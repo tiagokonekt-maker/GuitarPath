@@ -4,8 +4,9 @@ import App from './App.jsx'
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App />)
 
+// Service worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-  })
+    navigator.serviceWorker.register('/sw.js');
+  });
 }
