@@ -260,7 +260,10 @@ function HomeScreen({ state, dispatch, navigate, content }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
         <div>
           <p style={{ margin: 0, fontSize: 13, color: C.muted, fontFamily: FONTS.ui }}>{new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</p>
-          <h1 style={{ margin: "4px 0 0", fontSize: 26, fontWeight: 700, fontFamily: FONTS.title, letterSpacing: "-0.01em" }}>Bonjour 🎸</h1>
+          <h1 style={{ margin: "4px 0 0", fontSize: 26, fontWeight: 700, fontFamily: FONTS.title, letterSpacing: "-0.01em", display: "flex", alignItems: "center", gap: 8 }}>
+  <img src="/logo.svg" alt="GuitarPath" style={{ width: 32, height: 32 }} />
+  Bonjour
+</h1>
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 4, background: C.amberL, borderRadius: 20, padding: "5px 11px" }}>
