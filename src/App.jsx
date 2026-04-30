@@ -1,5 +1,8 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { COURSES as DEFAULT_COURSES, QUIZ as DEFAULT_QUIZ, EXERCISES as DEFAULT_EXERCISES } from "./content.js";
+import { useAuth } from "./supabase/useAuth.js";
+import { useProgress } from "./supabase/useProgress.js";
+import { AuthScreen } from "./supabase/AuthScreen.jsx";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // THEME — palette claire + polices custom
@@ -864,8 +867,8 @@ function ProgressScreen({ state, dispatch, content, onOpenSettings }) {
 // ═══════════════════════════════════════════════════════════════════════════
 // SETTINGS — IMPORT JSON
 // ═══════════════════════════════════════════════════════════════════════════
-function SettingsScreen({ state, dispatch, content, onClose, onImported }) {
-  const [importStatus, setImportStatus] = useState(null);
+function SettingsScreen({ state, dispatch, content, onClose, onImported, user, onSignOut }) {
+const [importStatus, setImportStatus] = useState(null);
 
   const handleFile = (e) => {
     const file = e.target.files?.[0];
@@ -950,6 +953,19 @@ function SettingsScreen({ state, dispatch, content, onClose, onImported }) {
       </div>
 
       <button onClick={resetContent} style={{ width: "100%", padding: "13px", borderRadius: 12, border: `1px solid ${C.border}`, background: C.bg, color: C.muted, fontSize: 13, cursor: "pointer", marginBottom: 10, fontFamily: FONTS.ui }}>
+       <div style={{ background: C.bgSec, borderRadius: 14, padding: '1rem', marginBottom: '1rem' }}>
+        <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6, fontFamily: FONTS.title }}>Compte</div>
+        <div style={{ fontSize: 13, color: C.muted, marginBottom: 10, fontFamily: FONTS.body }}>
+          Connecté : <strong>{user?.email}</strong>
+        </div>
+        <button onClick={onSignOut} style={{
+          width: '100%', padding: '12px', borderRadius: 12,
+          border: `1px solid ${C.coral}50`, background: C.bg,
+          color: C.coral, fontSize: 13, cursor: 'pointer', fontFamily: FONTS.ui,
+        }}>
+          Se déconnecter
+        </button>
+      </div>
         Supprimer le contenu importé
       </button>
       <button onClick={resetProgress} style={{ width: "100%", padding: "13px", borderRadius: 12, border: `1px solid ${C.coral}50`, background: C.bg, color: C.coral, fontSize: 13, cursor: "pointer", fontFamily: FONTS.ui }}>
@@ -971,12 +987,42 @@ const TABS = [
 ];
 
 export default function App() {
+  const { user, loading: authLoading, signIn, signUp, signOut } = useAuth();
+  const { loadProgress, saveProgressDebounced, syncOfflineData } = useProgress(user?.id);
+
   const [state, setState] = useState(loadState);
   const [content, setContent] = useState(loadContent);
-  const dispatch = useCallback((action) => setState(prev => reducer(prev, action)), []);
   const [screen, setScreen] = useState("home");
   const [toast, setToast] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [progressLoaded, setProgressLoaded] = useState(false);
+
+  const dispatch = useCallback((action) => {
+    setState(prev => reducer(prev, action));
+  }, []);
+
+  useEffect(() => {
+    if (!user || progressLoaded) return;
+    loadProgress().then(cloudState => {
+      if (cloudState) setState(prev => ({ ...prev, ...cloudState }));
+      setProgressLoaded(true);
+    });
+  }, [user, progressLoaded, loadProgress]);
+
+  useEffect(() => {
+    if (!user) setProgressLoaded(false);
+  }, [user]);
+
+  useEffect(() => {
+    if (!user || !progressLoaded) return;
+    saveProgressDebounced(state);
+  }, [state, user, progressLoaded, saveProgressDebounced]);
+
+  useEffect(() => {
+    const handleOnline = () => { if (user) syncOfflineData(); };
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [user, syncOfflineData]);
 
   useEffect(() => { dispatch({ type: "ROTATE_DAILY" }); }, []);
 
@@ -996,26 +1042,42 @@ export default function App() {
     else if (s === "practice") setScreen("practice");
   };
 
+  if (authLoading) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F5F4FA' }}>
+        <div style={{ fontSize: 40 }}>🎸</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthScreen onSignIn={signIn} onSignUp={signUp} />;
+  }
+
   const renderScreen = () => {
-    if (showSettings) return <SettingsScreen state={state} dispatch={dispatch} content={content} onClose={() => setShowSettings(false)} onImported={reloadContent} />;
+    if (showSettings) return (
+      <SettingsScreen
+        state={state} dispatch={dispatch} content={content}
+        onClose={() => setShowSettings(false)} onImported={reloadContent}
+        user={user} onSignOut={signOut}
+      />
+    );
     switch (screen) {
-      case "home": return <HomeScreen state={state} dispatch={dispatch} navigate={navigate} content={content} />;
-      case "courses": return <CoursesScreen state={state} dispatch={dispatch} content={content} />;
+      case "home":      return <HomeScreen state={state} dispatch={dispatch} navigate={navigate} content={content} />;
+      case "courses":   return <CoursesScreen state={state} dispatch={dispatch} content={content} />;
       case "exercises": return <ExercisesScreen state={state} dispatch={dispatch} content={content} />;
-      case "quiz": return <QuizScreen state={state} dispatch={dispatch} content={content} />;
-      case "practice": return <PracticeScreen state={state} dispatch={dispatch} />;
+      case "quiz":      return <QuizScreen state={state} dispatch={dispatch} content={content} />;
+      case "practice":  return <PracticeScreen state={state} dispatch={dispatch} />;
       case "challenge": return <ChallengeScreen state={state} dispatch={dispatch} navigate={navigate} />;
-      case "progress": return <ProgressScreen state={state} dispatch={dispatch} content={content} onOpenSettings={() => setShowSettings(true)} />;
-      default: return <HomeScreen state={state} dispatch={dispatch} navigate={navigate} content={content} />;
+      case "progress":  return <ProgressScreen state={state} dispatch={dispatch} content={content} onOpenSettings={() => setShowSettings(true)} />;
+      default:          return <HomeScreen state={state} dispatch={dispatch} navigate={navigate} content={content} />;
     }
   };
 
-  // Hauteur de la nav bar + safe area iPhone
   const NAV_HEIGHT = 64;
 
   return (
     <>
-      {/* Style global : reset, safe area, fond */}
       <style>{`
         html, body, #root { margin: 0; padding: 0; background: ${C.bg}; }
         body { font-family: ${FONTS.ui}; color: ${C.text}; -webkit-tap-highlight-color: transparent; overscroll-behavior: none; }
@@ -1026,12 +1088,8 @@ export default function App() {
 
       {toast && <Toast msg={toast} onClose={() => setToast(null)} />}
 
-      {/* Conteneur principal */}
       <div style={{
-        maxWidth: 440,
-        margin: "0 auto",
-        background: C.bg,
-        minHeight: "100vh",
+        maxWidth: 440, margin: "0 auto", background: C.bg, minHeight: "100vh",
         position: "relative",
         paddingBottom: `calc(${NAV_HEIGHT}px + env(safe-area-inset-bottom, 0px))`,
         paddingTop: "env(safe-area-inset-top, 0px)",
@@ -1039,25 +1097,14 @@ export default function App() {
         {renderScreen()}
       </div>
 
-      {/* Barre de navigation FIXE */}
       {!showSettings && (
         <div style={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          background: C.bg,
-          borderTop: `1px solid ${C.border}`,
-          zIndex: 100,
-          paddingBottom: "env(safe-area-inset-bottom, 0px)",
+          position: "fixed", bottom: 0, left: 0, right: 0,
+          background: C.bg, borderTop: `1px solid ${C.border}`,
+          zIndex: 100, paddingBottom: "env(safe-area-inset-bottom, 0px)",
           boxShadow: "0 -2px 8px rgba(0,0,0,0.04)",
         }}>
-          <div style={{
-            maxWidth: 440,
-            margin: "0 auto",
-            display: "flex",
-            height: NAV_HEIGHT,
-          }}>
+          <div style={{ maxWidth: 440, margin: "0 auto", display: "flex", height: NAV_HEIGHT }}>
             {TABS.map(t => {
               const active = screen === t.id;
               const icons = {
@@ -1069,17 +1116,10 @@ export default function App() {
               };
               return (
                 <button key={t.id} onClick={() => { setScreen(t.id); setShowSettings(false); }} style={{
-                  flex: 1,
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 3,
-                  color: active ? C.primary : C.muted,
-                  padding: "8px 0",
+                  flex: 1, background: "none", border: "none", cursor: "pointer",
+                  display: "flex", flexDirection: "column", alignItems: "center",
+                  justifyContent: "center", gap: 3,
+                  color: active ? C.primary : C.muted, padding: "8px 0",
                 }}>
                   {icons[t.id]}
                   <span style={{ fontSize: 10, fontWeight: active ? 700 : 500, fontFamily: FONTS.ui, letterSpacing: "0.02em" }}>{t.label}</span>
