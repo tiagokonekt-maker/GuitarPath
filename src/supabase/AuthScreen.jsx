@@ -55,7 +55,7 @@ export function AuthScreen({ onSignIn, onSignUp }) {
       }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
-          <div style={{ fontSize: 40, marginBottom: 8 }}>🎸</div>
+          <img src="/logo.svg" alt="GuitarPath" style={{ width: 80, height: 80, marginBottom: 8 }} />
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: C.primaryD }}>GuitarPath</h1>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: C.muted }}>
             {mode === 'login' ? 'Connecte-toi pour continuer' : 'Crée ton compte gratuit'}
