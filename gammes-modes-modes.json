@@ -1,0 +1,358 @@
+{
+  "courses": [
+    {
+      "id": "scales",
+      "title": "Gammes & modes",
+      "icon": "🎼",
+      "color": "#1D9E75",
+      "colorL": "#E1F5EE",
+      "desc": "De la note unique aux 7 modes — pédagogie progressive",
+      "lessons": [
+
+        {
+          "id": "scales-c4-01",
+          "title": "Mineur naturel et majeur : deux faces d'une même pièce",
+          "duration": 10,
+          "content": [
+            { "type": "p", "text": "Avant d'attaquer les modes, on fait une étape essentielle : comprendre la relation entre majeur et mineur. Cette relation est plus profonde que tu ne le penses, et elle est la clé pour saisir ce qui se passera dans les leçons suivantes. Spoiler : majeur et mineur ne sont pas opposés. Ce sont deux manières d'écouter les MÊMES notes." },
+            { "type": "h", "text": "La gamme mineure naturelle" },
+            { "type": "p", "text": "Si la gamme majeure suit la formule T-T-DT-T-T-T-DT, la gamme mineure naturelle suit T-DT-T-T-DT-T-T. Les demi-tons ne sont plus aux mêmes endroits. Résultat : un caractère sonore radicalement différent. Le mineur sonne mélancolique, introspectif, parfois dramatique. Le majeur sonne lumineux, ouvert, optimiste." },
+            { "type": "h", "text": "Construction de La mineur naturel" },
+            { "type": "p", "text": "Partons de La. T → Si. DT → Do. T → Ré. T → Mi. DT → Fa. T → Sol. T → La (octave). Résultat : La-Si-Do-Ré-Mi-Fa-Sol-La. Aucune altération ! Comme Do majeur, mais en partant de La." },
+            { "type": "h", "text": "Le secret : Do majeur et La mineur partagent les mêmes notes" },
+            { "type": "p", "text": "Compare. Do majeur = Do-Ré-Mi-Fa-Sol-La-Si. La mineur naturel = La-Si-Do-Ré-Mi-Fa-Sol. EXACTEMENT les mêmes 7 notes. La seule différence : la note de départ (la fondamentale). Cette équivalence s'appelle la 'tonalité relative'. Toute gamme majeure a sa relative mineure, située 1 ton et demi en dessous." },
+            { "type": "h", "text": "Pourquoi la fondamentale change tout" },
+            { "type": "p", "text": "Joue Do-Ré-Mi-Fa-Sol-La-Si en revenant souvent sur Do, en commençant et finissant tes phrases sur Do. Tu entendras du majeur, du joyeux. Joue les MÊMES notes, mais reviens toujours sur La, commence et finis sur La. Tu entendras du mineur, du mélancolique. Tes oreilles 'recentrent' la gamme autour de la fondamentale qu'elles entendent le plus souvent. C'est ce phénomène qui rend les modes possibles." },
+            { "type": "h", "text": "Les paires de tonalités relatives" },
+            { "type": "p", "text": "Do maj ↔ La min. Sol maj ↔ Mi min. Ré maj ↔ Si min. La maj ↔ Fa# min. Mi maj ↔ Do# min. Si maj ↔ Sol# min. Fa maj ↔ Ré min. Si♭ maj ↔ Sol min. Mi♭ maj ↔ Do min. Mêmes notes, deux ambiances possibles. Le compositeur choisit l'une ou l'autre selon ce qu'il veut raconter." },
+            { "type": "ref", "text": "Test sonore : 'Greensleeves' (chanson traditionnelle anglaise du XVIe siècle) est en La mineur. 'Stairway to Heaven' (Led Zeppelin) commence en La mineur. À l'inverse, 'Joy to the World' (chant de Noël) est en Do majeur. Tu peux jouer les deux mélodies avec exactement les mêmes 7 notes (Do-Ré-Mi-Fa-Sol-La-Si), mais l'une sonnera triste, l'autre joyeuse. La fondamentale ressentie fait toute la différence." },
+            { "type": "tip", "text": "Cette leçon est la pierre angulaire de tout ce qui suit. Si tu comprends que 'mêmes notes + fondamentale différente = ambiance différente', tu es prêt pour les modes. Si pas encore, relis cette leçon avant d'avancer." }
+          ],
+          "quiz": ["q-scales-c4-01", "q-scales-c4-02", "q-scales-c4-03"]
+        },
+
+        {
+          "id": "scales-c4-02",
+          "title": "Qu'est-ce qu'un mode (la grande révélation)",
+          "duration": 12,
+          "content": [
+            { "type": "p", "text": "Voilà. Tu y es. Tu as toutes les briques nécessaires pour comprendre les modes — ce concept qui terrorise tant de guitaristes intermédiaires. Mais en réalité, après ce que tu viens d'apprendre dans la leçon précédente, les modes vont te paraître évidents. Promis." },
+            { "type": "h", "text": "La définition simple" },
+            { "type": "p", "text": "Un mode = la gamme majeure jouée en partant d'un degré différent de la tonique. C'est tout. Si tu prends Do majeur (Do-Ré-Mi-Fa-Sol-La-Si) et que tu commences la gamme sur Ré au lieu de Do, tu obtiens : Ré-Mi-Fa-Sol-La-Si-Do-Ré. Ce sont les MÊMES notes que Do majeur, mais avec Ré comme fondamentale. Ce 'mode' s'appelle le mode dorien." },
+            { "type": "h", "text": "7 modes pour 7 degrés" },
+            { "type": "p", "text": "Comme la gamme majeure a 7 degrés, on peut commencer la gamme sur 7 fondamentales différentes. Donc 7 modes existent. Voici leurs noms et leurs degrés de départ : I = Ionien (= majeur). II = Dorien. III = Phrygien. IV = Lydien. V = Mixolydien. VI = Éolien (= mineur naturel). VII = Locrien. Dans l'ordre, on a IDPLMEL. Mnémonique anglais : 'I Don't Particularly Like Modes A Lot' (I D P L M A L)." },
+            { "type": "h", "text": "Pourquoi des noms grecs ?" },
+            { "type": "p", "text": "Les noms viennent de la Grèce antique. Chaque mode portait le nom d'une région ou peuple grec : les Doriens (région du Péloponnèse), les Phrygiens (Asie Mineure), les Lydiens (royaume d'Anatolie), les Mixolydiens, les Éoliens (îles éoliennes), les Locriens (peuple grec ancien). Les Grecs avaient théorisé ces modes 500 ans avant notre ère. Ils ont été formalisés par l'Église médiévale, puis redécouverts par les jazzmen au XXe siècle. Histoire de plus de 2500 ans." },
+            { "type": "h", "text": "Mêmes notes, ambiances opposées" },
+            { "type": "p", "text": "Voici la chose magique : les 7 modes de Do majeur partagent EXACTEMENT les mêmes 7 notes (Do-Ré-Mi-Fa-Sol-La-Si). Mais selon la fondamentale choisie, l'ambiance change radicalement. Mi phrygien (mêmes notes que Do majeur, fondamentale Mi) sonne espagnol. Lydien (fondamentale Fa) sonne flottant et magique. Mixolydien (fondamentale Sol) sonne rock'n'roll. C'est le pouvoir de la fondamentale ressentie." },
+            { "type": "h", "text": "Modes 'majeurs' et modes 'mineurs'" },
+            { "type": "p", "text": "Tous les modes ne sonnent pas pareil. Si la tierce est majeure (à 4 demi-tons de la fondamentale), le mode est dit 'majeur' : Ionien, Lydien, Mixolydien. Si la tierce est mineure (3 demi-tons), le mode est dit 'mineur' : Dorien, Phrygien, Éolien, Locrien. La tierce est ce qui détermine la couleur de base." },
+            { "type": "h", "text": "Pourquoi utiliser des modes en 2026 ?" },
+            { "type": "p", "text": "Parce qu'ils élargissent la palette sonore disponible. La gamme majeure et la gamme mineure suffisent pour 70% de la musique pop. Mais si tu veux faire du blues-jazz (dorien), du rock énergique (mixolydien), de la musique mystérieuse (lydien), du flamenco/oriental (phrygien), tu as besoin des modes. Ils sont les outils des compositeurs modernes." },
+            { "type": "ref", "text": "Pour entendre la différence : prends un drone (note tenue) en Ré sur ta basse ou via une app. Joue Do majeur (Do-Ré-Mi-Fa-Sol-La-Si). Tu entendras du dorien : couleur mineure mais lumineuse. Maintenant change de drone vers Mi et joue les MÊMES notes : tu entendras du phrygien, espagnol et tendu. Mêmes notes, ambiances opposées. C'est ça, les modes." },
+            { "type": "tip", "text": "Ne te décourage pas si les modes paraissent complexes. Ils ne le sont pas — ils sont juste nouveaux. Dans les 7 prochaines leçons, on va prendre chaque mode un par un et tu vas le maîtriser." }
+          ],
+          "quiz": ["q-scales-c4-04", "q-scales-c4-05", "q-scales-c4-06"]
+        },
+
+        {
+          "id": "scales-c4-03",
+          "title": "Comment l'oreille perçoit un mode (le rôle du drone)",
+          "duration": 8,
+          "content": [
+            { "type": "p", "text": "Un mode existe seulement si l'oreille perçoit une fondamentale stable. Sans cette ancre, ton cerveau retombe sur la fondamentale par défaut (la tonique de la gamme majeure parente). Comprendre ce phénomène, c'est comprendre comment 'faire sonner' un mode quand on improvise." },
+            { "type": "h", "text": "Le piège : sans ancre, pas de mode" },
+            { "type": "p", "text": "Si tu joues simplement les notes de Ré dorien (Ré-Mi-Fa-Sol-La-Si-Do) sans rien d'autre, ton oreille va naturellement entendre 'Do majeur' parce que c'est le pattern qu'elle reconnaît le mieux. Le mode dorien va s'évanouir. Pour qu'un mode 'sonne' vraiment, il faut un dispositif qui ancre l'oreille sur la nouvelle fondamentale." },
+            { "type": "h", "text": "Le drone : ton meilleur ami" },
+            { "type": "p", "text": "Un drone, c'est une note grave tenue en continu sous la mélodie. Quand un drone Ré joue en boucle pendant que tu improvises Ré dorien, ton oreille entend le Ré comme la fondamentale. Le mode s'installe. Cette technique vient de la musique indienne classique (les tamboura), de la musique traditionnelle écossaise (les cornemuses), du blues primitif (la corde grave qui résonne)." },
+            { "type": "h", "text": "Comment générer un drone" },
+            { "type": "p", "text": "Trois solutions. (1) Une app de drone : 'Drone Tone Tool', 'Drone Generator' ou simplement chercher 'drone Ré 60bpm' sur YouTube. (2) Une boucle d'accord modal : par exemple, jouer Dm7 en boucle pour ancrer l'oreille en Ré. (3) Ta propre guitare : laisse résonner la corde de Ré (corde 4 vide ou corde 5 case 5) entre tes phrases." },
+            { "type": "h", "text": "Les accords modaux : alternative au drone" },
+            { "type": "p", "text": "Au lieu d'un drone fixe, tu peux jouer un accord 'caractéristique' du mode en boucle. Pour le dorien : Dm7 (ou Am7). Pour le mixolydien : G7. Pour le lydien : Cmaj7 avec un Fa# en accent. Pour le phrygien : Em (avec un Fa naturel en passage). Chaque mode a ses accords 'maison'." },
+            { "type": "h", "text": "Mettre en valeur la 'note caractéristique'" },
+            { "type": "p", "text": "Chaque mode a une note qui le différencie de son cousin majeur ou mineur. C'est sa 'note caractéristique'. En dorien, c'est la 6e majeure. En phrygien, c'est la b2. En lydien, c'est la #4. En mixolydien, c'est la b7. Quand tu improvises, mets cette note en valeur (notes longues, temps forts) pour 'affirmer' que tu joues ce mode et pas un autre. Sinon, ton oreille glissera vers la gamme majeure ou mineure standard." },
+            { "type": "ref", "text": "Démonstration : 'So What' (Miles Davis, 1959) est joué sur une vamp Dm7 (qui agit comme un drone harmonique). Toute la pièce reste en Ré dorien pendant 16 mesures. Aucune ambiguïté : l'oreille s'installe dans le dorien et y reste. Sans le drone harmonique de Dm7, le morceau aurait sonné comme du Do majeur ordinaire." },
+            { "type": "tip", "text": "Quand tu pratiques un mode, lance toujours un drone ou une vamp d'accord modal. Sans support harmonique, tu travailles dans le vide — ton oreille ne perçoit pas la couleur du mode." }
+          ],
+          "quiz": ["q-scales-c4-07", "q-scales-c4-08"]
+        },
+
+        {
+          "id": "scales-c5-01",
+          "title": "Ionien — la lumière pure (= majeur)",
+          "duration": 8,
+          "content": [
+            { "type": "p", "text": "Le mode ionien, c'est tout simplement... la gamme majeure que tu connais déjà. Pas de surprise, pas de note caractéristique exotique. Mais l'aborder en tant que 'mode' permet de bien le situer dans la famille des 7 modes, et de comprendre ce qui le rend unique." },
+            { "type": "h", "text": "Formule" },
+            { "type": "p", "text": "1 - 2 - 3 - 4 - 5 - 6 - 7. Aucune altération par rapport à la 'gamme parente' (puisque c'est elle-même). En Do : Do-Ré-Mi-Fa-Sol-La-Si." },
+            { "type": "h", "text": "Couleur sonore" },
+            { "type": "p", "text": "Joyeux, lumineux, stable, ouvert. C'est le mode 'par défaut' de la musique pop occidentale depuis plusieurs siècles. Quand tu entends une chanson 'qui sent l'été', il y a 70% de chances qu'elle soit en Ionien." },
+            { "type": "h", "text": "Pourquoi 'mode brillant'" },
+            { "type": "p", "text": "Sur une échelle imaginaire qui classe les modes du plus lumineux au plus sombre, le Ionien est en deuxième position (juste derrière le Lydien, plus brillant encore). Ses 2 demi-tons (entre 3-4 et 7-8) créent des résolutions qui satisfont l'oreille occidentale par habitude millénaire." },
+            { "type": "h", "text": "Sur quels accords l'utiliser" },
+            { "type": "p", "text": "Tout accord majeur 7 (Cmaj7, Gmaj7, etc.) en contexte 'tonal classique' (chanson en Do majeur, par exemple). C'est la valeur sûre. Si tu hésites sur un solo, joue en Ionien — ça ne sonnera jamais faux." },
+            { "type": "h", "text": "Histoire" },
+            { "type": "p", "text": "Le mode ionien est en réalité un 'nouveau venu' dans la famille des modes. Pendant le Moyen-Âge, il était considéré comme 'profane' (trop joyeux pour la liturgie). L'Église préférait les modes plus sobres comme le dorien ou le mixolydien. Ce n'est qu'à la Renaissance, vers 1500, que le ionien a pris le dessus, devenant la 'gamme majeure' standard de la musique tonale." },
+            { "type": "ref", "text": "Exemples emblématiques : 'Let It Be' (Beatles) en Do ionien. 'Twist and Shout' (Beatles), 'Can't Help Falling in Love' (Elvis), 'Imagine' (John Lennon) — tous en mode ionien. C'est le langage par défaut de la pop." },
+            { "type": "tip", "text": "Si tu sais déjà improviser en gamme majeure, tu sais improviser en ionien. Le seul changement, c'est ta façon de penser : au lieu de te dire 'je joue la gamme majeure', dis-toi 'je joue le mode ionien'. Cette nuance prépare ton cerveau aux 6 autres modes." }
+          ],
+          "quiz": ["q-scales-c5-01"]
+        },
+
+        {
+          "id": "scales-c5-02",
+          "title": "Dorien — le mode caméléon",
+          "duration": 12,
+          "content": [
+            { "type": "p", "text": "Le dorien est le mode mineur le plus polyvalent et le plus utilisé après l'éolien (mineur naturel). Il a une couleur mineure de base, mais avec une touche de lumière qui le rend unique. C'est le mode du jazz modal, du funk, du rock progressif, et de beaucoup de musiques traditionnelles européennes." },
+            { "type": "h", "text": "Construction" },
+            { "type": "p", "text": "Le dorien est le 2e mode de la gamme majeure. Si tu joues Do majeur en commençant sur Ré, tu obtiens Ré dorien : Ré-Mi-Fa-Sol-La-Si-Do. Mêmes notes que Do majeur, fondamentale = Ré." },
+            { "type": "h", "text": "Formule" },
+            { "type": "p", "text": "1 - 2 - b3 - 4 - 5 - 6 - b7. Comparé à la gamme mineure naturelle (1-2-b3-4-5-b6-b7), le dorien a une SIXTE MAJEURE au lieu d'une sixte mineure. C'est cette 6 majeure qui crée la spécificité du dorien." },
+            { "type": "h", "text": "La note caractéristique : la 6 majeure" },
+            { "type": "p", "text": "Voilà LA note à mettre en valeur quand tu improvises en dorien. En Ré dorien, c'est Si (la 6 majeure). Sans ce Si, tes phrases sonneront 'mineur naturel ordinaire'. Avec ce Si en évidence (sur les temps forts, en notes longues), le dorien s'affirme. Cette note est ce qui donne au dorien son côté 'lumineux dans la mélancolie'." },
+            { "type": "h", "text": "Couleur sonore" },
+            { "type": "p", "text": "Mineur, mais pas triste. Sophistiqué, jazzy, parfois funky. Il y a quelque chose d'optimiste dans le dorien, malgré sa tierce mineure. C'est un mode 'adulte' : ni naïf comme le ionien, ni dramatique comme le phrygien, ni lugubre comme l'éolien." },
+            { "type": "h", "text": "Sur quels accords l'utiliser" },
+            { "type": "p", "text": "1) Tout accord m7 en vamp modale (un seul accord tenu pendant plusieurs mesures). Ex : Dm7 en boucle = Ré dorien. 2) Sur le ii d'un ii-V modal qui ne résout pas (Em7-A7 sans aller vers Dmaj7 = Mi dorien). 3) Sur des progressions Im-IV typiques du folk/rock (Dm-G ou Am-D)." },
+            { "type": "h", "text": "Histoire" },
+            { "type": "p", "text": "Le dorien était l'un des modes préférés de l'Église médiévale. Beaucoup de chants grégoriens sont en dorien. Au XXe siècle, il a été redécouvert par les jazzmen modaux (Miles Davis, John Coltrane) qui cherchaient à s'éloigner du système tonal. Il est aussi présent dans la musique celtique traditionnelle ('Scarborough Fair') et le folk progressif." },
+            { "type": "ref", "text": "Exemples emblématiques : 'So What' (Miles Davis, 1959) — 16 mesures de Dm7 en Ré dorien, puis 8 mesures de Mi♭m7 en Mi♭ dorien, puis retour. C'est le manifeste du jazz modal. 'Oye Como Va' (Santana) : vamp Am7-D7 = La dorien. 'Light My Fire' (The Doors) : Am-F#m = La dorien. 'Smoke on the Water' (Deep Purple) : riff principal en Sol dorien. 'Scarborough Fair' (chanson traditionnelle anglaise) : entièrement en mi dorien." },
+            { "type": "tip", "text": "Drill dorien efficace : drone Ré (corde 5 vide ou app drone). Joue Ré dorien (= notes de Do majeur en partant de Ré) pendant 5 minutes en plaçant un Si appuyé toutes les 2 mesures. Tu sentiras la couleur 'dorien pur' s'installer dans tes oreilles. Refais ça 7 jours de suite : c'est gravé." }
+          ],
+          "quiz": ["q-scales-c5-02", "q-scales-c5-03", "q-scales-c5-04"]
+        },
+
+        {
+          "id": "scales-c5-03",
+          "title": "Phrygien — l'âme andalouse",
+          "duration": 11,
+          "content": [
+            { "type": "p", "text": "Le phrygien est le mode qui sonne le plus 'exotique' à une oreille occidentale. Espagnol, oriental, dramatique, parfois inquiétant. Il porte en lui des siècles de musique flamenco, des modes arabes, et l'imaginaire de la péninsule ibérique sous influence maure. C'est aussi le mode favori des guitaristes metal/néo-classique." },
+            { "type": "h", "text": "Construction" },
+            { "type": "p", "text": "Le phrygien est le 3e mode de la gamme majeure. Si tu joues Do majeur en commençant sur Mi, tu obtiens Mi phrygien : Mi-Fa-Sol-La-Si-Do-Ré. Mêmes notes que Do majeur, fondamentale = Mi." },
+            { "type": "h", "text": "Formule" },
+            { "type": "p", "text": "1 - b2 - b3 - 4 - 5 - b6 - b7. Comparé à la gamme mineure naturelle (1-2-b3-4-5-b6-b7), le phrygien a une SECONDE MINEURE au lieu d'une seconde majeure. La b2 est sa note caractéristique." },
+            { "type": "h", "text": "La note caractéristique : la b2" },
+            { "type": "p", "text": "En Mi phrygien, c'est Fa (la b2). Cette note est à un demi-ton de la fondamentale, ce qui crée une tension extrême. C'est cette dissonance contrôlée qui donne au phrygien son côté 'oriental' ou 'flamenco'. Quand tu improvises en phrygien, fais-le entendre — sur le premier temps d'une mesure, c'est dévastateur." },
+            { "type": "h", "text": "Couleur sonore" },
+            { "type": "p", "text": "Sombre, mystérieux, oriental, dramatique. Il évoque le désert, le danger, l'exotisme méditerranéen. Pour beaucoup de musiciens, c'est le mode 'le plus différent' parmi les sept — celui qui, instantanément, crée une ambiance. Tu ne joues pas du phrygien par hasard." },
+            { "type": "h", "text": "Phrygien dominant : la variante essentielle" },
+            { "type": "p", "text": "Il existe une variante très utilisée : le phrygien dominant. Formule : 1-b2-3-4-5-b6-b7 (la tierce devient majeure). En Mi : Mi-Fa-Sol#-La-Si-Do-Ré. Cette gamme n'est PAS un mode de la gamme majeure, mais un mode de la gamme mineure harmonique (qu'on verra plus tard). C'est le mode du flamenco authentique, du klezmer juif, et de la musique du Moyen-Orient. Ultra-caractérisé." },
+            { "type": "h", "text": "Sur quels accords l'utiliser" },
+            { "type": "p", "text": "Sur des accords Im (mineur simple) dans un contexte espagnol ou modal sombre. La cadence flamenco classique : Am-G-F-E (en La phrygien). Très utilisé dans les solos métal néoclassique (Yngwie Malmsteen, Steve Vai). Pour le rock, fonctionne sur des riffs en mineur où tu veux ajouter une touche 'sombre' et 'orientale'." },
+            { "type": "h", "text": "Histoire" },
+            { "type": "p", "text": "Le phrygien doit son nom au peuple antique des Phrygiens (Anatolie, actuelle Turquie). Au Moyen-Âge, l'Église l'utilisait pour des chants grégoriens 'introspectifs'. Il a connu un grand renouveau au XXe siècle avec le flamenco moderne (Paco de Lucía), puis avec le metal néoclassique des années 80. Sa popularité actuelle dépasse les frontières du flamenco : on l'entend dans le metal progressif, le black metal symphonique, et même dans certaines bandes-son cinéma orientales." },
+            { "type": "ref", "text": "Exemples emblématiques : 'Spain' (Chick Corea) en Ré phrygien dominant. 'Smoke on the Water' utilise des inflexions phrygiennes dans son intro. 'War' (Yngwie Malmsteen) en Mi phrygien dominant. Toute la musique flamenco traditionnelle 'soleá' et 'siguiriya' est en phrygien. Si tu écoutes 'Concierto de Aranjuez' (Joaquín Rodrigo, 1939), tu entends la quintessence du phrygien espagnol." },
+            { "type": "tip", "text": "Pour goûter au phrygien : joue le riff suivant en boucle sur la corde de Mi grave : Mi(0) - Fa(1) - Sol(3) - Mi(0). Tu viens d'esquisser l'âme du phrygien. Reproduis ça avec la b2 toujours en évidence et tu sentiras l'Andalousie venir à toi." }
+          ],
+          "quiz": ["q-scales-c5-05", "q-scales-c5-06"]
+        },
+
+        {
+          "id": "scales-c5-04",
+          "title": "Lydien — l'évasion onirique",
+          "duration": 10,
+          "content": [
+            { "type": "p", "text": "Le lydien, c'est le mode du rêve, de l'espace ouvert, du mystère bienveillant. Il est utilisé par les compositeurs de musiques de film pour évoquer la magie, le voyage, l'évasion. Visuellement, le lydien c'est un grand ciel bleu, une lumière dorée. C'est le mode le plus brillant des sept." },
+            { "type": "h", "text": "Construction" },
+            { "type": "p", "text": "Le lydien est le 4e mode de la gamme majeure. Si tu joues Do majeur en commençant sur Fa, tu obtiens Fa lydien : Fa-Sol-La-Si-Do-Ré-Mi. Mêmes notes que Do majeur, fondamentale = Fa." },
+            { "type": "h", "text": "Formule" },
+            { "type": "p", "text": "1 - 2 - 3 - #4 - 5 - 6 - 7. Comparé à la gamme majeure (Ionien), le lydien a une QUARTE AUGMENTÉE au lieu d'une quarte juste. C'est cette #4 qui crée la magie." },
+            { "type": "h", "text": "La note caractéristique : la #4 (quarte augmentée)" },
+            { "type": "p", "text": "En Fa lydien, c'est Si (la #4 par rapport à Fa). Cette note est à un demi-ton de la quinte (Do), ce qui crée une tension non résolue, 'flottante'. Au lieu de descendre vers la quinte (résolution attendue), tu peux la laisser en suspension. Cette suspension perpétuelle = effet lydien. C'est ce qui rend le mode magique et mystérieux." },
+            { "type": "h", "text": "Couleur sonore" },
+            { "type": "p", "text": "Brillant, flottant, magique, ouvert, parfois mystérieux. Si le ionien est 'lumineux et stable', le lydien est 'lumineux et flottant'. Il évoque l'envol, la rêverie. C'est le mode de Steven Spielberg, de John Williams, des bandes-son de fantasy." },
+            { "type": "h", "text": "Sur quels accords l'utiliser" },
+            { "type": "p", "text": "Sur tout accord Maj7 dans un contexte non-tonal classique (pas de résolution V-I). Particulièrement sur des vamps Maj7-Maj7 distantes d'un ton (ex : Cmaj7-Dmaj7 = Do lydien). Très utilisé en jazz fusion (Pat Metheny adore le lydien) et en composition cinématographique." },
+            { "type": "h", "text": "Histoire" },
+            { "type": "p", "text": "Le lydien doit son nom au royaume antique de Lydie (actuelle Turquie occidentale). C'était un mode 'sacré' dans la Grèce antique, associé à la beauté solennelle. Au Moyen-Âge, l'Église l'utilisait pour des chants 'lumineux'. Au XXe siècle, il a été massivement adopté par le jazz (notamment par George Russell, qui a écrit 'The Lydian Chromatic Concept' en 1953, un livre théorique majeur). Et bien sûr, John Williams en a fait sa marque de fabrique pour Star Wars, E.T., Indiana Jones, Harry Potter — toutes ces musiques utilisent le lydien comme couleur principale." },
+            { "type": "ref", "text": "Exemples emblématiques : Le thème de 'E.T.' (John Williams, 1982) commence sur la #4 en Fa lydien — c'est cette note qui donne instantanément l'effet 'magie'. La musique de 'Princesse Mononoké' (Joe Hisaishi) utilise le lydien. 'Joy' (Bach, BWV 147 — 'Jésus que ma joie demeure') a des passages en lydien. 'Flying in a Blue Dream' (Joe Satriani) est en mi lydien. Le morceau 'Dreams' de Fleetwood Mac est en La lydien." },
+            { "type": "tip", "text": "Pour expérimenter le lydien : prends un accord Cmaj7 et tiens-le en arrière-plan. Joue uniquement Si naturel (la #4 de Fa lydien... mais en Cmaj7, ça serait la 7). Mauvais exemple. Reprends : tiens un accord Fmaj7. Joue uniquement Si naturel par-dessus. Tu entends la magie ? C'est le lydien." }
+          ],
+          "quiz": ["q-scales-c5-07", "q-scales-c5-08"]
+        },
+
+        {
+          "id": "scales-c5-05",
+          "title": "Mixolydien — le roi du rock",
+          "duration": 11,
+          "content": [
+            { "type": "p", "text": "Le mixolydien est le mode du rock, du blues, du country, du funk. C'est le mode des guitaristes par excellence. Si tu écoutes Hendrix, les Stones, Zeppelin, AC/DC, ZZ Top — beaucoup de leurs riffs et solos sont en mixolydien. Ce mode est fait pour la guitare." },
+            { "type": "h", "text": "Construction" },
+            { "type": "p", "text": "Le mixolydien est le 5e mode de la gamme majeure. Si tu joues Do majeur en commençant sur Sol, tu obtiens Sol mixolydien : Sol-La-Si-Do-Ré-Mi-Fa. Mêmes notes que Do majeur, fondamentale = Sol." },
+            { "type": "h", "text": "Formule" },
+            { "type": "p", "text": "1 - 2 - 3 - 4 - 5 - 6 - b7. Comparé à la gamme majeure (Ionien), le mixolydien a une SEPTIÈME MINEURE au lieu d'une septième majeure. Ce simple changement transforme tout." },
+            { "type": "h", "text": "La note caractéristique : la b7" },
+            { "type": "p", "text": "En Sol mixolydien, c'est Fa (la b7). Cette note est à un ton de la fondamentale (Sol), au lieu du demi-ton de la sensible classique. Du coup, la résolution 'sensible → tonique' du majeur disparaît : Fa ne 'tire' pas vers Sol comme Si tirerait vers Do. Le mixolydien sonne 'décontracté', 'flottant' — comme une dominante qui ne résout jamais. C'est exactement ce qu'on veut en blues et en rock." },
+            { "type": "h", "text": "Couleur sonore" },
+            { "type": "p", "text": "Lumineux mais décontracté. Bluesy. Rock'n'roll. Il a la luminosité du majeur, mais sans la 'demande de résolution' du ionien. C'est pour ça que ça sonne plus 'sale', plus 'libre'." },
+            { "type": "h", "text": "Sur quels accords l'utiliser" },
+            { "type": "p", "text": "1) Tout accord 7 (dominante) dans un contexte non-résolu : sur G7 → Sol mixolydien. 2) Tous les blues majeurs : sur un blues en La (A7-D7-E7), tu peux jouer La mixolydien sur tout. 3) Vamps I-bVII typiques du rock : Ré-Do-Ré-Do = Ré mixolydien. 4) Riffs de hard rock (Whole Lotta Love, Smoke on the Water utilisent mixolydien)." },
+            { "type": "h", "text": "Pourquoi mixolydien et pas majeur sur G7 ?" },
+            { "type": "p", "text": "Sur un accord G7 (Sol-Si-Ré-Fa), tu pourrais être tenté de jouer Sol majeur. Mais Sol majeur contient Fa#, alors que G7 contient Fa naturel. Le Fa# de Sol majeur entre en conflit avec le Fa de l'accord. Le mixolydien (avec Fa naturel) est en revanche en parfaite cohérence avec G7. Match parfait." },
+            { "type": "h", "text": "Histoire" },
+            { "type": "p", "text": "Le mixolydien doit son nom à la 'mixture lydienne' antique. Au Moyen-Âge, c'était un mode majeur très utilisé en chant grégorien. Mais c'est au XXe siècle qu'il a explosé : le blues afro-américain, qui mélange gamme majeure et 'blue notes', sonne presque toujours mixolydien. Les Beatles l'ont popularisé en pop ('Norwegian Wood', 'Tomorrow Never Knows'). Hendrix en a fait l'âme du rock psychédélique ('Hey Joe', 'Voodoo Child'). Aujourd'hui, c'est le mode du rock, point." },
+            { "type": "ref", "text": "Exemples emblématiques : 'Sweet Home Chicago' (Robert Johnson) en Mi mixolydien. 'Norwegian Wood' (Beatles) en Mi mixolydien. 'Whole Lotta Love' (Led Zeppelin) en Mi mixolydien. 'Sweet Home Alabama' (Lynyrd Skynyrd) en Sol mixolydien. 'Free Falling' (Tom Petty) en Fa mixolydien. La grande majorité des solos d'Eric Clapton, Hendrix, Stevie Ray Vaughan dans un contexte rock-blues sont en mixolydien." },
+            { "type": "tip", "text": "Astuce mixolydien : sur un blues en La, tu connais probablement déjà la pentatonique mineure de La. Pour 'colorer' ton solo en mixolydien, ajoute la 3 majeure (Do#) et la 6 (Fa#) à ta penta. Ça te donnera les notes de La mixolydien sans tout réapprendre. Le truc des bluesmen depuis 100 ans." }
+          ],
+          "quiz": ["q-scales-c5-09", "q-scales-c5-10", "q-scales-c5-11"]
+        },
+
+        {
+          "id": "scales-c5-06",
+          "title": "Éolien — la mélancolie naturelle",
+          "duration": 9,
+          "content": [
+            { "type": "p", "text": "L'éolien est le mode mineur 'standard' — la gamme mineure naturelle que tu connais déjà sans le savoir. C'est le mode des ballades tristes, des chansons mélancoliques, des morceaux introspectifs. Il porte en lui plus de mille ans de musique européenne." },
+            { "type": "h", "text": "Construction" },
+            { "type": "p", "text": "L'éolien est le 6e mode de la gamme majeure. Si tu joues Do majeur en commençant sur La, tu obtiens La éolien : La-Si-Do-Ré-Mi-Fa-Sol. Mêmes notes que Do majeur, fondamentale = La. C'est exactement la gamme mineure naturelle de La." },
+            { "type": "h", "text": "Formule" },
+            { "type": "p", "text": "1 - 2 - b3 - 4 - 5 - b6 - b7. C'est la gamme mineure naturelle. Pas de note 'caractéristique' qui le distinguerait — c'est lui-même la référence du 'son mineur'." },
+            { "type": "h", "text": "Pourquoi pas de note caractéristique ?" },
+            { "type": "p", "text": "Comme le ionien (= majeur), l'éolien est trop 'standard' pour avoir une note qui le ferait sortir du lot. C'est par rapport à lui qu'on définit les autres modes mineurs : le dorien a la 6 majeure (vs b6 de l'éolien). Le phrygien a la b2 (vs 2 de l'éolien). Le locrien a la b5 (vs 5 de l'éolien). L'éolien est la base mineure, le mineur 'pur'." },
+            { "type": "h", "text": "Couleur sonore" },
+            { "type": "p", "text": "Mélancolique, triste, introspectif, dramatique. Le 'son mineur' classique. Quand quelqu'un dit 'cette chanson est en mineur', il parle généralement de l'éolien. C'est le mode de la majorité des ballades, des chansons d'amour torturé, des introspections musicales." },
+            { "type": "h", "text": "Sur quels accords l'utiliser" },
+            { "type": "p", "text": "Tout accord mineur dans un contexte 'tonal' classique (chanson en La mineur, par exemple). Toute progression Im-IVm-Vm typique du folk, de la pop mélancolique, du rock tristoune. C'est la valeur sûre du mineur." },
+            { "type": "h", "text": "Histoire" },
+            { "type": "p", "text": "L'éolien doit son nom aux îles éoliennes (au nord de la Sicile). C'est un mode très ancien, présent dans toutes les musiques traditionnelles européennes. À la Renaissance, comme le ionien pour le majeur, il s'est imposé comme la 'gamme mineure' standard de la musique tonale. Aujourd'hui, quand on parle de 'mineur naturel', on parle d'éolien — sans même utiliser le nom du mode." },
+            { "type": "ref", "text": "Exemples emblématiques : 'Stairway to Heaven' (Led Zeppelin) en La éolien. 'House of the Rising Sun' (The Animals) en La éolien. 'Mad World' (Tears for Fears / Gary Jules) en Mi éolien. La quasi-totalité des chansons traditionnelles celtiques, des ballades folk russes, et de la musique 'gypsy' moderne. Quand tu entends une chanson 'qui sent l'automne', il y a 70% de chances qu'elle soit en éolien." },
+            { "type": "tip", "text": "Tu connais déjà l'éolien si tu as travaillé la pentatonique mineure (qui en est extraite). Pour passer de la penta à l'éolien complet, ajoute simplement le 2 (la seconde majeure) et la b6 (la sixte mineure). Tu as la gamme complète." }
+          ],
+          "quiz": ["q-scales-c5-12"]
+        },
+
+        {
+          "id": "scales-c5-07",
+          "title": "Locrien — le mode interdit",
+          "duration": 9,
+          "content": [
+            { "type": "p", "text": "Voici le 7e mode, et le plus mystérieux : le locrien. C'est le seul mode dont la fondamentale est diminuée (la quinte est diminuée). Conséquence : il sonne extrêmement instable. Pendant des siècles, il a été considéré comme 'inutilisable'. Aujourd'hui, il existe — mais reste rarement employé. À connaître par culture, à utiliser avec parcimonie." },
+            { "type": "h", "text": "Construction" },
+            { "type": "p", "text": "Le locrien est le 7e mode de la gamme majeure. Si tu joues Do majeur en commençant sur Si, tu obtiens Si locrien : Si-Do-Ré-Mi-Fa-Sol-La. Mêmes notes que Do majeur, fondamentale = Si." },
+            { "type": "h", "text": "Formule" },
+            { "type": "p", "text": "1 - b2 - b3 - 4 - b5 - b6 - b7. C'est le mode le plus 'sombre' avec ses 5 altérations (b2, b3, b5, b6, b7). Et surtout, sa quinte est diminuée — ce qui le rend instable." },
+            { "type": "h", "text": "La note caractéristique (et le problème) : la b5" },
+            { "type": "p", "text": "La b5 (en Si locrien, c'est Fa) crée une tension extrême avec la fondamentale. Pire : la quinte juste, qui dans tous les autres modes ancre la fondamentale comme 'point stable', est ici absente. Résultat : ton oreille ne sait plus où se reposer. Le locrien sonne perpétuellement instable, comme un accord qui ne résout jamais." },
+            { "type": "h", "text": "Couleur sonore" },
+            { "type": "p", "text": "Instable, anxiogène, dissonant, intriguant. Pas vraiment 'beau' au sens classique — plutôt 'inconfortable'. C'est précisément cette inconfort qui le rend utile dans certains contextes : musique de tension, jazz avancé, métal extrême." },
+            { "type": "h", "text": "Sur quels accords l'utiliser" },
+            { "type": "p", "text": "Sur des accords m7b5 (demi-diminués) en jazz. Ex : Bm7b5 = Si locrien. Très utilisé sur le ii d'un ii-V-i mineur (en La mineur : Bm7b5-E7-Am7). En métal extrême et certaines musiques de film d'horreur, on l'utilise pour créer une atmosphère angoissante." },
+            { "type": "h", "text": "Pourquoi le locrien était 'interdit'" },
+            { "type": "p", "text": "Au Moyen-Âge, l'Église condamnait le triton (intervalle b5) comme 'diabolus in musica' (le diable en musique). Le locrien, dont la quinte est précisément un triton, était donc considéré comme 'maudit' et n'était pratiquement jamais utilisé en musique sacrée. Cette réputation a perduré jusqu'au XXe siècle. Ce n'est qu'avec le jazz moderne et le métal que le locrien a trouvé sa place." },
+            { "type": "ref", "text": "Exemples (rares) : 'Army of Me' (Björk) utilise des couleurs locriennes. Certains passages de 'YYZ' (Rush) jouent avec le locrien. Black Sabbath et Slayer ont des riffs locriens dans leurs morceaux les plus sombres. Mais honnêtement, peu de morceaux sont 'entièrement' en locrien — il est souvent utilisé en passage." },
+            { "type": "tip", "text": "Le locrien n'est pas une priorité pour ton apprentissage. Connais son existence, comprends pourquoi il est rare, et passe à autre chose. À ce stade, te concentrer sur le dorien, mixolydien et lydien sera infiniment plus rentable musicalement." }
+          ],
+          "quiz": ["q-scales-c5-13"]
+        },
+
+        {
+          "id": "scales-c6-01",
+          "title": "La gamme mineure harmonique",
+          "duration": 10,
+          "content": [
+            { "type": "p", "text": "Au-delà des 7 modes de la gamme majeure, il existe d'autres familles de gammes. La plus importante est la gamme mineure harmonique, créée pour résoudre un problème spécifique de l'harmonie tonale. Elle est utilisée en classique, en jazz, en métal néoclassique, et dans la musique gitane." },
+            { "type": "h", "text": "Le problème à résoudre" },
+            { "type": "p", "text": "Dans une tonalité mineure (éolien), le 5e degré est mineur (en La : V = Em). Or, pour créer une cadence 'forte' V-I, il faut une dominante majeure ou 7 (E ou E7). Avec un Em, la résolution vers Am est faible. Solution : on rehausse la 7e note de la gamme mineure (Sol → Sol#), ce qui transforme Em en E, et permet une cadence mineure forte." },
+            { "type": "h", "text": "Formule" },
+            { "type": "p", "text": "1 - 2 - b3 - 4 - 5 - b6 - 7 (la 7 est majeure, contrairement à l'éolien qui a une b7). En La : La-Si-Do-Ré-Mi-Fa-Sol#. Une seule différence avec l'éolien : Sol# au lieu de Sol naturel." },
+            { "type": "h", "text": "Couleur sonore" },
+            { "type": "p", "text": "L'écart de tierce mineure (3 demi-tons) entre la b6 (Fa) et la 7 (Sol#) crée un saut caractéristique 'oriental' / 'espagnol classique'. C'est le son de la musique gitane, du flamenco classique, du métal néoclassique. Plus dramatique et 'classique' que l'éolien standard." },
+            { "type": "h", "text": "Sur quels accords l'utiliser" },
+            { "type": "p", "text": "Principalement sur le V7 d'une cadence mineure (E7 → Am en La mineur). Sur le E7, joue La mineure harmonique — qui contient le Sol# (la 3 de E7) qui résout magnifiquement vers le La de Am. Cette technique est la base du jazz mineur et du métal néoclassique." },
+            { "type": "h", "text": "Phrygien dominant : le 5e mode de la mineure harmonique" },
+            { "type": "p", "text": "Comme la gamme majeure a 7 modes, la gamme mineure harmonique en a 7 aussi. Le plus utilisé est son 5e mode : le 'phrygien dominant' (qu'on a évoqué dans la leçon sur le phrygien). En Mi : Mi-Fa-Sol#-La-Si-Do-Ré. C'est exactement le mode du flamenco authentique. Tu peux l'utiliser sur un E7 dans un contexte espagnol/oriental." },
+            { "type": "h", "text": "Histoire" },
+            { "type": "p", "text": "La mineure harmonique a été 'inventée' au XVIIIe siècle pour permettre la cadence parfaite en mineur. Bach, Mozart, Beethoven l'utilisent abondamment. Au XIXe siècle, elle devient le langage de la musique romantique mineure. Au XXe siècle, Yngwie Malmsteen et le métal néoclassique en font leur langage signature. Aujourd'hui, c'est aussi un outil essentiel du jazz." },
+            { "type": "ref", "text": "Exemples emblématiques : 'Sonate au clair de lune' (Beethoven, mouvement 1) utilise la mineure harmonique. 'Hava Nagila' (chant traditionnel juif) en Ré mineur harmonique. Toute la musique de Yngwie Malmsteen ('Black Star', 'Far Beyond the Sun'). Le solo d'intro de 'Sweet Child O' Mine' (Guns N' Roses) utilise la mineure harmonique de Ré." },
+            { "type": "tip", "text": "Pour intégrer la mineure harmonique : sur un blues mineur en La (Am-Dm-E7), joue La pentatonique sur Am et Dm, mais switch vers La mineure harmonique sur le E7. Tu obtiens immédiatement le son 'minor blues sophistiqué' typique de B.B. King ou de Carlos Santana." }
+          ],
+          "quiz": ["q-scales-c6-01", "q-scales-c6-02"]
+        },
+
+        {
+          "id": "scales-c6-02",
+          "title": "La gamme mineure mélodique",
+          "duration": 9,
+          "content": [
+            { "type": "p", "text": "Encore une variante de la mineure : la mineure mélodique. Cette gamme a une histoire particulière (deux versions selon le contexte) et un usage essentiel en jazz moderne." },
+            { "type": "h", "text": "Formule (version 'jazz moderne')" },
+            { "type": "p", "text": "1 - 2 - b3 - 4 - 5 - 6 - 7 (la 6 ET la 7 sont majeures). En La : La-Si-Do-Ré-Mi-Fa#-Sol#. C'est presque une gamme majeure, avec juste la tierce mineure (b3) qui la rend mineure." },
+            { "type": "h", "text": "La double version (classique vs jazz)" },
+            { "type": "p", "text": "En musique classique traditionnelle, la mineure mélodique a deux formes : montante (1-2-b3-4-5-6-7) et descendante (1-2-b3-4-5-b6-b7 = éolien). Elle 'rehausse' la 6 et la 7 quand on monte, et les 'redescend' quand on descend. Cette double forme servait à éviter le saut bizarre de la mineure harmonique. En jazz moderne, on utilise la même formule (montante) à la montée ET à la descente. C'est plus simple et plus moderne." },
+            { "type": "h", "text": "Couleur sonore" },
+            { "type": "p", "text": "Mineure mais lumineuse, presque ambiguë. Le caractère mineur est subtil (juste la b3). Le reste de la gamme est 'majeur'. Très utilisé en jazz moderne pour les solos sur accords mineurs maj7 (Im(maj7)) — un accord rare et sophistiqué qui contient à la fois la b3 et la 7 majeure." },
+            { "type": "h", "text": "Les modes de la mélodique : un univers à part" },
+            { "type": "p", "text": "Comme la gamme majeure a 7 modes, la mineure mélodique en a 7 aussi. Et plusieurs sont essentiels en jazz moderne. Le 4e mode (Lydien b7) est utilisé sur les dominantes 7 'altérées'. Le 7e mode (mode 'altéré') est THE gamme à utiliser sur les V7 qui résolvent (ex : G7alt → Cmaj7). Le 6e mode (Locrien #2) est utilisé sur les m7b5. Tout un monde." },
+            { "type": "h", "text": "Quand utiliser la mélodique" },
+            { "type": "p", "text": "1) Sur un Im(maj7) — accord rare mais 'jazz moderne'. 2) Pour le mode altéré (sur les V7 résolvants). 3) Pour le lydien b7 (sur les V7 non résolvants). 4) Pour le locrien #2 (sur les m7b5). Si tu n'as pas encore intégré la mineure harmonique, mets la mélodique de côté pour l'instant." },
+            { "type": "h", "text": "Histoire" },
+            { "type": "p", "text": "La forme classique (montante/descendante) date du XVIIIe siècle. La forme 'jazz' (montante uniquement) a été codifiée au XXe siècle, notamment par les musiciens de bebop (Charlie Parker, Dizzy Gillespie) et les théoriciens du jazz moderne (George Russell). Aujourd'hui, c'est l'une des gammes les plus importantes du jazz contemporain." },
+            { "type": "ref", "text": "Exemples : 'Beautiful Love' (standard de jazz) utilise la mineure mélodique. La plupart des solos de jazz fusion (Pat Metheny, John Scofield, Mike Stern) regorgent de mélodique. Allan Holdsworth en a fait un art." },
+            { "type": "tip", "text": "La mineure mélodique est une gamme 'avancée'. Si tu débutes en théorie, garde-la pour plus tard. Concentre-toi d'abord sur la maîtrise de la majeure, des modes courants (dorien, mixolydien) et de la mineure harmonique." }
+          ],
+          "quiz": ["q-scales-c6-03"]
+        },
+
+        {
+          "id": "scales-c6-03",
+          "title": "Comment choisir une gamme en improvisation",
+          "duration": 12,
+          "content": [
+            { "type": "p", "text": "Tu connais maintenant beaucoup de gammes. La question pratique : quelle gamme choisir face à une chanson, une grille d'accords, une situation d'improvisation ? C'est le sujet de cette leçon de synthèse, et c'est là que tu transformes la théorie en pratique." },
+            { "type": "h", "text": "Étape 1 : identifier la tonalité" },
+            { "type": "p", "text": "Avant tout, repère la tonalité de la chanson. Comment ? Regarde l'accord le plus présent et le dernier accord (généralement la tonalité). Si la chanson revient toujours sur Do et finit sur Do, elle est probablement en Do majeur. Si elle revient sur Am et finit sur Am, elle est en La mineur (éolien). Avec ça, tu as déjà ta 'gamme par défaut' : la majeure ou la mineure naturelle correspondante." },
+            { "type": "h", "text": "Étape 2 : analyser le contexte" },
+            { "type": "p", "text": "Ensuite, regarde le STYLE de la chanson : Pop/folk classique → ionien (majeur) ou éolien (mineur). Blues → pentatonique mineure ou gamme blues + mixolydien. Rock → mixolydien, pentatonique mineure. Jazz → modes selon les accords. Folk celtique / morceaux traditionnels → souvent dorien. Flamenco / musique espagnole → phrygien dominant. Cinéma 'magique' → lydien. Le style guide le choix." },
+            { "type": "h", "text": "Étape 3 : repérer les vamps modales" },
+            { "type": "p", "text": "Si la chanson tient un seul accord pendant longtemps (ex : 8 mesures de Dm7), c'est une 'vamp modale' — utilise le mode correspondant à cet accord. Vamp Dm7 = Ré dorien. Vamp Cmaj7 = Do ionien (mais possibilité de lydien). Vamp G7 = Sol mixolydien." },
+            { "type": "h", "text": "Étape 4 : changer de gamme par accord (jazz)" },
+            { "type": "p", "text": "Si les accords changent vite et que la chanson est jazz/sophistiquée, tu peux changer de gamme par accord. Sur Dm7 → Ré dorien. Sur G7 → Sol mixolydien. Sur Cmaj7 → Do ionien. Mais comme ces 3 modes ont les mêmes notes (Do majeur), tu peux aussi simplement jouer Do majeur tout du long en visant les notes-clés de chaque accord. Beaucoup plus simple." },
+            { "type": "h", "text": "Le principe de cohérence" },
+            { "type": "p", "text": "Une règle qui simplifie tout : tant que les accords appartiennent à une seule tonalité (ex : tous les accords sont diatoniques de Do majeur), tu peux improviser dans la gamme parente (Do majeur) et toutes tes notes sonneront 'justes'. Tu n'as pas besoin de changer de gamme à chaque accord. Cette règle marche pour 80% de la pop, du folk, du rock simple." },
+            { "type": "h", "text": "Cas particuliers" },
+            { "type": "p", "text": "Sur un V7 résolvant en mineur (E7 → Am) : utilise la mineure harmonique du I (La harmonique sur E7). Sur un blues majeur : utilise le mixolydien sur tout, ou la pentatonique mineure pour le côté blues, ou un mix des deux. Sur une vamp m7b5-V7-Im : utilise le locrien sur le ii, mineure harmonique sur le V, mineure naturelle sur le I." },
+            { "type": "h", "text": "Le conseil pratique : commence simple" },
+            { "type": "p", "text": "Si tu hésites toujours, voici la règle de survie : pentatonique mineure de la fondamentale de la chanson. Sur une chanson en La mineur → La pentatonique mineure. Sur une chanson en Do majeur → La pentatonique mineure (pentatonique relative). Sur un blues → pentatonique mineure de la tonique. Cette 'gamme universelle' marchera dans 80% des cas. Tu pourras affiner avec l'expérience." },
+            { "type": "ref", "text": "Test pratique : prends 3 chansons de styles différents (une pop type Beatles, un blues, un standard de jazz). Identifie leur tonalité, leur style, et choisis la gamme la plus appropriée pour improviser. Avec 10 chansons analysées comme ça, tu vas développer un instinct musical solide." },
+            { "type": "tip", "text": "L'improvisation, c'est 30% de théorie + 70% d'oreille. La théorie te donne les options, mais c'est ton oreille qui choisit la bonne au moment juste. Plus tu joues, plus tu écoutes, plus ton instinct devient précis. Le but n'est pas de calculer, c'est d'entendre — et de réagir." }
+          ],
+          "quiz": ["q-scales-c6-04", "q-scales-c6-05"]
+        }
+
+      ]
+    }
+  ],
+
+  "quiz": [
+    { "id": "q-scales-c4-01", "courseId": "scales", "lessonId": "scales-c4-01", "lvl": 2, "q": "Quelle est la formule de la gamme mineure naturelle ?", "o": ["T-T-DT-T-T-T-DT", "T-DT-T-T-DT-T-T", "DT-T-T-T-DT-T-T", "T-T-T-DT-T-T-DT"], "a": 1, "exp": "T-DT-T-T-DT-T-T. Les demi-tons sont entre les degrés 2-3 et 5-6 (différent du majeur qui les a entre 3-4 et 7-8). C'est cette structure qui crée le 'son mineur'.", "xp": 35 },
+    { "id": "q-scales-c4-02", "courseId": "scales", "lessonId": "scales-c4-01", "lvl": 2, "q": "Do majeur et La mineur naturel partagent…", "o": ["Aucune note", "Quelques notes", "Exactement les mêmes 7 notes", "5 notes sur 7"], "a": 2, "exp": "Mêmes 7 notes : Do-Ré-Mi-Fa-Sol-La-Si. Seule la fondamentale change. C'est la relation 'tonalités relatives'. Le 6e degré du majeur = relatif mineur.", "xp": 40 },
+    { "id": "q-scales-c4-03", "courseId": "scales", "lessonId": "scales-c4-01", "lvl": 3, "q": "Pourquoi les mêmes notes peuvent sonner 'majeur' ou 'mineur' ?", "o": ["C'est aléatoire", "L'oreille recentre la gamme autour de la fondamentale qu'elle entend le plus", "Il y a un truc subliminal", "C'est une convention"], "a": 1, "exp": "Ton oreille perçoit comme 'fondamentale' la note la plus présente et la note de fin/début. Selon cette ancrage, les MÊMES notes prennent une couleur majeure ou mineure. Phénomène psychoacoustique fondamental.", "xp": 50 },
+    { "id": "q-scales-c4-04", "courseId": "scales", "lessonId": "scales-c4-02", "lvl": 1, "q": "Combien de modes existe-t-il dans la gamme majeure ?", "o": ["5", "6", "7", "12"], "a": 2, "exp": "7 modes, un par degré : Ionien (I), Dorien (II), Phrygien (III), Lydien (IV), Mixolydien (V), Éolien (VI), Locrien (VII).", "xp": 25 },
+    { "id": "q-scales-c4-05", "courseId": "scales", "lessonId": "scales-c4-02", "lvl": 2, "q": "Le mode dorien est construit sur quel degré de la gamme majeure ?", "o": ["1er", "2e", "3e", "5e"], "a": 1, "exp": "Dorien = 2e mode. En partant du 2e degré de Do majeur (= Ré), on obtient Ré dorien : Ré-Mi-Fa-Sol-La-Si-Do.", "xp": 30 },
+    { "id": "q-scales-c4-06", "courseId": "scales", "lessonId": "scales-c4-02", "lvl": 3, "q": "Quels modes ont une tierce majeure (= modes 'majeurs') ?", "o": ["Dorien, Phrygien, Éolien", "Ionien, Lydien, Mixolydien", "Locrien, Phrygien, Dorien", "Tous les modes"], "a": 1, "exp": "Modes majeurs (tierce maj = 4 demi-tons) : Ionien, Lydien, Mixolydien. Modes mineurs (tierce min = 3 demi-tons) : Dorien, Phrygien, Éolien, Locrien.", "xp": 40 },
+    { "id": "q-scales-c4-07", "courseId": "scales", "lessonId": "scales-c4-03", "lvl": 2, "q": "Pourquoi un drone est utile pour pratiquer un mode ?", "o": ["Pour ralentir le tempo", "Pour ancrer l'oreille sur la nouvelle fondamentale", "C'est obligatoire", "Pour cacher les fausses notes"], "a": 1, "exp": "Sans ancrage, l'oreille retombe sur la tonique de la gamme parente. Un drone (note tenue) sur la fondamentale du mode l'ancre dans l'oreille et fait 'sonner' le mode.", "xp": 35 },
+    { "id": "q-scales-c4-08", "courseId": "scales", "lessonId": "scales-c4-03", "lvl": 3, "q": "Pour 'affirmer' un mode pendant un solo, il faut…", "o": ["Jouer plus fort", "Mettre en valeur la note caractéristique du mode", "Jouer plus vite", "Changer d'accord souvent"], "a": 1, "exp": "Chaque mode a une note caractéristique qui le distingue. La mettre en valeur (notes longues, temps forts) affirme le mode. Sans elle, l'oreille glisse vers la gamme majeure ou mineure standard.", "xp": 45 },
+    { "id": "q-scales-c5-01", "courseId": "scales", "lessonId": "scales-c5-01", "lvl": 2, "q": "Le mode ionien correspond à…", "o": ["La gamme mineure", "La gamme majeure", "La pentatonique", "La gamme blues"], "a": 1, "exp": "Ionien = gamme majeure. Pas de note caractéristique 'exotique', c'est la base de la musique tonale occidentale.", "xp": 25 },
+    { "id": "q-scales-c5-02", "courseId": "scales", "lessonId": "scales-c5-02", "lvl": 2, "q": "Quelle note caractérise le dorien par rapport à l'éolien (mineur naturel) ?", "o": ["La quarte augmentée", "La sixte majeure", "La tierce majeure", "La septième majeure"], "a": 1, "exp": "Dorien = éolien + sixte majeure. C'est cette 6 majeure qui donne au dorien sa couleur 'mineure mais lumineuse'. À mettre en valeur en impro.", "xp": 35 },
+    { "id": "q-scales-c5-03", "courseId": "scales", "lessonId": "scales-c5-02", "lvl": 3, "q": "Sur un accord Dm7 tenu (vamp modale), quel mode privilégier ?", "o": ["Ré phrygien", "Ré dorien", "Ré locrien", "Ré mixolydien"], "a": 1, "exp": "Sur tout m7 en vamp modale, le dorien est le mode 'naturel'. Ré dorien sur Dm7 = 'So What' (Miles Davis). Le mode polyvalent jazz/funk/rock.", "xp": 45 },
+    { "id": "q-scales-c5-04", "courseId": "scales", "lessonId": "scales-c5-02", "lvl": 3, "q": "En Ré dorien, quelle note 'affirme' le mode (note caractéristique) ?", "o": ["Ré", "Fa", "Si", "Do"], "a": 2, "exp": "Si est la 6 majeure de Ré dorien. C'est elle qui distingue le dorien de l'éolien. La mettre en valeur (notes longues, temps forts) = affirmer le mode.", "xp": 50 },
+    { "id": "q-scales-c5-05", "courseId": "scales", "lessonId": "scales-c5-03", "lvl": 2, "q": "Quelle note caractérise le mode phrygien ?", "o": ["La b2 (seconde mineure)", "La #4", "La b6", "La b7"], "a": 0, "exp": "Phrygien = mineur naturel avec b2. Le demi-ton entre 1 et b2 crée le son 'espagnol/flamenco' caractéristique.", "xp": 35 },
+    { "id": "q-scales-c5-06", "courseId": "scales", "lessonId": "scales-c5-03", "lvl": 3, "q": "Le 'phrygien dominant' (mode du flamenco) a quelle particularité ?", "o": ["Tierce mineure", "Tierce majeure (au lieu de mineure)", "Quinte diminuée", "Aucune particularité"], "a": 1, "exp": "Phrygien dominant = phrygien avec 3 majeure (au lieu de b3). Formule 1-b2-3-4-5-b6-b7. Mode du flamenco authentique, du klezmer et de la musique du Moyen-Orient.", "xp": 50 },
+    { "id": "q-scales-c5-07", "courseId": "scales", "lessonId": "scales-c5-04", "lvl": 2, "q": "Quelle note caractérise le mode lydien ?", "o": ["b2", "#4 (quarte augmentée)", "b6", "b7"], "a": 1, "exp": "Lydien = majeur avec #4. En Do : Do-Ré-Mi-Fa#-Sol-La-Si. Le Fa# crée la couleur 'flottante', filmique.", "xp": 35 },
+    { "id": "q-scales-c5-08", "courseId": "scales", "lessonId": "scales-c5-04", "lvl": 3, "q": "Le lydien évoque typiquement quelle ambiance ?", "o": ["Tristesse", "Tension dramatique", "Espace, rêve, magie", "Énergie blues"], "a": 2, "exp": "Lydien = couleur 'flottante', non-résolue. Son utilisé par John Williams (Star Wars, E.T.). Ambiance ouverte, magique, filmique.", "xp": 40 },
+    { "id": "q-scales-c5-09", "courseId": "scales", "lessonId": "scales-c5-05", "lvl": 2, "q": "Quelle note caractérise le mode mixolydien ?", "o": ["b3", "#4", "b6", "b7 (septième mineure)"], "a": 3, "exp": "Mixolydien = majeur avec b7 (septième mineure). Cette note crée la sensation 'dominante non résolue' typique du rock et du blues.", "xp": 35 },
+    { "id": "q-scales-c5-10", "courseId": "scales", "lessonId": "scales-c5-05", "lvl": 3, "q": "Sur un accord G7, quel mode utiliser ?", "o": ["Sol ionien", "Sol mixolydien", "Sol dorien", "Sol lydien"], "a": 1, "exp": "Sur tout accord 7 (dominante), le mixolydien correspond. Sol mixolydien (avec Fa naturel = b7) match parfaitement la 7e de G7.", "xp": 45 },
+    { "id": "q-scales-c5-11", "courseId": "scales", "lessonId": "scales-c5-05", "lvl": 3, "q": "Pourquoi Sol majeur sonne-t-il 'faux' sur G7 alors que Sol mixolydien sonne 'juste' ?", "o": ["Coïncidence", "Le Fa# de Sol majeur entre en conflit avec le Fa naturel de G7", "Plus rapide", "Aucune différence"], "a": 1, "exp": "G7 contient Fa naturel (la b7). Sol majeur contient Fa#. Conflit dissonant. Sol mixolydien (Fa naturel) match l'accord parfaitement.", "xp": 55 },
+    { "id": "q-scales-c5-12", "courseId": "scales", "lessonId": "scales-c5-06", "lvl": 2, "q": "Le mode éolien correspond à…", "o": ["La gamme majeure", "La gamme mineure naturelle", "La gamme blues", "La pentatonique"], "a": 1, "exp": "Éolien = gamme mineure naturelle. C'est le mode mineur 'standard' de la musique tonale occidentale.", "xp": 30 },
+    { "id": "q-scales-c5-13", "courseId": "scales", "lessonId": "scales-c5-07", "lvl": 3, "q": "Pourquoi le locrien est-il rarement utilisé ?", "o": ["Trop joyeux", "Sa quinte est diminuée, ce qui le rend instable", "Il est trop simple", "Convention sociale"], "a": 1, "exp": "Locrien a une b5 (quinte diminuée). La quinte juste, qui ancre normalement la fondamentale, est absente. Résultat : extrême instabilité. À utiliser avec parcimonie.", "xp": 50 },
+    { "id": "q-scales-c6-01", "courseId": "scales", "lessonId": "scales-c6-01", "lvl": 2, "q": "La gamme mineure harmonique se distingue de la mineure naturelle par…", "o": ["Une 6 majeure", "Une 7 majeure (au lieu de b7)", "Une #4", "Une b2"], "a": 1, "exp": "Mineure harmonique = mineure naturelle avec 7 majeure. La harmonique = La-Si-Do-Ré-Mi-Fa-Sol#. Cette 7 majeure permet la cadence V-I forte en mineur.", "xp": 40 },
+    { "id": "q-scales-c6-02", "courseId": "scales", "lessonId": "scales-c6-01", "lvl": 3, "q": "Pourquoi a-t-on inventé la mineure harmonique ?", "o": ["Pour le folklore", "Pour permettre une cadence V-I forte en tonalité mineure", "Pour le métal", "Aucune raison"], "a": 1, "exp": "En mineure naturelle, le V est mineur (Em sur Am). Cadence faible. En rehaussant le 7e degré (Sol → Sol#), le V devient majeur (E ou E7), ce qui crée une cadence forte.", "xp": 50 },
+    { "id": "q-scales-c6-03", "courseId": "scales", "lessonId": "scales-c6-02", "lvl": 3, "q": "La gamme mineure mélodique 'jazz' a quelle formule ?", "o": ["1-2-b3-4-5-b6-b7", "1-2-b3-4-5-6-7", "1-b2-b3-4-5-b6-7", "1-2-3-4-5-6-b7"], "a": 1, "exp": "Mineure mélodique jazz = 1-2-b3-4-5-6-7. Mineure naturelle avec 6 ET 7 majeures. Presque une majeure avec juste b3. Très utilisée en jazz moderne.", "xp": 55 },
+    { "id": "q-scales-c6-04", "courseId": "scales", "lessonId": "scales-c6-03", "lvl": 2, "q": "Si tu ne sais pas quelle gamme choisir face à une chanson, la 'gamme universelle' à essayer en premier est…", "o": ["La gamme majeure", "La pentatonique mineure de la fondamentale de la chanson", "La gamme blues", "Le lydien"], "a": 1, "exp": "Pentatonique mineure de la tonique de la chanson : 5 notes 'safe' qui marchent dans 80% des cas. Tu pourras affiner avec l'expérience.", "xp": 40 },
+    { "id": "q-scales-c6-05", "courseId": "scales", "lessonId": "scales-c6-03", "lvl": 3, "q": "Sur une vamp Dm7-G7-Cmaj7 (ii-V-I en Do), quelle stratégie d'improvisation est la plus simple ?", "o": ["Changer de mode à chaque accord", "Jouer Do majeur tout du long en visant les notes-clés de chaque accord", "Jouer la pentatonique blues", "Improviser au hasard"], "a": 1, "exp": "Comme ces 3 modes (Ré dorien, Sol mixolydien, Do ionien) ont les mêmes notes (Do majeur), tu peux jouer Do majeur sur les 3 accords. Plus simple, tout aussi efficace.", "xp": 55 }
+  ],
+
+  "exercises": []
+}

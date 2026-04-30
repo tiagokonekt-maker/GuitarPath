@@ -1,0 +1,333 @@
+{
+  "courses": [
+    {
+      "id": "harmony",
+      "title": "Harmonie",
+      "icon": "🎵",
+      "color": "#7F77DD",
+      "colorL": "#EEEDFE",
+      "desc": "Construction des accords, progressions, logique harmonique",
+      "lessons": [
+
+        {
+          "id": "harm-c5-01",
+          "title": "Harmoniser la gamme majeure",
+          "duration": 12,
+          "content": [
+            { "type": "p", "text": "Harmoniser une gamme, c'est construire un accord sur chaque note de cette gamme en utilisant uniquement les notes appartenant à la gamme. Le résultat : 7 accords 'diatoniques' qui forment la palette harmonique de la tonalité. C'est la base de toute l'harmonie tonale, et la clé pour comprendre pourquoi tel accord 'va' avec tel autre." },
+            { "type": "h", "text": "Le principe : empiler des tierces diatoniques" },
+            { "type": "p", "text": "Pour construire un accord sur le degré I de Do majeur : commence sur Do, empile des tierces en utilisant uniquement les notes de Do majeur. Do + Mi (3e) + Sol (5e) = Do majeur. Pour le degré II : Ré + Fa (3e) + La (5e) = Ré mineur. La tierce de Ré dans la gamme de Do est Fa (et non Fa# comme dans Ré majeur). Donc Ré mineur, pas majeur." },
+            { "type": "h", "text": "Les 7 triades diatoniques de Do majeur" },
+            { "type": "p", "text": "I = Do majeur (Do-Mi-Sol). ii = Ré mineur (Ré-Fa-La). iii = Mi mineur (Mi-Sol-Si). IV = Fa majeur (Fa-La-Do). V = Sol majeur (Sol-Si-Ré). vi = La mineur (La-Do-Mi). vii° = Si diminué (Si-Ré-Fa). Le pattern de qualités : Maj-min-min-Maj-Maj-min-dim. Ce pattern est UNIVERSEL — il est identique dans toute tonalité majeure." },
+            { "type": "h", "text": "Les 7 accords de 7e diatoniques" },
+            { "type": "p", "text": "En ajoutant la 7e à chaque degré : Imaj7 = Cmaj7. iim7 = Dm7. iiim7 = Em7. IVmaj7 = Fmaj7. V7 = G7. vim7 = Am7. viim7b5 = Bm7b5. Pattern : Maj7-m7-m7-Maj7-7-m7-m7b5. Remarque : le V porte un accord de dominante (7, pas Maj7). C'est lui qui crée la tension harmonique principale." },
+            { "type": "h", "text": "Pourquoi ce pattern est universel" },
+            { "type": "p", "text": "Ce pattern (Maj-min-min-Maj-Maj-min-dim) est déterminé par la structure de la gamme majeure (ses tons et demi-tons). Toute gamme majeure génère exactement ce même pattern, peu importe la tonalité. En Sol majeur : I=Sol, ii=Lam, iii=Sim, IV=Do, V=Ré, vi=Mim, vii°=Fa#dim. Toujours Maj-min-min-Maj-Maj-min-dim." },
+            { "type": "h", "text": "Le chiffrage romain : majuscule vs minuscule" },
+            { "type": "p", "text": "Convention universelle : chiffres romains MAJUSCULES (I, IV, V) = accords majeurs. Minuscules (ii, iii, vi) = accords mineurs. 'vii°' = diminué. C'est le système le plus utilisé pour analyser la musique. Quand un musicien dit 'la chanson est en I-V-vi-IV', tu sais exactement de quoi il parle, dans n'importe quelle tonalité." },
+            { "type": "ref", "text": "Analyse pratique : 'Let It Be' (Beatles) en Do majeur = C-G-Am-F = I-V-vi-IV. 'Stairway to Heaven' (Led Zeppelin) commence sur Am (vi de Do majeur). 'House of the Rising Sun' (The Animals) en La mineur = Am-C-D-F-Am = i-III-IV-VI-i (en mineur, les chiffres changent légèrement). L'harmonisation de la gamme est partout." },
+            { "type": "tip", "text": "Exercice : prends 5 chansons pop que tu connais. Trouve leur tonalité. Identifie les accords. Traduis en chiffrage romain (I, ii, iii...). Tu vas découvrir que 80% des chansons pop utilisent 4-5 progressions identiques. C'est illuminant." }
+          ],
+          "quiz": ["q-harm-c5-01", "q-harm-c5-02", "q-harm-c5-03"]
+        },
+
+        {
+          "id": "harm-c5-02",
+          "title": "Le chiffrage romain et le système Nashville",
+          "duration": 9,
+          "content": [
+            { "type": "p", "text": "Le chiffrage romain est le langage universel des musiciens pour parler d'harmonie sans mentionner de tonalité spécifique. Le système Nashville (NNS) est sa version simplifiée, utilisée par les musiciens de studio à Nashville depuis les années 50. Comprendre ces deux systèmes te rend capable de communiquer musicalement avec n'importe quel musicien." },
+            { "type": "h", "text": "Le chiffrage romain : rappel" },
+            { "type": "p", "text": "I = tonique (accord majeur). ii = sus-tonique (accord mineur). iii = médiante (accord mineur). IV = sous-dominante (accord majeur). V = dominante (accord majeur). vi = sus-dominante (accord mineur). vii° = sensible (accord diminué). MAJUSCULE = majeur. minuscule = mineur. ° = diminué." },
+            { "type": "h", "text": "Le système Nashville (NNS)" },
+            { "type": "p", "text": "À Nashville dans les années 1950, les musiciens de session devaient jouer des dizaines de chansons par jour dans des tonalités différentes. Au lieu d'écrire les noms d'accords, ils ont développé un système de chiffres arabes. 1 = tonique. 2m = sous-tonique mineur. 4 = sous-dominante. 5 = dominante. 6m = relatif mineur. Ex : I-V-vi-IV en chiffrage romain = 1-5-6m-4 en Nashville." },
+            { "type": "h", "text": "Avantages du système Nashville" },
+            { "type": "p", "text": "Transposition instantanée : si le chanteur monte d'un ton, tu joues les mêmes chiffres dans une nouvelle tonalité sans réapprendre la chanson. Communication ultra-rapide : 'on joue un 1-4-5-1' est compris en 1 seconde. Lecture en live : une 'Nashville chart' (feuille de chiffres) permet de jouer une chanson sans répétition." },
+            { "type": "h", "text": "Exemples de progressions en chiffrage" },
+            { "type": "p", "text": "I-V-vi-IV (1-5-6m-4) : 'Let It Be', 'No Woman No Cry', 'With Or Without You'. I-IV-V (1-4-5) : blues classique, rock'n'roll, country. ii-V-I (2m-5-1) : standard jazz. I-vi-IV-V (1-6m-4-5) : doo-wop, années 50. Ces 4 progressions couvrent une immense partie du répertoire pop." },
+            { "type": "h", "text": "Tonalités majeures vs mineures en chiffrage" },
+            { "type": "p", "text": "En tonalité mineure, le chiffrage change légèrement. Le 'i' (mineur) est la tonique. Le 'bIII' est le relatif majeur (ex : Do dans Am). Le 'iv' est la sous-dominante mineure. Le 'v' ou 'V' est la dominante. Ex : la progression Am-F-C-G s'analyse comme i-bVI-bIII-bVII en La mineur. Les majuscules avec 'b' indiquent des degrés 'empruntés' au relatif majeur." },
+            { "type": "ref", "text": "Anecdote : à Nashville, les musiciens de session (bassiste, guitariste, pianiste) peuvent jouer une session d'enregistrement entière à la vue d'une 'Nashville chart' qu'ils n'ont jamais vue avant. Une feuille A4 avec des chiffres leur suffit pour jouer un arrangement complet. C'est la preuve ultime de l'efficacité de ce système." },
+            { "type": "tip", "text": "Adopte le chiffrage romain dès aujourd'hui. À chaque chanson que tu joues, traduis les accords en chiffres. En 1 mois, tu penseras directement en degrés — et tu pourras transposer n'importe quelle chanson instantanément." }
+          ],
+          "quiz": ["q-harm-c5-04", "q-harm-c5-05"]
+        },
+
+        {
+          "id": "harm-c5-03",
+          "title": "Les familles fonctionnelles",
+          "duration": 10,
+          "content": [
+            { "type": "p", "text": "Les 7 accords diatoniques ne sont pas tous égaux. Ils se regroupent en 3 familles selon leur 'fonction' harmonique : ce qu'ils 'font' dans la musique, l'effet qu'ils créent. Comprendre ces 3 familles, c'est comprendre la grammaire de la musique tonale — pourquoi certains enchaînements sonnent 'logiques' et d'autres non." },
+            { "type": "h", "text": "Famille Tonique (T) : le repos" },
+            { "type": "p", "text": "Accords : I, iii, vi. Ces accords créent une sensation de repos, de stabilité, d'arrivée. Le I est le repos absolu. Le vi (relatif mineur) est un repos plus doux, légèrement ambigu. Le iii est le repos le plus instable des trois — il est rarement utilisé seul. En Do majeur : Do (I), Mi mineur (iii), La mineur (vi)." },
+            { "type": "h", "text": "Famille Sous-Dominante (SD) : le mouvement doux" },
+            { "type": "p", "text": "Accords : IV, ii. Ces accords créent un mouvement, une envie d'aller quelque part, mais sans la tension forte de la dominante. Le IV est ouvert, 'gospel'. Le ii est plus sophistiqué, utilisé comme 'préparation' avant la dominante. En Do majeur : Fa (IV), Ré mineur (ii)." },
+            { "type": "h", "text": "Famille Dominante (D) : la tension" },
+            { "type": "p", "text": "Accords : V, vii°. Ces accords créent la tension maximale qui 'demande' à se résoudre vers la tonique. Le V est la dominante classique. Le vii° (diminué) est encore plus instable. En Do majeur : Sol (V) ou G7 (V7), Si diminué (vii°). La progression V→I est la résolution harmonique la plus puissante de la musique tonale." },
+            { "type": "h", "text": "La phrase harmonique typique" },
+            { "type": "p", "text": "La 'grammaire' de l'harmonie tonale suit généralement ce schéma : Tonique → Sous-Dominante → Dominante → Tonique. T → SD → D → T. C'est une 'phrase musicale complète'. Exemple : Do (I) → Fa (IV) → Sol (V) → Do (I). Ou plus sophistiqué : Do (I) → Ré mineur (ii) → Sol 7 (V7) → Do (I). Toutes les variations respectent cette logique de base." },
+            { "type": "h", "text": "Substitutions au sein d'une famille" },
+            { "type": "p", "text": "Les accords d'une même famille sont interchangeables. Tu peux remplacer IV par ii (même famille SD) : au lieu de I-IV-V-I, jouer I-ii-V-I. Au lieu de V-I (dominante directe), jouer vii°-I. Ces substitutions créent des progressions plus sophistiquées tout en respectant la logique fonctionnelle. C'est la base de l'harmonie 'élargie'." },
+            { "type": "h", "text": "Progressions circulaires" },
+            { "type": "p", "text": "Les progressions 'en boucle' (celles qu'on peut répéter indéfiniment) sont presque toujours T-SD-D-T ou une variation. I-IV-V-I boucle parfaitement. I-V-vi-IV boucle aussi (T-D-T-SD, un peu différent). ii-V-I boucle en jazz. Ces structures circulaires permettent l'improvisation longue durée — elles ne finissent jamais vraiment." },
+            { "type": "ref", "text": "'The Beatles' sont des maîtres des fonctions harmoniques. 'Twist and Shout' : I-IV-V sans sophistication, maximum d'énergie. 'Yesterday' : harmonisation bien plus complexe, toujours respectant les fonctions. 'Penny Lane' mélange les 3 familles de façon surprenante. Écouter les Beatles en analysant les fonctions T-SD-D est un cours de théorie musicale à lui seul." },
+            { "type": "tip", "text": "Drill : dans une chanson, identifie chaque accord et classe-le dans sa famille (T, SD ou D). Puis identifie les moments de 'tension' (D) et de 'repos' (T). Tu vas comprendre pourquoi certains moments t'émeuvent plus que d'autres : c'est souvent à la résolution D→T." }
+          ],
+          "quiz": ["q-harm-c5-06", "q-harm-c5-07", "q-harm-c5-08"]
+        },
+
+        {
+          "id": "harm-c6-01",
+          "title": "I-IV-V : le blues et le rock",
+          "duration": 10,
+          "content": [
+            { "type": "p", "text": "I-IV-V est la progression la plus ancienne, la plus universelle, et la plus jouée dans l'histoire de la musique populaire. Blues, rock'n'roll, country, folk, R&B — ils reposent tous sur cette fondation à 3 accords. La comprendre, c'est comprendre l'ADN de la musique populaire depuis 100 ans." },
+            { "type": "h", "text": "La formule" },
+            { "type": "p", "text": "I = tonique (repos). IV = sous-dominante (mouvement). V = dominante (tension). Enchaîné : I → IV (ça part) → V (ça tend) → I (ça résout). Ce cycle éternel de départ-tension-retour est la base du storytelling musical. En La : La (I) - Ré (IV) - Mi (V)." },
+            { "type": "h", "text": "Le blues 12 mesures" },
+            { "type": "p", "text": "La forme la plus emblématique de I-IV-V : le blues à 12 mesures. Structure standard en La : 4 mesures de I (La7), 2 mesures de IV (Ré7), 2 mesures de I (La7), 1 mesure de V (Mi7), 1 mesure de IV (Ré7), 2 mesures de I (La7). Cette grille de 12 mesures est la base de milliers de chansons blues, rock'n'roll, et jazz." },
+            { "type": "h", "text": "Pourquoi des accords 7 dans le blues" },
+            { "type": "p", "text": "Dans un blues standard, le I, IV et V sont souvent des accords de dominante (X7) même si ce n'est pas 'justifié' harmoniquement (en Do majeur, le I devrait être Imaj7, pas I7). C'est une licence harmonique du blues : utiliser des accords 7 sur tous les degrés donne ce son 'rough', tendu, expressif. C'est la signature sonore du blues." },
+            { "type": "h", "text": "I-IV-V en rock'n'roll" },
+            { "type": "p", "text": "'Johnny B. Goode' (Chuck Berry), 'Rock Around the Clock' (Bill Haley), 'Hound Dog' (Elvis), 'La Bamba' (Ritchie Valens) — toutes ces chansons iconiques = I-IV-V. La progression est si puissante qu'elle a lancé une révolution musicale dans les années 50. Avec 3 accords appris en 10 minutes, tu peux jouer des centaines de classiques." },
+            { "type": "h", "text": "I-IV-V en country et folk" },
+            { "type": "p", "text": "La country et le folk américain reposent massivement sur I-IV-V. 'Ring of Fire' (Johnny Cash), 'Country Roads' (John Denver), 'Wagon Wheel' (Old Crow Medicine Show) — toutes en I-IV-V ou variations directes. La guitare acoustique, la voix, 3 accords : c'est la définition du folk." },
+            { "type": "h", "text": "Variations de I-IV-V" },
+            { "type": "p", "text": "La progression évolue selon les genres. Blues rapide : I-IV-V-IV en boucle (au lieu de revenir au I). Quick change : passage rapide par IV en mesure 2 (I-IV-I-I-IV-IV-I-I-V-IV-I-I). Turnaround : fin de grille qui revient au début via V-IV-I ou ii-V-I. Ces variations enrichissent le blues classique." },
+            { "type": "ref", "text": "'Sweet Home Chicago' (Robert Johnson, 1936) est le blues I-IV-V par excellence en Mi. 80 ans plus tard, 'Pride and Joy' (Stevie Ray Vaughan) utilise exactement la même structure harmonique en Mi. L'ossature harmonique n'a pas changé, mais l'expression musicale a évolué. C'est ça la transmission musicale." },
+            { "type": "tip", "text": "Drill I-IV-V : dans 5 tonalités différentes (La, Mi, Ré, Sol, Do), trouve les 3 accords I-IV-V et joue-les en boucle à un tempo de blues (80 BPM). Improvise par-dessus avec la pentatonique de la tonalité. En 30 minutes, tu joues un blues convaincant dans 5 tonalités." }
+          ],
+          "quiz": ["q-harm-c6-01", "q-harm-c6-02"]
+        },
+
+        {
+          "id": "harm-c6-02",
+          "title": "I-V-vi-IV : la progression pop",
+          "duration": 9,
+          "content": [
+            { "type": "p", "text": "Si I-IV-V est l'ADN du blues, I-V-vi-IV est l'ADN de la pop moderne. Cette progression simple mais redoutablement efficace est présente dans des centaines de chansons parmi les plus écoutées des 40 dernières années. Connaître I-V-vi-IV, c'est tenir la clé d'une immense partie du répertoire pop." },
+            { "type": "h", "text": "La formule" },
+            { "type": "p", "text": "I (tonique majeur) → V (dominante) → vi (relatif mineur = tonique douce) → IV (sous-dominante). En Do majeur : Do-Sol-La mineur-Fa. En Sol majeur : Sol-Ré-Mi mineur-Do. La particularité : cette progression commence et finit par des accords de la famille tonique (I et vi), ce qui lui donne un caractère stable et 'ronronnant'." },
+            { "type": "h", "text": "Le catalogue" },
+            { "type": "p", "text": "'Let It Be' (Beatles, 1970) en Do. 'No Woman No Cry' (Bob Marley, 1975) en Do. 'With Or Without You' (U2, 1987) en Ré. 'Don't Stop Believin'' (Journey, 1981) en Mi. 'Someone Like You' (Adele, 2011) en La. 'Pompeii' (Bastille) en Mi. Ces chansons ont des styles, des époques, des continents différents. Un seul dénominateur commun : I-V-vi-IV." },
+            { "type": "h", "text": "Pourquoi ça marche si bien ?" },
+            { "type": "p", "text": "Plusieurs raisons. Le vi (relatif mineur) apporte une touche de mélancolie sans rompre l'ambiance positive globale — c'est l'équilibre parfait entre joie et émotion. La progression est circulaire : elle peut tourner indéfiniment sans résoudre définitivement, ce qui la rend idéale pour les couplets et refrains. Et elle est prévisible juste assez pour être confortable, mais avec le vi qui apporte une surprise légère." },
+            { "type": "h", "text": "Variantes" },
+            { "type": "p", "text": "vi-IV-I-V (commence sur le mineur) : 'Apologize' (OneRepublic), 'Numb' (Linkin Park). Même 4 accords, ordre différent. IV-I-V-vi : variante ascendante. I-V-IV-vi : variante descendante. Ces réarrangements créent des émotions différentes avec les mêmes matériaux. C'est l'universalité de cette palette de 4 accords." },
+            { "type": "h", "text": "Le piège : l'originalité dans le banal" },
+            { "type": "p", "text": "La progression I-V-vi-IV est si utilisée qu'elle peut sembler 'paresseuse'. Mais les grands compositeurs savent qu'une progression simple laisse toute la place à la mélodie, aux paroles, à l'arrangement et à la production. Paul McCartney a dit que 'Let It Be' n'avait rien d'original harmoniquement — c'est tout le reste qui la rend unique. La progression est le support, pas la star." },
+            { "type": "ref", "text": "YouTube : cherche 'Axis of Awesome 4 chords'. C'est une vidéo culte où le groupe joue des dizaines de chansons différentes sur la même progression I-V-vi-IV sans s'arrêter. Écouter ça en entier est à la fois comique et profondément éclairant sur la nature de la pop music." },
+            { "type": "tip", "text": "Exercice de composition : utilise I-V-vi-IV comme base. Mais au lieu de plaquer les accords bêtement, essaie différentes rythmiques (arpèges, strumming, picking), différents registres (graves, medium, aigus), différentes vitesses (lente et mélancolique, rapide et énergique). Même progression, 10 morceaux différents possibles." }
+          ],
+          "quiz": ["q-harm-c6-03", "q-harm-c6-04"]
+        },
+
+        {
+          "id": "harm-c6-03",
+          "title": "ii-V-I : le moteur du jazz",
+          "duration": 12,
+          "content": [
+            { "type": "p", "text": "La progression ii-V-I est à la musique jazz ce que I-IV-V est au blues : une fondation absolue. 95% des standards de jazz reposent sur des enchaînements de ii-V-I dans différentes tonalités. Maîtriser ii-V-I, c'est avoir accès à un immense répertoire et comprendre le langage harmonique le plus sophistiqué de la musique populaire." },
+            { "type": "h", "text": "La formule en majeur" },
+            { "type": "p", "text": "En Do majeur : Dm7 (ii) → G7 (V) → Cmaj7 (I). Le ii prépare. Le V crée la tension. Le I résout. Ces 3 accords forment la cellule harmonique fondamentale du jazz. Le mouvement de basse Ré → Sol → Do (deux fois une quarte descendante) crée une gravité irrésistible." },
+            { "type": "h", "text": "La formule en mineur" },
+            { "type": "p", "text": "En La mineur : Bm7b5 (ii°) → E7 (V) → Am7 (i). En mineur, le ii devient demi-diminué (m7b5). Le V est presque toujours transformé en dominante (E7 au lieu de Em7) pour créer une résolution forte — c'est pourquoi on utilise la gamme mineure harmonique sur ce V7." },
+            { "type": "h", "text": "Pourquoi la résolution est si forte" },
+            { "type": "p", "text": "Dans G7→Cmaj7 : la 3e de G7 (Si) monte chromatiquement d'un demi-ton vers Do (fondamentale du I). La 7e de G7 (Fa) descend chromatiquement d'un demi-ton vers Mi (3e du I). Ces 2 mouvements de demi-ton simultanés créent une 'attraction physique' dans l'oreille. La résolution ii-V-I est la plus satisfaisante de toute la musique tonale." },
+            { "type": "h", "text": "Le cycle de quartes : enchaîner les ii-V-I" },
+            { "type": "p", "text": "En jazz, les morceaux modulent souvent par cycle de quartes. Après ii-V-I en Do, on passe à ii-V-I en Fa (Gm7-C7-Fmaj7), puis en Si♭ (Cm7-F7-B♭maj7), etc. Chaque I devient le point de départ du ii suivant. Maîtriser ii-V-I dans les 12 tonalités = pouvoir jouer n'importe quel standard jazz." },
+            { "type": "h", "text": "La substitution tritonique" },
+            { "type": "p", "text": "Une technique harmonique avancée : remplacer le V7 par l'accord 7 situé un triton (6 demi-tons) plus haut. G7 → Db7. Pourquoi ? G7 (Sol-Si-Ré-Fa) et Db7 (Réb-Fa-Lab-Do) partagent les mêmes guide tones : Si/Fa et Fa/Do (enharmoniques). Cette substitution crée une descente chromatique élégante dans la basse : Ré (ii) → Réb (V substitué) → Do (I)." },
+            { "type": "h", "text": "Improviser sur ii-V-I" },
+            { "type": "p", "text": "Approche simple : sur ii (Dm7) → Ré dorien. Sur V (G7) → Sol mixolydien. Sur I (Cmaj7) → Do ionien. Mais comme ces 3 modes ont exactement les mêmes notes (Do majeur), tu peux jouer Do majeur tout du long en visant simplement les guide tones de chaque accord (vu dans la leçon Guide Tones)." },
+            { "type": "h", "text": "ii-V-I dans les standards célèbres" },
+            { "type": "p", "text": "'Autumn Leaves' : ii-V-I en Sol majeur et en Mi mineur alternent. 'Fly Me to the Moon' : ii-V-I en Do majeur. 'All The Things You Are' : cascade de ii-V-I dans plusieurs tonalités. 'Blue Bossa' : ii-V-I en Do mineur et en Réb majeur. Si tu apprends à reconnaître et jouer ii-V-I, ces morceaux deviennent accessibles." },
+            { "type": "ref", "text": "Miles Davis et son quintet (1955-1960) ont développé un langage harmonique basé entièrement sur des ii-V-I sophistiqués. Écoute 'Autumn Leaves' ou 'Walkin'' : chaque phrase du solo de Davis vise les guide tones des ii-V-I. C'est un cours de musique appliqué à l'improvisation jazz." },
+            { "type": "tip", "text": "Drill ii-V-I : apprends la progression Dm7-G7-Cmaj7 en shell voicings (vu précédemment). Joue-la en boucle à 70 BPM. Improvise par-dessus en Do majeur en visant Mi (guide tone de Dm7), Si (guide tone de G7), Mi (guide tone de Cmaj7) comme fins de phrases. En 2 semaines, tu maîtrises le principe du ii-V-I." }
+          ],
+          "quiz": ["q-harm-c6-05", "q-harm-c6-06", "q-harm-c6-07"]
+        },
+
+        {
+          "id": "harm-c6-04",
+          "title": "Les progressions modales",
+          "duration": 9,
+          "content": [
+            { "type": "p", "text": "Toutes les progressions d'accords ne suivent pas la logique tonale classique (I-IV-V, ii-V-I). Il existe aussi les progressions 'modales' : des suites d'accords qui gravitent autour d'un mode plutôt que d'une tonalité. Ces progressions sont la base du jazz modal, du rock psychédélique, et d'une grande partie de la musique folk et celtique." },
+            { "type": "h", "text": "Qu'est-ce qu'une progression modale ?" },
+            { "type": "p", "text": "Une progression modale se construit sur les accords diatoniques d'un mode spécifique, en ancrant l'oreille sur la tonique du mode (et non de la gamme parente). Au lieu de I-IV-V-I (qui confirme la tonalité), une progression modale tourne autour d'un accord central sans jamais 'résoudre' définitivement. Ça crée une ambiance statique, hypnotique." },
+            { "type": "h", "text": "La vamp dorien" },
+            { "type": "p", "text": "La vamp dorien la plus classique : Im7-IV7 en boucle. Ex : Dm7-G7 qui tourne sans aller vers Cmaj7. Ou juste Dm7 pendant de nombreuses mesures. Le Ré est la tonique modale, la gamme est Ré dorien. La progression ne résout jamais vers Do — elle reste en Ré. 'So What' (Miles Davis) = Dm7 en boucle pendant 16 mesures." },
+            { "type": "h", "text": "La vamp mixolydien" },
+            { "type": "p", "text": "I7-bVII en boucle : Ré7-Do ou La7-Sol. La fondamentale reste sur I, mais le bVII (accord majeur un ton plus bas) apporte la couleur mixolydienne. 'Hey Joe' (Hendrix) : C-G-D-A-E = bVII-bIV-bI-bV-I en Mi mixolydien. 'Sweet Home Alabama' (Lynyrd Skynyrd) : D-C-G en Sol mixolydien." },
+            { "type": "h", "text": "La vamp phrygienne" },
+            { "type": "p", "text": "Im-bII en boucle : Am-Bb ou Em-F. La bII est la note caractéristique du phrygien. Cette progression sonne immédiatement 'espagnol', 'flamenco'. La cadence flamenco classique : Am-G-F-E (i-bVII-bVI-V en La phrygien). Beaucoup de musique latine et de métal utilisent cette progression." },
+            { "type": "h", "text": "La vamp lydien" },
+            { "type": "p", "text": "Imaj7-II en boucle : Cmaj7-D. La présence du II (accord majeur construit sur le 2e degré = le #4 caractéristique du lydien) donne la couleur lydienne. Très utilisée dans les bandes-son de films (John Williams). Évoque la magie, l'espace ouvert." },
+            { "type": "h", "text": "Comment distinguer tonal vs modal" },
+            { "type": "p", "text": "Tonal : la progression 'voyage', crée des tensions et des résolutions, revient à la tonique. Modal : la progression 'tourne', reste sur une sonorité, crée une hypnose. Dans la musique moderne, les deux coexistent souvent : couplets modaux (vamp) + refrain tonal (progression). Ex : 'Light My Fire' (The Doors) : intro en Ré dorien (modal), solo modal, mais chorus plus tonal." },
+            { "type": "ref", "text": "'Riders on the Storm' (The Doors) : vamp Dm7-Em7 en Ré dorien pendant tout le morceau. 'Oye Como Va' (Santana) : Am7-D7 en La dorien. 'Scarborough Fair' (Simon & Garfunkel) : mélodie en Mi dorien avec progressions modales. Ces morceaux montrent comment une vamp simple peut créer une atmosphère inoubliable." },
+            { "type": "tip", "text": "Compose une vamp modale : choisis un mode (commence par dorien ou mixolydien). Construis 2 accords qui capturent sa couleur. Ex : Dm7-G (dorien) ou A7-G (mixolydien). Boucle ces 2 accords pendant 5 minutes et improvise par-dessus avec le mode correspondant. Tu viens de composer une pièce modale." }
+          ],
+          "quiz": ["q-harm-c6-08"]
+        },
+
+        {
+          "id": "harm-c7-01",
+          "title": "Les accords empruntés",
+          "duration": 10,
+          "content": [
+            { "type": "p", "text": "Jusqu'ici, on a joué avec les 7 accords diatoniques d'une tonalité. Mais les compositeurs ne se limitent pas à ces 7 accords — ils 'empruntent' des accords venant d'autres tonalités pour enrichir leurs progressions. Cette technique, appelée 'modal mixture' ou 'emprunt au mineur parallèle', est l'une des plus utilisées en pop, rock et jazz." },
+            { "type": "h", "text": "Le principe de l'emprunt" },
+            { "type": "p", "text": "Une chanson en Do majeur peut temporairement emprunter un accord de Do mineur (sa 'tonalité parallèle'). Do majeur = Do-Ré-Mi-Fa-Sol-La-Si. Do mineur = Do-Ré-Mib-Fa-Sol-Lab-Sib. Les accords exclusifs à Do mineur (qui n'existent pas en Do majeur) peuvent être 'empruntés' pour créer de la couleur." },
+            { "type": "h", "text": "L'accord bVII : le plus emprunté" },
+            { "type": "p", "text": "En Do majeur, le VII est Si diminué. En empruntant de Do mineur, tu obtiens le bVII = Si♭ majeur. Cet accord (Si♭-Ré-Fa) n'appartient pas à Do majeur, mais il est souvent utilisé. Exemple : Do-Si♭-Fa-Do (I-bVII-IV-I). Rock classique, Beatles ('Hey Jude'). Le bVII apporte une couleur 'brute', presque modale." },
+            { "type": "h", "text": "L'accord bVI : la couleur dramatique" },
+            { "type": "p", "text": "En empruntant à Do mineur, tu obtiens le bVI = La♭ majeur. Très utilisé pour une touche dramatique ou 'épique'. Progression : I-bVI-bVII-I (Do-Lab-Sib-Do). Utilisée dans beaucoup de chansons rock 'épiques' et de musiques de film d'action." },
+            { "type": "h", "text": "L'accord iv (sous-dominante mineure)" },
+            { "type": "p", "text": "En Do majeur, le IV est Fa majeur. En empruntant à Do mineur, tu obtiens iv = Fa mineur. Cet accord crée une couleur 'soul', mélancolique même dans un contexte majeur. Progression classique : I-IV-iv-I (Do-Fa-Fa mineur-Do). Utilisée dans 'Yesterday' (Beatles), de nombreuses ballades soul." },
+            { "type": "h", "text": "L'accord V/V : dominante de la dominante" },
+            { "type": "p", "text": "Autre type d'emprunt : les 'dominantes secondaires'. Tu peux construire un accord de dominante (X7) qui résout vers n'importe quel accord diatonique. Ex : A7 → Dm (dans Do majeur). A7 n'est pas diatonique en Do, mais il 'prépare' Dm (ii de Do) comme une mini-résolution V→I. Résultat : la progression sonne plus 'jazz' et 'orientée'." },
+            { "type": "h", "text": "Le bII (accord napolitain)" },
+            { "type": "p", "text": "Emprunt classique de la musique classique : le 'accord napolitain' = bII majeur en position fondamentale (ou 1ère inversion). En Do : bII = Réb majeur. Utilisé avant le V pour créer une tension supérieure. Très dramatique. Présent dans Beethoven, Mozart, et même dans du rock moderne (Radiohead utilise des accords 'napolitains')." },
+            { "type": "ref", "text": "'Creep' (Radiohead, 1992) utilise la progression I-III-IV-iv (en Sol : Sol-Si-Do-Do mineur). Le Do mineur (iv) est emprunté à Sol mineur. Ce passage entre Do majeur et Do mineur est le moment émotionnellement le plus fort de la chanson — l'emprunt crée la surprise harmonique qui accompagne le pivot textuel 'I'm a creep'." },
+            { "type": "tip", "text": "Expérimente l'emprunt : prends I-IV-V-I en Do (Do-Fa-Sol-Do). Remplace le IV par iv (Do-Fa mineur-Sol-Do). Entends la différence. C'est ça, l'emprunt : 1 accord différent, tout l'effet change. Essaie aussi de remplacer le V par bVII (Do-Fa-Sib-Do) pour un effet rock." }
+          ],
+          "quiz": ["q-harm-c7-01", "q-harm-c7-02"]
+        },
+
+        {
+          "id": "harm-c7-02",
+          "title": "La substitution tritonique",
+          "duration": 9,
+          "content": [
+            { "type": "p", "text": "La substitution tritonique est l'une des techniques harmoniques les plus sophistiquées et les plus utilisées du jazz moderne. Elle permet de remplacer un accord de dominante par un autre accord de dominante situé un triton plus loin — créant ainsi des lignes de basse chromatiques élégantes et une couleur harmonique inattendue." },
+            { "type": "h", "text": "Le principe" },
+            { "type": "p", "text": "N'importe quel accord V7 peut être remplacé par un autre accord V7 situé 6 demi-tons (1 triton) plus haut. G7 (dominante de Do) peut être remplacé par Db7 (= Réb7). Pourquoi ? Parce que G7 et Db7 partagent les mêmes guide tones (3e et 7e), juste interverties." },
+            { "type": "h", "text": "La preuve par les guide tones" },
+            { "type": "p", "text": "G7 : guide tones = Si (3e) et Fa (7e). Db7 : guide tones = Fa (3e) et Do♭ = Si (enharmonique) (7e). G7 a Si et Fa. Db7 a Fa et Si. Les mêmes 2 notes, inversées dans leur rôle (3e et 7e). Comme ces notes définissent la qualité de l'accord, les deux accords 'résolvent' de la même façon vers Cmaj7." },
+            { "type": "h", "text": "La ligne de basse chromatique" },
+            { "type": "p", "text": "L'avantage majeur de la substitution tritonique : la ligne de basse chromatique. Dm7 (Ré) → G7 (Sol) → Cmaj7 (Do) = saut de quarte, puis quarte. Dm7 (Ré) → Db7 (Réb) → Cmaj7 (Do) = descente chromatique : Ré → Réb → Do. Cette descente d'un demi-ton à chaque accord est beaucoup plus élégante et 'jazz'." },
+            { "type": "h", "text": "Substitution tritonique vs substitution ordinaire" },
+            { "type": "p", "text": "Substitution ordinaire : remplacer un accord par un autre de la même famille (ex : IV par ii, V par vii°). Substitution tritonique : remplacer un V7 par le V7 opposé (à 6 demi-tons). La tritonique est plus avancée et crée un effet harmonique plus surprenant." },
+            { "type": "h", "text": "Utilisation pratique" },
+            { "type": "p", "text": "Dans une grille de jazz, tu peux appliquer la substitution tritonique sur n'importe quel V7. Am7-D7-Gmaj7 (ii-V-I en Sol) → Am7-Ab7-Gmaj7 (La♭7 au lieu de Ré7). La basse descend La → Lab → Sol. On peut aller encore plus loin : varier d'une répétition à l'autre (D7 la première fois, Ab7 la deuxième) pour éviter la répétition." },
+            { "type": "h", "text": "Extensions altérées sur la sub tri" },
+            { "type": "p", "text": "L'accord de substitution tritonique (Db7 à la place de G7) peut être enrichi d'extensions altérées (b9, #9, b13) pour un son encore plus complexe. Db7alt (Réb avec extensions altérées) résout sur Cmaj7 avec une tension maximale. C'est le vocabulaire harmonique du jazz post-bebop." },
+            { "type": "ref", "text": "Charlie Parker, Dizzy Gillespie et les autres fondateurs du bebop (années 1940) ont codifié la substitution tritonique comme outil standard. Écoute 'Donna Lee' ou 'Anthropology' de Parker : les reharmonisations rapides que tu entends utilisent massivement les substitutions tritoniques." },
+            { "type": "tip", "text": "Exercice simple : joue Am7-G7-Cmaj7 en boucle. Maintenant remplace G7 par Db7 : Am7-Db7-Cmaj7. Entends la différence ? La ligne de basse La-Réb-Do contre La-Sol-Do. La substitution crée une descente chromatique. C'est élégant et ça ne coûte qu'1 note de changement." }
+          ],
+          "quiz": ["q-harm-c7-03", "q-harm-c7-04"]
+        },
+
+        {
+          "id": "harm-c7-03",
+          "title": "Les modulations : changer de tonalité",
+          "duration": 10,
+          "content": [
+            { "type": "p", "text": "Une modulation, c'est le changement de tonalité pendant un morceau. C'est l'une des techniques les plus expressives en composition : elle peut créer une montée d'énergie, une surprise, ou un changement d'ambiance radical. Les modulations sont présentes dans presque toute la musique, du classique à la pop en passant par le jazz." },
+            { "type": "h", "text": "Pourquoi moduler ?" },
+            { "type": "p", "text": "Plusieurs raisons. Monter d'un ton au refrain : technique pop classique pour créer une montée d'énergie ('And I Will Always Love You' de Whitney Houston monte d'un ton pour le dernier refrain). Changer d'ambiance : passer du majeur au mineur parallèle (ou vice versa). Développement harmonique : le jazz module constamment pour explorer différentes tonalités." },
+            { "type": "h", "text": "Modulation diatonique (par pivot)" },
+            { "type": "p", "text": "La modulation la plus douce : trouver un accord commun aux 2 tonalités ('accord pivot') et l'utiliser comme charnière. Ex : passer de Do majeur à Sol majeur. L'accord Am (vi de Do = ii de Sol) sert de pivot. Do-Am-D7-G : le Am est en Do majeur, mais le D7 prépare Sol. L'oreille accepte la modulation sans choc." },
+            { "type": "h", "text": "Modulation directe (abrupte)" },
+            { "type": "p", "text": "Parfois, on module sans préparation — juste en sautant directement à la nouvelle tonalité. L'effet peut être surprenant ou même choquant. Très utilisé dans la pop pour les 'key changes' spectaculaires (dernier refrain plus haut). 'I Will Survive' (Gloria Gaynor) monte d'un demi-ton de façon assez abrupte sur le dernier refrain." },
+            { "type": "h", "text": "Modulation par dominante secondaire" },
+            { "type": "p", "text": "On prépare la nouvelle tonalité avec un accord de dominante (V7) qui résout vers elle. Ex : passage de Do majeur vers Ré majeur. A7 (dominante de Ré) prépare l'arrivée en Ré. Progression : ...Cmaj7-A7-Dmaj7... L'A7 'annonce' la nouvelle tonalité. C'est la modulation la plus fréquente en jazz." },
+            { "type": "h", "text": "Modulation relative (majeur ↔ mineur)" },
+            { "type": "p", "text": "Passer d'une tonalité majeure à sa relative mineure (ou vice versa) est très courant. Do majeur ↔ La mineur. Mêmes notes, changement de fondamentale ressentie. Beaucoup de ballades commencent au majeur et glissent vers le mineur pour les couplets (ou inversement). 'Hotel California' (Eagles) commence en Si mineur et résout sur Ré majeur (relatif)." },
+            { "type": "h", "text": "Modulation par cycle de quartes (jazz)" },
+            { "type": "p", "text": "Le jazz module souvent en suivant le cycle des quintes : après un ii-V-I en Do, on passe à ii-V-I en Fa (quarte plus bas), puis en Sib, etc. 'Autumn Leaves' suit ce principe. Chaque ii-V-I est 'résolu' et sert de 'do' pour la modulation suivante. C'est la modulation la plus fluide et la plus naturelle à l'oreille." },
+            { "type": "ref", "text": "'Modulation magique' la plus célèbre de la pop : 'Man in the Mirror' (Michael Jackson). Après le refrain, la musique monte d'un demi-ton. Puis encore un demi-ton. L'effet d'élévation émotionnelle est spectaculaire. C'est une modulation directe répétée — simple mais efficace. En live, ça 'soulève' littéralement le public." },
+            { "type": "tip", "text": "Compose une modulation simple : joue I-IV-V-I en Do majeur. Puis joue immédiatement I-IV-V-I en Ré majeur (juste 1 ton plus haut). Le contraste est frappant. Maintenant essaie une transition plus douce : Do-A7-Ré majeur (la A7 prépare Ré). Entends la différence entre modulation abrupte et préparée." }
+          ],
+          "quiz": ["q-harm-c7-05"]
+        },
+
+        {
+          "id": "harm-c8-01",
+          "title": "Cibler les notes d'accord en temps réel",
+          "duration": 11,
+          "content": [
+            { "type": "p", "text": "On arrive au cœur de l'application pratique de l'harmonie : improviser en 'suivant' les accords. Cette technique, appelée 'ciblage harmonique', transforme un solo générique en solo musical, connecté à l'harmonie. C'est la différence entre un guitariste qui 'joue des notes' et un musicien qui 'parle avec son instrument'." },
+            { "type": "h", "text": "Le problème du solo générique" },
+            { "type": "p", "text": "Quand tu improvises uniquement avec la gamme de la tonalité sans cibler les notes d'accord, ton solo 'flotte' au-dessus de la progression — ça sonne correct mais peu musical. Tes phrases ne semblent pas réagir aux changements d'accords. Un solo musical, lui, 'tombe' sur les bonnes notes aux bons moments." },
+            { "type": "h", "text": "Le principe du ciblage" },
+            { "type": "p", "text": "Sur chaque accord, identifie 1-2 notes 'cibles' qui définissent fortement cet accord. Tes phrases doivent arriver sur ces notes aux moments importants (temps forts, fins de phrases). La note cible peut arriver n'importe où dans la phrase, mais son placement sur un temps fort la met en valeur." },
+            { "type": "h", "text": "Hiérarchie des notes cibles" },
+            { "type": "p", "text": "1ère priorité : 3e et 7e (guide tones, définissent la qualité de l'accord). 2e priorité : fondamentale (la plus stable, mais moins 'colorée'). 3e priorité : 5e (générique, peu informative). 4e priorité : extensions (9, 11, 13 — ajoutent de la couleur sophistiquée). En commençant, concentre-toi sur les guide tones uniquement." },
+            { "type": "h", "text": "L'approche chromatique" },
+            { "type": "p", "text": "Pour 'tomber' sur une note cible de façon élégante, approche-la par chromatisme : joue la note 1 demi-ton au-dessus ou en dessous juste avant la cible. Sur G7, cible Si : joue Do → Si (depuis au-dessus) ou Si♭ → Si (depuis en dessous). Cette technique vient du bebop et donne immédiatement un son jazz." },
+            { "type": "h", "text": "L'enclosure" },
+            { "type": "p", "text": "Version plus élaborée du chromatisme : 'encadrer' la note cible par 2 notes (1 au-dessus, 1 en dessous). Pour cibler Si sur G7 : joue Do (1/2 ton au-dessus) → Si♭ (1/2 ton en dessous) → Si (cible). Ou l'inverse. Cette 'enclosure' crée une petite suspension avant la note cible, encore plus expressive." },
+            { "type": "h", "text": "Placement rythmique des cibles" },
+            { "type": "p", "text": "Les notes cibles tombent idéalement sur les temps forts (temps 1 et 3 d'une mesure de 4/4). Les notes 'de passage' (gamme, chromatismes, ornements) tombent sur les temps faibles (temps 2 et 4) ou les contretemps. Ce placement crée le 'swing' rythmique-harmonique : chaque temps fort 'confirme' l'accord en cours." },
+            { "type": "h", "text": "Exemple pratique : solo sur ii-V-I" },
+            { "type": "p", "text": "Sur Dm7-G7-Cmaj7 (4 temps chacun) : Dm7 → arrive sur Fa (3e de Dm7) ou Do (7e) au temps 1. G7 → arrive sur Si (3e de G7) au temps 1 de la mesure G7. Cmaj7 → arrive sur Mi (3e de Cmaj7) ou Si (7e). Les 'couloirs' entre ces notes cibles sont libres : tu peux y jouer n'importe quelle gamme ou chromatisme, tant que tu atterris sur la cible au bon moment." },
+            { "type": "ref", "text": "Joe Pass (guitare jazz, 1929-1994) est le maître absolu du ciblage harmonique. Regarde ses vidéos de guitare solo (particulièrement 'Virtuoso', 1973) : chaque note d'accord est mise en valeur au bon moment, la gamme et les chromatismes comblent l'espace entre les cibles. C'est la définition du solo harmoniquement connecté." },
+            { "type": "tip", "text": "Drill ciblage (10 min) : sur Dm7-G7-Cmaj7 à 60 BPM. Jeu 1 : improvise librement sans chercher à cibler. Jeu 2 : joue UNIQUEMENT les guide tones de chaque accord (Fa-Do sur Dm7, Si-Fa sur G7, Mi-Si sur Cmaj7). Jeu 3 : mélange librement, en arrivant sur les guide tones au temps 1 de chaque nouvel accord. Entends la différence entre les 3 modes." }
+          ],
+          "quiz": ["q-harm-c8-01", "q-harm-c8-02"]
+        },
+
+        {
+          "id": "harm-c8-02",
+          "title": "Construire un solo qui suit les accords",
+          "duration": 11,
+          "content": [
+            { "type": "p", "text": "Cette leçon de synthèse réunit tout ce que tu as appris en harmonie et l'applique à l'improvisation. Construire un solo qui 'suit les accords', ce n'est pas jouer toutes les notes d'accord à la suite — c'est faire des choix mélodiques qui reflètent l'harmonie de façon naturelle et musicale." },
+            { "type": "h", "text": "Les 3 niveaux d'un bon solo" },
+            { "type": "p", "text": "Niveau 1 (débutant) : jouer dans la gamme de la tonalité sans cibler. Ça sonne 'correct' mais générique. Niveau 2 (intermédiaire) : cibler les guide tones aux moments clés. Ça sonne 'musical' et 'sur les accords'. Niveau 3 (avancé) : avoir un discours mélodique cohérent (motifs, développement, arc narratif) ET suivre l'harmonie. Ça sonne 'musical ET expressif'." },
+            { "type": "h", "text": "L'arpège comme structure de base" },
+            { "type": "p", "text": "La technique la plus directe pour suivre les accords : baser tes phrases sur les arpèges de l'accord courant. Sur Dm7 : joue des fragments de Ré-Fa-La-Do. Sur G7 : Sol-Si-Ré-Fa. Sur Cmaj7 : Do-Mi-Sol-Si. Les arpèges sont ton 'squelette' — tu habilles ensuite avec gamme, chromatismes, ornements. C'est la base du jazz et du bop." },
+            { "type": "h", "text": "La gamme + les notes cibles" },
+            { "type": "p", "text": "Approche plus fluide que les arpèges purs : utilise la gamme de la tonalité (Do majeur sur ii-V-I en Do) mais en 'visant' les notes cibles aux moments importants. La gamme te donne la 'couleur de fond', les notes cibles donnent les 'repères harmoniques'. Les notes non-cibles sont des 'de passage' qui ne s'attardent pas." },
+            { "type": "h", "text": "Le motif mélodique : donner une identité au solo" },
+            { "type": "p", "text": "Un motif = une phrase courte (3-6 notes) répétée et transformée. Joue un motif de 4 notes. Rejoue-le 1 ton plus haut (séquence). Rejoue-le en rythme différent. Rejoue-le en miroir (inversion). Ces 4 techniques de développement motivique transforment 4 notes en un solo complet. C'est ce que font tous les grands improvisateurs." },
+            { "type": "h", "text": "L'arc narratif : début, développement, climax, résolution" },
+            { "type": "p", "text": "Un grand solo a une forme : intro calme (établit le caractère). Développement (monte en intensité, densité, hauteur). Climax (point haut, note tenue, bend, maximum d'expression). Résolution (descente vers la tonique, calme, fin). Même pour un solo de 16 mesures. Pense à 'Comfortably Numb' (Gilmour) : il suit exactement cet arc en 4 parties." },
+            { "type": "h", "text": "Les silences : l'autre moitié de la musique" },
+            { "type": "p", "text": "Miles Davis : 'Ce que tu ne joues pas compte autant que ce que tu joues'. Les silences ne sont pas l'absence de musique — ils sont de la musique. Un silence après une phrase tendue crée de l'espace et met en valeur ce qui suit. Les meilleurs solistes utilisent les silences pour 'respirer' et pour créer du contraste avec les phrases denses." },
+            { "type": "h", "text": "Le placement des phrases sur la grille" },
+            { "type": "p", "text": "Les phrases qui commencent toujours sur le temps 1 sonnent carrées. Les phrases qui commencent sur un contretemps ('et' du 4 de la mesure précédente) sonnent plus fluides, syncopées, 'jazz'. Les phrases qui commencent sur le temps 3 d'une mesure créent un effet de décalage agréable. Varie les placements de début de phrase pour casser la monotonie." },
+            { "type": "ref", "text": "Analyse du solo de David Gilmour sur 'Comfortably Numb' (Pink Floyd, 1979) : il commence par des phrases courtes et espacées (intro calme), développe progressivement (densité augmente), atteint un climax sur des bends expressifs dans l'aigu, et résout avec des phrases descendantes. 3 minutes de solo parfaitement structuré. Écoute en te concentrant uniquement sur la forme, pas les notes." },
+            { "type": "tip", "text": "Plan de travail pour improviser sur ii-V-I : Semaine 1 : joue uniquement les arpèges. Semaine 2 : ajoute la gamme entre les notes d'arpège. Semaine 3 : ajoute des chromatismes d'approche. Semaine 4 : développe un motif sur 8 mesures. Semaine 5 : applique l'arc narratif (intro-développement-climax-résolution). En 5 semaines, tu improvises musicalement sur une grille jazz." }
+          ],
+          "quiz": ["q-harm-c8-03", "q-harm-c8-04"]
+        }
+
+      ]
+    }
+  ],
+
+  "quiz": [
+    { "id": "q-harm-c5-01", "courseId": "harmony", "lessonId": "harm-c5-01", "lvl": 1, "q": "En harmonisant la gamme majeure, le pattern de qualités des accords est…", "o": ["Maj-Maj-min-Maj-Maj-min-dim", "Maj-min-min-Maj-Maj-min-dim", "min-Maj-min-Maj-min-Maj-dim", "Maj-min-Maj-min-Maj-min-Maj"], "a": 1, "exp": "I=Maj, ii=min, iii=min, IV=Maj, V=Maj, vi=min, vii°=dim. Pattern universel valable dans TOUTE tonalité majeure.", "xp": 30 },
+    { "id": "q-harm-c5-02", "courseId": "harmony", "lessonId": "harm-c5-01", "lvl": 2, "q": "En Do majeur, quel accord se trouve sur le degré ii ?", "o": ["Do mineur", "Ré mineur", "Mi mineur", "Fa majeur"], "a": 1, "exp": "I=Do, ii=Ré. Pattern : le ii est toujours mineur en tonalité majeure. En Do majeur : ii = Ré mineur (Ré-Fa-La).", "xp": 35 },
+    { "id": "q-harm-c5-03", "courseId": "harmony", "lessonId": "harm-c5-01", "lvl": 3, "q": "En Sol majeur, quel est l'accord sur le V ?", "o": ["Sol majeur", "La mineur", "Ré majeur (D)", "Mi mineur"], "a": 2, "exp": "Sol(I)-La(ii)-Si(iii)-Do(IV)-Ré(V). V de Sol majeur = Ré (majeur). En accord de 7e : D7 = Ré-Fa#-La-Do.", "xp": 40 },
+    { "id": "q-harm-c5-04", "courseId": "harmony", "lessonId": "harm-c5-02", "lvl": 2, "q": "En chiffrage Nashville, la progression '1-5-6m-4' en Do correspond à…", "o": ["Do-Sol-La-Fa", "Do-Sol-Lam-Fa", "Do-Fa-Sol-Lam", "Do-Mim-Fa-Sol"], "a": 1, "exp": "1=Do(maj), 5=Sol(maj), 6m=Lam(min), 4=Fa(maj). Do-Sol-Lam-Fa = la 'Pop Progression' en Do majeur.", "xp": 40 },
+    { "id": "q-harm-c5-05", "courseId": "harmony", "lessonId": "harm-c5-02", "lvl": 3, "q": "Quel est le principal avantage du système Nashville pour un musicien de session ?", "o": ["Plus élégant visuellement", "Transposition instantanée dans n'importe quelle tonalité", "Plus précis que les notes", "Plus international"], "a": 1, "exp": "Avec le Nashville, changer de tonalité = changer la référence du '1', sans réécrire les chiffres. Un musicien de session peut transposer instantanément à la demande du chanteur.", "xp": 45 },
+    { "id": "q-harm-c5-06", "courseId": "harmony", "lessonId": "harm-c5-03", "lvl": 2, "q": "Quels accords appartiennent à la famille 'Dominante' ?", "o": ["I, iii, vi", "IV, ii", "V, vii°", "I, IV, V"], "a": 2, "exp": "Famille Dominante = V + vii°. Ces accords créent la tension maximale et 'demandent' à résoudre vers la tonique (I). V7→I est la résolution la plus forte.", "xp": 40 },
+    { "id": "q-harm-c5-07", "courseId": "harmony", "lessonId": "harm-c5-03", "lvl": 2, "q": "La 'phrase harmonique typique' suit quel schéma ?", "o": ["D→SD→T→D", "T→SD→D→T", "SD→D→T→SD", "T→D→SD→T"], "a": 1, "exp": "Tonique(repos) → Sous-Dominante(mouvement) → Dominante(tension) → Tonique(résolution). Ex : Do(I) → Fa(IV) → Sol(V) → Do(I).", "xp": 40 },
+    { "id": "q-harm-c5-08", "courseId": "harmony", "lessonId": "harm-c5-03", "lvl": 3, "q": "Remplacer IV par ii (en gardant la même fonction SD) est une exemple de…", "o": ["Modulation", "Substitution diatonique au sein d'une famille fonctionnelle", "Erreur harmonique", "Mode emprunt"], "a": 1, "exp": "IV et ii appartiennent à la même famille fonctionnelle (Sous-Dominante). Les remplacer l'un par l'autre = substitution diatonique. Effet : harmonie plus sophistiquée, même logique fonctionnelle.", "xp": 50 },
+    { "id": "q-harm-c6-01", "courseId": "harmony", "lessonId": "harm-c6-01", "lvl": 1, "q": "Le blues à 12 mesures utilise principalement quels degrés ?", "o": ["I, II, III", "I, IV, V", "ii, V, I", "I, VI, VII"], "a": 1, "exp": "Le blues 12 mesures = I (4 mesures) + IV (2 mesures) + I (2 mesures) + V (1 mesure) + IV (1 mesure) + I (2 mesures). Les 3 degrés fondamentaux de la tonalité.", "xp": 25 },
+    { "id": "q-harm-c6-02", "courseId": "harmony", "lessonId": "harm-c6-01", "lvl": 2, "q": "Pourquoi le blues utilise-t-il des accords 7 (dominante) sur tous les degrés, même le I ?", "o": ["Erreur harmonique", "Licence du blues : crée le son 'tendu, expressif' typique du genre", "Obligation du genre", "Pour être plus joyeux"], "a": 1, "exp": "En harmonie classique, I7 (dominante) est 'incorrect'. Dans le blues, c'est une licence stylistique délibérée. Tous les accords en dominante 7 créent cette tension permanente, ce son 'rough' caractéristique.", "xp": 40 },
+    { "id": "q-harm-c6-03", "courseId": "harmony", "lessonId": "harm-c6-02", "lvl": 2, "q": "La progression I-V-vi-IV en La majeur correspond à…", "o": ["La-Mi-Fa#m-Ré", "La-Ré-Mi-Fa#m", "La-Mi-Ré-Fa#m", "La-Si-Fa#m-Ré"], "a": 0, "exp": "La majeur : I=La, V=Mi, vi=Fa#m, IV=Ré. La-Mi-Fa#m-Ré = la 'Pop Progression' en La majeur. Utilisée dans 'Someone Like You' (Adele).", "xp": 45 },
+    { "id": "q-harm-c6-04", "courseId": "harmony", "lessonId": "harm-c6-02", "lvl": 3, "q": "Pourquoi I-V-vi-IV est-elle si efficace en pop ?", "o": ["Par hasard", "Le vi apporte une mélancolie douce dans un contexte joyeux, et la progression est circulaire", "Elle est simple à jouer", "Convention industrielle"], "a": 1, "exp": "Le vi (relatif mineur) crée une touche émotionnelle sans briser l'ambiance positive. La progression est circulaire (pas de résolution définitive) = idéale pour couplets/refrains en boucle.", "xp": 50 },
+    { "id": "q-harm-c6-05", "courseId": "harmony", "lessonId": "harm-c6-03", "lvl": 2, "q": "Le ii-V-I en Sol majeur correspond à…", "o": ["Am7-D7-Gmaj7", "Bm7-E7-Amaj7", "Dm7-G7-Cmaj7", "Em7-A7-Dmaj7"], "a": 0, "exp": "Sol majeur : ii=Am7, V=D7, I=Gmaj7. Am7-D7-Gmaj7. Le mouvement de basse La→Ré→Sol (2 quartes descendantes) crée la gravité harmonique jazz.", "xp": 40 },
+    { "id": "q-harm-c6-06", "courseId": "harmony", "lessonId": "harm-c6-03", "lvl": 3, "q": "Pourquoi la résolution V7→I est-elle si puissante ?", "o": ["Convention historique", "2 mouvements chromatiques simultanés : 3e du V monte vers 1 du I, 7e du V descend vers 3 du I", "Le rythme s'accélère", "L'accord est plus grave"], "a": 1, "exp": "Dans G7→Cmaj7 : Si (3e de G7) → Do, Fa (7e de G7) → Mi. 2 mouvements de demi-ton simultanés et opposés créent une 'attraction physique' dans l'oreille. C'est la résolution la plus forte.", "xp": 55 },
+    { "id": "q-harm-c6-07", "courseId": "harmony", "lessonId": "harm-c6-03", "lvl": 3, "q": "La substitution tritonique de G7 (dans Dm7-G7-Cmaj7) est…", "o": ["F#7", "Ab7 (Lab7)", "Db7 (Réb7)", "C7"], "a": 2, "exp": "Sub tritonique = V7 + 6 demi-tons. Sol + 6 = Réb. G7 → Db7. La basse devient Ré→Réb→Do (descente chromatique). G7 et Db7 partagent les mêmes guide tones (Si/Fa).", "xp": 60 },
+    { "id": "q-harm-c6-08", "courseId": "harmony", "lessonId": "harm-c6-04", "lvl": 2, "q": "Une progression modale se distingue d'une progression tonale par…", "o": ["Elle utilise plus d'accords", "Elle 'tourne' sur une fondamentale sans résoudre définitivement", "Elle est plus simple", "Elle utilise toujours le mode dorien"], "a": 1, "exp": "Tonal = voyage harmonique (T→SD→D→T, résolution définitive). Modal = vamp autour d'une fondamentale, pas de résolution. Effet statique, hypnotique. 'So What' (Miles Davis) = Dm7 en boucle.", "xp": 45 },
+    { "id": "q-harm-c7-01", "courseId": "harmony", "lessonId": "harm-c7-01", "lvl": 2, "q": "L'accord 'bVII' emprunté au mineur parallèle en Do majeur est…", "o": ["Si♭ majeur", "Si mineur", "La♭ majeur", "Fa mineur"], "a": 0, "exp": "bVII de Do majeur = Si♭ majeur (emprunté de Do mineur). Son : rock, 'brut', presque modal. Utilisé dans 'Hey Jude' (Beatles), 'Sweet Home Alabama' (Lynyrd Skynyrd).", "xp": 45 },
+    { "id": "q-harm-c7-02", "courseId": "harmony", "lessonId": "harm-c7-01", "lvl": 3, "q": "L'accord 'iv' (sous-dominante mineure) emprunté en Do majeur est…", "o": ["Fa majeur", "Fa mineur", "Ré mineur", "La mineur"], "a": 1, "exp": "iv de Do majeur = Fa mineur (emprunté de Do mineur). Crée une couleur soul et mélancolique même dans un contexte majeur. Utilisé dans 'Yesterday' (Beatles).", "xp": 50 },
+    { "id": "q-harm-c7-03", "courseId": "harmony", "lessonId": "harm-c7-02", "lvl": 3, "q": "Pourquoi G7 et Db7 sont-ils interchangeables (substitution tritonique) ?", "o": ["Même fondamentale", "Ils partagent les mêmes guide tones (3e et 7e interversées)", "Même quinte", "Convention jazz"], "a": 1, "exp": "G7 guide tones : Si + Fa. Db7 guide tones : Fa + Do♭(=Si). Mêmes 2 notes, rôles inversés. Comme les guide tones définissent la résolution, les 2 accords 'résolvent' identiquement vers Cmaj7.", "xp": 60 },
+    { "id": "q-harm-c7-04", "courseId": "harmony", "lessonId": "harm-c7-02", "lvl": 3, "q": "Quel est l'avantage principal de la substitution tritonique dans une progression ?", "o": ["Son plus grave", "Ligne de basse chromatique (descente par demi-tons)", "Plus de notes", "Tempo plus lent"], "a": 1, "exp": "Dm7(Ré)→G7(Sol)→Cmaj7(Do) = sauts de quarte. Dm7(Ré)→Db7(Réb)→Cmaj7(Do) = descente chromatique Ré→Réb→Do. Bien plus élégant et 'jazz'.", "xp": 55 },
+    { "id": "q-harm-c7-05", "courseId": "harmony", "lessonId": "harm-c7-03", "lvl": 2, "q": "Une 'modulation par pivot' utilise…", "o": ["Un accord hors tonalité", "Un accord commun aux 2 tonalités comme charnière", "Une rupture abrupte", "Toujours le V7"], "a": 1, "exp": "Modulation par pivot = trouver un accord commun aux 2 tonalités. Ex : Am (vi de Do et ii de Sol) sert de charnière pour passer de Do majeur à Sol majeur. Modulation la plus douce.", "xp": 45 },
+    { "id": "q-harm-c8-01", "courseId": "harmony", "lessonId": "harm-c8-01", "lvl": 2, "q": "Quelle est la hiérarchie des notes cibles en improvisation ?", "o": ["Fondamentale > quinte > 3e > 7e", "3e et 7e > fondamentale > quinte > extensions", "Toutes les notes sont égales", "Extensions > guide tones > fondamentale"], "a": 1, "exp": "3e et 7e (guide tones) sont les priorités car elles définissent la qualité de l'accord. Fondamentale = stable mais générique. Quinte = très générique. Extensions = sophistiqué mais optionnel.", "xp": 45 },
+    { "id": "q-harm-c8-02", "courseId": "harmony", "lessonId": "harm-c8-01", "lvl": 3, "q": "L''approche chromatique' avant une note cible consiste à…", "o": ["Jouer la note plus fort", "Jouer la note 1 demi-ton au-dessus ou en dessous juste avant la cible", "Jouer rapidement", "Changer de gamme"], "a": 1, "exp": "Chromatisme d'approche = jouer la note 1 demi-ton au-dessus (ou en dessous) juste avant la cible. Crée une 'arrivée' élégante sur la note cible. Technique de bebop classique.", "xp": 55 },
+    { "id": "q-harm-c8-03", "courseId": "harmony", "lessonId": "harm-c8-02", "lvl": 2, "q": "Un solo 'qui suit les accords' se construit principalement sur…", "o": ["La même gamme sans s'adapter", "Les arpèges + notes de gamme + ciblage des guide tones aux moments clés", "Le plus de notes possible", "Uniquement les notes des accords"], "a": 1, "exp": "Arpèges = squelette. Gamme = chair. Ciblage guide tones aux temps forts = connexion harmonique. Chromatismes = ornements. C'est la combinaison des 4 qui crée un solo musical.", "xp": 50 },
+    { "id": "q-harm-c8-04", "courseId": "harmony", "lessonId": "harm-c8-02", "lvl": 3, "q": "Pourquoi les silences sont-ils importants dans un solo ?", "o": ["Ils laissent le temps de réfléchir", "Ils créent du contraste et de l'espace, mettant en valeur les phrases jouées", "Convention musicale", "Pour économiser son énergie"], "a": 1, "exp": "Miles Davis : 'Ce que tu ne joues pas compte autant que ce que tu joues'. Les silences créent du contraste, de la tension, de l'espace. Une phrase après un silence résonne plus fort qu'une phrase après du bruit.", "xp": 55 }
+  ],
+
+  "exercises": []
+}

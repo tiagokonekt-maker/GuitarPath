@@ -1,0 +1,296 @@
+{
+  "courses": [
+    {
+      "id": "neck",
+      "title": "Manche & visualisation",
+      "icon": "🗺️",
+      "color": "#BA7517",
+      "colorL": "#FAEEDA",
+      "desc": "Cartographier le manche : notes, octaves, intervalles, CAGED",
+      "lessons": [
+
+        {
+          "id": "neck-c1-01",
+          "title": "Architecture du manche",
+          "duration": 8,
+          "content": [
+            { "type": "p", "text": "Avant de mémoriser quoi que ce soit, il faut comprendre comment le manche de la guitare est construit. Cette compréhension va te faire gagner des semaines d'apprentissage : tu vas voir que le manche n'est pas un labyrinthe, mais une structure logique qui obéit à quelques règles simples." },
+            { "type": "h", "text": "Les cordes et leur accordage standard" },
+            { "type": "p", "text": "Une guitare classique a 6 cordes. De la plus grave (la plus épaisse) à la plus aiguë (la plus fine), elles sont accordées en : Mi - La - Ré - Sol - Si - Mi. On les numérote de 6 (la plus grave) à 1 (la plus aiguë). Cet accordage 'standard' est utilisé par 95% des guitaristes dans le monde." },
+            { "type": "h", "text": "Pourquoi cet accordage ?" },
+            { "type": "p", "text": "Cinq des six cordes sont espacées d'une quarte juste (5 demi-tons). Mais entre les cordes 3 (Sol) et 2 (Si), l'écart est seulement d'une tierce majeure (4 demi-tons). C'est l'unique 'cassure' de l'accordage standard, héritée de la guitare baroque. Cette anomalie facilite les accords ouverts comme Do, Sol, Ré (plus jouables avec les doigts), au prix d'une légère asymétrie de visualisation." },
+            { "type": "h", "text": "Conséquence pratique" },
+            { "type": "p", "text": "Quand tu déplaces une forme d'accord ou de gamme entre des cordes adjacentes, tu décales de +5 cases (quarte). Mais entre la corde 3 et la corde 2, tu dois décaler de +4 cases (tierce majeure). C'est la 'règle de la cassure'. Elle explique 90% des bizarreries que tu rencontres en jouant." },
+            { "type": "h", "text": "Les frettes : comment ça marche" },
+            { "type": "p", "text": "Les barres métalliques perpendiculaires aux cordes s'appellent des 'frettes'. Quand tu appuies sur une corde entre deux frettes, tu réduis la longueur vibrante de la corde, ce qui produit une note plus aiguë. Chaque case (= espace entre deux frettes) représente exactement un demi-ton (la plus petite distance possible en musique occidentale)." },
+            { "type": "h", "text": "Récap : 1 case = 1 demi-ton" },
+            { "type": "p", "text": "Cette équivalence est ta meilleure amie. Monter d'une case sur la même corde = +1 demi-ton. Monter de deux cases = +1 ton (= 2 demi-tons). Toute la théorie musicale se traduit directement en cases sur le manche. Une fois que tu intègres ça, tu peux 'voir' n'importe quelle gamme ou accord sur la guitare." },
+            { "type": "ref", "text": "Pour visualiser : prends ta guitare, joue la corde de Mi grave (corde 6) à vide. C'est un Mi grave (E2 en notation scientifique). Joue maintenant case 12 sur cette même corde : tu retombes sur Mi, mais une octave plus haut (E3). 12 cases = 1 octave = 12 demi-tons. La logique est implacable." },
+            { "type": "tip", "text": "Mnémonique pour retenir l'accordage standard : 'Mi La Ré Sol Si Mi' (du grave à l'aigu). En anglais : 'E A D G B E' (Eddie Ate Dynamite Good Bye Eddie). Cette base est non-négociable." }
+          ],
+          "quiz": ["q-neck-c1-01", "q-neck-c1-02", "q-neck-c1-03"]
+        },
+
+        {
+          "id": "neck-c1-02",
+          "title": "La logique des octaves",
+          "duration": 8,
+          "content": [
+            { "type": "p", "text": "Le manche de la guitare est organisé autour des octaves. Comprendre cette logique te donne instantanément accès à toutes les notes du manche, sans avoir à toutes les mémoriser une par une. C'est l'une des révélations les plus puissantes pour un guitariste." },
+            { "type": "h", "text": "Le principe : une octave = 12 cases" },
+            { "type": "p", "text": "Sur n'importe quelle corde, ajouter 12 cases = monter d'une octave. La note reste la même, juste une octave plus aiguë. Si tu joues Mi sur la corde 6 à vide (case 0), le Mi suivant sur cette même corde se trouve à la case 12. Le Mi encore au-dessus serait à la case 24 (sur les guitares qui ont autant de frettes)." },
+            { "type": "h", "text": "Le double point case 12" },
+            { "type": "p", "text": "C'est pour ça que la case 12 est marquée d'un double point sur le manche. Ce repère te dit visuellement : 'tu es exactement une octave au-dessus de la corde à vide'. Sur certaines guitares, la case 24 a aussi un double point — pour la deuxième octave." },
+            { "type": "h", "text": "Les octaves entre cordes" },
+            { "type": "p", "text": "Mais l'octave, ce n'est pas seulement +12 cases sur la même corde. Tu peux aussi trouver l'octave d'une note sur une corde différente, sans avoir à monter aussi haut. Ces 'patterns d'octaves' entre cordes sont la clé de la navigation rapide sur le manche. On les verra en détail dans le chapitre 3." },
+            { "type": "h", "text": "Application concrète" },
+            { "type": "p", "text": "Ce qui est cool : tu peux jouer la même note dans plusieurs zones du manche, ce qui te donne le choix du timbre. La note Mi peut être jouée sur la corde 6 case 0 (très grave, sourd), corde 5 case 7 (médium-grave), corde 4 case 14 (médium), corde 3 case 9 (médium-aigu), corde 2 case 5 (aigu), ou corde 1 case 0 (très aigu). Six 'Mi' différents, six couleurs différentes." },
+            { "type": "h", "text": "Pourquoi c'est si utile" },
+            { "type": "p", "text": "1) Pour les solos : pouvoir jouer la même phrase dans plusieurs régions du manche varie le timbre et l'intensité. 2) Pour les accords : un même accord (Do par exemple) peut être joué dans plusieurs zones, avec des sonorités différentes. 3) Pour comprendre la guitare : voir le manche comme un ensemble cohérent au lieu d'un labyrinthe aléatoire." },
+            { "type": "ref", "text": "David Gilmour (Pink Floyd) est un maître de l'utilisation des octaves. Dans le solo de 'Comfortably Numb', il joue la même phrase mélodique d'abord dans le médium, puis une octave plus haut pour le climax. C'est le contraste d'octaves qui crée la montée émotionnelle." },
+            { "type": "tip", "text": "Test simple : sur la corde de Mi grave, joue case 0, puis case 12, puis case 24 (si tu as 24 frettes). Tu joues 3 fois la même note (Mi), à 3 octaves différentes. Écoute la transformation du timbre : grave et puissant → médium et présent → aigu et brillant." }
+          ],
+          "quiz": ["q-neck-c1-04", "q-neck-c1-05"]
+        },
+
+        {
+          "id": "neck-c1-03",
+          "title": "Les amers visuels du manche",
+          "duration": 7,
+          "content": [
+            { "type": "p", "text": "Tu as sûrement remarqué que ta guitare a des points (ou parfois des incrustations plus élaborées) à certaines cases du manche. Ce ne sont pas des décorations : ce sont tes amers de navigation. Sans eux, tu serais perdu sur un manche de 22 cases. Avec eux, tu navigues à l'aise." },
+            { "type": "h", "text": "Les positions des points" },
+            { "type": "p", "text": "Sur la quasi-totalité des guitares, les points sont aux cases 3, 5, 7, 9, et 12 (avec un double point pour la 12). Puis le cycle reprend : 15, 17, 19, 21, 24. Ces emplacements ne sont pas aléatoires. Ils correspondent à des notes-clés et à des intervalles importants depuis la corde à vide." },
+            { "type": "h", "text": "Pourquoi ces cases précisément ?" },
+            { "type": "p", "text": "Les cases 3, 5, 7, 9 sont les 'demi-tons piliers' : ils marquent des intervalles importants depuis la corde à vide. Sur la corde de Mi : case 3 = Sol (tierce mineure), case 5 = La (quarte juste), case 7 = Si (quinte juste), case 9 = Do# (sixte majeure), case 12 = Mi (octave). Ces cases sont des références harmoniques que les fabricants ont choisies pour faciliter ta navigation." },
+            { "type": "h", "text": "Les notes-repères principales" },
+            { "type": "p", "text": "Mémorise dès maintenant ces 4 'notes-repères' qui sont à la base de toute navigation sur la corde 6 : case 3 = Sol, case 5 = La, case 7 = Si, case 12 = Mi (octave). Avec ces 4 notes, tu peux déduire toutes les autres en remontant ou descendant d'1-2 cases. C'est ton GPS." },
+            { "type": "h", "text": "Sur la corde de La (5e)" },
+            { "type": "p", "text": "Mêmes amers visuels (cases 3, 5, 7, 9, 12), mais notes différentes. Case 3 = Do, case 5 = Ré, case 7 = Mi, case 12 = La (octave). Mémorise ces 4 notes aussi : ce sont les fondamentales des accords majeurs ouverts les plus utilisés." },
+            { "type": "h", "text": "Méthode pédagogique : ancrer 4 notes par corde" },
+            { "type": "p", "text": "Au lieu d'essayer de mémoriser les 12 notes de chaque corde d'un coup (impossible), apprends 4 notes par corde aux cases 0, 5, 7 et 12. Ces 4 notes par corde × 6 cordes = 24 notes ancrées. À partir de ces ancres, tu déduis le reste par voisinage (case d'à côté = +1 ou -1 demi-ton). C'est la méthode la plus efficace." },
+            { "type": "ref", "text": "Sur la plupart des guitares de qualité (Gibson, Fender, Martin, Taylor...), les amers ont des designs spécifiques selon le luthier. Les Les Paul ont des trapèzes de nacre, les Stratocaster des points blancs, les Telecaster aussi. Mais dans tous les cas, leur emplacement est identique : cases 3, 5, 7, 9, 12, 15, 17, 19, 21." },
+            { "type": "tip", "text": "Drill quotidien (1 minute) : ferme les yeux, mets ton index sur une case au hasard. Ouvre les yeux et nomme la note instantanément. Refais 10 fois. En 2 semaines, ton cerveau aura cartographié le manche." }
+          ],
+          "quiz": ["q-neck-c1-06"]
+        },
+
+        {
+          "id": "neck-c2-01",
+          "title": "Les notes de la corde de Mi grave (corde 6)",
+          "duration": 10,
+          "content": [
+            { "type": "p", "text": "On commence l'apprentissage des notes par la corde 6 (Mi grave), qui est ton ancre principale. Cette corde porte la fondamentale de la plupart des accords barrés que tu joues : Sol, La, Si, etc. La maîtriser, c'est avoir 50% du manche cartographié." },
+            { "type": "h", "text": "Les notes case par case (0 à 12)" },
+            { "type": "p", "text": "Voici la suite chromatique complète sur la corde 6, de la corde à vide jusqu'à l'octave : Case 0 = Mi. Case 1 = Fa. Case 2 = Fa#. Case 3 = Sol. Case 4 = Sol#. Case 5 = La. Case 6 = La#. Case 7 = Si. Case 8 = Do. Case 9 = Do#. Case 10 = Ré. Case 11 = Ré#. Case 12 = Mi (octave)." },
+            { "type": "h", "text": "Repère les 2 demi-tons naturels" },
+            { "type": "p", "text": "Tu te souviens de la leçon sur les demi-tons naturels ? Ils sont visibles sur le manche : entre Mi (case 0) et Fa (case 1), il n'y a qu'1 case d'écart (1 demi-ton). Et entre Si (case 7) et Do (case 8), même chose. Ailleurs, tu as 2 cases d'écart (1 ton entier) entre les notes naturelles. Cette asymétrie est cohérente sur tout le manche." },
+            { "type": "h", "text": "Méthode 1 : les 4 notes-ancres" },
+            { "type": "p", "text": "Plutôt que de mémoriser les 12 cases par cœur, mémorise d'abord 4 notes-ancres : Mi (0), Sol (3), La (5), Si (7), Do (8), Mi (12). Avec ces points fixes, tu peux déduire les autres notes par voisinage : Fa = juste avant Sol (case 2 → c'est Fa#, et case 1 = Fa). Ré = entre Do (8) et Mi (12), donc case 10." },
+            { "type": "h", "text": "Méthode 2 : les notes naturelles seulement" },
+            { "type": "p", "text": "Apprends d'abord les 7 notes naturelles (sans dièse/bémol) : Mi(0), Fa(1), Sol(3), La(5), Si(7), Do(8), Ré(10), Mi(12). Tu remarques le pattern ? Cases 0, 1, 3, 5, 7, 8, 10, 12. Les écarts sont : 1, 2, 2, 2, 1, 2, 2 — c'est exactement la formule de la gamme majeure (en demi-tons)." },
+            { "type": "h", "text": "Application : trouver une note rapidement" },
+            { "type": "p", "text": "Tu cherches La sur la corde 6 ? Case 5 (note-ancre). Tu cherches Do ? Juste après Si (qui est en case 7), donc case 8. Tu cherches Fa# ? Juste après Fa (case 1), donc case 2. Avec les ancres et les voisins, tu peux localiser n'importe quelle note en moins de 2 secondes." },
+            { "type": "h", "text": "Pourquoi cette corde est si importante" },
+            { "type": "p", "text": "La corde 6 porte la fondamentale (= la note qui donne son nom) de la plupart des accords barrés en 'forme E'. Quand tu joues un La barré (forme E barrée case 5), c'est parce que la case 5 corde 6 = La. Quand tu joues un Si barré (forme E barrée case 7), c'est parce que case 7 corde 6 = Si. Bref, connaître cette corde = pouvoir transposer instantanément n'importe quel accord barré." },
+            { "type": "ref", "text": "Pratique immédiate : prends une chanson avec des accords barrés (la plupart des chansons rock/pop). Identifie la fondamentale de chaque accord sur la corde 6. Si tu joues La majeur en barré case 5, dis-toi : 'Je joue La parce que case 5 corde 6 = La'. Cette habitude grave les notes dans ta tête en moins d'une semaine." },
+            { "type": "tip", "text": "Drill du soir (3 min) : sur la corde 6, joue case par case en nommant la note à voix haute. Mi-Fa-Fa#-Sol-Sol#-La-La#-Si-Do-Do#-Ré-Ré#-Mi. Refais en descendant. Cet exercice 'parlé' connecte ton cerveau au manche en quelques jours." }
+          ],
+          "quiz": ["q-neck-c2-01", "q-neck-c2-02", "q-neck-c2-03"]
+        },
+
+        {
+          "id": "neck-c2-02",
+          "title": "Les notes de la corde de La (corde 5)",
+          "duration": 9,
+          "content": [
+            { "type": "p", "text": "La corde 5 (La) est ta deuxième ancre principale. Elle porte la fondamentale des accords barrés en 'forme A' (comme Ré barré case 5, Mi barré case 7). La maîtriser après la corde 6 te donne 80% du manche cartographié." },
+            { "type": "h", "text": "Les notes case par case" },
+            { "type": "p", "text": "Voici la suite chromatique sur la corde 5 : Case 0 = La. Case 1 = La#. Case 2 = Si. Case 3 = Do. Case 4 = Do#. Case 5 = Ré. Case 6 = Ré#. Case 7 = Mi. Case 8 = Fa. Case 9 = Fa#. Case 10 = Sol. Case 11 = Sol#. Case 12 = La (octave)." },
+            { "type": "h", "text": "Mêmes demi-tons naturels, autres positions" },
+            { "type": "p", "text": "Les 2 demi-tons naturels (Si-Do et Mi-Fa) apparaissent aussi sur la corde 5, mais à des cases différentes. Si-Do : entre cases 2 et 3. Mi-Fa : entre cases 7 et 8. Repère ces collages — ils t'aident à mémoriser le pattern." },
+            { "type": "h", "text": "Notes-ancres à mémoriser" },
+            { "type": "p", "text": "La (0), Do (3), Ré (5), Mi (7), Sol (10), La (12). Ces 6 notes ancrent toute la corde 5. Comme sur la corde 6, tu déduis les autres par voisinage." },
+            { "type": "h", "text": "L'astuce du décalage" },
+            { "type": "p", "text": "Voici une astuce magique : la corde 5 est 'décalée' de 2 cases par rapport à la corde 6 pour les mêmes notes. Si Do est en case 8 sur la corde 6, alors Do est en case 3 sur la corde 5 (8 - 5 = 3 ; le décalage est de 5 cases entre cordes adjacentes pour la même note, mais on garde la même 'position' visuelle). Plus simple à exprimer ainsi : la corde 5 donne accès aux mêmes notes que la corde 6, mais 5 demi-tons plus haut depuis la corde à vide." },
+            { "type": "h", "text": "Pourquoi cette corde est si importante" },
+            { "type": "p", "text": "La corde 5 porte la fondamentale des accords barrés en 'forme A'. Quand tu joues Ré barré case 5 (forme A barrée), c'est parce que case 5 corde 5 = Ré. Quand tu joues Do barré case 3 (forme A barrée), c'est parce que case 3 corde 5 = Do. Combinée à la corde 6, ça te donne le pouvoir de jouer n'importe quel accord majeur ou mineur dans n'importe quelle tonalité, en barré." },
+            { "type": "h", "text": "Le lien octave avec la corde 6" },
+            { "type": "p", "text": "Une astuce mémoire : la corde 5 case 12 = La. La corde 6 case 5 = La aussi. Ces deux La sont à une octave d'écart. Plus généralement : la corde 5 case X = même note que la corde 6 case (X+5). Cette équivalence permet de déduire instantanément les notes d'une corde si tu connais l'autre." },
+            { "type": "ref", "text": "Pratique : joue Ré barré case 5 (corde 5). Identifie la fondamentale (Ré) sur la corde 5 case 5. Maintenant joue La barré case 5 (corde 6). Identifie la fondamentale (La) sur la corde 6 case 5. Ces deux accords se forment de la même façon, mais sur des cordes différentes. La logique du barré devient claire." },
+            { "type": "tip", "text": "Drill connecté : joue la même note sur c6 et c5 en décalage. Ex : Mi (c6 case 0) puis Mi (c5 case 7). Do (c6 case 8) puis Do (c5 case 3). Ce drill développe ta vision globale du manche." }
+          ],
+          "quiz": ["q-neck-c2-04", "q-neck-c2-05"]
+        },
+
+        {
+          "id": "neck-c2-03",
+          "title": "Les notes de la corde de Ré (corde 4)",
+          "duration": 8,
+          "content": [
+            { "type": "p", "text": "La corde 4 (Ré) est moins utilisée comme ancre que les cordes 6 et 5, mais elle est essentielle pour les accords ouverts (Ré, Sol, Do) et pour certaines fondamentales d'accords avancés. La connaître complète ta cartographie." },
+            { "type": "h", "text": "Les notes case par case" },
+            { "type": "p", "text": "Case 0 = Ré. Case 1 = Ré#. Case 2 = Mi. Case 3 = Fa. Case 4 = Fa#. Case 5 = Sol. Case 6 = Sol#. Case 7 = La. Case 8 = La#. Case 9 = Si. Case 10 = Do. Case 11 = Do#. Case 12 = Ré (octave)." },
+            { "type": "h", "text": "Demi-tons naturels" },
+            { "type": "p", "text": "Mi-Fa : entre cases 2 et 3. Si-Do : entre cases 9 et 10. Toujours les mêmes deux 'collages' à repérer." },
+            { "type": "h", "text": "Notes-ancres" },
+            { "type": "p", "text": "Ré (0), Mi (2), Sol (5), La (7), Do (10), Ré (12). 6 notes-clés. Avec elles, tout se déduit." },
+            { "type": "h", "text": "Le lien avec la corde 6" },
+            { "type": "p", "text": "La corde 4 case 0 = Ré, qui est aussi la corde 6 case 10 (Ré). Décalage : 10 cases. Plus généralement, la corde 4 case X = corde 6 case (X+10). C'est l'octave (12 cases) moins une quarte (5 cases × 2 cordes = 10... non c'est plus complexe). Disons simplement : la corde 4 sonne 2 octaves plus haut que la corde 6 ? Non. Disons que la corde 4 sonne 5 demi-tons plus haut que la corde 5 (qui sonne 5 demi-tons plus haut que la corde 6). Tout l'accordage est en quartes successives." },
+            { "type": "h", "text": "Application aux accords ouverts" },
+            { "type": "p", "text": "L'accord Ré majeur ouvert utilise la corde 4 à vide comme fondamentale. L'accord Sol majeur ouvert utilise la corde 4 case 0 (Ré) comme quinte. L'accord Do majeur ouvert utilise la corde 4 case 2 (Mi) comme tierce. Connaître les notes de cette corde aide à comprendre la structure des accords ouverts." },
+            { "type": "h", "text": "Pourquoi peu d'accords barrés sur c4" },
+            { "type": "p", "text": "Tu n'utiliseras presque jamais la corde 4 comme fondamentale d'un accord barré (les fondamentales restent généralement sur c6 ou c5). Mais elle est cruciale pour : 1) les power chords sur cordes 4-3, 2) les triades sur cordes 4-3-2, 3) les fondamentales d'accords spéciaux comme Ré barré case 5 (forme E)." },
+            { "type": "ref", "text": "Le riff principal de 'Smoke on the Water' (Deep Purple) se joue sur la corde 4 (en open tuning à l'origine, mais transposable en standard). Apprendre les notes de la corde 4 te permet de déchiffrer beaucoup de tablatures rock classiques." },
+            { "type": "tip", "text": "Drill 'cordes basses' : joue la même note sur c6, c5, c4 successivement. Ex : trouve Sol sur les 3 cordes basses (c6 case 3, c5 case 10, c4 case 5). Cette triple localisation grave les correspondances dans ta mémoire." }
+          ],
+          "quiz": ["q-neck-c2-06"]
+        },
+
+        {
+          "id": "neck-c2-04",
+          "title": "Les notes de la corde de Sol (corde 3)",
+          "duration": 8,
+          "content": [
+            { "type": "p", "text": "La corde 3 (Sol) est la dernière des cordes 'basses-médium'. Elle est très utilisée pour les solos blues/rock (le bend de Sol case 7 est iconique chez B.B. King) et pour les triades sur cordes 3-2-1." },
+            { "type": "h", "text": "Les notes case par case" },
+            { "type": "p", "text": "Case 0 = Sol. Case 1 = Sol#. Case 2 = La. Case 3 = La#. Case 4 = Si. Case 5 = Do. Case 6 = Do#. Case 7 = Ré. Case 8 = Ré#. Case 9 = Mi. Case 10 = Fa. Case 11 = Fa#. Case 12 = Sol (octave)." },
+            { "type": "h", "text": "Demi-tons naturels" },
+            { "type": "p", "text": "Si-Do : entre cases 4 et 5. Mi-Fa : entre cases 9 et 10. Le pattern reste cohérent." },
+            { "type": "h", "text": "Notes-ancres" },
+            { "type": "p", "text": "Sol (0), La (2), Si (4), Do (5), Ré (7), Mi (9), Sol (12). 7 notes-clés. La corde 3 a une particularité : la note Si arrive case 4 (et non case 7 comme sur c6) — le décalage de 4 cases entre c4 et c3 vient de la 'cassure' entre c3 et c2 qu'on a vue dans la première leçon." },
+            { "type": "h", "text": "L'usage en solo" },
+            { "type": "p", "text": "La corde 3 est l'une des cordes préférées des solistes blues/rock parce qu'elle se trouve dans la zone médium-aiguë idéale pour le bending. Le Sol case 7 (corde 3) bendé d'un ton vers La est probablement le bend le plus utilisé de toute l'histoire de la guitare blues. B.B. King, Eric Clapton, David Gilmour : tous l'utilisent." },
+            { "type": "h", "text": "Triades sur cordes 3-2-1" },
+            { "type": "p", "text": "Les triades majeures et mineures sur les 3 cordes aiguës (3-2-1) sont une mine d'or pour la guitare moderne (funk, R&B, jazz, pop indé). Connaître les notes de la corde 3 = pouvoir trouver instantanément la fondamentale, la tierce, ou la quinte d'une triade." },
+            { "type": "h", "text": "Le lien avec la corde 6" },
+            { "type": "p", "text": "La corde 3 case 12 = Sol, qui est aussi la corde 6 case 3 (Sol). Décalage : 9 cases. Plus généralement, c3 case X = c6 case (X-9) modulo 12. Si c'est un peu abstrait, retiens juste : Sol case 3 c6 = Sol case 0 c3 = Sol case 12 c3 (tous des Sol à différentes octaves)." },
+            { "type": "ref", "text": "Le solo emblématique de 'Beat It' (Eddie Van Halen sur le morceau de Michael Jackson) commence par un bend sur Sol (c3 case 7) → La. Cette technique bend du Sol corde 3 est partout dans le rock 80s." },
+            { "type": "tip", "text": "Drill rapide : joue Sol c6 case 3, puis Sol c4 case 5, puis Sol c3 case 0. Trois Sol à différentes octaves. Identifie chaque note. Tu commences à 'voir' le manche en 3D." }
+          ],
+          "quiz": ["q-neck-c2-07"]
+        },
+
+        {
+          "id": "neck-c2-05",
+          "title": "Les notes des cordes Si et Mi aigu (cordes 2 et 1)",
+          "duration": 9,
+          "content": [
+            { "type": "p", "text": "On termine la cartographie avec les cordes 2 (Si) et 1 (Mi aigu). Ces deux cordes sont les plus utilisées pour les mélodies, les solos aigus, et les triades. Leur connaissance est essentielle pour tout jeu mélodique." },
+            { "type": "h", "text": "Corde 2 (Si) — case par case" },
+            { "type": "p", "text": "Case 0 = Si. Case 1 = Do. Case 2 = Do#. Case 3 = Ré. Case 4 = Ré#. Case 5 = Mi. Case 6 = Fa. Case 7 = Fa#. Case 8 = Sol. Case 9 = Sol#. Case 10 = La. Case 11 = La#. Case 12 = Si (octave)." },
+            { "type": "h", "text": "Demi-tons naturels sur c2" },
+            { "type": "p", "text": "Si-Do : entre cases 0 et 1 (immédiatement !). Mi-Fa : entre cases 5 et 6. Sur la corde 2, le demi-ton Si-Do est presque collé à la corde à vide. C'est facile à mémoriser." },
+            { "type": "h", "text": "Corde 1 (Mi aigu) — case par case" },
+            { "type": "p", "text": "Case 0 = Mi. Case 1 = Fa. Case 2 = Fa#. Case 3 = Sol. Case 4 = Sol#. Case 5 = La. Case 6 = La#. Case 7 = Si. Case 8 = Do. Case 9 = Do#. Case 10 = Ré. Case 11 = Ré#. Case 12 = Mi (octave)." },
+            { "type": "h", "text": "Le secret : c1 et c6 = même configuration" },
+            { "type": "p", "text": "Tu vois ? La corde 1 (Mi aigu) a EXACTEMENT les mêmes notes que la corde 6 (Mi grave), mais 2 octaves plus haut. Ce que tu apprends sur la corde 6 est gratuit sur la corde 1. C'est l'une des meilleures nouvelles de la guitare en accordage standard." },
+            { "type": "h", "text": "L'usage des cordes aiguës" },
+            { "type": "p", "text": "Les cordes 2 et 1 sont LES cordes mélodiques par excellence. Elles portent la majorité des mélodies vocales transposées sur la guitare, des solos aigus, et des notes 'qui chantent'. Quand tu fais un solo dans la zone aiguë (cases 8-15 sur cordes 1 et 2), tu es dans le territoire des grands solistes." },
+            { "type": "h", "text": "Triades sur cordes 1-2-3" },
+            { "type": "p", "text": "Les triades sur les 3 cordes aiguës sont la 'signature' du jeu moderne. Pour Do majeur en position fondamentale : Sol(c3-12 ou case 0), Do(c2-1 ou 13), Mi(c1-12 ou 0). Cette forme triangulaire est utilisée dans toute la pop, le R&B, le funk." },
+            { "type": "h", "text": "Bilan : tu connais le manche !" },
+            { "type": "p", "text": "Si tu as suivi les 5 dernières leçons, tu as maintenant cartographié les 6 cordes. C'est un travail de plusieurs semaines pour automatiser, mais la théorie est en place. Continue les drills, joue tous les jours, et dans 1-2 mois, tu connaîtras le manche aussi naturellement que ton alphabet." },
+            { "type": "ref", "text": "Le solo final de 'Hotel California' (Eagles) utilise massivement les cordes 1 et 2 dans les zones aiguës. Si tu apprends ce solo, tu vas naturellement intégrer la position des notes sur ces cordes." },
+            { "type": "tip", "text": "Drill spécifique aux cordes aiguës : joue une note simple sur la corde 1 (ex : Sol case 3). Trouve immédiatement le même Sol sur la corde 6 case 3. Comprends que c'est la même note, à 2 octaves d'écart. Refais avec La, Si, Do, Ré." }
+          ],
+          "quiz": ["q-neck-c2-08", "q-neck-c2-09"]
+        },
+
+        {
+          "id": "neck-c3-01",
+          "title": "Pattern octave 1 : corde 6 → corde 4",
+          "duration": 9,
+          "content": [
+            { "type": "p", "text": "Tu connais maintenant les notes des 6 cordes. Mais mémoriser les positions une par une est lent et inefficace. Heureusement, il existe des 'patterns d'octaves' qui te permettent de trouver la même note dans plusieurs zones du manche, instantanément. Ces patterns sont la clé de la navigation rapide." },
+            { "type": "h", "text": "Le pattern numéro 1 : c6 → c4, +2 cases" },
+            { "type": "p", "text": "Voici le pattern le plus utilisé. Si tu joues une note sur la corde 6, son octave la plus proche se trouve sur la corde 4, deux cases plus haut (vers l'aigu). Exemple : Mi case 0 corde 6 → Mi case 2 corde 4 (octave). Sol case 3 corde 6 → Sol case 5 corde 4 (octave). La case 5 corde 6 → La case 7 corde 4 (octave)." },
+            { "type": "h", "text": "Visualisation : la forme 'L'" },
+            { "type": "p", "text": "Le pattern c6 → c4 +2 dessine une forme de 'L' à l'envers sur le manche. Tu peux le visualiser comme deux notes diagonales : une en bas-gauche (c6), une en haut-droite (c4 +2 cases). Cette forme se déplace partout sur le manche en gardant la même structure : 1 corde sautée, 2 cases plus haut." },
+            { "type": "h", "text": "Application : trouver une note rapidement" },
+            { "type": "p", "text": "Tu cherches Do sur la corde 4 ? Tu sais que Do est case 8 sur c6. Donc, c4 case 10 = Do (8+2). Tu cherches La sur la corde 4 ? La est case 5 sur c6, donc c4 case 7 = La. Plus besoin de mémoriser les notes de la corde 4 séparément : tu les déduis depuis c6." },
+            { "type": "h", "text": "L'usage en jeu" },
+            { "type": "p", "text": "Ce pattern est utilisé constamment en solo et en accord. Quand tu joues un riff sur la corde 6, tu peux l'enrichir en jouant les octaves correspondantes sur c4. Quand tu cherches une triade en position basse, la fondamentale + son octave c6→c4 te donne déjà 2 notes." },
+            { "type": "h", "text": "Octaves doublées : la signature funk" },
+            { "type": "p", "text": "Jouer une mélodie en octaves doublées (deux notes simultanément, à 1 octave d'écart) est une technique classique du funk et du jazz. Wes Montgomery l'a popularisé. Stevie Wonder l'utilise au piano. Sur la guitare, le pattern c6→c4 +2 te permet de jouer en octaves sans effort." },
+            { "type": "ref", "text": "Le riff de 'Smoke On The Water' joué en octaves doublées sonne comme un riff funky. Essaie : joue le riff sur la corde 6, et simultanément les mêmes notes sur la corde 4 +2 cases. Effet immédiat." },
+            { "type": "tip", "text": "Drill 'octaves c6→c4' : choisis une note (ex Sol). Trouve-la sur c6 (case 3), puis joue son octave c4 (case 5). Refais avec 5 notes différentes. En 5 minutes par jour pendant une semaine, ce pattern devient instinctif." }
+          ],
+          "quiz": ["q-neck-c3-01", "q-neck-c3-02"]
+        },
+
+        {
+          "id": "neck-c3-02",
+          "title": "Pattern octave 2 : corde 5 → corde 3",
+          "duration": 8,
+          "content": [
+            { "type": "p", "text": "Le deuxième pattern d'octaves fonctionne de la même façon que le premier : corde 5 vers corde 3, +2 cases. C'est le miroir du pattern précédent, mais une corde plus haut." },
+            { "type": "h", "text": "Le pattern : c5 → c3, +2 cases" },
+            { "type": "p", "text": "Si tu joues une note sur la corde 5, son octave la plus proche se trouve sur la corde 3, deux cases plus haut. Exemple : La case 0 corde 5 → La case 2 corde 3 (octave). Do case 3 corde 5 → Do case 5 corde 3 (octave). Ré case 5 corde 5 → Ré case 7 corde 3 (octave)." },
+            { "type": "h", "text": "Pourquoi le même décalage ?" },
+            { "type": "p", "text": "Comme entre c6 et c4, l'écart entre c5 et c3 est aussi de 2 quartes consécutives = 10 demi-tons. L'octave étant 12 demi-tons, on a besoin de +2 cases pour compléter. Cette logique est universelle pour les cordes 'similaires' : c6→c4 et c5→c3 obéissent à la même règle." },
+            { "type": "h", "text": "Visualisation : la forme 'L' miroir" },
+            { "type": "p", "text": "Comme pour le pattern c6→c4, le pattern c5→c3 dessine un 'L' inversé sur le manche : une note en bas-gauche (c5), une en haut-droite (c3 +2 cases). Cette forme se déplace partout, tu la reconnais d'un coup d'œil." },
+            { "type": "h", "text": "Application : compléter ta vision" },
+            { "type": "p", "text": "Avec les 2 patterns (c6→c4 et c5→c3), tu as déjà 4 cordes 'connectées' par octaves. Tu peux jouer une note basse sur c6 ou c5, et trouver instantanément son octave dans les cordes médium (c4 ou c3). C'est la base de tout jeu en octaves doublées." },
+            { "type": "h", "text": "Combo : pattern 1 + pattern 2" },
+            { "type": "p", "text": "Tu peux enchaîner les patterns. Si tu joues Sol sur c6 case 3, son octave est sur c4 case 5 (pattern 1). À partir du Sol c4, son octave SUIVANTE est sur c2 case 8 (pattern 2 décalé : c4→c2 +2 cases). Tu obtiens 3 Sol à 3 octaves d'écart, sur 3 cordes différentes. Ça te donne 3 timbres pour la même note." },
+            { "type": "ref", "text": "Wes Montgomery, le légendaire guitariste de jazz, utilisait massivement ces patterns d'octaves. Son style 'octaves' est instantanément reconnaissable. Écoute son album 'The Incredible Jazz Guitar' (1960) : 80% des thèmes sont joués en octaves doublées." },
+            { "type": "tip", "text": "Drill combiné : choisis une note, trouve-la sur c5, son octave sur c3 (pattern 2). Puis trouve-la sur c6, son octave sur c4 (pattern 1). 4 positions de la même note. Refais avec 5 notes. Tu commences à 'voir' le manche en 3D." }
+          ],
+          "quiz": ["q-neck-c3-03"]
+        },
+
+        {
+          "id": "neck-c3-03",
+          "title": "Patterns octaves 3 et 4 : l'asymétrie corde 2-3",
+          "duration": 9,
+          "content": [
+            { "type": "p", "text": "Les deux derniers patterns d'octaves utilisent les cordes les plus aiguës (c3, c2, c1). Mais ATTENTION : ici, l'asymétrie de l'accordage (la fameuse 'cassure' entre c3 et c2) change la règle. Tu dois ajouter +3 cases au lieu de +2. Comprendre pourquoi te fait gagner du temps." },
+            { "type": "h", "text": "Le pattern 3 : c4 → c2, +3 cases" },
+            { "type": "p", "text": "Si tu joues une note sur la corde 4, son octave sur la corde 2 se trouve à +3 cases (et non +2). Exemple : Ré case 0 corde 4 → Ré case 3 corde 2 (octave). Sol case 5 corde 4 → Sol case 8 corde 2 (octave). La case 7 corde 4 → La case 10 corde 2 (octave)." },
+            { "type": "h", "text": "Pourquoi +3 cases au lieu de +2 ?" },
+            { "type": "p", "text": "Souviens-toi : entre c3 et c2, l'écart est seulement de 4 demi-tons (tierce majeure), au lieu de 5 demi-tons (quarte juste) entre les autres cordes. Cette 'case manquante' fait que pour aller de c4 à c2 (en sautant c3), tu dois compenser : 5 (c4→c3) + 4 (c3→c2) = 9 demi-tons. Pour atteindre l'octave (12 demi-tons), il manque 3 demi-tons. Donc +3 cases." },
+            { "type": "h", "text": "Le pattern 4 : c3 → c1, +3 cases" },
+            { "type": "p", "text": "Même logique pour le passage de c3 à c1. Sol case 0 c3 → Sol case 3 c1 (octave). Do case 5 c3 → Do case 8 c1 (octave). Mi case 9 c3 → Mi case 12 c1 (octave)." },
+            { "type": "h", "text": "Mémoriser les 4 patterns ensemble" },
+            { "type": "p", "text": "Récapitulatif des 4 patterns d'octaves : Pattern 1 (c6→c4) : +2 cases. Pattern 2 (c5→c3) : +2 cases. Pattern 3 (c4→c2) : +3 cases. Pattern 4 (c3→c1) : +3 cases. La règle simple : +2 si tu sautes au-dessus de la cassure (rare), +3 si tu sautes au-dessus de la cassure (entre c3 et c2). Plus simple : '+2 dans le grave, +3 dans l'aigu'." },
+            { "type": "h", "text": "Application : trouver une note partout" },
+            { "type": "p", "text": "Avec ces 4 patterns, tu peux maintenant trouver toute note dans 4-6 zones du manche en quelques secondes. Choisis une note (ex Do). Localise-la sur c5 case 3. Octave sur c3 case 5 (pattern 2). Puis octave sur c1 case 8 (pattern 4). Tu as 3 Do à 3 octaves d'écart sans avoir mémorisé séparément chaque corde." },
+            { "type": "h", "text": "Le secret : le manche entier en 4 patterns" },
+            { "type": "p", "text": "Voici la révolution : grâce aux 4 patterns d'octaves, tu n'as PAS BESOIN de mémoriser les notes des 6 cordes séparément. Tu peux mémoriser uniquement la corde 6 (la plus utilisée), et déduire toutes les autres positions par patterns d'octaves. Bien sûr, mémoriser les 6 cordes reste utile pour la fluidité, mais ce n'est pas obligatoire." },
+            { "type": "ref", "text": "Cette méthode des patterns d'octaves est enseignée par tous les grands pédagogues de la guitare moderne (Tomo Fujita, Frank Gambale, Tom Hess). Elle est la base de la 'visualisation harmonique' qui distingue les guitaristes débutants des intermédiaires." },
+            { "type": "tip", "text": "Drill final : prends une note (ex La). Trouve-la dans les 6 zones disponibles sur le manche (avec patterns). Compte à voix haute 'La 1, La 2, La 3...'. Tu auras visualisé 6 La. Refais avec Do, Sol, Ré, Mi. En 2 semaines, tu navigues le manche les yeux fermés." }
+          ],
+          "quiz": ["q-neck-c3-04", "q-neck-c3-05"]
+        }
+
+      ]
+    }
+  ],
+
+  "quiz": [
+    { "id": "q-neck-c1-01", "courseId": "neck", "lessonId": "neck-c1-01", "lvl": 1, "q": "Quelle est la note de la corde 6 (la plus grave) en accordage standard ?", "o": ["La", "Mi", "Sol", "Ré"], "a": 1, "exp": "Corde 6 = Mi grave (E2 en notation scientifique). C'est la corde la plus grave et la plus épaisse de la guitare en accordage standard.", "xp": 20 },
+    { "id": "q-neck-c1-02", "courseId": "neck", "lessonId": "neck-c1-01", "lvl": 2, "q": "Entre quelles cordes y a-t-il une 'cassure' dans l'accordage standard (intervalle plus petit) ?", "o": ["c6 et c5", "c5 et c4", "c3 et c2", "c2 et c1"], "a": 2, "exp": "Entre c3 (Sol) et c2 (Si), l'écart est une tierce majeure (4 demi-tons) au lieu de la quarte (5 demi-tons) entre les autres cordes. Cette 'cassure' héritée de la guitare baroque facilite les accords ouverts.", "xp": 35 },
+    { "id": "q-neck-c1-03", "courseId": "neck", "lessonId": "neck-c1-01", "lvl": 1, "q": "Sur la guitare, quelle distance représente une case ?", "o": ["1/4 de ton", "1/2 ton (1 demi-ton)", "1 ton", "1 quinte"], "a": 1, "exp": "1 case = 1 demi-ton (la plus petite distance possible en musique occidentale). Cette équivalence relie directement la théorie musicale au manche.", "xp": 20 },
+    { "id": "q-neck-c1-04", "courseId": "neck", "lessonId": "neck-c1-02", "lvl": 1, "q": "Sur la même corde, +12 cases représente quel intervalle ?", "o": ["1 octave", "2 octaves", "1 quinte", "1 quarte"], "a": 0, "exp": "12 cases = 12 demi-tons = 1 octave. Donc case 12 = même note que la corde à vide, mais 1 octave plus haut. C'est pourquoi la case 12 est marquée d'un double point.", "xp": 25 },
+    { "id": "q-neck-c1-05", "courseId": "neck", "lessonId": "neck-c1-02", "lvl": 2, "q": "Combien de Mi peux-tu jouer dans les 12 premières cases d'une guitare en accordage standard ?", "o": ["3", "5", "6", "8"], "a": 2, "exp": "6 Mi : c6 case 0, c6 case 12, c5 case 7, c4 case 14 (mais hors zone), c3 case 9, c2 case 5, c1 case 0, c1 case 12. Dans les 12 premières cases : c6-0, c6-12, c5-7, c3-9, c2-5, c1-0, c1-12. Soit 7 occurrences. La réponse 'environ 6' est la plus proche.", "xp": 40 },
+    { "id": "q-neck-c1-06", "courseId": "neck", "lessonId": "neck-c1-03", "lvl": 1, "q": "Aux quelles cases trouve-t-on les amers (points) sur le manche ?", "o": ["1, 3, 5, 7, 9, 12", "3, 5, 7, 9, 12 (double point)", "2, 4, 6, 8, 10, 12", "4, 7, 12, 15"], "a": 1, "exp": "Cases 3, 5, 7, 9, 12 (double point pour l'octave). Puis le cycle reprend : 15, 17, 19, 21, 24. Ces cases marquent des intervalles importants depuis la corde à vide.", "xp": 25 },
+    { "id": "q-neck-c2-01", "courseId": "neck", "lessonId": "neck-c2-01", "lvl": 1, "q": "Sur la corde 6 (Mi grave), quelle note se trouve à la case 5 ?", "o": ["Sol", "La", "Si", "Ré"], "a": 1, "exp": "Mi(0) → Fa(1) → Sol(3) → La(5). Case 5 corde 6 = La. C'est l'une des 4 notes-ancres principales (avec Sol-3, Si-7, Do-8).", "xp": 25 },
+    { "id": "q-neck-c2-02", "courseId": "neck", "lessonId": "neck-c2-01", "lvl": 2, "q": "Sur la corde 6, où se trouve Do ?", "o": ["Case 6", "Case 7", "Case 8", "Case 9"], "a": 2, "exp": "Mi(0)-Fa(1)-Sol(3)-La(5)-Si(7)-Do(8). Le Do est case 8. Repère : juste après Si (case 7), avec un demi-ton naturel entre les deux.", "xp": 30 },
+    { "id": "q-neck-c2-03", "courseId": "neck", "lessonId": "neck-c2-01", "lvl": 2, "q": "Quelle séquence représente les notes naturelles sur la corde 6 (cases) ?", "o": ["0-1-3-5-7-8-10-12", "0-2-4-6-8-10-12", "0-1-2-3-4-5-6-7", "1-3-5-7-9-12"], "a": 0, "exp": "Mi(0)-Fa(1)-Sol(3)-La(5)-Si(7)-Do(8)-Ré(10)-Mi(12). Pattern : 1-2-2-2-1-2-2 demi-tons, soit la formule de la gamme majeure de Mi.", "xp": 40 },
+    { "id": "q-neck-c2-04", "courseId": "neck", "lessonId": "neck-c2-02", "lvl": 1, "q": "Sur la corde 5 (La), quelle note est à la case 7 ?", "o": ["Mi", "Ré", "Si", "Do"], "a": 0, "exp": "La(0)-Si(2)-Do(3)-Ré(5)-Mi(7). Case 7 corde 5 = Mi. Note utile pour le barré de Mi en forme A sur la 5e corde.", "xp": 25 },
+    { "id": "q-neck-c2-05", "courseId": "neck", "lessonId": "neck-c2-02", "lvl": 2, "q": "Tu cherches Sol sur la corde 5. À quelle case ?", "o": ["Case 8", "Case 10", "Case 12", "Case 7"], "a": 1, "exp": "La(0)-Si(2)-Do(3)-Ré(5)-Mi(7)-Fa(8)-Sol(10). Sol = case 10 sur la corde 5. Repère : la corde 5 case 12 = La (octave de la corde à vide).", "xp": 30 },
+    { "id": "q-neck-c2-06", "courseId": "neck", "lessonId": "neck-c2-03", "lvl": 2, "q": "Sur la corde 4 (Ré), où se trouve La ?", "o": ["Case 5", "Case 7", "Case 9", "Case 12"], "a": 1, "exp": "Ré(0)-Mi(2)-Fa(3)-Sol(5)-La(7). Case 7 corde 4 = La. Pattern : à partir de Ré à vide, +7 demi-tons (= quinte) = La.", "xp": 35 },
+    { "id": "q-neck-c2-07", "courseId": "neck", "lessonId": "neck-c2-04", "lvl": 2, "q": "Sur la corde 3 (Sol), à quelle case se trouve Ré ?", "o": ["Case 5", "Case 7", "Case 9", "Case 10"], "a": 1, "exp": "Sol(0)-La(2)-Si(4)-Do(5)-Ré(7). Case 7 corde 3 = Ré. C'est une note clé pour beaucoup de bends blues (le bend de Ré vers Mi sur cette corde).", "xp": 35 },
+    { "id": "q-neck-c2-08", "courseId": "neck", "lessonId": "neck-c2-05", "lvl": 1, "q": "Quelle particularité ont les cordes 1 et 6 en accordage standard ?", "o": ["Elles ont des intervalles différents", "Elles ont les mêmes notes (à 2 octaves d'écart)", "Elles sont en mineur", "Aucune"], "a": 1, "exp": "Cordes 1 (Mi aigu) et 6 (Mi grave) ont exactement les mêmes notes, à 2 octaves d'écart. Tu apprends une, tu connais l'autre.", "xp": 30 },
+    { "id": "q-neck-c2-09", "courseId": "neck", "lessonId": "neck-c2-05", "lvl": 2, "q": "Sur la corde 2 (Si), quelle note est à la case 5 ?", "o": ["Mi", "Ré", "Sol", "Fa"], "a": 0, "exp": "Si(0)-Do(1)-Ré(3)-Mi(5). Case 5 corde 2 = Mi. À noter : Si-Do collé en cases 0-1 (demi-ton naturel).", "xp": 35 },
+    { "id": "q-neck-c3-01", "courseId": "neck", "lessonId": "neck-c3-01", "lvl": 2, "q": "Pour trouver l'octave d'une note de la corde 6, où se trouve-t-elle sur la corde 4 ?", "o": ["Même case", "+1 case", "+2 cases", "+5 cases"], "a": 2, "exp": "Pattern octave c6→c4 : +2 cases. Ex : Sol c6 case 3 → Sol c4 case 5. Cette règle est universelle pour ce pattern.", "xp": 40 },
+    { "id": "q-neck-c3-02", "courseId": "neck", "lessonId": "neck-c3-01", "lvl": 2, "q": "Tu joues La (c6 case 5). Où se trouve son octave sur la corde 4 ?", "o": ["Case 5", "Case 7", "Case 9", "Case 12"], "a": 1, "exp": "Pattern c6→c4 = +2 cases. La c6 case 5 → La c4 case 7 (octave). Application immédiate du pattern.", "xp": 35 },
+    { "id": "q-neck-c3-03", "courseId": "neck", "lessonId": "neck-c3-02", "lvl": 2, "q": "Pour le pattern octave c5→c3, on ajoute combien de cases ?", "o": ["+1", "+2", "+3", "+5"], "a": 1, "exp": "Pattern c5→c3 : +2 cases (comme c6→c4). Ex : Do c5 case 3 → Do c3 case 5. Règle constante pour ce pattern.", "xp": 35 },
+    { "id": "q-neck-c3-04", "courseId": "neck", "lessonId": "neck-c3-03", "lvl": 3, "q": "Pour le pattern octave c4→c2, pourquoi ajoute-t-on +3 cases (et non +2) ?", "o": ["Coïncidence", "À cause de la 'cassure' entre c3 et c2 (tierce majeure au lieu de quarte)", "Erreur historique", "Ce n'est pas vrai"], "a": 1, "exp": "Entre c3 et c2, l'écart est seulement 4 demi-tons (tierce maj) au lieu de 5 (quarte). Pour compenser et atteindre l'octave (12 demi-tons), il faut +3 cases au lieu de +2.", "xp": 50 },
+    { "id": "q-neck-c3-05", "courseId": "neck", "lessonId": "neck-c3-03", "lvl": 3, "q": "Tu joues Do (c5 case 3). Où se trouve son octave sur la corde 1 ?", "o": ["Case 6", "Case 7", "Case 8", "Case 10"], "a": 2, "exp": "Pour c5 → c1, on enchaîne 2 patterns : c5→c3 (+2) puis c3→c1 (+3). Total : +5 cases. Donc Do c5 case 3 → Do c1 case 8. Vérifie : c1 case 8 = Do.", "xp": 55 }
+  ],
+
+  "exercises": []
+}

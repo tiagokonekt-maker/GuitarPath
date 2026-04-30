@@ -1,0 +1,325 @@
+{
+  "courses": [
+    {
+      "id": "harmony",
+      "title": "Harmonie",
+      "icon": "🎵",
+      "color": "#7F77DD",
+      "colorL": "#EEEDFE",
+      "desc": "Construction des accords, progressions, logique harmonique",
+      "lessons": [
+
+        {
+          "id": "harm-c1-01",
+          "title": "Qu'est-ce que l'harmonie ?",
+          "duration": 8,
+          "content": [
+            { "type": "p", "text": "La mélodie, tu connais : c'est la ligne musicale que tu chantes ou que tu joues seul. Le rythme, tu connais aussi : c'est la pulsation, le groove. Mais l'harmonie ? C'est le troisième pilier de la musique, et souvent le moins bien compris. Cette leçon va t'en donner une définition claire, et te montrer pourquoi la maîtriser transforme ta façon de jouer." },
+            { "type": "h", "text": "Définition simple" },
+            { "type": "p", "text": "L'harmonie, c'est l'art de combiner plusieurs notes jouées simultanément (ou perçues comme telles) pour créer un effet musical cohérent. Quand tu plaques un accord de guitare, tu joues de l'harmonie : plusieurs notes ensemble qui créent une couleur sonore. Quand une chanteuse chante par-dessus une guitare, les deux voix forment une harmonie." },
+            { "type": "h", "text": "Harmonie vs mélodie vs rythme" },
+            { "type": "p", "text": "Mélodie = les notes jouées une par une (horizontal). Rythme = la durée et le placement des notes dans le temps. Harmonie = les notes jouées ensemble (vertical). En musique, ces trois dimensions coexistent en permanence. Une chanson pop a : une mélodie (le chant), un rythme (la batterie et le picking), et une harmonie (les accords de guitare, le piano, la basse)." },
+            { "type": "h", "text": "Pourquoi comprendre l'harmonie ?" },
+            { "type": "p", "text": "Sans connaissance harmonique, tu joues 'dans le vide' : tu mémorises des suites d'accords comme des recettes, sans comprendre pourquoi elles fonctionnent. Avec la compréhension harmonique, tu peux : (1) analyser n'importe quelle chanson en quelques secondes, (2) improviser intelligemment sur des grilles d'accords, (3) composer des progressions originales, (4) transposer n'importe quel morceau instantanément." },
+            { "type": "h", "text": "L'harmonie tonale : le système dominant" },
+            { "type": "p", "text": "La grande majorité de la musique populaire occidentale (pop, rock, jazz, folk, country, R&B, blues) utilise ce qu'on appelle le système 'tonal'. Ce système est organisé autour d'une note centrale (la tonique) vers laquelle toutes les autres notes et accords gravitent. Comprendre ce système, c'est comprendre 90% de la musique que tu écoutes." },
+            { "type": "h", "text": "L'harmonie comme grammaire" },
+            { "type": "p", "text": "Imagine la musique comme un langage. La mélodie, c'est les mots. Le rythme, c'est la ponctuation. L'harmonie, c'est la grammaire — les règles qui font que les mots s'enchaînent de façon compréhensible. Tu peux parler sans connaître la grammaire (comme un enfant), mais quand tu la maîtrises, ton expression devient infiniment plus riche et précise." },
+            { "type": "ref", "text": "Pour entendre l'harmonie 'en action' : écoute 'What a Wonderful World' (Louis Armstrong). La mélodie que tu fredonneras est simple. Mais écoute les accords en dessous : ils changent constamment, créant des émotions différentes sous la même mélodie. C'est l'harmonie qui fait que certains passages te touchent plus que d'autres." },
+            { "type": "tip", "text": "Exercice d'écoute : prends une chanson que tu connais bien. Écoute-la en te concentrant uniquement sur les accords (pas la mélodie, pas la batterie). Combien y a-t-il d'accords différents ? À quel moment changent-ils ? C'est ton premier pas vers l'analyse harmonique." }
+          ],
+          "quiz": ["q-harm-c1-01", "q-harm-c1-02"]
+        },
+
+        {
+          "id": "harm-c1-02",
+          "title": "Consonance et dissonance",
+          "duration": 9,
+          "content": [
+            { "type": "p", "text": "Pourquoi certains accords sonnent 'bien' et d'autres sonnent 'tendus' ou même 'faux' ? La réponse est dans deux concepts fondamentaux : la consonance (les sons qui s'accordent naturellement) et la dissonance (les sons qui créent une tension). Comprendre cette dualité, c'est comprendre comment la musique crée des émotions." },
+            { "type": "h", "text": "La consonance : quand les sons s'accordent" },
+            { "type": "p", "text": "Deux notes sont consonantes quand leurs fréquences vibrent dans des rapports simples. L'octave (rapport 2:1) est la consonance absolue. La quinte juste (rapport 3:2) est la deuxième plus consonante. La tierce majeure (5:4) est consonante mais avec une légère douceur. Plus le rapport est simple, plus les notes 'sonnent bien' ensemble." },
+            { "type": "h", "text": "La dissonance : quand les sons créent de la tension" },
+            { "type": "p", "text": "Deux notes sont dissonantes quand leurs fréquences vibrent dans des rapports complexes, créant des battements acoustiques perceptibles. La seconde majeure (Do-Ré jouées simultanément) crée une légère tension. La septième mineure est dissonante mais 'douce'. Le triton (quarte augmentée/quinte diminuée) est très dissonant — c'est 'le diable en musique'." },
+            { "type": "h", "text": "La tension-résolution : le moteur de la musique" },
+            { "type": "p", "text": "La musique se construit sur un cycle éternel : tension → résolution. Un accord dissonant (V7) crée une tension qui 'demande' à se résoudre vers un accord consonant (I). Cette alternance est le moteur émotionnel de toute la musique tonale. Sans dissonance, pas de tension. Sans tension, pas d'émotion. Le but n'est pas d'éviter la dissonance, mais de la gérer." },
+            { "type": "h", "text": "Consonance et dissonance sont relatives" },
+            { "type": "p", "text": "Attention : consonance et dissonance ne sont pas des valeurs absolues. Elles dépendent du contexte. Un accord de septième (dissonant en théorie) sonne 'doux' en jazz. Une quinte à vide (consonante) sonne 'agressive' en métal grunge. L'oreille s'habitue et réinterprète les sons selon le contexte. Ce qui sonnait 'faux' au Moyen-Âge (le triton) est aujourd'hui ordinaire en blues." },
+            { "type": "h", "text": "Dissonances 'acceptées' en musique moderne" },
+            { "type": "p", "text": "La musique classique baroque (Bach, Vivaldi) utilisait très peu de dissonances non résolues. Le blues et le jazz ont popularisé des dissonances que l'époque baroque aurait jugées 'fausses' (la septième mineure, la blue note). Le rock a rendu le triton ordinaire. Le jazz moderne (post-Coltrane) pousse encore plus loin. L'histoire de la musique, c'est aussi l'histoire de l'expansion des dissonances tolérées." },
+            { "type": "ref", "text": "'Black Sabbath' (Black Sabbath, 1970) : le riff d'intro est construit sur un triton (Mi-Si♭), l'intervalle le plus dissonant. En 1970, c'était délibérément provocateur et 'satanique'. Aujourd'hui, ce riff est étudié dans les conservatoires. La perception de la dissonance évolue avec le temps et la culture." },
+            { "type": "tip", "text": "Drill auditif : joue ces 3 intervalles sur ta guitare (depuis Do c5 case 3) : Do+Mi (tierce majeure, consonant), Do+Fa# (triton, très dissonant), Do+Sol (quinte, très consonant). Écoute la différence de 'tension' entre les 3. Ton oreille apprend à reconnaître consonance/dissonance." }
+          ],
+          "quiz": ["q-harm-c1-03", "q-harm-c1-04"]
+        },
+
+        {
+          "id": "harm-c2-01",
+          "title": "Les 4 types de triades",
+          "duration": 11,
+          "content": [
+            { "type": "p", "text": "Une triade, c'est 3 notes empilées par tierces (1-3-5). C'est l'unité de base de l'harmonie tonale. Il existe 4 types de triades, chacun avec sa couleur sonore unique. Les maîtriser, c'est comprendre la structure de tous les accords que tu joueras dans ta vie." },
+            { "type": "h", "text": "Triade majeure (1-3-5)" },
+            { "type": "p", "text": "Tierce majeure (4 demi-tons) + quinte juste (7 demi-tons depuis la fondamentale). Couleur : brillante, joyeuse, stable, affirmative. C'est l'accord 'par défaut' de la musique populaire occidentale. Exemples sur guitare : Do (Do-Mi-Sol), Sol (Sol-Si-Ré), La (La-Do#-Mi)." },
+            { "type": "h", "text": "Triade mineure (1-b3-5)" },
+            { "type": "p", "text": "Tierce mineure (3 demi-tons) + quinte juste (7 demi-tons). Couleur : mélancolique, introspective, douce-amère. Différence avec le majeur : 1 seul demi-ton d'écart sur la tierce. Et pourtant, l'effet émotionnel est radicalement différent. Exemples : Lam (La-Do-Mi), Rém (Ré-Fa-La), Mim (Mi-Sol-Si)." },
+            { "type": "h", "text": "Triade diminuée (1-b3-b5)" },
+            { "type": "p", "text": "Tierce mineure (3 demi-tons) + quinte diminuée (6 demi-tons). Couleur : instable, tendue, 'diabolique'. La quinte est diminuée (d'un demi-ton par rapport à la quinte juste), ce qui crée une forte dissonance. Cette triade n'est pas agréable tenue longtemps — elle 'demande' à se résoudre. Elle apparaît naturellement sur le 7e degré de la gamme majeure." },
+            { "type": "h", "text": "Triade augmentée (1-3-#5)" },
+            { "type": "p", "text": "Tierce majeure (4 demi-tons) + quinte augmentée (8 demi-tons). Couleur : flottante, mystérieuse, ambiguë. La quinte est augmentée d'un demi-ton. Cet accord est 'symétrique' : tu peux l'empiler à l'infini par tierces majeures et revenir à la même structure. Très utilisée dans la musique impressionniste (Debussy, Ravel) et le jazz moderne." },
+            { "type": "h", "text": "Comment les reconnaître à l'oreille" },
+            { "type": "p", "text": "Majeure : brillant, stable. 'Joyeux'. Mineure : doux, mélancolique. 'Triste'. Diminuée : tendu, instable. 'Anxieux'. Augmentée : flottant, ambigu. 'Mystérieux'. Ces qualificatifs sont des raccourcis — en réalité, la perception dépend toujours du contexte. Mais ils sont utiles pour commencer à identifier les qualités d'accord." },
+            { "type": "h", "text": "Récapitulatif des formules" },
+            { "type": "p", "text": "Majeure : 1-3-5 (4+3 demi-tons entre les tierces). Mineure : 1-b3-5 (3+4 demi-tons). Diminuée : 1-b3-b5 (3+3 demi-tons). Augmentée : 1-3-#5 (4+4 demi-tons). Le pattern de demi-tons entre les tierces résume tout : 4+3 = maj, 3+4 = min, 3+3 = dim, 4+4 = aug." },
+            { "type": "ref", "text": "Pour entendre chaque type dans un contexte réel : 'Happy Birthday' (majeur), 'Scarborough Fair' (mineur), le passage entre les accords dans 'Hark the Herald Angels Sing' (diminué en transition), 'Oh ! You Pretty Things' de David Bowie commence sur un accord augmenté. Écoute ces passages et identifie la couleur." },
+            { "type": "tip", "text": "Drill des 4 types : depuis Do (c5 case 3), joue successivement : Do majeur (Do-Mi-Sol), Do mineur (Do-Mib-Sol), Do diminué (Do-Mib-Solb), Do augmenté (Do-Mi-Sol#). Écoute la progression de couleur : de brillant à sombre à tendu à flottant. 4 accords, 4 univers." }
+          ],
+          "quiz": ["q-harm-c2-01", "q-harm-c2-02", "q-harm-c2-03"]
+        },
+
+        {
+          "id": "harm-c2-02",
+          "title": "Construire une triade depuis n'importe quelle note",
+          "duration": 10,
+          "content": [
+            { "type": "p", "text": "Maintenant que tu connais les 4 types de triades et leurs formules, on va apprendre à les construire depuis n'importe quelle note. C'est la compétence qui te rend vraiment libre : plus besoin de mémoriser chaque accord comme un cas isolé, tu les construis à la demande." },
+            { "type": "h", "text": "La méthode : formule + demi-tons" },
+            { "type": "p", "text": "Pour construire une triade majeure depuis n'importe quelle note : (1) Prends la fondamentale. (2) Ajoute 4 demi-tons = tierce majeure. (3) Ajoute 7 demi-tons depuis la fondamentale = quinte juste. Exemple : Fa majeur. Fa + 4 demi-tons = La. Fa + 7 demi-tons = Do. Fa majeur = Fa-La-Do." },
+            { "type": "h", "text": "Construire depuis Mi (E)" },
+            { "type": "p", "text": "Mi majeur : Mi + 4dt = Sol#. Mi + 7dt = Si. Mi majeur = Mi-Sol#-Si. Mi mineur : Mi + 3dt = Sol. Mi + 7dt = Si. Mi mineur = Mi-Sol-Si. Mi diminué : Mi + 3dt = Sol. Mi + 6dt = Sib. Mi diminué = Mi-Sol-Sib. Mi augmenté : Mi + 4dt = Sol#. Mi + 8dt = Do. Mi augmenté = Mi-Sol#-Do." },
+            { "type": "h", "text": "Construire depuis Si♭" },
+            { "type": "p", "text": "Sib majeur : Sib + 4dt = Ré. Sib + 7dt = Fa. Sib majeur = Sib-Ré-Fa. Sib mineur : Sib + 3dt = Réb. Sib + 7dt = Fa. Sib mineur = Sib-Réb-Fa. Quelques exemples avec des bémols : les formules restent identiques, seuls les noms des notes changent." },
+            { "type": "h", "text": "Les 12 triades majeures — une par une" },
+            { "type": "p", "text": "Do : Do-Mi-Sol. Do# : Do#-Fa-Sol#. Ré : Ré-Fa#-La. Ré# : Ré#-Sol-La#. Mi : Mi-Sol#-Si. Fa : Fa-La-Do. Fa# : Fa#-La#-Do#. Sol : Sol-Si-Ré. Sol# : Sol#-Do-Ré#. La : La-Do#-Mi. La# : La#-Ré-Fa. Si : Si-Ré#-Fa#. Mémorise-les progressivement — pas toutes en même temps." },
+            { "type": "h", "text": "Sur le manche : appliquer la formule" },
+            { "type": "p", "text": "Sur le manche, construire une triade depuis une note est visuel. Depuis Do sur c5 case 3 : tierce majeure = +4 cases sur la même corde = c5 case 7 = Mi. Quinte juste = +7 cases = c5 case 10 = Sol. Ou en utilisant les patterns d'intervalles entre cordes vus dans le module Manche." },
+            { "type": "h", "text": "L'enharmonie dans les triades" },
+            { "type": "p", "text": "Attention aux enharmonies quand tu construis une triade. La triade de Do# majeur = Do#-Fa-Sol#. Mais on écrira souvent Ré♭ majeur = Réb-Fa-Lab (enharmonique de Do# majeur). Même son, écriture différente. En pratique, sur la guitare, ce n'est pas un problème : tu joues les mêmes cases." },
+            { "type": "ref", "text": "Test pratique : la chanson 'La Bamba' (traditionnelle mexicaine) utilise les accords La-Ré-Mi. Si tu transposes en Do, tu joues Do-Fa-Sol. Même structure harmonique (I-IV-V), notes différentes. Tu viens d'appliquer la construction de triades à la transposition." },
+            { "type": "tip", "text": "Drill quotidien (3 min) : tire une note au hasard (nomme-en une). Construis sa triade majeure en 5 secondes. Puis sa triade mineure. Puis diminuée. Au bout de 2 semaines, c'est instantané. C'est l'investissement le plus rentable en théorie musicale." }
+          ],
+          "quiz": ["q-harm-c2-04", "q-harm-c2-05"]
+        },
+
+        {
+          "id": "harm-c2-03",
+          "title": "Les 12 triades majeures — mémorisation",
+          "duration": 9,
+          "content": [
+            { "type": "p", "text": "Il y a 12 notes dans la gamme chromatique, donc 12 triades majeures. Les mémoriser toutes paraît intimidant, mais avec la bonne méthode, c'est accessible en quelques semaines. Cette leçon te donne la stratégie la plus efficace." },
+            { "type": "h", "text": "Groupe 1 : les triades sans altérations ou 1 altération" },
+            { "type": "p", "text": "Do : Do-Mi-Sol (0 altération). Sol : Sol-Si-Ré (1 dièse). Fa : Fa-La-Do (1 bémol). Ces 3 triades sont les plus faciles à mémoriser — peu d'altérations, notes souvent jouées en position ouverte." },
+            { "type": "h", "text": "Groupe 2 : les triades courantes (2-3 altérations)" },
+            { "type": "p", "text": "Ré : Ré-Fa#-La. La : La-Do#-Mi. Mi : Mi-Sol#-Si. Sib : Sib-Ré-Fa. Mib : Mib-Sol-Sib. Ce groupe couvre les tonalités les plus utilisées en pop/rock." },
+            { "type": "h", "text": "Groupe 3 : les triades riches en altérations" },
+            { "type": "p", "text": "Si : Si-Ré#-Fa#. Fa# : Fa#-La#-Do#. Do# : Do#-Fa-Sol#. Sol# : Sol#-Do-Ré#. Moins fréquentes, mais importantes pour le jazz et la musique classique." },
+            { "type": "h", "text": "Méthode de mémorisation par groupes" },
+            { "type": "p", "text": "Semaine 1 : mémorise le groupe 1 (Do, Sol, Fa). Semaine 2 : ajoute Ré et La. Semaine 3 : ajoute Mi et Sib. Semaine 4 : ajoute Mib et Si. Semaine 5 : finalise avec Fa#, Do#, Sol#. 5 semaines pour les 12 triades majeures. Au lieu de tout apprendre d'un coup, tu construis progressivement." },
+            { "type": "h", "text": "Pattern mnémotechnique : le cycle des quintes" },
+            { "type": "p", "text": "Les 12 tonalités suivent le cycle des quintes (vu dans le module Gammes). Si tu mémorises l'ordre du cycle (Do-Sol-Ré-La-Mi-Si-Fa#-Do# ; Fa-Sib-Mib-Lab-Réb-Solb), les altérations des triades correspondantes suivent une logique : chaque quinte ajoute 1 altération. Comprendre le cycle simplifie l'apprentissage des 12 triades." },
+            { "type": "h", "text": "Sur la guitare : les formes CAGED comme aide" },
+            { "type": "p", "text": "Les formes CAGED (vues dans le module Manche) sont ta béquille pour mémoriser les triades. Si tu sais que la forme E barrée donne un accord majeur dont la fondamentale est sur c6, alors la triade de cet accord = les 3 notes principales de la forme E. Tu n'as pas à calculer : la forme te donne les notes." },
+            { "type": "ref", "text": "Jeu pratique : prends une radio ou une playlist et écoute les premières secondes de chaque chanson. Essaie d'identifier le premier accord joué. Est-ce majeur ou mineur ? Puis essaie de trouver de quelle tonalité il s'agit. Cet exercice d'écoute active développe l'oreille harmonique plus vite que n'importe quelle mémorisation théorique." },
+            { "type": "tip", "text": "Mémo visuel : écris les 12 triades majeures sur une feuille, avec fondamentale / tierce / quinte en colonnes. Colle-la dans ta chambre. Regarde-la chaque jour. En 3 semaines de simple exposition visuelle, tu les mémoriseras sans effort conscient." }
+          ],
+          "quiz": ["q-harm-c2-06", "q-harm-c2-07"]
+        },
+
+        {
+          "id": "harm-c2-04",
+          "title": "Les inversions de triades et leur usage",
+          "duration": 10,
+          "content": [
+            { "type": "p", "text": "Tu connais maintenant les triades en 'état fondamental' (1-3-5, fondamentale à la basse). Mais une triade peut aussi être jouée dans 2 autres configurations : 1ère inversion (3-5-1) et 2e inversion (5-1-3). Ces inversions sont des outils essentiels pour la composition, le voice-leading et les transitions fluides entre accords." },
+            { "type": "h", "text": "État fondamental : 1 à la basse" },
+            { "type": "p", "text": "C'est la position 'normale' d'un accord. La note la plus grave est la fondamentale. Exemple : Do majeur = Do (basse) - Mi - Sol. L'accord sonne stable, affirmé, 'ancré'. C'est la position que tu utilises 80% du temps quand tu plaques des accords." },
+            { "type": "h", "text": "1ère inversion : 3 à la basse" },
+            { "type": "p", "text": "La tierce devient la note la plus grave. Exemple : Do majeur 1ère inversion = Mi (basse) - Sol - Do. L'accord sonne légèrement plus 'ouvert', moins 'affirmé'. En notation symbolique, on l'écrit Do/Mi (Do avec Mi à la basse). Très utilisée pour créer des lignes de basse mélodiques (au lieu de descendre par saut, la basse se déplace par degrés conjoints)." },
+            { "type": "h", "text": "2e inversion : 5 à la basse" },
+            { "type": "p", "text": "La quinte devient la note la plus grave. Exemple : Do majeur 2e inversion = Sol (basse) - Do - Mi. Cet accord sonne le moins 'stable' des trois — la quinte en basse crée une légère tension. Très utilisé comme 'accord de passage' entre 2 accords (ex : I → I/5 → IV crée une descente fluide dans la basse)." },
+            { "type": "h", "text": "Voice-leading : l'art des transitions fluides" },
+            { "type": "p", "text": "Le 'voice-leading' est l'art de passer d'un accord à l'autre en minimisant les sauts. Au lieu de changer brusquement toutes les notes, tu gardes certaines notes communes et déplaces les autres par demi-tons ou tons. Les inversions sont l'outil principal du voice-leading : elles permettent d'utiliser des voicings 'proches' entre accords successifs." },
+            { "type": "h", "text": "Exemple de voice-leading avec inversions" },
+            { "type": "p", "text": "Progression Do-Sol-La mineur-Fa (1-5-6m-4). Au lieu de sauter d'un accord à l'autre : Do état fond. → Sol 1ère inversion (Si en basse) → La mineur 1ère inversion (Do en basse) → Fa état fond. La ligne de basse monte par demi-tons : Do-Si-Do-Do... wait. Reprenons : Do-Si-La-La est plus fluide que les sauts normaux. Les inversions créent une ligne de basse mélodique." },
+            { "type": "h", "text": "Sur la guitare : inversions pratiques" },
+            { "type": "p", "text": "Les inversions de triades s'utilisent surtout sur les cordes 1-2-3 et 2-3-4 (comme vu dans le module Manche). Sur un accord barré à 6 cordes, tu 'contiens' implicitement des inversions : certaines cordes jouent la tierce ou la quinte en position basse. Mais pour travailler les inversions explicitement, les triades à 3 cordes sont l'outil parfait." },
+            { "type": "ref", "text": "'And I Love Her' (Beatles) : la ligne de basse utilise des inversions d'accords pour créer un mouvement descendant mélodique. La basse ne suit pas toujours la fondamentale — elle passe par des tierces et quintes. Résultat : la ligne de basse est aussi une mélodie. C'est le pouvoir des inversions." },
+            { "type": "tip", "text": "Drill inversions : prends Do majeur. Joue-le en état fondamental (c5-3, c4-2, c3-0). Puis 1ère inversion (c4-2, c3-0, c2-1 — Mi en basse). Puis 2e inversion (c3-0, c2-1, c1-0 — Sol en basse). 3 positions, 3 couleurs. Mémorise les 3 formes de Do majeur. Refais avec Sol, La mineur." }
+          ],
+          "quiz": ["q-harm-c2-08", "q-harm-c2-09"]
+        },
+
+        {
+          "id": "harm-c3-01",
+          "title": "Pourquoi ajouter une 7e ?",
+          "duration": 9,
+          "content": [
+            { "type": "p", "text": "Une triade a 3 notes (1-3-5). Un accord de septième a 4 notes (1-3-5-7). Cette 4e note transforme radicalement la couleur de l'accord : il devient plus riche, plus sophistiqué, plus 'coloré'. Les accords de 7e sont la base du jazz, de la bossa nova, de la soul et de la pop moderne. Ils sont partout dès qu'on cherche un son un peu plus élaboré." },
+            { "type": "h", "text": "La 7e note : laquelle ?" },
+            { "type": "p", "text": "La '7e note' d'un accord est la note à 10 ou 11 demi-tons de la fondamentale (selon qu'elle est mineure ou majeure). Depuis Do : 7e mineure = Sib (10 demi-tons). 7e majeure = Si (11 demi-tons). Cette différence d'un seul demi-ton crée des couleurs très différentes." },
+            { "type": "h", "text": "La 7e majeure : couleur lumineuse et jazz" },
+            { "type": "p", "text": "Cmaj7 = Do-Mi-Sol-Si. La 7e majeure (Si) est à seulement 1 demi-ton de la fondamentale (Do). Cette proximité crée une tension douce, 'romantique', qui résout vers l'octave. Son : lumineux, sophistiqué, jazz, bossa nova. Entendre : la vamp de bossa nova ('Girl from Ipanema' commence sur Fmaj7)." },
+            { "type": "h", "text": "La 7e mineure sur accord mineur : couleur funky" },
+            { "type": "p", "text": "Am7 = La-Do-Mi-Sol. La 7e mineure (Sol) ajoute de la 'douceur' à l'accord mineur. Son : funky, modal, soul, R&B. Entendre : la vamp de 'So What' (Miles Davis) = Dm7 en boucle. Les accords de Am7 sont partout en néo-soul (D'Angelo, Erykah Badu, John Mayer)." },
+            { "type": "h", "text": "La 7e mineure sur accord majeur : la dominante" },
+            { "type": "p", "text": "G7 = Sol-Si-Ré-Fa. C'est l'accord de 'dominante' : majeur + 7e mineure. Il contient un triton (entre Si et Fa = 6 demi-tons), qui crée une forte tension demandant à se résoudre vers Do majeur. Son : tendu, blues, jazz. C'est LE son qui fait avancer la musique tonale." },
+            { "type": "h", "text": "Pourquoi les accords de 7e sonnent 'plus riches'" },
+            { "type": "p", "text": "Deux raisons. D'abord acoustique : ajouter une 4e harmonique enrichit le spectre sonore (plus de 'couleur'). Ensuite fonctionnel : la 7e ajoute une tension directionnelle à l'accord. L'accord sait 'où il veut aller'. Un Do majeur simple est stable, fermé. Un Cmaj7 est stable mais avec une légère invitation à continuer." },
+            { "type": "ref", "text": "'Autumn Leaves' (standard de jazz, 1945) : toute la progression utilise des accords de 7e (Am7-D7-Gmaj7-Cmaj7...). Sans les 7e, le morceau sonnerait 'enfantin'. Avec les 7e, il sonne adulte, sophistiqué, musical. Le même principe s'applique à n'importe quelle chanson pop : remplace les triades par des 7e et tu obtiens instantanément un son plus moderne." },
+            { "type": "tip", "text": "Test simple : prends une chanson pop (par ex I-V-vi-IV en Do). Joue-la d'abord avec des triades simples (C-G-Am-F). Puis joue-la avec des 7e (Cmaj7-G7-Am7-Fmaj7). Entends la différence de sophistication. Les 7e te coûtent souvent juste 1 doigt supplémentaire, mais la différence sonore est énorme." }
+          ],
+          "quiz": ["q-harm-c3-01", "q-harm-c3-02"]
+        },
+
+        {
+          "id": "harm-c3-02",
+          "title": "Les 5 types d'accords de septième",
+          "duration": 12,
+          "content": [
+            { "type": "p", "text": "Il existe 5 types fondamentaux d'accords de septième. Chacun a une couleur unique et un usage spécifique en harmonie. Maîtriser ces 5 types, c'est avoir accès à 95% des accords que tu rencontreras en pop, rock, jazz, bossa et soul." },
+            { "type": "h", "text": "1. Accord Maj7 — le rêveur" },
+            { "type": "p", "text": "Formule : 1-3-5-7 (majeur + 7e majeure). Cmaj7 = Do-Mi-Sol-Si. Couleur : lumineux, romantique, jazzy, bossa. 'Rêveur'. Utilisation : sur le I (tonique) et le IV en tonalité majeure. C'est l'accord qui commence beaucoup de ballades jazz et bossa nova." },
+            { "type": "h", "text": "2. Accord m7 — le méditatif" },
+            { "type": "p", "text": "Formule : 1-b3-5-b7 (mineur + 7e mineure). Am7 = La-Do-Mi-Sol. Couleur : doux, modal, funky, méditatif. 'Groove décontracté'. Utilisation : sur le ii et le vi en tonalité majeure, sur le I en tonalité modale. Base du jazz, du funk, de la bossa." },
+            { "type": "h", "text": "3. Accord 7 (dominante) — le moteur" },
+            { "type": "p", "text": "Formule : 1-3-5-b7 (majeur + 7e mineure). G7 = Sol-Si-Ré-Fa. Couleur : tendu, blues, 'qui veut avancer'. 'Motoriste'. Utilisation : sur le V en tonalité majeure ou mineure. C'est l'accord de tension par excellence : il contient un triton et veut se résoudre vers le I." },
+            { "type": "h", "text": "4. Accord m7b5 — le demi-diminué" },
+            { "type": "p", "text": "Formule : 1-b3-b5-b7 (mineur + quinte diminuée + 7e mineure). Bm7b5 = Si-Ré-Fa-La. Couleur : instable, sophistiqué, 'jazzy sombre'. Aussi appelé 'half-diminished'. Utilisation : sur le ii d'une cadence en tonalité mineure (ii-V-i). Très présent dans les standards de jazz." },
+            { "type": "h", "text": "5. Accord dim7 — le passeur" },
+            { "type": "p", "text": "Formule : 1-b3-b5-bb7 (triades diminuée + 7e doublement bémolisée = 6e). Cdim7 = Do-Mib-Solb-La (enharmonique de Sib). Couleur : ultra-tendu, dramatique, 'qui passe'. Utilisation : comme accord de transition, jamais comme point de repos. Sa symétrie (toutes les notes à 3 demi-tons d'écart) le rend transposable à lui-même tous les 3 demi-tons." },
+            { "type": "h", "text": "Tableau récapitulatif" },
+            { "type": "p", "text": "Maj7 (1-3-5-7) : lumineux, tonique/IV en majeur. m7 (1-b3-5-b7) : doux, ii/vi en majeur ou I modal. 7 dom (1-3-5-b7) : tendu, V partout. m7b5 (1-b3-b5-b7) : instable, ii en mineur. dim7 (1-b3-b5-bb7) : ultra-tendu, transition. Ces 5 types couvrent toute l'harmonie tonale classique et jazz." },
+            { "type": "h", "text": "Le triton dans la dominante" },
+            { "type": "p", "text": "Ce qui rend l'accord de dominante (X7) si puissant : il contient toujours un triton entre sa 3e et sa 7e. Dans G7 : Si (3e) → Fa (7e) = 6 demi-tons = triton. Ce triton est l'intervalle le plus dissonant. Il crée une tension irrésistible vers la résolution. Si → Do (monte d'un demi-ton). Fa → Mi (descend d'un demi-ton). Ces 2 mouvements de demi-ton vers le I est ce qui rend V7→I si satisfaisant." },
+            { "type": "ref", "text": "Pour entendre les 5 types dans un standard : 'All The Things You Are' (Jerome Kern, 1939) contient les 5 types d'accords de 7e dans ses 36 premières mesures. C'est pourquoi ce morceau est considéré comme l'un des meilleurs 'exercices' d'harmonie pour les jazzmen. Écoute une version piano solo pour entendre clairement chaque couleur." },
+            { "type": "tip", "text": "Drill 'reconnaissance' : joue successivement Cmaj7 (Do-Mi-Sol-Si), Cm7 (Do-Mib-Sol-Sib), C7 (Do-Mi-Sol-Sib), Cm7b5 (Do-Mib-Solb-Sib), Cdim7 (Do-Mib-Solb-La). Nomme chaque type à voix haute en le jouant. Puis joue-les les yeux fermés et identifie-les par l'oreille. En 2 semaines, tu les distingues à l'écoute." }
+          ],
+          "quiz": ["q-harm-c3-03", "q-harm-c3-04", "q-harm-c3-05"]
+        },
+
+        {
+          "id": "harm-c3-03",
+          "title": "Les guide tones : 3e et 7e",
+          "duration": 10,
+          "content": [
+            { "type": "p", "text": "Dans un accord de septième, toutes les notes ne jouent pas le même rôle. La fondamentale et la quinte sont 'génériques' — elles définissent la hauteur et l'ancrage. Mais la 3e et la 7e sont les notes qui définissent la QUALITÉ de l'accord (majeur, mineur, dominante, etc.). On les appelle les 'guide tones', et ce sont elles que tu cibles en improvisation pour 'sonner sur l'accord'." },
+            { "type": "h", "text": "Pourquoi la 3e et la 7e ?" },
+            { "type": "p", "text": "Parce qu'elles portent le maximum d'information harmonique avec le minimum de notes. Joue uniquement Do et Sol (fondamentale + quinte) : tu ne sais pas si c'est Do majeur, Do mineur, Do7, ou Do diminué. Ajoute Mi (3e) : maintenant tu sais que c'est un accord de Do majeur (Mi = tierce majeure). Ajoute Si (7e) : tu sais que c'est Cmaj7. Les guide tones 'racontent' l'accord." },
+            { "type": "h", "text": "Les guide tones des 5 types d'accords de 7e" },
+            { "type": "p", "text": "Cmaj7 : guide tones = Mi (3e maj) + Si (7e maj). Cm7 : Do-guide tones = Mib (3e min) + Sib (7e min). C7 : guide tones = Mi (3e maj) + Sib (7e min). Cm7b5 : guide tones = Mib (3e min) + Sib (7e min) — même que Cm7, mais la quinte diminuée change la couleur. Cdim7 : guide tones = Mib (3e min) + La (7e dim)." },
+            { "type": "h", "text": "Les guide tones en improvisation" },
+            { "type": "p", "text": "Voici le secret du jazz : quand tu improvises sur une progression d'accords, si tu fais tomber tes phrases sur les guide tones aux moments importants (temps forts, fins de phrases), tu sonnes 'sur l'accord' immédiatement. Même si le reste de ta phrase est 'neutre', les guide tones ancrent l'oreille de l'auditeur sur l'harmonie." },
+            { "type": "h", "text": "Le mouvement chromatique des guide tones" },
+            { "type": "p", "text": "Dans une progression Dm7-G7-Cmaj7 (ii-V-I), les guide tones se déplacent par demi-tons d'un accord à l'autre. 7e de Dm7 = Do → 3e de G7 = Si (descend d'un demi-ton). 3e de Dm7 = Fa → 7e de G7 = Fa (reste !). 3e de G7 = Si → 7e de Cmaj7 = Si (reste !). 7e de G7 = Fa → 3e de Cmaj7 = Mi (descend d'un demi-ton). Ce mouvement minimal est le 'fil rouge' qui relie les accords entre eux." },
+            { "type": "h", "text": "Voicings 'shell' : jouer économe" },
+            { "type": "p", "text": "En jazz, on joue souvent des 'shell voicings' : fondamentale + 3e + 7e (sans quinte). 3 notes seulement, mais elles définissent parfaitement l'accord. Avantage : moins de doigts, son plus 'ouvert', laisse de la place pour d'autres musiciens (basse, piano). G7 shell : Sol (c6-3) + Si (c5-2) + Fa (c4-3). 3 notes, son immédiatement reconnaissable." },
+            { "type": "ref", "text": "Les pianistes de jazz (Bill Evans, Herbie Hancock, Keith Jarrett) jouent presque exclusivement des shell voicings main gauche + lignes mélodiques main droite. Cette économie de notes, loin d'appauvrir le son, le rend plus clair et plus musical. Sur la guitare, c'est le même principe." },
+            { "type": "tip", "text": "Drill guide tones : sur la progression Dm7-G7-Cmaj7, joue uniquement les guide tones de chaque accord (3e et 7e). Dm7 : Fa-Do. G7 : Si-Fa. Cmaj7 : Mi-Si. Joue-les lentement, 1 accord par mesure. Tu entendras la 'ligne intérieure' de l'harmonie — c'est ce que les pros entendent en permanence." }
+          ],
+          "quiz": ["q-harm-c3-06", "q-harm-c3-07"]
+        },
+
+        {
+          "id": "harm-c3-04",
+          "title": "Les voicings shell : économe et efficace",
+          "duration": 8,
+          "content": [
+            { "type": "p", "text": "Un 'voicing' c'est une manière spécifique de disposer les notes d'un accord sur le manche. Les voicings shell (de l'anglais 'coque, squelette') sont des voicings minimalistes : seulement 2 ou 3 notes, mais les bonnes. Sur la guitare, ces voicings sont la base du jeu jazz et du comping moderne." },
+            { "type": "h", "text": "Définition d'un shell voicing" },
+            { "type": "p", "text": "Un shell voicing = fondamentale + 3e + 7e (la quinte est omise). Ces 3 notes définissent complètement la qualité de l'accord (vu dans la leçon précédente). L'omission de la quinte n'est pas un manque — c'est un choix esthétique qui rend le son plus 'ouvert'." },
+            { "type": "h", "text": "Les voicings shell sur la guitare (cordes 6-5-4)" },
+            { "type": "p", "text": "La disposition la plus pratique : fondamentale sur c6, 3e sur c5 (ou c4), 7e sur c4 (ou c3). Exemple Cmaj7 shell : Do (c6-8) + Mi (c4-10) + Si (c3-9). 3 doigts, 3 cordes, accord parfait. G7 shell : Sol (c6-3) + Si (c5-2) + Fa (c4-3). Dm7 shell : Ré (c6-10) + Fa (c5-8) + Do (c4-10)." },
+            { "type": "h", "text": "Les voicings shell sur cordes 5-4-3" },
+            { "type": "p", "text": "Quand la fondamentale est sur c5 : Cmaj7 shell : Do (c5-3) + Mi (c4-2) + Si (c3-4). G7 shell : Sol (c5-10) + Si (c4-9) + Fa (c3-10). Cette position est plus aiguë, utile pour les progressions dans le médium du manche." },
+            { "type": "h", "text": "Pourquoi omettre la quinte ne pose pas problème" },
+            { "type": "p", "text": "La quinte juste est le deuxième harmonique naturel de n'importe quelle note. Autrement dit, quand tu joues une fondamentale, son 2e harmonique naturel (déjà présent dans le son de la corde) EST la quinte. Ton oreille 'l'entend' même quand tu ne la joues pas. La quinte est implicite dans toute note fondamentale. C'est pourquoi l'omettre ne change pas la perception de l'accord." },
+            { "type": "h", "text": "Application : comper sur ii-V-I en jazz" },
+            { "type": "p", "text": "Sur la progression Dm7-G7-Cmaj7 (ii-V-I en Do) en shell voicings : Dm7 (c6-10, c5-8, c4-10) → G7 (c6-3, c5-2, c4-3) → Cmaj7 (c6-8, c4-10, c3-9). Si tu joues ça à 80 BPM avec du rythme, tu sonnes jazz immédiatement. Les shell voicings sont le premier pas vers le son jazz sur la guitare." },
+            { "type": "ref", "text": "Freddie Green (guitariste du Count Basie Orchestra, 1937-1987) a joué des shell voicings pendant toute sa carrière — 50 ans à comper des accords de 2-3 notes à 4 temps par mesure, à tempo swing. C'est l'utilisation ultime du shell voicing : économe, précis, rythmique, musical." },
+            { "type": "tip", "text": "Apprends ces 4 shell voicings 'par cœur' : Cmaj7 (c6-8, c4-10, c3-9), Dm7 (c6-10, c5-8, c4-10), G7 (c6-3, c5-2, c4-3), Am7 (c6-5, c5-3, c4-5). Ces 4 voicings te donnent la progression I-ii-V-vi en Do majeur en version jazz instantanée." }
+          ],
+          "quiz": ["q-harm-c3-08"]
+        },
+
+        {
+          "id": "harm-c4-01",
+          "title": "La 9e, la 11e, la 13e : les extensions",
+          "duration": 10,
+          "content": [
+            { "type": "p", "text": "On a vu les triades (1-3-5) et les accords de 7e (1-3-5-7). Mais on peut aller plus loin : ajouter une 9e, une 11e, ou une 13e. Ces notes supplémentaires s'appellent des 'extensions' — elles enrichissent la couleur de l'accord sans en changer la fonction fondamentale. C'est le territoire du jazz avancé, de la bossa nova et de la soul moderne." },
+            { "type": "h", "text": "Comment compter les extensions" },
+            { "type": "p", "text": "Les extensions continuent la série des tierces au-delà de la 7e. 9e = 2e une octave plus haut. 11e = 4e une octave plus haut. 13e = 6e une octave plus haut. Concrètement : Cmaj9 = Do-Mi-Sol-Si-Ré. C11 = Do-Mi-Sol-Sib-Ré-Fa. C13 = Do-Mi-Sol-Sib-Ré-Fa-La. En théorie, tu empiles jusqu'à 7 notes. En pratique, on en choisit 3 à 5 selon la couleur voulue." },
+            { "type": "h", "text": "La 9e : l'extension la plus utilisée" },
+            { "type": "p", "text": "Maj9 (1-3-5-7-9) : Cmaj9 = Do-Mi-Sol-Si-Ré. Couleur : encore plus lumineux que Maj7. m9 (1-b3-5-b7-9) : Dm9 = Ré-Fa-La-Do-Mi. Couleur : doux, chaud. 9 (dominante, 1-3-5-b7-9) : G9 = Sol-Si-Ré-Fa-La. Couleur : blues sophistiqué. La 9e est souvent 'libre' — tu peux l'ajouter à presque n'importe quel accord pour le sophistiquer légèrement." },
+            { "type": "h", "text": "La 11e : la quarte à l'octave" },
+            { "type": "p", "text": "La 11e est délicate : sur un accord Maj7, le 11 naturel (= quarte juste) crée une dissonance avec la 3e (1 demi-ton d'écart). On utilise plutôt le #11 (quarte augmentée = lydien !) sur les Maj7 : Cmaj7#11 = Do-Mi-Sol-Si-Fa#. Couleur : lydienne, mystérieuse. Sur les accords m7, le 11 naturel passe sans problème : Dm11 = Ré-Fa-La-Do-Mi-Sol." },
+            { "type": "h", "text": "La 13e : la sixte à l'octave" },
+            { "type": "p", "text": "G13 = Sol-Si-Ré-Fa-La-Do-Mi (7 notes en théorie). En pratique, on joue fondamentale + 3e + 7e + 13e (4 notes). G13 voicing pratique = Sol-Si-Fa-Mi (en omettant quinte, 9e, 11e). Couleur : dominante très riche, jazz. La 13e (= 6e) est présente dans beaucoup d'accords jazz-funk." },
+            { "type": "h", "text": "Les altérations de tensions" },
+            { "type": "p", "text": "On peut aussi altérer les extensions : b9 (9e bémolisée), #9 (9e augmentée = 'Hendrix chord'), #11 (11e augmentée = lydien), b13 (13e bémolisée). Ces extensions altérées donnent des couleurs encore plus sophistiquées. L'accord 7#9 (1-3-5-b7-#9) est l'accord de 'Purple Haze' : il combine tierce majeure ET tierce mineure (enharmonique de #9), créant une ambiguïté majeur/mineur explosive." },
+            { "type": "h", "text": "Sur la guitare : jouer les extensions" },
+            { "type": "p", "text": "Les extensions sont souvent ajoutées en remplaçant une note existante par l'extension (ex : remplacer la quinte par la 9e). Sur la guitare, avec 4-5 doigts, on choisit les notes les plus importantes de l'accord : fondamentale + 3e + 7e + extension principale. Les 4 meilleures notes selon l'effet voulu." },
+            { "type": "ref", "text": "'Purple Haze' (Jimi Hendrix, 1967) : le riff utilise un accord E7#9 (Mi7 avec 9e augmentée). Le Sol# (3e majeure) et le Sol naturel (#9 = enharmonique de lab ≈ sol) coexistent, créant l'ambiguïté majeur/mineur si caractéristique du son psychédélique Hendrix. Un seul accord, un son reconnaissable en 1 seconde." },
+            { "type": "tip", "text": "Commence avec une seule extension : ajoute une 9e à tes accords habituels. Dm → Dm9 (ajouter Mi). Gmaj7 → Gmaj9 (ajouter La). Am7 → Am9 (ajouter Si). Ces petites modifications raffinent immédiatement ton son sans complexifier ton jeu." }
+          ],
+          "quiz": ["q-harm-c4-01", "q-harm-c4-02"]
+        },
+
+        {
+          "id": "harm-c4-02",
+          "title": "Tensions et résolutions : comment les extensions fonctionnent",
+          "duration": 9,
+          "content": [
+            { "type": "p", "text": "Les extensions ne sont pas juste des 'décorations'. Elles obéissent à une logique précise de tensions et résolutions. Comprendre cette logique te permet d'utiliser les extensions intelligemment : pas au hasard, mais avec une intention harmonique claire." },
+            { "type": "h", "text": "Le principe de tension-résolution" },
+            { "type": "p", "text": "En harmonie tonale, le mouvement de base est : tension → résolution. Une dissonance (tension) attire vers une consonance (résolution). L'accord de dominante (V7) est la tension. L'accord de tonique (I) est la résolution. Les extensions enrichissent ce mouvement en ajoutant des couches de tension supplémentaires." },
+            { "type": "h", "text": "Extensions 'libres' vs extensions 'tendues'" },
+            { "type": "p", "text": "Certaines extensions sont 'disponibles' (free tones) : elles s'ajoutent à n'importe quel accord sans créer de tension spécifique. La 9e naturelle est souvent libre sur les accords Maj7 et m7. D'autres extensions sont 'tendues' (avoid tones ou chromatic approach tones) : elles créent une friction qui demande à se résoudre. La 11e naturelle sur un Maj7 est une tension (forme un demi-ton avec la 3e)." },
+            { "type": "h", "text": "Note évitée : le Fa sur Cmaj7" },
+            { "type": "p", "text": "La note la plus 'évitée' en harmonie tonale classique : le Fa (11e) sur Cmaj7. Fa est à 1 demi-ton de Mi (3e de Cmaj7). Cette friction est perçue comme dissonante. On dit que Fa est l'avoid note de Cmaj7. En pratique : si tu joues le Fa en note de passage (courte), ça passe. Si tu le tiens longtemps sur Cmaj7, ça sonne 'faux'. La durée détermine si une note tendue est agréable ou désagréable." },
+            { "type": "h", "text": "Les tensions dans la gamme sur l'accord" },
+            { "type": "p", "text": "Pour chaque accord, certaines notes de la gamme parente sont 'libres' (sonnent bien tenues) et d'autres sont 'tendues' (sonnent bien en passage mais pas tenues). Sur Cmaj7 en Do majeur : 1 (Do) = libre. 2/9 (Ré) = libre. 3 (Mi) = libre. 4/11 (Fa) = tendue (avoid). 5 (Sol) = libre. 6/13 (La) = libre. 7 (Si) = libre. Seul le Fa est tendu sur Cmaj7." },
+            { "type": "h", "text": "Résolution par demi-ton" },
+            { "type": "p", "text": "La résolution la plus forte = mouvement de demi-ton. C'est pourquoi V7 → I est si puissant (Si descend vers Do, Fa descend vers Mi, 2 mouvements de demi-ton). Les extensions créent des tensions supplémentaires qui se résolvent aussi par demi-tons. b9 de G7 (Lab) → Sol (fondamentale de C). #11 de G7alt (Do#) → Do (fondamentale de C). Plus tu ajoutes d'extensions tendues, plus la résolution sera satisfaisante." },
+            { "type": "h", "text": "L'équilibre tension-résolution dans un solo" },
+            { "type": "p", "text": "En improvisation, la gestion de la tension est un art. Trop peu de tension = solo plat, ennuyeux. Trop de tension sans résolution = chaos sonore. La formule idéale : build tension progressivement → release sur un point fort. Les extensions te donnent des outils pour 'doser' la tension de tes phrases." },
+            { "type": "ref", "text": "John Coltrane ('A Love Supreme', 1964) est le maître de la gestion tension-résolution. Il pousse la dissonance très loin (extensions altérées, superpositions modales) avant de résoudre. L'effet est cathartique — la résolution est d'autant plus satisfaisante que la tension était intense." },
+            { "type": "tip", "text": "Drill tension-résolution : sur Cmaj7, improvise en utilisant le Fa (avoid note) comme note de passage vers Mi ou Sol, jamais comme note tenue. Pratique ce geste jusqu'à ce qu'il devienne naturel : entrer sur Fa, ressortir immédiatement sur Mi ou Sol. Tu viens d'apprendre à gérer une tension harmonique." }
+          ],
+          "quiz": ["q-harm-c4-03", "q-harm-c4-04"]
+        }
+
+      ]
+    }
+  ],
+
+  "quiz": [
+    { "id": "q-harm-c1-01", "courseId": "harmony", "lessonId": "harm-c1-01", "lvl": 1, "q": "L'harmonie en musique, c'est…", "o": ["Les notes jouées une par une", "Les notes jouées simultanément (ou perçues ensemble)", "Le rythme de la mélodie", "La durée des notes"], "a": 1, "exp": "Harmonie = les notes jouées en simultané, formant des accords. Par opposition à la mélodie (horizontal) et au rythme (temporel). Les 3 piliers de la musique.", "xp": 20 },
+    { "id": "q-harm-c1-02", "courseId": "harmony", "lessonId": "harm-c1-01", "lvl": 2, "q": "Sans connaître l'harmonie, un musicien…", "o": ["Ne peut pas jouer", "Joue mais sans comprendre pourquoi les accords fonctionnent", "Joue mieux intuitivement", "N'a pas besoin de l'apprendre"], "a": 1, "exp": "Sans harmonie, on mémorise des accords comme des recettes. Avec l'harmonie, on comprend la logique — ce qui permet d'analyser, transposer, composer et improviser intelligemment.", "xp": 30 },
+    { "id": "q-harm-c1-03", "courseId": "harmony", "lessonId": "harm-c1-02", "lvl": 1, "q": "La consonance correspond à…", "o": ["Des sons qui créent de la tension", "Des sons qui s'accordent naturellement (rapports de fréquences simples)", "De la dissonance douce", "Un effet de réverb"], "a": 1, "exp": "Consonance = sons dont les fréquences vibrent dans des rapports simples (2:1 pour l'octave, 3:2 pour la quinte). L'oreille les perçoit comme 'stables' et 'agréables'.", "xp": 25 },
+    { "id": "q-harm-c1-04", "courseId": "harmony", "lessonId": "harm-c1-02", "lvl": 3, "q": "Pourquoi la dissonance est-elle nécessaire en musique ?", "o": ["Elle ne l'est pas", "Elle crée la tension qui rend la résolution satisfaisante", "Pour faire des erreurs", "Par convention historique"], "a": 1, "exp": "Sans dissonance, pas de tension. Sans tension, pas de mouvement harmonique, pas d'émotion. La musique fonctionne sur le cycle tension (dissonance) → résolution (consonance). Les deux sont nécessaires.", "xp": 45 },
+    { "id": "q-harm-c2-01", "courseId": "harmony", "lessonId": "harm-c2-01", "lvl": 1, "q": "Une triade majeure se compose de…", "o": ["1-2-3", "1-3-5 (fondamentale + tierce majeure + quinte juste)", "1-3-5-7", "1-b3-5"], "a": 1, "exp": "Triade majeure = 1-3-5. Tierce majeure (4 demi-tons) + quinte juste (7 demi-tons depuis la fondamentale). Son brillant, joyeux, stable.", "xp": 25 },
+    { "id": "q-harm-c2-02", "courseId": "harmony", "lessonId": "harm-c2-01", "lvl": 2, "q": "Quelle est la différence entre triade majeure et mineure ?", "o": ["La quinte change", "La fondamentale change", "La tierce : majeure (4dt) vs mineure (3dt)", "Le rythme"], "a": 2, "exp": "1 seul demi-ton de différence : tierce majeure (4 demi-tons) pour le majeur, tierce mineure (3 demi-tons) pour le mineur. Ce demi-ton change tout : de joyeux à mélancolique.", "xp": 30 },
+    { "id": "q-harm-c2-03", "courseId": "harmony", "lessonId": "harm-c2-01", "lvl": 2, "q": "La triade diminuée se compose de…", "o": ["1-3-5","1-b3-5","1-b3-b5","1-3-#5"], "a": 2, "exp": "Diminuée = 1-b3-b5. Tierce mineure + quinte diminuée (6 demi-tons). Very instable, 'diabolique'. Apparaît naturellement sur le 7e degré de la gamme majeure.", "xp": 35 },
+    { "id": "q-harm-c2-04", "courseId": "harmony", "lessonId": "harm-c2-02", "lvl": 2, "q": "Quelles notes forment la triade de Fa majeur ?", "o": ["Fa-La-Do", "Fa-Sol#-Do", "Fa-La-Ré", "Fa-La#-Do"], "a": 0, "exp": "Fa majeur : Fa + 4dt = La, Fa + 7dt = Do. Fa-La-Do. La triade majeure de Fa est la plus courante après Do, Sol et Ré en pop/folk.", "xp": 35 },
+    { "id": "q-harm-c2-05", "courseId": "harmony", "lessonId": "harm-c2-02", "lvl": 3, "q": "Quelles notes forment la triade de Si majeur ?", "o": ["Si-Ré-Fa#", "Si-Ré#-Fa#", "Si-Ré#-Sol", "Si-Ré-Sol#"], "a": 1, "exp": "Si majeur : Si + 4dt = Ré#, Si + 7dt = Fa#. Si-Ré#-Fa#. Attention : c'est Ré# et non Ré naturel.", "xp": 45 },
+    { "id": "q-harm-c2-06", "courseId": "harmony", "lessonId": "harm-c2-03", "lvl": 2, "q": "Dans quel groupe (cycle des quintes) se trouve La majeur ?", "o": ["0 altération", "1-2 altérations", "3 altérations", "5+ altérations"], "a": 2, "exp": "La majeur = 3 dièses (Do#, Fa#, Sol#). Dans le cycle des quintes : Do(0) → Sol(1#) → Ré(2#) → La(3#). 3 quintes après Do.", "xp": 40 },
+    { "id": "q-harm-c2-07", "courseId": "harmony", "lessonId": "harm-c2-03", "lvl": 3, "q": "La triade de Do# majeur est…", "o": ["Do#-Mi-Sol#", "Do#-Fa-Sol#", "Do#-Mi#-Sol#", "Do#-Fa#-La"], "a": 1, "exp": "Do# majeur : Do# + 4dt = Fa (enharmonique Mi#), Do# + 7dt = Sol#. Do#-Fa-Sol# (= Do#-Mi#-Sol# si on respecte la notation par degrés conjoints).", "xp": 50 },
+    { "id": "q-harm-c2-08", "courseId": "harmony", "lessonId": "harm-c2-04", "lvl": 2, "q": "Une triade en '2e inversion' a quelle note à la basse ?", "o": ["La fondamentale", "La tierce", "La quinte", "La septième"], "a": 2, "exp": "2e inversion : la quinte est à la basse (5-1-3). État fondamental : 1 à la basse. 1ère inversion : 3 à la basse. La 2e inversion sonne moins stable que les deux autres.", "xp": 40 },
+    { "id": "q-harm-c2-09", "courseId": "harmony", "lessonId": "harm-c2-04", "lvl": 3, "q": "Pourquoi utilise-t-on les inversions en composition ?", "o": ["Pour compliquer", "Pour permettre un voice-leading fluide (mouvements minimaux entre accords)", "Par convention", "Pour changer de tonalité"], "a": 1, "exp": "Voice-leading = passer d'un accord à l'autre avec les moins de mouvement possible entre les notes. Les inversions permettent d'utiliser des voicings 'proches' entre accords successifs.", "xp": 50 },
+    { "id": "q-harm-c3-01", "courseId": "harmony", "lessonId": "harm-c3-01", "lvl": 1, "q": "Un accord Maj7 contient…", "o": ["Fondamentale + tierce + quinte", "Fondamentale + tierce + quinte + 7e majeure", "Fondamentale + 7e seulement", "Fondamentale + quinte + 7e mineure"], "a": 1, "exp": "Maj7 = triade majeure (1-3-5) + 7e majeure (11 demi-tons depuis la fondamentale). Ex : Cmaj7 = Do-Mi-Sol-Si.", "xp": 30 },
+    { "id": "q-harm-c3-02", "courseId": "harmony", "lessonId": "harm-c3-01", "lvl": 2, "q": "Pourquoi un accord de dominante (X7) crée-t-il plus de tension qu'un accord majeur simple ?", "o": ["Plus de notes", "Il contient un triton entre sa 3e et sa 7e", "Le rythme est différent", "La quinte est augmentée"], "a": 1, "exp": "G7 = Sol-Si-Ré-Fa. Si (3e) → Fa (7e) = 6 demi-tons = triton. Cet intervalle dissonant crée une tension vers la résolution. La dominante 'veut' aller vers le I.", "xp": 45 },
+    { "id": "q-harm-c3-03", "courseId": "harmony", "lessonId": "harm-c3-02", "lvl": 2, "q": "L'accord m7b5 (demi-diminué) se compose de…", "o": ["1-3-5-b7", "1-b3-5-b7", "1-b3-b5-b7", "1-b3-b5-bb7"], "a": 2, "exp": "m7b5 = 1-b3-b5-b7. Mineur + quinte diminuée + 7e mineure. Utilisé sur le ii d'une cadence en mineur (Bm7b5-E7-Am7).", "xp": 40 },
+    { "id": "q-harm-c3-04", "courseId": "harmony", "lessonId": "harm-c3-02", "lvl": 2, "q": "L'accord G7 contient quelles notes ?", "o": ["Sol-Si-Ré-Fa#", "Sol-Si-Ré-Fa", "Sol-Sib-Ré-Fa", "Sol-Si-Réb-Fa"], "a": 1, "exp": "G7 = Sol(1) + Si(3 maj) + Ré(5) + Fa(b7). Le Fa est naturel (7e mineure de Sol). Si c'était Fa#, ce serait Gmaj7.", "xp": 40 },
+    { "id": "q-harm-c3-05", "courseId": "harmony", "lessonId": "harm-c3-02", "lvl": 3, "q": "Sur quel degré de la gamme majeure trouve-t-on un accord de dominante (X7) ?", "o": ["I", "II", "V", "VII"], "a": 2, "exp": "Le V (5e degré) porte naturellement un accord de dominante (V7) dans la gamme majeure harmonisée. Ex en Do majeur : V = G7 (Sol-Si-Ré-Fa). C'est la tension harmonique principale.", "xp": 45 },
+    { "id": "q-harm-c3-06", "courseId": "harmony", "lessonId": "harm-c3-03", "lvl": 2, "q": "Dans un accord de 7e, les 'guide tones' sont…", "o": ["La fondamentale et la quinte", "La 3e et la 7e", "Toutes les notes", "La fondamentale et la 7e"], "a": 1, "exp": "Guide tones = 3e + 7e. Ces 2 notes définissent la qualité de l'accord. La fondamentale et la quinte sont génériques. À cibler en improvisation pour sonner 'sur l'accord'.", "xp": 40 },
+    { "id": "q-harm-c3-07", "courseId": "harmony", "lessonId": "harm-c3-03", "lvl": 3, "q": "Dans une progression Dm7-G7-Cmaj7, comment se déplacent les guide tones ?", "o": ["Par grands sauts", "Par mouvements chromatiques (demi-tons)", "Ils restent fixes", "Aléatoirement"], "a": 1, "exp": "7e Dm7 (Do) → 3e G7 (Si) : descend d'1 demi-ton. 3e G7 (Si) → 7e Cmaj7 (Si) : reste. 7e G7 (Fa) → 3e Cmaj7 (Mi) : descend d'1 demi-ton. Ce 'fil rouge' chromatique relie les accords.", "xp": 55 },
+    { "id": "q-harm-c3-08", "courseId": "harmony", "lessonId": "harm-c3-04", "lvl": 3, "q": "Un shell voicing comprend…", "o": ["Fondamentale + quinte", "Fondamentale + 3e + 7e (sans quinte)", "Toutes les notes de l'accord", "3e + 5e + 7e"], "a": 1, "exp": "Shell voicing = fondamentale + 3e + 7e. La quinte est omise (elle est implicite dans les harmoniques naturels). 3 notes qui définissent complètement l'accord, son économe et ouvert.", "xp": 45 },
+    { "id": "q-harm-c4-01", "courseId": "harmony", "lessonId": "harm-c4-01", "lvl": 2, "q": "La 9e d'un accord correspond à quel degré de la gamme ?", "o": ["La 2e, une octave plus haut", "La 4e, une octave plus haut", "La 7e, une octave plus haut", "Une note hors gamme"], "a": 0, "exp": "9e = 2e degré de la gamme, une octave plus haut. En Do : 9e = Ré (2e). Sur Cmaj9 = Do-Mi-Sol-Si-Ré. L'octave n'est qu'un déplacement, pas un intervalle différent.", "xp": 35 },
+    { "id": "q-harm-c4-02", "courseId": "harmony", "lessonId": "harm-c4-01", "lvl": 3, "q": "L'accord '7#9' (Hendrix chord) contient quelle particularité ?", "o": ["Deux fondamentales", "Tierce majeure ET tierce mineure coexistent (ambiguïté maj/min)", "Deux quintes", "Pas de 7e"], "a": 1, "exp": "E7#9 : Mi-Sol#-Ré-Sol. La #9 de Mi = Sol (enharmonique de Fa##). Sol# (tierce majeure) + Sol naturel (#9 ≈ tierce mineure). Ambiguïté majeur/mineur = son psychédélique Hendrix.", "xp": 55 },
+    { "id": "q-harm-c4-03", "courseId": "harmony", "lessonId": "harm-c4-02", "lvl": 2, "q": "Quelle est la 'note évitée' (avoid note) sur un accord Cmaj7 ?", "o": ["Ré", "Mi", "Fa", "Sol"], "a": 2, "exp": "Fa (4e/11e naturelle) est l'avoid note de Cmaj7. Elle est à 1 demi-ton de Mi (3e), créant une friction. Fa tenu = dissonant. Fa en passage rapide vers Mi ou Sol = acceptable.", "xp": 45 },
+    { "id": "q-harm-c4-04", "courseId": "harmony", "lessonId": "harm-c4-02", "lvl": 3, "q": "Pourquoi la résolution V7→I est-elle si satisfaisante physiquement ?", "o": ["Convention culturelle", "2 mouvements de demi-ton simultanés (Si→Do et Fa→Mi)", "Le volume augmente", "Le tempo ralentit"], "a": 1, "exp": "Dans G7→C : Si (3e de G7) monte vers Do (1 de C) = +1 demi-ton. Fa (7e de G7) descend vers Mi (3e de C) = -1 demi-ton. 2 attractions chromatiques simultanées = résolution la plus forte en harmonie tonale.", "xp": 60 }
+  ],
+
+  "exercises": []
+}

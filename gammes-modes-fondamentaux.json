@@ -1,0 +1,377 @@
+{
+  "courses": [
+    {
+      "id": "scales",
+      "title": "Gammes & modes",
+      "icon": "🎼",
+      "color": "#1D9E75",
+      "colorL": "#E1F5EE",
+      "desc": "De la note unique aux 7 modes — pédagogie progressive",
+      "lessons": [
+
+        {
+          "id": "scales-c1-01",
+          "title": "L'alphabet musical : les 7 notes naturelles",
+          "duration": 8,
+          "content": [
+            { "type": "p", "text": "Avant d'aborder les gammes, les modes ou l'harmonie, il faut faire connaissance avec la matière première de la musique : les notes. Et bonne nouvelle, il n'y en a pas autant qu'on le croit. La musique occidentale repose sur seulement 7 notes naturelles, qui se répètent à l'infini sur ton instrument." },
+            { "type": "h", "text": "Les 7 notes" },
+            { "type": "p", "text": "Do, Ré, Mi, Fa, Sol, La, Si. Voilà. C'est tout. Tu les connais peut-être aussi en notation anglo-saxonne : C, D, E, F, G, A, B. Les deux notations désignent exactement les mêmes notes. Sur les partitions et tablatures internationales, c'est la notation anglaise qui domine. Sur la guitare, en France, on mélange souvent les deux." },
+            { "type": "h", "text": "Pourquoi Do = C et pas A ?" },
+            { "type": "p", "text": "Question légitime. Historiquement, l'alphabet musical anglais a démarré sur LA (= A), qui correspondait à la note de référence (le diapason). Mais l'oreille occidentale s'est progressivement orientée vers DO (= C) comme note 'centrale' parce que la gamme majeure de Do est la plus simple à analyser (aucune altération). C'est pour ça qu'on dit 'Do, Ré, Mi...' et pas 'La, Si, Do...' quand on liste les notes." },
+            { "type": "h", "text": "Les notes se répètent par octaves" },
+            { "type": "p", "text": "Quand tu joues les 7 notes en montant (Do-Ré-Mi-Fa-Sol-La-Si), la 8e note est à nouveau un Do, mais plus aigu. C'est ce qu'on appelle une octave. Sur ta guitare, la case 12 d'une corde sonne exactement comme la corde à vide, mais une octave plus haut. Cette répétition est universelle dans toute la musique tonale." },
+            { "type": "ref", "text": "Écoute les premières notes de 'Do-Ré-Mi' (chanson tirée de 'La Mélodie du bonheur', 1965) : c'est littéralement la gamme majeure de Do chantée note par note. Une oreille qui connaît cette mélodie connaît déjà l'ordre des 7 notes." },
+            { "type": "tip", "text": "Avant d'aller plus loin, mémorise cet ordre dans les deux notations : Do=C, Ré=D, Mi=E, Fa=F, Sol=G, La=A, Si=B. C'est le b.a.-ba." }
+          ],
+          "quiz": ["q-scales-c1-01", "q-scales-c1-02"]
+        },
+
+        {
+          "id": "scales-c1-02",
+          "title": "Les altérations : dièses et bémols",
+          "duration": 9,
+          "content": [
+            { "type": "p", "text": "7 notes, c'est bien. Mais entre certaines de ces notes, il existe des notes 'intermédiaires' : ce sont les altérations. Au total, la musique occidentale compte donc 12 sons différents avant que la boucle ne recommence à l'octave. Tu vois ces 12 sons à chaque case de ta guitare." },
+            { "type": "h", "text": "Le dièse (#) — augmenter d'un cran" },
+            { "type": "p", "text": "Un dièse devant une note signifie 'cette note, mais un cran plus haut'. Exemple : Fa# (Fa dièse) est juste après Fa, vers l'aigu. Sur ta guitare, c'est une case plus à droite. Si Fa est sur la case 1 de la corde de Mi grave, alors Fa# est sur la case 2." },
+            { "type": "h", "text": "Le bémol (♭) — diminuer d'un cran" },
+            { "type": "p", "text": "Un bémol fait l'inverse : il abaisse la note d'un cran. Si♭ (Si bémol) est juste avant Si, vers le grave. Si Si est case 7 de la corde de Mi, Si♭ est case 6." },
+            { "type": "h", "text": "Les deux exceptions importantes" },
+            { "type": "p", "text": "Entre certaines paires de notes, il n'y a PAS d'altération. C'est le cas entre Mi et Fa (Mi-Fa sont déjà collés), et entre Si et Do (Si-Do sont collés aussi). Donc il n'existe pas de Mi# (= ce serait Fa) ni de Fa♭ (= ce serait Mi). Ces deux 'collages' sont les fameux 'demi-tons naturels'. Tu y reviendras dans la leçon suivante." },
+            { "type": "h", "text": "Les 12 sons en ordre" },
+            { "type": "p", "text": "Voici la suite complète, du plus grave au plus aigu : Do - Do# - Ré - Ré# - Mi - Fa - Fa# - Sol - Sol# - La - La# - Si - et on revient à Do (octave). 12 sons en tout. Cette suite s'appelle la 'gamme chromatique'. Sur ta guitare, c'est exactement ce que tu joues si tu remontes case après case sur une seule corde." },
+            { "type": "ref", "text": "Pour visualiser : sur la corde de Mi grave (corde 6), joue case 0 (Mi), case 1 (Fa), case 2 (Fa#), case 3 (Sol)... jusqu'à case 12 où tu retombes sur Mi (1 octave plus haut). Tu viens de jouer la gamme chromatique." },
+            { "type": "tip", "text": "Sur le manche : 1 case = 1 cran d'altération. Monter d'une case = +1 dièse. Descendre = +1 bémol. Cette équivalence est ta meilleure amie pour comprendre la guitare." }
+          ],
+          "quiz": ["q-scales-c1-03", "q-scales-c1-04"]
+        },
+
+        {
+          "id": "scales-c1-03",
+          "title": "Tons et demi-tons : la mesure des distances",
+          "duration": 10,
+          "content": [
+            { "type": "p", "text": "Maintenant qu'on connaît les 12 sons, il faut apprendre à mesurer les distances entre eux. C'est ici que naissent les concepts de 'ton' et 'demi-ton' — les deux unités fondamentales de toute la théorie musicale. Sans eux, impossible de comprendre une seule gamme." },
+            { "type": "h", "text": "Le demi-ton : la plus petite distance" },
+            { "type": "p", "text": "Un demi-ton, c'est l'écart entre deux notes consécutives de la gamme chromatique. Sur la guitare, c'est exactement une case d'écart sur la même corde. Exemples : Do → Do# = 1 demi-ton. Mi → Fa = 1 demi-ton (rappel : entre Mi et Fa il n'y a pas d'altération). Si → Do = 1 demi-ton aussi." },
+            { "type": "h", "text": "Le ton : deux demi-tons" },
+            { "type": "p", "text": "Un ton, c'est tout simplement deux demi-tons collés. Sur la guitare, ça correspond à deux cases d'écart. Exemples : Do → Ré = 1 ton (parce que Do → Do# → Ré, soit 2 demi-tons). Sol → La = 1 ton. Fa → Sol = 1 ton." },
+            { "type": "h", "text": "Les demi-tons naturels (à mémoriser) " },
+            { "type": "p", "text": "Reprends mentalement les 7 notes naturelles : Do-Ré-Mi-Fa-Sol-La-Si. Entre la plupart des notes, l'écart est d'un ton. SAUF entre Mi et Fa (1 demi-ton), et entre Si et Do (1 demi-ton). Ces deux endroits sont les 'demi-tons naturels' de la gamme. Ils sont au cœur de tout ce qui suit." },
+            { "type": "h", "text": "Pourquoi cette asymétrie est cruciale" },
+            { "type": "p", "text": "Si tu pars de Do et que tu montes en respectant cette suite ton-ton-demi-ton-ton-ton-ton-demi-ton, tu obtiens automatiquement la gamme majeure de Do. Ce 'pattern' de tons et demi-tons est ce qui crée la sonorité 'majeure'. Si tu changes le pattern, tu obtiens un autre type de gamme (mineure, modale, etc.). Toute la théorie occidentale repose sur ces patterns d'écarts." },
+            { "type": "ref", "text": "Exercice immédiat : sur la corde de Mi grave, monte case par case en disant à voix haute : 'Mi (case 0) - Fa (case 1, +1/2 ton) - Sol (case 3, +1 ton) - La (case 5, +1 ton) - Si (case 7, +1 ton) - Do (case 8, +1/2 ton) - Ré (case 10, +1 ton) - Mi (case 12, +1 ton)'. Tu viens de jouer la gamme majeure de Mi en parlant à haute voix le pattern T-T-DT-T-T-T-DT." },
+            { "type": "tip", "text": "Mnémonique pour ne jamais oublier les demi-tons naturels : 'Mi-Fa Si-Do, ce sont eux qui se collent'. Cette phrase pourrait sauver ta vie de musicien." }
+          ],
+          "quiz": ["q-scales-c1-05", "q-scales-c1-06", "q-scales-c1-07"]
+        },
+
+        {
+          "id": "scales-c1-04",
+          "title": "Les enharmonies : pourquoi Do# = Réb ?",
+          "duration": 7,
+          "content": [
+            { "type": "p", "text": "Petite leçon courte mais utile. Tu as peut-être remarqué quelque chose de bizarre : la note entre Do et Ré peut s'appeler 'Do#' (Do dièse) OU 'Ré♭' (Ré bémol). C'est exactement le même son, la même touche du piano, la même case de ta guitare. Pourquoi deux noms ?" },
+            { "type": "h", "text": "Le concept d'enharmonie" },
+            { "type": "p", "text": "Deux notes qui sonnent pareil mais s'écrivent différemment sont dites 'enharmoniques'. Do# et Ré♭ sont enharmoniques. Mi# et Fa sont enharmoniques. La# et Si♭ sont enharmoniques. Ce n'est pas une coquetterie : le choix entre les deux dépend du contexte musical." },
+            { "type": "h", "text": "Quand utiliser un dièse vs un bémol" },
+            { "type": "p", "text": "Règle simple : on garde les noms de notes consécutifs dans une gamme. Dans Sol majeur (Sol-La-Si-Do-Ré-Mi-Fa#-Sol), on écrit 'Fa#' parce qu'on a déjà un 'Sol' juste après. Dans Mi♭ majeur (Mi♭-Fa-Sol-La♭-Si♭-Do-Ré-Mi♭), on écrit 'La♭' (et pas Sol#) parce qu'il faut une note 'La' dans la gamme. C'est de la cohérence d'orthographe musicale." },
+            { "type": "h", "text": "Pourquoi ça importe" },
+            { "type": "p", "text": "Sur ta guitare, c'est exactement la même case, donc tu peux ignorer la nuance au début. Mais quand tu liras une partition, tu verras des Sol bémol et des Fa dièse selon les morceaux. Comprendre l'enharmonie t'évitera des moments de panique." },
+            { "type": "ref", "text": "Anecdote : la chanson 'Yesterday' (The Beatles) est en Fa majeur. Elle contient des Si bémol, jamais des La dièse — pourtant ce serait la même note. C'est juste une question d'orthographe musicale cohérente avec la tonalité." },
+            { "type": "tip", "text": "Au début, accepte simplement qu'une même case puisse avoir deux noms. Ce sera plus clair quand on parlera de tonalités, dans les prochaines leçons." }
+          ],
+          "quiz": ["q-scales-c1-08"]
+        },
+
+        {
+          "id": "scales-c1-05",
+          "title": "Les intervalles simples : seconde, tierce, quarte, quinte",
+          "duration": 11,
+          "content": [
+            { "type": "p", "text": "Un intervalle, c'est la distance entre deux notes. Tu sais déjà mesurer cette distance en demi-tons. Maintenant on va lui donner un nom 'musical' : seconde, tierce, quarte, quinte... Ces noms sont essentiels parce que toute la musique en parle." },
+            { "type": "h", "text": "Comment compter un intervalle" },
+            { "type": "p", "text": "Pour nommer un intervalle entre 2 notes, on compte les notes elles-mêmes (en incluant la première et la dernière). De Do à Mi, on compte : Do(1) - Ré(2) - Mi(3). Donc Do→Mi est une 'tierce'. De Sol à Do : Sol(1) - La(2) - Si(3) - Do(4). Donc Sol→Do est une 'quarte'." },
+            { "type": "h", "text": "Les 5 intervalles courants" },
+            { "type": "p", "text": "Seconde : 2 notes d'écart (Do→Ré). Tierce : 3 notes (Do→Mi). Quarte : 4 notes (Do→Fa). Quinte : 5 notes (Do→Sol). Sixte : 6 notes (Do→La). Plus l'intervalle est grand, plus on monte dans l'aigu." },
+            { "type": "h", "text": "Mais attention : majeur ou mineur ?" },
+            { "type": "p", "text": "Chaque intervalle peut exister en version 'majeure' (plus grand) ou 'mineure' (plus petit). C'est là que les demi-tons reviennent. Une tierce majeure = 4 demi-tons (ex: Do→Mi). Une tierce mineure = 3 demi-tons (ex: Do→Mi♭). Même nom 'tierce', mais 1 demi-ton de différence — et ce demi-ton change tout ! C'est lui qui fait la différence entre un accord majeur (joyeux) et un accord mineur (triste)." },
+            { "type": "h", "text": "Tableau des intervalles et leurs demi-tons" },
+            { "type": "p", "text": "Seconde mineure = 1 demi-ton. Seconde majeure = 2. Tierce mineure = 3. Tierce majeure = 4. Quarte juste = 5. Triton (quarte aug./quinte dim.) = 6. Quinte juste = 7. Sixte mineure = 8. Sixte majeure = 9. Septième mineure = 10. Septième majeure = 11. Octave = 12. Mémoriser ces 12 valeurs est l'investissement le plus rentable de ta vie de musicien." },
+            { "type": "h", "text": "Sur la guitare : la mesure visuelle" },
+            { "type": "p", "text": "Une chose magique : sur une seule corde, l'intervalle EN DEMI-TONS = nombre de cases d'écart. Tierce majeure = 4 cases. Quinte = 7 cases. Octave = 12 cases. Tu as littéralement la théorie musicale sous les doigts." },
+            { "type": "ref", "text": "Reconnaître une quinte juste à l'oreille : les 2 premières notes du générique de Star Wars, c'est une quinte. Les premières notes de 'Twinkle Twinkle Little Star' (Au clair de la lune en France), c'est aussi une quinte ascendante. Une fois que ton oreille les a, tu les entendras partout." },
+            { "type": "tip", "text": "Apprends d'abord les 5 intervalles 'piliers' : seconde majeure (1 ton), tierce majeure (2 tons), quarte juste (5 demi-tons), quinte juste (7 demi-tons), octave. Tout le reste se déduit." }
+          ],
+          "quiz": ["q-scales-c1-09", "q-scales-c1-10", "q-scales-c1-11"]
+        },
+
+        {
+          "id": "scales-c1-06",
+          "title": "Les intervalles complets : sixtes, septièmes, octave",
+          "duration": 9,
+          "content": [
+            { "type": "p", "text": "On termine le tour des intervalles avec les plus grands. Ces intervalles peuvent sembler abstraits au début, mais tu vas voir qu'ils apparaissent partout dès que tu te mets à improviser ou à harmoniser." },
+            { "type": "h", "text": "Sixtes : la couleur vocale" },
+            { "type": "p", "text": "Sixte majeure = 9 demi-tons (Do→La). Sixte mineure = 8 demi-tons (Do→La♭). Les sixtes sonnent 'romantiques', 'chantantes'. Elles sont très utilisées dans les ballades pop, le R&B, la bossa nova. Beaucoup de mélodies vocales qui te touchent contiennent des sixtes." },
+            { "type": "h", "text": "Septièmes : la tension qui résout" },
+            { "type": "p", "text": "Septième majeure = 11 demi-tons (Do→Si). Septième mineure = 10 demi-tons (Do→Si♭). La septième majeure sonne 'sophistiquée', 'jazz'. La septième mineure sonne 'tendue', 'qui veut bouger' — c'est l'âme de la musique blues et jazz. Tous les accords '7' que tu joues (G7, A7, etc.) contiennent une septième mineure." },
+            { "type": "h", "text": "Octave : le retour à la maison" },
+            { "type": "p", "text": "Octave = 12 demi-tons. Même note, plus aigu (ou plus grave). C'est l'intervalle le plus 'consonant' : ton oreille entend les deux notes presque comme étant la même note. Sur la guitare, l'octave de toute note est à +12 cases sur la même corde." },
+            { "type": "h", "text": "Le triton : l'intervalle interdit" },
+            { "type": "p", "text": "Entre la quarte juste (5 demi-tons) et la quinte juste (7 demi-tons), il y a un intervalle de 6 demi-tons. On l'appelle 'triton' (3 tons entiers). Cet intervalle sonne extrêmement dissonant, instable. Au Moyen-Âge, on l'appelait 'diabolus in musica' (le diable en musique) et il était évité. Aujourd'hui, c'est l'intervalle clé du blues, du jazz, et de la musique heavy metal." },
+            { "type": "h", "text": "Récap visuel sur la guitare" },
+            { "type": "p", "text": "Sur une corde, depuis une note de référence : +1 case = seconde mineure. +2 = seconde majeure. +3 = tierce mineure. +4 = tierce majeure. +5 = quarte juste. +6 = triton. +7 = quinte juste. +8 = sixte mineure. +9 = sixte majeure. +10 = septième mineure. +11 = septième majeure. +12 = octave." },
+            { "type": "ref", "text": "Reconnaître un triton à l'oreille : le célèbre riff d'intro de 'Black Sabbath' (le morceau, 1970) est un triton. La sonnerie 'Maria' de West Side Story commence aussi par un triton (puis se résout sur la quinte). Une fois que tu l'as entendu, tu ne l'oublieras plus." },
+            { "type": "tip", "text": "Drill quotidien (2 min) : sur la corde de La (5e), choisis une case au hasard. Joue cette note puis trouve sa quinte juste (+7 cases) sans regarder. Refais avec sa tierce majeure (+4 cases). Cet exercice cale les intervalles dans tes doigts." }
+          ],
+          "quiz": ["q-scales-c1-12", "q-scales-c1-13"]
+        },
+
+        {
+          "id": "scales-c2-01",
+          "title": "Qu'est-ce qu'une gamme (vraiment) ?",
+          "duration": 8,
+          "content": [
+            { "type": "p", "text": "Tu entends parler de gammes depuis que tu joues : gamme majeure, mineure, blues, pentatonique... Mais qu'est-ce qu'une gamme, au fond ? La réponse est simple, et une fois que tu l'as comprise, tout devient lumineux." },
+            { "type": "h", "text": "Définition" },
+            { "type": "p", "text": "Une gamme est une SÉLECTION ORDONNÉE de notes choisies parmi les 12 sons disponibles. C'est un menu. Au lieu d'avoir accès aux 12 notes (la gamme chromatique complète), une gamme te donne 5, 6, 7 ou 8 notes spécifiques qui sonnent bien ensemble dans un certain contexte." },
+            { "type": "h", "text": "Pourquoi limiter le choix ?" },
+            { "type": "p", "text": "Parce qu'avec 12 notes disponibles, tout 'fonctionne' techniquement, mais pas tout sonne 'juste' ensemble. Une gamme te garantit une cohérence sonore. Quand tu improvises dans une gamme donnée, chacune des notes que tu joues 'colle' avec la tonalité du morceau. C'est une assurance contre la fausse note." },
+            { "type": "h", "text": "Les ingrédients d'une gamme" },
+            { "type": "p", "text": "Une gamme est définie par 3 choses : (1) une fondamentale (la note de départ, qui donne son nom à la gamme), (2) un nombre de notes (5 = pentatonique, 7 = heptatonique = 'normale', 8 = octatonique...), (3) une formule d'intervalles (ex: T-T-DT-T-T-T-DT pour la gamme majeure)." },
+            { "type": "h", "text": "Exemple concret" },
+            { "type": "p", "text": "La gamme de Do majeur a : (1) fondamentale = Do, (2) 7 notes, (3) formule T-T-DT-T-T-T-DT. En appliquant la formule depuis Do, tu obtiens Do-Ré-Mi-Fa-Sol-La-Si. C'est ta gamme. Toutes ces 7 notes sonneront 'naturelles' dans un morceau en Do majeur." },
+            { "type": "h", "text": "Et il existe combien de gammes ?" },
+            { "type": "p", "text": "Théoriquement, des centaines. En pratique, on utilise quelques familles principales : majeure, mineure (3 variantes), pentatoniques (mineure et majeure), blues, modes (7), gammes 'exotiques' (diminuée, par tons, hongroise...). On va se concentrer sur les essentielles." },
+            { "type": "ref", "text": "Comparaison utile : une gamme, c'est comme une palette de couleurs pour un peintre. La gamme majeure = palette joyeuse et lumineuse. La gamme mineure = palette mélancolique. La gamme blues = palette urbaine, dramatique. Le choix de la gamme = le choix de l'ambiance." },
+            { "type": "tip", "text": "Ne mémorise pas une gamme comme une suite de notes (Do-Ré-Mi...). Mémorise-la comme une formule d'intervalles (T-T-DT-T-T-T-DT). Ainsi tu peux la reconstruire dans n'importe quelle tonalité." }
+          ],
+          "quiz": ["q-scales-c2-01"]
+        },
+
+        {
+          "id": "scales-c2-02",
+          "title": "La gamme majeure : la matrice de tout",
+          "duration": 12,
+          "content": [
+            { "type": "p", "text": "Si tu ne devais retenir qu'une seule gamme dans ta vie de musicien, ce serait celle-ci. La gamme majeure n'est pas qu'une gamme parmi d'autres : c'est la matrice à partir de laquelle se déduisent les modes, l'harmonie tonale, et 90% de la musique populaire occidentale. La maîtriser, c'est avoir la clé de tout." },
+            { "type": "h", "text": "La formule magique" },
+            { "type": "p", "text": "Ton — Ton — Demi-ton — Ton — Ton — Ton — Demi-ton. Soit en abrégé : T-T-DT-T-T-T-DT. C'est la séquence d'intervalles qui définit la gamme majeure. Peu importe la note de départ : applique cette formule, et tu obtiens une gamme majeure." },
+            { "type": "h", "text": "Construction de Do majeur" },
+            { "type": "p", "text": "Partons de Do. T → Ré. T → Mi. DT → Fa. T → Sol. T → La. T → Si. DT → Do. On retombe sur Do à l'octave. Résultat : Do-Ré-Mi-Fa-Sol-La-Si-Do. Aucune altération ! C'est pour ça que Do majeur est la 'gamme de référence' : elle utilise uniquement les 7 notes naturelles, pas un seul dièse ni bémol." },
+            { "type": "h", "text": "Construction de Sol majeur" },
+            { "type": "p", "text": "Partons de Sol. T → La. T → Si. DT → Do. T → Ré. T → Mi. T → ? Si on monte d'un ton depuis Mi, on arrive à Fa#. (Mi+1 ton = Fa#, car Mi-Fa est déjà un demi-ton naturel). DT → Sol. Résultat : Sol-La-Si-Do-Ré-Mi-Fa#-Sol. Sol majeur a un seul dièse : Fa#. C'est sa 'signature'." },
+            { "type": "h", "text": "Pourquoi cette formule produit du 'majeur'" },
+            { "type": "p", "text": "C'est l'asymétrie des intervalles qui crée le caractère 'lumineux' de la gamme majeure. Les deux demi-tons (entre 3-4 et 7-8) créent des points de tension qui se résolvent vers les notes voisines. Ton oreille perçoit ces résolutions comme une marche logique, satisfaisante. C'est ce qui rend les mélodies majeures 'positives'." },
+            { "type": "h", "text": "Les 12 gammes majeures (cycle des quintes)" },
+            { "type": "p", "text": "Il existe 12 gammes majeures (une par note de la gamme chromatique). Plus la fondamentale est 'éloignée' de Do, plus il y a d'altérations : Do (0), Sol (1#), Ré (2#), La (3#), Mi (4#), Si (5#), Fa# (6#), Do# (7#). Côté bémols : Fa (1♭), Si♭ (2♭), Mi♭ (3♭), La♭ (4♭), Ré♭ (5♭), Sol♭ (6♭). Ce schéma, on l'appelle le 'cycle des quintes'." },
+            { "type": "ref", "text": "Pour entendre la gamme majeure 'pure' : la mélodie de 'Joy to the World' (chant de Noël) descend toute la gamme majeure du degré 8 au degré 1. C'est un exercice d'écoute parfait. Ou encore, l'intro de 'Let It Be' (The Beatles) est en Do majeur — toutes les notes des couplets viennent de cette gamme." },
+            { "type": "tip", "text": "Sur la guitare, la position la plus pratique pour jouer une gamme majeure se trouve avec la fondamentale sur la corde 6. Ex: Sol majeur, fondamentale case 3 corde 6. Apprends cette 'forme' et tu peux la transposer en glissant le long du manche pour avoir n'importe quelle gamme majeure." }
+          ],
+          "quiz": ["q-scales-c2-02", "q-scales-c2-03", "q-scales-c2-04"]
+        },
+
+        {
+          "id": "scales-c2-03",
+          "title": "Les degrés et leurs noms",
+          "duration": 10,
+          "content": [
+            { "type": "p", "text": "Dans une gamme, chaque note a un numéro et un nom. Ces numéros (les degrés) sont l'outil le plus puissant pour analyser la musique. Avec eux, tu pourras parler de musique sans même mentionner les notes : c'est universel et ça marche dans toutes les tonalités." },
+            { "type": "h", "text": "Les 7 degrés numérotés" },
+            { "type": "p", "text": "Dans une gamme, on numérote les notes de 1 à 7 (en chiffres romains : I, II, III, IV, V, VI, VII). En Do majeur : I=Do, II=Ré, III=Mi, IV=Fa, V=Sol, VI=La, VII=Si. En Sol majeur : I=Sol, II=La, III=Si, IV=Do, V=Ré, VI=Mi, VII=Fa#. Les degrés restent les mêmes — seul le contenu change." },
+            { "type": "h", "text": "Les noms des degrés" },
+            { "type": "p", "text": "Chaque degré a un nom 'fonctionnel'. I = Tonique (la maison, le repos absolu). II = Sus-tonique. III = Médiante. IV = Sous-dominante. V = Dominante (la note de tension qui appelle la résolution). VI = Sus-dominante. VII = Sensible (la note qui 'attire' vers la tonique, à un demi-ton près)." },
+            { "type": "h", "text": "Les 3 degrés piliers : I, IV, V" },
+            { "type": "p", "text": "Sur les 7 degrés, trois sont absolument fondamentaux : la Tonique (I), la Sous-dominante (IV) et la Dominante (V). Leur trio organise la quasi-totalité de la musique tonale. Une 'cadence' typique = mouvement entre ces 3 piliers. Le 'blues 12 mesures' classique = uniquement I, IV, V. Beaucoup de chansons pop utilisent juste ces 3 accords (la fameuse progression I-IV-V)." },
+            { "type": "h", "text": "Pourquoi le V crée tant de tension" },
+            { "type": "p", "text": "Le degré V contient la note 'Sensible' (le degré VII de la gamme), qui est à un demi-ton de la tonique. Cette proximité fait que ton oreille 'entend' le V comme un déséquilibre qui DEMANDE à se résoudre vers le I. C'est physique, presque animal. La cadence V → I est la résolution la plus puissante de la musique occidentale." },
+            { "type": "h", "text": "Le langage universel des degrés" },
+            { "type": "p", "text": "Quand un musicien dit 'la chanson est en I-V-vi-IV', il décrit une progression d'accords dans n'importe quelle tonalité. En Do majeur ça donne Do-Sol-Lam-Fa. En Sol majeur ça donne Sol-Ré-Mim-Do. Mêmes degrés, mêmes émotions, contenu différent. C'est le langage standard des musiciens en studio (système Nashville)." },
+            { "type": "ref", "text": "Test toi : la chanson 'Let It Be' (Beatles) suit la progression I-V-vi-IV en Do majeur (Do-Sol-Lam-Fa). 'No Woman No Cry' (Bob Marley) suit la même progression en Do majeur. 'With Or Without You' (U2) suit la même en Ré majeur (Ré-La-Sim-Sol). Une fois que tu entends 'I-V-vi-IV', tu l'entendras dans 30% de la pop mondiale." },
+            { "type": "tip", "text": "Apprends à PENSER en degrés plutôt qu'en notes. Au lieu de te dire 'je vais jouer un Sol', dis-toi 'je vais jouer le V de Do majeur'. Cette habitude transforme ton cerveau musical." }
+          ],
+          "quiz": ["q-scales-c2-05", "q-scales-c2-06", "q-scales-c2-07"]
+        },
+
+        {
+          "id": "scales-c2-04",
+          "title": "Le cycle des quintes : la carte des tonalités",
+          "duration": 10,
+          "content": [
+            { "type": "p", "text": "Le cycle des quintes est un schéma qui organise les 12 tonalités majeures (et leurs équivalents mineurs) dans un ordre logique. Comprendre ce cycle = avoir une carte mentale de toute la musique tonale, qui te permet de modulerle, transposer, et naviguer entre tonalités." },
+            { "type": "h", "text": "Le principe : monter de quinte en quinte" },
+            { "type": "p", "text": "Pars de Do majeur (0 altération). Monte d'une quinte juste : tu arrives à Sol majeur (1 dièse : Fa#). Encore une quinte : Ré majeur (2 dièses). Encore : La majeur (3 dièses). Mi (4#), Si (5#), Fa# (6#), Do# (7#). À chaque quinte ajoutée, on ajoute un dièse à l'armure de la tonalité." },
+            { "type": "h", "text": "Le sens inverse : descendre par quintes" },
+            { "type": "p", "text": "Depuis Do majeur, descends d'une quinte : Fa majeur (1 bémol : Si♭). Encore : Si♭ majeur (2 bémols). Mi♭ (3), La♭ (4), Ré♭ (5), Sol♭ (6), Do♭ (7). Côté bémols, on en ajoute un à chaque descente de quinte." },
+            { "type": "h", "text": "Pourquoi c'est utile" },
+            { "type": "p", "text": "1) Pour savoir l'armure d'une tonalité instantanément (ex: 'Mi majeur c'est combien de dièses ?' → Mi est à 4 quintes de Do, donc 4 dièses). 2) Pour moduler proprement entre tonalités voisines (les tonalités voisines dans le cycle partagent presque toutes leurs notes). 3) Pour comprendre les progressions d'accords (beaucoup de progressions jazz suivent le cycle : Cm7-F7-Bb7-Eb...)." },
+            { "type": "h", "text": "L'ordre des dièses et bémols" },
+            { "type": "p", "text": "Les dièses apparaissent toujours dans le même ordre quand tu montes le cycle : Fa# - Do# - Sol# - Ré# - La# - Mi# - Si#. Tu peux le mémoriser comme 'Fa Do Sol Ré La Mi Si'. Les bémols apparaissent dans l'ordre inverse : Si♭ - Mi♭ - La♭ - Ré♭ - Sol♭ - Do♭ - Fa♭. Soit 'Si Mi La Ré Sol Do Fa'." },
+            { "type": "h", "text": "Tonalités relatives mineures" },
+            { "type": "p", "text": "Chaque tonalité majeure a une tonalité mineure 'relative' qui partage exactement les mêmes notes. La relative mineure se trouve sur le 6e degré de la majeure. Do majeur ↔ La mineur (mêmes notes). Sol majeur ↔ Mi mineur. Etc. Ces deux tonalités ont la même armure mais des fondamentales différentes." },
+            { "type": "ref", "text": "Pour visualiser le cycle des quintes : représente-le comme une horloge. À midi : Do (0 altération). En tournant à droite (heures 1, 2, 3...) on monte par quintes et on ajoute des dièses : Sol, Ré, La, Mi, Si... À 6h : Fa# (6 altérations, milieu du cycle). Continue à droite : Ré♭, La♭, Mi♭, Si♭, Fa, et retour à Do à midi. C'est une boucle complète." },
+            { "type": "tip", "text": "Apprends d'abord les 5 tonalités les plus courantes : Do (0), Sol (1#), Ré (2#), La (3#), Fa (1♭). Ces 5 tonalités couvrent 80% des chansons que tu joueras dans ta vie." }
+          ],
+          "quiz": ["q-scales-c2-08", "q-scales-c2-09"]
+        },
+
+        {
+          "id": "scales-c2-05",
+          "title": "Jouer la gamme majeure sur le manche",
+          "duration": 12,
+          "content": [
+            { "type": "p", "text": "Maintenant qu'on connaît la théorie, mettons-la dans nos doigts. Jouer la gamme majeure sur la guitare, c'est la première vraie compétence pratique. On va voir 3 positions essentielles, à mémoriser dans cet ordre." },
+            { "type": "h", "text": "Position 1 : fondamentale sur la corde 6" },
+            { "type": "p", "text": "C'est la position la plus utilisée. La fondamentale (le 1er degré) est sur la corde 6 (Mi grave). Tu joues ensuite le pattern T-T-DT-T-T-T-DT en montant. Pour Sol majeur (fondamentale case 3 corde 6) : Corde 6 → Sol(3)-La(5). Corde 5 → Si(2)-Do(3)-Ré(5). Corde 4 → Mi(2)-Fa#(4)-Sol(5). Corde 3 → La(2)-Si(4). Corde 2 → Do(1)-Ré(3)-Mi(5). Corde 1 → Fa#(2)-Sol(3)." },
+            { "type": "h", "text": "Comment retenir la position" },
+            { "type": "p", "text": "Cette position couvre 5 cases sur le manche (cases 1 à 5 dans l'exemple Sol majeur). Tu utilises 4 doigts (index sur case 2, majeur sur case 3, annulaire sur case 4, auriculaire sur case 5). Quand tu glisses cette position le long du manche, tu obtiens d'autres tonalités majeures sans changer la forme. Forme glissée case 5 → La majeur. Case 7 → Si majeur. Etc." },
+            { "type": "h", "text": "Position 2 : fondamentale sur la corde 5" },
+            { "type": "p", "text": "Plus aiguë, utile pour explorer la zone médium du manche. Pour Do majeur (fondamentale case 3 corde 5) : Corde 5 → Do(3)-Ré(5). Corde 4 → Mi(2)-Fa(3)-Sol(5). Corde 3 → La(2)-Si(4). Corde 2 → Do(1)-Ré(3)-Mi(5). Corde 1 → Fa(1)-Sol(3). Cette position offre un timbre plus 'vocal', dans le médium." },
+            { "type": "h", "text": "Position 3 : extension aiguë" },
+            { "type": "p", "text": "Pour Sol majeur en haut du manche (case 12) : on retrouve Sol case 12 corde 6, et tu continues le pattern. Cette zone aiguë est idéale pour les solos et les phrases mélodiques 'qui chantent'." },
+            { "type": "h", "text": "Les 3 mots d'ordre pour bien apprendre une position" },
+            { "type": "p", "text": "1) Va lentement. 60 BPM au métronome, chaque note doit sonner claire. 2) Nomme les notes à voix haute pendant que tu les joues (Sol-La-Si-Do-Ré...). Ça connecte tes doigts à ton cerveau. 3) Identifie la fondamentale dans chaque corde. Avec le temps, tu verras les degrés (1, 2, 3, 4...) à la place des notes." },
+            { "type": "h", "text": "Connecter les positions" },
+            { "type": "p", "text": "Une fois les 3 positions mémorisées, l'étape suivante est de les connecter. Tu commences en position 1, glisses vers la position 2, puis vers la position 3. C'est ce qui te donnera la liberté totale sur le manche. Mais ne te précipite pas : maîtrise UNE position d'abord, à fond, avant d'en ajouter d'autres." },
+            { "type": "ref", "text": "Pour mettre tes nouvelles positions en pratique : la chanson 'Wonderwall' (Oasis) est en Sol majeur. Tu peux improviser un solo simple par-dessus en utilisant uniquement les notes de la gamme de Sol majeur en position 1. Toutes les notes que tu joueras sonneront 'justes'." },
+            { "type": "tip", "text": "Méthode anti-frustration : pendant les 7 premiers jours, ne joue QUE la position 1 dans UNE seule tonalité (Sol majeur). Pas de précipitation. Une vraie maîtrise = 100 répétitions, pas 5. Ta position deviendra automatique." }
+          ],
+          "quiz": ["q-scales-c2-10", "q-scales-c2-11"]
+        },
+
+        {
+          "id": "scales-c3-01",
+          "title": "La pentatonique mineure : la gamme universelle",
+          "duration": 11,
+          "content": [
+            { "type": "p", "text": "Si la gamme majeure est la matrice théorique de la musique occidentale, la pentatonique mineure est sa version 'simplifiée et radioactive'. C'est la gamme la plus utilisée dans le monde entier : blues, rock, pop, soul, funk, et même musique chinoise traditionnelle. 5 notes, et une efficacité redoutable." },
+            { "type": "h", "text": "Pourquoi 'pentatonique' ?" },
+            { "type": "p", "text": "'Penta' vient du grec 'cinq'. 'Tonique' fait référence aux tons. La pentatonique = gamme à 5 notes. À comparer avec les gammes 'normales' qui en ont 7 (heptatoniques). Moins de notes = plus de simplicité = moins de risques de fausse note." },
+            { "type": "h", "text": "Comment elle est construite" },
+            { "type": "p", "text": "La pentatonique mineure se construit en prenant 5 notes de la gamme mineure naturelle (qu'on verra bientôt). Sa formule en degrés est : 1 - b3 - 4 - 5 - b7. Soit la fondamentale, la tierce mineure, la quarte juste, la quinte juste, et la septième mineure. En La : La-Do-Ré-Mi-Sol." },
+            { "type": "h", "text": "Pourquoi elle sonne toujours juste" },
+            { "type": "p", "text": "La pentatonique a été conçue pour éliminer les notes les plus 'tendues' de la gamme. La gamme mineure naturelle contient 7 notes dont 2 (le 2e et le 6e degrés) qui créent des frottements. La pentatonique enlève ces 2 notes 'à risque'. Résultat : 5 notes qui s'accordent pratiquement avec n'importe quel accord mineur ou progression blues." },
+            { "type": "h", "text": "La position 1 — celle à apprendre en premier" },
+            { "type": "p", "text": "Pour La pentatonique mineure, position 1 (case 5) : Corde 6 → La(5)-Do(8). Corde 5 → Ré(5)-Mi(7). Corde 4 → Sol(5)-La(7). Corde 3 → Do(5)-Ré(7). Corde 2 → Mi(5)-Sol(8). Corde 1 → La(5)-Do(8). Tu utilises uniquement deux doigts par corde (index et auriculaire). Cette forme est l'une des plus mémorables de toute la guitare — beaucoup de guitaristes la connaissent de mémoire après leur première leçon." },
+            { "type": "h", "text": "Sur quoi l'utiliser" },
+            { "type": "p", "text": "1) Tout blues (les 12 mesures classiques). 2) Toute progression en mineur. 3) La plupart des solos rock (riffs Hendrix, Page, Clapton, Slash). 4) Improvisation 'safe' sur n'importe quelle chanson en mineur. C'est ton outil de survie en improvisation." },
+            { "type": "ref", "text": "L'intro du solo de 'Stairway to Heaven' (Led Zeppelin) est en La pentatonique mineure. Le solo de 'Sweet Child O' Mine' (Guns N' Roses) aussi. Le riff de 'Smoke on the Water' (Deep Purple) utilise la même gamme. Une fois que tu la connais, tu reconnaîtras la pentatonique mineure dans 80% des solos rock que tu écoutes." },
+            { "type": "tip", "text": "Programme intensif : pendant 7 jours, fais 10 minutes par jour de pentatonique mineure de La position 1, à 60 BPM en montant et en descendant. Au bout d'une semaine, c'est sous tes doigts à vie." }
+          ],
+          "quiz": ["q-scales-c3-01", "q-scales-c3-02"]
+        },
+
+        {
+          "id": "scales-c3-02",
+          "title": "Les 5 positions de la pentatonique",
+          "duration": 14,
+          "content": [
+            { "type": "p", "text": "La pentatonique a 5 notes, donc 5 positions différentes sur le manche. Chaque position démarre sur une note différente de la gamme. Une fois les 5 connectées, tu peux jouer la pentatonique partout sur la guitare, du grave à l'aigu." },
+            { "type": "h", "text": "Pourquoi 5 positions" },
+            { "type": "p", "text": "Logique simple : la gamme a 5 notes, donc tu peux commencer la position sur chacune de ces 5 notes. Position 1 commence sur la fondamentale (1). Position 2 commence sur la b3. Position 3 sur la 4. Position 4 sur la 5. Position 5 sur la b7. Ensemble, elles couvrent tout le manche." },
+            { "type": "h", "text": "Position 1 (déjà vue)" },
+            { "type": "p", "text": "Pour La pentatonique mineure, démarre sur La (case 5 corde 6). C'est la position la plus utilisée. Tu connais déjà." },
+            { "type": "h", "text": "Position 2 : démarre sur la b3" },
+            { "type": "p", "text": "Pour La penta min : commence sur Do (case 8 corde 6). Forme : Corde 6 Do(8)-Ré(10). Corde 5 Mi(7)-Sol(10). Corde 4 La(7)-Do(10). Corde 3 Ré(7)-Mi(9). Corde 2 Sol(8)-La(10). Corde 1 Do(8)-Ré(10). Note pivot avec position 1 : la case 8 (où le Do existe dans les 2 positions)." },
+            { "type": "h", "text": "Position 3 : démarre sur la 4" },
+            { "type": "p", "text": "Pour La penta min : commence sur Ré (case 10 corde 6). Position centrale, idéale pour les phrases 'qui chantent'. Très utilisée dans les solos blues style B.B. King." },
+            { "type": "h", "text": "Position 4 : démarre sur la 5" },
+            { "type": "p", "text": "Pour La penta min : commence sur Mi (case 12 corde 6). Position aiguë, parfaite pour les solos qui montent en intensité. Identique à la position 1 transposée 1 octave plus haut." },
+            { "type": "h", "text": "Position 5 : démarre sur la b7" },
+            { "type": "p", "text": "Pour La penta min : commence sur Sol (case 3 corde 6). Position grave, le 'sous-sol' du manche. Utilisée pour les riffs blues style Muddy Waters, et pour les fins de solos qui redescendent." },
+            { "type": "h", "text": "Connecter les positions" },
+            { "type": "p", "text": "Les positions partagent toujours 1-2 notes 'pivot' qui appartiennent aux deux. En glissant ton index sur ces notes, tu passes d'une position à l'autre sans interruption. Position 1 ↔ Position 2 partagent la case 8 (Do). Position 2 ↔ Position 3 partagent la case 10 (Mi). Identifier ces pivots = clé pour fluidifier le jeu sur tout le manche." },
+            { "type": "ref", "text": "Pour visualiser : David Gilmour (Pink Floyd) utilise les 5 positions dans le solo de 'Comfortably Numb'. Il commence en position 1, monte en position 2, atteint un climax en position 4 (aigu), puis redescend en position 5. C'est une démonstration parfaite de l'utilisation pédagogique des 5 positions." },
+            { "type": "tip", "text": "Plan d'apprentissage 5 semaines : 1 semaine par position. Chaque jour : 10 min de la position du moment. À la fin de la semaine 5, tu connais les 5 positions. À la fin de la semaine 7, tu les connectes fluide. C'est l'investissement le plus rentable pour un guitariste rock/blues." }
+          ],
+          "quiz": ["q-scales-c3-03", "q-scales-c3-04"]
+        },
+
+        {
+          "id": "scales-c3-03",
+          "title": "Pentatonique majeure et son lien avec la mineure",
+          "duration": 9,
+          "content": [
+            { "type": "p", "text": "Il existe aussi une pentatonique majeure, sœur lumineuse de la pentatonique mineure. Et le secret le plus utile de la guitare : ces deux gammes partagent les mêmes notes. Comprendre ce lien double instantanément tes outils d'improvisation." },
+            { "type": "h", "text": "La pentatonique majeure : formule" },
+            { "type": "p", "text": "Formule en degrés : 1 - 2 - 3 - 5 - 6. Soit la fondamentale, la seconde majeure, la tierce majeure, la quinte juste, la sixte majeure. En Do : Do-Ré-Mi-Sol-La. C'est la gamme majeure dont on a retiré le 4 et le 7 (les notes les plus 'tendues' en majeur)." },
+            { "type": "h", "text": "Son sonore typique" },
+            { "type": "p", "text": "Joyeux, lumineux, 'champêtre'. Très utilisée en country, gospel, folk, pop des années 60. C'est la gamme des chansons 'qui sentent bon'." },
+            { "type": "h", "text": "Le secret : Do penta MAJ = La penta MIN" },
+            { "type": "p", "text": "Compare : Do penta majeure = Do-Ré-Mi-Sol-La. La penta mineure = La-Do-Ré-Mi-Sol. Mêmes 5 notes ! Seul l'ordre — et donc la fondamentale — change. Cette équivalence s'appelle la 'pentatonique relative'. Toute pentatonique majeure a une équivalente mineure 1,5 ton plus bas (3 demi-tons en dessous)." },
+            { "type": "h", "text": "Les paires relatives à mémoriser" },
+            { "type": "p", "text": "Do maj ↔ La min. Sol maj ↔ Mi min. Ré maj ↔ Si min. La maj ↔ Fa# min. Mi maj ↔ Do# min. Si maj ↔ Sol# min. Fa maj ↔ Ré min. Si♭ maj ↔ Sol min. Mi♭ maj ↔ Do min. La♭ maj ↔ Fa min. Ré♭ maj ↔ Si♭ min. Sol♭ maj ↔ Mi♭ min. Mêmes notes, deux fondamentales possibles." },
+            { "type": "h", "text": "Pourquoi c'est révolutionnaire" },
+            { "type": "p", "text": "Si tu connais la pentatonique mineure de La (la position 1 que tu as apprise), tu connais aussi la pentatonique majeure de Do — c'est exactement la même position sur le manche. Sur une chanson en Do majeur : joue la position 'La penta min' à la case 5, mais commence et finis tes phrases sur Do (case 8 corde 6). Magie : ça sonne joyeux/majeur." },
+            { "type": "ref", "text": "Reconnaître une pentatonique majeure : 'My Girl' (The Temptations) commence par une mélodie pure pentatonique majeure de Do. 'Stand By Me' (Ben E. King) utilise la pentatonique majeure de La. Le riff principal de 'Sweet Home Alabama' (Lynyrd Skynyrd) est en pentatonique majeure. Country, soul, classic rock — partout." },
+            { "type": "tip", "text": "Astuce d'impro : pour passer de 'son blues' à 'son country' sans changer de position, garde la même forme sur le manche mais commence/termine tes phrases sur une note différente (la fondamentale majeure au lieu de la mineure). Ta tonalité change, mais pas ton effort technique." }
+          ],
+          "quiz": ["q-scales-c3-05", "q-scales-c3-06"]
+        },
+
+        {
+          "id": "scales-c3-04",
+          "title": "La gamme blues : l'ajout de la blue note",
+          "duration": 10,
+          "content": [
+            { "type": "p", "text": "La gamme blues, c'est la pentatonique mineure avec un 'plus' qui change tout : une note supplémentaire, la fameuse 'blue note', qui crée la couleur dramatique du blues. 6 notes, et tu as accès à la palette sonore d'un siècle entier de musique afro-américaine." },
+            { "type": "h", "text": "La formule" },
+            { "type": "p", "text": "Pentatonique mineure (1 - b3 - 4 - 5 - b7) + b5 = Gamme blues (1 - b3 - 4 - b5 - 5 - b7). En La : La - Do - Ré - Ré# - Mi - Sol. La nouvelle note (Ré#, ou Mi♭ enharmonique) se glisse entre la 4 et la 5 de la pentatonique." },
+            { "type": "h", "text": "Pourquoi 'blue note'" },
+            { "type": "p", "text": "Cette note (la b5) sonne extrêmement tendue par rapport à la fondamentale. Elle crée un demi-ton avec la quinte juste, ce qui produit une dissonance expressive caractéristique de la voix humaine en souffrance. Les chants de travail des esclaves dans les plantations américaines du XIXe siècle utilisaient déjà ces inflexions tendues. La 'blue note' est le pont entre la voix et la guitare blues." },
+            { "type": "h", "text": "Histoire courte du blues" },
+            { "type": "p", "text": "La gamme blues est née au début du XXe siècle dans le sud des États-Unis. Elle mélange les modes africains (qui privilégient la 5e diminuée) et les gammes occidentales. Robert Johnson, B.B. King, Muddy Waters, Albert King, Stevie Ray Vaughan — tous ces géants ont construit leurs solos sur cette gamme. Le blues a ensuite donné naissance au rock'n'roll, au R&B, à la soul, au funk, et au rap. Pas mal pour 6 notes." },
+            { "type": "h", "text": "Comment l'utiliser : la règle d'or" },
+            { "type": "p", "text": "La blue note (b5) est une note de PASSAGE, jamais une note de RÉSOLUTION. Tu y passes brièvement, tu ne t'y attardes pas. Phrasé typique : tu joues Ré (4), tu glisses sur Ré# (b5), tu arrives sur Mi (5). La b5 est un 'pont' qui amène à la quinte. Si tu tiens trop longtemps une blue note, ça sonne faux. Si tu y passes vite, ça sonne 'blues parfait'." },
+            { "type": "h", "text": "Position blues sur le manche" },
+            { "type": "p", "text": "Reprends la position 1 de La pentatonique mineure (case 5). Ajoute Ré# sur la corde 4, case 6. C'est tout. Tu peux maintenant jouer la gamme blues. Phrasé blues classique : Ré(c4-7) → Ré#(c4-6 en glissé) → Mi(c4-7 ?). Non, le Ré# est case 6 et Mi est case 7 sur la corde 4. Donc tu glisses entre case 6 et case 7." },
+            { "type": "ref", "text": "Pour entendre la blue note 'pure' : 'The Thrill is Gone' (B.B. King) regorge de blue notes. Le solo final de 'Crossroads' (Cream/Eric Clapton) utilise massivement la gamme blues. 'Texas Flood' (Stevie Ray Vaughan) est un cours magistral sur la gamme blues complète." },
+            { "type": "tip", "text": "Pratique du soir : sur une backing track de blues en La (12 mesures), improvise pendant 10 minutes en utilisant exclusivement la gamme blues. Force-toi à utiliser la b5 au moins 5 fois — toujours en passage, jamais en résolution. Tu vas développer un vrai feel blues en quelques semaines." }
+          ],
+          "quiz": ["q-scales-c3-07", "q-scales-c3-08"]
+        }
+
+      ]
+    }
+  ],
+
+  "quiz": [
+    { "id": "q-scales-c1-01", "courseId": "scales", "lessonId": "scales-c1-01", "lvl": 1, "q": "Combien de notes naturelles existe-t-il dans la musique occidentale ?", "o": ["5", "7", "8", "12"], "a": 1, "exp": "7 notes naturelles : Do, Ré, Mi, Fa, Sol, La, Si. Avec les altérations (dièses/bémols), on arrive à 12 sons distincts par octave.", "xp": 20 },
+    { "id": "q-scales-c1-02", "courseId": "scales", "lessonId": "scales-c1-01", "lvl": 1, "q": "Quelle est l'équivalence anglo-saxonne de la note 'Sol' ?", "o": ["F", "G", "A", "S"], "a": 1, "exp": "Sol = G dans la notation anglo-saxonne. Mémorise : C(Do), D(Ré), E(Mi), F(Fa), G(Sol), A(La), B(Si).", "xp": 25 },
+    { "id": "q-scales-c1-03", "courseId": "scales", "lessonId": "scales-c1-02", "lvl": 1, "q": "Que fait un dièse à une note ?", "o": ["L'abaisse d'un demi-ton", "L'élève d'un demi-ton", "Change sa durée", "Change son nom"], "a": 1, "exp": "Le dièse (#) élève la note d'un demi-ton (= 1 case sur la guitare). Le bémol (♭) fait l'inverse.", "xp": 20 },
+    { "id": "q-scales-c1-04", "courseId": "scales", "lessonId": "scales-c1-02", "lvl": 2, "q": "Pourquoi n'existe-t-il pas de 'Mi#' ?", "o": ["C'est une exception arbitraire", "Mi et Fa sont déjà séparés d'un demi-ton (Mi# serait Fa)", "Convention historique sans raison", "On peut écrire Mi# parfois"], "a": 1, "exp": "Mi-Fa et Si-Do sont des demi-tons naturels (collés). Donc Mi# = Fa et Si# = Do. Ces enharmonies existent pour des raisons pratiques.", "xp": 35 },
+    { "id": "q-scales-c1-05", "courseId": "scales", "lessonId": "scales-c1-03", "lvl": 1, "q": "Combien de demi-tons fait un ton ?", "o": ["1", "2", "3", "4"], "a": 1, "exp": "1 ton = 2 demi-tons = 2 cases sur la guitare. C'est l'unité de base pour mesurer les distances entre notes.", "xp": 20 },
+    { "id": "q-scales-c1-06", "courseId": "scales", "lessonId": "scales-c1-03", "lvl": 2, "q": "Entre quelles notes y a-t-il un demi-ton naturel ?", "o": ["Do-Ré et Mi-Fa", "Mi-Fa et Si-Do", "Sol-La et Ré-Mi", "Fa-Sol et La-Si"], "a": 1, "exp": "Mi-Fa et Si-Do sont les deux seuls demi-tons sans dièse/bémol dans la gamme naturelle. À mémoriser : 'Mi-Fa Si-Do, ce sont eux qui se collent'.", "xp": 30 },
+    { "id": "q-scales-c1-07", "courseId": "scales", "lessonId": "scales-c1-03", "lvl": 2, "q": "Sur la guitare, quelle distance représente un demi-ton ?", "o": ["1 corde", "1 case", "2 cases", "1 octave"], "a": 1, "exp": "1 demi-ton = 1 case sur la même corde. C'est la plus petite distance possible. 1 ton = 2 cases.", "xp": 25 },
+    { "id": "q-scales-c1-08", "courseId": "scales", "lessonId": "scales-c1-04", "lvl": 2, "q": "Do# et Ré♭ sont…", "o": ["Deux notes différentes", "La même note avec deux noms (enharmoniques)", "Une erreur d'écriture", "Séparées d'un demi-ton"], "a": 1, "exp": "Do# et Ré♭ sont enharmoniques : même son, deux écritures. Le choix entre les deux dépend du contexte de la tonalité.", "xp": 35 },
+    { "id": "q-scales-c1-09", "courseId": "scales", "lessonId": "scales-c1-05", "lvl": 1, "q": "Combien de demi-tons fait une tierce majeure ?", "o": ["3", "4", "5", "7"], "a": 1, "exp": "Tierce majeure = 4 demi-tons. C'est la 'tierce qui sonne joyeux' — celle des accords majeurs.", "xp": 25 },
+    { "id": "q-scales-c1-10", "courseId": "scales", "lessonId": "scales-c1-05", "lvl": 2, "q": "Quelle est la différence entre tierce majeure et tierce mineure ?", "o": ["1 demi-ton", "1 ton", "2 tons", "Aucune"], "a": 0, "exp": "Tierce mineure = 3 demi-tons. Tierce majeure = 4 demi-tons. 1 demi-ton de différence — qui change tout (mineur vs majeur).", "xp": 35 },
+    { "id": "q-scales-c1-11", "courseId": "scales", "lessonId": "scales-c1-05", "lvl": 2, "q": "Sur la guitare, à combien de cases se trouve la quinte juste d'une note ?", "o": ["+5 cases", "+7 cases", "+9 cases", "+12 cases"], "a": 1, "exp": "Quinte juste = 7 demi-tons = 7 cases sur la même corde. C'est l'intervalle des power chords (la fondamentale + sa quinte).", "xp": 30 },
+    { "id": "q-scales-c1-12", "courseId": "scales", "lessonId": "scales-c1-06", "lvl": 2, "q": "Combien de demi-tons fait une octave ?", "o": ["8", "10", "12", "13"], "a": 2, "exp": "Octave = 12 demi-tons. C'est la base de tout le système tonal : après 12 demi-tons, la note se répète mais en plus aigu.", "xp": 25 },
+    { "id": "q-scales-c1-13", "courseId": "scales", "lessonId": "scales-c1-06", "lvl": 3, "q": "L'intervalle de 6 demi-tons s'appelle…", "o": ["Quinte juste", "Triton (quarte aug. ou quinte dim.)", "Sixte mineure", "Septième mineure"], "a": 1, "exp": "6 demi-tons = triton, l'intervalle 'instable' du blues, du jazz et du metal. Au Moyen-Âge, on l'appelait 'diabolus in musica'.", "xp": 45 },
+    { "id": "q-scales-c2-01", "courseId": "scales", "lessonId": "scales-c2-01", "lvl": 2, "q": "Qu'est-ce qui définit une gamme ?", "o": ["Le nombre de notes uniquement", "La fondamentale + nombre de notes + formule d'intervalles", "Le tempo", "L'instrument utilisé"], "a": 1, "exp": "Une gamme = fondamentale + nombre de notes + formule d'intervalles entre les notes. La formule est ce qui crée le 'caractère' de la gamme (majeur, mineur, etc.).", "xp": 35 },
+    { "id": "q-scales-c2-02", "courseId": "scales", "lessonId": "scales-c2-02", "lvl": 1, "q": "Quelle est la formule de la gamme majeure ?", "o": ["T-T-T-DT-T-T-DT", "T-T-DT-T-T-T-DT", "DT-T-T-T-DT-T-T", "T-DT-T-T-DT-T-T"], "a": 1, "exp": "T-T-DT-T-T-T-DT. Les demi-tons sont entre les degrés 3-4 et 7-8. C'est cette structure qui crée le 'son majeur'.", "xp": 30 },
+    { "id": "q-scales-c2-03", "courseId": "scales", "lessonId": "scales-c2-02", "lvl": 2, "q": "Combien de dièses/bémols contient la gamme de Do majeur ?", "o": ["0", "1", "2", "3"], "a": 0, "exp": "Do majeur = Do-Ré-Mi-Fa-Sol-La-Si. Aucun dièse, aucun bémol. C'est la gamme de référence.", "xp": 25 },
+    { "id": "q-scales-c2-04", "courseId": "scales", "lessonId": "scales-c2-02", "lvl": 2, "q": "La gamme de Sol majeur contient combien de dièses ?", "o": ["0", "1 (Fa#)", "2", "3"], "a": 1, "exp": "Sol majeur = Sol-La-Si-Do-Ré-Mi-Fa#-Sol. Un seul dièse : Fa#. Pour respecter la formule T-T-DT-T-T-T-DT.", "xp": 35 },
+    { "id": "q-scales-c2-05", "courseId": "scales", "lessonId": "scales-c2-03", "lvl": 1, "q": "Le Ve degré d'une gamme s'appelle…", "o": ["Tonique", "Médiante", "Dominante", "Sensible"], "a": 2, "exp": "Le V est la 'Dominante' — le degré qui crée le maximum de tension et appelle la résolution sur le I (tonique).", "xp": 30 },
+    { "id": "q-scales-c2-06", "courseId": "scales", "lessonId": "scales-c2-03", "lvl": 2, "q": "En Sol majeur, quel accord correspond au degré V ?", "o": ["Sol", "Ré", "La", "Mi"], "a": 1, "exp": "Sol majeur : I=Sol, II=La, III=Si, IV=Do, V=Ré. Le V de Sol majeur = Ré (majeur).", "xp": 35 },
+    { "id": "q-scales-c2-07", "courseId": "scales", "lessonId": "scales-c2-03", "lvl": 3, "q": "La progression I-V-vi-IV en Do majeur correspond à…", "o": ["Do-Sol-Lam-Fa", "Do-Lam-Fa-Sol", "Do-Fa-Sol-Lam", "Do-Mim-Sol-Fa"], "a": 0, "exp": "Do(I)-Sol(V)-Lam(vi)-Fa(IV) = Do-Sol-Lam-Fa. C'est la 'Pop Progression' la plus utilisée au monde (Let It Be, No Woman No Cry, etc.).", "xp": 40 },
+    { "id": "q-scales-c2-08", "courseId": "scales", "lessonId": "scales-c2-04", "lvl": 2, "q": "À chaque quinte montée dans le cycle des quintes, on ajoute…", "o": ["1 bémol", "1 dièse", "1 octave", "Rien"], "a": 1, "exp": "Cycle des quintes vers l'aigu : +1 dièse à chaque quinte. Do(0)→Sol(1#)→Ré(2#)→La(3#)→Mi(4#)... Côté bémols, c'est l'inverse en descendant.", "xp": 35 },
+    { "id": "q-scales-c2-09", "courseId": "scales", "lessonId": "scales-c2-04", "lvl": 3, "q": "La tonalité relative mineure de Do majeur est…", "o": ["Ré mineur", "Mi mineur", "La mineur", "Sol mineur"], "a": 2, "exp": "Le relatif mineur se trouve sur le 6e degré : en Do majeur, le 6e degré est La. Donc La mineur partage exactement les mêmes notes que Do majeur.", "xp": 45 },
+    { "id": "q-scales-c2-10", "courseId": "scales", "lessonId": "scales-c2-05", "lvl": 2, "q": "Pour jouer la gamme de Sol majeur en position 1 (fondamentale corde 6), tu démarres à quelle case ?", "o": ["Case 1", "Case 3", "Case 5", "Case 7"], "a": 1, "exp": "Sol est case 3 sur la corde 6 (Mi grave). C'est ta fondamentale, point de départ de la position 1 de Sol majeur.", "xp": 30 },
+    { "id": "q-scales-c2-11", "courseId": "scales", "lessonId": "scales-c2-05", "lvl": 3, "q": "Si tu glisses la position 1 de Sol majeur de la case 3 à la case 5, tu obtiens quelle gamme ?", "o": ["La majeur", "Si majeur", "Do majeur", "Fa majeur"], "a": 0, "exp": "Position 1 démarre sur la fondamentale corde 6. Case 5 corde 6 = La. Donc tu joues La majeur. La forme reste identique, seule la fondamentale change.", "xp": 45 },
+    { "id": "q-scales-c3-01", "courseId": "scales", "lessonId": "scales-c3-01", "lvl": 1, "q": "Combien de notes contient la pentatonique ?", "o": ["3", "5", "7", "12"], "a": 1, "exp": "'Penta' = cinq en grec. La pentatonique = gamme à 5 notes, plus simple que la gamme majeure (7 notes).", "xp": 20 },
+    { "id": "q-scales-c3-02", "courseId": "scales", "lessonId": "scales-c3-01", "lvl": 2, "q": "Quelle est la formule en degrés de la pentatonique mineure ?", "o": ["1-2-3-4-5", "1-b3-4-5-b7", "1-3-5-7-9", "1-2-b3-5-6"], "a": 1, "exp": "Penta mineure = 1-b3-4-5-b7. Elle retire le 2 et le b6 de la gamme mineure naturelle (les notes les plus 'tendues').", "xp": 30 },
+    { "id": "q-scales-c3-03", "courseId": "scales", "lessonId": "scales-c3-02", "lvl": 2, "q": "Combien de positions a la pentatonique sur le manche ?", "o": ["3", "5", "7", "12"], "a": 1, "exp": "5 positions, une par note de la gamme. Chaque position démarre sur un degré différent (1, b3, 4, 5, b7).", "xp": 25 },
+    { "id": "q-scales-c3-03", "courseId": "scales", "lessonId": "scales-c3-02", "lvl": 3, "q": "La position 2 de La pentatonique mineure démarre sur quelle note ?", "o": ["La", "Do", "Ré", "Sol"], "a": 1, "exp": "Position 2 démarre sur la b3. En La penta mineure, b3 = Do. Donc position 2 démarre case 8 corde 6 (Do).", "xp": 40 },
+    { "id": "q-scales-c3-04", "courseId": "scales", "lessonId": "scales-c3-02", "lvl": 3, "q": "Pourquoi les 5 positions de la pentatonique se 'connectent' ?", "o": ["Coïncidence", "Elles partagent toujours 1-2 notes pivots", "Elles sont identiques", "Aléatoire"], "a": 1, "exp": "Chaque position partage des notes pivots avec ses voisines. Identifier ces pivots = clé pour fluidifier le passage d'une position à l'autre.", "xp": 45 },
+    { "id": "q-scales-c3-05", "courseId": "scales", "lessonId": "scales-c3-03", "lvl": 2, "q": "Quelle est la formule de la pentatonique majeure ?", "o": ["1-b3-4-5-b7", "1-2-3-5-6", "1-3-5-7-9", "1-2-3-4-5"], "a": 1, "exp": "Penta majeure = 1-2-3-5-6. Elle retire le 4 et le 7 de la gamme majeure (les notes les plus 'tendues' en majeur).", "xp": 30 },
+    { "id": "q-scales-c3-06", "courseId": "scales", "lessonId": "scales-c3-03", "lvl": 3, "q": "Do penta majeure et La penta mineure contiennent…", "o": ["Des notes différentes", "Exactement les mêmes notes", "5 notes communes sur 6", "Aucune note commune"], "a": 1, "exp": "Do penta maj = Do-Ré-Mi-Sol-La. La penta min = La-Do-Ré-Mi-Sol. MÊMES notes ! Seule la fondamentale change. Relatives entre elles.", "xp": 50 },
+    { "id": "q-scales-c3-07", "courseId": "scales", "lessonId": "scales-c3-04", "lvl": 2, "q": "La 'blue note' est…", "o": ["La 2", "La b5 (quinte diminuée)", "La 6", "La 7"], "a": 1, "exp": "Blue note = b5. Ajoutée à la pentatonique mineure, elle crée la gamme blues (1-b3-4-b5-5-b7). Note de PASSAGE, jamais de résolution.", "xp": 35 },
+    { "id": "q-scales-c3-08", "courseId": "scales", "lessonId": "scales-c3-04", "lvl": 3, "q": "Comment utiliser correctement la blue note en improvisation ?", "o": ["La tenir longtemps", "L'utiliser uniquement en passage rapide", "Toujours finir dessus", "Ne jamais la jouer"], "a": 1, "exp": "Blue note = passage uniquement, jamais résolution. Tu y passes vite (Ré → Ré# → Mi). Tenue, elle sonne fausse. En passage, elle sonne 'blues parfait'.", "xp": 45 }
+  ],
+
+  "exercises": []
+}

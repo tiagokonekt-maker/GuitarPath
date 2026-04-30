@@ -1,0 +1,277 @@
+{
+  "courses": [
+    {
+      "id": "rhythm",
+      "title": "Rythme & phrasing",
+      "icon": "🥁",
+      "color": "#D85A30",
+      "colorL": "#FAECE7",
+      "desc": "Subdivisions, syncopes, groove, patterns par genre",
+      "lessons": [
+
+        {
+          "id": "rhy-c1-01",
+          "title": "Qu'est-ce que le rythme ?",
+          "duration": 8,
+          "content": [
+            { "type": "p", "text": "Le rythme est le premier langage musical de l'être humain. Bien avant les notes, bien avant les gammes, il y avait le battement du cœur, les pas de marche, les mains qui frappent. Le rythme précède la mélodie de plusieurs millénaires dans l'histoire de l'humanité. Et pourtant, c'est souvent la dimension la plus négligée par les guitaristes qui se concentrent sur les notes." },
+            { "type": "h", "text": "Définition : 3 concepts à distinguer" },
+            { "type": "p", "text": "Le rythme désigne 3 choses souvent confondues. La pulsation (ou 'pulse') = le battement régulier et constant qui sous-tend la musique. C'est ce que le métronome produit, ce que tu ressens quand tu tapes du pied. Le tempo = la vitesse de cette pulsation, mesurée en BPM (Battements Par Minute). 60 BPM = 1 battement par seconde. 120 BPM = 2 battements par seconde. Le rythme musical = la façon dont les notes s'organisent PAR RAPPORT à la pulsation. Court, long, entre les temps, sur les temps." },
+            { "type": "h", "text": "La pulsation : l'ancre de tout" },
+            { "type": "p", "text": "La pulsation est le fondement absolu de la musique rythmique. Sans pulsation stable, pas de groove, pas d'ensemble, pas de communication entre musiciens. C'est pour ça que le métronome est l'outil n°1 de tout musicien qui se prend au sérieux. Jouer 'en mesure' signifie jouer en cohérence avec une pulsation régulière." },
+            { "type": "h", "text": "Le tempo : plus qu'une vitesse" },
+            { "type": "p", "text": "Le tempo ne définit pas seulement la vitesse d'une chanson — il en définit aussi l'ambiance. Un même morceau joué à 60 BPM (très lent) n'évoque pas la même chose qu'à 160 BPM (rapide). Les ballades tristes tournent autour de 60-80 BPM. Le rock énergique : 120-160 BPM. Le funk : souvent 90-110 BPM (plus lent qu'on ne le pense). Le bebop jazz : parfois 240-300 BPM (vertigineux)." },
+            { "type": "h", "text": "Le rythme musical : l'organisation des notes" },
+            { "type": "p", "text": "Sur la base d'une pulsation stable, les notes peuvent être placées de mille façons différentes. Longues ou courtes. Sur le temps ou entre les temps. Régulières ou irrégulières. Cette organisation constitue le rythme musical proprement dit. Deux mélodies identiques (mêmes notes) jouées avec des rythmes différents donnent des morceaux complètement différents." },
+            { "type": "h", "text": "Rythme interne vs rythme externe" },
+            { "type": "p", "text": "Les grands musiciens ont un 'rythme interne' : une pulsation intégrée qui ne dépend pas d'une source externe (métronome, batteur). Ce sens du temps intérieur s'appelle le 'inner time' ou 'pocket'. Il se développe par années de pratique au métronome. L'objectif ultime : que ton corps soit le métronome." },
+            { "type": "ref", "text": "James Brown, le 'Godfather of Soul', avait un sens du rythme si précis qu'il pouvait arrêter et reprendre une chanson n'importe où en claquant des doigts, et l'orchestre entier le suivait sans décalage. Ce n'est pas un don — c'est le résultat de milliers d'heures de pratique rythmique. Son secret : il faisait autant attention au rythme qu'aux notes." },
+            { "type": "tip", "text": "Exercice fondamental : tape le pied sur les temps (1-2-3-4) en gardant un tempo parfaitement régulier pendant 1 minute. Facile ? Maintenant fais-le à 60 BPM en regardant une montre. Sans accélérer, sans ralentir. Si tu dévies, recommence. Ce simple exercice révèle la qualité de ton sens rythmique interne." }
+          ],
+          "quiz": ["q-rhy-c1-01", "q-rhy-c1-02"]
+        },
+
+        {
+          "id": "rhy-c1-02",
+          "title": "La mesure à 4/4 : le temps de référence",
+          "duration": 9,
+          "content": [
+            { "type": "p", "text": "La mesure est la façon dont on organise la pulsation en groupes réguliers. La mesure la plus courante en musique populaire est le 4/4 : 4 temps par mesure, la noire comme unité de temps. Comprendre le 4/4, c'est comprendre le cadre rythmique de 90% de la musique que tu écoutes." },
+            { "type": "h", "text": "Lire une signature rythmique" },
+            { "type": "p", "text": "La signature rythmique (ou 'chiffrage de mesure') s'écrit sous forme de fraction. Le chiffre du HAUT indique le nombre de temps par mesure. Le chiffre du BAS indique quelle valeur de note représente 1 temps. 4/4 = 4 temps par mesure, 1 noire = 1 temps. 3/4 = 3 temps par mesure (valse). 6/8 = 6 croches par mesure (2 groupes de 3)." },
+            { "type": "h", "text": "Le 4/4 : pourquoi cette domination ?" },
+            { "type": "p", "text": "Le 4/4 est la signature la plus 'naturelle' pour le corps humain : elle correspond à la marche (gauche-droite-gauche-droite = 4 temps), aux battements du cœur en repos, et à la façon dont notre cerveau groupe instinctivement les pulsations par 4. La quasi-totalité du rock, du pop, du blues, du jazz, du R&B est en 4/4." },
+            { "type": "h", "text": "Les temps forts et faibles" },
+            { "type": "p", "text": "Dans une mesure de 4/4, les 4 temps n'ont pas le même poids. Les temps 1 et 3 sont des 'temps forts' : ils portent naturellement l'accent. Les temps 2 et 4 sont des 'temps faibles'. En rock et pop, la caisse claire frappe souvent sur les temps 2 et 4 (ce qui 'renverse' les accents et crée le groove moderne). En jazz, le pied de grosse caisse marque souvent le 1." },
+            { "type": "h", "text": "Compter les mesures" },
+            { "type": "p", "text": "Pour s'y retrouver dans une chanson, on compte les temps et les mesures. 'Un-deux-trois-quatre | Un-deux-trois-quatre | ...' Chaque groupe de 4 = une mesure. Les chansons pop sont généralement organisées en multiples de 4 mesures : intro de 4 ou 8 mesures, couplet de 8 ou 16 mesures, refrain de 4 ou 8, etc. Cette régularité de 4 facilite l'apprentissage et la mémorisation." },
+            { "type": "h", "text": "Les autres mesures importantes" },
+            { "type": "p", "text": "3/4 (valse) : 3 temps par mesure. Accent sur le 1. Son 'tourbillonnant'. 'My Favorite Things' (Coltrane), les valses de Chopin. 6/8 : 6 croches par mesure, souvent ressenti en 2 groupes de 3. Folk irlandais, certaines ballades. 12/8 : 12 croches par mesure, ressenti en 4 groupes de 3. Slow blues (SRV), gospel. 5/4 : 5 temps par mesure. 'Take Five' (Dave Brubeck), 'Money' (Pink Floyd)." },
+            { "type": "h", "text": "La 'grille' : structure d'une chanson" },
+            { "type": "p", "text": "En musique jazz et blues, on parle de 'grille' pour désigner la structure harmonique et rythmique complète d'un morceau (nombre de mesures, accords par mesure). Le blues à 12 mesures = une grille de 12 mesures en 4/4. Un couplet pop de 8 mesures = une grille de 8 mesures. Connaître la grille = savoir où on est dans le morceau à tout moment." },
+            { "type": "ref", "text": "'Money' (Pink Floyd, 1973) est en 7/4 — 7 temps par mesure. La ligne de basse iconique (7 notes) est la signature de la mesure. En live, les musiciens doivent compter constamment pour ne pas se perdre. C'est le contraste avec le 4/4 habituel qui rend ce morceau si particulier. Écoute-le en comptant 1-2-3-4-5-6-7 : tu sentiras l'asymétrie." },
+            { "type": "tip", "text": "Drill : mets un métronome à 80 BPM et compte les mesures à voix haute pendant 2 minutes. '1-2-3-4, 2-2-3-4, 3-2-3-4...' (numéro de mesure + numéro de temps). Simple mais révélateur : combien de mesures perdent leur numéro ? Développe ce comptage instinctif." }
+          ],
+          "quiz": ["q-rhy-c1-03", "q-rhy-c1-04"]
+        },
+
+        {
+          "id": "rhy-c1-03",
+          "title": "Le métronome : ton meilleur ennemi",
+          "duration": 9,
+          "content": [
+            { "type": "p", "text": "Tout le monde sait qu'il faut s'entraîner au métronome. Beaucoup le font mal ou pas assez. Cette leçon te donne les techniques avancées d'utilisation du métronome — celles que les pros utilisent — pour développer un sens du temps interne solide comme un roc." },
+            { "type": "h", "text": "Pourquoi le métronome est indispensable" },
+            { "type": "p", "text": "Sans feedback externe, le cerveau humain a tendance à accélérer quand la musique est facile et à ralentir quand elle est difficile. C'est naturel et universel. Le métronome révèle ces irrégularités implacablement. Les utiliser pour t'améliorer — au lieu de les cacher — est la définition du travail sérieux." },
+            { "type": "h", "text": "Technique 1 : commencer lentement" },
+            { "type": "p", "text": "Règle absolue : joue toujours au tempo où tu peux jouer PARFAITEMENT. Si tu fais des erreurs, ralentis. Un tempo lent et propre vaut infiniment mieux qu'un tempo rapide et sloppy. La vitesse vient avec la répétition propre, pas en forçant. Commence un exercice à 50-60% du tempo cible, maîtrise-le, augmente de 5-10 BPM, recommence." },
+            { "type": "h", "text": "Technique 2 : le métronome sur les 2 et 4" },
+            { "type": "p", "text": "Au lieu de mettre le métronome sur tous les temps (1-2-3-4), mets-le uniquement sur les temps 2 et 4 (en réglant le BPM à moitié). Ex : tu veux jouer à 100 BPM. Règle le métronome à 50 BPM et traite ces clics comme les temps 2 et 4. Tu dois imaginer les temps 1 et 3. Cet exercice développe le sens du backbeat (groove naturel) et te prépare au jeu avec un batteur." },
+            { "type": "h", "text": "Technique 3 : le métronome sur le temps 1 seulement" },
+            { "type": "p", "text": "Encore plus difficile : un clic toutes les 4 temps (= 1 mesure). Ex : tempo cible 120 BPM, clic à 30 BPM (1 clic = 4 temps). Tu dois compter 1-2-3-4 dans ta tête entre chaque clic. Si tu arrives pile sur le clic au temps 1 de chaque mesure, ton sens rythmique est solide. Exercice avancé, réservé aux musiciens déjà à l'aise avec le métronome standard." },
+            { "type": "h", "text": "Technique 4 : le clic en contretemps" },
+            { "type": "p", "text": "Mets le métronome à moitié du tempo, et traite les clics comme les 'et' (contretemps) au lieu des temps. Ex : tempo cible 100 BPM. Métronome à 50 BPM. Les clics tombent sur le 'et de 1', le 'et de 2', etc. Tu dois jouer les temps forts dans ta tête. Exercice extrêmement efficace pour développer le sens du groove syncopé." },
+            { "type": "h", "text": "Les applications métronome recommandées" },
+            { "type": "p", "text": "Plusieurs bonnes options gratuites : 'Pro Metronome' (iOS/Android, excellent pour les subdivisions), 'Tempo' (simple et efficace), 'GuitarTuna' (inclut métronome). Pour le travail avancé, un métronome physique (comme le Korg MA-2) est plus pratique qu'une app. L'important : avoir un clic propre et fiable." },
+            { "type": "ref", "text": "Jeff Porcaro (batteur de Toto, l'un des grands batteurs de studio des années 80) s'entraînait au métronome tous les matins pendant 30 minutes avant toute session. Sa précision légendaire ('Rosanna groove') venait directement de cette discipline quotidienne. Les musiciens de studio les plus demandés sont ceux dont le 'time' est impeccable." },
+            { "type": "tip", "text": "Défi du mois : chaque jour de pratique, commence par 5 minutes de métronome pur. Pas de mélodie, pas d'accords — juste frapper sur chaque temps (ou chaque contretemps) avec une seule note. 5 minutes par jour × 30 jours = un sens du temps transformé." }
+          ],
+          "quiz": ["q-rhy-c1-05"]
+        },
+
+        {
+          "id": "rhy-c2-01",
+          "title": "Rondes, blanches, noires : les valeurs de base",
+          "duration": 9,
+          "content": [
+            { "type": "p", "text": "Avant de pouvoir lire un rythme ou en composer un, il faut connaître les 'valeurs rythmiques' : les unités qui servent à mesurer la durée des sons. Comme un cuisiner a besoin de mesures (grammes, litres, cuillères), un musicien a besoin de valeurs rythmiques pour organiser le temps." },
+            { "type": "h", "text": "La noire : l'unité de référence" },
+            { "type": "p", "text": "En 4/4, la noire = 1 temps. C'est l'unité de base. À 60 BPM, une noire dure 1 seconde. À 120 BPM, elle dure 0.5 seconde. Quand le métronome clique, chaque clic = 1 noire. Sur la guitare, jouer une note noire = la jouer et la tenir pendant exactement 1 temps avant la suivante." },
+            { "type": "h", "text": "La blanche : 2 temps" },
+            { "type": "p", "text": "La blanche vaut 2 noires = 2 temps. Quand tu joues une note blanche, tu la tiens pendant 2 temps avant de jouer la suivante. Dans une mesure de 4/4, tu peux jouer 2 blanches maximum (2 × 2 temps = 4 temps). Tiens la note bien pendant les 2 temps — relâche-la proprement au moment de jouer la suivante." },
+            { "type": "h", "text": "La ronde : 4 temps" },
+            { "type": "p", "text": "La ronde vaut 4 noires = 4 temps = 1 mesure entière. Une seule note par mesure. À 60 BPM, une ronde dure 4 secondes. Très utilisée dans les solos expressifs où on veut tenir une note longtemps avec du vibrato ou du bend. Jouer des rondes développe la conscience des mesures et du temps." },
+            { "type": "h", "text": "Le lien entre les valeurs" },
+            { "type": "p", "text": "Chaque valeur est exactement la moitié de la suivante : Ronde = 2 blanches = 4 noires = 8 croches = 16 doubles-croches. C'est un système de subdivision binaire : tu peux toujours diviser une valeur en 2. Cette logique est facile à visualiser comme une 'arbre' de subdivisions." },
+            { "type": "h", "text": "Les points d'augmentation" },
+            { "type": "p", "text": "Un point après une note augmente sa durée de moitié. Noire pointée = noire + croche = 1.5 temps. Blanche pointée = blanche + noire = 3 temps. Le rythme 'pointé' (noire pointée + croche) est la base du swing et du shuffle : longue-courte, longue-courte." },
+            { "type": "h", "text": "Sur la guitare : entendre les valeurs" },
+            { "type": "p", "text": "Exercice révélateur : joue La (c5 case 7) à 60 BPM. D'abord en rondes (1 La toutes les 4 temps). Puis en blanches (1 La tous les 2 temps). Puis en noires (1 La par temps). La densité de notes triple à chaque étape, mais la pulsation reste identique. Tu viens de 'subdiviser' le temps." },
+            { "type": "ref", "text": "'With or Without You' (U2) : la ligne de basse et la guitare d'Adam Clayton/The Edge jouent principalement des rondes et blanches pendant les couplets. Cette lenteur délibérée crée l'espace émotionnel de la chanson. Les notes longues ont autant de puissance expressive que les notes rapides." },
+            { "type": "tip", "text": "Drill des valeurs : à 60 BPM, joue 4 mesures en rondes, 4 en blanches, 4 en noires sur un accord de Am. Puis redescends (noires → blanches → rondes). Entends comment la densité change sans que le tempo ne bouge. C'est le premier exercice de subdivisions." }
+          ],
+          "quiz": ["q-rhy-c2-01", "q-rhy-c2-02"]
+        },
+
+        {
+          "id": "rhy-c2-02",
+          "title": "Croches et doubles-croches",
+          "duration": 10,
+          "content": [
+            { "type": "p", "text": "Les croches et doubles-croches sont les valeurs les plus utilisées en musique populaire. Elles permettent de créer le groove, les riffs, les fills rythmiques. Maîtriser leur placement et leur comptage, c'est débloquer l'accès à la quasi-totalité des patterns rythmiques de la guitare pop, rock et blues." },
+            { "type": "h", "text": "La croche : 1/2 temps" },
+            { "type": "p", "text": "La croche vaut la moitié d'une noire. Dans une mesure de 4/4, il y a 8 croches. On les compte : '1 et 2 et 3 et 4 et'. Les chiffres (1, 2, 3, 4) tombent sur les temps forts. Les 'et' tombent entre les temps, sur les contretemps. Cette façon de compter est universelle chez les musiciens anglophones ('one and two and three and four and')." },
+            { "type": "h", "text": "La double-croche : 1/4 temps" },
+            { "type": "p", "text": "La double-croche vaut la moitié d'une croche. Dans une mesure de 4/4, il y a 16 doubles-croches. On les compte : '1 e et a 2 e et a 3 e et a 4 e et a'. Soit '1-ee-and-a' (en anglais 'one-e-and-a'). Les chiffres tombent sur les temps, les 'e' et 'a' subdivisent encore plus finement." },
+            { "type": "h", "text": "La main droite continue" },
+            { "type": "p", "text": "Secret fondamental pour jouer les croches et doubles-croches : la main droite (celle qui joue) doit continuer son mouvement pendulaire (bas-haut) même quand elle ne touche pas les cordes. C'est comme un essuie-glace qui bouge en permanence. Les notes sonnent quand la main touche les cordes, mais le mouvement ne s'arrête jamais. Cette continuité est la clé du groove." },
+            { "type": "h", "text": "Le strumming en croches" },
+            { "type": "p", "text": "En 4/4, strumming en croches : bas sur chaque chiffre (1, 2, 3, 4), haut sur chaque 'et'. Bas-haut-bas-haut-bas-haut-bas-haut. La main ne s'arrête jamais. Les coups 'haut' sont aussi importants que les coups 'bas'. Pratique ça lentement (60 BPM) avec un accord simple (Am) jusqu'à ce que la régularité soit parfaite." },
+            { "type": "h", "text": "Le strumming en doubles-croches" },
+            { "type": "p", "text": "Base du funk : 16 coups par mesure (8 bas, 8 haut alternés). '1 e et a 2 e et a...' On ne joue pas forcément tous les coups — on 'ouvre' et 'ferme' la main selon le rythme voulu. La main continue son mouvement pendulaire mais ne touche les cordes qu'aux moments sélectionnés. C'est le fondement du strumming funk." },
+            { "type": "h", "text": "Croches vs doubles-croches : entendre la différence" },
+            { "type": "p", "text": "À 100 BPM : 8 croches par mesure sonnent comme un tempo modéré, fluide. 16 doubles-croches par mesure sonnent comme un flux rapide, dense. Le même accord joué dans les deux rythmes crée des ambiances très différentes. Le rock classique utilise souvent les croches (puissance). Le funk utilise les doubles-croches (groove, légèreté)." },
+            { "type": "ref", "text": "'Superstition' (Stevie Wonder, 1972) : le riff de clavicorde joue des doubles-croches syncopées. La batterie aussi. C'est le pattern de doubles-croches qui crée le groove irrésistible. Sur guitare, pour reproduire ce son funk, tu dois penser en doubles-croches : main droite qui bouge en permanence à 16 coups par mesure." },
+            { "type": "tip", "text": "Drill progression : à 70 BPM, joue 2 mesures de noires, 2 de croches, 2 de doubles-croches, puis reviens (doubles-croches → croches → noires). Sans t'arrêter. La transition entre les valeurs doit être fluide. C'est le drill de base de tout professeur de rythme." }
+          ],
+          "quiz": ["q-rhy-c2-03", "q-rhy-c2-04"]
+        },
+
+        {
+          "id": "rhy-c2-03",
+          "title": "Les triolets : le feel ternaire",
+          "duration": 10,
+          "content": [
+            { "type": "p", "text": "Un triolet, c'est 3 notes égales jouées dans le temps d'une valeur binaire (2 notes). En d'autres termes : diviser un temps en 3 au lieu de 2. Ce 'feel ternaire' est à la base du blues, du jazz swing, du shuffle, et de la bossa nova. Sans comprendre les triolets, impossible de vraiment swinguer." },
+            { "type": "h", "text": "Définition visuelle" },
+            { "type": "p", "text": "Un triolet de croches = 3 croches dans le temps d'une noire (au lieu de 2 croches normales). On les compte : '1-trip-let, 2-trip-let, 3-trip-let, 4-trip-let'. Ou encore : 'tri-o-let, tri-o-let, tri-o-let, tri-o-let'. Chaque syllabe = 1 note du triolet. Sur 1 mesure de 4/4, il y a 4 triolets de croches = 12 notes." },
+            { "type": "h", "text": "Le feel ternaire vs binaire" },
+            { "type": "p", "text": "Feel binaire (normal) : chaque temps divisé en 2 parties égales. Croche-croche-croche-croche. Son régulier, 'carré'. Feel ternaire : chaque temps divisé en 3 parties. Son 'oscillant', 'qui balance'. La différence est subtile mais fondamentale pour le style. Le jazz swing et le blues sont ternaires. Le rock et le pop sont généralement binaires." },
+            { "type": "h", "text": "Le shuffle : triolets appliqués" },
+            { "type": "p", "text": "Le shuffle est le rythme ternaire le plus répandu en blues. Principe : dans un triolet (1-2-3), on joue uniquement la 1ère et la 3ème note (1-et-3). Résultat : une paire 'longue-courte' répétée. 'Dah-dah, dah-dah, dah-dah, dah-dah'. C'est le feel de Robert Johnson, Muddy Waters, B.B. King. Quand tu entends 'ça swingue', c'est souvent le shuffle." },
+            { "type": "h", "text": "Le swing jazz : le triolet subtil" },
+            { "type": "p", "text": "Le swing jazz utilise aussi les triolets, mais de façon plus subtile. Au lieu de jouer strictement 1ère et 3ème note du triolet, les jazzmen 'infléchissent' les croches vers un feel ternaire sans être complètement shuffle. C'est un rapport 70-30 environ (la 1ère note vaut 70% du temps, la 2e 30%). Cela ne se calcule pas — ça s'imite en écoutant." },
+            { "type": "h", "text": "Triolets dans les solos" },
+            { "type": "p", "text": "Dans un solo, alterner des passages binaires (croches régulières) et ternaires (triolets) crée une richesse rythmique immédiate. Exemple : joue une gamme en croches normales (binaire) pendant 2 temps, puis la même gamme en triolets (ternaire) pendant 2 temps. Le contraste est saisissant." },
+            { "type": "h", "text": "Feel ternaire sans triolets écrits" },
+            { "type": "p", "text": "Attention : dans beaucoup de musiques blues et shuffle, les triolets ne sont PAS notés — ils sont 'sous-entendus'. Une chanson peut être notée en croches normales mais jouée avec un feel shuffle. On écrit 'shuffle feel' ou 'swing feel' au début de la partition. C'est au musicien d'interpréter correctement." },
+            { "type": "ref", "text": "Pour entendre le triolet pur : 'My Favorite Things' (Coltrane version, 1960) est en 3/4 avec des triolets omniprésents. 'Hit the Road Jack' (Ray Charles) a un riff de piano en triolets de croches. Le générique de 'Star Wars' (John Williams) commence sur un triolet. Une fois que tu l'entends, il est partout." },
+            { "type": "tip", "text": "Drill triolets : à 60 BPM, alterne 2 mesures de croches normales (1-et-2-et-3-et-4-et) et 2 mesures de triolets (1-trip-let-2-trip-let). Sans t'arrêter entre les transitions. L'objectif : que ton corps sente la différence binaire/ternaire sans avoir à calculer." }
+          ],
+          "quiz": ["q-rhy-c2-05", "q-rhy-c2-06"]
+        },
+
+        {
+          "id": "rhy-c2-04",
+          "title": "Les silences : la musique dans le vide",
+          "duration": 8,
+          "content": [
+            { "type": "p", "text": "En musique, les silences ne sont pas l'absence de musique. Ils SONT de la musique. Un silence bien placé a autant d'impact qu'une note bien placée. C'est ce qu'on appelle 'l'espace' en jazz — la capacité à ne pas jouer est aussi importante que la capacité à jouer. Miles Davis a dit que les notes qu'il ne jouait pas étaient aussi importantes que celles qu'il jouait." },
+            { "type": "h", "text": "Les symboles de silence" },
+            { "type": "p", "text": "Chaque valeur rythmique a son équivalent en silence. Soupir = silence d'1 noire. Demi-soupir = silence d'1 croche. Quart de soupir = silence d'1 double-croche. Demi-pause = silence de 2 temps. Pause = silence de 4 temps (mesure entière). Sur la guitare, produire un silence = étouffer les cordes (avec la paume ou les doigts) au bon moment." },
+            { "type": "h", "text": "Comment produire un silence sur la guitare" },
+            { "type": "p", "text": "Deux techniques. Palm mute de fin : après avoir joué une note, pose délicatement la paume de ta main droite sur les cordes pour les étouffer. Doigt gauche qui relâche : sans déplacer le doigt, relâche légèrement la pression — la note s'éteint. La deuxième technique est plus rapide et précise pour les silences courts dans un riff." },
+            { "type": "h", "text": "Silences rythmiques vs silences expressifs" },
+            { "type": "p", "text": "Silences rythmiques : prévus dans le riff ou la mélodie (ex : le silence sur le 'et' du 2 dans un pattern syncopé). Silences expressifs : improvisés, pour créer de l'espace dans un solo. Ces derniers sont artistiques — tu décides de te taire pour que la note suivante ait plus d'impact. L'oreille de l'auditeur 'attend' dans le silence, ce qui amplifie la surprise de la note suivante." },
+            { "type": "h", "text": "Le silence comme outil de tension" },
+            { "type": "p", "text": "Un silence après une phrase intense crée une tension magnétique. L'auditeur 'veut' que tu continues. Quand tu joues ensuite, l'impact est démultiplié. C'est la technique du stand-up comedian qui laisse un silence avant sa chute. En musique, les meilleurs solistes gèrent les silences comme les comédiens gèrent les pauses." },
+            { "type": "h", "text": "Rythme dans le silence : le ghost strum" },
+            { "type": "p", "text": "Pour maintenir le groove même dans les silences, le guitariste fait des 'ghost strums' : des mouvements de main droite qui ne touchent pas les cordes (ou les effleurent sans les faire sonner). Ce mouvement continu maintient le feel rythmique même pendant les silences. C'est la différence entre un guitariste qui 'joue' et un guitariste qui 'groove'." },
+            { "type": "ref", "text": "Chet Atkins (guitare country/fingerstyle, l'un des plus grands guitaristes du XXe siècle) était célèbre pour ses silences expressifs. Dans ses solos, des mesures entières pouvaient ne contenir que 2-3 notes avec beaucoup d'espace. L'effet était hypnotique — chaque note semblait plus importante parce qu'elle était entourée de silence." },
+            { "type": "tip", "text": "Drill silence conscient : improvise 4 minutes sur Am. Règle : tu dois laisser au moins 1 mesure entière de silence toutes les 8 mesures. Compte les silences à voix basse. Résultat : ton improvisation va immédiatement sonner plus 'musicale' et moins 'brouillonne'." }
+          ],
+          "quiz": ["q-rhy-c2-07"]
+        },
+
+        {
+          "id": "rhy-c3-01",
+          "title": "La syncope : décaler l'accent",
+          "duration": 11,
+          "content": [
+            { "type": "p", "text": "La syncope est l'un des concepts rythmiques les plus importants en musique populaire. C'est elle qui fait qu'un rythme 'groove', qu'il te donne envie de bouger. Sans syncope, la musique sonne 'carrée' et monotone. Avec elle, elle prend vie. Comprendre la syncope, c'est comprendre le secret du funk, du jazz, du reggae et du R&B." },
+            { "type": "h", "text": "Définition" },
+            { "type": "p", "text": "Une syncope (ou note syncopée) = une note accentuée sur un temps faible (les 'et' ou les 'e/a' des subdivisions) plutôt que sur un temps fort (1, 2, 3, 4). L'oreille humaine 'attend' les accents sur les temps forts. Quand l'accent tombe ailleurs, elle est surprise — et cette surprise crée le groove." },
+            { "type": "h", "text": "Syncope simple : jouer sur les 'et'" },
+            { "type": "p", "text": "Exemple basique : au lieu de jouer sur les temps 1-2-3-4, joue sur les 'et' : 'et-de-1, et-de-2, et-de-3, et-de-4'. Résultat : l'accent est décalé d'une croche. La basse (ou le batteur) marque les temps, toi tu joues entre. C'est le principe du reggae 'skank' et de beaucoup de patterns funk." },
+            { "type": "h", "text": "Syncope par 'tenue'" },
+            { "type": "p", "text": "Autre type de syncope : tu joues une note sur un temps faible et tu la TIENS sur le temps fort suivant (au lieu de rejouer une note au temps fort). La note jointe deux temps = l'accent du temps fort est 'volé' par la note précédente. Ce type de syncope est très utilisé en bossa nova et en jazz." },
+            { "type": "h", "text": "Le backbeat : la syncope fondamentale du rock" },
+            { "type": "p", "text": "Dans le rock et le pop, la caisse claire frappe sur les temps 2 et 4 (les 'temps faibles'). C'est le 'backbeat'. Cette inversion des accents (fort sur les faibles) est la signature rythmique du rock'n'roll depuis les années 50. Quand tu joues de la guitare avec un batteur, tu dois sentir ce backbeat et jouer avec lui." },
+            { "type": "h", "text": "La syncope en guitare rythmique" },
+            { "type": "p", "text": "Pattern syncopé classique en guitare : joue un accord sur le temps 1, silence au 2, accord sur le 'et-de-2', accord au temps 3, silence au 4, accord sur le 'et-de-4'. Notation : 1 - (2) - et - 3 - (4) - et. Ce pattern simple crée immédiatement du groove. C'est la base de nombreux riffs pop et funk." },
+            { "type": "h", "text": "Compter les syncopes" },
+            { "type": "p", "text": "Pour jouer avec précision des patterns syncopés, il faut compter à voix haute au début. '1 et 2 et 3 et 4 et' pendant que tu joues le pattern. Avec le temps, l'intégration dans le corps se fait et tu n'as plus besoin de compter. Mais au début, le comptage verbal est indispensable pour placer les accents correctement." },
+            { "type": "h", "text": "La syncope et l'irrégularité" },
+            { "type": "p", "text": "La syncope ne veut pas dire 'jouer n'importe où'. Ça veut dire 'déplacer les accents de façon délibérée et contrôlée'. Une syncope bien placée crée du groove. Une note mal placée crée de la confusion. La différence : la précision du placement et la cohérence du pattern. Un groove syncopé est régulier dans son irrégularité." },
+            { "type": "ref", "text": "'Superstition' (Stevie Wonder, 1972) : le riff principal est entièrement construit sur des accents syncopés. Les notes importantes tombent sur les contretemps. C'est pour ça que ce riff 'danse'. 'Papa's Got a Brand New Bag' (James Brown, 1965) : le hit qui a lancé le funk, construit sur la syncope 'sur le 1' (l'accent est sur le premier temps, mais les notes précédentes créent l'anticipation)." },
+            { "type": "tip", "text": "Drill syncope (10 min) : sur Am, joue un accord sur chaque 'et' (contretemps) pendant 2 minutes. Puis alterne : accord sur le temps 1, accord sur le 'et-de-2', accord sur le temps 3, accord sur le 'et-de-4'. 2 minutes. Puis crée ton propre pattern syncopé. Enregistre-toi et écoute : sonne-t-il groovy ?" }
+          ],
+          "quiz": ["q-rhy-c3-01", "q-rhy-c3-02"]
+        },
+
+        {
+          "id": "rhy-c3-02",
+          "title": "L'anticipation : jouer avant le temps",
+          "duration": 9,
+          "content": [
+            { "type": "p", "text": "L'anticipation est une forme spécifique de syncope : jouer une note 'avant' le temps où elle serait attendue, et la tenir sur ce temps. C'est l'une des techniques rythmiques les plus utilisées en jazz, en bossa nova, et en pop moderne. Elle crée une sensation de 'fluidité', comme si la musique 'glissait' par-dessus les barres de mesure." },
+            { "type": "h", "text": "Définition" },
+            { "type": "p", "text": "Au lieu de jouer Do sur le temps 1 d'une mesure, tu le joues sur le 'et du 4' de la mesure précédente, et tu le TIENS jusqu'au temps 1 (et au-delà). Le temps 1 est 'anticipé' d'une croche. La note semble 'arriver avant l'heure' — d'où le nom d'anticipation." },
+            { "type": "h", "text": "L'effet sur l'oreille" },
+            { "type": "p", "text": "L'anticipation crée une sensation de mouvement vers l'avant, d'élan. La phrase musicale semble 'se pencher' vers ce qui vient. En comparaison, jouer exactement sur le temps sonne 'solide mais statique'. L'anticipation ajoute du mouvement sans pour autant désorganiser le tempo." },
+            { "type": "h", "text": "En bossa nova : l'anticipation systématique" },
+            { "type": "p", "text": "João Gilberto, l'inventeur du bossa nova (fin des années 50), a construit son style sur l'anticipation systématique des accords. Dans 'The Girl from Ipanema', les accords changent souvent un 'et' avant le temps attendu, créant la légèreté flottante caractéristique du style. Cette anticipation est si intégrée dans la bossa qu'elle en est le trait stylistique fondamental." },
+            { "type": "h", "text": "En jazz : le 'front phrasing'" },
+            { "type": "p", "text": "En jazz, jouer 'en avant' du temps (slightly ahead of the beat) s'appelle 'front phrasing' ou 'playing on top'. Cela crée une sensation d'urgence, d'énergie. À l'opposé, jouer 'derrière' le temps (laid-back) crée une sensation de décontraction. Les grands jazzmen choisissent leur placement délibérément selon l'effet voulu." },
+            { "type": "h", "text": "Comment pratiquer l'anticipation" },
+            { "type": "p", "text": "Exercice : joue une progression Am-F-C-G en strumming noires normales. Maintenant anticipe le changement d'accord de 1 croche : joue le nouvel accord sur le 'et-du-4' de la mesure précédente au lieu du temps 1. La progression sonne immédiatement plus fluide et 'professionnelle'." },
+            { "type": "h", "text": "Anticipation vs erreur de timing" },
+            { "type": "p", "text": "Attention : une anticipation doit être délibérée et précise. Si tu arrives 'à peu près' avant le temps sans contrôle, ça sonne comme une erreur. L'anticipation bien faite arrive exactement sur le 'et-du-4' (ou le 'a-du-4' pour une double-croche d'anticipation). La précision distingue l'anticipation musicale de la sloppiness rythmique." },
+            { "type": "ref", "text": "'Fly Me to the Moon' (chanté par Sinatra, arrangé par Count Basie) : la phrase vocale 'Fly me to the moon' anticipe chaque nouveau mot d'une croche. Cette anticipation constante donne à la mélodie son caractère coulant et naturel. L'équivalent guitare serait de changer d'accord une croche en avance." },
+            { "type": "tip", "text": "Exercice d'anticipation : joue I-V-vi-IV en Do. D'abord, change d'accord exactement sur le temps 1 de chaque mesure (normal). Ensuite, anticipe chaque changement d'une croche : change sur le 'et-du-4' de la mesure précédente. Compare les deux versions. La deuxième sonne plus 'professionnelle' et 'moderne'." }
+          ],
+          "quiz": ["q-rhy-c3-03"]
+        },
+
+        {
+          "id": "rhy-c3-03",
+          "title": "Le groove : qu'est-ce qui fait qu'un rythme 'sent bon' ?",
+          "duration": 11,
+          "content": [
+            { "type": "p", "text": "Le groove, c'est ce qui fait qu'une musique te donne envie de bouger. C'est difficile à définir avec des mots, mais immédiatement reconnaissable à l'oreille. Il n'existe pas de recette magique pour créer du groove, mais plusieurs composantes y contribuent systématiquement. Cette leçon les analyse." },
+            { "type": "h", "text": "Définition" },
+            { "type": "p", "text": "Le groove = la sensation physique de mouvement créée par un motif rythmique récurrent et précis. Quand tu entends du funk et que ton pied tape tout seul, c'est le groove qui parle à ton corps. Il combine 3 ingrédients : précision rythmique (les notes sont placées exactement où il faut), syncope (les accents sont déplacés stratégiquement), et régularité (le motif se répète de façon prévisible)." },
+            { "type": "h", "text": "La précision : sans elle, pas de groove" },
+            { "type": "p", "text": "La première condition du groove est la précision absolue du placement des notes. Pas 'à peu près sur le temps' — exactement sur le temps (ou exactement sur le contretemps, selon le style). Cette précision n'est pas de la rigidité : c'est une ancre qui donne à l'oreille un repère stable. Paradoxalement, c'est cette stabilité qui 'libère' le groove." },
+            { "type": "h", "text": "La répétition : le groove comme hypnose" },
+            { "type": "p", "text": "Le groove fonctionne par répétition. Un motif rythmique joué 1 fois est intéressant. Joué 8 fois, il commence à 'groover'. Joué 16 fois, il hypnotise. C'est pourquoi le funk et le hip-hop utilisent des boucles courtes répétées indéfiniment. La répétition installe le motif dans le corps de l'auditeur, qui commence à l'anticiper et à le ressentir physiquement." },
+            { "type": "h", "text": "Le micro-timing : jouer 'dans' le temps" },
+            { "type": "p", "text": "Au-delà de la précision, il y a le 'micro-timing' : la façon infinitésimale dont les notes se placent juste avant, sur, ou après le temps exact. Un batteur qui joue 'laid-back' place ses notes légèrement après le clic du métronome — ça crée une sensation de décontraction. Un batteur qui joue 'on top' place ses notes légèrement avant — ça crée de l'urgence. Ce micro-timing ne se programme pas : il vient des années de pratique et d'écoute." },
+            { "type": "h", "text": "Les ghost notes : la texture du groove" },
+            { "type": "p", "text": "Les ghost notes sont des notes très légères, presque inaudibles, qui remplissent l'espace entre les notes 'principales'. Sur la batterie, elles sont jouées très doucement sur la caisse claire. Sur la guitare funk, ce sont des coups de mediator sur des cordes étouffées qui ne font 'click' qu'à peine. Elles ne sont pas là pour être entendues — elles sont là pour maintenir la continuité du flux rythmique." },
+            { "type": "h", "text": "Le lock avec la basse" },
+            { "type": "p", "text": "En musique de groupe, le groove vient du verrouillage ('locking') entre la basse et la grosse caisse. Quand ces deux instruments jouent exactement en même temps, le groove est solide. Quand ils se décalent légèrement, le groove s'affaiblit. En tant que guitariste, tu dois 'locker' avec la basse — écouter le grave et t'y accrocher rythmiquement." },
+            { "type": "h", "text": "Développer son groove" },
+            { "type": "p", "text": "3 exercices clés. 1) Joue avec un métronome tous les jours (améliore la précision). 2) Écoute beaucoup de funk, blues et groove music en te concentrant sur la percussion et la basse (intériorise le feel). 3) Joue avec d'autres musiciens — le vrai groove se développe dans le contexte du jeu en groupe." },
+            { "type": "ref", "text": "Clyde Stubblefield, le batteur de James Brown sur 'Funky Drummer' (1970), joue un break de batterie qui a été samplé des centaines de fois par des rappeurs et des producteurs. Ce beat 'groovy' est construit sur des ghost notes, des syncopes précises, et une régularité métronomique. C'est l'exemple parfait de tout ce qui crée le groove." },
+            { "type": "tip", "text": "Test groove personnel : enregistre 2 minutes de guitare rythmique sur un accord de Am avec métronome à 90 BPM. Joue le pattern le plus simple possible (une croche par temps, alternance bas-haut). Écoute l'enregistrement : est-ce que ça groove ? Si non, identifie les moments où le temps 'coule' : c'est là que tu travailles." }
+          ],
+          "quiz": ["q-rhy-c3-04", "q-rhy-c3-05"]
+        }
+
+      ]
+    }
+  ],
+
+  "quiz": [
+    { "id": "q-rhy-c1-01", "courseId": "rhythm", "lessonId": "rhy-c1-01", "lvl": 1, "q": "Quelle est la différence entre 'pulsation' et 'rythme musical' ?", "o": ["Aucune différence", "Pulsation = battement régulier constant. Rythme = organisation des notes par rapport à cette pulsation", "La pulsation est plus rapide", "Le rythme est plus fort"], "a": 1, "exp": "Pulsation = le clic du métronome, constant. Rythme musical = la façon dont les notes se placent par rapport à ce clic (long, court, entre les temps, etc.).", "xp": 25 },
+    { "id": "q-rhy-c1-02", "courseId": "rhythm", "lessonId": "rhy-c1-01", "lvl": 2, "q": "Que signifie 120 BPM ?", "o": ["120 mesures par minute", "120 battements (temps) par minute", "120 notes par minute", "120 croches par minute"], "a": 1, "exp": "BPM = Beats Per Minute = battements par minute. 120 BPM = 2 battements par seconde. C'est un tempo modéré-rapide typique du rock et de la pop.", "xp": 25 },
+    { "id": "q-rhy-c1-03", "courseId": "rhythm", "lessonId": "rhy-c1-02", "lvl": 1, "q": "En 4/4, que signifie le chiffre du haut ?", "o": ["La valeur d'un temps", "Le nombre de temps par mesure", "Le tempo", "La durée de la mesure"], "a": 1, "exp": "En 4/4 : le 4 du haut = 4 temps par mesure. Le 4 du bas = la noire (valeur n°4) représente 1 temps. La mesure dure 4 noires.", "xp": 25 },
+    { "id": "q-rhy-c1-04", "courseId": "rhythm", "lessonId": "rhy-c1-02", "lvl": 2, "q": "Dans une mesure de 4/4, les 'temps forts' sont…", "o": ["Les temps 2 et 4", "Les temps 1 et 3", "Tous les temps", "Aucun temps spécifique"], "a": 1, "exp": "En 4/4, temps forts = 1 et 3 (naturellement accentués). Temps faibles = 2 et 4. Le rock place la caisse claire sur 2 et 4 pour créer le backbeat — une inversion délibérée des accents naturels.", "xp": 30 },
+    { "id": "q-rhy-c1-05", "courseId": "rhythm", "lessonId": "rhy-c1-03", "lvl": 2, "q": "Mettre le métronome sur les temps 2 et 4 seulement (à moitié du BPM cible) développe…", "o": ["La vitesse", "Le sens du backbeat et le groove naturel", "La technique", "La mémoire musicale"], "a": 1, "exp": "En traitant les clics comme les temps 2 et 4, tu dois imaginer les temps 1 et 3 toi-même. Cela développe le 'backbeat feel' typique du rock et du jazz, et prépare au jeu avec un batteur.", "xp": 40 },
+    { "id": "q-rhy-c2-01", "courseId": "rhythm", "lessonId": "rhy-c2-01", "lvl": 1, "q": "En 4/4, combien de noires y a-t-il par mesure ?", "o": ["2", "3", "4", "8"], "a": 2, "exp": "4/4 = 4 noires par mesure. La noire = 1 temps. C'est la signature la plus courante en musique populaire.", "xp": 20 },
+    { "id": "q-rhy-c2-02", "courseId": "rhythm", "lessonId": "rhy-c2-01", "lvl": 2, "q": "Une blanche vaut…", "o": ["1 temps", "2 temps", "4 temps", "1/2 temps"], "a": 1, "exp": "Blanche = 2 noires = 2 temps. Dans une mesure de 4/4, on peut jouer 2 blanches (2×2 = 4 temps = 1 mesure).", "xp": 25 },
+    { "id": "q-rhy-c2-03", "courseId": "rhythm", "lessonId": "rhy-c2-02", "lvl": 1, "q": "En 4/4, comment compte-t-on les croches ?", "o": ["1-2-3-4-5-6-7-8", "1 et 2 et 3 et 4 et", "1-2-3-4 (x2)", "Tri-o-let par temps"], "a": 1, "exp": "'1 et 2 et 3 et 4 et' = 8 croches par mesure. Les chiffres tombent sur les temps forts, les 'et' sur les contretemps.", "xp": 25 },
+    { "id": "q-rhy-c2-04", "courseId": "rhythm", "lessonId": "rhy-c2-02", "lvl": 2, "q": "Pourquoi la main droite ne doit-elle pas s'arrêter entre les coups en strumming ?", "o": ["Pour aller plus vite", "Le mouvement pendulaire continu est la clé du groove et de la régularité", "Pour économiser l'énergie", "Convention de style"], "a": 1, "exp": "Mouvement continu (bas-haut-bas-haut) = régularité du groove. La main ne touche pas forcément les cordes à chaque mouvement, mais ne s'arrête JAMAIS. C'est ce qui crée le 'feel' rythmique.", "xp": 35 },
+    { "id": "q-rhy-c2-05", "courseId": "rhythm", "lessonId": "rhy-c2-03", "lvl": 2, "q": "Un triolet de croches place combien de notes sur 1 temps ?", "o": ["2", "3", "4", "6"], "a": 1, "exp": "Triolet = 3 notes égales dans le temps d'une noire (au lieu de 2 croches normales). Base du feel ternaire, du shuffle et du swing.", "xp": 30 },
+    { "id": "q-rhy-c2-06", "courseId": "rhythm", "lessonId": "rhy-c2-03", "lvl": 3, "q": "Le shuffle blues est basé sur…", "o": ["Des croches égales", "Des triolets dont on joue la 1ère et la 3ème note (longue-courte)", "Des doubles-croches", "Des syncopes"], "a": 1, "exp": "Shuffle = triolet (1-2-3) dont on joue notes 1 et 3 uniquement. Résultat : 'longue-courte'. Le feel swing/blues. Robert Johnson, Muddy Waters, B.B. King.", "xp": 45 },
+    { "id": "q-rhy-c2-07", "courseId": "rhythm", "lessonId": "rhy-c2-04", "lvl": 2, "q": "Comment produire un silence propre sur la guitare ?", "o": ["Arrêter de jouer", "Étouffer les cordes (paume ou relâchement du doigt gauche) au bon moment", "Attendre", "Jouer plus doucement"], "a": 1, "exp": "Silence = son étouffé. 2 techniques : palm mute (paume droite sur les cordes) ou relâchement du doigt gauche. La précision du timing du silence est aussi importante que la précision des notes.", "xp": 35 },
+    { "id": "q-rhy-c3-01", "courseId": "rhythm", "lessonId": "rhy-c3-01", "lvl": 2, "q": "La syncope consiste à…", "o": ["Jouer sur les temps forts", "Accentuer les temps faibles (les 'et' ou 'e/a') au lieu des temps forts", "Jouer plus vite", "Changer de tonalité"], "a": 1, "exp": "Syncope = accent délibérément placé sur un temps faible (contretemps). L'oreille 'attend' l'accent sur les temps forts. Le décalage crée le groove. Fondement du funk, jazz, reggae, R&B.", "xp": 35 },
+    { "id": "q-rhy-c3-02", "courseId": "rhythm", "lessonId": "rhy-c3-01", "lvl": 3, "q": "Quelle est la différence entre une syncope et une note mal placée ?", "o": ["Aucune", "La syncope est délibérée et précise. La note mal placée est involontaire et imprécise", "La syncope est plus forte", "La note mal placée est plus courte"], "a": 1, "exp": "Une syncope bien faite arrive EXACTEMENT sur le contretemps visé — c'est un choix musical précis. Une note mal placée arrive 'à peu près' sans contrôle — c'est une erreur de timing.", "xp": 50 },
+    { "id": "q-rhy-c3-03", "courseId": "rhythm", "lessonId": "rhy-c3-02", "lvl": 3, "q": "L'anticipation harmonique consiste à…", "o": ["Jouer l'accord du temps 1 exactement sur le temps 1", "Jouer l'accord du temps 1 sur le 'et-du-4' de la mesure précédente et le tenir", "Jouer en avance sur le tempo", "Doubler la vitesse"], "a": 1, "exp": "Anticipation = jouer l'accord 'attendu' au temps 1 une croche avant (sur le 'et-de-4' précédent) et le tenir. Crée la fluidité et le 'glissement' caractéristique de la bossa nova et du jazz.", "xp": 50 },
+    { "id": "q-rhy-c3-04", "courseId": "rhythm", "lessonId": "rhy-c3-03", "lvl": 2, "q": "Quels sont les 3 ingrédients principaux du groove ?", "o": ["Vitesse, volume, technique", "Précision rythmique, syncope stratégique, régularité du motif", "Gammes, modes, accords", "BPM élevé, distorsion, reverb"], "a": 1, "exp": "Groove = précision (notes exactement où elles doivent être) + syncope (accents déplacés stratégiquement) + régularité (motif récurrent prévisible). Enlève l'un de ces éléments, le groove disparaît.", "xp": 40 },
+    { "id": "q-rhy-c3-05", "courseId": "rhythm", "lessonId": "rhy-c3-03", "lvl": 3, "q": "Les 'ghost notes' sont…", "o": ["Des notes très fortes", "Des notes très légères qui maintiennent la continuité du flux rythmique", "Des notes jouées en silence", "Des notes fausses"], "a": 1, "exp": "Ghost notes = notes très légères (presque inaudibles) entre les notes principales. Elles maintiennent le flux rythmique continu. Fondamentales en funk (corde étouffée, son 'click').", "xp": 45 }
+  ],
+
+  "exercises": []
+}

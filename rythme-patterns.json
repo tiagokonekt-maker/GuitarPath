@@ -1,0 +1,278 @@
+{
+  "courses": [
+    {
+      "id": "rhythm",
+      "title": "Rythme & phrasing",
+      "icon": "🥁",
+      "color": "#D85A30",
+      "colorL": "#FAECE7",
+      "desc": "Subdivisions, syncopes, groove, patterns par genre",
+      "lessons": [
+
+        {
+          "id": "rhy-c4-01",
+          "title": "La main droite : mouvement pendulaire et continuité",
+          "duration": 10,
+          "content": [
+            { "type": "p", "text": "Tout le rythme de la guitare passe par la main droite. C'est elle qui donne vie aux accords et aux riffs. Pourtant, c'est souvent la main la plus négligée dans l'apprentissage — on se concentre sur les doigts de la main gauche (les notes) en oubliant que sans une main droite solide et régulière, rien ne groove. Cette leçon remet la main droite au centre." },
+            { "type": "h", "text": "Le mouvement pendulaire : la base absolue" },
+            { "type": "p", "text": "La main droite doit se déplacer comme un pendule : bas-haut-bas-haut, de façon régulière et continue. Ce mouvement ne s'arrête JAMAIS, même quand tu ne touches pas les cordes. Les notes sonnent quand la main touche les cordes, les silences se créent quand la main passe dans le vide ou sur des cordes étouffées. Mais le mouvement, lui, continue toujours." },
+            { "type": "h", "text": "Pourquoi la continuité est cruciale" },
+            { "type": "p", "text": "Si tu arrêtes le mouvement de ta main droite entre les notes, tu dois le 'redémarrer' à chaque fois. Ce redémarrage crée inévitablement des micro-irrégularités de timing. Avec un mouvement continu, ta main droite devient un métronome physique — elle maintient le tempo dans ton corps, indépendamment de ce que joue ta main gauche." },
+            { "type": "h", "text": "Coups bas et coups hauts" },
+            { "type": "p", "text": "Coup bas (downstroke) : la main descend, le médiator attaque les cordes du grave à l'aigu. Son plus 'épais', plus puissant. Coup haut (upstroke) : la main monte, le médiator attaque les cordes de l'aigu au grave. Son plus 'fin', plus léger. Alterner les deux crée naturellement un accent sur les bas (temps forts) et une légèreté sur les hauts (temps faibles). C'est le groove de base." },
+            { "type": "h", "text": "Le médium : pression et angle" },
+            { "type": "p", "text": "Tiens le médiator entre le pouce et l'index avec juste assez de pression pour qu'il ne tombe pas, mais sans crisper. Un médiator tenu trop fort crée un son dur et mécanique. Tenu trop lâche, il tourne et tu perds le contrôle. L'angle idéal : légèrement incliné par rapport aux cordes (pas perpendiculaire) pour un son fluide et une résistance minimale." },
+            { "type": "h", "text": "Le poignet vs le bras" },
+            { "type": "p", "text": "Pour le strumming, le mouvement doit venir principalement du poignet, pas du bras entier. Un strumming 'de bras' fatigue vite et manque de précision. Un strumming 'de poignet' permet de jouer longtemps avec des patterns complexes. Imagine que ton poignet est la charnière d'une porte : le bas de la porte (la main) se balance, la charnière (poignet) reste souple." },
+            { "type": "h", "text": "Commencer par une seule corde" },
+            { "type": "p", "text": "Pour développer le mouvement pendulaire sans complexité harmonique : joue un accord de Am, mais joue uniquement la corde de La (c5) à vide. Fais le mouvement pendulaire bas-haut-bas-haut à 60 BPM sans t'arrêter pendant 2 minutes. Concentre-toi UNIQUEMENT sur la régularité du mouvement. C'est l'exercice de base de tout professeur de guitare sérieux." },
+            { "type": "ref", "text": "Tommy Emmanuel (guitariste australien virtuose de fingerstyle et flatpicking) passe les premières 10 minutes de chaque session à travailler uniquement le mouvement pendulaire de la main droite sur une corde. Il dit que c'est cet exercice quotidien qui lui a permis de développer le groove qu'il a aujourd'hui après 50 ans de guitare." },
+            { "type": "tip", "text": "Drill main droite (5 min) : pas d'accords. Une seule corde (c5 vide). Mouvement pendulaire continu à 80 BPM. Accent légèrement plus fort sur les coups bas. Ne t'arrête pas, ne regarde pas ta main. Si tu dévies du métronome, c'est là où tu travailles." }
+          ],
+          "quiz": ["q-rhy-c4-01"]
+        },
+
+        {
+          "id": "rhy-c4-02",
+          "title": "Patterns de strumming : folk, pop, rock",
+          "duration": 12,
+          "content": [
+            { "type": "p", "text": "Un pattern de strumming, c'est une séquence organisée de coups bas (B) et hauts (H) qui se répète sur plusieurs mesures. Chaque genre musical a ses patterns caractéristiques. En apprendre quelques-uns te donne un vocabulaire rythmique immédiatement utilisable." },
+            { "type": "h", "text": "Notation des patterns" },
+            { "type": "p", "text": "On notera les patterns ainsi : B = coup bas (downstroke), H = coup haut (upstroke), - = silence (mouvement de main sans contact avec les cordes), x = accord étouffé (contact avec les cordes mais cordes étouffées, son 'click'). Les temps sont séparés par une virgule. Ex : B-BH-B-BH = 1 mesure de croches." },
+            { "type": "h", "text": "Pattern folk basique (le plus universel)" },
+            { "type": "p", "text": "Séquence : B - BH - BH - BH. Sur une mesure de 4/4 en croches : Bas (1) - Haut (et-1) - Bas (2) - Haut (et-2) - Bas (3) - Haut (et-3) - Bas (4) - Haut (et-4). Tout le monde joue, tous les coups sonnent. Son équilibré. Utilisé dans 'Knockin' on Heaven's Door' (Dylan), '500 Miles' (The Proclaimers), la majorité des chansons folk acoustiques." },
+            { "type": "h", "text": "Pattern pop (down-up accents syncopés)" },
+            { "type": "p", "text": "Séquence : B - BH - -H - BH. En 4/4 : Bas(1) - silence(et-1) - Bas(2) - Haut(et-2) - silence(3) - Haut(et-3) - Bas(4) - Haut(et-4). Le silence au et-du-1 et le 3 étouffé créent la syncope caractéristique du pop. Utilisé dans la majorité des chansons pop modernes. Un peu plus complexe que le folk basique." },
+            { "type": "h", "text": "Pattern rock power chords (tous bas)" },
+            { "type": "p", "text": "Séquence : B B B B (4 coups bas par mesure). Tous des downstrokes. Son puissant, agressif, direct. Souvent avec palm mute sur certains coups. C'est la base du rock AC/DC, Ramones, Green Day. La régularité des downstrokes crée une énergie compacte impossible à obtenir avec des coups hauts." },
+            { "type": "h", "text": "Pattern rock syncopé (intermédiaire)" },
+            { "type": "p", "text": "Séquence : B B-H -H B-H. En 4/4 : Bas(1) - Bas(2) - Haut(et-2) - silence(3) - Haut(et-3) - Bas(4) - Haut(et-4). Ce pattern est celui de nombreux riffs rock des années 70-90 (Oasis, Nirvana, Pearl Jam). Plus groovy que 4 downstrokes, plus 'rock' que le pattern folk." },
+            { "type": "h", "text": "Pattern ballade lente" },
+            { "type": "p", "text": "Pour les tempos très lents (60-75 BPM) : arpège les cordes une par une au lieu de strummer. Pouce sur c6 (temps 1), index sur c3 (et), majeur sur c2 (2), annulaire sur c1 (et-2), répète. Ce 'finger-picking ballade' est utilisé dans les ballades acoustiques (John Denver, early Coldplay)." },
+            { "type": "h", "text": "Comment choisir un pattern" },
+            { "type": "p", "text": "Règle pratique : écoute la chanson et imite ce que tu entends. Le pattern doit correspondre à l'émotion de la chanson. Lent et triste → ballade arpégée ou noires. Energique et puissant → downstrokes rock. Léger et joyeux → folk ou pop syncopé. En doute ? Le pattern folk basique (B-BH-BH-BH) fonctionne dans 80% des contextes." },
+            { "type": "ref", "text": "Noel Gallagher (Oasis) utilise principalement 2 patterns : un pattern pop syncopé pour les ballades ('Wonderwall', 'Don't Look Back in Anger') et des downstrokes rock pour les morceaux énergiques. Écoute ces deux chansons en te concentrant uniquement sur sa main droite." },
+            { "type": "tip", "text": "Apprentissage des patterns : prends le pattern pop syncopé. Joue-le d'abord sur UNE SEULE corde à 60 BPM. Quand c'est fluide, joue sur 2 cordes. Puis sur l'accord complet. Cette progression évite de gérer trop de variables en même temps." }
+          ],
+          "quiz": ["q-rhy-c4-02", "q-rhy-c4-03"]
+        },
+
+        {
+          "id": "rhy-c4-03",
+          "title": "Le palm mute : étouffer pour créer du groove",
+          "duration": 9,
+          "content": [
+            { "type": "p", "text": "Le palm mute est l'une des techniques rythmiques les plus importantes de la guitare électrique et acoustique. Il consiste à étouffer partiellement les cordes avec la paume de la main droite, créant un son 'percussif', 'étouffé', qu'on associe immédiatement au rock, au metal et au funk. Maîtriser le palm mute, c'est ajouter une couleur rythmique essentielle à ton jeu." },
+            { "type": "h", "text": "La technique" },
+            { "type": "p", "text": "Pose le bord de la paume droite (la partie charnue entre le poignet et le petit doigt) sur les cordes, juste avant le chevalet. La pression doit être légère : assez pour étouffer le son, pas assez pour tuer le sustain complètement. Trop près du chevalet = son trop ouvert (pas assez de mute). Trop loin = son trop étouffé, presque inaudible. Trouve le sweet spot." },
+            { "type": "h", "text": "Son et effet" },
+            { "type": "p", "text": "Avec le palm mute, le son de guitare devient 'chunk', percussif, court. Les notes ont peu de sustain. À la distorsion, c'est le son du riff de metal compact et agressif. Clean, c'est le son du riff funk ou du strumming roots/country. Alterner palm mute (PM) et notes ouvertes (sans PM) crée un contraste dynamique puissant." },
+            { "type": "h", "text": "Palm mute partiel : graduation du son" },
+            { "type": "p", "text": "Tu peux varier l'intensité du palm mute en ajustant la pression ou la position. PM léger = son légèrement amorti avec du sustain. PM fort = son très court, presque 'click'. Cette graduation te permet de jouer des nuances dynamiques sur un même riff : PM léger pour les couplets, PM fort pour les bridges, notes ouvertes pour le refrain." },
+            { "type": "h", "text": "Notation et application" },
+            { "type": "p", "text": "En tablature, le palm mute se note 'PM' ou 'P.M.' avec une ligne pointillée sous les notes concernées. Dans un riff typique rock/metal : riff PM PM PM - ouvert PM PM ouvert. L'alternance crée la dynamique. Ex : E5 barré avec PM sur les temps 1-2-3, puis E5 ouvert sur le temps 4 pour l'accent." },
+            { "type": "h", "text": "Palm mute rythmique : le 'chug'" },
+            { "type": "p", "text": "En metal, le 'chug' est une technique de palm mute rythmique où tu joues des coups de médiator très rapprochés sur des cordes complètement étouffées (ou quasi-étouffées). Le résultat est presque percussif — comme une caisse claire jouée sur la guitare. Très utilisé en metal pour les parties rythmiques de 'groove metal' ou 'djent'." },
+            { "type": "h", "text": "Palm mute funk : le 'scratch'" },
+            { "type": "p", "text": "En funk, le palm mute n'est pas utilisé comme en metal. On utilise plutôt l'index de la main gauche pour étouffer toutes les cordes, et on joue des coups de médiator sur ces cordes étouffées. Résultat : un 'scratch' rythmique très court et percussif. C'est différent du palm mute classique mais produit un effet similaire." },
+            { "type": "ref", "text": "'Enter Sandman' (Metallica, 1991) : l'intro est un exemple classique d'alternance PM/ouvert. Le riff commence entièrement en PM, puis les accents tombent sur des notes ouvertes. Cette alternance crée la dynamique qui rend le riff si reconnaissable. Écoute et identifie les moments PM vs ouvert." },
+            { "type": "tip", "text": "Drill palm mute : sur la corde de Mi grave (c6), joue en downstrokes à 80 BPM avec PM sur les temps 1, 2, 3 et note ouverte sur le temps 4. Boucle 2 minutes. Quand c'est fluide, ajoute la corde de La (c5) pour former un E5 power chord. Tu joues le riff de base du rock." }
+          ],
+          "quiz": ["q-rhy-c4-04"]
+        },
+
+        {
+          "id": "rhy-c5-01",
+          "title": "Blues shuffle : le feel ternaire appliqué",
+          "duration": 11,
+          "content": [
+            { "type": "p", "text": "Le shuffle blues est le feel rythmique fondamental du blues. Quand tu entends B.B. King, Stevie Ray Vaughan, Eric Clapton dans leur répertoire blues, c'est le shuffle que tu entends. Ce feel ternaire transforme un rythme 'carré' en quelque chose qui 'swingue' et qui 'danse'. Comprendre et jouer le shuffle est une étape incontournable pour tout guitariste rock/blues." },
+            { "type": "h", "text": "Rappel : le feel shuffle" },
+            { "type": "p", "text": "On divise chaque temps en 3 (triolet), mais on ne joue que la 1ère et la 3ème note du triolet. Résultat : une paire 'longue-courte' par temps. Compté : 'DAH-dah, DAH-dah, DAH-dah, DAH-dah'. En notation écrite, les croches sont normales, mais indiqué 'shuffle feel' en tête de partition." },
+            { "type": "h", "text": "Le riff boogie-woogie" },
+            { "type": "p", "text": "La forme la plus emblématique du shuffle blues à la guitare : le riff boogie-woogie. Sur la corde 6 (Mi) avec Am7 en tête : joue Mi(0) suivi de La(5) en alternance sur un feel shuffle. Ou la version '3-4-5' : Mi(0)-Sol(3)-La(5) en triolets avec retour. Ce riff est la base de dizaines de classiques blues." },
+            { "type": "h", "text": "Le shuffle à 12 mesures" },
+            { "type": "p", "text": "Jouer un blues à 12 mesures en shuffle : 4 mesures de I (A7 ou riff sur La), 2 mesures de IV (D7 ou riff sur Ré), 2 mesures de I, 1 mesure de V (E7), 1 mesure de IV, 2 mesures de I. Le tout avec le feel shuffle (longue-courte sur chaque temps). C'est la grille de référence pour pratiquer le blues." },
+            { "type": "h", "text": "Quick change vs slow change" },
+            { "type": "p", "text": "Deux versions du blues 12 mesures. Slow change (classique) : 4 mesures complètes sur I avant d'aller au IV. Quick change (moderne) : on passe au IV dès la mesure 2 avant de revenir au I. Ex : A7(1)-D7(2)-A7(3)-A7(4)-D7(5)-D7(6)-A7(7)-A7(8)-E7(9)-D7(10)-A7(11)-E7(12). Les deux versions coexistent dans le répertoire blues." },
+            { "type": "h", "text": "Texas shuffle vs Chicago shuffle" },
+            { "type": "p", "text": "Texas shuffle (Stevie Ray Vaughan) : plus chargé, plus de notes, feel presque double-croches. Très physique. Chicago shuffle (Muddy Waters, Willie Dixon) : plus épuré, groove implacable, espace entre les notes. Less is more. Savoir lequel tu préfères te guide vers ton style personnel de blues." },
+            { "type": "h", "text": "Le shuffle acoustique" },
+            { "type": "p", "text": "Sur guitare acoustique, le shuffle prend une autre forme. Souvent joué en fingerpicking : le pouce fait le shuffle sur les cordes graves (basse alternée), les doigts jouent la mélodie sur les cordes aiguës. Robert Johnson jouait ainsi. Lightnin' Hopkins aussi. Ce style 'solo blues acoustique' combine basse, rythme et mélodie en même temps." },
+            { "type": "ref", "text": "'Pride and Joy' (Stevie Ray Vaughan, 1983) : le riff d'intro est un Texas shuffle parfait en Mi. Écoute le feel 'longue-courte' sur chaque temps. 'Everyday I Have the Blues' (B.B. King) : Chicago shuffle épuré en Fa. 'Hound Dog' (Elvis, version Big Mama Thornton originale) : shuffle en Mi. Ces 3 morceaux = 3 déclinaisons du même feel." },
+            { "type": "tip", "text": "Drill shuffle 20 min : mets un backing track de blues shuffle en La à 80 BPM (YouTube). Joue le riff boogie-woogie sur la corde 6 pendant 5 min. Puis improvise en pentatonique Am avec le feel shuffle (fais sonner tes phrases en longue-courte). Enregistre-toi. Tu entendras directement si le feel est là ou non." }
+          ],
+          "quiz": ["q-rhy-c5-01", "q-rhy-c5-02"]
+        },
+
+        {
+          "id": "rhy-c5-02",
+          "title": "Reggae et ska : jouer sur les contretemps",
+          "duration": 10,
+          "content": [
+            { "type": "p", "text": "Le reggae et le ska sont des musiques jamaïcaines qui ont révolutionné la guitare rythmique en plaçant les accents là où personne ne les attendait : sur les contretemps. La guitare joue 'en négatif' — là où les autres instruments ne jouent pas. Cette approche radicalement différente crée une musique hypnotique et unique." },
+            { "type": "h", "text": "Le skank reggae : jouer sur les 'et'" },
+            { "type": "p", "text": "Le pattern reggae de base s'appelle le 'skank'. Principe : jouer des accords étouffés (courts, staccato) uniquement sur les contretemps. En 4/4 : silence(1) - accord(et-1) - silence(2) - accord(et-2) - silence(3) - accord(et-3) - silence(4) - accord(et-4). La guitare ne joue JAMAIS sur les temps 1, 2, 3, 4." },
+            { "type": "h", "text": "L'importance de l'espace" },
+            { "type": "p", "text": "Dans le reggae, la guitare laisse les temps forts complètement vides. La basse (très grave et proéminente) et la grosse caisse marquent les temps. La guitare et le clavier occupent les contretemps. Cette répartition crée l'espace caractéristique du reggae — chaque instrument a sa propre 'fenêtre temporelle', et tous ensemble ils forment un tout cohérent." },
+            { "type": "h", "text": "La technique du skank" },
+            { "type": "p", "text": "Pour jouer le skank proprement : joue l'accord (court et étouffé) sur le contretemps, puis relâche immédiatement la pression de la main gauche pour créer le silence sur le temps suivant. Le son doit être COURT et net. Un skank qui traîne sonne 'pas reggae'. La définition du son vient de la précision du relâchement." },
+            { "type": "h", "text": "Le ska : plus vite, plus court" },
+            { "type": "p", "text": "Le ska est l'ancêtre du reggae (années 50-60 en Jamaïque). Même principe (accords sur les contretemps), mais à un tempo beaucoup plus rapide (120-160 BPM contre 70-90 BPM pour le reggae). Les accords sont encore plus courts et percussifs. Ska original (The Skatalites), ska britannique (The Specials), ska punk (Rancid, Sublime)." },
+            { "type": "h", "text": "Le riddim : la boucle reggae" },
+            { "type": "p", "text": "En reggae, on appelle 'riddim' la boucle rythmique de base sur laquelle tout repose. La guitare fait partie du riddim avec son skank. La précision rythmique doit être absolue — le riddim reggae est souvent plus strict que le rock ou le jazz. Un skank légèrement décalé est immédiatement perceptible dans le contexte reggae." },
+            { "type": "h", "text": "Le lien avec la syncope" },
+            { "type": "p", "text": "Le skank reggae est une forme extrême de syncope : toutes les notes sont sur les contretemps, sans exception. Jouer le reggae développe donc le sens du contretemps de façon très efficace. Après quelques sessions de skank, jouer des syncopes dans d'autres styles (funk, jazz) devient beaucoup plus naturel." },
+            { "type": "ref", "text": "'No Woman No Cry' (Bob Marley, 1975) : écoute la guitare et le piano dans le fond. Ils skanquent sur les contretemps pendant que la basse de Family Man Barrett tient les temps. 'The Harder They Come' (Jimmy Cliff, 1972) : exemple de ska à la limite du reggae early. 'What I Got' (Sublime, 1996) : ska-punk où la guitare skanque à tempo rapide." },
+            { "type": "tip", "text": "Drill skank (10 min) : backing reggae en Do à 75 BPM (YouTube). Joue UNIQUEMENT sur les 'et' de chaque temps avec des accords courts et étouffés. Commence lentement (60 BPM). Compte à voix haute : 'silence(1) - chord(et) - silence(2) - chord(et)...' Ton oreille va s'inverser — après 5 minutes, le 'et' devient ta référence naturelle." }
+          ],
+          "quiz": ["q-rhy-c5-03"]
+        },
+
+        {
+          "id": "rhy-c5-03",
+          "title": "Funk : les 16e notes et les ghost notes",
+          "duration": 12,
+          "content": [
+            { "type": "p", "text": "Le funk est le genre qui pousse la guitare rythmique à son point de perfectionnement maximal. La guitare funk n'est pas un instrument harmonique — c'est un instrument de percussion. Chaque note, chaque silence, chaque ghost note est une pièce d'un puzzle rythmique précis. Comprendre le funk, c'est comprendre comment la guitare peut 'drummer'." },
+            { "type": "h", "text": "Les 16e notes : la matière première du funk" },
+            { "type": "p", "text": "En funk, la main droite joue un flux continu de 16 doubles-croches par mesure. Ce flux ne s'arrête jamais. On compte : '1-e-et-a-2-e-et-a-3-e-et-a-4-e-et-a'. La main bouge en permanence (bas-haut-bas-haut × 4 par temps). Sur ces 16 positions possibles, le musicien choisit quelles notes sonnent et lesquelles sont étouffées (ghost notes)." },
+            { "type": "h", "text": "Les ghost notes en funk" },
+            { "type": "p", "text": "Une ghost note funk = un coup de médiator sur des cordes étouffées. La main gauche plaque un accord mais sans appuyer — les cordes ne sonnent pas clairement, juste un 'click' ou 'chuck' percussif. Ces clicks sont les ghost notes. Elles ne sont pas là pour être entendues harmoniquement — elles maintiennent le flux rythmique et créent la texture du groove funk." },
+            { "type": "h", "text": "Accents et ghost notes : le pattern funk" },
+            { "type": "p", "text": "Dans un pattern funk, certaines 16e sont 'accents' (cordes sonnantes avec harmonie) et d'autres sont 'ghost notes' (cordes étouffées). La combinaison des deux crée le groove. Pattern typique : accent(1) - ghost - accent(et-1) - ghost - ghost - accent(e-2) - accent(et-2) - ghost... La distribution des accents varie selon le groove voulu." },
+            { "type": "h", "text": "Le son funk : comment l'obtenir" },
+            { "type": "p", "text": "Son funk optimal : guitare propre (clean) avec un peu de compression. Souvent accordée avec un capo ou jouée en position ouverte. Accords 7 (m7, 7, 9) avec des voicings courts (2-3 cordes). Main gauche qui maîtrise l'étouffement (effleurement des cordes pour les ghost notes vs pression complète pour les accents). La distorsion tue le groove funk — il faut du clean." },
+            { "type": "h", "text": "Le wah-wah : l'outil funk par excellence" },
+            { "type": "p", "text": "La pédale wah-wah est associée au funk depuis Jimi Hendrix et Isaac Hayes. Ouverte sur les accents, fermée sur les ghost notes, la wah imite le spectre de la voix humaine. Ce n'est pas indispensable pour jouer funk, mais c'est une couleur sonore inimitable. Nile Rodgers (CHIC), Chic Murray, et le jeune Prince utilisaient le wah comme extension de leur vocabulaire rythmique." },
+            { "type": "h", "text": "L'approche Nile Rodgers" },
+            { "type": "p", "text": "Nile Rodgers (CHIC, David Bowie, Daft Punk) est la référence absolue de la guitare funk rythmique. Son approche : des accords 'chucked' (étouffés) et secs, des voicings minimalistes (souvent juste 3-4 cordes), un groove implacable basé sur les 16e notes syncopées. Ses riffs semblent simples, mais leur précision rythmique est extraordinaire." },
+            { "type": "ref", "text": "'Le Freak' (CHIC, 1978) : le riff de guitare de Nile Rodgers = parfait exemple de ghost notes + accents en 16e. 'Get Up (I Feel Like Being a) Sex Machine' (James Brown, 1970) : riff de guitare en 16e avec ghost notes omniprésents. 'Give It Away' (Red Hot Chili Peppers, 1991) : John Frusciante adapte le funk au rock en maintenant les 16e continues." },
+            { "type": "tip", "text": "Drill funk (15 min) : sur Am9 (accord Am avec 9e = La-Do-Mi-Si), joue un flux continu de 16e notes à 85 BPM. Main gauche : alterne pression complète (son) et relâchement (ghost). Main droite : bas-haut permanent. Commence avec un accent sur le 1 et sur le 'et-2', ghost partout ailleurs. Augmente progressivement la complexité rythmique." }
+          ],
+          "quiz": ["q-rhy-c5-04", "q-rhy-c5-05"]
+        },
+
+        {
+          "id": "rhy-c5-04",
+          "title": "Bossa nova : le pattern classique",
+          "duration": 10,
+          "content": [
+            { "type": "p", "text": "La bossa nova est un genre musical brésilien né à la fin des années 50 à Rio de Janeiro, créé par João Gilberto, Tom Jobim et Vinicius de Moraes. Son rythme caractéristique est l'un des plus sophistiqués et des plus difficiles à maîtriser en guitare. Mais quand c'est réussi, il est d'une élégance absolue." },
+            { "type": "h", "text": "Origines et contexte" },
+            { "type": "p", "text": "La bossa nova est née du samba brésilien (rythme ternaire complexe) mélangé au jazz américain (harmonies sophistiquées, voicings 7e et 9e). João Gilberto a simplifié le samba pour le jouer seul à la guitare, en chantant par-dessus. Cette simplification 'à l'essentiel' crée le son bossa : épuré, intime, profondément groovy malgré sa légèreté apparente." },
+            { "type": "h", "text": "Le pattern de base (pouce + doigts)" },
+            { "type": "p", "text": "La bossa se joue en fingerstyle (sans médiator). Le pouce joue la basse (alternant fondamentale et quinte) sur les cordes graves. Les doigts (index, majeur, annulaire) jouent les accords sur les cordes aiguës. Le pattern rythmique global crée une anticipation systématique des accords — caractéristique vue dans la leçon sur l'anticipation." },
+            { "type": "h", "text": "Le pattern bossa (simplifié)" },
+            { "type": "p", "text": "Sur 1 mesure de 4/4 : Pouce basse(1) - Doigts accord(et-1) - Pouce basse(2) - Doigts accord(et-2) - Pouce basse(3) - Doigts accord(2et) anticipé - Pouce basse(4) - Doigts accord(et-4). La mesure suivante repart identique. Ce pattern peut varier selon les guitaristes, mais l'alternance pouce-doigts avec anticipation est la base." },
+            { "type": "h", "text": "Les accords bossa" },
+            { "type": "p", "text": "La bossa n'utilise presque jamais de triades simples. Ce sont des accords 7, 9, 11, 13, avec des voicings spécifiques qui ont peu de notes mais beaucoup de couleur. Maj7, m7, 7b9, maj9, m11... La combinaison du rythme syncopé et de ces harmonies riches crée l'identité sonore de la bossa. Gmaj7, Fmaj7, E7, Am7 sont des accords emblématiques du genre." },
+            { "type": "h", "text": "La difficulté : indépendance main droite" },
+            { "type": "p", "text": "La vraie difficulté de la bossa : coordonner un pouce (basse régulière) et des doigts (accords syncopés) de façon indépendante. C'est comme faire deux choses différentes en même temps. La solution : apprendre d'abord la ligne de basse seule. Puis les accords seuls. Puis combiner très lentement. Cette indépendance s'acquiert progressivement, jamais en forçant." },
+            { "type": "h", "text": "Simplifier pour débutants bossa" },
+            { "type": "p", "text": "Si le pattern complet est trop complexe au début : joue simplement les accords sur les contretemps (les 'et') sans la basse. Tu obtiens un 'half bossa' immédiatement reconnaissable. Ajoute la basse au pouce quand le rythme des accords est automatique." },
+            { "type": "ref", "text": "'The Girl from Ipanema' (Tom Jobim / Vinicius de Moraes, 1962 créée par João Gilberto) : la version originale fingerstyle de João Gilberto est la référence. 'Corcovado' (Quiet Nights) et 'Desafinado' sont aussi des exemples emblématiques. Pour la guitare seule, cherche les arrangements de Baden Powell ou de João Bosco." },
+            { "type": "tip", "text": "Plan bossa sur 2 semaines : Semaine 1 - joue uniquement les accords sur les contretemps à 65 BPM (pattern simplifié). Semaine 2 - ajoute le pouce sur les temps forts. L'indépendance viendra progressivement. Ne force pas — la bossa demande de la patience mais récompense magnifiquement." }
+          ],
+          "quiz": ["q-rhy-c5-06"]
+        },
+
+        {
+          "id": "rhy-c5-05",
+          "title": "Gypsy jazz : la pompe Django",
+          "duration": 10,
+          "content": [
+            { "type": "p", "text": "Le gypsy jazz est un style musical créé dans les années 30 par le guitariste manouche Django Reinhardt à Paris. Sa guitare rythmique caractéristique — la 'pompe' — est l'une des plus distinctives et des plus exigeantes de toute la guitare. La pompe n'est pas juste un pattern : c'est une philosophie du rythme entier." },
+            { "type": "h", "text": "Origines et Django" },
+            { "type": "p", "text": "Django Reinhardt (1910-1953) était un guitariste Romani (manouche) qui jouait dans les cafés et dancings parisiens. Malgré 2 doigts paralysés à la main gauche suite à un incendie, il a développé un style guitaristique révolutionnaire. Son groupe, le Quintette du Hot Club de France (avec le violoniste Stéphane Grappelli), a créé le seul grand style de jazz vraiment européen." },
+            { "type": "h", "text": "La pompe : définition et feel" },
+            { "type": "p", "text": "La pompe gypsy = strumming 4 downstrokes par mesure, tous des coups bas, en alternant note tenue (ouverte) et note étouffée (chunk). Pattern : BAS sec(1) - BAS chunk(2) - BAS sec(3) - BAS chunk(4). Ou parfois : BAS sec(1) - BAS sec(2) - BAS chunk(3) - BAS chunk(4). Les coups 'secs' sonnent l'accord. Les coups 'chunk' étouffent aussitôt." },
+            { "type": "h", "text": "Pourquoi exclusivement des downstrokes" },
+            { "type": "p", "text": "Contrairement au strumming folk ou pop (alternance haut-bas), la pompe gypsy n'utilise QUE des coups bas. Cela crée un son percussif et une énergie particulière impossible à obtenir avec des coups hauts. L'effort physique est plus grand (pas de 'récupération' avec les coups hauts), mais le résultat est un groove compact et puissant." },
+            { "type": "h", "text": "Le tempo gypsy" },
+            { "type": "p", "text": "Le gypsy jazz se joue vite — souvent 180-240 BPM pour les morceaux rapides (the 'swings'). La pompe à ces tempos est physiquement exigeante. Commence à 100 BPM et augmente progressivement. 1 mois de pratique quotidienne est nécessaire avant d'approcher les tempos 'gypsy réels'." },
+            { "type": "h", "text": "L'harmonie gypsy" },
+            { "type": "p", "text": "Le gypsy jazz utilise beaucoup d'accords dim7, de substitutions tritoniques, et de dominantes secondaires. Les voicings sont souvent compacts (3-4 notes sur cordes 1-2-3-4). La progression ii-V-I est omniprésente, souvent dans plusieurs tonalités enchaînées rapidement. Les standards joués incluent 'Minor Swing', 'Djangology', 'Les Yeux Noirs'." },
+            { "type": "h", "text": "Comment pratiquer la pompe" },
+            { "type": "p", "text": "Commence avec 1 accord seulement (Dm ou Am). 4 downstrokes par mesure à 90 BPM. Alternance sec/chunk à chaque coup. Ne jamais utiliser de coup haut. Augmente le tempo de 5 BPM par semaine. La pompe 'sonne gypsy' quand elle atteint environ 150 BPM avec un son défini et énergique." },
+            { "type": "ref", "text": "'Minor Swing' (Django Reinhardt & Stéphane Grappelli, 1937) : LE standard gypsy jazz par excellence. La pompe de Rhythm Guitar Sec (le second guitariste du Quintette) sur ce morceau = exemple parfait. Écoute 'La Mer' (Charles Trenet) dans une version jazz pour la pompe appliquée à une chanson française." },
+            { "type": "tip", "text": "La pompe gypsy est physique. Commence par 5 minutes maximum par session pour éviter les tendinites. Après 2 semaines, augmente à 10 minutes. La pompe gypsy est un marathon, pas un sprint." }
+          ],
+          "quiz": ["q-rhy-c5-07"]
+        },
+
+        {
+          "id": "rhy-c6-01",
+          "title": "Jouer laid-back, on-top, in-the-pocket",
+          "duration": 10,
+          "content": [
+            { "type": "p", "text": "Le micro-timing est la dimension la plus subtile de la rythmique. Deux musiciens peuvent jouer exactement les mêmes notes au même tempo, et pourtant sonner complètement différemment. La raison : l'un joue laid-back, l'autre on-top, le troisième in-the-pocket. Ces nuances de placement infinitésimal par rapport au temps définissent le 'feel' d'un musicien." },
+            { "type": "h", "text": "In-the-pocket : le 'temps parfait'" },
+            { "type": "p", "text": "Jouer 'in-the-pocket' = jouer exactement sur le temps, ni avant ni après. Son : solide, ancré, confortable. L'auditeur se sent en sécurité rythmiquement. C'est le feel idéal pour l'accompagnement funk, le R&B, et tout ce qui doit créer un groove stable. La caisse claire de John Bonham (Led Zeppelin) est 'in-the-pocket' avec une précision quasi métronomique." },
+            { "type": "h", "text": "Laid-back : derrière le temps" },
+            { "type": "p", "text": "Jouer 'laid-back' = jouer légèrement après le clic du métronome. La note arrive microscopiquement en retard par rapport au temps exact. Son : décontracté, cool, 'qui se pose'. Évoque la chaleur, la décontraction. Très utilisé en blues (B.B. King joue très laid-back), en soul (les musiciens de Motown jouaient souvent laid-back), et en certains styles de jazz (Lester Young, Miles Davis période 'cool jazz')." },
+            { "type": "h", "text": "On-top : devant le temps" },
+            { "type": "p", "text": "Jouer 'on-top' = jouer légèrement avant le clic. La note arrive microscopiquement en avance. Son : urgent, énergique, 'qui pousse'. Crée une sensation de tension et d'excitation. Utilisé dans le bebop rapide (Charlie Parker jouait on-top), le hard rock énergique, et le jazz fusion (John McLaughlin)." },
+            { "type": "h", "text": "Ce sont des choix artistiques, pas des erreurs" },
+            { "type": "p", "text": "Crucial à comprendre : laid-back et on-top ne sont pas des erreurs de tempo. Ce sont des décisions artistiques délibérées qui définissent le feel. Un musicien qui joue constamment laid-back par accident est en retard. Un musicien qui CHOISIT de jouer laid-back contrôle son expression. La différence = cohérence et intention." },
+            { "type": "h", "text": "Comment développer le micro-timing" },
+            { "type": "p", "text": "1) Écoute active : écoute tes artistes préférés en te concentrant sur leur placement rythmique. Est-ce qu'ils sont devant ou derrière ? 2) Enregistre-toi et analyse : joue avec un métronome, enregistre. Écoute si tu es en avance ou en retard sur le clic. 3) Imite consciemment : essaie délibérément de jouer 'laid-back' pendant 5 minutes. Puis 'on-top'. Sens la différence physique." },
+            { "type": "h", "text": "Le feel de groupe" },
+            { "type": "p", "text": "En groupe, le micro-timing collectif crée une ambiance unique. Un groupe qui joue tous 'in-the-pocket' sonne solide. Un groupe laid-back collectivement sonne décontracté et chaud. Mélanger laid-back (basse) et on-top (batterie lead) crée une tension créative intéressante. Les grands groupes (Meters, JB's) ont développé un micro-timing collectif reconnaissable en quelques secondes." },
+            { "type": "ref", "text": "Écoute comparative : 'Freddie King Is a Blues Master' (Freddie King) = laid-back extrême, les notes traînent. 'Bireli Lagrene joue Minor Swing' = on-top, chaque note pousse. 'James Brown - Super Bad' = in-the-pocket parfait, les musiciens 'lockés' comme des machines. Trois feels, trois émotions complètement différentes." },
+            { "type": "tip", "text": "Exercice de micro-timing : joue une gamme de Do avec un métronome à 60 BPM. D'abord in-the-pocket (pile sur le clic). Puis essaie de jouer chaque note 20% plus tard (laid-back). Puis 20% plus tôt (on-top). Tu vas probablement avoir du mal à contrôler ces variations — c'est normal. Ce contrôle se développe sur des années de pratique consciente." }
+          ],
+          "quiz": ["q-rhy-c6-01", "q-rhy-c6-02"]
+        },
+
+        {
+          "id": "rhy-c6-02",
+          "title": "Construire un riff rythmique personnel",
+          "duration": 11,
+          "content": [
+            { "type": "p", "text": "Cette leçon de synthèse te donne les outils pour créer tes propres riffs rythmiques. Un riff rythmique personnel, c'est ta signature musicale — quelques notes ou accords organisés dans un pattern distinctif que tu as inventé. Tous les grands guitaristes ont leurs riffs caractéristiques." },
+            { "type": "h", "text": "Les ingrédients d'un bon riff" },
+            { "type": "p", "text": "Un riff efficace combine 4 éléments : (1) Un motif rythmique fort (pas trop complexe, mémorisable). (2) Une idée harmonique simple (1-3 accords ou notes). (3) Une 'signature' distinctive (élément qui le rend reconnaissable : un bend, un mute spécifique, une note de passage). (4) La répétabilité (pouvoir le jouer 20 fois parfaitement identique)." },
+            { "type": "h", "text": "Étape 1 : choisir le feel" },
+            { "type": "p", "text": "Avant de trouver des notes, choisis le feel de ton riff. Blues shuffle ? Funk 16e ? Rock downstrokes ? Reggae skank ? Ce feel détermine le groove de base. Exemple : 'je veux un riff blues-rock avec palm mute et quelques accents ouverts'. Ce cadre te guide dans tes choix." },
+            { "type": "h", "text": "Étape 2 : choisir la zone harmonique" },
+            { "type": "p", "text": "Sur quoi ton riff est-il basé ? Power chord en Mi (rock)? Accord de Am7 (funk/blues)? Notes de la pentatonique Am (blues)? Riff de basse sur cordes graves (rock/métal)? La zone harmonique détermine la couleur et le registre du riff. La plupart des grands riffs sont très simples harmoniquement — leur force vient du rythme, pas des notes." },
+            { "type": "h", "text": "Étape 3 : créer le motif" },
+            { "type": "p", "text": "Commence par 1 mesure (4 temps). Place 4-8 éléments (coups de médiator, mutes, notes). Assure-toi qu'il y a un accent clair (souvent sur le temps 1 ou le 'et-de-2'). Teste-le en boucle 10 fois. S'il sonne naturellement après 3-4 répétitions = bon signe. Si tu dois chercher la prochaine note = trop complexe, simplifie." },
+            { "type": "h", "text": "Étape 4 : variations" },
+            { "type": "p", "text": "Un bon riff a une version A (la base) et une version B (variation). La version B peut : changer le dernier temps (turnaround), monter d'une corde à la fin, ajouter une note de passage. La version B intervient toutes les 4 mesures environ, créant de la variété sans tout changer." },
+            { "type": "h", "text": "Les riffs les plus célèbres : analyse" },
+            { "type": "p", "text": "'Smoke on the Water' (Deep Purple) : 4 notes en power chords, rythme de noires simples. Ultra simple, mais reconnaissable universellement. 'Johnny B. Goode' (Chuck Berry) : riff boogie en La, double-croches. Simple, groovy, répétable. 'Superstition' (Stevie Wonder) : riff clavinet = 8 notes en doubles-croches syncopées. Plus complexe mais toujours répétable. La complexité n'est pas la clé du succès d'un riff." },
+            { "type": "h", "text": "Documenter et développer" },
+            { "type": "p", "text": "Quand tu trouves un riff qui 'sonne', enregistre-le immédiatement. Les bonnes idées disparaissent. Utilise ton téléphone. Ensuite, note le en tablature (même approximative). Puis travaille-le : est-ce qu'il supporte d'être joué 2 minutes en boucle sans ennuyer ? C'est le test ultime. Les grands riffs sont faits pour être répétés." },
+            { "type": "ref", "text": "Keith Richards (Rolling Stones) dit qu'il enregistre toutes ses idées de riffs la nuit avec un petit dictaphone. Beaucoup de ses riffs célèbres sont nés à 3h du matin. 'Satisfaction' est venu dans son sommeil — il s'est réveillé, a mis le dictaphone en marche, a joué le riff, puis s'est rendormi. Le lendemain, l'enregistrement était là." },
+            { "type": "tip", "text": "Projet riff : crée 1 riff par semaine. Chaque lundi, tu as un nouveau riff à créer sur la base du style étudié (blues la semaine 1, reggae la semaine 2, funk la semaine 3, etc.). En 10 semaines, tu as 10 riffs personnels. C'est le début de ton vocabulaire musical propre." }
+          ],
+          "quiz": ["q-rhy-c6-03"]
+        }
+
+      ]
+    }
+  ],
+
+  "quiz": [
+    { "id": "q-rhy-c4-01", "courseId": "rhythm", "lessonId": "rhy-c4-01", "lvl": 2, "q": "Pourquoi la main droite ne doit-elle jamais s'arrêter entre les coups en strumming ?", "o": ["Pour aller plus vite", "Le mouvement pendulaire continu crée la régularité et le groove", "Convention de style", "Pour économiser l'énergie"], "a": 1, "exp": "Mouvement continu = régularité. La main ne touche pas forcément les cordes à chaque mouvement, mais ne s'arrête JAMAIS. C'est ce qui crée le 'feel' rythmique et évite les micro-irrégularités.", "xp": 35 },
+    { "id": "q-rhy-c4-02", "courseId": "rhythm", "lessonId": "rhy-c4-02", "lvl": 1, "q": "En strumming, que signifie 'B' et 'H' dans la notation de pattern ?", "o": ["Bass et High", "Bas (downstroke) et Haut (upstroke)", "Bémol et Harmonique", "Bruit et Harmonie"], "a": 1, "exp": "B = coup bas (downstroke, main qui descend). H = coup haut (upstroke, main qui monte). Le pattern de strumming note l'alternance de ces deux types de coups.", "xp": 25 },
+    { "id": "q-rhy-c4-03", "courseId": "rhythm", "lessonId": "rhy-c4-02", "lvl": 2, "q": "Quel pattern convient le mieux à un morceau punk/rock énergique ?", "o": ["Pattern bossa nova", "4 downstrokes consécutifs (B B B B)", "Pattern syncopé pop", "Skank reggae"], "a": 1, "exp": "4 downstrokes consécutifs = énergie compacte, son puissant et direct. Signature du punk (Ramones), du hard rock (AC/DC). Les upstrokes 'adouciraient' le son.", "xp": 35 },
+    { "id": "q-rhy-c4-04", "courseId": "rhythm", "lessonId": "rhy-c4-03", "lvl": 2, "q": "Pour un palm mute efficace, où place-t-on la paume droite ?", "o": ["Sur la tête de guitare", "Sur les cordes, juste avant le chevalet", "Sur le manche", "N'importe où"], "a": 1, "exp": "La paume se pose sur les cordes juste avant le chevalet. Trop loin = pas assez de mute. Trop près = son trop ouvert. Le 'sweet spot' crée le son 'chunk' caractéristique.", "xp": 35 },
+    { "id": "q-rhy-c5-01", "courseId": "rhythm", "lessonId": "rhy-c5-01", "lvl": 2, "q": "Le blues à 12 mesures suit quelle structure de degrés ?", "o": ["I-IV-V-I en 4 mesures", "4×I - 2×IV - 2×I - 1×V - 1×IV - 2×I", "8×I - 4×V", "I-ii-V-I répété 3 fois"], "a": 1, "exp": "Structure classique : 4 mesures I, 2 mesures IV, 2 mesures I, 1 mesure V, 1 mesure IV, 2 mesures I = 12 mesures. La plus grande grille de l'histoire de la musique populaire.", "xp": 40 },
+    { "id": "q-rhy-c5-02", "courseId": "rhythm", "lessonId": "rhy-c5-01", "lvl": 3, "q": "La différence entre Texas shuffle et Chicago shuffle est…", "o": ["La tonalité", "Texas = plus chargé et dense, Chicago = plus épuré et spacieux", "Le tempo uniquement", "Les accords utilisés"], "a": 1, "exp": "Texas shuffle (SRV) = dense, physique, presque double-croches. Chicago shuffle (Muddy Waters) = épuré, les silences parlent autant que les notes. Deux philosophies du même feel.", "xp": 50 },
+    { "id": "q-rhy-c5-03", "courseId": "rhythm", "lessonId": "rhy-c5-02", "lvl": 2, "q": "Dans le reggae skank, la guitare joue…", "o": ["Sur tous les temps", "Uniquement sur les contretemps (les 'et')", "Sur les temps 1 et 3 seulement", "En continu sans silence"], "a": 1, "exp": "Skank reggae = accords courts sur les contretemps UNIQUEMENT. Jamais sur les temps 1, 2, 3, 4. La basse et grosse caisse occupent les temps forts. Chaque instrument a sa 'fenêtre temporelle'.", "xp": 40 },
+    { "id": "q-rhy-c5-04", "courseId": "rhythm", "lessonId": "rhy-c5-03", "lvl": 2, "q": "En funk, les 'ghost notes' sont…", "o": ["Des notes très fortes", "Des notes étouffées légères qui maintiennent le flux rythmique", "Des notes jouées sans médiator", "Des notes hors-gamme"], "a": 1, "exp": "Ghost notes funk = coups de médiator sur cordes étouffées (main gauche relâchée). Son 'click' ou 'chuck' percussif. Maintiennent le flux des 16e notes entre les accents harmoniques.", "xp": 40 },
+    { "id": "q-rhy-c5-05", "courseId": "rhythm", "lessonId": "rhy-c5-03", "lvl": 3, "q": "Pourquoi le son funk optimal est-il clean (sans distorsion) ?", "o": ["Convention stylistique", "La distorsion compresse les transitoires et efface la texture des ghost notes et des accents", "Plus facile à jouer", "Coût des équipements"], "a": 1, "exp": "La distorsion compresse le signal, effaçant les nuances entre ghost notes légères et accents forts. Le funk vit de ces contrastes de dynamique — qui disparaissent avec la saturation.", "xp": 50 },
+    { "id": "q-rhy-c5-06", "courseId": "rhythm", "lessonId": "rhy-c5-04", "lvl": 2, "q": "La bossa nova est née du mélange de…", "o": ["Rock américain et samba", "Samba brésilien et jazz américain", "Flamenco et jazz", "Blues et folklore brésilien"], "a": 1, "exp": "Bossa nova = samba brésilien (rythme) + jazz américain (harmonies). Créée par João Gilberto, Tom Jobim et Vinicius de Moraes à Rio de Janeiro fin des années 50.", "xp": 35 },
+    { "id": "q-rhy-c5-07", "courseId": "rhythm", "lessonId": "rhy-c5-05", "lvl": 2, "q": "La 'pompe' gypsy jazz utilise…", "o": ["Alternance bas-haut", "Exclusivement des downstrokes alternant sec et étouffé", "Uniquement des upstrokes", "Doublé de croches"], "a": 1, "exp": "Pompe gypsy = UNIQUEMENT des downstrokes (jamais d'upstrokes). Alternance coup sec (accord sonore) et coup étouffé (chunk). Style Django Reinhardt. Physiquement exigeant.", "xp": 40 },
+    { "id": "q-rhy-c6-01", "courseId": "rhythm", "lessonId": "rhy-c6-01", "lvl": 2, "q": "Jouer 'laid-back' signifie…", "o": ["Jouer fort", "Jouer légèrement après le temps (microscopiquement en retard)", "Jouer devant le temps", "Jouer lentement"], "a": 1, "exp": "Laid-back = notes placées microscopiquement après le clic. Son décontracté, 'cool', chaud. Utilisé en blues (B.B. King), soul, cool jazz. C'est un choix artistique délibéré, pas une erreur.", "xp": 40 },
+    { "id": "q-rhy-c6-02", "courseId": "rhythm", "lessonId": "rhy-c6-01", "lvl": 3, "q": "Quelle est la différence entre 'jouer laid-back par accident' et 'choisir de jouer laid-back' ?", "o": ["Aucune différence", "L'un est une erreur (inconstant), l'autre est un choix artistique délibéré (cohérent)", "La vitesse", "Le volume"], "a": 1, "exp": "Laid-back accidentel = retard inconstant, sans contrôle. Laid-back délibéré = retard cohérent, expressif, artistique. La différence = intentionnalité et maîtrise. Les grands musiciens contrôlent leur micro-timing.", "xp": 55 },
+    { "id": "q-rhy-c6-03", "courseId": "rhythm", "lessonId": "rhy-c6-02", "lvl": 2, "q": "Quel est le test ultime pour valider un riff rythmique ?", "o": ["Le jouer très rapidement", "Pouvoir le jouer 20 fois parfaitement identique sans se lasser", "Le trouver compliqué", "L'approuver par un professeur"], "a": 1, "exp": "Un bon riff supporte la répétition. Il doit être reproductible parfaitement et sonner naturellement après 3-4 répétitions. Si tu dois chercher à chaque fois = trop complexe. Simplifie.", "xp": 40 }
+  ],
+
+  "exercises": []
+}
