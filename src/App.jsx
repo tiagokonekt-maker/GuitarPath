@@ -3,6 +3,7 @@ import { COURSES as DEFAULT_COURSES, QUIZ as DEFAULT_QUIZ, EXERCISES as DEFAULT_
 import { useAuth } from "./supabase/useAuth.js";
 import { useProgress } from "./supabase/useProgress.js";
 import { AuthScreen } from "./supabase/AuthScreen.jsx";
+import { renderDiagramBlock } from "./diagrams.jsx";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // DESIGN SYSTEM — palette claire, polices Roboto + Josefin Sans, Tabler icons
@@ -710,6 +711,9 @@ function LessonView({ lesson, state, dispatch, onBack }) {
               </p>
             </div>
           );
+          // ── Blocs visuels (fretboard, scale_pattern, interval_chart, chord_diagram, caged_form, note_grid)
+          const diagram = renderDiagramBlock(b, i);
+          if (diagram) return diagram;
           return <p key={i} style={{ margin: 0, fontSize: 15, lineHeight: 1.7, color: C.text, fontFamily: FONTS.title }}>{b.text}</p>;
         })}
       </div>
