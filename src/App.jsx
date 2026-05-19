@@ -106,9 +106,10 @@ const mergeCourses = (defaults, imported) => {
   imported.forEach(c => {
     if (map.has(c.id)) {
       const existing = map.get(c.id);
-      const lessonMap = new Map(existing.lessons.map(l => [l.id, l]));
-      (c.lessons || []).forEach(l => lessonMap.set(l.id, l));
-      map.set(c.id, { ...existing, ...c, lessons: Array.from(lessonMap.values()) });
+      // imported ajoute les leçons absentes, mais n'écrase PAS les leçons existantes (enrichies)
+      const lessonMap = new Map((c.lessons || []).map(l => [l.id, l]));
+      existing.lessons.forEach(l => lessonMap.set(l.id, l)); // defaults gagnent
+      map.set(c.id, { ...c, ...existing, lessons: Array.from(lessonMap.values()) });
     } else {
       map.set(c.id, c);
     }
