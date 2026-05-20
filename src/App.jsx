@@ -24,14 +24,15 @@ const screensPromise = Promise.all([
   import("./screens/ChallengeScreen.jsx"),
   import("./screens/ProgressScreen.jsx"),
   import("./screens/SettingsScreen.jsx"),
+  import("./screens/FretboardExplorer.jsx"),
 ]);
 
 // ── Contenu pédagogique (489kb) ───────────────────────────────────────────
 const contentPromise = import("./content.js");
 
-// ── Modules visuels ───────────────────────────────────────────────────────
-const diagramsPromise  = import("./diagrams.jsx");
-const fretboardPromise = import("./Fretboard.jsx");
+// ── Modules visuels — imports synchrones (58kb gzippé, pas de problème de double instance) ──
+import { renderDiagramBlock } from "./diagrams.jsx";
+import { FretboardLesson, FretboardQuizQuestion, FretboardExercise } from "./Fretboard.jsx";
 
 // Refs des composants lazy — injectées dans les screens après chargement
 let screens = null;
@@ -62,30 +63,27 @@ export default function App() {
 
   // ── Chargement async de tout après le premier rendu ─────────────────────
   useEffect(() => {
-    Promise.all([
-      contentPromise,
-      screensPromise,
-      diagramsPromise,
-      fretboardPromise,
-    ]).then(([contentModule, screenModules, diagramsModule, fretboardModule]) => {
+    Promise.all([contentPromise, screensPromise])
+      .then(([contentModule, screenModules]) => {
 
-      // Injecter les renderers lazy dans les screens
+      // Injecter les renderers synchrones dans les screens
       const [, coursesM, exercisesM, quizM] = screenModules;
-      coursesM.setDiagramRenderer(diagramsModule.renderDiagramBlock);
-      coursesM.setFretboardLesson(fretboardModule.FretboardLesson);
-      exercisesM.setFretboardExercise(fretboardModule.FretboardExercise);
-      quizM.setFretboardQuizQuestion(fretboardModule.FretboardQuizQuestion);
+      coursesM.setDiagramRenderer(renderDiagramBlock);
+      coursesM.setFretboardLesson(FretboardLesson);
+      exercisesM.setFretboardExercise(FretboardExercise);
+      quizM.setFretboardQuizQuestion(FretboardQuizQuestion);
 
       // Stocker les screens
       screens = {
-        HomeScreen:      screenModules[0].HomeScreen,
-        CoursesScreen:   screenModules[1].CoursesScreen,
-        ExercisesScreen: screenModules[2].ExercisesScreen,
-        QuizScreen:      screenModules[3].QuizScreen,
-        PracticeScreen:  screenModules[4].PracticeScreen,
-        ChallengeScreen: screenModules[5].ChallengeScreen,
-        ProgressScreen:  screenModules[6].ProgressScreen,
-        SettingsScreen:  screenModules[7].SettingsScreen,
+        HomeScreen:          screenModules[0].HomeScreen,
+        CoursesScreen:       screenModules[1].CoursesScreen,
+        ExercisesScreen:     screenModules[2].ExercisesScreen,
+        QuizScreen:          screenModules[3].QuizScreen,
+        PracticeScreen:      screenModules[4].PracticeScreen,
+        ChallengeScreen:     screenModules[5].ChallengeScreen,
+        ProgressScreen:      screenModules[6].ProgressScreen,
+        SettingsScreen:      screenModules[7].SettingsScreen,
+        FretboardExplorer:   screenModules[8].FretboardExplorer,
       };
 
       // Charger le contenu (merge localStorage)
@@ -168,7 +166,7 @@ export default function App() {
   };
 
   const navigate = (s) => {
-    if (TABS.find(t => t.id === s) || s === "challenge" || s === "practice") setScreen(s);
+    if (TABS.find(t => t.id === s) || s === "challenge" || s === "practice" || s === "explorer") setScreen(s);
   };
 
   // ── Loaders ──────────────────────────────────────────────────────────────
@@ -188,7 +186,8 @@ export default function App() {
   );
 
   const { HomeScreen, CoursesScreen, ExercisesScreen, QuizScreen,
-          PracticeScreen, ChallengeScreen, ProgressScreen, SettingsScreen } = screens;
+          PracticeScreen, ChallengeScreen, ProgressScreen, SettingsScreen,
+          FretboardExplorer } = screens;
 
   // ── Rendu principal ──────────────────────────────────────────────────────
   const renderScreen = () => {
@@ -202,7 +201,8 @@ export default function App() {
       case "courses":   return <CoursesScreen state={state} dispatch={dispatch} content={content} />;
       case "exercises": return <ExercisesScreen state={state} dispatch={dispatch} content={content} />;
       case "quiz":      return <QuizScreen state={state} dispatch={dispatch} content={content} />;
-      case "practice":  return <PracticeScreen state={state} dispatch={dispatch} />;
+      case "explorer":   return <FretboardExplorer onBack={() => setScreen("home")} />;
+      case "practice":   return <PracticeScreen state={state} dispatch={dispatch} />;
       case "challenge": return <ChallengeScreen state={state} dispatch={dispatch} navigate={navigate} />;
       case "progress":  return <ProgressScreen state={state} content={content} onOpenSettings={() => setShowSettings(true)} />;
       default:          return <HomeScreen state={state} dispatch={dispatch} navigate={navigate} content={content} />;

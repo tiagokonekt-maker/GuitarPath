@@ -268,7 +268,7 @@ export function Fretboard({
 
   // Cordes : 6 (Mi grave) → 1 (Mi aigu) — affichage de gauche à droite en orientation portrait
   // En affichage portrait (mobile), les cordes sont en lignes horizontales (6 en haut = Mi grave)
-  const strings = [6, 5, 4, 3, 2, 1];
+  const strings = [1, 2, 3, 4, 5, 6];
 
   // ── Tailles adaptées au mode compact ────────────────────────────────────
   const cellW  = compact ? 38 : 46;
@@ -938,7 +938,7 @@ export function FretboardQuizQuestion({ question, onComplete, answered }) {
 // ── Canvas interne du quiz fretboard ────────────────────────────────────────
 function FretboardQuizCanvas({ targetPositions, contextPositions, selected, revealed, onCellClick, compact, question }) {
   const CW = 36, CH = 28, OW = 26, LW = 20, DOT = 20;
-  const strings = [6, 5, 4, 3, 2, 1];
+  const strings = [1, 2, 3, 4, 5, 6];
   const MAX_F = 12;
   const SLABELS = { 6: "E₂", 5: "A₂", 4: "D₃", 3: "G₃", 2: "B₃", 1: "E₄" };
   const MARKERS = [3, 5, 7, 9];
@@ -1279,7 +1279,7 @@ export function FretboardExercise({ ex, onComplete, dispatch }) {
 // ── Canvas du manche pour FretboardExercise ──────────────────────────────────
 function ExerciseCanvas({ stage, targetPositions, targetMap, selected, revealed, onCellClick }) {
   const CW = 36, CH = 28, OW = 26, LW = 20, DOT = 20;
-  const strings = [6, 5, 4, 3, 2, 1];
+  const strings = [1, 2, 3, 4, 5, 6];
   const MAX_F = (stage.fretRange || [0, 12])[1];
   const MIN_F = (stage.fretRange || [0, 12])[0];
   const SLABELS = { 6: "E₂", 5: "A₂", 4: "D₃", 3: "G₃", 2: "B₃", 1: "E₄" };

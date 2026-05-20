@@ -11,12 +11,10 @@
 // Les 12 notes en notation internationale (sharps par défaut)
 export const CHROMATIC_NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
-// Alias bémols ↔ dièses
+// Alias bémols → dièses (sens unique — on normalise toujours vers les dièses)
 export const ENHARMONICS = {
   "Db": "C#", "Eb": "D#", "Fb": "E",  "Gb": "F#",
   "Ab": "G#", "Bb": "A#", "Cb": "B",
-  "C#": "Db", "D#": "Eb", "F#": "Gb",
-  "G#": "Ab", "A#": "Bb",
 };
 
 // Noms français des notes (pour l'affichage en mode "french")
