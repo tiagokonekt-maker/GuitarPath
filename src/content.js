@@ -58,19 +58,20 @@ export const COURSES = [
               showStringNames: true, showFretNumbers: true,
               markerFrets: [3, 5, 7, 9, 12],
               notes: [
-                { string: 6, fret: 1,  label: "Mi",  color: "amber",   root: true },
-                { string: 6, fret: 6,  label: "La",  color: "amber",   root: true },
-                { string: 6, fret: 8,  label: "Si",  color: "neutral" },
-                { string: 6, fret: 9,  label: "Do",  color: "primary" },
-                { string: 6, fret: 13, label: "Mi",  color: "amber",   root: true },
-                { string: 5, fret: 1,  label: "La",  color: "green",   root: true },
-                { string: 5, fret: 6,  label: "Ré",  color: "green",   root: true },
-                { string: 5, fret: 8,  label: "Mi",  color: "neutral" },
-                { string: 5, fret: 13, label: "La",  color: "green",   root: true },
+                { string: 6, fret: 0,  label: "Mi",  color: "amber",   root: true },
+                { string: 6, fret: 5,  label: "La",  color: "amber",   root: true },
+                { string: 6, fret: 7,  label: "Si",  color: "neutral" },
+                { string: 6, fret: 8,  label: "Do",  color: "primary" },
+                { string: 6, fret: 12, label: "Mi",  color: "amber",   root: true },
+                { string: 5, fret: 0,  label: "La",  color: "green",   root: true },
+                { string: 5, fret: 5,  label: "Ré",  color: "green",   root: true },
+                { string: 5, fret: 7,  label: "Mi",  color: "neutral" },
+                { string: 5, fret: 12, label: "La",  color: "green",   root: true },
               ],
             },
           },
           { type: "tip", text: "Test : ferme les yeux, mets ton index sur une case au hasard. Ouvre les yeux et nomme la note en moins de 2 secondes. Refais 10 fois par jour." },
+          { type: "fretboard_interactive", mode: "highlight", notes: ["E","A","D","G","B"], caption: "Explore : notes naturelles sur tout le manche", lang: "fr", compact: true },
         ],
         quiz: ["q-neck-01", "q-neck-02", "q-neck-03"],
       },
@@ -133,12 +134,14 @@ export const COURSES = [
               notes: [
                 { string: 6, fret: 5, label: "La", color: "amber", root: true },
                 { string: 4, fret: 7, label: "La", color: "amber", root: true },
-                { string: 5, fret: 5, label: "La", color: "green", root: true },
-                { string: 3, fret: 7, label: "La", color: "green", root: true },
+                { string: 5, fret: 0, label: "La", color: "green", root: true },
+                { string: 3, fret: 2, label: "La", color: "green", root: true },
               ],
             },
           },
           { type: "tip", text: "Méthode 1 corde / jour. Lundi : maîtrise totale corde 6. Mardi : corde 5. En 6 jours tu connais tout. Le 7e jour : test global." },
+          { type: "fretboard_interactive", mode: "quiz", quizTarget: "C", caption: "Quiz : trouve tous les Do sur le manche", lang: "fr", compact: true },
+          { type: "fretboard_interactive", mode: "quiz", quizTarget: "G", caption: "Quiz : trouve tous les Sol sur le manche", lang: "fr", compact: true },
         ],
         quiz: ["q-neck-04", "q-neck-05", "q-neck-06"],
       },
@@ -191,6 +194,7 @@ export const COURSES = [
           { type: "h", text: "Inversion d'intervalle" },
           { type: "p", text: "Tout intervalle a son 'inverse' qui complète à l'octave. P4 + P5 = octave. m3 + M6 = octave. M2 + m7 = octave. Cette symétrie est utile pour les accords (ex: l'inversion d'une triade fait apparaître les intervalles inversés)." },
           { type: "tip", text: "Drill quotidien : choisis 2 cases au hasard sur le manche. Calcule l'intervalle entre elles en demi-tons puis nomme-le. Au bout de 2 semaines c'est instantané." },
+          { type: "fretboard_interactive", mode: "scale", root: "A", scale: "major", caption: "Intervalles de La majeur sur le manche", displayMode: "intervals", lang: "fr", compact: true },
         ],
         quiz: ["q-neck-07", "q-neck-08", "q-neck-09", "q-neck-10"],
       },
@@ -217,7 +221,7 @@ export const COURSES = [
                 { string: 6, fret: 5, label: "La", color: "amber",   root: true },
                 { string: 5, fret: 7, label: "Mi", color: "primary" },
                 { string: 4, fret: 7, label: "La", color: "amber",   root: true },
-                { string: 3, fret: 6, label: "Do", color: "primary" },
+                { string: 3, fret: 5, label: "Do", color: "primary" },
                 { string: 2, fret: 5, label: "Mi", color: "primary" },
                 { string: 1, fret: 5, label: "La", color: "amber",   root: true },
               ],
@@ -230,11 +234,11 @@ export const COURSES = [
               form: "A", root: "La", rootFret: 0,
               startFret: 0, frets: 5,
               notes: [
-                { string: 5, fret: 1, label: "La", color: "amber",   root: true },
+                { string: 5, fret: 0, label: "La", color: "amber",   root: true },
                 { string: 4, fret: 2, label: "Mi", color: "primary" },
                 { string: 3, fret: 2, label: "La", color: "amber",   root: true },
                 { string: 2, fret: 1, label: "Do", color: "primary" },
-                { string: 1, fret: 1, label: "La", color: "amber",   root: true },
+                { string: 1, fret: 0, label: "Mi", color: "primary" },
               ],
             },
           },
@@ -248,7 +252,7 @@ export const COURSES = [
                 { string: 4, fret: 7, label: "La", color: "amber",   root: true },
                 { string: 3, fret: 9, label: "Mi", color: "primary" },
                 { string: 2, fret: 10,label: "La", color: "amber",   root: true },
-                { string: 1, fret: 8, label: "Mi", color: "primary" },
+                { string: 1, fret: 8, label: "Do", color: "primary" },
               ],
             },
           },
@@ -257,6 +261,8 @@ export const COURSES = [
           { type: "h", text: "CAGED en mineur" },
           { type: "p", text: "Le système fonctionne identique en mineur. Am s'organise en 5 formes : forme Em barré, forme Am barré, forme Dm, forme Cm (rare), forme Gm (rare). En pratique, les 3 premières (E, A, D) couvrent 90% des besoins." },
           { type: "tip", text: "Programme de 5 jours : chaque jour, joue Am sous une forme CAGED. Lundi forme E. Mardi forme A. Mercredi forme G. Jeudi forme C. Vendredi forme D. Le manche s'éclaircit en une semaine." },
+          { type: "fretboard_interactive", mode: "chord", root: "A", chord: "min", caption: "Am — toutes les notes La Do Mi sur tout le manche", displayMode: "notes", lang: "fr", compact: true },
+          { type: "fretboard_interactive", mode: "quiz", quizTarget: "A", caption: "Quiz CAGED : repère toutes les fondamentales La", lang: "fr", compact: true },
         ],
         quiz: ["q-neck-11", "q-neck-12", "q-neck-13", "q-neck-14"],
       },
@@ -302,6 +308,7 @@ export const COURSES = [
           { type: "h", text: "Inversions = mouvement" },
           { type: "p", text: "Au lieu de sauter de Do à Sol par un grand mouvement, utilise une inversion proche. Do (état fondamental) → Sol (1ère inversion une case plus loin). Le mouvement devient fluide, mélodique. C'est le voice-leading appliqué à la guitare." },
           { type: "tip", text: "Mini-projet : prends 4 accords d'une chanson pop. Joue-les uniquement en triades sur cordes 1-2-3. Tu obtiens un son moderne et sophistiqué instantanément." },
+          { type: "fretboard_interactive", mode: "chord", root: "C", chord: "maj", caption: "Do majeur — visualise Do Mi Sol sur tout le manche", displayMode: "notes", lang: "fr", compact: true },
         ],
         quiz: ["q-neck-15", "q-neck-16", "q-neck-17"],
       },
@@ -326,8 +333,8 @@ export const COURSES = [
               notes: [
                 { string: 6, fret: 8,  label: "Do",  color: "primary", root: true  },
                 { string: 6, fret: 10, label: "Ré",  color: "green"  },
-                { string: 5, fret: 8,  label: "Sol",  color: "primary" },
-                { string: 5, fret: 10, label: "La",  color: "green"  },
+                { string: 5, fret: 10, label: "Sol",  color: "primary" },
+                { string: 4, fret: 9, label: "Si",   color: "green"   },
                 { string: 4, fret: 9,  label: "Si",  color: "primary" },
                 { string: 4, fret: 10, label: "Do",  color: "primary", root: true  },
                 { string: 3, fret: 9,  label: "Mi",  color: "primary" },
@@ -346,6 +353,7 @@ export const COURSES = [
           { type: "h", text: "Méthode pratique pour lier" },
           { type: "p", text: "Quand tu joues un accord, identifie immédiatement après : (1) sa fondamentale, (2) sa tierce, (3) sa quinte, (4) sa septième sur le manche. Joue-les en arpège lent. Puis improvise dans cette zone en visant ces 4 notes." },
           { type: "tip", text: "Drill : 1 accord = 1 minute. Plaque l'accord, identifie ses 4 notes sur le manche, arpèges-les, improvise 1 min en les ciblant. Refais sur 5 accords différents." },
+          { type: "fretboard_interactive", mode: "scale", root: "G", scale: "major", caption: "Sol majeur — gamme, accord et arpège dans la même zone", displayMode: "degrees", lang: "fr", compact: true },
         ],
         quiz: ["q-neck-18", "q-neck-19", "q-neck-20"],
       },
@@ -409,12 +417,12 @@ export const COURSES = [
               showStringNames: true, showFretNumbers: true,
               markerFrets: [3, 5, 7, 9, 12],
               notes: [
-                { string: 6, fret: 1,  label: "Mi", color: "amber", root: true },
-                { string: 5, fret: 8,  label: "Mi", color: "amber", root: true },
-                { string: 4, fret: 3,  label: "Mi", color: "amber", root: true },
-                { string: 3, fret: 10, label: "Mi", color: "amber", root: true },
-                { string: 2, fret: 6,  label: "Mi", color: "amber", root: true },
-                { string: 1, fret: 1,  label: "Mi", color: "amber", root: true },
+                { string: 6, fret: 0,  label: "Mi", color: "amber", root: true },
+                { string: 5, fret: 7,  label: "Mi", color: "amber", root: true },
+                { string: 4, fret: 2,  label: "Mi", color: "amber", root: true },
+                { string: 3, fret: 9, label: "Mi", color: "amber", root: true },
+                { string: 2, fret: 5,  label: "Mi", color: "amber", root: true },
+                { string: 1, fret: 0,  label: "Mi", color: "amber", root: true },
               ],
             },
           },
@@ -447,11 +455,11 @@ export const COURSES = [
               showStringNames: false, showFretNumbers: true,
               markerFrets: [3, 5, 7, 9, 12],
               notes: [
-                { string: 6, fret: 4,  label: "Sol", color: "amber" },
-                { string: 6, fret: 6,  label: "La",  color: "green" },
-                { string: 6, fret: 8,  label: "Si",  color: "neutral" },
-                { string: 6, fret: 10, label: "Do#", color: "neutral" },
-                { string: 6, fret: 13, label: "Mi",  color: "amber", root: true },
+                { string: 6, fret: 3,  label: "Sol", color: "amber" },
+                { string: 6, fret: 5,  label: "La",  color: "green" },
+                { string: 6, fret: 7,  label: "Si",  color: "neutral" },
+                { string: 6, fret: 9, label: "Do#", color: "neutral" },
+                { string: 6, fret: 12, label: "Mi",  color: "amber", root: true },
               ],
             },
           },
@@ -541,8 +549,8 @@ export const COURSES = [
               showStringNames: true, showFretNumbers: true,
               markerFrets: [3, 5],
               notes: [
-                { string: 6, fret: 6, label: "La", color: "amber", root: true },
-                { string: 5, fret: 1, label: "La", color: "amber", root: true },
+                { string: 6, fret: 5, label: "La", color: "amber", root: true },
+                { string: 5, fret: 0, label: "La", color: "amber", root: true },
               ],
             },
           },
@@ -887,6 +895,8 @@ export const COURSES = [
             },
           },
           { type: "tip", text: "Les 7 positions de la gamme majeure correspondent aux 7 modes (Ionien sur le 1er degré, Dorien sur le 2e, etc.). Apprendre les positions = apprendre les modes." },
+          { type: "fretboard_interactive", mode: "scale", root: "C", scale: "major", caption: "Do majeur — toutes les positions sur le manche", displayMode: "notes", lang: "fr", compact: true },
+          { type: "fretboard_interactive", mode: "quiz", quizTarget: "C", caption: "Quiz : trouve toutes les fondamentales Do", lang: "fr", compact: true },
         ],
         quiz: ["q-scales-01", "q-scales-02", "q-scales-03", "q-scales-04"],
       },
@@ -964,6 +974,8 @@ export const COURSES = [
           { type: "h", text: "Pentatonique blues : ajout de la b5" },
           { type: "p", text: "Pentatonique mineure + b5 = gamme blues (1-b3-4-b5-5-b7). En La : ajoute Ré# entre Ré et Mi. La b5 ('blue note') crée la tension caractéristique du blues. Règle d'or : utilise-la en passage, jamais en résolution." },
           { type: "tip", text: "Drill 5 semaines : 1 position par semaine. Lundi : montée propre à 60bpm. Mardi : 70bpm. Mercredi : impro 5min uniquement dans cette position. Jeudi : connexion avec position précédente. Vendredi : test global." },
+          { type: "fretboard_interactive", mode: "scale", root: "A", scale: "pentatonic_minor", caption: "Pentatonique mineure de La — vue complète du manche", displayMode: "notes", lang: "fr", compact: true },
+          { type: "fretboard_interactive", mode: "scale", root: "A", scale: "pentatonic_minor", caption: "Même gamme — vue par intervalles (R, b3, 4, 5, b7)", displayMode: "intervals", lang: "fr", compact: true },
         ],
         quiz: ["q-scales-05", "q-scales-06", "q-scales-07", "q-scales-08"],
       },
@@ -1017,6 +1029,7 @@ export const COURSES = [
           { type: "h", text: "Comment 'entendre' un mode" },
           { type: "p", text: "Joue un drone sur la fondamentale du mode (note tenue) puis joue les 7 notes du mode. Le drone ancre l'oreille sur la fondamentale, ce qui révèle la couleur du mode. C'est la méthode imparable pour intégrer la sonorité modale." },
           { type: "tip", text: "Programme 7 semaines : 1 mode par semaine. Lundi-Mardi : drone + écoute. Mercredi : exercices manche. Jeudi : composition courte (16 mesures). Vendredi : impro libre. Au bout de 7 semaines tu maîtrises les 7 modes en profondeur." },
+          { type: "fretboard_interactive", mode: "scale", root: "D", scale: "dorian", caption: "Dorien de Ré — compare avec Ré majeur", displayMode: "intervals", lang: "fr", compact: true },
         ],
         quiz: ["q-scales-09", "q-scales-10", "q-scales-11", "q-scales-12", "q-scales-13"],
       },
@@ -1062,6 +1075,7 @@ export const COURSES = [
           { type: "h", text: "Vocabulaire dorien typique (licks)" },
           { type: "p", text: "Lick 1 : 1-b3-4-5-6-5 (montée vers la 6 puis retour à la 5). Lick 2 : 6-5-4-b3-2-1 (descente cible la 6 majeure en ouverture). Lick 3 : 1-2-b3-5-6-b7 (zigzag dorien classique). Apprends 3-5 licks types pour avoir un vocabulaire de base." },
           { type: "tip", text: "Drone Ré (corde 5 vide ou app drone). Joue Ré dorien 5 minutes en visant Si toutes les 2 mesures. Tu sentiras la couleur 'dorien pur' s'ancrer dans ton oreille." },
+          { type: "fretboard_interactive", mode: "scale", root: "A", scale: "dorian", caption: "Dorien de La — explore les positions sur tout le manche", displayMode: "intervals", lang: "fr", compact: true },
         ],
         quiz: ["q-scales-14", "q-scales-15"],
       },
@@ -1109,6 +1123,7 @@ export const COURSES = [
           { type: "h", text: "Lien avec les autres modes" },
           { type: "p", text: "Sol mixolydien = Do majeur = Ré dorien = Mi phrygien = Fa lydien = La éolien = Si locrien. Tous les mêmes notes ! Seule la fondamentale change. Maîtriser un mode en Do = maîtriser les 7 modes dans la même tonalité." },
           { type: "tip", text: "Test pratique : joue un blues en La (A7-D7-E7). Sur A7 → La mixo. Sur D7 → Ré mixo. Sur E7 → Mi mixo. Chaque accord a 'son' mode. Le solo sonne immédiatement bluesy-jazz." },
+          { type: "fretboard_interactive", mode: "scale", root: "G", scale: "mixolydian", caption: "Mixolydien de Sol — la b7 qui donne le son blues/rock", displayMode: "intervals", lang: "fr", compact: true },
         ],
         quiz: ["q-scales-16", "q-scales-17"],
       },
@@ -1181,6 +1196,7 @@ export const COURSES = [
           { type: "h", text: "Lydien et phrygien : pour qui ?" },
           { type: "p", text: "Ces modes ne sont pas pour les standards pop ou blues. Ils servent à colorer des moments précis : intro mystérieuse (lydien), pont dramatique (phrygien dominant), bridge filmique (lydien). À utiliser avec parcimonie pour un effet maximal." },
           { type: "tip", text: "Compose 8 mesures en lydien (drone Do, joue Do lydien) et 8 mesures en phrygien dominant (drone Mi, joue Mi phrygien dominant). Tu auras 2 ambiances ultra-typées dans ton vocabulaire." },
+          { type: "fretboard_interactive", mode: "scale", root: "F", scale: "lydian", caption: "Lydien de Fa — le #4 caractéristique (couleur flottante)", displayMode: "intervals", lang: "fr", compact: true },
         ],
         quiz: ["q-scales-18", "q-scales-19"],
       },
@@ -1230,6 +1246,7 @@ export const COURSES = [
           { type: "h", text: "Quand utiliser ces gammes" },
           { type: "p", text: "Mineure harmonique : sur le V7 de mineur (E7→Am, joue La harmonique). Mineure mélodique : sur les Im(maj7) (mineur avec 7 majeure). Les modes de la mélodique : jazz moderne, fusion, musique de film sophistiquée." },
           { type: "tip", text: "Joue un blues mineur en La (Am-Dm-E7). Sur les Am et Dm : penta mineure ou éolien. Sur le E7 : La mineure harmonique. Tu obtiens immédiatement le son 'minor blues' sophistiqué." },
+          { type: "fretboard_interactive", mode: "scale", root: "A", scale: "harmonic_minor", caption: "Mineure harmonique de La — repère la 7e majeure (Sol#)", displayMode: "intervals", lang: "fr", compact: true },
         ],
         quiz: ["q-scales-20", "q-scales-21"],
       },
@@ -2265,6 +2282,7 @@ export const COURSES = [
           { type: "h", text: "Inversions" },
           { type: "p", text: "État fondamental : 1-3-5 (basse = 1). 1ère inversion : 3-5-1 (basse = 3). 2e inversion : 5-1-3 (basse = 5). Chaque inversion change le 'sens' harmonique de l'accord. La basse en 3 ou 5 crée du mouvement, la basse en 1 stabilise." },
           { type: "tip", text: "Drill 12 jours : un jour, une fondamentale (Do, Do#, Ré...). Construis sa triade Maj, puis min, puis dim, puis aug. Joue-les sur cordes 1-2-3. En 2 semaines tu maîtrises 48 triades." },
+          { type: "fretboard_interactive", mode: "chord", root: "C", chord: "min", caption: "Compare Do majeur vs Do mineur — spot la tierce", displayMode: "intervals", lang: "fr", compact: true },
         ],
         quiz: ["q-harm-01", "q-harm-02", "q-harm-03", "q-harm-04"],
       },
@@ -2301,6 +2319,8 @@ export const COURSES = [
           { type: "h", text: "Tensions / extensions (9, 11, 13)" },
           { type: "p", text: "Au-delà de la 7e, on peut empiler 9 (= 2 octave +), 11 (= 4 octave +), 13 (= 6 octave +). Cmaj9 = Do-Mi-Sol-Si-Ré. C13 = Do-Mi-Sol-Sib-Ré-La. Ces extensions enrichissent la couleur sans changer la fonction." },
           { type: "tip", text: "Apprends 1 voicing shell par type de 7e en forme E (case 5) et 1 en forme A (case 5). Avec ces 10 voicings tu joues 80% des standards jazz. C'est le ratio effort/résultat optimal." },
+          { type: "fretboard_interactive", mode: "chord", root: "G", chord: "dom7", caption: "Sol7 — toutes les positions sur le manche", displayMode: "notes", lang: "fr", compact: true },
+          { type: "fretboard_interactive", mode: "chord", root: "A", chord: "min7", caption: "La m7 — toutes les positions sur le manche", displayMode: "notes", lang: "fr", compact: true },
         ],
         quiz: ["q-harm-05", "q-harm-06", "q-harm-07", "q-harm-08"],
       },
@@ -2324,6 +2344,8 @@ export const COURSES = [
           { type: "h", text: "Changer d'arpège sur changement d'accord" },
           { type: "p", text: "Sur Dm7-G7-Cmaj7 : 1ère mesure → notes de Dm7 (Ré-Fa-La-Do). 2e mesure → notes de G7 (Sol-Si-Ré-Fa). 3e mesure → notes de Cmaj7 (Do-Mi-Sol-Si). Tes phrases bougent avec l'harmonie. C'est ce qui sonne 'jazz'." },
           { type: "tip", text: "Drill 'arpège-gamme-arpège' : 1 mesure d'arpège, 1 mesure de gamme, 1 mesure d'arpège. Boucle sur Am7. Tu apprends à alterner les deux mondes." },
+          { type: "fretboard_interactive", mode: "chord", root: "C", chord: "maj7", caption: "Arpège Cmaj7 — Do Mi Sol Si sur tout le manche", displayMode: "notes", lang: "fr", compact: true },
+          { type: "fretboard_interactive", mode: "chord", root: "D", chord: "min7", caption: "Arpège Dm7 — Ré Fa La Do sur tout le manche", displayMode: "notes", lang: "fr", compact: true },
         ],
         quiz: ["q-harm-09", "q-harm-10", "q-harm-11"],
       },
@@ -2347,6 +2369,7 @@ export const COURSES = [
           { type: "h", text: "Modulation : changer de tonalité" },
           { type: "p", text: "Une chanson peut moduler (changer de tonalité). Pivot le plus courant : passer par un accord commun aux 2 tonalités. Ex : Do majeur → Sol majeur via le Sol qui est V de Do et I de Sol. Cette technique structure les ponts en pop et les changements en jazz." },
           { type: "tip", text: "Exercice : prends 5 chansons pop que tu connais. Trouve leur tonalité, identifie les accords, traduis en chiffrage Nashville (1-4-5-6 etc.). Tu vas découvrir que la majorité utilisent 4-5 progressions identiques." },
+          { type: "fretboard_interactive", mode: "scale", root: "C", scale: "major", caption: "Do majeur harmonisé — vois les 7 degrés", displayMode: "degrees", lang: "fr", compact: true },
         ],
         quiz: ["q-harm-12", "q-harm-13", "q-harm-14", "q-harm-15"],
       },
@@ -2390,18 +2413,21 @@ export const COURSES = [
               showStringNames: true, showFretNumbers: true,
               markerFrets: [5, 7, 9],
               notes: [
-                { string: 5, fret: 5, label: "Fa",  color: "primary",  root: false },
-                { string: 4, fret: 5, label: "Do",  color: "primary",  root: false },
+                { string: 4, fret: 3, label: "Fa",  color: "primary",  root: false },
+                { string: 3, fret: 5, label: "Do",  color: "primary",  root: false },
                 { string: 6, fret: 7, label: "Si",  color: "amber",    root: true  },
-                { string: 4, fret: 8, label: "Fa",  color: "amber",    root: false },
+                { string: 2, fret: 6, label: "Fa",  color: "amber",    root: false },
                 { string: 5, fret: 7, label: "Mi",  color: "green",    root: true  },
-                { string: 3, fret: 9, label: "Si",  color: "green",    root: false },
+                { string: 3, fret: 4, label: "Si",  color: "green",    root: false },
               ],
             },
           },
           { type: "h", text: "Cycle de quartes : enchaîner les ii-V-I" },
           { type: "p", text: "En jazz, les morceaux modulent souvent par cycle de quartes. ii-V-I en Do (Dm7-G7-Cmaj7), puis ii-V-I en Fa (Gm7-C7-Fmaj7), puis en Sib... etc. Chaque ii-V-I 'pivot' vers le suivant via le I qui devient ii. Maîtriser le ii-V-I dans toutes les tonalités = pouvoir jouer sur n'importe quel standard." },
           { type: "tip", text: "Apprends 5 licks ii-V-I dans la tonalité de Do (Dm7-G7-Cmaj7) avant d'élargir. La transposition vient ensuite — d'abord, ancre le vocabulaire." },
+          { type: "fretboard_interactive", mode: "chord", root: "D", chord: "min7", caption: "ii — Dm7 : Ré Fa La Do sur le manche", displayMode: "notes", lang: "fr", compact: true },
+          { type: "fretboard_interactive", mode: "chord", root: "G", chord: "dom7", caption: "V — G7 : Sol Si Ré Fa sur le manche", displayMode: "notes", lang: "fr", compact: true },
+          { type: "fretboard_interactive", mode: "chord", root: "C", chord: "maj7", caption: "I — Cmaj7 : Do Mi Sol Si sur le manche", displayMode: "notes", lang: "fr", compact: true },
         ],
         quiz: ["q-harm-16", "q-harm-17", "q-harm-18"],
       },
@@ -2426,9 +2452,9 @@ export const COURSES = [
               notes: [
                 { string: 6, fret: 5,  label: "La",  color: "neutral" },
                 { string: 5, fret: 5,  label: "Ré",  color: "amber", root: true },
-                { string: 4, fret: 5,  label: "La",  color: "neutral" },
-                { string: 3, fret: 5,  label: "Fa",  color: "green",  root: false },
-                { string: 2, fret: 6,  label: "Do",  color: "primary",root: false },
+                { string: 4, fret: 3,  label: "Fa",  color: "neutral" },
+                { string: 3, fret: 5,  label: "Do",  color: "green",  root: false },
+                { string: 2, fret: 6,  label: "Fa",  color: "primary",root: false },
                 { string: 1, fret: 5,  label: "La",  color: "neutral" },
               ],
             },
@@ -2444,6 +2470,7 @@ export const COURSES = [
           { type: "h", text: "Tension-résolution en miniature" },
           { type: "p", text: "Sur le V7 (G7), joue volontairement une note 'tendue' (b9, #11, b13). Cette note crée de la tension qui sera résolue sur la note cible du I (Cmaj7). Tension micro → résolution micro. C'est le langage du jazz post-bebop." },
           { type: "tip", text: "Drill ciblage : 1 mesure par accord, métronome 60bpm. Sur chaque mesure, joue 5-7 notes qui FINISSENT sur la 3e ou la 7e de l'accord courant. Tu apprends à 'viser' systématiquement." },
+          { type: "fretboard_interactive", mode: "quiz", quizTarget: "G", caption: "Quiz : trouve toutes les quintes Sol sur le manche", lang: "fr", compact: true },
         ],
         quiz: ["q-harm-19", "q-harm-20"],
       },
@@ -2717,11 +2744,11 @@ export const COURSES = [
               notes: [
                 { string: 6, fret: 5,  label: "La",  color: "neutral" },
                 { string: 5, fret: 5,  label: "Ré",  color: "neutral" },
-                { string: 4, fret: 5,  label: "La",  color: "neutral" },
-                { string: 3, fret: 5,  label: "Fa",  color: "green",  root: false },
-                { string: 2, fret: 5,  label: "Si",  color: "primary",root: false },
+                { string: 4, fret: 9,  label: "Si",  color: "neutral" },
+                { string: 3, fret: 4,  label: "Si",  color: "green",  root: false },
+                { string: 2, fret: 6,  label: "Fa",  color: "primary",root: false },
                 { string: 1, fret: 5,  label: "La",  color: "neutral" },
-                { string: 6, fret: 8,  label: "Si",  color: "primary",root: false },
+                { string: 6, fret: 7,  label: "Si",  color: "primary",root: false },
                 { string: 5, fret: 8,  label: "Fa",  color: "green",  root: false },
               ],
             },
@@ -4018,6 +4045,27 @@ export const QUIZ = [
   {id:"q-logic-09",courseId:"harmony",lessonId:"harmony-02",lvl:3,q:"Pourquoi un accord 7 dominante crée-t-il plus de tension qu'un accord majeur simple ?",o:["Hasard","Présence du triton entre la 3e et la b7","Plus de notes","Volume plus fort"],a:1,exp:"G7 = Sol-Si-Ré-Fa. Si→Fa = 6 demi-tons = TRITON. Cet intervalle dissonant 'demande' à résoudre. C'est la source de la tension dominante.",xp:65},
   {id:"q-logic-10",courseId:"scales",lessonId:"scales-02",lvl:3,q:"Pourquoi la pentatonique 'sonne juste' sur tant de progressions différentes ?",o:["Magique","Elle évite les notes les plus dissonantes (2 et b6)","Elle est plus simple","Convention culturelle"],a:1,exp:"Penta mineure = 1-b3-4-5-b7. Elle évite le 2 (forme demi-ton avec b3) et b6 (forme demi-ton avec 5). Sans ces 2 demi-tons tendus, elle 'pose' sur quasi tous les accords mineurs et blues.",xp:65},
 
+// ═══ QUIZ FRETBOARD INTERACTIFS — manche cliquable ═══
+  {id:"q-fret-neck-01",type:"fretboard",courseId:"neck",lessonId:"neck-02",lvl:1,q:"Trouve toutes les notes Do (C) sur le manche",concept:{type:"find_note",root:"C"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Case 8 corde 6, case 3 corde 5.",xp:40,exp:"Do se trouve en c6f8, c5f3, c4f10, c3f5, c2f1, c1f8."},
+  {id:"q-fret-neck-02",type:"fretboard",courseId:"neck",lessonId:"neck-02",lvl:1,q:"Trouve toutes les notes Sol (G) sur le manche",concept:{type:"find_note",root:"G"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Sol est la corde 3 à vide.",xp:40,exp:"Sol en : c6f3, c5f10, c4f5, c3f0, c2f3, c1f3."},
+  {id:"q-fret-neck-03",type:"fretboard",courseId:"neck",lessonId:"neck-02",lvl:1,q:"Trouve toutes les notes Mi (E) sur le manche",concept:{type:"find_note",root:"E"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Mi est à vide sur les cordes 6 et 1.",xp:40,exp:"Mi en : c6f0, c5f7, c4f2, c3f9, c2f5, c1f0."},
+  {id:"q-fret-neck-04",type:"fretboard",courseId:"neck",lessonId:"neck-02",lvl:2,q:"Trouve toutes les notes Ré (D) sur le manche",concept:{type:"find_note",root:"D"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Ré est à vide sur la corde 4.",xp:40,exp:"Ré en : c6f10, c5f5, c4f0, c3f7, c2f3, c1f10."},
+  {id:"q-fret-neck-05",type:"fretboard",courseId:"neck",lessonId:"neck-04",lvl:2,q:"CAGED : trouve toutes les fondamentales La (ancres des 5 formes)",concept:{type:"find_note",root:"A"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"La est à vide sur la corde 5. Cherche les octaves.",xp:50,exp:"La en : c6f5, c5f0, c4f7, c3f2, c2f10, c1f5. Ce sont tes ancres CAGED."},
+  {id:"q-fret-scales-01",type:"fretboard",courseId:"scales",lessonId:"scales-01",lvl:1,q:"Sélectionne les notes de Do majeur sur les cases 0-3",concept:{type:"find_scale",root:"C",quality:"major"},selectionRules:{mode:"all"},fretRange:[0,3],display:{showNotes:false},hint:"Do majeur = Do Ré Mi Fa Sol La Si.",xp:45,exp:"Do majeur en position ouverte : 7 notes naturelles cases 0-3."},
+  {id:"q-fret-scales-02",type:"fretboard",courseId:"scales",lessonId:"scales-02",lvl:1,q:"Sélectionne les notes de la pentatonique mineure de La (cases 5-8)",concept:{type:"find_scale",root:"A",quality:"pentatonic_minor"},selectionRules:{mode:"all"},fretRange:[4,9],display:{showNotes:false},hint:"Position 1 classique autour de la case 5.",xp:50,exp:"Pentatonique mineure de La position 1 : La-Do-Ré-Mi-Sol."},
+  {id:"q-fret-scales-03",type:"fretboard",courseId:"scales",lessonId:"scales-02",lvl:2,q:"Trouve toutes les notes de la gamme blues de La sur le manche",concept:{type:"find_scale",root:"A",quality:"blues"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Blues = pentatonique mineure + note bleue (b5 = Ré#).",xp:55,exp:"Blues de La : La-Do-Ré-Ré#-Mi-Sol. La note bleue Ré# est la caracteristique."},
+  {id:"q-fret-scales-04",type:"fretboard",courseId:"scales",lessonId:"scales-04",lvl:2,q:"Trouve toutes les notes du dorien de Ré sur le manche",concept:{type:"find_scale",root:"D",quality:"dorian"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Dorien = mineur avec 6te majeure. Ré dorien = Ré Mi Fa Sol La Si Do.",xp:55,exp:"Ré dorien = notes de Do majeur depuis Ré. Le Si (6te M) est la note caractéristique."},
+  {id:"q-fret-scales-05",type:"fretboard",courseId:"scales",lessonId:"scales-05",lvl:2,q:"Trouve les notes du mixolydien de Sol (cases 0-5)",concept:{type:"find_scale",root:"G",quality:"mixolydian"},selectionRules:{mode:"all"},fretRange:[0,5],display:{showNotes:false},hint:"Mixolydien = majeure avec 7e mineure. Sol-La-Si-Do-Ré-Mi-Fa.",xp:55,exp:"Sol mixolydien : le Fa naturel (pas Fa#) est la note caractéristique."},
+  {id:"q-fret-harm-01",type:"fretboard",courseId:"harmony",lessonId:"harmony-01",lvl:1,q:"Trouve toutes les notes de Do majeur (Do Mi Sol) sur le manche",concept:{type:"find_chord",root:"C",quality:"maj"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Do majeur = Do + Mi (3ce M) + Sol (5te).",xp:45,exp:"Triade Do majeur : 3 notes distinctes, nombreuses positions sur le manche."},
+  {id:"q-fret-harm-02",type:"fretboard",courseId:"harmony",lessonId:"harmony-01",lvl:2,q:"Trouve toutes les notes de La mineur (La Do Mi)",concept:{type:"find_chord",root:"A",quality:"min"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"La mineur = La + Do (3ce m) + Mi (5te). Compare avec La majeur (Do#).",xp:45,exp:"Am : La-Do-Mi. La tierce mineure (Do vs Do#) fait toute la différence."},
+  {id:"q-fret-harm-03",type:"fretboard",courseId:"harmony",lessonId:"harmony-02",lvl:2,q:"Trouve toutes les notes de Am7 (La Do Mi Sol)",concept:{type:"find_chord",root:"A",quality:"min7"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Am7 = Am + Sol (7e mineure). 4 notes sur tout le manche.",xp:55,exp:"Am7 : La-Do-Mi-Sol. La 7e mineure Sol est la couleur funk/jazz."},
+  {id:"q-fret-harm-04",type:"fretboard",courseId:"harmony",lessonId:"harmony-02",lvl:2,q:"Trouve toutes les notes de G7 (Sol Si Ré Fa)",concept:{type:"find_chord",root:"G",quality:"dom7"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"G7 : guide tones = Si (3e) et Fa (7e mineure).",xp:55,exp:"G7 : Sol-Si-Ré-Fa. Si et Fa sont les guide tones qui définissent la tension dominante."},
+  {id:"q-fret-harm-05",type:"fretboard",courseId:"harmony",lessonId:"harmony-02",lvl:3,q:"Trouve toutes les notes de Cmaj7 (Do Mi Sol Si)",concept:{type:"find_chord",root:"C",quality:"maj7"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Cmaj7 : guide tones = Mi (3e) et Si (7e majeure).",xp:60,exp:"Cmaj7 : Do-Mi-Sol-Si. La 7e majeure Si (vs Sib de C7) donne la couleur douce."},
+  {id:"q-fret-harm-06",type:"fretboard",courseId:"harmony",lessonId:"harmony-03",lvl:2,q:"Trouve toutes les notes de l'arpège Dm7 (Ré Fa La Do)",concept:{type:"find_chord",root:"D",quality:"min7"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Dm7 = ii de Do majeur. Guide tones : Fa (3e) + Do (7e).",xp:55,exp:"Dm7 : Ré-Fa-La-Do. C'est le ii du ii-V-I en Do."},
+  {id:"q-fret-harm-07",type:"fretboard",courseId:"harmony",lessonId:"harmony-05",lvl:3,q:"ii-V-I : trouve toutes les fondamentales Ré (ancres du ii)",concept:{type:"find_note",root:"D"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Ré est à vide sur la corde 4.",xp:50,exp:"Ré en : c6f10, c5f5, c4f0, c3f7, c2f3, c1f10. Ancres du ii dans le ii-V-I."},
+  {id:"q-fret-harm-08",type:"fretboard",courseId:"harmony",lessonId:"harmony-06",lvl:3,q:"Sur G7 : trouve toutes les notes Si (3e — guide tone principal)",concept:{type:"find_note",root:"B"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Si est à vide sur la corde 2. C'est ta note cible d'arrivée sur G7.",xp:60,exp:"Si en : c6f7, c5f2, c4f9, c3f4, c2f0, c1f7. Cibles d'arrivée sur G7."},
+  {id:"q-fret-harm-09",type:"fretboard",courseId:"harmony",lessonId:"harmony-06",lvl:3,q:"Sur G7 : trouve toutes les notes Fa (7e — tension à résoudre)",concept:{type:"find_note",root:"F"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Fa est case 1 corde 1. La 7e de G7 veut se résoudre vers Mi (Cmaj7).",xp:60,exp:"Fa en : c6f1, c5f8, c4f3, c3f10, c2f6, c1f1. La résolution Fa→Mi est le mouvement fondamental du ii-V-I."},
+  {id:"q-fret-harm-10",type:"fretboard",courseId:"harmony",lessonId:"harmony-04",lvl:2,q:"Harmonisation Do majeur : trouve toutes les notes Mi (3e du I)",concept:{type:"find_note",root:"E"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Mi à vide sur cordes 6 et 1. Tierce de Do majeur.",xp:50,exp:"Mi en : c6f0, c5f7, c4f2, c3f9, c2f5, c1f0. La tierce majeure de Cmaj7."},
 ];
 
 
@@ -4064,4 +4112,346 @@ export const EXERCISES = [
   {id:"ex-impro-04",mod:"impro",lvl:3,title:"Approche chromatique",dur:12,bpm:70,courseLink:"harmony-06",steps:["Backing Cmaj7 70 BPM. Cible Mi (3 de Cmaj7).","Avant chaque Mi, joue Fa (1/2 ton au-dessus). Phrase : Fa→Mi.","Ou : joue Mib (1/2 ton en dessous). Phrase : Mib→Mi.","Mélange les 2 approches dans une impro de 5 min."],tip:"Chromatisme = note tendue → note cible. Source du son bebop.",xp:75},
   {id:"ex-impro-05",mod:"impro",lvl:3,title:"Enclosure de Sol sur Cmaj7",dur:10,bpm:75,courseLink:"harmony-06",steps:["Cible : Sol (5 de Cmaj7).","Encadre Sol par : Lab (chrome au-dessus) et Fa# (chrome en dessous).","Lick : Lab-Fa#-Sol. Joue cette enclosure 10 fois.","Intègre dans une impro libre sur Cmaj7."],tip:"Enclosure = arrivée 'parfaite' sur la cible. Très utilisé en bebop.",xp:80},
 
+// ═══ EXERCICES FRETBOARD INTERACTIFS ═══
+  // type: "fretboard_exercise" → rendu par FretboardExercise dans ExerciseDetail
+
+  {
+    id:"ex-fret-01", type:"fretboard_exercise", mod:"neck", lvl:1,
+    title:"Cartographie : notes naturelles", dur:12, xp:70,
+    unlockedBy:["neck-01","neck-02"],
+    courseLink:"neck-02",
+    stages:[
+      {
+        instruction:"Trouve tous les Do sur le manche",
+        concept:{type:"find_note",root:"C"},
+        selectionRules:{mode:"all"},
+        fretRange:[0,12], stringRange:[1,6],
+        display:{showNotes:false},
+        hint:"Commence par la corde 6 (Mi grave). Do est case 8.",
+        exp:"Do en c6f8, c5f3, c4f10, c3f5, c2f1, c1f8.",
+        xp:15
+      },
+      {
+        instruction:"Trouve tous les Sol sur le manche",
+        concept:{type:"find_note",root:"G"},
+        selectionRules:{mode:"all"},
+        fretRange:[0,12], stringRange:[1,6],
+        display:{showNotes:false},
+        hint:"Sol est à vide sur la corde 3.",
+        exp:"Sol en c6f3, c5f10, c4f5, c3f0, c2f3, c1f3.",
+        xp:15
+      },
+      {
+        instruction:"Trouve tous les Ré sur le manche",
+        concept:{type:"find_note",root:"D"},
+        selectionRules:{mode:"all"},
+        fretRange:[0,12], stringRange:[1,6],
+        display:{showNotes:false},
+        hint:"Ré est à vide sur la corde 4.",
+        exp:"Ré en c6f10, c5f5, c4f0, c3f7, c2f3, c1f10.",
+        xp:15
+      },
+      {
+        instruction:"Trouve tous les La sur le manche (fondamentales CAGED)",
+        concept:{type:"find_note",root:"A"},
+        selectionRules:{mode:"all"},
+        fretRange:[0,12], stringRange:[1,6],
+        display:{showNotes:false},
+        hint:"La est à vide sur la corde 5.",
+        exp:"La en c6f5, c5f0, c4f7, c3f2, c2f10, c1f5. Ce sont tes ancres CAGED.",
+        xp:25
+      }
+    ],
+    tip:"Ces 4 notes (Do Sol Ré La) forment un cycle de quintes. Les mémoriser c'est déjà cartographier le manche."
+  },
+
+  {
+    id:"ex-fret-02", type:"fretboard_exercise", mod:"neck", lvl:2,
+    title:"Intervalles : quintes et quartes sur le manche", dur:12, xp:80,
+    unlockedBy:["neck-03"],
+    courseLink:"neck-03",
+    stages:[
+      {
+        instruction:"Trouve toutes les quintes de Mi (Si) sur le manche",
+        concept:{type:"find_note",root:"B"},
+        selectionRules:{mode:"all"},
+        fretRange:[0,12], stringRange:[1,6],
+        display:{showNotes:false},
+        hint:"La quinte de Mi est Si. Si est à vide sur la corde 2.",
+        exp:"Si en c6f7, c5f2, c4f9, c3f4, c2f0, c1f7.",
+        xp:20
+      },
+      {
+        instruction:"Trouve toutes les quintes de La (Mi) sur le manche",
+        concept:{type:"find_note",root:"E"},
+        selectionRules:{mode:"all"},
+        fretRange:[0,12], stringRange:[1,6],
+        display:{showNotes:false},
+        hint:"La quinte de La est Mi. Mi est à vide sur cordes 6 et 1.",
+        exp:"Mi en c6f0, c5f7, c4f2, c3f9, c2f5, c1f0.",
+        xp:20
+      },
+      {
+        instruction:"Trouve toutes les tierces majeures de Do (Mi) sur le manche",
+        concept:{type:"find_note",root:"E"},
+        selectionRules:{mode:"all"},
+        fretRange:[0,12], stringRange:[1,6],
+        display:{showNotes:false},
+        hint:"La tierce majeure de Do est Mi (4 demi-tons au-dessus).",
+        exp:"Mi en c6f0, c5f7, c4f2, c3f9, c2f5, c1f0. Même note que la quinte de La !",
+        xp:20
+      },
+      {
+        instruction:"Trouve toutes les tierces mineures de La (Do)",
+        concept:{type:"find_note",root:"C"},
+        selectionRules:{mode:"all"},
+        fretRange:[0,12], stringRange:[1,6],
+        display:{showNotes:false},
+        hint:"La tierce mineure de La est Do (3 demi-tons). Do = case 8 corde 6.",
+        exp:"Do en c6f8, c5f3, c4f10, c3f5, c2f1, c1f8.",
+        xp:20
+      }
+    ],
+    tip:"Un intervalle = une distance en demi-tons. Quinte (7dt) = la relation la plus forte en musique."
+  },
+
+  {
+    id:"ex-fret-03", type:"fretboard_exercise", mod:"neck", lvl:2,
+    title:"CAGED : ancres et fondamentales", dur:15, xp:90,
+    unlockedBy:["neck-04"],
+    courseLink:"neck-04",
+    stages:[
+      {
+        instruction:"Trouve toutes les fondamentales Sol (ancres forme G-CAGED)",
+        concept:{type:"find_note",root:"G"},
+        selectionRules:{mode:"all"},
+        fretRange:[0,12], stringRange:[1,6],
+        display:{showNotes:false},
+        hint:"Sol est à vide corde 3. C'est la fondamentale de la forme G.",
+        exp:"Sol en c6f3, c5f10, c4f5, c3f0, c2f3, c1f3.",
+        xp:20
+      },
+      {
+        instruction:"Trouve toutes les notes de Am (La Do Mi) sur le manche",
+        concept:{type:"find_chord",root:"A",quality:"min"},
+        selectionRules:{mode:"all"},
+        fretRange:[0,12], stringRange:[1,6],
+        display:{showNotes:false},
+        hint:"Am = La + Do (3ce mineure) + Mi (quinte). Compare avec Am7 (+ Sol).",
+        exp:"Am : La (c6f5, c5f0, c4f7, c3f2, c2f10, c1f5), Do, Mi — tout le manche.",
+        xp:25
+      },
+      {
+        instruction:"Quiz CAGED : trouve les 5 zones en trouvant toutes les fondamentales La",
+        concept:{type:"find_note",root:"A"},
+        selectionRules:{mode:"all"},
+        fretRange:[0,12], stringRange:[1,6],
+        display:{showNotes:false},
+        hint:"Chaque La est le centre d'une des 5 formes CAGED.",
+        exp:"La en : c6f5 (forme E), c5f0 (forme A), c4f7 (forme D ?), c3f2, c2f10, c1f5.",
+        xp:30
+      }
+    ],
+    tip:"Les fondamentales = tes ancres visuelles. Avant de voir les accords, vois les fondamentales."
+  },
+
+  {
+    id:"ex-fret-04", type:"fretboard_exercise", mod:"scales", lvl:1,
+    title:"Pentatonique mineure de La — 3 positions", dur:15, xp:85,
+    unlockedBy:["scales-02"],
+    courseLink:"scales-02",
+    stages:[
+      {
+        instruction:"Position 1 (cases 5-8) : sélectionne toutes les notes de La pentatonique mineure",
+        concept:{type:"find_scale",root:"A",quality:"pentatonic_minor"},
+        selectionRules:{mode:"all"},
+        fretRange:[4,9], stringRange:[1,6],
+        display:{showNotes:false},
+        hint:"La-Do-Ré-Mi-Sol. La boîte classique autour de la case 5.",
+        exp:"Position 1 = la plus utilisée en rock/blues. Commence ici avant les autres.",
+        xp:25
+      },
+      {
+        instruction:"Position 2 (cases 7-10) : sélectionne toutes les notes",
+        concept:{type:"find_scale",root:"A",quality:"pentatonic_minor"},
+        selectionRules:{mode:"all"},
+        fretRange:[6,11], stringRange:[1,6],
+        display:{showNotes:false},
+        hint:"Même 5 notes, zone différente. Commence par repérer les La (fondamentales).",
+        exp:"Position 2 = la continuité naturelle de la position 1 vers les aigus.",
+        xp:25
+      },
+      {
+        instruction:"Maintenant le manche complet (cases 0-12) : toutes les notes",
+        concept:{type:"find_scale",root:"A",quality:"pentatonic_minor"},
+        selectionRules:{mode:"all"},
+        fretRange:[0,12], stringRange:[1,6],
+        display:{showNotes:false},
+        hint:"C'est beaucoup ! Commence par la corde 6 et descends corde par corde.",
+        exp:"La pentatonique mineure de La : 5 notes × 6 cordes = ~30 positions sur le manche entier.",
+        xp:35
+      }
+    ],
+    tip:"La pentatonique n'a pas de mauvaises notes sur un accord Am. C'est ta zone de confort pour l'impro."
+  },
+
+  {
+    id:"ex-fret-05", type:"fretboard_exercise", mod:"scales", lvl:2,
+    title:"Gammes et modes — exploration", dur:15, xp:90,
+    unlockedBy:["scales-03","scales-04"],
+    courseLink:"scales-04",
+    stages:[
+      {
+        instruction:"Trouve toutes les notes de Do majeur sur le manche",
+        concept:{type:"find_scale",root:"C",quality:"major"},
+        selectionRules:{mode:"all"},
+        fretRange:[0,12], stringRange:[1,6],
+        display:{showNotes:false},
+        hint:"Do-Ré-Mi-Fa-Sol-La-Si. 7 notes naturelles.",
+        exp:"Do majeur = les 7 notes naturelles. Mémorise ce pattern comme référence.",
+        xp:20
+      },
+      {
+        instruction:"Même tonique, mode différent : Ré dorien (Ré Mi Fa Sol La Si Do)",
+        concept:{type:"find_scale",root:"D",quality:"dorian"},
+        selectionRules:{mode:"all"},
+        fretRange:[0,12], stringRange:[1,6],
+        display:{showNotes:false},
+        hint:"Ré dorien = mêmes notes que Do majeur, mais depuis Ré. Entends la différence.",
+        exp:"Ré dorien = Do majeur joué depuis Ré. Même notes, couleur différente.",
+        xp:25
+      },
+      {
+        instruction:"Sol mixolydien (Sol La Si Do Ré Mi Fa) — repère le Fa naturel",
+        concept:{type:"find_scale",root:"G",quality:"mixolydian"},
+        selectionRules:{mode:"all"},
+        fretRange:[0,12], stringRange:[1,6],
+        display:{showNotes:false},
+        hint:"Mixolydien = majeure avec b7. Sol-La-Si-Do-Ré-Mi-Fa (pas Fa#).",
+        exp:"Sol mixolydien = son rock/blues. Le Fa naturel (vs Fa# de Sol majeur) fait la couleur.",
+        xp:25
+      }
+    ],
+    tip:"Les modes ne sont pas des gammes différentes — ils sont des perspectives différentes sur les mêmes notes."
+  },
+
+  {
+    id:"ex-fret-06", type:"fretboard_exercise", mod:"harmony", lvl:2,
+    title:"Construction de triades sur le manche", dur:12, xp:80,
+    unlockedBy:["harmony-01"],
+    courseLink:"harmony-01",
+    stages:[
+      {
+        instruction:"Trouve toutes les notes de Do majeur (Do Mi Sol)",
+        concept:{type:"find_chord",root:"C",quality:"maj"},
+        selectionRules:{mode:"all"},
+        fretRange:[0,12], stringRange:[1,6],
+        display:{showNotes:false},
+        hint:"Do majeur = Do + Mi (4dt) + Sol (7dt). 3 notes, partout sur le manche.",
+        exp:"Triade majeure : 1-3-5. Do-Mi-Sol partout sur le manche.",
+        xp:20
+      },
+      {
+        instruction:"Trouve toutes les notes de La mineur (La Do Mi)",
+        concept:{type:"find_chord",root:"A",quality:"min"},
+        selectionRules:{mode:"all"},
+        fretRange:[0,12], stringRange:[1,6],
+        display:{showNotes:false},
+        hint:"La mineur = La + Do (3dt) + Mi (7dt). La tierce mineure fait la différence.",
+        exp:"Am : 1-b3-5 = La-Do-Mi. Le Do (vs Do# de Am → A) crée la couleur mineure.",
+        xp:20
+      },
+      {
+        instruction:"Trouve toutes les notes de Sol7 (Sol Si Ré Fa)",
+        concept:{type:"find_chord",root:"G",quality:"dom7"},
+        selectionRules:{mode:"all"},
+        fretRange:[0,12], stringRange:[1,6],
+        display:{showNotes:false},
+        hint:"G7 = Sol + Si (3ce M) + Ré (5te) + Fa (7e m). Accord de tension.",
+        exp:"G7 : Si et Fa sont les guide tones — la tension veux se résoudre vers Cmaj7.",
+        xp:40
+      }
+    ],
+    tip:"Un accord = des notes, pas une forme de main. Voir les notes sur le manche = liberté totale."
+  },
+
+  {
+    id:"ex-fret-07", type:"fretboard_exercise", mod:"harmony", lvl:3,
+    title:"ii-V-I : cartographier la progression", dur:15, xp:100,
+    unlockedBy:["harmony-05"],
+    courseLink:"harmony-05",
+    stages:[
+      {
+        instruction:"ii — Dm7 : trouve toutes les notes Ré Fa La Do sur le manche",
+        concept:{type:"find_chord",root:"D",quality:"min7"},
+        selectionRules:{mode:"all"},
+        fretRange:[0,12], stringRange:[1,6],
+        display:{showNotes:false},
+        hint:"Dm7 = ii de Do majeur. Guide tones = Fa (3e) et Do (7e).",
+        exp:"Dm7 : Ré-Fa-La-Do. C'est l'accord de tension douce du ii-V-I.",
+        xp:25
+      },
+      {
+        instruction:"V — G7 : trouve toutes les notes Sol Si Ré Fa sur le manche",
+        concept:{type:"find_chord",root:"G",quality:"dom7"},
+        selectionRules:{mode:"all"},
+        fretRange:[0,12], stringRange:[1,6],
+        display:{showNotes:false},
+        hint:"G7 = V de Do majeur. Guide tones = Si (3e) et Fa (7e) = tension maximale.",
+        exp:"G7 : Sol-Si-Ré-Fa. Le Fa veut descendre vers Mi, le Si monte vers Do.",
+        xp:25
+      },
+      {
+        instruction:"I — Cmaj7 : trouve toutes les notes Do Mi Sol Si sur le manche",
+        concept:{type:"find_chord",root:"C",quality:"maj7"},
+        selectionRules:{mode:"all"},
+        fretRange:[0,12], stringRange:[1,6],
+        display:{showNotes:false},
+        hint:"Cmaj7 = résolution. Guide tones = Mi (3e) et Si (7e M) = repos.",
+        exp:"Cmaj7 : Do-Mi-Sol-Si. La résolution parfaite après G7.",
+        xp:30
+      }
+    ],
+    tip:"Le ii-V-I est le moteur de tout le jazz. Cartographier ces 3 accords sur le manche = voir l'harmonie visuellement."
+  },
+
+  {
+    id:"ex-fret-08", type:"fretboard_exercise", mod:"impro", lvl:3,
+    title:"Cibler les guide tones en impro", dur:12, xp:95,
+    unlockedBy:["harmony-06","scales-02"],
+    courseLink:"harmony-06",
+    stages:[
+      {
+        instruction:"Sur G7 : repère toutes les notes Si (3e — guide tone)",
+        concept:{type:"find_note",root:"B"},
+        selectionRules:{mode:"all"},
+        fretRange:[0,12], stringRange:[1,6],
+        display:{showNotes:false},
+        hint:"Si est à vide sur la corde 2. Ce sont tes notes d'arrivée sur G7.",
+        exp:"Si en c6f7, c5f2, c4f9, c3f4, c2f0, c1f7. Cibles d'arrivée sur G7.",
+        xp:25
+      },
+      {
+        instruction:"Sur G7 : repère toutes les notes Fa (7e — tension à résoudre)",
+        concept:{type:"find_note",root:"F"},
+        selectionRules:{mode:"all"},
+        fretRange:[0,12], stringRange:[1,6],
+        display:{showNotes:false},
+        hint:"Fa est case 1 corde 1. Cette note veut descendre vers Mi (résolution).",
+        exp:"Fa en c6f1, c5f8, c4f3, c3f10, c2f6, c1f1. Tension → résolution vers Mi de Cmaj7.",
+        xp:25
+      },
+      {
+        instruction:"Sur Cmaj7 : repère toutes les notes Mi (3e — couleur majeure)",
+        concept:{type:"find_note",root:"E"},
+        selectionRules:{mode:"all"},
+        fretRange:[0,12], stringRange:[1,6],
+        display:{showNotes:false},
+        hint:"Mi est à vide sur les cordes 6 et 1. Note de repos de Cmaj7.",
+        exp:"Mi en c6f0, c5f7, c4f2, c3f9, c2f5, c1f0. Résolution naturelle depuis Fa de G7.",
+        xp:25
+      }
+    ],
+    tip:"Cibler les guide tones (3e + 7e) de chaque accord = la différence entre 'sonner sur l'accord' et 'jouer des notes au hasard'."
+  },
 ];

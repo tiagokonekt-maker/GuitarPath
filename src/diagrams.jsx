@@ -42,7 +42,7 @@ const DC = {
 };
 
 const FONT = '"Josefin Sans", "Roboto", sans-serif';
-const STRING_NAMES = ["Mi♭", "Si", "Sol", "Ré", "La", "Mi♭"]; // c1→c6, affiché c6→c1
+const STRING_NAMES = ["Mi", "Si", "Sol", "Ré", "La", "Mi"]; // c1→c6, affiché c6→c1
 
 // ─── Wrapper commun ────────────────────────────────────────────────────────
 function DiagramCard({ caption, children, accent = DC.primary }) {
@@ -113,7 +113,7 @@ export function FretboardDiagram({ data, caption }) {
   } = data;
 
   const STRINGS = 6;
-  const LEFT_PAD = showStringNames ? 28 : 12;
+  const LEFT_PAD = showStringNames ? 46 : 30;
   const TOP_PAD = showFretNumbers ? 22 : 10;
   const BOTTOM_PAD = 14;
   const RIGHT_PAD = 12;
@@ -196,7 +196,7 @@ export function FretboardDiagram({ data, caption }) {
             textAnchor="end" fontSize={9} fill={DC.text2} fontFamily={FONT}
           >
             {/* c1=Mi aigu, c6=Mi grave */}
-            {["Mi♭", "Si", "Sol", "Ré", "La", "Mi♭"][s - 1]}
+            {["Mi", "Si", "Sol", "Ré", "La", "Mi"][s - 1]}
           </text>
         ))}
 
@@ -212,6 +212,22 @@ export function FretboardDiagram({ data, caption }) {
           if (isOpen) {
             const x = LEFT_PAD - 16; const y = sy(s);
             return <circle key={i} cx={x} cy={y} r={NOTE_R - 2} fill="none" stroke={col.stroke || DC.primary} strokeWidth={2} />;
+          }
+
+          // fret 0 (corde à vide jouée) : affichée à gauche du sillet, colorée
+          if (f === 0) {
+            const x = LEFT_PAD - 16; const y = sy(s);
+            return (
+              <g key={i}>
+                <circle cx={x} cy={y} r={NOTE_R - 2} fill={col.fill} stroke={col.fill} strokeWidth={2} />
+                {label && (
+                  <text x={x} y={y + 4} textAnchor="middle"
+                    fontSize={label.length > 2 ? 7 : 9}
+                    fill={col.text} fontFamily={FONT} fontWeight={600}
+                  >{label}</text>
+                )}
+              </g>
+            );
           }
 
           const x = LEFT_PAD + (f - startFret - 1) * FRET_SPACING + FRET_SPACING / 2;
@@ -319,7 +335,7 @@ export function ScalePattern({ data, caption }) {
         ))}
 
         {/* Noms de cordes (c6 en bas → s=0, c1 en haut → s=5) */}
-        {["Mi♭", "La", "Ré", "Sol", "Si", "Mi♭"].map((name, s) => (
+        {["Mi", "La", "Ré", "Sol", "Si", "Mi"].map((name, s) => (
           <text key={s}
             x={LEFT_PAD - 6} y={sy(s) + 4}
             textAnchor="end" fontSize={9} fill={DC.text2} fontFamily={FONT}
@@ -456,7 +472,7 @@ export function IntervalChart({ data, caption }) {
 //   barre: { fret: 2, from: 0, to: 5 }  // from/to = index dans frets[] (c6=0)
 // }
 // ═══════════════════════════════════════════════════════════════════════════
-const STRING_LABELS = ["Mi♭", "La", "Ré", "Sol", "Si", "Mi♭"]; // [c6..c1] affiché gauche→droite
+const STRING_LABELS = ["Mi", "La", "Ré", "Sol", "Si", "Mi"]; // [c6..c1] affiché gauche→droite
 
 export function ChordDiagram({ data, caption }) {
   const { name = "", frets = [], fingers = [], startFret = 1, barre } = data;

@@ -4,6 +4,7 @@ import { useAuth } from "./supabase/useAuth.js";
 import { useProgress } from "./supabase/useProgress.js";
 import { AuthScreen } from "./supabase/AuthScreen.jsx";
 import { renderDiagramBlock } from "./diagrams.jsx";
+import { FretboardLesson, FretboardQuizQuestion, FretboardExercise } from "./Fretboard.jsx";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // DESIGN SYSTEM — palette claire, polices Roboto + Josefin Sans, Tabler icons
@@ -715,6 +716,12 @@ function LessonView({ lesson, state, dispatch, onBack }) {
           // ── Blocs visuels (fretboard, scale_pattern, interval_chart, chord_diagram, caged_form, note_grid)
           const diagram = renderDiagramBlock(b, i);
           if (diagram) return diagram;
+          // ── Manche interactif
+          if (b.type === "fretboard_interactive") return (
+            <div key={i} style={{ marginBottom: 0 }}>
+              <FretboardLesson block={b} />
+            </div>
+          );
           return <p key={i} style={{ margin: 0, fontSize: 15, lineHeight: 1.7, color: C.text, fontFamily: FONTS.title }}>{b.text}</p>;
         })}
       </div>
@@ -825,8 +832,56 @@ function ExerciseDetail({ ex, state, dispatch, onBack, content }) {
   const [checked, setChecked] = useState(saved);
   const [done, setDone] = useState(false);
   const [pop, setPop] = useState(false);
-  const allDone = checked.length === ex.steps.length;
   const theme = MODULE_THEME[ex.mod] || MODULE_THEME.neck;
+
+  // ── Exercice fretboard interactif (type: "fretboard_exercise") ───────────
+  if (ex.type === "fretboard_exercise") {
+    const finishFretboard = ({ totalXp }) => {
+      dispatch({ type: "COMPLETE_EXERCISE", id: ex.id, title: ex.title, xp: totalXp || ex.xp });
+      dispatch({ type: "MARK_STREAK" });
+      dispatch({ type: "UPDATE_WEEKLY", field: "exercises" });
+    };
+    const linkedLesson = ex.courseLink ? content.courses.flatMap(c => c.lessons).find(l => l.id === ex.courseLink) : null;
+    return (
+      <div style={{ padding: "14px 16px 0" }}>
+        <button onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", color: C.text2, fontSize: 13, padding: "0 0 12px", fontFamily: FONTS.ui, display: "flex", alignItems: "center", gap: 4 }}>
+          <Ti name="chevron-left" size={16} /> RETOUR
+        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+          <div style={{ width: 42, height: 42, borderRadius: 12, background: theme.colorL, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Ti name="guitar-pick" size={20} color={theme.color} />
+          </div>
+          <div>
+            <div style={{ fontSize: 10, color: C.text3, textTransform: "uppercase", letterSpacing: "0.1em", fontFamily: FONTS.ui }}>
+              {ex.mod} · {ex.dur} MIN · MANCHE INTERACTIF
+            </div>
+            <div style={{ fontSize: 17, fontWeight: 700, marginTop: 2, fontFamily: FONTS.title, color: C.text }}>{ex.title}</div>
+          </div>
+        </div>
+        {linkedLesson && (
+          <div style={{ background: C.primaryL, border: `1px solid ${C.primaryBorder}`, borderRadius: 11, padding: "9px 13px", marginBottom: 12, display: "flex", gap: 8, alignItems: "center" }}>
+            <Ti name="book-2" size={14} color={C.primary} />
+            <div style={{ fontSize: 12, color: C.primaryD, fontFamily: FONTS.title }}>Lié à : <strong>{linkedLesson.title}</strong></div>
+          </div>
+        )}
+        <FretboardExercise
+          ex={ex}
+          onComplete={finishFretboard}
+          dispatch={dispatch}
+        />
+        {ex.tip && (
+          <div style={{ background: C.amberL, borderRadius: 11, padding: "10px 13px", marginTop: 12, marginBottom: 12, border: `1px solid ${C.amberBorder}`, display: "flex", gap: 8, alignItems: "flex-start" }}>
+            <Ti name="bulb" size={15} color={C.amber} style={{ marginTop: 1 }} />
+            <p style={{ margin: 0, fontSize: 13, color: C.amberD, lineHeight: 1.55, fontFamily: FONTS.title }}>{ex.tip}</p>
+          </div>
+        )}
+        <div style={{ height: 16 }} />
+      </div>
+    );
+  }
+
+  // ── Exercice classique (steps à cocher) ──────────────────────────────────
+  const allDone = checked.length === (ex.steps || []).length;
 
   useEffect(() => {
     if (checked.length > 0 && !done) dispatch({ type: "SAVE_EXERCISE_PROGRESS", id: ex.id, checkedSteps: checked });
@@ -1007,6 +1062,8 @@ function QuizPlayer({ pool, title, state, dispatch, content, onDone }) {
   const [questions] = useState(pool);
   const [idx, setIdx] = useState(0);
   const [sel, setSel] = useState(null);
+  const [fretAnswered, setFretAnswered] = useState(false);
+  const [fretCorrect, setFretCorrect] = useState(null);
   const [score, setScore] = useState(0);
   const [finished, setFinished] = useState(false);
 
@@ -1023,7 +1080,8 @@ function QuizPlayer({ pool, title, state, dispatch, content, onDone }) {
   }
 
   const q = questions[idx];
-  const answered = sel !== null;
+  const isFretQuestion = q.type === "fretboard";
+  const answered = isFretQuestion ? fretAnswered : sel !== null;
 
   const choose = (i) => {
     if (answered) return;
@@ -1035,6 +1093,16 @@ function QuizPlayer({ pool, title, state, dispatch, content, onDone }) {
     dispatch({ type: "UPDATE_WEEKLY", field: "quizzes" });
   };
 
+  const handleFretComplete = (result) => {
+    const ok = result.complete;
+    setFretAnswered(true);
+    setFretCorrect(ok);
+    if (ok) setScore(s => s + 1);
+    dispatch({ type: "QUIZ_ANSWER", id: q.id, correct: ok, xp: q.xp || 40 });
+    dispatch({ type: "MARK_STREAK" });
+    dispatch({ type: "UPDATE_WEEKLY", field: "quizzes" });
+  };
+
   const next = () => {
     if (idx + 1 >= questions.length) {
       setFinished(true);
@@ -1042,6 +1110,8 @@ function QuizPlayer({ pool, title, state, dispatch, content, onDone }) {
       dispatch({ type: "QUIZ_SESSION_DONE", id: title, title, xp: totalXp, score: `${score}/${questions.length}` });
     } else {
       setSel(null);
+      setFretAnswered(false);
+      setFretCorrect(null);
       setIdx(i => i + 1);
     }
   };
@@ -1081,56 +1151,92 @@ function QuizPlayer({ pool, title, state, dispatch, content, onDone }) {
       </div>
       <div style={{ fontSize: 10, color: C.text3, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.1em", fontFamily: FONTS.ui }}>
         {linkedCourse?.title} · NIV. {q.lvl} · {idx + 1}/{questions.length}
+        {isFretQuestion && <span style={{ marginLeft: 6, color: C.amber, fontWeight: 700 }}>· MANCHE</span>}
       </div>
 
       <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: 16, marginBottom: 10 }}>
         <p style={{ margin: 0, fontSize: 15, fontWeight: 500, lineHeight: 1.5, color: C.text, fontFamily: FONTS.title }}>{q.q}</p>
       </div>
 
-      {q.o.map((opt, i) => {
-        let bg = C.surface, border = `1px solid ${C.border}`, col = C.text, badgeBg = C.surface2, badgeFg = C.text2, ic = ["A", "B", "C", "D"][i];
-        if (answered) {
-          if (i === q.a) { bg = C.greenL; border = `1px solid ${C.green}`; col = C.greenD; badgeBg = C.greenBorder; badgeFg = C.greenD; ic = <Ti name="check" size={12} />; }
-          else if (i === sel) { bg = C.coralL; border = `1px solid ${C.coral}`; col = C.coralD; badgeBg = C.coralBorder; badgeFg = C.coralD; ic = <Ti name="x" size={12} />; }
-        }
-        return (
-          <button key={i} onClick={() => choose(i)} disabled={answered} style={{
-            display: "flex", alignItems: "center", gap: 10,
-            background: bg, border, borderRadius: 11,
-            padding: "11px 13px", cursor: answered ? "default" : "pointer",
-            textAlign: "left", width: "100%", marginBottom: 7, fontFamily: FONTS.title,
-          }}>
-            <div style={{
-              width: 24, height: 24, borderRadius: 7,
-              background: badgeBg, color: badgeFg,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 10, fontWeight: 500, flexShrink: 0, fontFamily: FONTS.ui,
-            }}>{ic}</div>
-            <span style={{ fontSize: 13, color: col, lineHeight: 1.4, fontFamily: FONTS.title, fontWeight: answered && i === q.a ? 500 : 400 }}>{opt}</span>
-          </button>
-        );
-      })}
-
-      {answered && (
+      {/* ── Question fretboard interactive ── */}
+      {isFretQuestion ? (
         <>
-          <div style={{
-            background: sel === q.a ? C.greenL : C.coralL,
-            borderRadius: R.md, padding: "12px 14px", marginTop: 8, marginBottom: 12,
-            border: `1px solid ${sel === q.a ? C.greenBorder : C.coralBorder}`,
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-              <Ti name={sel === q.a ? "check" : "alert-circle"} size={14} color={sel === q.a ? C.green : C.coral} />
-              <div style={{ fontSize: 12, fontWeight: 500, color: sel === q.a ? C.greenD : C.coralD, fontFamily: FONTS.ui }}>
-                {sel === q.a ? `CORRECT · +${q.xp || 30} XP` : "PAS TOUT À FAIT…"}
+          <FretboardQuizQuestion
+            question={q}
+            onComplete={handleFretComplete}
+            answered={fretAnswered}
+          />
+          {fretAnswered && (
+            <>
+              <div style={{
+                background: fretCorrect ? C.greenL : C.coralL,
+                borderRadius: R.md, padding: "12px 14px", marginTop: 8, marginBottom: 12,
+                border: `1px solid ${fretCorrect ? C.greenBorder : C.coralBorder}`,
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                  <Ti name={fretCorrect ? "check" : "alert-circle"} size={14} color={fretCorrect ? C.green : C.coral} />
+                  <div style={{ fontSize: 12, fontWeight: 500, color: fretCorrect ? C.greenD : C.coralD, fontFamily: FONTS.ui }}>
+                    {fretCorrect ? `CORRECT · +${q.xp || 40} XP` : "PAS TOUT À FAIT…"}
+                  </div>
+                </div>
+                <div style={{ fontSize: 12, color: fretCorrect ? C.greenD : C.coralD, lineHeight: 1.55, fontFamily: FONTS.ui }}>{q.exp}</div>
               </div>
-            </div>
-            <div style={{ fontSize: 12, color: sel === q.a ? C.greenD : C.coralD, lineHeight: 1.55, fontFamily: FONTS.ui }}>{q.exp || q.x}</div>
-            {linkedLesson && <div style={{ fontSize: 11, color: C.primary, marginTop: 6, fontFamily: FONTS.ui }}>Pour approfondir : <em>{linkedLesson.title}</em></div>}
-          </div>
-          <button onClick={next} style={{
-            width: "100%", padding: "14px", borderRadius: R.md, border: "none",
-            background: C.primary, color: "#fff", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: FONTS.ui,
-          }}>{idx + 1 >= questions.length ? "Voir les résultats" : "Suivant →"}</button>
+              <button onClick={next} style={{
+                width: "100%", padding: "14px", borderRadius: R.md, border: "none",
+                background: C.primary, color: "#fff", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: FONTS.ui,
+              }}>{idx + 1 >= questions.length ? "Voir les résultats" : "Suivant →"}</button>
+            </>
+          )}
+        </>
+      ) : (
+        /* ── Question QCM classique ── */
+        <>
+          {q.o.map((opt, i) => {
+            let bg = C.surface, border = `1px solid ${C.border}`, col = C.text, badgeBg = C.surface2, badgeFg = C.text2, ic = ["A", "B", "C", "D"][i];
+            if (answered) {
+              if (i === q.a) { bg = C.greenL; border = `1px solid ${C.green}`; col = C.greenD; badgeBg = C.greenBorder; badgeFg = C.greenD; ic = <Ti name="check" size={12} />; }
+              else if (i === sel) { bg = C.coralL; border = `1px solid ${C.coral}`; col = C.coralD; badgeBg = C.coralBorder; badgeFg = C.coralD; ic = <Ti name="x" size={12} />; }
+            }
+            return (
+              <button key={i} onClick={() => choose(i)} disabled={answered} style={{
+                display: "flex", alignItems: "center", gap: 10,
+                background: bg, border, borderRadius: 11,
+                padding: "11px 13px", cursor: answered ? "default" : "pointer",
+                textAlign: "left", width: "100%", marginBottom: 7, fontFamily: FONTS.title,
+              }}>
+                <div style={{
+                  width: 24, height: 24, borderRadius: 7,
+                  background: badgeBg, color: badgeFg,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 10, fontWeight: 500, flexShrink: 0, fontFamily: FONTS.ui,
+                }}>{ic}</div>
+                <span style={{ fontSize: 13, color: col, lineHeight: 1.4, fontFamily: FONTS.title, fontWeight: answered && i === q.a ? 500 : 400 }}>{opt}</span>
+              </button>
+            );
+          })}
+
+          {answered && (
+            <>
+              <div style={{
+                background: sel === q.a ? C.greenL : C.coralL,
+                borderRadius: R.md, padding: "12px 14px", marginTop: 8, marginBottom: 12,
+                border: `1px solid ${sel === q.a ? C.greenBorder : C.coralBorder}`,
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                  <Ti name={sel === q.a ? "check" : "alert-circle"} size={14} color={sel === q.a ? C.green : C.coral} />
+                  <div style={{ fontSize: 12, fontWeight: 500, color: sel === q.a ? C.greenD : C.coralD, fontFamily: FONTS.ui }}>
+                    {sel === q.a ? `CORRECT · +${q.xp || 30} XP` : "PAS TOUT À FAIT…"}
+                  </div>
+                </div>
+                <div style={{ fontSize: 12, color: sel === q.a ? C.greenD : C.coralD, lineHeight: 1.55, fontFamily: FONTS.ui }}>{q.exp || q.x}</div>
+                {linkedLesson && <div style={{ fontSize: 11, color: C.primary, marginTop: 6, fontFamily: FONTS.ui }}>Pour approfondir : <em>{linkedLesson.title}</em></div>}
+              </div>
+              <button onClick={next} style={{
+                width: "100%", padding: "14px", borderRadius: R.md, border: "none",
+                background: C.primary, color: "#fff", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: FONTS.ui,
+              }}>{idx + 1 >= questions.length ? "Voir les résultats" : "Suivant →"}</button>
+            </>
+          )}
         </>
       )}
       <div style={{ height: 16 }} />
