@@ -25,6 +25,7 @@ const screensPromise = Promise.all([
   import("./screens/ProgressScreen.jsx"),
   import("./screens/SettingsScreen.jsx"),
   import("./screens/FretboardExplorer.jsx"),
+  import("./screens/JamSession.jsx"),
 ]);
 
 // ── Contenu pédagogique (489kb) ───────────────────────────────────────────
@@ -84,6 +85,7 @@ export default function App() {
         ProgressScreen:      screenModules[6].ProgressScreen,
         SettingsScreen:      screenModules[7].SettingsScreen,
         FretboardExplorer:   screenModules[8].FretboardExplorer,
+        JamSession:          screenModules[9].JamSession,
       };
 
       // Charger le contenu (merge localStorage)
@@ -166,7 +168,7 @@ export default function App() {
   };
 
   const navigate = (s) => {
-    if (TABS.find(t => t.id === s) || s === "challenge" || s === "practice" || s === "explorer") setScreen(s);
+    if (TABS.find(t => t.id === s) || s === "challenge" || s === "practice" || s === "explorer" || s === "jam") setScreen(s);
   };
 
   // ── Loaders ──────────────────────────────────────────────────────────────
@@ -187,7 +189,7 @@ export default function App() {
 
   const { HomeScreen, CoursesScreen, ExercisesScreen, QuizScreen,
           PracticeScreen, ChallengeScreen, ProgressScreen, SettingsScreen,
-          FretboardExplorer } = screens;
+          FretboardExplorer, JamSession } = screens;
 
   // ── Rendu principal ──────────────────────────────────────────────────────
   const renderScreen = () => {
@@ -202,6 +204,7 @@ export default function App() {
       case "exercises": return <ExercisesScreen state={state} dispatch={dispatch} content={content} />;
       case "quiz":      return <QuizScreen state={state} dispatch={dispatch} content={content} />;
       case "explorer":   return <FretboardExplorer onBack={() => setScreen("home")} />;
+      case "jam":        return <JamSession onBack={() => setScreen("home")} />;
       case "practice":   return <PracticeScreen state={state} dispatch={dispatch} />;
       case "challenge": return <ChallengeScreen state={state} dispatch={dispatch} navigate={navigate} />;
       case "progress":  return <ProgressScreen state={state} content={content} onOpenSettings={() => setShowSettings(true)} />;

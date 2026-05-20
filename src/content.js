@@ -3921,6 +3921,137 @@ export const COURSES = [
 ],
   },
 
+
+  // ═══════════════════════════════════════════════════════════════════════
+    // MODULE 5 — IMPROVISATION
+    // ═══════════════════════════════════════════════════════════════════════
+    {
+      id: "impro",
+      title: "Improvisation",
+      icon: "🎵",
+      color: "#D4537E",
+      colorL: "#FBEAF1",
+      desc: "Phrasing, ciblage des notes d'accord, tension/résolution, langage musical",
+      lessons: [
+  
+        {
+          id: "impro-01",
+          title: "Penser en phrases musicales",
+          duration: 12,
+          content: [
+            { type: "p", text: "L'improvisation n'est pas une suite de notes aléatoires — c'est une conversation musicale. Comme une phrase parlée, une phrase musicale a un début, un développement et une fin. Les grands improvisateurs (Miles Davis, Jimi Hendrix, Django Reinhardt) pensent tous en phrases, pas en gammes." },
+            { type: "h", text: "La règle du silence" },
+            { type: "p", text: "Le silence est ta meilleure arme. Une note seule, bien placée après un silence, a plus d'impact qu'une cascade de doubles-croches. Les débutants ont peur du silence et remplissent tout. Les pros utilisent le silence comme une note à part entière — c'est lui qui donne du sens aux notes qui suivent." },
+            { type: "h", text: "Structure d'une phrase efficace" },
+            { type: "p", text: "Une bonne phrase musicale fait 2 à 4 mesures. Elle monte vers un point culminant (souvent la 3e mesure), puis descend vers une note de résolution. Pense à une question (tension) suivie d'une réponse (résolution). La question finit souvent sur une note instable (2e, 7e). La réponse arrive sur une note stable (fondamentale, 3e, 5e)." },
+            { type: "fretboard_interactive", mode: "highlight", notes: ["A", "C", "E"], caption: "Notes stables de Am — cibles de résolution idéales", displayMode: "notes", lang: "fr", compact: true },
+            { type: "h", text: "Le principe call & response" },
+            { type: "p", text: "Joue une phrase de 2 mesures (question), puis silence 2 mesures (réponse imaginaire). Répète. Cette alternance question/réponse est la base du blues, du jazz et du rock. B.B. King en est le maître absolu — il joue 3 notes, attend, répond à lui-même. Chaque phrase est une mini-conversation." },
+            { type: "tip", text: "Exercice : sur un backing Am 70 BPM, joue 2 mesures, silence 2 mesures. Pendant le silence, écoute ce que tu viens de jouer et prépare ta réponse. Fais ça 10 minutes. Tu viens d'apprendre à phraser." },
+            { type: "h", text: "Varier le rythme, pas que les notes" },
+            { type: "p", text: "90% des débutants varient les notes mais jouent toujours le même rythme. Les pros font l'inverse : ils varient le rythme sur peu de notes. Prends juste La-Do-Mi (3 notes d'Am) et joue-les en blanches, puis en croches, puis avec des syncopes, puis avec des triolets. Tu viens d'obtenir 10 phrases différentes avec 3 notes." },
+            { type: "fretboard_interactive", mode: "scale", root: "A", scale: "pentatonic_minor", caption: "Pentatonique de La — 5 notes suffisent pour des heures d'impro", displayMode: "notes", lang: "fr", compact: true },
+          ],
+          quiz: ["q-impro-01"],
+        },
+  
+        {
+          id: "impro-02",
+          title: "Cibler les notes d'accord",
+          duration: 15,
+          content: [
+            { type: "p", text: "La différence entre 'jouer sur un accord' et 'jouer à côté' tient à une chose : est-ce que tu cibles les notes de l'accord sur les temps forts ? Ce concept — le chord tone targeting — est le secret n°1 des improvisateurs professionnels." },
+            { type: "h", text: "Les chord tones" },
+            { type: "p", text: "Les chord tones sont les notes de la triade ou de la tétrade. Sur Am7 : La, Do, Mi, Sol. Sur G7 : Sol, Si, Ré, Fa. Ces notes sonnent 'dedans' à 100% car elles font partie de l'accord lui-même. Arriver sur une chord tone sur le temps 1 d'une mesure = phrasing professionnel instantané." },
+            { type: "fretboard_interactive", mode: "chord", root: "A", chord: "min7", caption: "Am7 — toutes les chord tones sur le manche", displayMode: "notes", lang: "fr", compact: true },
+            { type: "h", text: "Les guide tones (3e et 7e)" },
+            { type: "p", text: "Parmi les chord tones, la 3e et la 7e sont les plus importantes — ce sont les 'guide tones'. La 3e définit si l'accord est majeur ou mineur. La 7e définit si c'est un accord de 7e majeure, mineure ou dominante. Sur Am7 : Do (b3) + Sol (b7). Sur G7 : Si (3) + Fa (b7). Ces 2 notes résument l'accord." },
+            { type: "fretboard_interactive", mode: "quiz", quizTarget: "C", caption: "Quiz : trouve tous les Do — tierce mineure de Am7", lang: "fr", compact: true },
+            { type: "h", text: "La technique du ciblage" },
+            { type: "p", text: "Principe : tu peux jouer n'importe quelle note de la gamme tant que tu arrives sur une chord tone sur les temps forts. Les notes 'de passage' entre deux chord tones peuvent être non diatoniques — elles ne choquent pas car elles passent vite. C'est la base du bebop." },
+            { type: "fretboard_interactive", mode: "chord", root: "G", chord: "dom7", caption: "G7 — guide tones : Si (3e) et Fa (7e mineure)", displayMode: "intervals", lang: "fr", compact: true },
+            { type: "tip", text: "Exercice quotidien : sur un accord tenu (Am pendant 4 mesures), joue des phrases qui finissent TOUJOURS sur La, Do, Mi ou Sol. Force-toi à atterrir sur ces notes. Au bout de 10 minutes, tu entends la différence." },
+          ],
+          quiz: ["q-impro-04", "q-impro-05"],
+        },
+  
+        {
+          id: "impro-03",
+          title: "Tension et résolution",
+          duration: 15,
+          content: [
+            { type: "p", text: "La musique est une manipulation de la tension et de la résolution. Tu crées de la tension (dissonance, instabilité) puis tu la résous (consonance, repos). Plus la tension est grande avant la résolution, plus la résolution est satisfaisante. C'est le moteur de toute musique tonale." },
+            { type: "h", text: "Les approach notes" },
+            { type: "p", text: "Une approach note est une note à 1 demi-ton au-dessus ou en dessous d'une note cible. Elle crée une tension momentanée qui se résout immédiatement. Exemple : si tu vises Do (3e de Am), joue Do# juste avant (approche par le haut) ou Si (approche par le bas). L'oreille anticipe la résolution et la ressent comme une 'arrivée'." },
+            { type: "fretboard_interactive", mode: "highlight", notes: ["C", "C#", "B"], caption: "Approches chromatiques de Do — Si (bas) et Do# (haut)", displayMode: "notes", lang: "fr", compact: true },
+            { type: "h", text: "L'enclosure" },
+            { type: "p", text: "L'enclosure combine les deux approaches : tu encadres la note cible par ses deux voisines chromatiques. Pour cibler Do : Do#→Si→Do. L'effet est plus fort — l'oreille est 'capturée' dans un mouvement circulaire avant l'arrivée. C'est la signature du bebop, utilisée par Charlie Parker à chaque mesure." },
+            { type: "h", text: "Les avoid notes" },
+            { type: "p", text: "Certaines notes de la gamme créent une dissonance trop forte sur certains accords — les 'avoid notes'. Sur Cmaj7, la 4e (Fa) crée une 2e mineure avec la 3e (Mi). Ces notes ne sont pas interdites — elles passent vite, en notes de passage, mais ne se tiennent pas sur les temps forts." },
+            { type: "fretboard_interactive", mode: "scale", root: "C", scale: "major", caption: "Do majeur sur Cmaj7 — Fa (4e, degré 4) est l'avoid note", displayMode: "degrees", lang: "fr", compact: true },
+            { type: "tip", text: "Exercice enclosure : cible Mi (3e de Cmaj7). Avant Mi, joue Fa→Mib→Mi. Répète 20 fois. Intègre dans une phrase. Tu viens d'apprendre un lick bebop." },
+          ],
+          quiz: ["q-impro-06", "q-impro-10"],
+        },
+  
+        {
+          id: "impro-04",
+          title: "Jouer sur les changements d'accords",
+          duration: 18,
+          content: [
+            { type: "p", text: "La vraie improvisation commence quand tu joues SUR les accords. La différence : le guitariste amateur joue La pentatonique sur tout un blues. Le pro entend chaque accord changer et adapte ses cibles — même s'il reste dans la même gamme, ses phrases reflètent les changements harmoniques." },
+            { type: "h", text: "Le ii-V-I : la progression universelle" },
+            { type: "p", text: "Dm7-G7-Cmaj7 (ii-V-I en Do) est la progression la plus importante du jazz, du pop et du funk. Elle crée un mouvement de tension (ii) → tension maximale (V) → résolution (I). Ton boulot : refléter ce voyage harmonique dans tes phrases." },
+            { type: "fretboard_interactive", mode: "chord", root: "D", chord: "min7", caption: "ii — Dm7 : Ré Fa La Do (tension douce)", displayMode: "notes", lang: "fr", compact: true },
+            { type: "fretboard_interactive", mode: "chord", root: "G", chord: "dom7", caption: "V — G7 : Sol Si Ré Fa (tension maximale)", displayMode: "notes", lang: "fr", compact: true },
+            { type: "fretboard_interactive", mode: "chord", root: "C", chord: "maj7", caption: "I — Cmaj7 : Do Mi Sol Si (résolution)", displayMode: "notes", lang: "fr", compact: true },
+            { type: "h", text: "Le mouvement des guide tones" },
+            { type: "p", text: "Sur Dm7→G7→Cmaj7 : Fa (3 de Dm7) reste sur G7 (devient b7), puis descend vers Mi (3 de Cmaj7). Do (b7 de Dm7) descend vers Si (3 de G7), reste Si (b7 de Cmaj7). Ces mouvements chromatiques sont le moteur de la progression. Les entendre et les cibler = jouer le changement." },
+            { type: "fretboard_interactive", mode: "quiz", quizTarget: "F", caption: "Quiz : trouve tous les Fa — guide tone pivot du ii-V-I", lang: "fr", compact: true },
+            { type: "tip", text: "Exercice : sur ii-V-I en Do (60 BPM), joue une seule note par accord : Fa sur Dm7, Si sur G7, Mi sur Cmaj7. Tu viens de 'jouer le changement' avec 3 notes. Construis des phrases autour de ces cibles." },
+          ],
+          quiz: ["q-impro-02", "q-impro-03", "q-impro-07"],
+        },
+  
+        {
+          id: "impro-05",
+          title: "Construire un solo",
+          duration: 15,
+          content: [
+            { type: "p", text: "Un solo n'est pas une collection de licks bout à bout — c'est une narration musicale avec un début, un développement et une conclusion. Les meilleurs solos de l'histoire suivent tous une structure narrative claire." },
+            { type: "h", text: "La structure en 3 actes" },
+            { type: "p", text: "Acte 1 (25%) : pose le contexte. Jeu épuré, notes longues, peu de notes. Acte 2 (50%) : monte progressivement. Augmente la densité, monte dans les aigus, augmente l'intensité. Acte 3 (25%) : climax aux 2/3 puis descente satisfaisante vers la tonique." },
+            { type: "h", text: "La règle du climax aux 2/3" },
+            { type: "p", text: "Ton moment le plus intense arrive aux 2/3 du solo, pas à la fin. Sur 32 mesures, le climax est mesure 21-22. Le tiers restant permet une résolution progressive — plus satisfaisante qu'un solo qui monte jusqu'au bout et s'arrête brutalement. C'est la structure narrative naturelle." },
+            { type: "h", text: "Gérer l'espace de registre" },
+            { type: "p", text: "Commence en registre médium (cases 5-9), développe vers les aigus (cases 12-17) pour le climax, puis redescends. Ce voyage physique sur le manche crée une progression émotionnelle naturelle. Les notes aiguës ont plus d'énergie — utilise-les au moment clé." },
+            { type: "fretboard_interactive", mode: "scale", root: "A", scale: "pentatonic_minor", caption: "Pentatonique mineure de La — registre complet pour ton voyage", displayMode: "notes", lang: "fr", compact: true },
+            { type: "tip", text: "Enregistre-toi sur un backing Am de 32 mesures. Réécoute. Dessine une courbe d'intensité (1 à 10) mesure par mesure. Le climax est-il aux 2/3 ? Si non, recommence en t'imposant cette contrainte." },
+          ],
+          quiz: ["q-impro-13"],
+        },
+  
+        {
+          id: "impro-06",
+          title: "Vocabulaire blues et jazz",
+          duration: 18,
+          content: [
+            { type: "p", text: "Le vocabulaire musical, c'est comme le vocabulaire d'une langue. Un bon improvisateur a un répertoire de licks, patterns et gestes musicaux qu'il déploie et adapte. Tu n'inventes pas — tu empruntes, transformes, combines." },
+            { type: "h", text: "Les licks blues essentiels" },
+            { type: "p", text: "Un lick blues efficace combine 3 éléments : (1) un bend sur une note, (2) une approche chromatique vers une chord tone, (3) un vibrato sur la note finale. La pentatonique mineure + la note bleue (b5) + ces 3 techniques = 80% du vocabulaire blues de tous les temps." },
+            { type: "fretboard_interactive", mode: "scale", root: "A", scale: "blues", caption: "Gamme blues de La — la b5 (Ré#) est ta note bleue caractéristique", displayMode: "notes", lang: "fr", compact: true },
+            { type: "h", text: "La substitution de pentatonique" },
+            { type: "p", text: "Technique avancée : joue la pentatonique majeure de la bIII sur un accord mineur 7. Exemple : pentatonique majeure de Do sur Am7. Notes : Do-Ré-Mi-Sol-La = b3, 4, 5, b7, 1 de Am7. Son jazz sophistiqué. Utilisé par Miles Davis, Wes Montgomery, Pat Metheny." },
+            { type: "fretboard_interactive", mode: "scale", root: "C", scale: "pentatonic_major", caption: "Pentatonique majeure de Do sur Am7 — substitution jazz élégante", displayMode: "notes", lang: "fr", compact: true },
+            { type: "h", text: "La substitution tritonique" },
+            { type: "p", text: "Sur G7 (V dans Do), tu peux substituer Db7. G7 et Db7 partagent les mêmes guide tones (Si/Do et Fa) — l'oreille accepte. Sur Dm7-G7-Cmaj7 : Dm7-Db7-Cmaj7. La basse descend chromatiquement Ré→Réb→Do. Mouvement luxueux du jazz moderne." },
+            { type: "tip", text: "Apprends 1 lick par semaine dans toutes les tonalités (12 semaines = 12 licks). Au bout de 3 mois : 12 licks × 12 tonalités = vocabulaire suffisant pour improviser sur n'importe quel standard." },
+          ],
+          quiz: ["q-impro-08", "q-impro-09", "q-impro-11", "q-impro-12", "q-impro-14", "q-impro-15"],
+        },
+  
+      ],
+    },
 ];
 
 
