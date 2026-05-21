@@ -664,7 +664,9 @@ function QuizControls({ selected, correct, revealed, target, lang, onReveal, onR
  * }
  */
 export function FretboardLesson({ block }) {
-  const [displayMode, setDisplayMode] = useState(block.displayMode || "notes");
+  // Pour highlight et quiz, forcer "notes" — pas de degrés/intervalles sans structure harmonique
+  const defaultDisplay = (block.mode === "highlight" || block.mode === "quiz") ? "notes" : (block.displayMode || "notes");
+  const [displayMode, setDisplayMode] = useState(defaultDisplay);
   const [quizDone, setQuizDone] = useState(false);
 
   const modeMap = {
@@ -730,8 +732,8 @@ export function FretboardLesson({ block }) {
           )}
         </div>
 
-        {/* Sélecteur de mode d'affichage (sauf quiz) */}
-        {block.mode !== "quiz" && (
+        {/* Sélecteur de mode d'affichage (sauf quiz et highlight) */}
+        {block.mode !== "quiz" && block.mode !== "highlight" && (
           <div style={{ display: "flex", gap: 4 }}>
             {[
               { key: "notes",     label: "Notes" },
