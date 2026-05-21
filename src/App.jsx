@@ -13,6 +13,7 @@ import { Toast } from "./design/ui.jsx";
 import { loadState, saveState, loadContent } from "./store/state.js";
 import { reducer } from "./store/reducer.js";
 import { BADGES, computeNewBadges } from "./store/badges.js";
+import { buildReviewSession } from "./store/reviewEngine.js";
 
 // ── Screens (lazy imports — chargés après le premier rendu) ────────────────
 const screensPromise = Promise.all([
@@ -26,6 +27,7 @@ const screensPromise = Promise.all([
   import("./screens/SettingsScreen.jsx"),
   import("./screens/FretboardExplorer.jsx"),
   import("./screens/JamSession.jsx"),
+  import("./screens/ReviewSession.jsx"),
 ]);
 
 // ── Contenu pédagogique (489kb) ───────────────────────────────────────────
@@ -58,6 +60,7 @@ export default function App() {
   const [content, setContent] = useState(null);
   const [appReady, setAppReady] = useState(false);
   const [screen, setScreen] = useState("home");
+  const [reviewQuestions, setReviewQuestions] = useState([]);
   const [toast, setToast] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
   const [progressLoaded, setProgressLoaded] = useState(false);
@@ -68,11 +71,12 @@ export default function App() {
       .then(([contentModule, screenModules]) => {
 
       // Injecter les renderers synchrones dans les screens
-      const [, coursesM, exercisesM, quizM] = screenModules;
+      const [, coursesM, exercisesM, quizM, , , , , , , reviewM] = screenModules;
       coursesM.setDiagramRenderer(renderDiagramBlock);
       coursesM.setFretboardLesson(FretboardLesson);
       exercisesM.setFretboardExercise(FretboardExercise);
       quizM.setFretboardQuizQuestion(FretboardQuizQuestion);
+      if (reviewM?.setFretboardQuizQuestion) reviewM.setFretboardQuizQuestion(FretboardQuizQuestion);
 
       // Stocker les screens
       screens = {
@@ -86,6 +90,7 @@ export default function App() {
         SettingsScreen:      screenModules[7].SettingsScreen,
         FretboardExplorer:   screenModules[8].FretboardExplorer,
         JamSession:          screenModules[9].JamSession,
+        ReviewSession:       screenModules[10].ReviewSession,
       };
 
       // Charger le contenu (merge localStorage)
@@ -168,7 +173,19 @@ export default function App() {
   };
 
   const navigate = (s) => {
-    if (TABS.find(t => t.id === s) || s === "challenge" || s === "practice" || s === "explorer" || s === "jam") setScreen(s);
+    if (TABS.find(t => t.id === s) || ["challenge","practice","explorer","jam","review"].includes(s)) {
+      // Calculer les questions de revision une seule fois a l'ouverture
+      if (s === "review" && content) {
+        const session = buildReviewSession(
+          content.quiz,
+          state.reviewHistory || {},
+          state.completedLessons,
+          { targetCount: 12 }
+        );
+        setReviewQuestions(session.questions);
+      }
+      setScreen(s);
+    }
   };
 
   // ── Loaders ──────────────────────────────────────────────────────────────
@@ -189,7 +206,7 @@ export default function App() {
 
   const { HomeScreen, CoursesScreen, ExercisesScreen, QuizScreen,
           PracticeScreen, ChallengeScreen, ProgressScreen, SettingsScreen,
-          FretboardExplorer, JamSession } = screens;
+          FretboardExplorer, JamSession, ReviewSession } = screens;
 
   // ── Rendu principal ──────────────────────────────────────────────────────
   const renderScreen = () => {
@@ -203,9 +220,10 @@ export default function App() {
       case "courses":   return <CoursesScreen state={state} dispatch={dispatch} content={content} />;
       case "exercises": return <ExercisesScreen state={state} dispatch={dispatch} content={content} />;
       case "quiz":      return <QuizScreen state={state} dispatch={dispatch} content={content} />;
-      case "explorer":   return <FretboardExplorer onBack={() => setScreen("home")} />;
-      case "jam":        return <JamSession onBack={() => setScreen("home")} />;
-      case "practice":   return <PracticeScreen state={state} dispatch={dispatch} />;
+      case "explorer":  return <FretboardExplorer onBack={() => setScreen("home")} />;
+      case "jam":       return <JamSession onBack={() => setScreen("home")} />;
+      case "review":    return <ReviewSession questions={reviewQuestions} state={state} dispatch={dispatch} onDone={() => setScreen("home")} />;
+      case "practice":  return <PracticeScreen state={state} dispatch={dispatch} />;
       case "challenge": return <ChallengeScreen state={state} dispatch={dispatch} navigate={navigate} />;
       case "progress":  return <ProgressScreen state={state} content={content} onOpenSettings={() => setShowSettings(true)} />;
       default:          return <HomeScreen state={state} dispatch={dispatch} navigate={navigate} content={content} />;

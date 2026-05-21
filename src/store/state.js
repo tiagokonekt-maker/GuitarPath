@@ -9,6 +9,7 @@ export const defaultState = () => ({
   completedExercises: {}, exerciseProgress: {},
   quizResults: {}, wrongQuiz: [],
   completedLessons: {},
+  reviewHistory: {},
   dailyChallengeIdx: 0, dailyChallengeDone: false, dailyChallengeDate: "",
   dailyChallengeCount: 0,
   unlockedBadges: [],

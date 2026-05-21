@@ -1,11 +1,11 @@
 // GuitarPath — screens/HomeScreen.jsx
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { C, FONTS, R } from "../design/tokens.js";
-import { BADGE_TINTS } from "../store/badges.js";
 import { Ti } from "../design/Ti.jsx";
-import { ProgressBar, XPPop, Toast } from "../design/ui.jsx";
+import { ProgressBar } from "../design/ui.jsx";
 import { MODULE_THEME } from "../store/moduleTheme.js";
 import { DAILY_CHALLENGES, KEYS, MODES, TEMPOS, CONSTRAINTS } from "../store/challenges.js";
+import { getReviewStats, buildReviewSession } from "../store/reviewEngine.js";
 
 function HomeScreen({ state, dispatch, navigate, content }) {
   const totalLessons = content.courses.reduce((a,c) => a + c.lessons.length, 0);
@@ -14,6 +14,12 @@ function HomeScreen({ state, dispatch, navigate, content }) {
   const lvlPct = Math.round((xpInLevel / 300) * 100);
   const xpToNext = 300 - xpInLevel;
   const todayChallenge = DAILY_CHALLENGES[state.dailyChallengeIdx % DAILY_CHALLENGES.length];
+
+  // Stats de revision intelligente
+  const reviewStats = useMemo(() => {
+    if (!content.quiz) return { toReview: 0, eligible: 0 };
+    return getReviewStats(content.quiz, state.reviewHistory || {}, state.completedLessons);
+  }, [content.quiz, state.reviewHistory, state.completedLessons]);
 
   // Trouver la prochaine leçon
   const nextLesson = useMemo(() => {
@@ -160,36 +166,61 @@ function HomeScreen({ state, dispatch, navigate, content }) {
         </div>
       </button>
 
-      {/* Session du jour */}
+      {/* Revision intelligente */}
       <div style={{ fontSize: 10, fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", color: C.text3, fontFamily: FONTS.ui, marginBottom: 8 }}>
-        Session du jour
+        Revision du jour
       </div>
 
-      {[
-        { id: "courses",   icon: "book-2",        label: "Théorie",       sub: "Cours structurés", tint: "primary" },
-        { id: "exercises", icon: "guitar-pick",   label: "Exercices",     sub: `${content.exercises.length} disponibles`, tint: "green" },
-        { id: "quiz",      icon: "help-circle",   label: "Quiz",          sub: `${content.quiz.length} questions${state.wrongQuiz.length>0?` · ${state.wrongQuiz.length} à revoir`:""}`, tint: "amber" },
-        { id: "practice",  icon: "dice-5",        label: "Practice libre", sub: "Défis générés à l'infini", tint: "coral" },
-      ].map(t => {
-        const tint = BADGE_TINTS[t.tint];
-        return (
-          <button key={t.id} onClick={() => navigate(t.id)} style={{
-            background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.md,
-            padding: "11px 14px", display: "flex", alignItems: "center", gap: 12,
-            cursor: "pointer", textAlign: "left", width: "100%", marginBottom: 8,
-            fontFamily: FONTS.title,
-          }}>
-            <div style={{ width: 38, height: 38, borderRadius: 11, background: tint.bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <Ti name={t.icon} size={18} color={tint.icon} />
+      {reviewStats.eligible === 0 ? (
+        /* Pas encore de leçons completees */
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.md, padding: "14px 16px", marginBottom: 8, display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ width: 38, height: 38, borderRadius: 11, background: C.primaryL, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <Ti name="lock" size={18} color={C.primary} />
+          </div>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 500, color: C.text, fontFamily: FONTS.title }}>Revision intelligente</div>
+            <div style={{ fontSize: 11, color: C.text3, fontFamily: FONTS.ui, marginTop: 1 }}>Complete des lecons pour debloquer</div>
+          </div>
+        </div>
+      ) : reviewStats.toReview === 0 ? (
+        /* Tout est a jour */
+        <div style={{ background: C.greenL, border: `1px solid ${C.greenBorder}`, borderRadius: R.md, padding: "14px 16px", marginBottom: 8, display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ width: 38, height: 38, borderRadius: 11, background: C.surface, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <Ti name="check" size={18} color={C.green} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 500, color: C.greenD, fontFamily: FONTS.title }}>Tout est a jour !</div>
+            <div style={{ fontSize: 11, color: C.green, fontFamily: FONTS.ui, marginTop: 1 }}>
+              {reviewStats.mastered} questions maitrisees · Reviens demain
             </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 15, fontWeight: 500, color: C.text, fontFamily: FONTS.title }}>{t.label}</div>
-              <div style={{ fontSize: 11, color: C.text3, marginTop: 1, fontFamily: FONTS.ui }}>{t.sub}</div>
+          </div>
+        </div>
+      ) : (
+        /* Session disponible */
+        <button onClick={() => navigate("review")} style={{
+          width: "100%", background: C.surface,
+          border: `1.5px solid ${C.primary}`,
+          borderRadius: R.md, padding: "13px 16px", marginBottom: 8,
+          cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12,
+          fontFamily: FONTS.title,
+        }}>
+          <div style={{ width: 38, height: 38, borderRadius: 11, background: C.primaryL, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <Ti name="refresh" size={18} color={C.primary} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: C.primary, fontFamily: FONTS.ui, marginBottom: 2 }}>
+              Revision intelligente
             </div>
-            <Ti name="chevron-right" size={14} color="#B4B2A9" />
-          </button>
-        );
-      })}
+            <div style={{ fontSize: 13, fontWeight: 500, color: C.text, fontFamily: FONTS.title }}>
+              {reviewStats.toReview} question{reviewStats.toReview > 1 ? "s" : ""} a revoir
+            </div>
+            <div style={{ fontSize: 11, color: C.text3, fontFamily: FONTS.ui, marginTop: 1 }}>
+              {reviewStats.pctMastered}% maîtrisé · ~{Math.min(reviewStats.toReview, 12)} questions · 5 min
+            </div>
+          </div>
+          <Ti name="arrow-right" size={16} color={C.primary} />
+        </button>
+      )}
 
       {/* Dernières sessions */}
       {state.sessionHistory && state.sessionHistory.length > 0 && (

@@ -40,6 +40,23 @@ function reducer(state, action) {
       s.level = Math.floor(s.xp / 300) + 1;
       break;
     }
+    case "REVIEW_ANSWER": {
+      // Mise a jour de l'historique de revision (SM-2)
+      s.reviewHistory = action.history;
+      if (action.correct && action.xp) {
+        s.xp += action.xp;
+        s.level = Math.floor(s.xp / 300) + 1;
+      }
+      break;
+    }
+    case "REVIEW_SESSION_DONE":
+      s.xp += action.xp || 0;
+      s.level = Math.floor(s.xp / 300) + 1;
+      s.sessionHistory = [{
+        type: "review", title: "Session de revision",
+        xp: action.xp, score: action.score, date: today,
+      }, ...(s.sessionHistory || [])].slice(0, 10);
+      break;
     case "QUIZ_SESSION_DONE":
       s.sessionHistory = [{ type: "quiz", id: action.id || "session", title: action.title || "Quiz", xp: action.xp, date: today, score: action.score }, ...(s.sessionHistory || [])].slice(0, 10);
       break;
