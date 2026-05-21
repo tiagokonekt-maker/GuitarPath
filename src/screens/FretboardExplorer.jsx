@@ -5,6 +5,7 @@ import { C, FONTS, R } from "../design/tokens.js";
 import { Ti } from "../design/Ti.jsx";
 import { Fretboard } from "../Fretboard.jsx";
 import { SCALES, CHORD_TYPES, getScaleNotes, getChordNotes, noteToFr } from "../fretboardUtils.js";
+import { playScaleFromRoot, playChordFromRoot, isAudioLoaded } from "../audioEngine.js";
 
 const ROOTS_FR = [
   { en: "C",  fr: "Do"   }, { en: "C#", fr: "Do#"  }, { en: "D",  fr: "Re"   },
@@ -74,6 +75,17 @@ export function FretboardExplorer({ onBack }) {
   const [chordKey, setChordKey]   = useState("min7");
   const [displayMode, setDisplayMode] = useState("notes");
   const [showRootPicker, setShowRootPicker] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  const handlePlay = async () => {
+    if (isPlaying) return;
+    setIsPlaying(true);
+    try {
+      if (tab === "scale") await playScaleFromRoot(root, scaleKey, 90);
+      else await playChordFromRoot(root, chordKey);
+    } catch {}
+    setTimeout(() => setIsPlaying(false), 3000);
+  };
 
   const activeNotes = useMemo(() => {
     if (tab === "scale") return getScaleNotes(root, scaleKey);
@@ -103,6 +115,16 @@ export function FretboardExplorer({ onBack }) {
           <div style={{ fontSize: 16, fontWeight: 700, color: C.text, fontFamily: FONTS.title }}>Explorateur du manche</div>
           <div style={{ fontSize: 11, color: C.text3, fontFamily: FONTS.ui }}>{rootFr} - {activeLabel}</div>
         </div>
+        {/* Bouton ecouter */}
+        <button onClick={handlePlay} disabled={isPlaying} style={{
+          width: 36, height: 36, borderRadius: "50%", border: "none",
+          background: isPlaying ? C.primaryL : C.primary,
+          cursor: isPlaying ? "default" : "pointer",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: isPlaying ? "none" : "0 2px 8px rgba(127,119,221,0.3)",
+        }}>
+          <Ti name={isPlaying ? "loader" : "volume"} size={16} color={isPlaying ? C.primary : "#fff"} />
+        </button>
       </div>
 
       <div style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: 12, overflowY: "auto", paddingBottom: 32 }}>

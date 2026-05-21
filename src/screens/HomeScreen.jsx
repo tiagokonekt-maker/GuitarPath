@@ -120,7 +120,7 @@ function HomeScreen({ state, dispatch, navigate, content }) {
         <Ti name="arrow-right" size={16} color={C.amber} />
       </button>
 
-      {/* 🎵 Featured — Jam Session */}
+      {/* Jam Session */}
       <button onClick={() => navigate("jam")} style={{
         width: "100%",
         background: `linear-gradient(135deg, #FBEAF1 0%, ${C.primaryL} 100%)`,
@@ -140,10 +140,36 @@ function HomeScreen({ state, dispatch, navigate, content }) {
             Jam Session
           </div>
           <div style={{ fontSize: 11, color: C.text3, fontFamily: FONTS.ui, marginTop: 1 }}>
-            Gamme active, notes cibles, contraintes aléatoires
+            Gamme active, notes cibles, contraintes aleatoires
           </div>
         </div>
         <Ti name="arrow-right" size={16} color="#D4537E" />
+      </button>
+
+      {/* Ear Training */}
+      <button onClick={() => navigate("ear")} style={{
+        width: "100%",
+        background: `linear-gradient(135deg, ${C.greenL} 0%, ${C.primaryL} 100%)`,
+        border: `1px solid ${C.greenBorder}`,
+        borderRadius: R.lg, padding: 14, marginBottom: 10,
+        cursor: "pointer", textAlign: "left", fontFamily: FONTS.title,
+        display: "flex", alignItems: "center", gap: 12,
+      }}>
+        <div style={{ width: 42, height: 42, borderRadius: 12, background: C.surface, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
+          <Ti name="ear" size={22} color={C.green} />
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: C.greenD, fontFamily: FONTS.ui, marginBottom: 2 }}>
+            Outil · Oreille
+          </div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: C.text, fontFamily: FONTS.title }}>
+            Ear Training
+          </div>
+          <div style={{ fontSize: 11, color: C.text3, fontFamily: FONTS.ui, marginTop: 1 }}>
+            Identifie intervalles et qualite d'accords
+          </div>
+        </div>
+        <Ti name="arrow-right" size={16} color={C.green} />
       </button>
 
       {/* Défi du jour */}

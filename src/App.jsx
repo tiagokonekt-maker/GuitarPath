@@ -28,6 +28,7 @@ const screensPromise = Promise.all([
   import("./screens/FretboardExplorer.jsx"),
   import("./screens/JamSession.jsx"),
   import("./screens/ReviewSession.jsx"),
+  import("./screens/EarTraining.jsx"),
 ]);
 
 // ── Contenu pédagogique (489kb) ───────────────────────────────────────────
@@ -91,6 +92,7 @@ export default function App() {
         FretboardExplorer:   screenModules[8].FretboardExplorer,
         JamSession:          screenModules[9].JamSession,
         ReviewSession:       screenModules[10].ReviewSession,
+        EarTraining:         screenModules[11].EarTraining,
       };
 
       // Charger le contenu (merge localStorage)
@@ -173,15 +175,9 @@ export default function App() {
   };
 
   const navigate = (s) => {
-    if (TABS.find(t => t.id === s) || ["challenge","practice","explorer","jam","review"].includes(s)) {
-      // Calculer les questions de revision une seule fois a l'ouverture
+    if (TABS.find(t => t.id === s) || ["challenge","practice","explorer","jam","review","ear"].includes(s)) {
       if (s === "review" && content) {
-        const session = buildReviewSession(
-          content.quiz,
-          state.reviewHistory || {},
-          state.completedLessons,
-          { targetCount: 12 }
-        );
+        const session = buildReviewSession(content.quiz, state.reviewHistory || {}, state.completedLessons, { targetCount: 12 });
         setReviewQuestions(session.questions);
       }
       setScreen(s);
@@ -206,7 +202,7 @@ export default function App() {
 
   const { HomeScreen, CoursesScreen, ExercisesScreen, QuizScreen,
           PracticeScreen, ChallengeScreen, ProgressScreen, SettingsScreen,
-          FretboardExplorer, JamSession, ReviewSession } = screens;
+          FretboardExplorer, JamSession, ReviewSession, EarTraining } = screens;
 
   // ── Rendu principal ──────────────────────────────────────────────────────
   const renderScreen = () => {
@@ -220,6 +216,7 @@ export default function App() {
       case "courses":   return <CoursesScreen state={state} dispatch={dispatch} content={content} />;
       case "exercises": return <ExercisesScreen state={state} dispatch={dispatch} content={content} />;
       case "quiz":      return <QuizScreen state={state} dispatch={dispatch} content={content} />;
+      case "ear":       return <EarTraining onBack={() => setScreen("home")} dispatch={dispatch} />;
       case "explorer":  return <FretboardExplorer onBack={() => setScreen("home")} />;
       case "jam":       return <JamSession onBack={() => setScreen("home")} />;
       case "review":    return <ReviewSession questions={reviewQuestions} state={state} dispatch={dispatch} onDone={() => setScreen("home")} />;
