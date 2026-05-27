@@ -1,15 +1,19 @@
-// GuitarPath — screens/ExercisesScreen.jsx
-import { useState, useEffect } from "react";
+// Groply — screens/ExercisesScreen.jsx
+import { useState, useEffect, useMemo } from "react";
 import { C, FONTS, R } from "../design/tokens.js";
 import { Ti } from "../design/Ti.jsx";
 import { ProgressBar, XPPop } from "../design/ui.jsx";
 import { MODULE_THEME } from "../store/moduleTheme.js";
 
-// Lazy ref injectée par App.jsx
 export let _FretboardExercise = null;
 export const setFretboardExercise = (fn) => { _FretboardExercise = fn; };
 
-// ── Liste des exercices ──────────────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────────────────────
+const LEVEL_LABELS = { 1:"Fondamentaux", 2:"Intermédiaire", 3:"Avancé" };
+const LEVEL_COLORS = { 1:{ bg:C.greenL, border:C.greenBorder, text:C.greenD, dot:C.green }, 2:{ bg:C.amberL, border:C.amberBorder, text:C.amberD, dot:C.amber }, 3:{ bg:C.pinkL, border:C.pinkBorder, text:C.pinkD, dot:C.pink } };
+const DIFF_STARS = { 1:"★☆☆", 2:"★★☆", 3:"★★★" };
+
+// ── ExercisesScreen ───────────────────────────────────────────────────────────
 function ExercisesScreen({ state, dispatch, content }) {
   const [filter, setFilter] = useState("all");
   const [active, setActive] = useState(null);
@@ -22,7 +26,31 @@ function ExercisesScreen({ state, dispatch, content }) {
     { id:"rhythm",  label:"Rythme" },
     { id:"impro",   label:"Impro" },
   ];
-  const filtered = content.exercises.filter(e => filter === "all" || e.mod === filter);
+
+  const allEx = content.exercises;
+
+  // Stats globales
+  const totalDone  = useMemo(() => allEx.filter(e => state.completedExercises[e.id]).length, [state.completedExercises, allEx]);
+  const totalXP    = useMemo(() => allEx.reduce((s,e) => s + (state.completedExercises[e.id] ? e.xp : 0), 0), [state.completedExercises, allEx]);
+  const pctGlobal  = allEx.length ? Math.round(totalDone / allEx.length * 100) : 0;
+
+  // Exercice recommandé = premier non-complété du niveau le plus bas
+  const recommended = useMemo(() => {
+    const sorted = [...allEx].sort((a,b) => (a.lvl||1) - (b.lvl||1));
+    return sorted.find(e => !state.completedExercises[e.id] && (filter==="all" || e.mod===filter));
+  }, [allEx, state.completedExercises, filter]);
+
+  // Exercices filtrés groupés par niveau
+  const byLevel = useMemo(() => {
+    const filtered = allEx.filter(e => filter==="all" || e.mod===filter);
+    const groups = {};
+    filtered.forEach(e => {
+      const l = e.lvl || 1;
+      if (!groups[l]) groups[l] = [];
+      groups[l].push(e);
+    });
+    return groups;
+  }, [allEx, filter]);
 
   if (active) return (
     <ExerciseDetail ex={active} state={state} dispatch={dispatch} onBack={() => setActive(null)} content={content} />
@@ -30,15 +58,20 @@ function ExercisesScreen({ state, dispatch, content }) {
 
   return (
     <div>
-      {/* En-tête */}
-      <div style={{ background:"linear-gradient(150deg,#FFF8ED,#FFF0D9)", padding:"24px 20px 18px" }}>
+      {/* ── EN-TÊTE ──────────────────────────────────────────────────────── */}
+      <div style={{ background:"linear-gradient(150deg,#FFF8ED,#FFF0D9)", padding:"24px 20px 20px" }}>
         <div style={{ fontSize:26, fontWeight:800, color:C.text, letterSpacing:"-.4px" }}>Exercices</div>
-        <div style={{ fontSize:13, fontWeight:500, color:C.amberD, opacity:.8, marginTop:2 }}>
-          {content.exercises.length} exercices disponibles
+        <div style={{ fontSize:13, fontWeight:500, color:C.amberD, opacity:.8, marginTop:2, marginBottom:14 }}>
+          {totalDone} / {allEx.length} complétés · {totalXP} XP gagnés
         </div>
+        <div style={{ display:"flex", justifyContent:"space-between", marginBottom:5 }}>
+          <span style={{ fontSize:12, fontWeight:700, color:C.text }}>{pctGlobal}% terminé</span>
+          <span style={{ fontSize:12, fontWeight:600, color:C.amber }}>{allEx.length - totalDone} restants</span>
+        </div>
+        <ProgressBar pct={pctGlobal} color={C.amber} h={7} />
       </div>
 
-      {/* Filtres — tag pills sans scrollbar visible */}
+      {/* ── FILTRES ──────────────────────────────────────────────────────── */}
       <div style={{ display:"flex", gap:6, padding:"12px 20px", overflowX:"auto" }}>
         {cats.map(c => (
           <button key={c.id} onClick={() => setFilter(c.id)} style={{
@@ -53,57 +86,142 @@ function ExercisesScreen({ state, dispatch, content }) {
       </div>
 
       <div style={{ padding:"0 20px" }}>
-        {filtered.map(ex => {
-          const done       = !!state.completedExercises[ex.id];
-          const inProgress = state.exerciseProgress[ex.id]?.length > 0;
-          const th         = MODULE_THEME[ex.mod] || MODULE_THEME.neck;
-          return (
-            <button key={ex.id} onClick={() => setActive(ex)} style={{
-              background:C.surface, border:`1.5px solid ${C.border}`,
-              borderRadius:R.lg, padding:"13px 16px",
-              display:"flex", alignItems:"center", gap:12,
-              cursor:"pointer", textAlign:"left", width:"100%", marginBottom:8,
+
+        {/* ── RECOMMANDÉ ───────────────────────────────────────────────────── */}
+        {recommended && (
+          <>
+            <div style={{ fontSize:11, fontWeight:700, color:C.text3, letterSpacing:".07em", textTransform:"uppercase", marginBottom:10 }}>
+              Recommandé pour toi
+            </div>
+            <button onClick={() => setActive(recommended)} style={{
+              width:"100%", background:`linear-gradient(135deg, ${C.primaryL}, #fff)`,
+              border:`2px solid ${C.primaryBorder}`, borderRadius:R.xl,
+              padding:"16px", cursor:"pointer", textAlign:"left",
+              fontFamily:FONTS.title, marginBottom:20, display:"flex", gap:14, alignItems:"center",
             }}>
-              <div style={{
-                width:44, height:44, borderRadius:R.md, flexShrink:0,
-                background: done ? C.greenL : inProgress ? C.amberL : th.colorL,
-                display:"flex", alignItems:"center", justifyContent:"center",
-              }}>
-                {done
-                  ? <Ti name="check"         size={20} color={C.green} />
-                  : inProgress
-                    ? <Ti name="player-pause" size={20} color={C.amber} />
-                    : <Ti name="guitar-pick"  size={20} color={th.color} />
-                }
+              <div style={{ width:52, height:52, borderRadius:R.lg, background:C.primary, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, boxShadow:`0 4px 12px ${C.primaryBorder}` }}>
+                <Ti name="player-play" size={24} color="#fff" />
               </div>
               <div style={{ flex:1 }}>
-                <div style={{ fontSize:14, fontWeight:700, color:C.text, letterSpacing:"-.1px" }}>{ex.title}</div>
-                <div style={{ display:"flex", gap:8, marginTop:3, flexWrap:"wrap", alignItems:"center" }}>
-                  <span style={{ fontSize:11, fontWeight:500, color:C.text3 }}>{ex.dur} min</span>
-                  {ex.bpm && <span style={{ fontSize:11, color:C.text3 }}>♩ {ex.bpm}</span>}
-                  <span style={{ fontSize:11, fontWeight:700, color:C.primary, background:C.primaryL, borderRadius:99, padding:"1px 8px" }}>+{ex.xp} XP</span>
-                  {state.completedExercises[ex.id]?.count > 1 && (
-                    <span style={{ fontSize:11, color:C.green, fontWeight:700 }}>×{state.completedExercises[ex.id].count}</span>
-                  )}
+                <div style={{ fontSize:10, fontWeight:700, color:C.primary, letterSpacing:".08em", textTransform:"uppercase", marginBottom:3 }}>
+                  {LEVEL_LABELS[recommended.lvl||1]} · {DIFF_STARS[recommended.lvl||1]}
+                </div>
+                <div style={{ fontSize:15, fontWeight:800, color:C.text, letterSpacing:"-.2px" }}>{recommended.title}</div>
+                <div style={{ display:"flex", gap:8, marginTop:4, alignItems:"center" }}>
+                  <span style={{ fontSize:11, color:C.text3, fontWeight:500 }}>{recommended.dur} min</span>
+                  {recommended.bpm && <span style={{ fontSize:11, color:C.text3 }}>♩ {recommended.bpm}</span>}
+                  <span style={{ fontSize:11, fontWeight:700, color:C.primary, background:C.primaryL, borderRadius:99, padding:"2px 8px" }}>+{recommended.xp} XP</span>
                 </div>
               </div>
-              <Ti name="chevron-right" size={15} color={C.text3} />
+              <Ti name="arrow-right" size={18} color={C.primary} />
             </button>
+          </>
+        )}
+
+        {/* ── GROUPES PAR NIVEAU ──────────────────────────────────────────── */}
+        {[1, 2, 3].map(lvl => {
+          const exos = byLevel[lvl];
+          if (!exos || exos.length === 0) return null;
+          const lvlDone = exos.filter(e => state.completedExercises[e.id]).length;
+          const lvlPct  = Math.round(lvlDone / exos.length * 100);
+          const lc      = LEVEL_COLORS[lvl];
+
+          return (
+            <div key={lvl} style={{ marginBottom:20 }}>
+              {/* Header groupe */}
+              <div style={{
+                background:lc.bg, border:`1.5px solid ${lc.border}`,
+                borderRadius:R.lg, padding:"12px 14px", marginBottom:10,
+              }}>
+                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                    <div style={{ width:8, height:8, borderRadius:"50%", background:lc.dot }} />
+                    <span style={{ fontSize:13, fontWeight:800, color:lc.text }}>{LEVEL_LABELS[lvl]}</span>
+                    <span style={{ fontSize:11, color:lc.text, opacity:.7 }}>{DIFF_STARS[lvl]}</span>
+                  </div>
+                  <span style={{ fontSize:12, fontWeight:700, color:lc.dot }}>{lvlDone}/{exos.length}</span>
+                </div>
+                <ProgressBar pct={lvlPct} color={lc.dot} h={4} />
+              </div>
+
+              {/* Liste exercices */}
+              {exos.map(ex => {
+                const done       = !!state.completedExercises[ex.id];
+                const inProgress = (state.exerciseProgress[ex.id]?.length || 0) > 0;
+                const th         = MODULE_THEME[ex.mod] || MODULE_THEME.neck;
+                const count      = state.completedExercises[ex.id]?.count || 0;
+
+                return (
+                  <button key={ex.id} onClick={() => setActive(ex)} style={{
+                    background:C.surface, border:`1.5px solid ${done ? C.greenBorder : inProgress ? C.amberBorder : C.border}`,
+                    borderRadius:R.lg, padding:"12px 14px",
+                    display:"flex", alignItems:"center", gap:12,
+                    cursor:"pointer", textAlign:"left", width:"100%", marginBottom:8,
+                    fontFamily:FONTS.title,
+                  }}>
+                    {/* Icône état */}
+                    <div style={{
+                      width:44, height:44, borderRadius:R.md, flexShrink:0,
+                      background: done ? C.greenL : inProgress ? C.amberL : th.colorL,
+                      display:"flex", alignItems:"center", justifyContent:"center",
+                      position:"relative",
+                    }}>
+                      {done
+                        ? <Ti name="check" size={20} color={C.green} />
+                        : inProgress
+                          ? <Ti name="player-pause" size={20} color={C.amber} />
+                          : <Ti name="guitar-pick" size={20} color={th.color} />
+                      }
+                      {count > 1 && (
+                        <div style={{ position:"absolute", top:-4, right:-4, width:16, height:16, borderRadius:"50%", background:C.green, display:"flex", alignItems:"center", justifyContent:"center" }}>
+                          <span style={{ fontSize:8, fontWeight:800, color:"#fff" }}>{count}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Infos */}
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontSize:13.5, fontWeight:700, color: done ? C.text2 : C.text, letterSpacing:"-.1px", textDecoration: done ? "line-through" : "none" }}>
+                        {ex.title}
+                      </div>
+                      <div style={{ display:"flex", gap:6, marginTop:3, flexWrap:"wrap", alignItems:"center" }}>
+                        <span style={{ fontSize:11, fontWeight:500, color:C.text3 }}>{ex.dur} min</span>
+                        {ex.bpm && <span style={{ fontSize:11, color:C.text3 }}>♩{ex.bpm}</span>}
+                        <span style={{
+                          fontSize:11, fontWeight:700,
+                          color: done ? C.green : C.primary,
+                          background: done ? C.greenL : C.primaryL,
+                          borderRadius:99, padding:"1px 7px",
+                        }}>
+                          {done ? `✓ ${ex.xp} XP` : `+${ex.xp} XP`}
+                        </span>
+                        {inProgress && !done && (
+                          <span style={{ fontSize:11, fontWeight:600, color:C.amber }}>En cours</span>
+                        )}
+                      </div>
+                    </div>
+                    <Ti name="chevron-right" size={15} color={C.text3} />
+                  </button>
+                );
+              })}
+            </div>
           );
         })}
+
         <div style={{ height:24 }} />
       </div>
     </div>
   );
 }
 
-// ── Détail exercice (logique inchangée, BackBar ajoutée) ─────────────────────
+// ── ExerciseDetail (logique inchangée, layout redesigné) ──────────────────────
 function ExerciseDetail({ ex, state, dispatch, onBack, content }) {
   const saved  = state.exerciseProgress[ex.id] || [];
   const [checked, setChecked] = useState(saved);
   const [done, setDone]       = useState(false);
   const [pop,  setPop]        = useState(false);
-  const theme = MODULE_THEME[ex.mod] || MODULE_THEME.neck;
+  const theme  = MODULE_THEME[ex.mod] || MODULE_THEME.neck;
+  const lc     = LEVEL_COLORS[ex.lvl||1];
 
   function BackBtn() {
     return (
@@ -128,43 +246,21 @@ function ExerciseDetail({ ex, state, dispatch, onBack, content }) {
       <div>
         <BackBtn />
         <div style={{ padding:"0 20px" }}>
-          <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:14 }}>
-            <div style={{ width:44, height:44, borderRadius:R.md, background:theme.colorL, display:"flex", alignItems:"center", justifyContent:"center" }}>
-              <Ti name="guitar-pick" size={20} color={theme.color} />
-            </div>
-            <div>
-              <div style={{ fontSize:10, color:C.text3, textTransform:"uppercase", letterSpacing:".1em", fontWeight:600 }}>
-                {ex.mod} · {ex.dur} min · Manche interactif
-              </div>
-              <div style={{ fontSize:17, fontWeight:800, marginTop:2, color:C.text }}>{ex.title}</div>
-            </div>
-          </div>
-          {linkedLesson && (
-            <div style={{ background:C.primaryL, border:`1.5px solid ${C.primaryBorder}`, borderRadius:R.md, padding:"9px 13px", marginBottom:12, display:"flex", gap:8, alignItems:"center" }}>
-              <Ti name="book-2" size={14} color={C.primary} />
-              <div style={{ fontSize:12, color:C.primaryD }}>Lié à : <strong>{linkedLesson.title}</strong></div>
-            </div>
-          )}
+          <ExHeader ex={ex} theme={theme} lc={lc} />
+          {linkedLesson && <LinkedLesson lesson={linkedLesson} />}
           {_FretboardExercise && <_FretboardExercise ex={ex} onComplete={finishFretboard} dispatch={dispatch} />}
-          {ex.tip && (
-            <div style={{ background:C.amberL, borderRadius:R.md, padding:"10px 13px", marginTop:12, marginBottom:12, border:`1.5px solid ${C.amberBorder}`, display:"flex", gap:8, alignItems:"flex-start" }}>
-              <Ti name="bulb" size={15} color={C.amber} />
-              <p style={{ margin:0, fontSize:13, color:C.amberD, lineHeight:1.55 }}>{ex.tip}</p>
-            </div>
-          )}
+          {ex.tip && <Tip text={ex.tip} />}
           <div style={{ height:24 }} />
         </div>
       </div>
     );
   }
 
-  // Exercice classique (steps à cocher)
-  const allDone = checked.length === (ex.steps || []).length;
-
+  // Exercice classique
+  const allDone = checked.length === (ex.steps||[]).length;
   useEffect(() => {
     if (checked.length > 0 && !done) dispatch({ type:"SAVE_EXERCISE_PROGRESS", id:ex.id, checkedSteps:checked });
   }, [checked]);
-
   const toggle = (i) => setChecked(prev => prev.includes(i) ? prev.filter(x=>x!==i) : [...prev, i]);
   const finish = () => {
     setPop(true);
@@ -183,26 +279,15 @@ function ExerciseDetail({ ex, state, dispatch, onBack, content }) {
       {pop && <XPPop amount={ex.xp} onDone={()=>{}} />}
       <BackBtn />
       <div style={{ padding:"0 20px" }}>
-        <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12 }}>
-          <div style={{ width:44, height:44, borderRadius:R.md, background:theme.colorL, display:"flex", alignItems:"center", justifyContent:"center" }}>
-            <Ti name="guitar-pick" size={20} color={theme.color} />
-          </div>
-          <div>
-            <div style={{ fontSize:10, color:C.text3, textTransform:"uppercase", letterSpacing:".1em", fontWeight:600 }}>
-              {ex.mod} · {ex.dur} min{ex.bpm ? ` · ♩ ${ex.bpm}` : ""}
-            </div>
-            <div style={{ fontSize:17, fontWeight:800, marginTop:2, color:C.text }}>{ex.title}</div>
-          </div>
-        </div>
+        <ExHeader ex={ex} theme={theme} lc={lc} />
+        {linkedLesson && <LinkedLesson lesson={linkedLesson} />}
 
-        {linkedLesson && (
-          <div style={{ background:C.primaryL, border:`1.5px solid ${C.primaryBorder}`, borderRadius:R.md, padding:"9px 13px", marginBottom:12, display:"flex", gap:8, alignItems:"center" }}>
-            <Ti name="book-2" size={14} color={C.primary} />
-            <div style={{ fontSize:12, color:C.primaryD }}>Lié à : <strong>{linkedLesson.title}</strong></div>
+        {/* Progression steps */}
+        <div style={{ marginBottom:12 }}>
+          <div style={{ display:"flex", justifyContent:"space-between", marginBottom:5 }}>
+            <span style={{ fontSize:12, fontWeight:600, color:C.text2 }}>Étapes</span>
+            <span style={{ fontSize:12, fontWeight:700, color:C.green }}>{checked.length}/{(ex.steps||[]).length}</span>
           </div>
-        )}
-
-        <div style={{ marginBottom:14 }}>
           <ProgressBar pct={(checked.length/(ex.steps||[1]).length)*100} color={C.green} h={5} />
         </div>
 
@@ -211,26 +296,21 @@ function ExerciseDetail({ ex, state, dispatch, onBack, content }) {
             {(ex.steps||[]).map((s, i) => {
               const ck = checked.includes(i);
               return (
-                <button key={i} onClick={()=>toggle(i)} style={{
+                <button key={i} onClick={() => toggle(i)} style={{
                   display:"flex", alignItems:"flex-start", gap:11,
                   background: ck ? C.greenL : C.surface,
                   border:`1.5px solid ${ck ? C.greenBorder : C.border}`,
-                  borderRadius:R.md, padding:"11px 13px",
+                  borderRadius:R.md, padding:"12px 13px",
                   cursor:"pointer", textAlign:"left", width:"100%", marginBottom:7,
                 }}>
                   <div style={{ width:22, height:22, borderRadius:"50%", border:`2px solid ${ck?C.green:C.border}`, background:ck?C.green:"transparent", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, marginTop:1 }}>
                     {ck && <Ti name="check" size={12} color="#fff" />}
                   </div>
-                  <p style={{ margin:0, fontSize:14, lineHeight:1.55, color:ck?C.greenD:C.text, fontWeight:ck?600:500 }}>{s}</p>
+                  <p style={{ margin:0, fontSize:14, lineHeight:1.55, color:ck?C.greenD:C.text, fontWeight:ck?600:500, fontFamily:FONTS.title }}>{s}</p>
                 </button>
               );
             })}
-            {ex.tip && (
-              <div style={{ background:C.amberL, borderRadius:R.md, padding:"10px 13px", marginBottom:12, border:`1.5px solid ${C.amberBorder}`, display:"flex", gap:8, alignItems:"flex-start" }}>
-                <Ti name="bulb" size={15} color={C.amber} />
-                <p style={{ margin:0, fontSize:13, color:C.amberD, lineHeight:1.55 }}>{ex.tip}</p>
-              </div>
-            )}
+            {ex.tip && <Tip text={ex.tip} />}
             <button onClick={finish} disabled={!allDone} style={{
               width:"100%", padding:14, borderRadius:R.lg, border:"none",
               background: allDone ? C.green : C.surface2,
@@ -240,7 +320,10 @@ function ExerciseDetail({ ex, state, dispatch, onBack, content }) {
               fontFamily:FONTS.ui,
               display:"flex", alignItems:"center", justifyContent:"center", gap:6,
             }}>
-              {allDone ? <>Exercice terminé <Ti name="check" size={16} color="#fff" /></> : `${checked.length} / ${(ex.steps||[]).length} étapes`}
+              {allDone
+                ? <><Ti name="check" size={16} color="#fff" /> Exercice terminé · +{ex.xp} XP</>
+                : `${checked.length} / ${(ex.steps||[]).length} étapes complétées`
+              }
             </button>
           </>
         ) : (
@@ -257,6 +340,49 @@ function ExerciseDetail({ ex, state, dispatch, onBack, content }) {
         )}
         <div style={{ height:24 }} />
       </div>
+    </div>
+  );
+}
+
+// ── Micro-composants ──────────────────────────────────────────────────────────
+function ExHeader({ ex, theme, lc }) {
+  return (
+    <div style={{ background:lc.bg, border:`1.5px solid ${lc.border}`, borderRadius:R.lg, padding:"14px 16px", marginBottom:14 }}>
+      <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+        <div style={{ width:48, height:48, borderRadius:R.md, background:theme.colorL, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+          <Ti name="guitar-pick" size={22} color={theme.color} />
+        </div>
+        <div>
+          <div style={{ display:"flex", gap:6, alignItems:"center", marginBottom:3 }}>
+            <span style={{ fontSize:10, fontWeight:700, color:lc.dot, background:lc.bg, border:`1px solid ${lc.border}`, borderRadius:99, padding:"1px 7px", textTransform:"uppercase", letterSpacing:".06em" }}>
+              {LEVEL_LABELS[ex.lvl||1]}
+            </span>
+            <span style={{ fontSize:11, color:lc.dot }}>{DIFF_STARS[ex.lvl||1]}</span>
+          </div>
+          <div style={{ fontSize:17, fontWeight:800, color:C.text, letterSpacing:"-.2px" }}>{ex.title}</div>
+          <div style={{ fontSize:11, color:C.text3, marginTop:2 }}>
+            {ex.dur} min{ex.bpm ? ` · ♩ ${ex.bpm} BPM` : ""} · +{ex.xp} XP
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LinkedLesson({ lesson }) {
+  return (
+    <div style={{ background:C.primaryL, border:`1.5px solid ${C.primaryBorder}`, borderRadius:R.md, padding:"9px 13px", marginBottom:12, display:"flex", gap:8, alignItems:"center" }}>
+      <Ti name="book-2" size={14} color={C.primary} />
+      <div style={{ fontSize:12, color:C.primaryD }}>Lié à la leçon : <strong>{lesson.title}</strong></div>
+    </div>
+  );
+}
+
+function Tip({ text }) {
+  return (
+    <div style={{ background:C.amberL, borderRadius:R.md, padding:"11px 13px", marginBottom:12, border:`1.5px solid ${C.amberBorder}`, display:"flex", gap:8, alignItems:"flex-start" }}>
+      <Ti name="bulb" size={15} color={C.amber} />
+      <p style={{ margin:0, fontSize:13, color:C.amberD, lineHeight:1.55, fontFamily:FONTS.title }}>{text}</p>
     </div>
   );
 }
