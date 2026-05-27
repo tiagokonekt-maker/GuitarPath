@@ -79,35 +79,50 @@ function HomeScreen({ state, dispatch, navigate, content }) {
         <div style={{ position:"absolute", top:-30, right:-35, width:130, height:130, background:"rgba(255,255,255,.10)", borderRadius:"50%", pointerEvents:"none" }} />
         <div style={{ position:"absolute", bottom:-45, left:-10, width:90, height:90, background:"rgba(255,200,120,.12)", borderRadius:"50%", pointerEvents:"none" }} />
 
-        <div style={{ fontSize:13, fontWeight:500, color:"rgba(255,255,255,.75)", marginBottom:2 }}>
-          {dateStr}
+        {/* Logo Groply — centré en haut entre texte et guitare */}
+        <div style={{
+          position:"absolute", top:28, left:"58%", transform:"translateX(-50%)",
+          zIndex:4, display:"flex", alignItems:"center", gap:6,
+        }}>
+          <img src="/logo.svg" alt="Groply" style={{ height:46, width:"auto", filter:"brightness(0) invert(1)", opacity:.92 }} />
+          <span style={{ fontSize:24, fontWeight:800, color:"#fff", letterSpacing:"-.2px", opacity:.92 }}>Groply</span>
         </div>
-        <div style={{ fontSize:22, fontWeight:800, color:"#fff", marginBottom:18, letterSpacing:"-.3px" }}>
-          Bonjour 👋
-        </div>
+
+        {/* Layout hero : texte gauche + guitare droite */}
+        <div style={{ display:"flex", alignItems:"flex-end", gap:0, position:"relative", zIndex:2 }}>
+
+          {/* Colonne texte — max 58% */}
+          <div style={{ flex:"0 0 58%", maxWidth:"58%" }}>
+
+            <div style={{ fontSize:13, fontWeight:500, color:"rgba(255,255,255,.75)", marginBottom:2 }}>
+              {dateStr}
+            </div>
+            <div style={{ fontSize:22, fontWeight:800, color:"#fff", marginBottom:18, letterSpacing:"-.3px" }}>
+              Bonjour 👋
+            </div>
 
         {/* Session card glass */}
         {nextLesson ? (
           <button onClick={() => navigate("courses")} style={{
             width:"100%", background:"rgba(255,255,255,.18)",
             border:"1.5px solid rgba(255,255,255,.28)",
-            borderRadius:R.lg, padding:"16px 18px",
+            borderRadius:R.lg, padding:"14px 16px",
             backdropFilter:"blur(6px)", cursor:"pointer",
             textAlign:"left", fontFamily:FONTS.title,
           }}>
             <div style={{ fontSize:10, fontWeight:700, color:"rgba(255,255,255,.7)", letterSpacing:".08em", textTransform:"uppercase", marginBottom:3 }}>
               Prochain objectif
             </div>
-            <div style={{ fontSize:17, fontWeight:800, color:"#fff", letterSpacing:"-.2px" }}>
+            <div style={{ fontSize:15, fontWeight:800, color:"#fff", letterSpacing:"-.2px", marginBottom:4 }}>
               {nextLesson.lesson.title}
             </div>
-            <div style={{ fontSize:12, fontWeight:500, color:"rgba(255,255,255,.7)", marginBottom:13 }}>
+            <div style={{ fontSize:11, fontWeight:500, color:"rgba(255,255,255,.7)", marginBottom:12 }}>
               {nextLesson.course.title} · {nextLesson.lesson.duration} min
             </div>
             <span style={{
               display:"inline-flex", alignItems:"center", gap:7,
               background:"#fff", color:C.primary,
-              borderRadius:99, padding:"9px 20px",
+              borderRadius:99, padding:"8px 16px",
               fontSize:13, fontWeight:700,
             }}>
               <Ti name="player-play" size={13} color={C.primary} />
@@ -123,6 +138,30 @@ function HomeScreen({ state, dispatch, navigate, content }) {
             <div style={{ fontSize:12, color:"rgba(255,255,255,.7)", marginTop:3 }}>Reviens demain pour de nouveaux défis.</div>
           </div>
         )}
+          </div>{/* fin colonne texte */}
+
+        </div>{/* fin flex hero */}
+
+        {/* Guitare positionnée en absolute dans le hero — clippée par overflow:hidden */}
+        <img
+          src="/guitar.webp"
+          alt=""
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            right: 10,
+            top: "50%",
+            transform: "translateY(-50%) rotate(6deg)",
+            height: 290,
+            width: "auto",
+            zIndex: 1,
+            mixBlendMode: "multiply",
+            filter: "brightness(1) saturate(1.1) contrast(1.1)",
+            WebkitMaskImage: "radial-gradient(ellipse 90% 95% at 50% 55%, black 55%, transparent 100%)",
+            maskImage: "radial-gradient(ellipse 90% 95% at 50% 55%, black 55%, transparent 100%)",
+            pointerEvents: "none",
+          }}
+        />
       </div>
 
       <div style={{ padding:"16px 20px 0" }}>
