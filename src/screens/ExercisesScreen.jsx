@@ -59,16 +59,23 @@ function ExercisesScreen({ state, dispatch, content }) {
   return (
     <div>
       {/* ── EN-TÊTE ──────────────────────────────────────────────────────── */}
-      <div style={{ background:"linear-gradient(150deg,#FFF8ED,#FFF0D9)", padding:"24px 20px 20px" }}>
-        <div style={{ fontSize:26, fontWeight:800, color:C.text, letterSpacing:"-.4px" }}>Exercices</div>
-        <div style={{ fontSize:13, fontWeight:500, color:C.amberD, opacity:.8, marginTop:2, marginBottom:14 }}>
+      <div style={{
+        backgroundImage:"url('/beach.jpg')",
+        backgroundSize:"cover", backgroundPosition:"center 55%",
+        padding:"24px 20px 20px", position:"relative", overflow:"hidden",
+      }}>
+        <div style={{ position:"absolute", inset:0, background:"rgba(20,60,120,.45)", pointerEvents:"none" }} />
+        <div style={{ position:"relative", zIndex:1 }}>
+        <div style={{ fontSize:26, fontWeight:800, color:"#fff", letterSpacing:"-.4px" }}>Exercices</div>
+        <div style={{ fontSize:13, fontWeight:500, color:"rgba(255,255,255,.8)", marginTop:2, marginBottom:14 }}>
           {totalDone} / {allEx.length} complétés · {totalXP} XP gagnés
         </div>
         <div style={{ display:"flex", justifyContent:"space-between", marginBottom:5 }}>
-          <span style={{ fontSize:12, fontWeight:700, color:C.text }}>{pctGlobal}% terminé</span>
-          <span style={{ fontSize:12, fontWeight:600, color:C.amber }}>{allEx.length - totalDone} restants</span>
+          <span style={{ fontSize:12, fontWeight:700, color:"#fff" }}>{pctGlobal}% terminé</span>
+          <span style={{ fontSize:12, fontWeight:600, color:"rgba(255,255,255,.8)" }}>{allEx.length - totalDone} restants</span>
         </div>
         <ProgressBar pct={pctGlobal} color={C.amber} h={7} />
+        </div>
       </div>
 
       {/* ── FILTRES ──────────────────────────────────────────────────────── */}

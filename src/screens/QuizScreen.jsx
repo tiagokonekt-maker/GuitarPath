@@ -47,16 +47,23 @@ function QuizScreen({ state, dispatch, content }) {
   return (
     <div>
       {/* ── EN-TÊTE ──────────────────────────────────────────────────────── */}
-      <div style={{ background:"linear-gradient(150deg,#DFFFFF,#CCFAF0)", padding:"24px 20px 20px" }}>
-        <div style={{ fontSize:26, fontWeight:800, color:C.text, letterSpacing:"-.4px" }}>Quiz</div>
-        <div style={{ fontSize:13, fontWeight:500, color:"#3A9B7A", marginTop:2, marginBottom:14 }}>
+      <div style={{
+        backgroundImage:"url('/ocean.jpg')",
+        backgroundSize:"cover", backgroundPosition:"center 30%",
+        padding:"24px 20px 20px", position:"relative", overflow:"hidden",
+      }}>
+        <div style={{ position:"absolute", inset:0, background:"rgba(0,60,80,.50)", pointerEvents:"none" }} />
+        <div style={{ position:"relative", zIndex:1 }}>
+        <div style={{ fontSize:26, fontWeight:800, color:"#fff", letterSpacing:"-.4px" }}>Quiz</div>
+        <div style={{ fontSize:13, fontWeight:500, color:"rgba(255,255,255,.8)", marginTop:2, marginBottom:14 }}>
           {totalAnswered} / {totalQ} questions répondues
         </div>
         <div style={{ display:"flex", justifyContent:"space-between", marginBottom:5 }}>
-          <span style={{ fontSize:12, fontWeight:700, color:C.text }}>{pctDone}% maîtrisé</span>
-          {wrongCount > 0 && <span style={{ fontSize:12, fontWeight:700, color:C.pink }}>{wrongCount} à réviser</span>}
+          <span style={{ fontSize:12, fontWeight:700, color:"#fff" }}>{pctDone}% maîtrisé</span>
+          {wrongCount > 0 && <span style={{ fontSize:12, fontWeight:700, color:"rgba(255,255,255,.85)" }}>{wrongCount} à réviser</span>}
         </div>
         <ProgressBar pct={pctDone} color={C.teal} h={7} />
+        </div>
       </div>
 
       <div style={{ padding:"16px 20px 0" }}>

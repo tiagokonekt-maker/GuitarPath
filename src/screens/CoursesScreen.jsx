@@ -48,12 +48,16 @@ function CoursesScreen({ state, dispatch, content }) {
     <div>
       {/* En-tête coloré */}
       <div style={{
-        background:"linear-gradient(150deg, #F2EEFF, #E8E0FF)",
-        padding:"24px 20px 18px",
+        backgroundImage:"url('/lavender.jpg')",
+        backgroundSize:"cover", backgroundPosition:"center 60%",
+        padding:"24px 20px 18px", position:"relative", overflow:"hidden",
       }}>
-        <div style={{ fontSize:26, fontWeight:800, color:C.text, letterSpacing:"-.4px" }}>Cours</div>
-        <div style={{ fontSize:13, fontWeight:500, color:"#8B83B0", marginTop:2 }}>
-          {content.courses.length} modules · {totalLessons} leçons
+        <div style={{ position:"absolute", inset:0, background:"rgba(60,20,100,.52)", pointerEvents:"none" }} />
+        <div style={{ position:"relative", zIndex:1 }}>
+          <div style={{ fontSize:26, fontWeight:800, color:"#fff", letterSpacing:"-.4px" }}>Cours</div>
+          <div style={{ fontSize:13, fontWeight:500, color:"rgba(255,255,255,.75)", marginTop:2 }}>
+            {content.courses.length} modules · {totalLessons} leçons
+          </div>
         </div>
       </div>
 

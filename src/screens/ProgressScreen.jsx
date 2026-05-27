@@ -31,17 +31,24 @@ function ProgressScreen({ state, content, onOpenSettings }) {
   return (
     <div>
       {/* ── EN-TÊTE HERO ─────────────────────────────────────────────────── */}
-      <div style={{ background:"linear-gradient(150deg, #FFF6EF, #FFEEDD)", padding:"24px 20px 20px" }}>
+      <div style={{
+      backgroundImage:"url('/sunrise.jpg')",
+      backgroundSize:"cover", backgroundPosition:"center 40%",
+      padding:"24px 20px 20px", position:"relative", overflow:"hidden",
+    }}>
+      <div style={{ position:"absolute", inset:0, background:"rgba(120,50,10,.48)", pointerEvents:"none" }} />
+      <div style={{ position:"relative", zIndex:1 }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
-          <div style={{ fontSize:26, fontWeight:800, color:C.text, letterSpacing:"-.4px" }}>Progression</div>
+          <div style={{ fontSize:26, fontWeight:800, color:"#fff", letterSpacing:"-.4px" }}>Progression</div>
           <button onClick={onOpenSettings} style={{
-            background:C.surface, border:`1.5px solid ${C.border}`,
+            background:"rgba(255,255,255,.18)", border:"1.5px solid rgba(255,255,255,.3)",
             borderRadius:R.sm, padding:"7px 12px",
-            fontSize:12, fontWeight:600, color:C.text2,
+            fontSize:12, fontWeight:600, color:"#fff",
             cursor:"pointer", fontFamily:FONTS.ui,
             display:"flex", alignItems:"center", gap:5,
+            backdropFilter:"blur(4px)",
           }}>
-            <Ti name="settings" size={13} color={C.text2} /> Réglages
+            <Ti name="settings" size={13} color="#fff" /> Réglages
           </button>
         </div>
 
@@ -49,39 +56,40 @@ function ProgressScreen({ state, content, onOpenSettings }) {
         <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:14, flexWrap:"wrap" }}>
           <div style={{
             display:"inline-flex", alignItems:"center", gap:8,
-            background:C.surface, border:`2px solid ${C.primaryBorder}`,
-            borderRadius:R.md, padding:"8px 16px",
+            background:"rgba(255,255,255,.2)", border:"1.5px solid rgba(255,255,255,.35)",
+            borderRadius:R.md, padding:"8px 16px", backdropFilter:"blur(4px)",
           }}>
-            <span style={{ fontSize:22, fontWeight:800, color:C.primary, letterSpacing:"-.5px" }}>{state.level}</span>
-            <span style={{ fontSize:13, fontWeight:600, color:C.text2 }}>Niveau</span>
+            <span style={{ fontSize:22, fontWeight:800, color:"#fff", letterSpacing:"-.5px" }}>{state.level}</span>
+            <span style={{ fontSize:13, fontWeight:600, color:"rgba(255,255,255,.8)" }}>Niveau</span>
           </div>
           <div style={{
             display:"inline-flex", alignItems:"center", gap:5,
-            background:C.primaryL, border:`1.5px solid ${C.primaryBorder}`,
+            background:"rgba(255,255,255,.18)", border:"1.5px solid rgba(255,255,255,.3)",
             borderRadius:99, padding:"7px 13px",
-            fontSize:13, fontWeight:700, color:C.primary,
+            fontSize:13, fontWeight:700, color:"#fff",
+            backdropFilter:"blur(4px)",
           }}>
-            <Ti name="flame" size={14} color={C.primary} />
+            <Ti name="flame" size={14} color="#fff" />
             {state.streak} jours
           </div>
         </div>
 
         {/* XP bar */}
         <div style={{ display:"flex", justifyContent:"space-between", marginBottom:5 }}>
-          <span style={{ fontSize:13, fontWeight:700, color:C.text }}>{state.xp} XP total</span>
-          <span style={{ fontSize:12, fontWeight:600, color:C.primary }}>Niv. {state.level+1} → {state.xp + xpToNext} XP</span>
+          <span style={{ fontSize:13, fontWeight:700, color:"#fff" }}>{state.xp} XP total</span>
+          <span style={{ fontSize:12, fontWeight:600, color:"rgba(255,255,255,.8)" }}>Niv. {state.level+1} → {state.xp + xpToNext} XP</span>
         </div>
-        <div style={{ height:8, background:"#EDE9E3", borderRadius:99, overflow:"hidden" }}>
+        <div style={{ height:8, background:"rgba(255,255,255,.25)", borderRadius:99, overflow:"hidden" }}>
           <div style={{ width:`${lvlPct}%`, height:"100%", background:`linear-gradient(90deg,#FF9155,${C.primary})`, borderRadius:99, transition:"width .4s ease" }} />
         </div>
-        <div style={{ fontSize:11, color:C.text3, marginTop:4 }}>
+        <div style={{ fontSize:11, color:"rgba(255,255,255,.65)", marginTop:4 }}>
           {xpToNext} XP pour le niveau {state.level + 1}
         </div>
       </div>
+    </div>
 
-      <div style={{ padding:"16px 20px 0" }}>
-
-        {/* ── STATS 3 ──────────────────────────────────────────────────────── */}
+    <div style={{ padding:"16px 20px 0" }}>
+      {/* ── STATS 3 ──────────────────────────────────────────────────────── */}
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginBottom:20 }}>
           {[
             { ic:"flame",        v:`${state.streak}j`, l:"Série",     bg:C.amberL,   ic_c:C.amber,   v_c:C.amberD },
