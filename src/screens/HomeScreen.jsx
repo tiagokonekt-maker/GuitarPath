@@ -85,7 +85,7 @@ function HomeScreen({ state, dispatch, navigate, content }) {
           zIndex:4, display:"flex", alignItems:"center", gap:6,
         }}>
           <img src="/logo.svg" alt="Groply" style={{ height:46, width:"auto", filter:"brightness(0) invert(1)", opacity:.92 }} />
-          <span style={{ fontSize:24, fontWeight:800, color:"#fff", letterSpacing:"-.2px", opacity:.92 }}>Groply</span>
+          <span style={{ fontSize:24, fontWeight:800, color:"#fff", letterSpacing:".5px", opacity:.92, fontFamily:"'Nunito', sans-serif" }}>Groply</span>
         </div>
 
         {/* Layout hero : texte gauche + guitare droite */}

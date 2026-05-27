@@ -22,6 +22,7 @@ const C = {
 };
 
 const FONTS = '"Poppins", -apple-system, sans-serif';
+const BRAND_FONT = '"Nunito", "Poppins", sans-serif';
 
 export function AuthScreen({ onSignIn, onSignUp }) {
   const [mode, setMode]         = useState('login');
@@ -55,6 +56,8 @@ export function AuthScreen({ onSignIn, onSignUp }) {
   };
 
   return (
+    <>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@800&display=swap');`}</style>
     <div style={{
       minHeight: '100vh',
       display: 'flex', flexDirection: 'column',
@@ -84,8 +87,8 @@ export function AuthScreen({ onSignIn, onSignUp }) {
             <img src="/logo.svg" alt="Groply" style={{ width: 44, height: 44, filter: 'brightness(0) invert(1)' }} />
           </div>
           <h1 style={{
-            margin: 0, fontSize: 26, fontWeight: 800,
-            color: C.text, letterSpacing: '-.4px', fontFamily: FONTS,
+            margin: 0, fontSize: 28, fontWeight: 800,
+            color: C.text, letterSpacing: '.5px', fontFamily: BRAND_FONT,
           }}>
             Groply
           </h1>
@@ -189,5 +192,6 @@ export function AuthScreen({ onSignIn, onSignUp }) {
         Groply · Apprends la guitare, vraiment.
       </p>
     </div>
+    </>
   );
 }
