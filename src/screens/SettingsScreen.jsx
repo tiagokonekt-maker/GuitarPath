@@ -1,10 +1,31 @@
 // GuitarPath — screens/SettingsScreen.jsx
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState } from "react";
 import { C, FONTS, R } from "../design/tokens.js";
 import { Ti } from "../design/Ti.jsx";
-import { ProgressBar, XPPop, Toast } from "../design/ui.jsx";
 import { CONTENT_KEY } from "../store/state.js";
 import { BADGES } from "../store/badges.js";
+
+const todayStr = () => new Date().toISOString().slice(0,10);
+
+function SettingsSection({ title, children }) {
+  return (
+    <div style={{ background:C.surface, border:`1.5px solid ${C.border}`, borderRadius:R.lg, marginBottom:10, overflow:"hidden" }}>
+      <div style={{ padding:"12px 16px 0", fontSize:10, fontWeight:700, letterSpacing:".07em", textTransform:"uppercase", color:C.text3 }}>
+        {title}
+      </div>
+      <div style={{ marginTop:8 }}>{children}</div>
+    </div>
+  );
+}
+
+function SettingsRow({ label, value, last }) {
+  return (
+    <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"11px 16px", borderBottom: last ? "none" : `1px solid ${C.borderSoft}` }}>
+      <span style={{ fontSize:13, fontWeight:600, color:C.text }}>{label}</span>
+      <span style={{ fontSize:12, fontWeight:600, color:C.text2 }}>{value}</span>
+    </div>
+  );
+}
 
 function SettingsScreen({ state, dispatch, content, onClose, onImported, user, onSignOut }) {
   const [importStatus, setImportStatus] = useState(null);
@@ -17,30 +38,21 @@ function SettingsScreen({ state, dispatch, content, onClose, onImported, user, o
       try {
         const data = JSON.parse(ev.target.result);
         if (!data.courses && !data.quiz && !data.exercises) {
-          setImportStatus({ ok: false, msg: "Fichier JSON invalide. Le fichier doit contenir au moins une clé 'courses', 'quiz' ou 'exercises'." });
+          setImportStatus({ ok:false, msg:"Fichier JSON invalide. Le fichier doit contenir au moins une clé 'courses', 'quiz' ou 'exercises'." });
           return;
         }
-        let existing = { courses: [], quiz: [], exercises: [] };
-        try {
-          const raw = localStorage.getItem(CONTENT_KEY);
-          if (raw) existing = JSON.parse(raw);
-        } catch {}
+        let existing = { courses:[], quiz:[], exercises:[] };
+        try { const raw = localStorage.getItem(CONTENT_KEY); if (raw) existing = JSON.parse(raw); } catch {}
         const merged = {
-          courses: mergeCourses(existing.courses || [], data.courses || []),
-          quiz: mergeById(existing.quiz || [], data.quiz || []),
-          exercises: mergeById(existing.exercises || [], data.exercises || []),
+          courses:   mergeCourses(existing.courses||[], data.courses||[]),
+          quiz:      mergeById(existing.quiz||[], data.quiz||[]),
+          exercises: mergeById(existing.exercises||[], data.exercises||[]),
         };
         localStorage.setItem(CONTENT_KEY, JSON.stringify(merged));
-        const counts = {
-          c: (data.courses || []).length,
-          q: (data.quiz || []).length,
-          e: (data.exercises || []).length,
-        };
-        setImportStatus({ ok: true, msg: `Import réussi : +${counts.c} module(s), +${counts.q} quiz, +${counts.e} exercice(s).` });
+        const counts = { c:(data.courses||[]).length, q:(data.quiz||[]).length, e:(data.exercises||[]).length };
+        setImportStatus({ ok:true, msg:`Import réussi : +${counts.c} module(s), +${counts.q} quiz, +${counts.e} exercice(s).` });
         if (onImported) onImported();
-      } catch {
-        setImportStatus({ ok: false, msg: "Erreur de lecture : le fichier n'est pas un JSON valide." });
-      }
+      } catch { setImportStatus({ ok:false, msg:"Erreur de lecture : le fichier n'est pas un JSON valide." }); }
     };
     reader.readAsText(file);
   };
@@ -49,144 +61,118 @@ function SettingsScreen({ state, dispatch, content, onClose, onImported, user, o
     if (window.confirm("Supprimer tout le contenu importé et revenir au contenu de base ?")) {
       localStorage.removeItem(CONTENT_KEY);
       if (onImported) onImported();
-      setImportStatus({ ok: true, msg: "Contenu remis à l'état initial." });
+      setImportStatus({ ok:true, msg:"Contenu remis à l'état initial." });
     }
   };
 
   const resetProgress = () => {
     if (window.confirm("Réinitialiser TOUTE ta progression (XP, badges, etc.) ? Action irréversible.")) {
-      dispatch({ type: "RESET" });
-      setImportStatus({ ok: true, msg: "Progression réinitialisée." });
+      dispatch({ type:"RESET" });
+      setImportStatus({ ok:true, msg:"Progression réinitialisée." });
     }
   };
 
   const exportProgress = () => {
-    const payload = {
-      exportedAt: new Date().toISOString(),
-      app: "GuitarPath",
-      version: 4,
-      state,
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `guitarpath-progression-${todayStr()}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    setImportStatus({ ok: true, msg: "Progression exportée." });
+    const payload = { exportedAt:new Date().toISOString(), app:"GuitarPath", version:4, state };
+    const blob = new Blob([JSON.stringify(payload,null,2)], { type:"application/json" });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href = url; a.download = `guitarpath-progression-${todayStr()}.json`;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+    setImportStatus({ ok:true, msg:"Progression exportée." });
   };
 
-  // Styles communs des boutons réglages
-  const btnBase = {
-    width: "100%", padding: 13, borderRadius: 11, fontSize: 13, fontWeight: 500,
-    cursor: "pointer", fontFamily: FONTS.ui, display: "flex",
-    alignItems: "center", justifyContent: "center", gap: 6, marginBottom: 8,
-  };
-  const btnNeutral = { ...btnBase, background: C.surface, color: C.text, border: `1px solid ${C.text}` };
-  const btnPrimary = { ...btnBase, background: C.surface, color: C.primary, border: `1px solid ${C.primary}` };
-  const btnDanger  = { ...btnBase, background: C.surface, color: C.danger,  border: `1px solid ${C.danger}` };
+  const btn = (color, border) => ({
+    width:"100%", padding:"13px 16px", borderRadius:R.md, fontSize:13, fontWeight:700,
+    cursor:"pointer", fontFamily:FONTS.ui, display:"flex", alignItems:"center",
+    justifyContent:"center", gap:6, marginBottom:8,
+    background:C.surface, color:color, border:`1.5px solid ${border||color}`,
+  });
 
   return (
-    <div style={{ padding: "14px 16px 0" }}>
-      <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: C.text2, fontSize: 13, padding: "0 0 8px", fontFamily: FONTS.ui, display: "flex", alignItems: "center", gap: 4 }}>
-        <Ti name="chevron-left" size={16} /> RETOUR
-      </button>
-      <h1 style={{ margin: "0 0 14px", fontSize: 24, fontWeight: 700, fontFamily: FONTS.title, letterSpacing: "-0.01em", color: C.text }}>Réglages</h1>
-
-      {/* Compte */}
-      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, marginBottom: 10, overflow: "hidden" }}>
-        <div style={{ padding: "12px 14px 0", fontSize: 10, fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", color: C.text3, fontFamily: FONTS.ui }}>Compte</div>
-        <div style={{ marginTop: 8 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 14px", borderBottom: `1px solid ${C.borderSoft}` }}>
-            <span style={{ fontSize: 13, color: C.text, fontFamily: FONTS.title }}>Email</span>
-            <span style={{ fontSize: 12, color: C.text2, fontFamily: FONTS.ui }}>{user?.email || "—"}</span>
-          </div>
-        </div>
+    <div>
+      {/* En-tête */}
+      <div style={{ background:"linear-gradient(150deg,#FAF8F5,#F5F1EC)", padding:"22px 20px 18px" }}>
+        <button onClick={onClose} style={{ background:C.surface, border:`1.5px solid ${C.border}`, borderRadius:R.sm, width:36, height:36, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", marginBottom:14 }}>
+          <Ti name="arrow-left" size={17} color={C.text} />
+        </button>
+        <div style={{ fontSize:26, fontWeight:800, color:C.text, letterSpacing:"-.4px" }}>Réglages</div>
       </div>
-      <button onClick={onSignOut} style={btnDanger}>
-        <Ti name="logout" size={14} /> Se déconnecter
-      </button>
 
-      {/* Contenu */}
-      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, marginTop: 14, marginBottom: 10, overflow: "hidden" }}>
-        <div style={{ padding: "12px 14px 0", fontSize: 10, fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", color: C.text3, fontFamily: FONTS.ui }}>Contenu</div>
-        <div style={{ marginTop: 8 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 14px", borderBottom: `1px solid ${C.borderSoft}` }}>
-            <span style={{ fontSize: 13, color: C.text, fontFamily: FONTS.title }}>Modules</span>
-            <span style={{ fontSize: 12, color: C.text, fontWeight: 500, fontFamily: FONTS.ui }}>{content.courses.length}</span>
+      <div style={{ padding:"14px 20px 0" }}>
+
+        {/* Compte */}
+        <SettingsSection title="Compte">
+          <SettingsRow label="Email" value={user?.email || "—"} last />
+        </SettingsSection>
+        <button onClick={onSignOut} style={btn(C.danger)}>
+          <Ti name="logout" size={14} color={C.danger} /> Se déconnecter
+        </button>
+
+        {/* Contenu */}
+        <SettingsSection title="Contenu pédagogique">
+          <SettingsRow label="Modules"   value={content.courses.length} />
+          <SettingsRow label="Quiz"      value={`${content.quiz.length} questions`} />
+          <SettingsRow label="Exercices" value={content.exercises.length} last />
+        </SettingsSection>
+        <label style={{ ...btn(C.primary), cursor:"pointer" }}>
+          <Ti name="upload" size={14} color={C.primary} /> Importer un fichier JSON
+          <input type="file" accept=".json,application/json" onChange={handleFile} style={{ display:"none" }} />
+        </label>
+        <button onClick={resetContent} style={btn(C.text2, C.border)}>
+          <Ti name="trash" size={14} color={C.text2} /> Supprimer le contenu importé
+        </button>
+
+        {/* Progression */}
+        <SettingsSection title="Ma progression">
+          <SettingsRow label="XP total"          value={`${state.xp ?? 0} XP`} />
+          <SettingsRow label="Niveau actuel"      value={state.level} />
+          <SettingsRow label="Badges débloqués"   value={`${state.unlockedBadges.length} / ${BADGES.length}`} last />
+        </SettingsSection>
+        <button onClick={exportProgress} style={btn(C.text2, C.border)}>
+          <Ti name="download" size={14} color={C.text2} /> Exporter ma progression (JSON)
+        </button>
+        <button onClick={resetProgress} style={btn(C.danger)}>
+          <Ti name="refresh" size={14} color={C.danger} /> Réinitialiser ma progression
+        </button>
+
+        {/* Feedback import */}
+        {importStatus && (
+          <div style={{
+            background: importStatus.ok ? C.greenL : C.coralL,
+            border:`1.5px solid ${importStatus.ok ? C.greenBorder : C.coralBorder}`,
+            borderRadius:R.md, padding:"11px 14px", marginTop:12,
+            display:"flex", gap:8, alignItems:"flex-start",
+          }}>
+            <Ti name={importStatus.ok?"check":"alert-circle"} size={15} color={importStatus.ok?C.green:C.coral} />
+            <p style={{ margin:0, fontSize:12, color:importStatus.ok?C.greenD:C.coralD, lineHeight:1.5 }}>{importStatus.msg}</p>
           </div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 14px", borderBottom: `1px solid ${C.borderSoft}` }}>
-            <span style={{ fontSize: 13, color: C.text, fontFamily: FONTS.title }}>Quiz</span>
-            <span style={{ fontSize: 12, color: C.text, fontWeight: 500, fontFamily: FONTS.ui }}>{content.quiz.length} questions</span>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 14px" }}>
-            <span style={{ fontSize: 13, color: C.text, fontFamily: FONTS.title }}>Exercices</span>
-            <span style={{ fontSize: 12, color: C.text, fontWeight: 500, fontFamily: FONTS.ui }}>{content.exercises.length}</span>
-          </div>
-        </div>
+        )}
+
+        <div style={{ height:28 }} />
       </div>
-      <label style={{ ...btnPrimary, cursor: "pointer" }}>
-        <Ti name="upload" size={14} /> Importer un fichier JSON
-        <input type="file" accept=".json,application/json" onChange={handleFile} style={{ display: "none" }} />
-      </label>
-      <button onClick={resetContent} style={btnNeutral}>
-        <Ti name="trash" size={14} /> Supprimer le contenu importé
-      </button>
-
-      {/* Progression */}
-      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, marginTop: 14, marginBottom: 10, overflow: "hidden" }}>
-        <div style={{ padding: "12px 14px 0", fontSize: 10, fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", color: C.text3, fontFamily: FONTS.ui }}>Ma progression</div>
-        <div style={{ marginTop: 8 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 14px", borderBottom: `1px solid ${C.borderSoft}` }}>
-            <span style={{ fontSize: 13, color: C.text, fontFamily: FONTS.title }}>XP total</span>
-            <span style={{ fontSize: 12, color: C.primary, fontWeight: 500, fontFamily: FONTS.ui }}>{state.xp ?? 0} XP</span>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 14px", borderBottom: `1px solid ${C.borderSoft}` }}>
-            <span style={{ fontSize: 13, color: C.text, fontFamily: FONTS.title }}>Niveau actuel</span>
-            <span style={{ fontSize: 12, color: C.text, fontWeight: 500, fontFamily: FONTS.ui }}>{state.level}</span>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 14px" }}>
-            <span style={{ fontSize: 13, color: C.text, fontFamily: FONTS.title }}>Badges débloqués</span>
-            <span style={{ fontSize: 12, color: C.text, fontWeight: 500, fontFamily: FONTS.ui }}>{state.unlockedBadges.length} / {BADGES.length}</span>
-          </div>
-        </div>
-      </div>
-      <button onClick={exportProgress} style={btnNeutral}>
-        <Ti name="download" size={14} /> Exporter ma progression (JSON)
-      </button>
-      <button onClick={resetProgress} style={btnDanger}>
-        <Ti name="refresh" size={14} /> Réinitialiser ma progression
-      </button>
-
-      {importStatus && (
-        <div style={{
-          background: importStatus.ok ? C.greenL : C.coralL,
-          border: `1px solid ${importStatus.ok ? C.greenBorder : C.coralBorder}`,
-          borderRadius: 11, padding: "11px 13px", marginTop: 12, display: "flex", gap: 8, alignItems: "flex-start",
-        }}>
-          <Ti name={importStatus.ok ? "check" : "alert-circle"} size={15} color={importStatus.ok ? C.green : C.coral} style={{ marginTop: 1 }} />
-          <p style={{ margin: 0, fontSize: 12, color: importStatus.ok ? C.greenD : C.coralD, fontFamily: FONTS.title, lineHeight: 1.5 }}>{importStatus.msg}</p>
-        </div>
-      )}
-
-      <div style={{ height: 24 }} />
     </div>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// ROOT APP
-// ═══════════════════════════════════════════════════════════════════════════
-const TABS = [
-  { id: "home",      label: "ACCUEIL",   icon: "home" },
-  { id: "courses",   label: "COURS",     icon: "book-2" },
-  { id: "exercises", label: "EXERCICES", icon: "guitar-pick" },
-  { id: "quiz",      label: "QUIZ",      icon: "help-circle" },
-  { id: "progress",  label: "PROGRÈS",   icon: "chart-bar" },
-];
-
+// Helpers merge (inchangés)
+function mergeCourses(existing, incoming) {
+  const map = Object.fromEntries(existing.map(c=>[c.id,c]));
+  incoming.forEach(c => {
+    if (!map[c.id]) { map[c.id]=c; return; }
+    const merged = { ...map[c.id], ...c };
+    const lessonMap = Object.fromEntries((map[c.id].lessons||[]).map(l=>[l.id,l]));
+    (c.lessons||[]).forEach(l=>{ lessonMap[l.id]=l; });
+    merged.lessons = Object.values(lessonMap);
+    map[c.id] = merged;
+  });
+  return Object.values(map);
+}
+function mergeById(existing, incoming) {
+  const map = Object.fromEntries(existing.map(x=>[x.id,x]));
+  incoming.forEach(x=>{ map[x.id]=x; });
+  return Object.values(map);
+}
 
 export { SettingsScreen };

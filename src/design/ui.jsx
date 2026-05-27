@@ -18,7 +18,7 @@ export function XPPop({ amount, onDone }) {
     return () => clearTimeout(t);
   }, [onDone]);
   return (
-    <div style={{ position: "fixed", bottom: 80, left: "50%", transform: "translateX(-50%)", background: C.primary, color: "#fff", padding: "8px 18px", borderRadius: 999, fontSize: 14, fontWeight: 700, fontFamily: C.ui, zIndex: 200, pointerEvents: "none", animation: "fadeUp 1.4s ease forwards" }}>
+    <div style={{ position: "fixed", bottom: 80, left: "50%", transform: "translateX(-50%)", background: C.primary, color: "#fff", padding: "8px 18px", borderRadius: 999, fontSize: 14, fontWeight: 700, fontFamily: FONTS.ui, zIndex: 200, pointerEvents: "none", animation: "fadeUp 1.4s ease forwards" }}>
       +{amount} XP
     </div>
   );

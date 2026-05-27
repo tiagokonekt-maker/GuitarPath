@@ -1,24 +1,24 @@
 // GuitarPath — screens/ProgressScreen.jsx
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { C, FONTS, R } from "../design/tokens.js";
 import { Ti } from "../design/Ti.jsx";
-import { ProgressBar, XPPop, Toast } from "../design/ui.jsx";
+import { ProgressBar } from "../design/ui.jsx";
 import { MODULE_THEME } from "../store/moduleTheme.js";
 import { BADGES, BADGE_RARITIES, skillMastery, BADGE_TINTS } from "../store/badges.js";
 
 function ProgressScreen({ state, content, onOpenSettings }) {
   const xpInLevel = state.xp % 300;
-  const xpToNext = 300 - xpInLevel;
+  const xpToNext  = 300 - xpInLevel;
+  const lvlPct    = Math.round((xpInLevel / 300) * 100);
 
   const skills = useMemo(() => [
-    { label: "Manche",   pct: skillMastery(state, content, "neck"),    color: C.amber },
-    { label: "Gammes",   pct: skillMastery(state, content, "scales"),  color: C.green },
-    { label: "Harmonie", pct: skillMastery(state, content, "harmony"), color: C.primary },
-    { label: "Rythme",   pct: skillMastery(state, content, "rhythm"),  color: C.coral },
-    { label: "Impro",    pct: skillMastery(state, content, "impro"),   color: C.pink },
-  ], [state, content]);
+    { label:"Manche",   id:"neck",    color:C.amber,   colorD:C.amberD },
+    { label:"Gammes",   id:"scales",  color:C.green,   colorD:C.greenD },
+    { label:"Harmonie", id:"harmony", color:C.purple,  colorD:C.purpleD },
+    { label:"Rythme",   id:"rhythm",  color:C.blue,    colorD:C.blueD },
+    { label:"Impro",    id:"impro",   color:C.pink,    colorD:C.pinkD },
+  ].map(s => ({ ...s, pct: skillMastery(state, content, s.id) })), [state, content]);
 
-  // Grouper badges par catégorie
   const badgesByCategory = useMemo(() => {
     const map = {};
     BADGES.forEach(b => {
@@ -29,120 +29,146 @@ function ProgressScreen({ state, content, onOpenSettings }) {
   }, []);
 
   return (
-    <div style={{ padding: "18px 16px 0" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-        <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, fontFamily: FONTS.title, letterSpacing: "-0.01em", color: C.text }}>Progression</h1>
-        <button onClick={onOpenSettings} style={{
-          background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.sm,
-          padding: "6px 11px", fontSize: 11, color: C.text, cursor: "pointer",
-          fontFamily: FONTS.ui, fontWeight: 500, display: "flex", alignItems: "center", gap: 5,
-        }}>
-          <Ti name="settings" size={13} /> RÉGLAGES
-        </button>
-      </div>
-
-      {/* XP hero */}
-      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: 14, marginBottom: 10 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <div style={{
-            width: 60, height: 60, borderRadius: "50%",
-            background: C.primaryL, border: `2px solid ${C.primary}`,
-            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-            flexShrink: 0,
+    <div>
+      {/* ── EN-TÊTE HERO ─────────────────────────────────────────────────── */}
+      <div style={{ background:"linear-gradient(150deg, #FFF6EF, #FFEEDD)", padding:"24px 20px 20px" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+          <div style={{ fontSize:26, fontWeight:800, color:C.text, letterSpacing:"-.4px" }}>Progression</div>
+          <button onClick={onOpenSettings} style={{
+            background:C.surface, border:`1.5px solid ${C.border}`,
+            borderRadius:R.sm, padding:"7px 12px",
+            fontSize:12, fontWeight:600, color:C.text2,
+            cursor:"pointer", fontFamily:FONTS.ui,
+            display:"flex", alignItems:"center", gap:5,
           }}>
-            <span style={{ fontSize: 9, color: C.text3, letterSpacing: "0.05em", fontFamily: FONTS.ui }}>NIV.</span>
-            <span style={{ fontSize: 20, fontWeight: 700, color: C.primary, lineHeight: 1, fontFamily: FONTS.ui }}>{state.level}</span>
+            <Ti name="settings" size={13} color={C.text2} /> Réglages
+          </button>
+        </div>
+
+        {/* Niveau + streak */}
+        <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:14, flexWrap:"wrap" }}>
+          <div style={{
+            display:"inline-flex", alignItems:"center", gap:8,
+            background:C.surface, border:`2px solid ${C.primaryBorder}`,
+            borderRadius:R.md, padding:"8px 16px",
+          }}>
+            <span style={{ fontSize:22, fontWeight:800, color:C.primary, letterSpacing:"-.5px" }}>{state.level}</span>
+            <span style={{ fontSize:13, fontWeight:600, color:C.text2 }}>Niveau</span>
           </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 10, fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", color: C.text3, fontFamily: FONTS.ui, marginBottom: 3 }}>
-              Expérience totale
-            </div>
-            <div style={{ fontSize: 24, fontWeight: 700, letterSpacing: "-0.01em", color: C.text, lineHeight: 1, fontFamily: FONTS.ui }}>
-              {state.xp} XP
-            </div>
-            <div style={{ fontSize: 11, color: C.text3, marginTop: 4, fontFamily: FONTS.ui }}>
-              {xpToNext} XP pour atteindre le niveau {state.level + 1}
-            </div>
+          <div style={{
+            display:"inline-flex", alignItems:"center", gap:5,
+            background:C.primaryL, border:`1.5px solid ${C.primaryBorder}`,
+            borderRadius:99, padding:"7px 13px",
+            fontSize:13, fontWeight:700, color:C.primary,
+          }}>
+            <Ti name="flame" size={14} color={C.primary} />
+            {state.streak} jours
           </div>
+        </div>
+
+        {/* XP bar */}
+        <div style={{ display:"flex", justifyContent:"space-between", marginBottom:5 }}>
+          <span style={{ fontSize:13, fontWeight:700, color:C.text }}>{state.xp} XP total</span>
+          <span style={{ fontSize:12, fontWeight:600, color:C.primary }}>Niv. {state.level+1} → {state.xp + xpToNext} XP</span>
+        </div>
+        <div style={{ height:8, background:"#EDE9E3", borderRadius:99, overflow:"hidden" }}>
+          <div style={{ width:`${lvlPct}%`, height:"100%", background:`linear-gradient(90deg,#FF9155,${C.primary})`, borderRadius:99, transition:"width .4s ease" }} />
+        </div>
+        <div style={{ fontSize:11, color:C.text3, marginTop:4 }}>
+          {xpToNext} XP pour le niveau {state.level + 1}
         </div>
       </div>
 
-      {/* Stats 3 */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 10 }}>
-        {[
-          { ic: "flame",        v: `${state.streak}j`, l: "Streak",    c: C.amber, cd: C.amberD },
-          { ic: "circle-check", v: Object.keys(state.completedExercises).length, l: "Exercices", c: C.green, cd: C.greenD },
-          { ic: "book-2",       v: Object.keys(state.completedLessons).length,   l: "Leçons",    c: C.primary, cd: C.primaryD },
-        ].map(s => (
-          <div key={s.l} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.sm, padding: "10px 6px", textAlign: "center" }}>
-            <Ti name={s.ic} size={16} color={s.c} />
-            <div style={{ fontSize: 18, fontWeight: 700, color: s.cd, lineHeight: 1, marginTop: 3, fontFamily: FONTS.ui }}>{s.v}</div>
-            <div style={{ fontSize: 11, color: C.text3, marginTop: 2, fontFamily: FONTS.ui }}>{s.l}</div>
-          </div>
-        ))}
-      </div>
+      <div style={{ padding:"16px 20px 0" }}>
 
-      {/* Compétences */}
-      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: 14, marginBottom: 10 }}>
-        <div style={{ fontSize: 15, fontWeight: 500, marginBottom: 11, fontFamily: FONTS.title, color: C.text }}>Compétences</div>
-        {skills.map(sk => (
-          <div key={sk.label} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 9 }}>
-            <span style={{ fontSize: 12, color: C.text2, width: 90, flexShrink: 0, fontWeight: 500, fontFamily: FONTS.ui }}>{sk.label}</span>
-            <div style={{ flex: 1 }}>
-              <ProgressBar pct={sk.pct} color={sk.color} h={3} />
+        {/* ── STATS 3 ──────────────────────────────────────────────────────── */}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginBottom:20 }}>
+          {[
+            { ic:"flame",        v:`${state.streak}j`, l:"Série",     bg:C.amberL,   ic_c:C.amber,   v_c:C.amberD },
+            { ic:"circle-check", v:Object.keys(state.completedExercises).length, l:"Exercices", bg:C.greenL, ic_c:C.green, v_c:C.greenD },
+            { ic:"book-2",       v:Object.keys(state.completedLessons).length,   l:"Leçons",    bg:C.primaryL, ic_c:C.primary, v_c:C.primaryD },
+          ].map(s => (
+            <div key={s.l} style={{
+              background:s.bg, borderRadius:R.lg, padding:"12px 8px", textAlign:"center",
+              border:`1.5px solid ${s.bg === C.amberL ? C.amberBorder : s.bg === C.greenL ? C.greenBorder : C.primaryBorder}`,
+            }}>
+              <Ti name={s.ic} size={18} color={s.ic_c} />
+              <div style={{ fontSize:20, fontWeight:800, color:s.v_c, letterSpacing:"-.5px", marginTop:4, lineHeight:1 }}>{s.v}</div>
+              <div style={{ fontSize:10, color:s.v_c, fontWeight:600, textTransform:"uppercase", letterSpacing:".05em", marginTop:3, opacity:.7 }}>{s.l}</div>
             </div>
-            <span style={{ fontSize: 11, fontWeight: 500, width: 32, textAlign: "right", flexShrink: 0, color: sk.pct > 0 ? sk.color : C.text3, fontFamily: FONTS.ui }}>{sk.pct}%</span>
-          </div>
-        ))}
-      </div>
-
-      {/* Badges */}
-      <div style={{ padding: "0 0 6px", display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
-        <div style={{ fontSize: 10, fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", color: C.text3, fontFamily: FONTS.ui }}>
-          Badges
+          ))}
         </div>
-        <div style={{ fontSize: 11, color: C.text3, fontFamily: FONTS.ui }}>
-          {state.unlockedBadges.length} / {BADGES.length} débloqués
-        </div>
-      </div>
 
-      {Object.entries(badgesByCategory).map(([cat, badges]) => (
-        <div key={cat}>
-          <div style={{ padding: "0 0 6px", fontSize: 10, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.1em", color: C.text3, fontFamily: FONTS.ui, marginTop: 8 }}>
-            — {cat}
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 7, marginBottom: 8 }}>
-            {badges.map(b => {
-              const ok = state.unlockedBadges.includes(b.id);
-              const tint = BADGE_TINTS[b.tint];
-              const rarity = BADGE_RARITIES[b.rarity];
-              return (
-                <div key={b.id} style={{
-                  borderRadius: 12, padding: "10px 6px", textAlign: "center",
-                  border: `1px solid ${tint.border}`, background: tint.bg,
-                  position: "relative", opacity: ok ? 1 : 0.32, filter: ok ? "none" : "grayscale(0.5)",
+        {/* ── COMPÉTENCES PAR MODULE ───────────────────────────────────────── */}
+        <div style={{ fontSize:16, fontWeight:800, color:C.text, marginBottom:12, letterSpacing:"-.2px" }}>Compétences</div>
+        {skills.map(sk => {
+          const th = MODULE_THEME[sk.id] || {};
+          return (
+            <div key={sk.label} style={{
+              background:C.surface, border:`1.5px solid ${C.border}`,
+              borderRadius:R.lg, padding:"13px 16px", marginBottom:8,
+            }}>
+              <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:9 }}>
+                <div style={{
+                  width:34, height:34, borderRadius:R.sm,
+                  background: th.colorL || C.primaryL,
+                  display:"flex", alignItems:"center", justifyContent:"center",
                 }}>
-                  <span style={{
-                    position: "absolute", top: 4, right: 4,
-                    fontSize: 7, fontWeight: 600, padding: "1px 4px", borderRadius: 3,
-                    letterSpacing: "0.05em", textTransform: "uppercase",
-                    background: rarity.bg, color: rarity.fg, fontFamily: FONTS.ui,
-                  }}>{rarity.label}</span>
-                  <Ti name={b.icon.replace("ti-", "")} size={22} color={tint.icon} />
-                  <div style={{ fontSize: 9.5, fontWeight: 500, lineHeight: 1.25, marginTop: 5, color: tint.text, fontFamily: FONTS.ui }}>{b.label}</div>
+                  <Ti name={(th.icon||"music").replace("ti-","")} size={15} color={sk.color} />
                 </div>
-              );
-            })}
+                <span style={{ fontSize:13.5, fontWeight:700, color:C.text, flex:1 }}>{sk.label}</span>
+                <span style={{ fontSize:13, fontWeight:800, color: sk.pct > 0 ? sk.color : C.text3 }}>{sk.pct}%</span>
+              </div>
+              <ProgressBar pct={sk.pct} color={sk.color} h={5} />
+            </div>
+          );
+        })}
+
+        {/* ── BADGES ───────────────────────────────────────────────────────── */}
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", margin:"20px 0 10px" }}>
+          <div style={{ fontSize:16, fontWeight:800, color:C.text, letterSpacing:"-.2px" }}>Badges</div>
+          <div style={{ fontSize:12, fontWeight:600, color:C.text3 }}>
+            {state.unlockedBadges.length} / {BADGES.length}
           </div>
         </div>
-      ))}
-      <div style={{ height: 20 }} />
+
+        {Object.entries(badgesByCategory).map(([cat, badges]) => (
+          <div key={cat}>
+            <div style={{ fontSize:11, fontWeight:700, textTransform:"uppercase", letterSpacing:".07em", color:C.text3, margin:"8px 0 8px" }}>
+              {cat}
+            </div>
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:8, marginBottom:8 }}>
+              {badges.map(b => {
+                const ok     = state.unlockedBadges.includes(b.id);
+                const tint   = BADGE_TINTS[b.tint];
+                const rarity = BADGE_RARITIES[b.rarity];
+                return (
+                  <div key={b.id} style={{
+                    borderRadius:R.md, padding:"10px 6px", textAlign:"center",
+                    border:`1.5px solid ${tint.border}`, background:tint.bg,
+                    position:"relative",
+                    opacity: ok ? 1 : 0.3,
+                    filter: ok ? "none" : "grayscale(.5)",
+                  }}>
+                    <span style={{
+                      position:"absolute", top:4, right:4,
+                      fontSize:7, fontWeight:700, padding:"1px 4px", borderRadius:3,
+                      letterSpacing:".05em", textTransform:"uppercase",
+                      background:rarity.bg, color:rarity.fg,
+                    }}>{rarity.label}</span>
+                    <Ti name={b.icon.replace("ti-","")} size={22} color={tint.icon} />
+                    <div style={{ fontSize:9.5, fontWeight:600, lineHeight:1.25, marginTop:5, color:tint.text }}>{b.label}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+
+        <div style={{ height:28 }} />
+      </div>
     </div>
   );
 }
-
-// ═══════════════════════════════════════════════════════════════════════════
-// SETTINGS — propre, lisible, plein contraste
-// ═══════════════════════════════════════════════════════════════════════════
 
 export { ProgressScreen };

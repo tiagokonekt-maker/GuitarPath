@@ -43,11 +43,11 @@ let screens = null;
 
 // ── Navigation ────────────────────────────────────────────────────────────
 const TABS = [
-  { id: "home",      label: "ACCUEIL",   icon: "home" },
-  { id: "courses",   label: "COURS",     icon: "book-2" },
-  { id: "exercises", label: "EXERCICES", icon: "guitar-pick" },
-  { id: "quiz",      label: "QUIZ",      icon: "help-circle" },
-  { id: "progress",  label: "PROGRÈS",   icon: "chart-bar" },
+  { id: "home",      label: "Accueil",   icon: "home" },
+  { id: "courses",   label: "Cours",     icon: "book-2" },
+  { id: "exercises", label: "Exercices", icon: "guitar-pick" },
+  { id: "quiz",      label: "Quiz",      icon: "help-circle" },
+  { id: "progress",  label: "Progrès",   icon: "chart-bar" },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -227,45 +227,95 @@ export default function App() {
     }
   };
 
-  const NAV_HEIGHT = 62;
+  // Hauteur nav + safe area iOS
+  const NAV_HEIGHT = 66;
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Josefin+Sans:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
         @import url('https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.20.0/dist/tabler-icons.min.css');
-        html, body, #root { margin: 0; padding: 0; background: ${C.bg}; }
-        body { font-family: ${FONTS.title}; color: ${C.text}; -webkit-tap-highlight-color: transparent; overscroll-behavior: none; }
+
+        html, body, #root {
+          margin: 0; padding: 0;
+          background: ${C.bg};
+        }
+        body {
+          font-family: ${FONTS.title};
+          color: ${C.text};
+          -webkit-tap-highlight-color: transparent;
+          overscroll-behavior: none;
+        }
         * { box-sizing: border-box; }
         button { font-family: inherit; }
         input, textarea { font-family: inherit; }
-        ::-webkit-scrollbar { width: 0; height: 0; }
+
+        /* ── Masquer toutes les scrollbars (mobile-first) ─────────────── */
+        * { scrollbar-width: none; -ms-overflow-style: none; }
+        *::-webkit-scrollbar { display: none; }
       `}</style>
 
       {toast && <Toast msg={toast} onClose={() => setToast(null)} />}
 
-      <div style={{ maxWidth: 440, margin: "0 auto", background: C.bg, minHeight: "100vh", position: "relative",
+      <div style={{
+        maxWidth: 440, margin: "0 auto",
+        background: C.bg, minHeight: "100vh",
+        position: "relative",
         paddingBottom: `calc(${NAV_HEIGHT}px + env(safe-area-inset-bottom, 0px))`,
-        paddingTop: "env(safe-area-inset-top, 0px)" }}>
+        paddingTop: "env(safe-area-inset-top, 0px)",
+      }}>
         {renderScreen()}
       </div>
 
+      {/* ── Barre de navigation ────────────────────────────────────────── */}
       {!showSettings && (
-        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: C.surface,
-          borderTop: `1px solid ${C.border}`, zIndex: 100, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
-          <div style={{ maxWidth: 440, margin: "0 auto", display: "flex", height: NAV_HEIGHT, padding: "8px 0 6px" }}>
+        <div style={{
+          position: "fixed", bottom: 0, left: 0, right: 0,
+          background: C.surface,
+          borderTop: `1.5px solid ${C.border}`,
+          zIndex: 100,
+          paddingBottom: "env(safe-area-inset-bottom, 0px)",
+        }}>
+          <div style={{
+            maxWidth: 440, margin: "0 auto",
+            display: "flex",
+            height: NAV_HEIGHT,
+            padding: "10px 4px 0",
+          }}>
             {TABS.map(t => {
               const active = screen === t.id && !showSettings;
               return (
-                <button key={t.id} onClick={() => { setScreen(t.id); setShowSettings(false); }} style={{
-                  flex: 1, background: "none", border: "none", cursor: "pointer",
-                  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                  gap: 2, color: active ? C.primary : C.text2, padding: "4px 0", fontFamily: FONTS.ui,
-                }}>
-                  <Ti name={t.icon} size={19} />
-                  <span style={{ fontSize: 9, fontWeight: active ? 600 : 500, letterSpacing: "0.04em",
-                    color: active ? C.primary : C.text2 }}>{t.label}</span>
-                  {active && <span style={{ width: 3, height: 3, borderRadius: "50%", background: C.primary, marginTop: -1 }} />}
+                <button
+                  key={t.id}
+                  onClick={() => { setScreen(t.id); setShowSettings(false); }}
+                  style={{
+                    flex: 1,
+                    background: "none", border: "none", cursor: "pointer",
+                    display: "flex", flexDirection: "column",
+                    alignItems: "center", justifyContent: "flex-start",
+                    gap: 3,
+                    padding: "4px 0",
+                    fontFamily: FONTS.ui,
+                    minHeight: 44,
+                  }}
+                >
+                  <Ti name={t.icon} size={21} color={active ? C.primary : C.text3} />
+                  <span style={{
+                    fontSize: 10,
+                    fontWeight: active ? 700 : 500,
+                    color: active ? C.primary : C.text3,
+                    letterSpacing: "0.01em",
+                  }}>
+                    {t.label}
+                  </span>
+                  {active && (
+                    <span style={{
+                      width: 4, height: 4,
+                      borderRadius: "50%",
+                      background: C.primary,
+                      marginTop: 1,
+                    }} />
+                  )}
                 </button>
               );
             })}
