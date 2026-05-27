@@ -821,28 +821,29 @@ export function FretboardQuizQuestion({ question, onComplete, answered }) {
     setLastKey(questionKey);
   }
 
-  // Calculer les positions cibles selon le fretMode
+  // Calculer les positions cibles
+  // Support double format :
+  //   ancien : { fretMode, target, root, scale, chord }
+  //   content.js : { concept: { type, root }, selectionRules }
   const targetPositions = useMemo(() => {
-    const { fretMode, target, root, scale, chord } = question;
-    if (fretMode === "find_note" && target) {
-      return getQuizTargetPositions(target);
-    }
-    if (fretMode === "find_root" && root) {
-      return getQuizTargetPositions(root);
-    }
-    if (fretMode === "find_chord" && root && chord) {
-      // Pour un accord : on demande de trouver les fondamentales
-      return getQuizTargetPositions(root);
-    }
-    if (fretMode === "find_scale_root" && root) {
-      return getQuizTargetPositions(root);
+    // Résoudre le mode et la note cible selon le format de la question
+    const fretMode = question.fretMode || question.concept?.type;
+    const target   = question.target   || question.concept?.root;
+    const root     = question.root     || question.concept?.root;
+    const { scale, chord } = question;
+
+    if ((fretMode === "find_note" || fretMode === "find_root" ||
+         fretMode === "find_chord" || fretMode === "find_scale_root") && (target || root)) {
+      return getQuizTargetPositions(target || root);
     }
     return [];
   }, [question.id]);
 
   // Positions de contexte à afficher (pour find_chord, find_scale_root)
   const contextPositions = useMemo(() => {
-    const { fretMode, root, scale, chord } = question;
+    const fretMode = question.fretMode || question.concept?.type;
+    const root     = question.root     || question.concept?.root;
+    const { scale, chord } = question;
     if (fretMode === "find_chord" && root && chord) {
       return getChordPositions(root, chord, 12);
     }
