@@ -72,12 +72,17 @@ function HomeScreen({ state, dispatch, navigate, content }) {
     <div>
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
       <div style={{
-        background: `linear-gradient(150deg, #FF9155 0%, ${C.primary} 55%, ${C.primaryD} 100%)`,
+        backgroundImage: "url('/sunset.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center 30%",
         padding: "28px 20px 22px", position: "relative", overflow: "hidden",
       }}>
+
+        {/* Overlay sunset */}
+        <div style={{ position:"absolute", inset:0, background:"rgba(160,55,0,.5)", pointerEvents:"none", zIndex:0 }} />
         {/* blobs décoratifs */}
-        <div style={{ position:"absolute", top:-30, right:-35, width:130, height:130, background:"rgba(255,255,255,.10)", borderRadius:"50%", pointerEvents:"none" }} />
-        <div style={{ position:"absolute", bottom:-45, left:-10, width:90, height:90, background:"rgba(255,200,120,.12)", borderRadius:"50%", pointerEvents:"none" }} />
+        <div style={{ position:"absolute", top:-30, right:-35, width:130, height:130, background:"rgba(255,255,255,.08)", borderRadius:"50%", pointerEvents:"none" }} />
+        <div style={{ position:"absolute", bottom:-45, left:-10, width:90, height:90, background:"rgba(255,200,120,.10)", borderRadius:"50%", pointerEvents:"none" }} />
 
         {/* Logo Groply — centré en haut entre texte et guitare */}
         <div style={{
@@ -87,6 +92,27 @@ function HomeScreen({ state, dispatch, navigate, content }) {
           <img src="/logo.svg" alt="Groply" style={{ height:46, width:"auto", filter:"brightness(0) invert(1)", opacity:.92 }} />
           <span style={{ fontSize:24, fontWeight:800, color:"#fff", letterSpacing:".5px", opacity:.92, fontFamily:"'Nunito', sans-serif" }}>Groply</span>
         </div>
+
+        {/* Guitare — multiply sur sunset */}
+        <img
+          src="/guitar.webp"
+          alt=""
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            right: 10,
+            top: "50%",
+            transform: "translateY(-50%) rotate(6deg)",
+            height: 290,
+            width: "auto",
+            zIndex: 1,
+            mixBlendMode: "multiply",
+            filter: "brightness(1) saturate(1.1) contrast(1.1)",
+            WebkitMaskImage: "radial-gradient(ellipse 90% 95% at 50% 55%, black 55%, transparent 100%)",
+            maskImage: "radial-gradient(ellipse 90% 95% at 50% 55%, black 55%, transparent 100%)",
+            pointerEvents: "none",
+          }}
+        />
 
         {/* Layout hero : texte gauche + guitare droite */}
         <div style={{ display:"flex", alignItems:"flex-end", gap:0, position:"relative", zIndex:2 }}>
@@ -142,26 +168,7 @@ function HomeScreen({ state, dispatch, navigate, content }) {
 
         </div>{/* fin flex hero */}
 
-        {/* Guitare positionnée en absolute dans le hero — clippée par overflow:hidden */}
-        <img
-          src="/guitar.webp"
-          alt=""
-          aria-hidden="true"
-          style={{
-            position: "absolute",
-            right: 10,
-            top: "50%",
-            transform: "translateY(-50%) rotate(6deg)",
-            height: 290,
-            width: "auto",
-            zIndex: 1,
-            mixBlendMode: "multiply",
-            filter: "brightness(1) saturate(1.1) contrast(1.1)",
-            WebkitMaskImage: "radial-gradient(ellipse 90% 95% at 50% 55%, black 55%, transparent 100%)",
-            maskImage: "radial-gradient(ellipse 90% 95% at 50% 55%, black 55%, transparent 100%)",
-            pointerEvents: "none",
-          }}
-        />
+
       </div>
 
       <div style={{ padding:"16px 20px 0" }}>
