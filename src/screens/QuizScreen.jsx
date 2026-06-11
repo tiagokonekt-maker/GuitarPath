@@ -3,6 +3,7 @@ import { useState, useMemo } from "react";
 import { C, FONTS, R } from "../design/tokens.js";
 import { Ti } from "../design/Ti.jsx";
 import { ProgressBar, XPPop } from "../design/ui.jsx";
+import { Gropi } from "../design/Gropi.jsx";
 import { MODULE_THEME } from "../store/moduleTheme.js";
 
 export let _FretboardQuizQuestion = null;
@@ -220,18 +221,71 @@ function QuizPlayer({ pool, title, state, dispatch, content, onDone }) {
   };
 
   if (finished) {
-    const pct    = Math.round(score/questions.length*100);
-    const trophy = score===questions.length ? "trophy" : score>=5 ? "confetti" : "barbell";
+    const pct      = Math.round(score/questions.length*100);
+    const isPerfect = score === questions.length;
+    const isGood    = pct >= 60;
+    const pose      = isPerfect ? "celebrate" : isGood ? "happy" : "think";
+    const title     = isPerfect ? "Parfait !" : isGood ? "Très bien !" : "Continue !";
+    const subtitle  = isPerfect
+      ? "Toutes les réponses correctes — Gropi est fier de toi. 🎸"
+      : isGood
+      ? "Bon travail ! Les questions ratées reviendront en révision."
+      : "Pas de panique — les erreurs sont dans la révision intelligente.";
+    const xpEarned  = score * 30;
+
     return (
-      <div style={{ padding:"32px 20px", textAlign:"center" }}>
-        <div style={{ width:80, height:80, borderRadius:R.xl, background:C.primaryL, display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 14px" }}>
-          <Ti name={trophy} size={40} color={C.primary} />
+      <div style={{ padding:"28px 20px 32px", display:"flex", flexDirection:"column", alignItems:"center", gap:0 }}>
+        {/* Gropi */}
+        <Gropi pose={pose} size={isPerfect ? 160 : 120}/>
+
+        {/* Titre */}
+        <div style={{ fontSize:26, fontWeight:800, color:C.text, letterSpacing:"-.4px", marginTop:isPerfect?6:10, textAlign:"center" }}>
+          {title}
         </div>
-        <div style={{ fontSize:24, fontWeight:800, color:C.text, letterSpacing:"-.4px", marginBottom:6 }}>
-          {score===questions.length ? "Parfait !" : score>=5 ? "Très bien !" : "Continue !"}
+        <div style={{ fontSize:13, fontWeight:500, color:C.text2, marginTop:6, textAlign:"center", lineHeight:1.5, maxWidth:260 }}>
+          {subtitle}
         </div>
-        <div style={{ fontSize:15, fontWeight:600, color:C.primary, marginBottom:24 }}>{score}/{questions.length} · {pct}%</div>
-        <button onClick={onDone} style={{ width:"100%", padding:14, borderRadius:R.lg, border:"none", background:C.primary, color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer", fontFamily:FONTS.ui }}>
+
+        {/* Score */}
+        <div style={{
+          display:"flex", gap:16, margin:"18px 0 0",
+          background:C.surface, border:`1.5px solid ${C.border}`,
+          borderRadius:R.xl, padding:"14px 24px",
+        }}>
+          <div style={{textAlign:"center"}}>
+            <div style={{fontSize:26,fontWeight:800,color:C.green}}>{score}</div>
+            <div style={{fontSize:10,fontWeight:700,color:C.text3,textTransform:"uppercase",letterSpacing:".06em"}}>Correctes</div>
+          </div>
+          <div style={{width:1,background:C.border}}/>
+          <div style={{textAlign:"center"}}>
+            <div style={{fontSize:26,fontWeight:800,color:C.text2}}>{questions.length-score}</div>
+            <div style={{fontSize:10,fontWeight:700,color:C.text3,textTransform:"uppercase",letterSpacing:".06em"}}>À revoir</div>
+          </div>
+          <div style={{width:1,background:C.border}}/>
+          <div style={{textAlign:"center"}}>
+            <div style={{fontSize:26,fontWeight:800,color:C.primary}}>+{xpEarned}</div>
+            <div style={{fontSize:10,fontWeight:700,color:C.text3,textTransform:"uppercase",letterSpacing:".06em"}}>XP</div>
+          </div>
+        </div>
+
+        {/* Barre de score */}
+        <div style={{width:"100%",marginTop:14}}>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
+            <span style={{fontSize:11,color:C.text3}}>Score</span>
+            <span style={{fontSize:11,fontWeight:700,color:C.text2}}>{pct}%</span>
+          </div>
+          <div style={{height:7,background:C.border,borderRadius:99,overflow:"hidden"}}>
+            <div style={{width:`${pct}%`,height:"100%",borderRadius:99,transition:"width .5s ease",
+              background:isPerfect?C.green:isGood?C.primary:C.pink}}/>
+          </div>
+        </div>
+
+        <button onClick={onDone} style={{
+          width:"100%", marginTop:20, padding:14, borderRadius:R.lg, border:"none",
+          background:`linear-gradient(135deg,#FF9155,${C.primary})`,
+          color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer", fontFamily:FONTS.ui,
+          boxShadow:`0 4px 16px ${C.primary}44`,
+        }}>
           Retour
         </button>
       </div>

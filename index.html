@@ -1,26 +1,66 @@
 <!doctype html>
-<html lang="en">
+<html lang="fr">
   <head>
     <meta charset="UTF-8" />
 
+    <!-- PWA core -->
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#E85D1A" />
 
-    <!-- PWA / iOS -->
+    <!-- iOS PWA -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Groply" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
-    <!-- Mobile viewport -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- SEO & social -->
+    <meta name="description" content="Progresser à la guitare — impro, théorie, manche" />
+    <meta property="og:title" content="Groply" />
+    <meta property="og:description" content="Progresser à la guitare — impro, théorie, manche" />
+    <meta property="og:image" content="/icon-512.png" />
 
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-<link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <!-- Viewport -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <!-- Icônes -->
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+
     <title>Groply</title>
   </head>
 
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+
+    <!-- Service Worker registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').then(reg => {
+            // Mise à jour silencieuse dès qu'une nouvelle version est prête
+            reg.addEventListener('updatefound', () => {
+              const sw = reg.installing;
+              if (!sw) return;
+              sw.addEventListener('statechange', () => {
+                if (sw.state === 'installed' && navigator.serviceWorker.controller) {
+                  sw.postMessage('SKIP_WAITING');
+                  // Reload pour activer le nouveau SW immédiatement
+                  navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    window.location.reload();
+                  }, { once: true });
+                }
+              });
+            });
+          }).catch(() => {});
+        });
+      }
+
+      // Shortcut handler : ?shortcut=session ou ?shortcut=jam
+      // L'app React lit window.__GROPLY_SHORTCUT au démarrage
+      const sp = new URLSearchParams(location.search);
+      const sc = sp.get('shortcut');
+      if (sc) window.__GROPLY_SHORTCUT = sc;
+    </script>
   </body>
 </html>

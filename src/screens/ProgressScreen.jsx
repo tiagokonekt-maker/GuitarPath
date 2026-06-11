@@ -5,6 +5,7 @@ import { Ti } from "../design/Ti.jsx";
 import { ProgressBar } from "../design/ui.jsx";
 import { MODULE_THEME } from "../store/moduleTheme.js";
 import { BADGES, BADGE_RARITIES, skillMastery, BADGE_TINTS } from "../store/badges.js";
+import { Gropi, GropiTip } from "../design/Gropi.jsx";
 
 function ProgressScreen({ state, content, onOpenSettings }) {
   const xpInLevel = state.xp % 300;
@@ -89,8 +90,8 @@ function ProgressScreen({ state, content, onOpenSettings }) {
     </div>
 
     <div style={{ padding:"16px 20px 0" }}>
-      {/* ── STATS 3 ──────────────────────────────────────────────────────── */}
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginBottom:20 }}>
+        {/* ── STATS 3 ──────────────────────────────────────────────────────── */}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginBottom:16 }}>
           {[
             { ic:"flame",        v:`${state.streak}j`, l:"Série",     bg:C.amberL,   ic_c:C.amber,   v_c:C.amberD },
             { ic:"circle-check", v:Object.keys(state.completedExercises).length, l:"Exercices", bg:C.greenL, ic_c:C.green, v_c:C.greenD },
@@ -105,6 +106,23 @@ function ProgressScreen({ state, content, onOpenSettings }) {
               <div style={{ fontSize:10, color:s.v_c, fontWeight:600, textTransform:"uppercase", letterSpacing:".05em", marginTop:3, opacity:.7 }}>{s.l}</div>
             </div>
           ))}
+        </div>
+
+        {/* ── GROPI contextuel ─────────────────────────────────────────────── */}
+        <div style={{ marginBottom:20 }}>
+          <GropiTip
+            pose={state.streak >= 7 ? "celebrate" : state.streak >= 3 ? "happy" : state.streak === 0 ? "plead" : "wave"}
+            tint={state.streak >= 7 ? "green" : state.streak === 0 ? "primary" : "primary"}
+            eyebrow="Gropi te parle"
+          >
+            {state.streak >= 7
+              ? `${state.streak} jours d'affilée — tu construis une vraie habitude. Continue ! 🔥`
+              : state.streak >= 3
+              ? `Série de ${state.streak} jours. La régularité, c'est 80 % du chemin.`
+              : state.streak === 0
+              ? "Ta flamme s'est éteinte — mais une seule session suffit pour la rallumer. 🎸"
+              : "Chaque session compte. Reviens demain pour continuer ta progression."}
+          </GropiTip>
         </div>
 
         {/* ── COMPÉTENCES PAR MODULE ───────────────────────────────────────── */}

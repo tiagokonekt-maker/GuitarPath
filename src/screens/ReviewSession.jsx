@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { C, FONTS, R } from "../design/tokens.js";
 import { Ti } from "../design/Ti.jsx";
+import { Gropi } from "../design/Gropi.jsx";
 import { updateReviewHistory } from "../store/reviewEngine.js";
 
 // Fretboard injecte depuis App.jsx
@@ -85,12 +86,20 @@ export function ReviewSession({ questions, state, dispatch, onDone }) {
     return (
       <div style={{ padding: "24px 16px 32px", display: "flex", flexDirection: "column", gap: 14 }}>
 
-        {/* Hero */}
-        <div style={{ textAlign: "center", padding: "24px 0 8px" }}>
-          <div style={{ fontSize: 52, marginBottom: 10 }}>{emoji}</div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: C.text, fontFamily: FONTS.title }}>{title}</div>
+        {/* Hero Gropi */}
+        <div style={{ textAlign: "center", padding: "16px 0 8px" }}>
+          <Gropi
+            pose={pct >= 80 ? "celebrate" : pct >= 50 ? "happy" : "think"}
+            size={pct >= 80 ? 150 : 110}
+            style={{ margin: "0 auto" }}
+          />
+          <div style={{ fontSize: 22, fontWeight: 700, color: C.text, fontFamily: FONTS.title, marginTop: 8 }}>{title}</div>
           <div style={{ fontSize: 13, color: C.text2, fontFamily: FONTS.ui, marginTop: 4 }}>
-            Session de revision terminee
+            {pct >= 80
+              ? "Excellente révision — ta mémoire se renforce. 🎸"
+              : pct >= 50
+              ? "Bon travail ! Les questions ratées reviennent bientôt."
+              : "Les erreurs sont normales — c'est comme ça qu'on progresse."}
           </div>
         </div>
 

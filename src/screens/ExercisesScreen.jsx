@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo } from "react";
 import { C, FONTS, R } from "../design/tokens.js";
 import { Ti } from "../design/Ti.jsx";
 import { ProgressBar, XPPop } from "../design/ui.jsx";
+import { Gropi } from "../design/Gropi.jsx";
 import { MODULE_THEME } from "../store/moduleTheme.js";
 
 export let _FretboardExercise = null;
@@ -335,12 +336,13 @@ function ExerciseDetail({ ex, state, dispatch, onBack, content }) {
           </>
         ) : (
           <div style={{ background:C.greenL, borderRadius:R.xl, padding:"24px 20px", textAlign:"center", border:`1.5px solid ${C.greenBorder}` }}>
-            <div style={{ width:56, height:56, borderRadius:R.lg, background:C.green, display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 12px" }}>
-              <Ti name="trophy" size={28} color="#fff" />
+            <Gropi pose="celebrate" size={130} style={{ margin:"0 auto" }}/>
+            <div style={{ fontSize:22, fontWeight:800, color:C.greenD, letterSpacing:"-.3px", marginTop:8 }}>Bien joué !</div>
+            <div style={{ fontSize:13, fontWeight:500, color:C.green, marginTop:4 }}>+{ex.xp} XP gagnés</div>
+            <div style={{ fontSize:12, color:C.greenD, opacity:.7, marginTop:6, lineHeight:1.5 }}>
+              Gropi a tout entendu depuis ici. Continue comme ça. 🎸
             </div>
-            <div style={{ fontSize:20, fontWeight:800, color:C.greenD, letterSpacing:"-.3px" }}>Bien joué !</div>
-            <div style={{ fontSize:14, fontWeight:700, color:C.green, marginTop:4 }}>+{ex.xp} XP</div>
-            <button onClick={onBack} style={{ marginTop:16, padding:"12px 28px", borderRadius:R.lg, border:"none", background:C.green, color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:FONTS.ui }}>
+            <button onClick={onBack} style={{ marginTop:18, padding:"12px 32px", borderRadius:R.lg, border:"none", background:C.green, color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:FONTS.ui, boxShadow:`0 4px 14px ${C.green}44` }}>
               Retour
             </button>
           </div>

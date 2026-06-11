@@ -1,0 +1,39 @@
+{
+  "name": "Groply",
+  "short_name": "Groply",
+  "description": "Progresser à la guitare — impro, théorie, manche",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "background_color": "#FAF8F5",
+  "theme_color": "#E85D1A",
+  "orientation": "portrait-primary",
+  "categories": ["education", "music"],
+  "lang": "fr",
+  "dir": "ltr",
+  "icons": [
+    { "src": "/icon-192.png",      "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png",      "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-192-mask.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/logo.svg",          "sizes": "any",     "type": "image/svg+xml" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Session du jour",
+      "short_name": "Session",
+      "description": "Lancer directement ma session du jour",
+      "url": "/?shortcut=session",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Jam Session",
+      "short_name": "Jam",
+      "description": "Improviser avec backing track",
+      "url": "/?shortcut=jam",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "screenshots": [],
+  "prefer_related_applications": false
+}
