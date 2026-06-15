@@ -5,7 +5,7 @@ import { C, FONTS, R } from "../design/tokens.js";
 import { Ti } from "../design/Ti.jsx";
 import { ProgressBar, XPPop } from "../design/ui.jsx";
 import { MODULE_THEME } from "../store/moduleTheme.js";
-import { Gropi } from "../design/Gropi.jsx";
+import { Gropi, GropiCoach, GropiBubble } from "../design/Gropi.jsx";
 
 export let _renderDiagramBlock = null;
 export let _FretboardLesson    = null;
@@ -33,7 +33,7 @@ const PULSE_CSS = `
 `;
 
 // ── Nœud individuel ───────────────────────────────────────────────────────────
-function PathNode({ lesson, index, state, th, onSelect, isCurrent, isLocked }) {
+function PathNode({ lesson, index, state, th, onSelect, isCurrent, isLocked, gropiTip }) {
   const done = !!state.completedLessons[lesson.id];
   const side = index%2===0 ? "left" : "right";
 
@@ -116,6 +116,21 @@ function PathNode({ lesson, index, state, th, onSelect, isCurrent, isLocked }) {
               boxShadow:`0 3px 10px ${C.primary}44`,
             }}>Commencer</div>
           )}
+        </div>
+      )}
+
+      {/* Gropi compagnon — uniquement sur le nœud en cours */}
+      {isCurrent && (
+        <div style={{ marginTop: 10, alignSelf: side === "left" ? "flex-start" : "flex-end" }}>
+          <GropiBubble
+            pose="wave"
+            size={68}
+            tint="primary"
+            eyebrow={`Gropi · ${lesson.title}`}
+            side={side}
+          >
+            {gropiTip}
+          </GropiBubble>
         </div>
       )}
     </div>
@@ -279,6 +294,19 @@ function ModuleRoadmap({ course, state, th, onSelectLesson, onBack }) {
                 const prevSide  = li===0 ? null : (li-1)%2===0?"left":"right";
                 const curSide   = li%2===0?"left":"right";
 
+                // Tip contextuel de Gropi sur le nœud en cours
+                let gropiTip = null;
+                if (isCurrent) {
+                  if (lesson.gropiTip) {
+                    gropiTip = lesson.gropiTip;            // tip rédigé dans content.js
+                  } else {
+                    const remaining = chapterLessons.length - li;
+                    gropiTip = remaining > 1
+                      ? `Plus que ${remaining} leçons avant le checkpoint du chapitre ${ci+1} ! On avance pas à pas, prends ton temps sur celle-ci. 🎸`
+                      : `Dernière leçon avant le checkpoint ! Après, on teste tout : quiz, manche et oreille. Tu es prêt. 💪`;
+                  }
+                }
+
                 return (
                   <div key={lesson.id}>
                     {li>0&&(
@@ -293,6 +321,7 @@ function ModuleRoadmap({ course, state, th, onSelectLesson, onBack }) {
                       onSelect={onSelectLesson}
                       isCurrent={isCurrent}
                       isLocked={isLocked}
+                      gropiTip={gropiTip}
                     />
                   </div>
                 );
@@ -440,24 +469,14 @@ function LessonView({ lesson, state, dispatch, onBack }) {
         <div style={{display:"flex",flexDirection:"column",gap:14,marginBottom:20}}>
           {lesson.content.map((b,i)=>{
             if(b.type==="h") return <h3 key={i} style={{margin:"8px 0 0",fontSize:17,fontWeight:800,color:C.primary,letterSpacing:"-.2px"}}>{b.text}</h3>;
-            if(b.type==="tip") return (
-              <div key={i} style={{background:C.amberL,border:`1.5px solid ${C.amberBorder}`,borderRadius:R.md,padding:"12px 14px",display:"flex",gap:10,alignItems:"flex-start"}}>
-                <Ti name="bulb" size={16} color={C.amber}/>
-                <p style={{margin:0,fontSize:13,color:C.amberD,lineHeight:1.65,fontFamily:FONTS.title}}>{b.text}</p>
-              </div>
-            );
+            if(b.type==="tip") return <GropiCoach key={i} variant="tip">{b.text}</GropiCoach>;
             if(b.type==="img") return (
               <div key={i} style={{background:C.surface2,borderRadius:R.md,padding:12,textAlign:"center"}}>
                 <img src={b.src} alt={b.alt||""} style={{maxWidth:"100%",borderRadius:8}}/>
                 {b.caption&&<p style={{fontSize:12,color:C.text3,marginTop:8,fontStyle:"italic"}}>{b.caption}</p>}
               </div>
             );
-            if(b.type==="ref") return (
-              <div key={i} style={{background:C.primaryL,border:`1.5px solid ${C.primaryBorder}`,borderRadius:R.md,padding:"12px 14px",display:"flex",gap:10,alignItems:"flex-start"}}>
-                <Ti name="music" size={16} color={C.primary}/>
-                <p style={{margin:0,fontSize:13,color:C.primaryD,lineHeight:1.55}}><strong>Référence :</strong> {b.text}</p>
-              </div>
-            );
+            if(b.type==="ref") return <GropiCoach key={i} variant="ref">{b.text}</GropiCoach>;
             const diagram = _renderDiagramBlock?_renderDiagramBlock(b,i):null;
             if(diagram) return diagram;
             if(b.type==="fretboard_interactive"&&_FretboardLesson) return <div key={i}><_FretboardLesson block={b}/></div>;
@@ -474,7 +493,7 @@ function LessonView({ lesson, state, dispatch, onBack }) {
         )}
         {done ? (
           <div style={{ background:C.greenL, borderRadius:R.xl, padding:"22px 20px", textAlign:"center", border:`1.5px solid ${C.greenBorder}`, marginBottom:8 }}>
-            <Gropi pose="celebrate" size={120} style={{ margin:"0 auto" }}/>
+            <Gropi pose="celebrate" size={120} anim="cheer" style={{ margin:"0 auto" }}/>
             <div style={{ fontSize:20, fontWeight:800, color:C.greenD, letterSpacing:"-.3px", marginTop:8 }}>Leçon complétée !</div>
             <div style={{ fontSize:13, color:C.green, marginTop:4 }}>+30 XP · Continue sur ta lancée 🎸</div>
             <button onClick={onBack} style={{ marginTop:16, padding:"12px 32px", borderRadius:R.lg, border:"none", background:C.green, color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:FONTS.ui, boxShadow:`0 4px 14px ${C.green}44` }}>

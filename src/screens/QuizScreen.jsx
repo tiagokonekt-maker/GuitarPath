@@ -224,9 +224,14 @@ function QuizPlayer({ pool, title, state, dispatch, content, onDone }) {
     const pct      = Math.round(score/questions.length*100);
     const isPerfect = score === questions.length;
     const isGood    = pct >= 60;
-    const pose      = isPerfect ? "celebrate" : isGood ? "happy" : "think";
-    const title     = isPerfect ? "Parfait !" : isGood ? "Très bien !" : "Continue !";
-    const subtitle  = isPerfect
+    const isReview  = /révision/i.test(title);       // session de rattrapage
+    const redeemed  = isReview && isGood;            // questions ratées enfin réussies
+    const pose      = redeemed ? "pride" : isPerfect ? "celebrate" : isGood ? "happy" : "think";
+    const anim      = (redeemed || isPerfect) ? "cheer" : "pop";
+    const heading   = redeemed ? "Tu as enfin réussi !" : isPerfect ? "Parfait !" : isGood ? "Très bien !" : "Continue !";
+    const subtitle  = redeemed
+      ? "Ces questions te résistaient — et tu les as eues. Gropi en a la larme à l'œil. 🥹"
+      : isPerfect
       ? "Toutes les réponses correctes — Gropi est fier de toi. 🎸"
       : isGood
       ? "Bon travail ! Les questions ratées reviendront en révision."
@@ -236,11 +241,11 @@ function QuizPlayer({ pool, title, state, dispatch, content, onDone }) {
     return (
       <div style={{ padding:"28px 20px 32px", display:"flex", flexDirection:"column", alignItems:"center", gap:0 }}>
         {/* Gropi */}
-        <Gropi pose={pose} size={isPerfect ? 160 : 120}/>
+        <Gropi pose={pose} size={(isPerfect||redeemed) ? 160 : 120} anim={anim}/>
 
         {/* Titre */}
-        <div style={{ fontSize:26, fontWeight:800, color:C.text, letterSpacing:"-.4px", marginTop:isPerfect?6:10, textAlign:"center" }}>
-          {title}
+        <div style={{ fontSize:26, fontWeight:800, color:C.text, letterSpacing:"-.4px", marginTop:(isPerfect||redeemed)?6:10, textAlign:"center" }}>
+          {heading}
         </div>
         <div style={{ fontSize:13, fontWeight:500, color:C.text2, marginTop:6, textAlign:"center", lineHeight:1.5, maxWidth:260 }}>
           {subtitle}

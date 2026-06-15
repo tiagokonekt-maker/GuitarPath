@@ -336,7 +336,7 @@ function ExerciseDetail({ ex, state, dispatch, onBack, content }) {
           </>
         ) : (
           <div style={{ background:C.greenL, borderRadius:R.xl, padding:"24px 20px", textAlign:"center", border:`1.5px solid ${C.greenBorder}` }}>
-            <Gropi pose="celebrate" size={130} style={{ margin:"0 auto" }}/>
+            <Gropi pose="celebrate" size={130} anim="cheer" style={{ margin:"0 auto" }}/>
             <div style={{ fontSize:22, fontWeight:800, color:C.greenD, letterSpacing:"-.3px", marginTop:8 }}>Bien joué !</div>
             <div style={{ fontSize:13, fontWeight:500, color:C.green, marginTop:4 }}>+{ex.xp} XP gagnés</div>
             <div style={{ fontSize:12, color:C.greenD, opacity:.7, marginTop:6, lineHeight:1.5 }}>

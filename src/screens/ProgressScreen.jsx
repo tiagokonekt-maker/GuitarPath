@@ -111,7 +111,7 @@ function ProgressScreen({ state, content, onOpenSettings }) {
         {/* ── GROPI contextuel ─────────────────────────────────────────────── */}
         <div style={{ marginBottom:20 }}>
           <GropiTip
-            pose={state.streak >= 7 ? "celebrate" : state.streak >= 3 ? "happy" : state.streak === 0 ? "plead" : "wave"}
+            pose={state.streak >= 7 ? "rocker" : state.streak >= 3 ? "happy" : state.streak === 0 ? "pride" : "wave"}
             tint={state.streak >= 7 ? "green" : state.streak === 0 ? "primary" : "primary"}
             eyebrow="Gropi te parle"
           >

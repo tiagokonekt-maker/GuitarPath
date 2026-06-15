@@ -89,8 +89,9 @@ export function ReviewSession({ questions, state, dispatch, onDone }) {
         {/* Hero Gropi */}
         <div style={{ textAlign: "center", padding: "16px 0 8px" }}>
           <Gropi
-            pose={pct >= 80 ? "celebrate" : pct >= 50 ? "happy" : "think"}
+            pose={pct >= 80 ? "celebrate" : pct >= 50 ? "pride" : "think"}
             size={pct >= 80 ? 150 : 110}
+            anim={pct >= 50 ? "cheer" : "pop"}
             style={{ margin: "0 auto" }}
           />
           <div style={{ fontSize: 22, fontWeight: 700, color: C.text, fontFamily: FONTS.title, marginTop: 8 }}>{title}</div>

@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { C, FONTS, R } from "../design/tokens.js";
 import { Ti } from "../design/Ti.jsx";
+import { Gropi } from "../design/Gropi.jsx";
 import { Fretboard } from "../Fretboard.jsx";
 import { getScaleNotes, noteToFr } from "../fretboardUtils.js";
 import * as Tone from "tone";
@@ -581,6 +582,7 @@ export function JamSession({ onBack }) {
           <div style={{ fontSize: 16, fontWeight: 700, color: C.text, fontFamily: FONTS.title }}>Jam Session</div>
           <div style={{ fontSize: 11, color: C.text3, fontFamily: FONTS.ui }}>{rootFr} - {ctx.label}</div>
         </div>
+        <Gropi pose="rocker" size={46} anim="wiggle" />
       </div>
 
       <div style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: 12, overflowY: "auto", paddingBottom: 32 }}>

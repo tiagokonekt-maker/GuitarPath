@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import { C, FONTS, R } from "../design/tokens.js";
 import { Ti } from "../design/Ti.jsx";
 import { ProgressBar } from "../design/ui.jsx";
+import { Gropi } from "../design/Gropi.jsx";
 import { getReviewStats } from "../store/reviewEngine.js";
 
 // ── Conseils contextuels ─────────────────────────────────────────────────────
@@ -31,39 +32,9 @@ function pickTip(state, rs) {
   return contextual[0]?.text(state,rs) || "Gropi est là pour toi. 🎸";
 }
 
-// ── Gropi SVG inline (pose wave) ─────────────────────────────────────────────
-function GropiWave({ size=80 }) {
-  return (
-    <svg viewBox="0 0 200 230" width={size} height={Math.round(size*1.15)}
-         style={{display:"block",flexShrink:0}} aria-hidden="true">
-      <defs>
-        <linearGradient id="gb-hw" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#FFA45E"/><stop offset="1" stopColor="#E85D1A"/>
-        </linearGradient>
-      </defs>
-      <ellipse cx="78" cy="207" rx="14" ry="9" fill="#C2490E"/>
-      <ellipse cx="122" cy="207" rx="14" ry="9" fill="#C2490E"/>
-      <path d="M56 120 L42 142" stroke="#E2560F" strokeWidth="15" strokeLinecap="round"/>
-      <path d="M146 112 L166 84" stroke="#E2560F" strokeWidth="15" strokeLinecap="round"/>
-      {[13,22].map(y=>[81,119].map(x=><circle key={x+"-"+y} cx={x} cy={y} r="3.6" fill="#FFDDC0"/>))}
-      <rect x="86" y="4" width="28" height="27" rx="9" fill="#B5430C"/>
-      <rect x="91" y="24" width="18" height="36" fill="#C2490E"/>
-      {[34,43,52].map(y=><line key={y} x1="91" y1={y} x2="109" y2={y} stroke="#E89055" strokeWidth="2"/>)}
-      {[95.5,100,104.5].map(x=><line key={x} x1={x} y1="25" x2={x} y2="59" stroke="#FFE6CC" strokeWidth="1.4"/>)}
-      <path d="M100 54 C76 54 60 66 56 88 C54 100 50 105 50 122 C50 168 70 200 100 200 C130 200 150 168 150 122 C150 105 146 100 144 88 C140 66 124 54 100 54 Z" fill="url(#gb-hw)"/>
-      <path d="M100 116 C127 116 141 133 141 152 C141 178 122 195 100 195 C78 195 59 178 59 152 C59 133 73 116 100 116 Z" fill="#FFE9D8"/>
-      <circle cx="100" cy="131" r="17.5" fill="none" stroke="#F4B98F" strokeWidth="2.6"/>
-      <ellipse cx="57" cy="104" rx="8.5" ry="5.5" fill="#FF9E6B" opacity=".7"/>
-      <ellipse cx="143" cy="104" rx="8.5" ry="5.5" fill="#FF9E6B" opacity=".7"/>
-      <ellipse cx="76" cy="88" rx="12.5" ry="14.5" fill="#fff"/>
-      <ellipse cx="124" cy="88" rx="12.5" ry="14.5" fill="#fff"/>
-      <circle cx="78" cy="90" r="6.2" fill="#2B1608"/><circle cx="122" cy="90" r="6.2" fill="#2B1608"/>
-      <circle cx="75.5" cy="85" r="2.1" fill="#fff"/><circle cx="119.5" cy="85" r="2.1" fill="#fff"/>
-      <path d="M62 68 Q76 61 90 67" fill="none" stroke="#7A2E08" strokeWidth="4" strokeLinecap="round"/>
-      <path d="M110 67 Q124 61 138 68" fill="none" stroke="#7A2E08" strokeWidth="4" strokeLinecap="round"/>
-      <path d="M86 126 Q100 139 114 126" fill="none" stroke="#7A2E08" strokeWidth="5" strokeLinecap="round"/>
-    </svg>
-  );
+// ── Mascotte (pose coucou) ───────────────────────────────────────────────────
+function GropiWave({ size = 80 }) {
+  return <Gropi pose="wave" size={size} anim="wiggle" />;
 }
 
 // ── Bloc Gropi fusionné : conseil + session du jour + CTA unique ─────────────
@@ -251,13 +222,10 @@ function HomeScreen({state,dispatch,navigate,content}) {
           <span style={{fontSize:24,fontWeight:800,color:"#fff",letterSpacing:".5px",opacity:.92,fontFamily:"'Nunito',sans-serif"}}>Groply</span>
         </div>
 
-        {/* Guitare */}
-        <img src="/guitar.webp" alt="" aria-hidden="true" style={{
-          position:"absolute",right:10,top:"50%",transform:"translateY(-50%) rotate(6deg)",
-          height:290,width:"auto",zIndex:1,mixBlendMode:"multiply",
-          filter:"brightness(1) saturate(1.1) contrast(1.1)",
-          WebkitMaskImage:"radial-gradient(ellipse 90% 95% at 50% 55%,black 55%,transparent 100%)",
-          maskImage:"radial-gradient(ellipse 90% 95% at 50% 55%,black 55%,transparent 100%)",
+        {/* Gropi célébration */}
+        <Gropi pose="celebrate" size={196} anim="bob" style={{
+          position:"absolute", right:-4, bottom:0, zIndex:1,
+          filter:"drop-shadow(0 10px 18px rgba(120,40,0,.38))",
           pointerEvents:"none",
         }}/>
 

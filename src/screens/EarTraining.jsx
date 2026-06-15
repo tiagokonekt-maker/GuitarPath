@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { C, FONTS, R } from "../design/tokens.js";
 import { Ti } from "../design/Ti.jsx";
+import { Gropi } from "../design/Gropi.jsx";
 import { loadAudio, isAudioLoaded, generateEarTrainingQuestion, playInterval, playChord } from "../audioEngine.js";
 
 const MODES = [
@@ -128,6 +129,7 @@ export function EarTraining({ onBack, dispatch }) {
           <div style={{ fontSize: 16, fontWeight: 700, color: C.text, fontFamily: FONTS.title }}>Ear Training</div>
           <div style={{ fontSize: 11, color: C.text3, fontFamily: FONTS.ui }}>{score.total}/{SESSION_LENGTH} · {score.correct} correctes</div>
         </div>
+        <Gropi pose="listen" size={46} anim="bob" />
         <div style={{ fontSize: 13, fontWeight: 600, color: C.primary, fontFamily: FONTS.ui }}>
           {score.total > 0 ? `${Math.round(score.correct/score.total*100)}%` : ""}
         </div>
