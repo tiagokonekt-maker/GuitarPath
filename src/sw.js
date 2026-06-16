@@ -1,10 +1,6 @@
-// Groply — Service Worker v3
-// Cache-first assets · Network-first navigation · Offline fallback propre
-// Mis à jour : icônes PNG + audio précachés, gestion SKIP_WAITING robuste
+// Groply — Service Worker v5
+const CACHE = 'groply-v5';
 
-const CACHE = 'groply-v3';
-
-// Assets garantis offline (chemin statique, pas de hash Vite)
 const PRECACHE = [
   '/',
   '/index.html',
@@ -12,28 +8,34 @@ const PRECACHE = [
   '/offline.html',
   '/logo.svg',
   '/favicon.svg',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/icon-maskable.png',
+  '/apple-touch-icon.png',
   '/guitar.webp',
   '/sunset.jpg',
   '/lavender.jpg',
   '/beach.jpg',
   '/ocean.jpg',
   '/sunrise.jpg',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/icon-192-mask.png',
-  '/apple-touch-icon.png',
+  '/mascotte-celebrate.svg',
+  '/mascotte-happy.svg',
+  '/mascotte-think.svg',
+  '/mascotte-wave.svg',
+  '/mascotte-rocker.svg',
+  '/mascotte-idea.svg',
+  '/mascotte-pride.svg',
+  '/mascotte-listen.svg',
 ];
 
-// ── INSTALL ───────────────────────────────────────────────────────────────────
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE)
-      .then(cache => Promise.allSettled(PRECACHE.map(u => cache.add(u).catch(() => {}))))
+      .then(c => Promise.allSettled(PRECACHE.map(u => c.add(u).catch(() => {}))))
       .then(() => self.skipWaiting())
   );
 });
 
-// ── ACTIVATE : purge les anciens caches ───────────────────────────────────────
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys()
@@ -42,51 +44,36 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// ── FETCH ─────────────────────────────────────────────────────────────────────
 self.addEventListener('fetch', (e) => {
   const { request } = e;
   const url = new URL(request.url);
-
-  // Ignore non-GET et cross-origin (Supabase, fonts Google, etc.)
   if (request.method !== 'GET') return;
   if (url.origin !== self.location.origin) return;
 
-  // Navigation HTML → network-first, fallback offline.html
   if (request.mode === 'navigate') {
     e.respondWith(
       fetch(request)
         .then(res => {
-          // On met en cache la dernière version reçue
-          if (res.ok) {
-            const clone = res.clone();
-            caches.open(CACHE).then(c => c.put(request, clone));
-          }
+          if (res.ok) caches.open(CACHE).then(c => c.put(request, res.clone()));
           return res;
         })
-        .catch(() =>
-          caches.match('/offline.html').then(r => r || caches.match('/index.html'))
-        )
+        .catch(() => caches.match('/offline.html').then(r => r || caches.match('/index.html')))
     );
     return;
   }
 
-  // Assets JS/CSS/images/audio → cache-first, réseau en fallback avec mise en cache
   e.respondWith(
     caches.match(request).then(cached => {
       if (cached) return cached;
       return fetch(request).then(res => {
         if (!res || res.status !== 200 || res.type === 'opaque') return res;
-        const clone = res.clone();
-        caches.open(CACHE).then(c => c.put(request, clone));
+        caches.open(CACHE).then(c => c.put(request, res.clone()));
         return res;
       }).catch(() => {});
     })
   );
 });
 
-// ── MESSAGE : rechargement propre depuis l'app ────────────────────────────────
 self.addEventListener('message', (e) => {
-  if (e.data === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
+  if (e.data === 'SKIP_WAITING') self.skipWaiting();
 });
