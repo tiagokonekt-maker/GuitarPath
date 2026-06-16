@@ -225,35 +225,53 @@ function freqToNote(freq) {
   return { name: NOTE_NAMES[(midi % 12 + 12) % 12], octave: Math.floor(midi / 12) - 1, cents };
 }
 
-// Autocorrélation (ACF2+) — robuste pour la guitare
+// Autocorrélation (ACF2+) — optimisée pour la guitare acoustique
+// fftSize 8192 pour les cordes graves (Mi2 = 82 Hz)
 function autoCorrelate(buf, sampleRate) {
   const SIZE = buf.length;
+
+  // RMS — seuil bas pour capter les cordes acoustiques tenues à distance
   let rms = 0;
   for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
   rms = Math.sqrt(rms / SIZE);
-  if (rms < 0.01) return -1;                 // trop faible = silence
+  if (rms < 0.003) return -1;   // silence (réduit de 0.01 → 0.003)
 
-  let r1 = 0, r2 = SIZE - 1, thres = 0.2;
+  // Clipping léger (seuil réduit pour préserver les cordes graves)
+  let r1 = 0, r2 = SIZE - 1, thres = 0.1;  // 0.2 → 0.1
   for (let i = 0; i < SIZE/2; i++) if (Math.abs(buf[i]) < thres) { r1 = i; break; }
   for (let i = 1; i < SIZE/2; i++) if (Math.abs(buf[SIZE-i]) < thres) { r2 = SIZE - i; break; }
   const b = buf.slice(r1, r2);
   const L = b.length;
+  if (L < 2) return -1;
 
+  // Autocorrélation
   const c = new Array(L).fill(0);
   for (let i = 0; i < L; i++)
     for (let j = 0; j < L - i; j++) c[i] += b[j] * b[j+i];
 
-  let d = 0; while (c[d] > c[d+1]) d++;
+  // Trouver le premier minimum local puis le maximum suivant
+  let d = 0;
+  while (d < L - 1 && c[d] > c[d+1]) d++;
   let maxval = -1, maxpos = -1;
-  for (let i = d; i < L; i++) if (c[i] > maxval) { maxval = c[i]; maxpos = i; }
-  let T0 = maxpos;
+  for (let i = d; i < L; i++) {
+    if (c[i] > maxval) { maxval = c[i]; maxpos = i; }
+  }
+  if (maxpos < 1) return -1;
 
-  // interpolation parabolique
+  // Vérifier que la corrélation est suffisamment forte (évite les faux positifs)
+  if (c[maxpos] / c[0] < 0.3) return -1;   // nouveau : filtre les sons non périodiques
+
+  // Interpolation parabolique pour plus de précision
+  let T0 = maxpos;
   const x1 = c[T0-1] || 0, x2 = c[T0] || 0, x3 = c[T0+1] || 0;
   const a = (x1 + x3 - 2*x2) / 2, bb = (x3 - x1) / 2;
   if (a) T0 = T0 - bb / (2*a);
 
-  return sampleRate / T0;
+  // Limiter aux fréquences de guitare (Mi2 = 82 Hz → Mi4 = 330 Hz + harmoniques)
+  const freq = sampleRate / T0;
+  if (freq < 60 || freq > 1400) return -1;  // nouveau : filtre hors plage guitare
+
+  return freq;
 }
 
 // Sélecteur d'accordage (groupé par catégorie)
@@ -304,6 +322,7 @@ function Tuner() {
   const streamRef = useRef(null);
   const rafRef    = useRef(null);
   const bufRef    = useRef(null);
+  const freqHistRef = useRef([]);  // historique pour lissage
 
   const stop = useCallback(() => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
@@ -323,7 +342,8 @@ function Tuner() {
       ctxRef.current = ctx;
       const src = ctx.createMediaStreamSource(stream);
       const an = ctx.createAnalyser();
-      an.fftSize = 2048;
+      an.fftSize = 8192;   // 2048 → 8192 : meilleure résolution cordes graves
+      an.smoothingTimeConstant = 0;  // pas de lissage temporel pour réactivité max
       src.connect(an);
       analyser.current = an;
       bufRef.current = new Float32Array(an.fftSize);
@@ -333,8 +353,20 @@ function Tuner() {
         an.getFloatTimeDomainData(bufRef.current);
         const f = autoCorrelate(bufRef.current, ctx.sampleRate);
         if (f > 0) {
-          setFreq(f);
-          setNote(freqToNote(f));
+          // Lissage : garder les 4 dernières fréquences valides
+          const hist = freqHistRef.current;
+          hist.push(f);
+          if (hist.length > 4) hist.shift();
+          // Médiane pour éviter les sauts
+          const sorted = [...hist].sort((a,b)=>a-b);
+          const median = sorted[Math.floor(sorted.length/2)];
+          setFreq(median);
+          setNote(freqToNote(median));
+        } else {
+          // Silence détecté → vider l'historique progressivement
+          const hist = freqHistRef.current;
+          if (hist.length > 0) hist.shift();
+          if (hist.length === 0) { setFreq(0); setNote(null); }
         }
         rafRef.current = requestAnimationFrame(tick);
       };
