@@ -1,7 +1,8 @@
 // GuitarPath -- screens/FretboardExplorer.jsx
 // Page "Explorateur du manche" -- visualisation libre gammes + accords
 import { useState, useMemo } from "react";
-import { C, FONTS, R } from "../design/tokens.js";
+import { FONTS, R } from "../design/tokens.js";
+import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { Fretboard } from "../Fretboard.jsx";
 import { SCALES, CHORD_TYPES, getScaleNotes, getChordNotes, noteToFr } from "../fretboardUtils.js";
@@ -69,6 +70,7 @@ const CHORD_INFO = {
 };
 
 export function FretboardExplorer({ onBack }) {
+  const C = useC();
   const [tab, setTab]             = useState("scale");
   const [root, setRoot]           = useState("A");
   const [scaleKey, setScaleKey]   = useState("pentatonic_minor");

@@ -1,21 +1,25 @@
 // GuitarPath — store/badges.js
 // Système de badges, conditions de déverrouillage
 
-import { C } from "../design/tokens.js";
+import { LIGHT } from "../design/tokens.js";
 
-const BADGE_TINTS = {
+const buildBadgeTints = (C) => ({
   primary: { bg: C.primaryL, border: C.primaryBorder, icon: C.primary, text: C.primaryD },
   green:   { bg: C.greenL,   border: C.greenBorder,   icon: C.green,   text: C.greenD },
   amber:   { bg: C.amberL,   border: C.amberBorder,   icon: C.amber,   text: C.amberD },
   coral:   { bg: C.coralL,   border: C.coralBorder,   icon: C.coral,   text: C.coralD },
   pink:    { bg: C.pinkL,    border: "#EFC4D5",        icon: C.pink,    text: "#85304E" },
-};
-const BADGE_RARITIES = {
+});
+const buildBadgeRarities = (C) => ({
   commun:    { label: "commun",   bg: "#E5E3DC", fg: "#5F5E5A" },
   rare:      { label: "rare",     bg: "#D8D3F6", fg: C.primaryD },
   epique:    { label: "épique",   bg: C.coralBorder, fg: C.coralD },
   legend:    { label: "légend.",  bg: C.primary, fg: "#FFFFFF" },
-};
+});
+
+// Alias legacy (light) — pour compatibilité
+const BADGE_TINTS = buildBadgeTints(LIGHT);
+const BADGE_RARITIES = buildBadgeRarities(LIGHT);
 
 const skillMastery = (state, content, courseId) => {
   const exs = content.exercises.filter(e => e.mod === courseId);
@@ -91,4 +95,4 @@ const computeNewBadges = (state, content) => {
 // REDUCER
 // ═══════════════════════════════════════════════════════════════════════════
 
-export { BADGE_TINTS, BADGE_RARITIES, BADGES, computeNewBadges, skillMastery };
+export { buildBadgeTints, buildBadgeRarities, BADGE_TINTS, BADGE_RARITIES, BADGES, computeNewBadges, skillMastery };

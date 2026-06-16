@@ -1,13 +1,18 @@
 // GuitarPath — screens/ProgressScreen.jsx
 import { useState, useMemo } from "react";
-import { C, FONTS, R } from "../design/tokens.js";
+import { FONTS, R } from "../design/tokens.js";
+import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { ProgressBar } from "../design/ui.jsx";
-import { MODULE_THEME } from "../store/moduleTheme.js";
-import { BADGES, BADGE_RARITIES, skillMastery, BADGE_TINTS } from "../store/badges.js";
+import { buildModuleTheme } from "../store/moduleTheme.js";
+import { BADGES, buildBadgeTints, buildBadgeRarities, skillMastery } from "../store/badges.js";
 import { Gropi, GropiTip } from "../design/Gropi.jsx";
 
 function ProgressScreen({ state, content, onOpenSettings }) {
+  const C = useC();
+  const MODULE_THEME = buildModuleTheme(C);
+  const BADGE_TINTS = buildBadgeTints(C);
+  const BADGE_RARITIES = buildBadgeRarities(C);
   const xpInLevel = state.xp % 300;
   const xpToNext  = 300 - xpInLevel;
   const lvlPct    = Math.round((xpInLevel / 300) * 100);

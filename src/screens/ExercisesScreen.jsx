@@ -1,21 +1,25 @@
 // Groply — screens/ExercisesScreen.jsx
 import { useState, useEffect, useMemo } from "react";
-import { C, FONTS, R } from "../design/tokens.js";
+import { FONTS, R } from "../design/tokens.js";
+import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { ProgressBar, XPPop } from "../design/ui.jsx";
 import { Gropi } from "../design/Gropi.jsx";
-import { MODULE_THEME } from "../store/moduleTheme.js";
+import { buildModuleTheme } from "../store/moduleTheme.js";
 
 export let _FretboardExercise = null;
 export const setFretboardExercise = (fn) => { _FretboardExercise = fn; };
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const LEVEL_LABELS = { 1:"Fondamentaux", 2:"Intermédiaire", 3:"Avancé" };
-const LEVEL_COLORS = { 1:{ bg:C.greenL, border:C.greenBorder, text:C.greenD, dot:C.green }, 2:{ bg:C.amberL, border:C.amberBorder, text:C.amberD, dot:C.amber }, 3:{ bg:C.pinkL, border:C.pinkBorder, text:C.pinkD, dot:C.pink } };
+const makeLevelColors = (C) => ({ 1:{ bg:C.greenL, border:C.greenBorder, text:C.greenD, dot:C.green }, 2:{ bg:C.amberL, border:C.amberBorder, text:C.amberD, dot:C.amber }, 3:{ bg:C.pinkL, border:C.pinkBorder, text:C.pinkD, dot:C.pink } });
 const DIFF_STARS = { 1:"★☆☆", 2:"★★☆", 3:"★★★" };
 
 // ── ExercisesScreen ───────────────────────────────────────────────────────────
 function ExercisesScreen({ state, dispatch, content }) {
+  const C = useC();
+  const MODULE_THEME = buildModuleTheme(C);
+  const LEVEL_COLORS = makeLevelColors(C);
   const [filter, setFilter] = useState("all");
   const [active, setActive] = useState(null);
 
@@ -102,7 +106,7 @@ function ExercisesScreen({ state, dispatch, content }) {
               Recommandé pour toi
             </div>
             <button onClick={() => setActive(recommended)} style={{
-              width:"100%", background:`linear-gradient(135deg, ${C.primaryL}, #fff)`,
+              width:"100%", background:`linear-gradient(135deg, ${C.primaryL}, ${C.surface})`,
               border:`2px solid ${C.primaryBorder}`, borderRadius:R.xl,
               padding:"16px", cursor:"pointer", textAlign:"left",
               fontFamily:FONTS.title, marginBottom:20, display:"flex", gap:14, alignItems:"center",
@@ -224,6 +228,9 @@ function ExercisesScreen({ state, dispatch, content }) {
 
 // ── ExerciseDetail (logique inchangée, layout redesigné) ──────────────────────
 function ExerciseDetail({ ex, state, dispatch, onBack, content }) {
+  const C = useC();
+  const MODULE_THEME = buildModuleTheme(C);
+  const LEVEL_COLORS = makeLevelColors(C);
   const saved  = state.exerciseProgress[ex.id] || [];
   const [checked, setChecked] = useState(saved);
   const [done, setDone]       = useState(false);
@@ -355,6 +362,7 @@ function ExerciseDetail({ ex, state, dispatch, onBack, content }) {
 
 // ── Micro-composants ──────────────────────────────────────────────────────────
 function ExHeader({ ex, theme, lc }) {
+  const C = useC();
   return (
     <div style={{ background:lc.bg, border:`1.5px solid ${lc.border}`, borderRadius:R.lg, padding:"14px 16px", marginBottom:14 }}>
       <div style={{ display:"flex", alignItems:"center", gap:12 }}>
@@ -379,6 +387,7 @@ function ExHeader({ ex, theme, lc }) {
 }
 
 function LinkedLesson({ lesson }) {
+  const C = useC();
   return (
     <div style={{ background:C.primaryL, border:`1.5px solid ${C.primaryBorder}`, borderRadius:R.md, padding:"9px 13px", marginBottom:12, display:"flex", gap:8, alignItems:"center" }}>
       <Ti name="book-2" size={14} color={C.primary} />
@@ -388,6 +397,7 @@ function LinkedLesson({ lesson }) {
 }
 
 function Tip({ text }) {
+  const C = useC();
   return (
     <div style={{ background:C.amberL, borderRadius:R.md, padding:"11px 13px", marginBottom:12, border:`1.5px solid ${C.amberBorder}`, display:"flex", gap:8, alignItems:"flex-start" }}>
       <Ti name="bulb" size={15} color={C.amber} />

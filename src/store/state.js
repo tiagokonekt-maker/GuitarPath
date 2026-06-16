@@ -6,6 +6,7 @@ export const CONTENT_KEY = "guitarpath_v3_content";
 
 export const defaultState = () => ({
   xp: 0, level: 1, streak: 0, lastSessionDate: "",
+  theme: "auto",   // "auto" | "light" | "dark"
   completedExercises: {}, exerciseProgress: {},
   quizResults: {}, wrongQuiz: [],
   completedLessons: {},
@@ -16,6 +17,7 @@ export const defaultState = () => ({
   weeklyGoals: { sessions: 0, exercises: 0, quizzes: 0, week: "" },
   practiceLibre: { count: 0, totalMinutes: 0 },
   sessionHistory: [],
+  gropiTipDate: "",
 });
 
 export const loadState = () => {

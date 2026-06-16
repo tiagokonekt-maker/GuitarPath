@@ -1,11 +1,13 @@
 // GuitarPath — screens/ChallengeScreen.jsx
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { C, FONTS, R } from "../design/tokens.js";
+import { FONTS, R } from "../design/tokens.js";
+import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { ProgressBar, XPPop, Toast } from "../design/ui.jsx";
 import { DAILY_CHALLENGES, KEYS, MODES, TEMPOS, CONSTRAINTS } from "../store/challenges.js";
 
 function ChallengeScreen({ state, dispatch, navigate }) {
+  const C = useC();
   const ch = DAILY_CHALLENGES[state.dailyChallengeIdx % DAILY_CHALLENGES.length];
   const done = state.dailyChallengeDone;
   const [pop, setPop] = useState(false);

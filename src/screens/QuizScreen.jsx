@@ -1,6 +1,7 @@
 // Groply — screens/QuizScreen.jsx
 import { useState, useMemo } from "react";
-import { C, FONTS, R } from "../design/tokens.js";
+import { FONTS, R } from "../design/tokens.js";
+import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { ProgressBar, XPPop } from "../design/ui.jsx";
 import { Gropi } from "../design/Gropi.jsx";
@@ -10,7 +11,7 @@ export let _FretboardQuizQuestion = null;
 export const setFretboardQuizQuestion = (fn) => { _FretboardQuizQuestion = fn; };
 
 // ── Données modules quiz ──────────────────────────────────────────────────────
-const MODULES = [
+const makeModules = (C) => [
   { id:"neck",    label:"Manche",   icon:"map-2",    color:C.amber,  colorL:C.amberL,  colorD:C.amberD,  border:C.amberBorder },
   { id:"scales",  label:"Gammes",   icon:"music",    color:C.green,  colorL:C.greenL,  colorD:C.greenD,  border:C.greenBorder },
   { id:"harmony", label:"Harmonie", icon:"stack-2",  color:C.purple, colorL:C.purpleL, colorD:C.purpleD, border:C.purpleBorder },
@@ -20,6 +21,8 @@ const MODULES = [
 
 // ── QuizScreen ────────────────────────────────────────────────────────────────
 function QuizScreen({ state, dispatch, content }) {
+  const C = useC();
+  const MODULES = makeModules(C);
   const [mode, setMode] = useState(null);
 
   const totalAnswered = Object.keys(state.quizResults).length;
@@ -76,7 +79,7 @@ function QuizScreen({ state, dispatch, content }) {
 
         {/* Quiz du jour — carte hero */}
         <button onClick={() => launch("daily","Quiz du jour")} style={{
-          width:"100%", background:`linear-gradient(135deg, ${C.primaryL}, #fff)`,
+          width:"100%", background:`linear-gradient(135deg, ${C.primaryL}, ${C.surface})`,
           border:`2px solid ${C.primaryBorder}`, borderRadius:R.xl,
           padding:16, cursor:"pointer", textAlign:"left",
           fontFamily:FONTS.title, marginBottom:10,
@@ -101,7 +104,7 @@ function QuizScreen({ state, dispatch, content }) {
           disabled={wrongCount === 0}
           style={{
             width:"100%",
-            background: wrongCount > 0 ? `linear-gradient(135deg, ${C.pinkL}, #fff)` : C.surface2,
+            background: wrongCount > 0 ? `linear-gradient(135deg, ${C.pinkL}, ${C.surface})` : C.surface2,
             border:`2px solid ${wrongCount > 0 ? C.pinkBorder : C.border}`,
             borderRadius:R.xl, padding:16,
             cursor: wrongCount > 0 ? "pointer" : "default",
@@ -171,6 +174,7 @@ function QuizScreen({ state, dispatch, content }) {
 
 // ── QuizPlayer (logique 100% inchangée, layout retouché) ──────────────────────
 function QuizPlayer({ pool, title, state, dispatch, content, onDone }) {
+  const C = useC();
   const [questions] = useState(pool);
   const [idx, setIdx]   = useState(0);
   const [sel, setSel]   = useState(null);
@@ -367,6 +371,7 @@ function QuizPlayer({ pool, title, state, dispatch, content, onDone }) {
 
 // ── Micro-composants ──────────────────────────────────────────────────────────
 function FeedbackBox({ ok, xp, exp, lesson }) {
+  const C = useC();
   return (
     <div style={{ background:ok?C.greenL:C.coralL, borderRadius:R.md, padding:"12px 14px", marginBottom:12, border:`1.5px solid ${ok?C.greenBorder:C.coralBorder}` }}>
       <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:4 }}>
@@ -382,6 +387,7 @@ function FeedbackBox({ ok, xp, exp, lesson }) {
 }
 
 function NextBtn({ onClick, last }) {
+  const C = useC();
   return (
     <button onClick={onClick} style={{ width:"100%", padding:14, borderRadius:R.lg, border:"none", background:C.primary, color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer", fontFamily:FONTS.ui }}>
       {last ? "Voir les résultats" : "Suivant →"}

@@ -1,7 +1,8 @@
 // GuitarPath -- screens/JamSession.jsx
 // Outil interactif d'improvisation : gamme active, notes cibles, contraintes + backing track
 import { useState, useMemo, useEffect, useRef } from "react";
-import { C, FONTS, R } from "../design/tokens.js";
+import { FONTS, R } from "../design/tokens.js";
+import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { Gropi } from "../design/Gropi.jsx";
 import { Fretboard } from "../Fretboard.jsx";
@@ -11,7 +12,7 @@ import * as Tone from "tone";
 // ─────────────────────────────────────────────────────────────────────────
 // CONTEXTES
 // ─────────────────────────────────────────────────────────────────────────
-const CONTEXTS = [
+const makeContexts = (C) => [
   {
     id: "blues_minor",
     label: "Blues mineur",
@@ -122,7 +123,7 @@ const CONSTRAINTS = [
   { text: "Joue les yeux fermes. Sens le manche, ne le regarde pas.", level: "Difficile" },
 ];
 
-const LEVEL_COLOR = { "Facile": C.green, "Moyen": C.amber, "Difficile": C.coral };
+const makeLevelColor = (C) => ({ "Facile": C.green, "Moyen": C.amber, "Difficile": C.coral });
 
 // ─────────────────────────────────────────────────────────────────────────
 // BACKING TRACK PLAYER — Version Pro
@@ -550,6 +551,8 @@ function BackingTrackPlayer({ context, root, bpm }) {
 // COMPOSANT PRINCIPAL
 // ─────────────────────────────────────────────────────────────────────────
 export function JamSession({ onBack }) {
+  const C = useC();
+  const LEVEL_COLOR = makeLevelColor(C);
   const [contextId, setContextId] = useState("blues_minor");
   const [root, setRoot]           = useState("A");
   const [displayMode, setDisplayMode] = useState("notes");

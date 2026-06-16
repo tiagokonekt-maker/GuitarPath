@@ -1,7 +1,8 @@
 // GuitarPath -- screens/EarTraining.jsx
 // Quiz d'oreille : intervalles et qualite d'accords
 import { useState, useEffect, useRef } from "react";
-import { C, FONTS, R } from "../design/tokens.js";
+import { FONTS, R } from "../design/tokens.js";
+import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { Gropi } from "../design/Gropi.jsx";
 import { loadAudio, isAudioLoaded, generateEarTrainingQuestion, playInterval, playChord } from "../audioEngine.js";
@@ -12,6 +13,7 @@ const MODES = [
 ];
 
 export function EarTraining({ onBack, dispatch }) {
+  const C = useC();
   const [audioReady, setAudioReady]   = useState(isAudioLoaded());
   const [audioError, setAudioError]   = useState(false);
   const [mode, setMode]               = useState("interval");

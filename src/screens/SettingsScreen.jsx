@@ -1,13 +1,16 @@
 // GuitarPath — screens/SettingsScreen.jsx
 import { useState } from "react";
-import { C, FONTS, R } from "../design/tokens.js";
+import { FONTS, R } from "../design/tokens.js";
 import { Ti } from "../design/Ti.jsx";
 import { CONTENT_KEY } from "../store/state.js";
 import { BADGES } from "../store/badges.js";
 
+import { useC } from "../design/ThemeContext.jsx";
+
 const todayStr = () => new Date().toISOString().slice(0,10);
 
 function SettingsSection({ title, children }) {
+  const C = useC();
   return (
     <div style={{ background:C.surface, border:`1.5px solid ${C.border}`, borderRadius:R.lg, marginBottom:10, overflow:"hidden" }}>
       <div style={{ padding:"12px 16px 0", fontSize:10, fontWeight:700, letterSpacing:".07em", textTransform:"uppercase", color:C.text3 }}>
@@ -19,6 +22,7 @@ function SettingsSection({ title, children }) {
 }
 
 function SettingsRow({ label, value, last }) {
+  const C = useC();
   return (
     <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"11px 16px", borderBottom: last ? "none" : `1px solid ${C.borderSoft}` }}>
       <span style={{ fontSize:13, fontWeight:600, color:C.text }}>{label}</span>
@@ -28,6 +32,7 @@ function SettingsRow({ label, value, last }) {
 }
 
 function SettingsScreen({ state, dispatch, content, onClose, onImported, user, onSignOut }) {
+  const C = useC();
   const [importStatus, setImportStatus] = useState(null);
 
   const handleFile = (e) => {
@@ -93,7 +98,7 @@ function SettingsScreen({ state, dispatch, content, onClose, onImported, user, o
   return (
     <div>
       {/* En-tête */}
-      <div style={{ background:"linear-gradient(150deg,#FAF8F5,#F5F1EC)", padding:"22px 20px 18px" }}>
+      <div style={{ background:C.surface2, padding:"22px 20px 18px" }}>
         <button onClick={onClose} style={{ background:C.surface, border:`1.5px solid ${C.border}`, borderRadius:R.sm, width:36, height:36, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", marginBottom:14 }}>
           <Ti name="arrow-left" size={17} color={C.text} />
         </button>
@@ -101,6 +106,36 @@ function SettingsScreen({ state, dispatch, content, onClose, onImported, user, o
       </div>
 
       <div style={{ padding:"14px 20px 0" }}>
+
+        {/* Apparence */}
+        <SettingsSection title="Apparence">
+          <div style={{ padding:"12px 16px 14px" }}>
+            <div style={{ fontSize:12, color:C.text2, marginBottom:10 }}>Thème de l'application</div>
+            <div style={{ display:"flex", gap:8 }}>
+              {[
+                { val:"auto",  label:"Auto",   icon:"device-desktop",   desc:"Suit le système" },
+                { val:"light", label:"Clair",  icon:"sun",              desc:"Toujours clair" },
+                { val:"dark",  label:"Sombre", icon:"moon",             desc:"Toujours sombre" },
+              ].map(opt => {
+                const active = (state.theme || "auto") === opt.val;
+                return (
+                  <button key={opt.val} onClick={() => dispatch({ type:"SET_THEME", theme:opt.val })}
+                    style={{
+                      flex:1, padding:"10px 6px", borderRadius:R.md, cursor:"pointer",
+                      fontFamily:FONTS.ui, textAlign:"center",
+                      border:`1.5px solid ${active ? C.primary : C.border}`,
+                      background: active ? C.primaryL : C.surface,
+                      display:"flex", flexDirection:"column", alignItems:"center", gap:5,
+                    }}>
+                    <Ti name={opt.icon} size={18} color={active ? C.primary : C.text3}/>
+                    <span style={{ fontSize:11, fontWeight:700, color:active ? C.primaryD : C.text2 }}>{opt.label}</span>
+                    <span style={{ fontSize:9.5, color:C.text3, lineHeight:1.3 }}>{opt.desc}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </SettingsSection>
 
         {/* Compte */}
         <SettingsSection title="Compte">

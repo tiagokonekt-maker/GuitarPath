@@ -1,7 +1,8 @@
 // GuitarPath -- screens/ReviewSession.jsx
 // Session de revision intelligente -- mix QCM + fretboard
 import { useState, useCallback } from "react";
-import { C, FONTS, R } from "../design/tokens.js";
+import { FONTS, R } from "../design/tokens.js";
+import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { Gropi } from "../design/Gropi.jsx";
 import { updateReviewHistory } from "../store/reviewEngine.js";
@@ -11,6 +12,7 @@ export let _FretboardQuizQuestion = null;
 export const setFretboardQuizQuestion = (fn) => { _FretboardQuizQuestion = fn; };
 
 export function ReviewSession({ questions, state, dispatch, onDone }) {
+  const C = useC();
   const [idx, setIdx]           = useState(0);
   const [sel, setSel]           = useState(null);
   const [fretAnswered, setFretAnswered] = useState(false);

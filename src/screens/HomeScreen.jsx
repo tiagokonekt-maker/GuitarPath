@@ -1,7 +1,8 @@
 // Groply — screens/HomeScreen.jsx  v6
 // Gropi : conseil contextuel + session du jour fusionnés en un seul bloc
 import { useState, useMemo, useEffect } from "react";
-import { C, FONTS, R } from "../design/tokens.js";
+import { FONTS, R } from "../design/tokens.js";
+import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { ProgressBar } from "../design/ui.jsx";
 import { Gropi } from "../design/Gropi.jsx";
@@ -34,11 +35,13 @@ function pickTip(state, rs) {
 
 // ── Mascotte (pose coucou) ───────────────────────────────────────────────────
 function GropiWave({ size = 80 }) {
+  const C = useC();
   return <Gropi pose="wave" size={size} anim="wiggle" />;
 }
 
 // ── Bloc Gropi fusionné : conseil + session du jour + CTA unique ─────────────
 function GropiBlock({ state, dispatch, navigate, reviewStats, nextLesson }) {
+  const C = useC();
   const today = new Date().toISOString().split("T")[0];
   const dismissed = state.gropiTipDate === today;
 
@@ -166,6 +169,7 @@ function GropiBlock({ state, dispatch, navigate, reviewStats, nextLesson }) {
 
 // ── QuickCard ─────────────────────────────────────────────────────────────────
 function QuickCard({icon,iconBg,iconColor,label,onClick,done=false}) {
+  const C = useC();
   return (
     <button onClick={onClick} style={{
       background:C.surface,border:`1.5px solid ${done?C.greenBorder:C.border}`,
@@ -187,6 +191,7 @@ function QuickCard({icon,iconBg,iconColor,label,onClick,done=false}) {
 
 // ── Écran principal ───────────────────────────────────────────────────────────
 function HomeScreen({state,dispatch,navigate,content}) {
+  const C = useC();
   const xpInLevel = state.xp%300;
   const lvlPct    = Math.round((xpInLevel/300)*100);
   const xpToNext  = 300-xpInLevel;
@@ -211,15 +216,15 @@ function HomeScreen({state,dispatch,navigate,content}) {
       <div style={{
         backgroundImage:"url('/sunset.jpg')",
         backgroundSize:"cover",backgroundPosition:"center 30%",
-        padding:"28px 20px 22px",position:"relative",overflow:"hidden",
+        padding:"56px 20px 22px",position:"relative",overflow:"hidden",
       }}>
         <div style={{position:"absolute",inset:0,background:"rgba(160,55,0,.5)",pointerEvents:"none",zIndex:0}}/>
         <div style={{position:"absolute",top:-30,right:-35,width:130,height:130,background:"rgba(255,255,255,.08)",borderRadius:"50%",pointerEvents:"none"}}/>
 
         {/* Logo */}
-        <div style={{position:"absolute",top:28,left:"58%",transform:"translateX(-50%)",zIndex:4,display:"flex",alignItems:"center",gap:6}}>
-          <img src="/logo.svg" alt="Groply" style={{height:46,width:"auto",filter:"brightness(0) invert(1)",opacity:.92}}/>
-          <span style={{fontSize:24,fontWeight:800,color:"#fff",letterSpacing:".5px",opacity:.92,fontFamily:"'Nunito',sans-serif"}}>Groply</span>
+        <div style={{position:"absolute",top:18,left:"50%",transform:"translateX(-50%)",zIndex:4,display:"flex",alignItems:"center",gap:9}}>
+          <img src="/logo.svg" alt="Groply" style={{height:40,width:"auto",filter:"brightness(0) invert(1)",opacity:.95}}/>
+          <span style={{fontSize:26,fontWeight:800,color:"#fff",letterSpacing:"-.3px",opacity:.95,fontFamily:"'Nunito',sans-serif"}}>Groply</span>
         </div>
 
         {/* Gropi célébration */}
@@ -308,6 +313,7 @@ function HomeScreen({state,dispatch,navigate,content}) {
             done={state.dailyChallengeDone}
             onClick={()=>navigate("challenge")}
           />
+          <QuickCard icon="clock" iconBg={C.blueL} iconColor={C.blue} label="Boîte à outils" onClick={()=>navigate("toolbox")}/>
         </div>
       </div>
 

@@ -1,10 +1,13 @@
 // GuitarPath — design/ui.jsx
 // Composants UI réutilisables
 import { useEffect } from "react";
-import { C, FONTS } from "./tokens.js";
+import { FONTS } from "./tokens.js";
+import { useC } from "./ThemeContext.jsx";
 import { Ti } from "./Ti.jsx";
 
-export function ProgressBar({ pct, color = C.primary, h = 6 }) {
+export function ProgressBar({ pct, color, h = 6 }) {
+  const C = useC();
+  color = color || C.primary;
   return (
     <div style={{ background: C.border, borderRadius: 999, overflow: "hidden", height: h }}>
       <div style={{ width: `${Math.min(100, pct)}%`, height: "100%", background: color, borderRadius: 999, transition: "width 0.4s ease" }} />
@@ -13,6 +16,7 @@ export function ProgressBar({ pct, color = C.primary, h = 6 }) {
 }
 
 export function XPPop({ amount, onDone }) {
+  const C = useC();
   useEffect(() => {
     const t = setTimeout(onDone, 1400);
     return () => clearTimeout(t);
@@ -25,6 +29,7 @@ export function XPPop({ amount, onDone }) {
 }
 
 export function Toast({ msg, onClose }) {
+  const C = useC();
   useEffect(() => {
     const t = setTimeout(onClose, 3000);
     return () => clearTimeout(t);

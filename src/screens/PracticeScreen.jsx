@@ -1,11 +1,13 @@
 // GuitarPath — screens/PracticeScreen.jsx
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { C, FONTS, R } from "../design/tokens.js";
+import { FONTS, R } from "../design/tokens.js";
+import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { ProgressBar, XPPop, Toast } from "../design/ui.jsx";
 import { KEYS, MODES, TEMPOS, CONSTRAINTS } from "../store/challenges.js";
 
 function PracticeScreen({ state, dispatch }) {
+  const C = useC();
   const [tab, setTab] = useState("impro");
   const [current, setCurrent] = useState(null);
   const [pop, setPop] = useState(false);

@@ -1,10 +1,11 @@
 // Groply — screens/CoursesScreen.jsx  v6
 // Roadmap zigzag avec nœuds typés (leçon / quiz / exercice / checkpoint)
 import { useState, useMemo } from "react";
-import { C, FONTS, R } from "../design/tokens.js";
+import { FONTS, R } from "../design/tokens.js";
+import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { ProgressBar, XPPop } from "../design/ui.jsx";
-import { MODULE_THEME } from "../store/moduleTheme.js";
+import { buildModuleTheme } from "../store/moduleTheme.js";
 import { Gropi, GropiCoach, GropiBubble } from "../design/Gropi.jsx";
 
 export let _renderDiagramBlock = null;
@@ -34,6 +35,7 @@ const PULSE_CSS = `
 
 // ── Nœud individuel ───────────────────────────────────────────────────────────
 function PathNode({ lesson, index, state, th, onSelect, isCurrent, isLocked, gropiTip }) {
+  const C = useC();
   const done = !!state.completedLessons[lesson.id];
   const side = index%2===0 ? "left" : "right";
 
@@ -139,6 +141,7 @@ function PathNode({ lesson, index, state, th, onSelect, isCurrent, isLocked, gro
 
 // ── Checkpoint ────────────────────────────────────────────────────────────────
 function CheckpointNode({ isLocked, isDone, th }) {
+  const C = useC();
   const purple = C.purple || "#6B4FCC";
   const purpleL = C.purpleL || "#EDE8FC";
   const purpleB = C.purpleBorder || "#C4B8F0";
@@ -167,6 +170,7 @@ function CheckpointNode({ isLocked, isDone, th }) {
 
 // ── Connecteur tiretillé ──────────────────────────────────────────────────────
 function PathConnector({ fromSide, done }) {
+  const C = useC();
   const stroke = done ? C.green : "#E0D8CE";
   return (
     <div style={{position:"relative",height:38,overflow:"visible",margin:"0 26px"}} aria-hidden="true">
@@ -186,6 +190,7 @@ function PathConnector({ fromSide, done }) {
 
 // ── Roadmap d'un module ───────────────────────────────────────────────────────
 function ModuleRoadmap({ course, state, th, onSelectLesson, onBack }) {
+  const C = useC();
   const chapters = useMemo(()=>groupIntoChapters(course.lessons,4),[course.lessons]);
 
   const currentLessonId = useMemo(()=>{
@@ -208,11 +213,11 @@ function ModuleRoadmap({ course, state, th, onSelectLesson, onBack }) {
 
       {/* En-tête module */}
       <div style={{
-        backgroundImage:`linear-gradient(180deg,${th.colorL} 0%,${C.bg} 100%)`,
+        backgroundImage:`linear-gradient(180deg,${th.colorL}88 0%,${C.bg} 100%)`,
         padding:"18px 20px 16px",
       }}>
         <button onClick={onBack} style={{
-          background:"rgba(255,255,255,.8)",border:"none",
+          background:C.surface,border:`1.5px solid ${C.border}`,
           borderRadius:R.sm,width:36,height:36,
           display:"flex",alignItems:"center",justifyContent:"center",
           cursor:"pointer",marginBottom:12,
@@ -222,7 +227,7 @@ function ModuleRoadmap({ course, state, th, onSelectLesson, onBack }) {
 
         {/* Bannière chapitre courant */}
         <div style={{
-          background:"rgba(255,255,255,.82)",borderRadius:R.lg,
+          background:`${C.surface}CC`,borderRadius:R.lg,
           padding:"13px 15px",display:"flex",alignItems:"center",gap:12,
           border:`1px solid ${th.color}22`,
           boxShadow:`0 4px 16px ${th.color}18`,
@@ -343,6 +348,8 @@ function ModuleRoadmap({ course, state, th, onSelectLesson, onBack }) {
 
 // ── Liste des modules ─────────────────────────────────────────────────────────
 function CoursesScreen({ state, dispatch, content }) {
+  const C = useC();
+  const MODULE_THEME = buildModuleTheme(C);
   const [active,       setActive]       = useState(null);
   const [activeLesson, setActiveLesson] = useState(null);
 
@@ -436,6 +443,7 @@ function CoursesScreen({ state, dispatch, content }) {
 
 // ── Contenu d'une leçon ───────────────────────────────────────────────────────
 function LessonView({ lesson, state, dispatch, onBack }) {
+  const C = useC();
   const [done,setDone] = useState(!!state.completedLessons[lesson.id]);
   const [pop, setPop]  = useState(false);
 

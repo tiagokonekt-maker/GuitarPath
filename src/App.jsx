@@ -7,9 +7,11 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "./supabase/useAuth.js";
 import { useProgress } from "./supabase/useProgress.js";
 import { AuthScreen } from "./supabase/AuthScreen.jsx";
-import { C, FONTS } from "./design/tokens.js";
+import { FONTS } from "./design/tokens.js";
 import { Ti } from "./design/Ti.jsx";
 import { Toast } from "./design/ui.jsx";
+import { Gropi } from "./design/Gropi.jsx";
+import { ThemeProvider, useC } from "./design/ThemeContext.jsx";
 import { loadState, saveState, loadContent } from "./store/state.js";
 import { reducer } from "./store/reducer.js";
 import { BADGES, computeNewBadges } from "./store/badges.js";
@@ -29,6 +31,7 @@ const screensPromise = Promise.all([
   import("./screens/JamSession.jsx"),
   import("./screens/ReviewSession.jsx"),
   import("./screens/EarTraining.jsx"),
+  import("./screens/ToolboxScreen.jsx"),
 ]);
 
 // ── Contenu pédagogique (489kb) ───────────────────────────────────────────
@@ -54,10 +57,25 @@ const TABS = [
 // COMPOSANT PRINCIPAL
 // ═══════════════════════════════════════════════════════════════════════════
 export default function App() {
+  // On lit le thème depuis localStorage directement (avant le state React)
+  // pour éviter le flash de couleur au premier rendu
+  const [theme, setTheme] = useState(() => {
+    try { const s = JSON.parse(localStorage.getItem("groply_state") || "{}"); return s.theme || "auto"; }
+    catch { return "auto"; }
+  });
+  return (
+    <ThemeProvider theme={theme}>
+      <AppInner onThemeChange={setTheme} />
+    </ThemeProvider>
+  );
+}
+
+function AppInner({ onThemeChange }) {
   const { user, loading: authLoading, signIn, signUp, signOut } = useAuth();
   const { loadProgress, saveProgress, syncOfflineData } = useProgress(user?.id);
 
   const [state, setState] = useState(loadState);
+  const C = useC();   // thème dynamique — remplace l'import statique
   const [content, setContent] = useState(null);
   const [appReady, setAppReady] = useState(false);
   const [screen, setScreen] = useState("home");
@@ -93,6 +111,7 @@ export default function App() {
         JamSession:          screenModules[9].JamSession,
         ReviewSession:       screenModules[10].ReviewSession,
         EarTraining:         screenModules[11].EarTraining,
+        ToolboxScreen:       screenModules[12].ToolboxScreen,
       };
 
       // Charger le contenu (merge localStorage)
@@ -103,6 +122,13 @@ export default function App() {
       });
       setContent(c);
       setAppReady(true);
+    }).catch(err => {
+      console.error("Erreur chargement app:", err);
+      document.getElementById("root").innerHTML =
+        `<div style="padding:40px;font-family:monospace;color:#E85D1A;background:#1A1008;min-height:100vh">
+          <b>Erreur de chargement</b><br/><br/>${err?.message || err}<br/><br/>
+          <small>${err?.stack?.slice(0,400) || ""}</small>
+        </div>`;
     });
   }, []);
 
@@ -110,9 +136,10 @@ export default function App() {
     setState(prev => {
       const next = reducer(prev, action);
       saveState(next);
+      if (action.type === "SET_THEME") onThemeChange(action.theme);
       return next;
     });
-  }, []);
+  }, [onThemeChange]);
 
   // ── Badges ──────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -175,7 +202,7 @@ export default function App() {
   };
 
   const navigate = (s) => {
-    if (TABS.find(t => t.id === s) || ["challenge","practice","explorer","jam","review","ear"].includes(s)) {
+    if (TABS.find(t => t.id === s) || ["challenge","practice","explorer","jam","review","ear","toolbox"].includes(s)) {
       if (s === "review" && content) {
         const session = buildReviewSession(content.quiz, state.reviewHistory || {}, state.completedLessons, { targetCount: 12 });
         setReviewQuestions(session.questions);
@@ -202,7 +229,7 @@ export default function App() {
 
   const { HomeScreen, CoursesScreen, ExercisesScreen, QuizScreen,
           PracticeScreen, ChallengeScreen, ProgressScreen, SettingsScreen,
-          FretboardExplorer, JamSession, ReviewSession, EarTraining } = screens;
+          FretboardExplorer, JamSession, ReviewSession, EarTraining, ToolboxScreen } = screens;
 
   // ── Rendu principal ──────────────────────────────────────────────────────
   const renderScreen = () => {
@@ -219,6 +246,7 @@ export default function App() {
       case "ear":       return <EarTraining onBack={() => setScreen("home")} dispatch={dispatch} />;
       case "explorer":  return <FretboardExplorer onBack={() => setScreen("home")} />;
       case "jam":       return <JamSession onBack={() => setScreen("home")} />;
+      case "toolbox":   return <ToolboxScreen onBack={() => setScreen("home")} />;
       case "review":    return <ReviewSession questions={reviewQuestions} state={state} dispatch={dispatch} onDone={() => setScreen("home")} />;
       case "practice":  return <PracticeScreen state={state} dispatch={dispatch} />;
       case "challenge": return <ChallengeScreen state={state} dispatch={dispatch} navigate={navigate} />;
@@ -299,11 +327,11 @@ export default function App() {
                     minHeight: 44,
                   }}
                 >
-                  <Ti name={t.icon} size={21} color={active ? C.primary : C.text3} />
+                  <Ti name={t.icon} size={21} color={active ? C.primary : C.text2} />
                   <span style={{
                     fontSize: 10,
                     fontWeight: active ? 700 : 500,
-                    color: active ? C.primary : C.text3,
+                    color: active ? C.primary : C.text2,
                     letterSpacing: "0.01em",
                   }}>
                     {t.label}
@@ -320,6 +348,34 @@ export default function App() {
               );
             })}
           </div>
+        </div>
+      )}
+
+      {/* ── Bouton flottant : Boîte à outils ───────────────────────────── */}
+      {!showSettings && screen !== "toolbox" && (
+        <div style={{
+          position: "fixed", left: 0, right: 0,
+          bottom: `calc(${NAV_HEIGHT}px + env(safe-area-inset-bottom, 0px) + 14px)`,
+          maxWidth: 440, margin: "0 auto",
+          pointerEvents: "none", zIndex: 101,
+        }}>
+          <button
+            onClick={() => navigate("toolbox")}
+            aria-label="Boîte à outils"
+            style={{
+              pointerEvents: "auto",
+              position: "absolute", right: 16, bottom: 0,
+              width: 58, height: 58, borderRadius: "50%", border: "none", cursor: "pointer",
+              background: `linear-gradient(135deg,#FF9155,${C.primary})`,
+              boxShadow: `0 6px 20px ${C.primary}66`,
+              overflow: "visible",
+            }}
+          >
+            <Gropi pose="rocker" size={72} anim="bob" style={{
+              position: "absolute", bottom: -8, left: "calc(50% - 8px)", transform: "translateX(-50%)",
+              filter: "drop-shadow(0 4px 8px rgba(120,40,0,.35))",
+            }}/>
+          </button>
         </div>
       )}
     </>

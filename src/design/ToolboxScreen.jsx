@@ -74,8 +74,7 @@ export function Gropi({ pose = "happy", size = 80, anim = "none", style, onClick
 }
 
 // ── Résolution d'une teinte du thème ──────────────────────────────────────────
-function tintColors(tint) {
-  const C = useC();
+function tintColors(C, tint) {
   return {
     light:  C[tint + "L"]      || C.primaryL,
     border: C[tint + "Border"] || C[tint + "B"] || C.primaryBorder,
@@ -86,7 +85,7 @@ function tintColors(tint) {
 // ── Bulle de conseil statique (compat : API inchangée) ────────────────────────
 export function GropiTip({ pose = "wave", tint = "primary", eyebrow = "Conseil de Gropi", onClose, children }) {
   const C = useC();
-  const { light, border, deep } = tintColors(tint);
+  const { light, border, deep } = tintColors(C, tint);
   return (
     <div style={{
       display: "flex", gap: 11, alignItems: "flex-start", position: "relative",
@@ -123,7 +122,7 @@ const COACH = {
 export function GropiCoach({ variant = "tip", eyebrow, children }) {
   const C = useC();
   const cfg = COACH[variant] || COACH.tip;
-  const { light, border, deep } = tintColors(cfg.tint);
+  const { light, border, deep } = tintColors(C, cfg.tint);
   return (
     <div style={{ display: "flex", gap: 9, alignItems: "flex-end", margin: "2px 0" }}>
       <Gropi pose={cfg.pose} size={54} anim="bob" style={{ marginBottom: 2 }} />
@@ -153,7 +152,7 @@ export function GropiBubble({
 }) {
   const C = useC();
   const [open, setOpen] = useState(defaultOpen);
-  const { light, border, deep } = tintColors(tint);
+  const { light, border, deep } = tintColors(C, tint);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: side === "right" ? "flex-start" : "flex-end" }}>

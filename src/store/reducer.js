@@ -94,6 +94,12 @@ function reducer(state, action) {
     case "UNLOCK_BADGES":
       s.unlockedBadges = [...new Set([...s.unlockedBadges, ...action.badgeIds])];
       break;
+    case "DISMISS_GROPI_TIP":
+      s.gropiTipDate = today;
+      break;
+    case "SET_THEME":
+      s.theme = action.theme; // "auto" | "light" | "dark"
+      break;
     case "RESET":
       s = defaultState();
       break;
