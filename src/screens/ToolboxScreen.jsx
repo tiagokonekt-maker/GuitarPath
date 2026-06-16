@@ -234,7 +234,7 @@ function autoCorrelate(buf, sampleRate) {
   let rms = 0;
   for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
   rms = Math.sqrt(rms / SIZE);
-  if (rms < 0.003) return -1;   // silence (réduit de 0.01 → 0.003)
+  if (rms < 0.001) return -1;   // seuil bas pour guitares acoustiques douces
 
   // Clipping léger (seuil réduit pour préserver les cordes graves)
   let r1 = 0, r2 = SIZE - 1, thres = 0.1;  // 0.2 → 0.1
@@ -312,6 +312,7 @@ function Tuner() {
   const [freq, setFreq]       = useState(0);
   const [note, setNote]       = useState(null);
   const [error, setError]     = useState(null);
+  const [debug, setDebug]     = useState({ rms: 0, raw: 0 });
   const [tuningId, setTuningId] = useState("standard");
 
   const tuning  = TUNINGS.find(t => t.id === tuningId) || TUNINGS[0];
@@ -322,9 +323,12 @@ function Tuner() {
   const streamRef = useRef(null);
   const rafRef    = useRef(null);
   const bufRef    = useRef(null);
-  const freqHistRef = useRef([]);  // historique pour lissage
+  const freqHistRef  = useRef([]);  // historique pour lissage
+  const holdTimer    = useRef(null); // timer pour tenir la note après silence
+  const lastNoteRef  = useRef(null); // dernière note valide
 
   const stop = useCallback(() => {
+    if (holdTimer.current) { clearTimeout(holdTimer.current); holdTimer.current = null; }
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
     if (ctxRef.current && ctxRef.current.state !== "closed") ctxRef.current.close();
@@ -366,8 +370,23 @@ function Tuner() {
       freqHistRef.current = [];
       setActive(true); setError(null);
 
+      let frameCount = 0;
       const tick = () => {
         an.getFloatTimeDomainData(bufRef.current);
+
+        // Debug : niveau audio brut (RMS) toutes les 6 frames (~10x/sec)
+        frameCount++;
+        if (frameCount % 6 === 0) {
+          let sum = 0, peak = 0;
+          for (let i = 0; i < bufRef.current.length; i++) {
+            const v = bufRef.current[i];
+            sum += v * v;
+            if (Math.abs(v) > peak) peak = Math.abs(v);
+          }
+          const rms = Math.sqrt(sum / bufRef.current.length);
+          setDebug({ rms: rms.toFixed(4), raw: peak.toFixed(3) });
+        }
+
         const f = autoCorrelate(bufRef.current, ctx.sampleRate);
         if (f > 0) {
           // Lissage : garder les 4 dernières fréquences valides
@@ -377,13 +396,23 @@ function Tuner() {
           // Médiane pour éviter les sauts
           const sorted = [...hist].sort((a,b)=>a-b);
           const median = sorted[Math.floor(sorted.length/2)];
+          // Annuler le timer de hold si une nouvelle note arrive
+          if (holdTimer.current) { clearTimeout(holdTimer.current); holdTimer.current = null; }
+          lastNoteRef.current = median;
           setFreq(median);
           setNote(freqToNote(median));
         } else {
-          // Silence détecté → vider l'historique progressivement
+          // Silence → vider l'historique mais tenir la dernière note 1.5s
           const hist = freqHistRef.current;
           if (hist.length > 0) hist.shift();
-          if (hist.length === 0) { setFreq(0); setNote(null); }
+          if (hist.length === 0 && !holdTimer.current) {
+            holdTimer.current = setTimeout(() => {
+              setFreq(0);
+              setNote(null);
+              lastNoteRef.current = null;
+              holdTimer.current = null;
+            }, 1500);
+          }
         }
         rafRef.current = requestAnimationFrame(tick);
       };
