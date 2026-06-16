@@ -1,7 +1,7 @@
 // GuitarPath — store/reducer.js
 // Reducer principal — toutes les actions de l'app
 
-import { todayStr, weekStr, saveState } from "./state.js";
+import { todayStr, weekStr, saveState, defaultState } from "./state.js";
 import { DAILY_CHALLENGES } from "./challenges.js";
 
 function reducer(state, action) {
