@@ -334,19 +334,36 @@ function Tuner() {
 
   const start = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation:false, autoGainControl:false, noiseSuppression:false },
-      });
+      // Mobile : certains navigateurs ignorent les contraintes → fallback
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation:false, autoGainControl:false, noiseSuppression:false, latency:0 },
+        });
+      } catch {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      }
       streamRef.current = stream;
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      if (ctx.state === 'suspended') await ctx.resume();
       ctxRef.current = ctx;
       const src = ctx.createMediaStreamSource(stream);
+
+      // Filtre passe-bande guitare (70–1400 Hz) + gain x4 pour mobile
+      const hp = ctx.createBiquadFilter();
+      hp.type = 'highpass'; hp.frequency.value = 70; hp.Q.value = 0.5;
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass'; lp.frequency.value = 1400; lp.Q.value = 0.5;
+      const gain = ctx.createGain();
+      gain.gain.value = 4.0;
+
       const an = ctx.createAnalyser();
-      an.fftSize = 8192;   // 2048 → 8192 : meilleure résolution cordes graves
-      an.smoothingTimeConstant = 0;  // pas de lissage temporel pour réactivité max
-      src.connect(an);
+      an.fftSize = 8192;
+      an.smoothingTimeConstant = 0;
+      src.connect(hp); hp.connect(lp); lp.connect(gain); gain.connect(an);
       analyser.current = an;
       bufRef.current = new Float32Array(an.fftSize);
+      freqHistRef.current = [];
       setActive(true); setError(null);
 
       const tick = () => {
