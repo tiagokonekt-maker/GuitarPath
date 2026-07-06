@@ -1,4 +1,4 @@
-// GuitarPath — screens/SettingsScreen.jsx
+// Groply — screens/SettingsScreen.jsx
 import { useState } from "react";
 import { FONTS, R } from "../design/tokens.js";
 import { Ti } from "../design/Ti.jsx";
@@ -82,7 +82,7 @@ function SettingsScreen({ state, dispatch, content, onClose, onImported, user, o
     const blob = new Blob([JSON.stringify(payload,null,2)], { type:"application/json" });
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement("a");
-    a.href = url; a.download = `guitarpath-progression-${todayStr()}.json`;
+    a.href = url; a.download = `groply-progression-${todayStr()}.json`;
     document.body.appendChild(a); a.click();
     document.body.removeChild(a); URL.revokeObjectURL(url);
     setImportStatus({ ok:true, msg:"Progression exportée." });

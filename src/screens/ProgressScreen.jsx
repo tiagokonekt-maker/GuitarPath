@@ -1,4 +1,4 @@
-// GuitarPath — screens/ProgressScreen.jsx
+// Groply — screens/ProgressScreen.jsx
 import { useState, useMemo } from "react";
 import { FONTS, R } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
@@ -6,6 +6,7 @@ import { Ti } from "../design/Ti.jsx";
 import { ProgressBar } from "../design/ui.jsx";
 import { buildModuleTheme } from "../store/moduleTheme.js";
 import { BADGES, buildBadgeTints, buildBadgeRarities, skillMastery } from "../store/badges.js";
+import { levelProgress } from "../store/leveling.js";
 import { Gropi, GropiTip } from "../design/Gropi.jsx";
 
 function ProgressScreen({ state, content, onOpenSettings }) {
@@ -13,9 +14,7 @@ function ProgressScreen({ state, content, onOpenSettings }) {
   const MODULE_THEME = buildModuleTheme(C);
   const BADGE_TINTS = buildBadgeTints(C);
   const BADGE_RARITIES = buildBadgeRarities(C);
-  const xpInLevel = state.xp % 300;
-  const xpToNext  = 300 - xpInLevel;
-  const lvlPct    = Math.round((xpInLevel / 300) * 100);
+  const { xpInLevel, xpNeeded, xpToNext, pct: lvlPct, totalForNext } = levelProgress(state.xp);
 
   const skills = useMemo(() => [
     { label:"Manche",   id:"neck",    color:C.amber,   colorD:C.amberD },
@@ -77,13 +76,16 @@ function ProgressScreen({ state, content, onOpenSettings }) {
           }}>
             <Ti name="flame" size={14} color="#fff" />
             {state.streak} jours
+            {(state.streakFreezes||0) > 0 && (
+              <span style={{ fontSize:11, fontWeight:700, opacity:.85 }}>· {state.streakFreezes}❄️</span>
+            )}
           </div>
         </div>
 
         {/* XP bar */}
         <div style={{ display:"flex", justifyContent:"space-between", marginBottom:5 }}>
           <span style={{ fontSize:13, fontWeight:700, color:"#fff" }}>{state.xp} XP total</span>
-          <span style={{ fontSize:12, fontWeight:600, color:"rgba(255,255,255,.8)" }}>Niv. {state.level+1} → {state.xp + xpToNext} XP</span>
+          <span style={{ fontSize:12, fontWeight:600, color:"rgba(255,255,255,.8)" }}>Niv. {state.level+1} → {totalForNext} XP</span>
         </div>
         <div style={{ height:8, background:"rgba(255,255,255,.25)", borderRadius:99, overflow:"hidden" }}>
           <div style={{ width:`${lvlPct}%`, height:"100%", background:`linear-gradient(90deg,#FF9155,${C.primary})`, borderRadius:99, transition:"width .4s ease" }} />

@@ -1,24 +1,22 @@
-// Groply — screens/CoursesScreen.jsx  v6
-// Roadmap zigzag avec nœuds typés (leçon / quiz / exercice / checkpoint)
-import { useState, useMemo } from "react";
+// Groply — screens/CoursesScreen.jsx  v7 — LE PARCOURS
+// L'onglet Cours devient un parcours unique et continu : les modules sont
+// découpés en unités de 3-4 leçons entrelacées en spirale (pathEngine.js).
+// Déverrouillage par groupe : toutes les leçons d'une unité ouverte sont
+// accessibles ; l'unité suivante s'ouvre quand la précédente est complète.
+// Fin d'unité : un coffre de +40 XP à réclamer.
+import { useState, useMemo, useEffect, useRef } from "react";
 import { FONTS, R } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { ProgressBar, XPPop } from "../design/ui.jsx";
 import { buildModuleTheme } from "../store/moduleTheme.js";
+import { buildPath, getPathStats, UNIT_BONUS_XP } from "../store/pathEngine.js";
 import { Gropi, GropiCoach, GropiBubble } from "../design/Gropi.jsx";
 
 export let _renderDiagramBlock = null;
 export let _FretboardLesson    = null;
 export const setDiagramRenderer = (fn) => { _renderDiagramBlock = fn; };
 export const setFretboardLesson  = (fn) => { _FretboardLesson    = fn; };
-
-// ── Grouper en chapitres de N leçons ─────────────────────────────────────────
-function groupIntoChapters(lessons, n=4) {
-  const out=[];
-  for(let i=0;i<lessons.length;i+=n) out.push(lessons.slice(i,i+n));
-  return out;
-}
 
 // ── Animation CSS partagée ────────────────────────────────────────────────────
 const PULSE_CSS = `
@@ -30,6 +28,10 @@ const PULSE_CSS = `
     0%   { transform:scale(.7); opacity:0; }
     60%  { transform:scale(1.12); }
     100% { transform:scale(1); opacity:1; }
+  }
+  @keyframes chest-bounce {
+    0%, 100% { transform:translateY(0); }
+    50%      { transform:translateY(-5px); }
   }
 `;
 
@@ -43,7 +45,7 @@ function PathNode({ lesson, index, state, th, onSelect, isCurrent, isLocked, gro
   if(done)         { bg=th.colorL;    border=th.color;   iconEl=<Ti name="check" size={isCurrent?22:18} color={th.color}/>; }
   else if(isCurrent){ bg=C.primaryL;  border=C.primary;  iconEl=<Ti name="player-play" size={22} color={C.primary}/>; }
   else if(isLocked) { bg=C.surface2;  border=C.border;   iconEl=<Ti name="lock" size={16} color={C.text3}/>; }
-  else              { bg=C.surface;   border=C.border;    iconEl=<Ti name="book-2" size={16} color={C.text3}/>; }
+  else              { bg=C.surface;   border=th.color;   iconEl=<Ti name="book-2" size={17} color={th.color}/>; } // disponible dans l'unité ouverte
 
   const sz = isCurrent ? 64 : 54;
 
@@ -139,30 +141,51 @@ function PathNode({ lesson, index, state, th, onSelect, isCurrent, isLocked, gro
   );
 }
 
-// ── Checkpoint ────────────────────────────────────────────────────────────────
-function CheckpointNode({ isLocked, isDone, th }) {
+// ── Coffre de fin d'unité ─────────────────────────────────────────────────────
+// Remplace l'ancien checkpoint décoratif : celui-ci fait vraiment quelque chose.
+// États : verrouillé (gris) → en cours (x/y) → réclamable (rebond ambré) → ouvert.
+function UnitChest({ unit, th, onClaim }) {
   const C = useC();
-  const purple = C.purple || "#6B4FCC";
-  const purpleL = C.purpleL || "#EDE8FC";
-  const purpleB = C.purpleBorder || "#C4B8F0";
+  const { complete, bonusClaimable, bonusClaimed, done, total, unlocked } = unit;
+
+  let bg, border, icon, iconColor, label, anim = "none", clickable = false;
+  if (bonusClaimed) {
+    bg = C.greenL; border = C.greenBorder; icon = "check"; iconColor = C.green;
+    label = `Coffre ouvert · +${UNIT_BONUS_XP} XP`;
+  } else if (bonusClaimable) {
+    bg = C.amberL; border = C.amber; icon = "gift"; iconColor = C.amber;
+    label = `Ouvre ton coffre · +${UNIT_BONUS_XP} XP`;
+    anim = "chest-bounce 1.2s ease-in-out infinite"; clickable = true;
+  } else if (unlocked) {
+    bg = C.surface; border = C.border; icon = "gift"; iconColor = C.text3;
+    label = `Coffre · ${done}/${total} leçons`;
+  } else {
+    bg = C.surface2; border = C.border; icon = "lock"; iconColor = C.text3;
+    label = "Coffre verrouillé";
+  }
+
   return (
     <div style={{display:"flex",flexDirection:"column",alignItems:"center",margin:"14px 0 8px"}}>
-      <div style={{
-        width:72,height:72,borderRadius:"50%",
-        background:isDone?th.colorL:isLocked?C.surface2:purpleL,
-        border:`2px solid ${isDone?th.color:isLocked?C.border:purple}`,
-        display:"flex",alignItems:"center",justifyContent:"center",
-        opacity:isLocked?.5:1,
-        boxShadow:(!isLocked&&!isDone)?`0 6px 20px ${purple}33`:"none",
-      }}>
-        <Ti name={isDone?"trophy":isLocked?"lock":"trophy"} size={26}
-            color={isDone?th.color:isLocked?C.text3:purple}/>
-      </div>
+      <button
+        onClick={()=>clickable&&onClaim(unit)}
+        disabled={!clickable}
+        aria-label={label}
+        style={{
+          width:72,height:72,borderRadius:"50%",
+          background:bg, border:`2px solid ${border}`,
+          display:"flex",alignItems:"center",justifyContent:"center",
+          cursor:clickable?"pointer":"default",
+          opacity:(!unlocked)?.55:1,
+          boxShadow:bonusClaimable?`0 6px 20px ${C.amber}44`:"none",
+          animation:anim,
+        }}>
+        <Ti name={icon} size={26} color={iconColor}/>
+      </button>
       <div style={{
         fontSize:9,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",
-        color:C.text3,fontFamily:FONTS.ui,marginTop:7,textAlign:"center",
+        color:bonusClaimable?C.amberD:C.text3,fontFamily:FONTS.ui,marginTop:7,textAlign:"center",
       }}>
-        Checkpoint · quiz + manche + oreille
+        {label}
       </div>
     </div>
   );
@@ -188,83 +211,137 @@ function PathConnector({ fromSide, done }) {
   );
 }
 
-// ── Roadmap d'un module ───────────────────────────────────────────────────────
-function ModuleRoadmap({ course, state, th, onSelectLesson, onBack }) {
+// ── Bannière de l'unité courante ──────────────────────────────────────────────
+function CurrentUnitBanner({ stats, MODULE_THEME }) {
   const C = useC();
-  const chapters = useMemo(()=>groupIntoChapters(course.lessons,4),[course.lessons]);
+  const u = stats.currentUnit;
+  const th = u ? (MODULE_THEME[u.courseId]||{icon:"ti-book-2",color:C.primary,colorL:C.primaryL,colorD:C.primaryD}) : null;
 
-  const currentLessonId = useMemo(()=>{
-    for(const l of course.lessons) if(!state.completedLessons[l.id]) return l.id;
-    return null;
-  },[course.lessons,state.completedLessons]);
+  return (
+    <div style={{
+      background:`${C.surface}CC`,borderRadius:R.lg,
+      padding:"13px 15px",display:"flex",alignItems:"center",gap:12,
+      border:`1px solid ${th?`${th.color}22`:C.border}`,
+      boxShadow:th?`0 4px 16px ${th.color}18`:"none",
+    }}>
+      <div style={{
+        width:42,height:42,borderRadius:R.md,
+        background:th?th.colorL:C.greenL,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,
+        border:`1.5px solid ${th?`${th.color}44`:C.greenBorder}`,
+      }}>
+        <Ti name={th?th.icon.replace("ti-",""):"trophy"} size={20} color={th?th.color:C.green}/>
+      </div>
+      <div style={{flex:1}}>
+        <div style={{fontSize:9,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:th?th.colorD:C.greenD,fontFamily:FONTS.ui}}>
+          {u ? `Unité ${u.index+1} sur ${stats.units}` : "Parcours"}
+        </div>
+        <div style={{fontSize:15,fontWeight:800,color:th?th.colorD:C.greenD,letterSpacing:"-.2px",marginTop:2}}>
+          {u ? `${u.courseTitle} · ${u.moduleUnitIndex}/${u.moduleUnitCount}` : "Parcours terminé ! 🎉"}
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:9,marginTop:7}}>
+          <div style={{flex:1,height:5,background:"rgba(0,0,0,.08)",borderRadius:99,overflow:"hidden"}}>
+            <div style={{width:`${stats.pct}%`,height:"100%",background:th?th.color:C.green,borderRadius:99,transition:"width .4s ease"}}/>
+          </div>
+          <span style={{fontSize:11,fontWeight:700,color:th?th.colorD:C.greenD}}>{stats.doneLessons} / {stats.totalLessons}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-  const unlockedUntil = useMemo(()=>{
-    const idx=course.lessons.findIndex(l=>l.id===currentLessonId);
-    return idx===-1?course.lessons.length:idx;
-  },[course.lessons,currentLessonId]);
+// ── En-tête d'unité (séparateur sur le parcours) ─────────────────────────────
+function UnitHeader({ unit, th }) {
+  const C = useC();
+  return (
+    <div style={{
+      display:"flex",alignItems:"center",gap:10,
+      margin:unit.index===0?"4px 0 16px":"26px 0 16px",
+    }}>
+      <div style={{flex:1,height:1.5,background:unit.unlocked?`${th.color}44`:C.border}}/>
+      <div style={{
+        display:"flex",alignItems:"center",gap:7,
+        background:unit.unlocked?th.colorL:C.surface2,
+        border:`1.5px solid ${unit.unlocked?`${th.color}44`:C.border}`,
+        borderRadius:999,padding:"6px 14px",
+      }}>
+        <Ti name={unit.unlocked?th.icon.replace("ti-",""):"lock"} size={13} color={unit.unlocked?th.color:C.text3}/>
+        <span style={{
+          fontSize:10,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",
+          color:unit.unlocked?th.colorD:C.text3,fontFamily:FONTS.ui,
+        }}>
+          Unité {unit.index+1} · {unit.courseTitle}
+        </span>
+      </div>
+      <div style={{flex:1,height:1.5,background:unit.unlocked?`${th.color}44`:C.border}}/>
+    </div>
+  );
+}
 
-  const doneCount = course.lessons.filter(l=>state.completedLessons[l.id]).length;
-  const totalCount = course.lessons.length;
-  const pct = totalCount>0 ? Math.round(doneCount/totalCount*100) : 0;
+// ── LE PARCOURS ───────────────────────────────────────────────────────────────
+function CoursesScreen({ state, dispatch, content }) {
+  const C = useC();
+  const MODULE_THEME = buildModuleTheme(C);
+  const [activeLesson, setActiveLesson] = useState(null);
+  const [chestPop, setChestPop] = useState(false);
+  const currentRef = useRef(null);
+  const scrolledOnce = useRef(false);
+
+  const path  = useMemo(()=>buildPath(content, state),
+    [content, state.completedLessons, state.claimedUnits]);
+  const stats = useMemo(()=>getPathStats(content, state),
+    [content, state.completedLessons, state.claimedUnits]);
+
+  // Auto-scroll vers l'unité courante (une seule fois, si progression existante)
+  useEffect(()=>{
+    if (activeLesson || scrolledOnce.current) return;
+    if (stats.doneLessons === 0) { scrolledOnce.current = true; return; }
+    const t = setTimeout(()=>{
+      currentRef.current?.scrollIntoView({ behavior:"smooth", block:"center" });
+      scrolledOnce.current = true;
+    }, 200);
+    return ()=>clearTimeout(t);
+  }, [activeLesson, stats.doneLessons]);
+
+  const claimChest = (unit) => {
+    dispatch({ type:"CLAIM_UNIT_BONUS", unitId:unit.id, xp:UNIT_BONUS_XP,
+               title:`Coffre — Unité ${unit.index+1} · ${unit.courseTitle}` });
+    setChestPop(true);
+    setTimeout(()=>setChestPop(false), 1400);
+  };
+
+  if(activeLesson) return (
+    <LessonView lesson={activeLesson} state={state} dispatch={dispatch}
+      onBack={()=>setActiveLesson(null)}/>
+  );
 
   return (
     <div>
       <style>{PULSE_CSS}</style>
+      {chestPop && <XPPop amount={UNIT_BONUS_XP} onDone={()=>{}}/>}
 
-      {/* En-tête module */}
+      {/* ── En-tête ── */}
       <div style={{
-        backgroundImage:`linear-gradient(180deg,${th.colorL}88 0%,${C.bg} 100%)`,
-        padding:"18px 20px 16px",
+        backgroundImage:"url('/lavender.jpg')",
+        backgroundSize:"cover",backgroundPosition:"center 60%",
+        padding:"26px 20px 18px",position:"relative",overflow:"hidden",
       }}>
-        <button onClick={onBack} style={{
-          background:C.surface,border:`1.5px solid ${C.border}`,
-          borderRadius:R.sm,width:36,height:36,
-          display:"flex",alignItems:"center",justifyContent:"center",
-          cursor:"pointer",marginBottom:12,
-        }}>
-          <Ti name="arrow-left" size={17} color={th.colorD}/>
-        </button>
-
-        {/* Bannière chapitre courant */}
-        <div style={{
-          background:`${C.surface}CC`,borderRadius:R.lg,
-          padding:"13px 15px",display:"flex",alignItems:"center",gap:12,
-          border:`1px solid ${th.color}22`,
-          boxShadow:`0 4px 16px ${th.color}18`,
-        }}>
-          <div style={{
-            width:42,height:42,borderRadius:R.md,
-            background:th.colorL,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,
-            border:`1.5px solid ${th.color}44`,
-          }}>
-            <Ti name={th.icon.replace("ti-","")} size={20} color={th.color}/>
+        <div style={{position:"absolute",inset:0,background:"rgba(60,20,100,.52)",pointerEvents:"none"}}/>
+        <div style={{position:"relative",zIndex:1}}>
+          <div style={{fontSize:28,fontWeight:800,color:"#fff",letterSpacing:"-.4px"}}>Parcours</div>
+          <div style={{fontSize:13,fontWeight:500,color:"rgba(255,255,255,.78)",marginTop:2,marginBottom:14}}>
+            {stats.units} unités · {stats.totalLessons} leçons · {stats.pct}%
           </div>
-          <div style={{flex:1}}>
-            <div style={{fontSize:9,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:th.colorD,fontFamily:FONTS.ui}}>
-              {course.title}
-            </div>
-            <div style={{fontSize:15,fontWeight:800,color:th.colorD,letterSpacing:"-.2px",marginTop:2}}>
-              {currentLessonId
-                ? `Chapitre ${Math.floor(unlockedUntil/4)+1} — ${course.title}`
-                : "Module terminé ! 🎉"}
-            </div>
-            <div style={{display:"flex",alignItems:"center",gap:9,marginTop:7}}>
-              <div style={{flex:1,height:5,background:"rgba(0,0,0,.08)",borderRadius:99,overflow:"hidden"}}>
-                <div style={{width:`${pct}%`,height:"100%",background:th.color,borderRadius:99,transition:"width .4s ease"}}/>
-              </div>
-              <span style={{fontSize:11,fontWeight:700,color:th.colorD}}>{doneCount} / {totalCount}</span>
-            </div>
-          </div>
+          <CurrentUnitBanner stats={stats} MODULE_THEME={MODULE_THEME}/>
         </div>
       </div>
 
-      {/* Légende */}
-      <div style={{display:"flex",gap:14,padding:"10px 20px 4px",flexWrap:"wrap"}}>
+      {/* ── Légende ── */}
+      <div style={{display:"flex",gap:14,padding:"12px 20px 4px",flexWrap:"wrap"}}>
         {[
-          {color:th.color,    label:"Leçon"},
-          {color:C.primary,   label:"Quiz"},
-          {color:C.teal||"#1A8276", label:"Exercice"},
-          {color:C.purple||"#6B4FCC",label:"Checkpoint"},
+          {color:C.primary,          label:"En cours"},
+          {color:C.green,            label:"Complétée"},
+          {color:C.amber,            label:"Coffre"},
+          {color:C.text3,            label:"Verrouillée"},
         ].map(({color,label})=>(
           <span key={label} style={{display:"flex",alignItems:"center",gap:5,fontSize:9,fontWeight:700,letterSpacing:".06em",textTransform:"uppercase",color:C.text3}}>
             <span style={{width:9,height:9,borderRadius:"50%",background:color,display:"inline-block"}}/>
@@ -273,31 +350,22 @@ function ModuleRoadmap({ course, state, th, onSelectLesson, onBack }) {
         ))}
       </div>
 
-      {/* Roadmap */}
+      {/* ── Le parcours ── */}
       <div style={{padding:"8px 20px 40px"}}>
-        {chapters.map((chapterLessons,ci)=>{
-          const chapterDone = chapterLessons.every(l=>state.completedLessons[l.id]);
-          const cpLocked    = !chapterDone;
+        {path.map(unit=>{
+          const th = MODULE_THEME[unit.courseId]||{icon:"ti-book-2",color:C.primary,colorL:C.primaryL,colorD:C.primaryD};
+          // Leçon courante = première non complétée de l'unité courante
+          const currentLessonId = unit.isCurrent
+            ? (unit.lessons.find(l=>!state.completedLessons[l.id])?.id ?? null)
+            : null;
 
           return (
-            <div key={ci}>
-              {/* Titre chapitre */}
-              <div style={{
-                textAlign:"center",fontSize:10,fontWeight:700,
-                letterSpacing:".12em",textTransform:"uppercase",
-                color:C.text3,fontFamily:FONTS.ui,
-                margin:ci===0?"4px 0 16px":"20px 0 16px",
-              }}>
-                — Chapitre {ci+1} —
-              </div>
+            <div key={unit.id} ref={unit.isCurrent?currentRef:null}>
+              <UnitHeader unit={unit} th={th}/>
 
-              {/* Nœuds */}
-              {chapterLessons.map((lesson,li)=>{
-                const globalIdx = ci*4+li;
+              {unit.lessons.map((lesson,li)=>{
                 const isCurrent = lesson.id===currentLessonId;
-                const isLocked  = globalIdx>unlockedUntil;
                 const prevSide  = li===0 ? null : (li-1)%2===0?"left":"right";
-                const curSide   = li%2===0?"left":"right";
 
                 // Tip contextuel de Gropi sur le nœud en cours
                 let gropiTip = null;
@@ -305,10 +373,10 @@ function ModuleRoadmap({ course, state, th, onSelectLesson, onBack }) {
                   if (lesson.gropiTip) {
                     gropiTip = lesson.gropiTip;            // tip rédigé dans content.js
                   } else {
-                    const remaining = chapterLessons.length - li;
+                    const remaining = unit.total - unit.done;
                     gropiTip = remaining > 1
-                      ? `Plus que ${remaining} leçons avant le checkpoint du chapitre ${ci+1} ! On avance pas à pas, prends ton temps sur celle-ci. 🎸`
-                      : `Dernière leçon avant le checkpoint ! Après, on teste tout : quiz, manche et oreille. Tu es prêt. 💪`;
+                      ? `Plus que ${remaining} leçons avant le coffre de l'unité ${unit.index+1} ! Tu peux les faire dans l'ordre que tu veux. 🎸`
+                      : `Dernière leçon de l'unité — le coffre t'attend juste après. Tu es prêt. 💪`;
                   }
                 }
 
@@ -317,125 +385,43 @@ function ModuleRoadmap({ course, state, th, onSelectLesson, onBack }) {
                     {li>0&&(
                       <PathConnector
                         fromSide={prevSide}
-                        done={!!state.completedLessons[chapterLessons[li-1].id]}
+                        done={!!state.completedLessons[unit.lessons[li-1].id]}
                       />
                     )}
                     <PathNode
                       lesson={lesson} index={li}
                       state={state} th={th}
-                      onSelect={onSelectLesson}
+                      onSelect={setActiveLesson}
                       isCurrent={isCurrent}
-                      isLocked={isLocked}
+                      isLocked={!unit.unlocked}
                       gropiTip={gropiTip}
                     />
                   </div>
                 );
               })}
 
-              {/* Connecteur → checkpoint */}
+              {/* Connecteur → coffre */}
               <PathConnector
-                fromSide={(chapterLessons.length-1)%2===0?"left":"right"}
-                done={chapterDone}
+                fromSide={(unit.lessons.length-1)%2===0?"left":"right"}
+                done={unit.complete}
               />
-              <CheckpointNode isLocked={cpLocked} isDone={chapterDone} th={th}/>
+              <UnitChest unit={unit} th={th} onClaim={claimChest}/>
             </div>
           );
         })}
-      </div>
-    </div>
-  );
-}
 
-// ── Liste des modules ─────────────────────────────────────────────────────────
-function CoursesScreen({ state, dispatch, content }) {
-  const C = useC();
-  const MODULE_THEME = buildModuleTheme(C);
-  const [active,       setActive]       = useState(null);
-  const [activeLesson, setActiveLesson] = useState(null);
-
-  if(activeLesson) return (
-    <LessonView lesson={activeLesson} state={state} dispatch={dispatch}
-      onBack={()=>setActiveLesson(null)}/>
-  );
-  if(active) {
-    const th = MODULE_THEME[active.id]||{icon:"ti-book-2",color:C.primary,colorL:C.primaryL,colorD:C.primaryD};
-    return (
-      <ModuleRoadmap
-        course={active} state={state} th={th}
-        onSelectLesson={setActiveLesson}
-        onBack={()=>setActive(null)}
-      />
-    );
-  }
-
-  const totalLessons = content.courses.reduce((a,c)=>a+c.lessons.length,0);
-
-  return (
-    <div>
-      {/* Header */}
-      <div style={{
-        backgroundImage:"url('/lavender.jpg')",
-        backgroundSize:"cover",backgroundPosition:"center 60%",
-        padding:"26px 20px 20px",position:"relative",overflow:"hidden",
-      }}>
-        <div style={{position:"absolute",inset:0,background:"rgba(60,20,100,.52)",pointerEvents:"none"}}/>
-        <div style={{position:"relative",zIndex:1}}>
-          <div style={{fontSize:28,fontWeight:800,color:"#fff",letterSpacing:"-.4px"}}>Cours</div>
-          <div style={{fontSize:13,fontWeight:500,color:"rgba(255,255,255,.78)",marginTop:2}}>
-            {content.courses.length} modules · {totalLessons} leçons
+        {/* Fin du parcours */}
+        {stats.pct===100&&(
+          <div style={{textAlign:"center",marginTop:20}}>
+            <Gropi pose="celebrate" size={130} anim="cheer" style={{margin:"0 auto"}}/>
+            <div style={{fontSize:17,fontWeight:800,color:C.greenD,marginTop:8,letterSpacing:"-.2px"}}>
+              Parcours complété ! 🎉
+            </div>
+            <div style={{fontSize:12,color:C.text2,marginTop:4}}>
+              Continue avec les révisions, la Jam et les défis pour entretenir tout ça.
+            </div>
           </div>
-        </div>
-      </div>
-
-      <div style={{padding:"16px 20px 0"}}>
-        {content.courses.map(c=>{
-          const total = c.lessons.length;
-          const done  = c.lessons.filter(l=>state.completedLessons[l.id]).length;
-          const pct   = total>0?Math.round(done/total*100):0;
-          const th    = MODULE_THEME[c.id]||{icon:"ti-book-2",color:C.primary,colorL:C.primaryL,colorD:C.primaryD};
-          // Leçon courante dans ce module
-          const nextL = c.lessons.find(l=>!state.completedLessons[l.id]);
-
-          return (
-            <button key={c.id} onClick={()=>setActive(c)} style={{
-              width:"100%",border:"none",cursor:"pointer",
-              textAlign:"left",fontFamily:FONTS.title,
-              borderRadius:R.xl,padding:"16px 18px",
-              marginBottom:12,position:"relative",overflow:"hidden",
-              background:th.colorL,
-              boxShadow:`0 4px 16px ${th.color}18`,
-            }}>
-              {/* Cercle déco */}
-              <div style={{position:"absolute",right:-20,top:-20,width:80,height:80,borderRadius:"50%",background:th.color,opacity:.12,pointerEvents:"none"}}/>
-
-              <div style={{display:"flex",alignItems:"center",gap:13,marginBottom:11,position:"relative",zIndex:1}}>
-                <div style={{width:46,height:46,borderRadius:R.md,background:"rgba(255,255,255,.65)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                  <Ti name={th.icon.replace("ti-","")} size={22} color={th.color}/>
-                </div>
-                <div style={{flex:1}}>
-                  <div style={{fontSize:15,fontWeight:800,color:th.colorD,letterSpacing:"-.2px"}}>{c.title}</div>
-                  <div style={{fontSize:11,fontWeight:500,color:th.colorD,opacity:.72,marginTop:1,lineHeight:1.4}}>{c.desc}</div>
-                </div>
-                <Ti name="chevron-right" size={16} color={th.color} style={{opacity:.6,flexShrink:0}}/>
-              </div>
-
-              <div style={{position:"relative",zIndex:1}}>
-                <ProgressBar pct={pct} color={th.color} h={5}/>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:6}}>
-                  <div style={{fontSize:11,fontWeight:700,color:th.colorD}}>
-                    {done} / {total} leçons · {pct}%
-                  </div>
-                  {nextL&&pct>0&&pct<100&&(
-                    <div style={{fontSize:10,fontWeight:600,color:th.colorD,opacity:.7}}>
-                      ▶ {nextL.title}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </button>
-          );
-        })}
-        <div style={{height:24}}/>
+        )}
       </div>
     </div>
   );
@@ -467,7 +453,7 @@ function LessonView({ lesson, state, dispatch, onBack }) {
         <button onClick={onBack} style={{background:C.surface,border:`1.5px solid ${C.border}`,borderRadius:R.sm,width:36,height:36,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>
           <Ti name="arrow-left" size={17} color={C.text}/>
         </button>
-        <span style={{fontSize:13,fontWeight:600,color:C.text2,fontFamily:FONTS.ui}}>Retour au module</span>
+        <span style={{fontSize:13,fontWeight:600,color:C.text2,fontFamily:FONTS.ui}}>Retour au parcours</span>
       </div>
       <div style={{padding:"16px 20px 0"}}>
         <h1 style={{margin:"0 0 6px",fontSize:22,fontWeight:800,lineHeight:1.25,letterSpacing:"-.3px",color:C.text}}>{lesson.title}</h1>
@@ -505,7 +491,7 @@ function LessonView({ lesson, state, dispatch, onBack }) {
             <div style={{ fontSize:20, fontWeight:800, color:C.greenD, letterSpacing:"-.3px", marginTop:8 }}>Leçon complétée !</div>
             <div style={{ fontSize:13, color:C.green, marginTop:4 }}>+30 XP · Continue sur ta lancée 🎸</div>
             <button onClick={onBack} style={{ marginTop:16, padding:"12px 32px", borderRadius:R.lg, border:"none", background:C.green, color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:FONTS.ui, boxShadow:`0 4px 14px ${C.green}44` }}>
-              Retour au module
+              Retour au parcours
             </button>
           </div>
         ) : (

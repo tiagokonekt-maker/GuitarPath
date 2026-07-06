@@ -2,6 +2,8 @@ import { useCallback, useRef } from 'react';
 import { supabase } from './supabaseClient';
 
 const SAVE_DEBOUNCE_MS = 3000; // sauvegarde 3s après le dernier changement
+const OFFLINE_KEY = 'groply_offline_state';
+const LEGACY_OFFLINE_KEY = 'guitarpath_offline_state'; // migration
 
 export function useProgress(userId) {
   const debounceTimer = useRef(null);
@@ -63,14 +65,14 @@ export function useProgress(userId) {
       if (error) {
         console.error('saveProgress error:', error);
         // Fallback : sauvegarde en localStorage
-        localStorage.setItem('guitarpath_offline_state', JSON.stringify(state));
+        localStorage.setItem(OFFLINE_KEY, JSON.stringify(state));
       } else {
         // Nettoyage du fallback si sync réussie
-        localStorage.removeItem('guitarpath_offline_state');
+        localStorage.removeItem(OFFLINE_KEY);
       }
     } catch (e) {
       console.warn('Supabase offline, sauvegarde locale');
-      localStorage.setItem('guitarpath_offline_state', JSON.stringify(state));
+      localStorage.setItem(OFFLINE_KEY, JSON.stringify(state));
     }
   }, [userId]);
 
@@ -83,11 +85,12 @@ export function useProgress(userId) {
   // ── Sync offline → Supabase au retour en ligne ──────────────────────
   const syncOfflineData = useCallback(async () => {
     if (!userId) return;
-    const offline = localStorage.getItem('guitarpath_offline_state');
+    const offline = localStorage.getItem(OFFLINE_KEY) || localStorage.getItem(LEGACY_OFFLINE_KEY);
     if (!offline) return;
     try {
       const state = JSON.parse(offline);
       await saveProgress(state);
+      localStorage.removeItem(LEGACY_OFFLINE_KEY); // nettoyage post-migration
       console.log('Sync offline → Supabase OK');
     } catch (e) {
       console.error('Sync offline failed:', e);

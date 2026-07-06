@@ -1,5 +1,6 @@
-// Groply — screens/HomeScreen.jsx  v6
+// Groply — screens/HomeScreen.jsx  v7
 // Gropi : conseil contextuel + session du jour fusionnés en un seul bloc
+// v7 : courbe d'XP centralisée (leveling.js), objectifs hebdo, gels de série
 import { useState, useMemo, useEffect } from "react";
 import { FONTS, R } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
@@ -7,6 +8,9 @@ import { Ti } from "../design/Ti.jsx";
 import { ProgressBar } from "../design/ui.jsx";
 import { Gropi } from "../design/Gropi.jsx";
 import { getReviewStats } from "../store/reviewEngine.js";
+import { getNextLesson } from "../store/pathEngine.js";
+import { levelProgress } from "../store/leveling.js";
+import { weekStr } from "../store/state.js";
 
 // ── Conseils contextuels ─────────────────────────────────────────────────────
 const GROPI_TIPS = [
@@ -14,7 +18,7 @@ const GROPI_TIPS = [
   { cond:(s)=>s.streak===0&&Object.keys(s.completedLessons||{}).length>0, text:()=>"Ta flamme s'est éteinte. Mais tu es là, c'est déjà tout. Rallume-la aujourd'hui. 🔥" },
   { cond:(s)=>s.streak>=7,           text:(s)=>`${s.streak} jours d'affilée 🔥 La régularité, c'est 80 % du chemin. Continue.` },
   { cond:(s)=>s.streak>=3,           text:(s)=>`Série de ${s.streak} jours — tu construis quelque chose. Ne la brise pas. 🎸` },
-  { cond:(s)=>s.level>=3&&s.xp%300<30, text:()=>"Tu viens de passer un niveau — c'est le bon moment pour tenter quelque chose de nouveau." },
+  { cond:(s)=>s.level>=3&&levelProgress(s.xp).xpInLevel<30, text:()=>"Tu viens de passer un niveau — c'est le bon moment pour tenter quelque chose de nouveau." },
   { cond:(s)=>Object.keys(s.completedLessons||{}).length===0, text:()=>"Commence par une leçon : 10 minutes aujourd'hui valent mieux qu'une heure dimanche. 🎵" },
   { cond:()=>new Date().getDay()===1, text:()=>"Lundi = parfait pour revoir la semaine passée avant d'avancer. 🔄" },
   { cond:()=>new Date().getDay()===5, text:()=>"Vendredi soir + guitare = combo gagnant. 15 minutes de Jam, et la semaine se termine bien. 🎶" },
@@ -189,24 +193,82 @@ function QuickCard({icon,iconBg,iconColor,label,onClick,done=false}) {
   );
 }
 
+// ── Objectifs de la semaine ───────────────────────────────────────────────────
+// Ces compteurs étaient déjà alimentés par tous les écrans (UPDATE_WEEKLY)
+// mais n'étaient affichés nulle part. Les objectifs sont volontairement
+// atteignables : la régularité prime sur le volume.
+const WEEKLY_TARGETS = { sessions: 5, exercises: 8, quizzes: 12 };
+
+function WeeklyGoals({ state }) {
+  const C = useC();
+  const currentWeek = weekStr();
+  // Si la semaine stockée n'est plus la courante, tout repart à zéro à l'affichage
+  const g = state.weeklyGoals?.week === currentWeek
+    ? state.weeklyGoals
+    : { sessions: 0, exercises: 0, quizzes: 0 };
+
+  const rows = [
+    { key: "sessions",  label: "Sessions de pratique", icon: "player-play",  color: C.primary },
+    { key: "exercises", label: "Exercices",            icon: "guitar-pick",  color: C.green   },
+    { key: "quizzes",   label: "Quiz",                 icon: "help-circle",  color: C.amber   },
+  ];
+  const allDone = rows.every(r => (g[r.key] || 0) >= WEEKLY_TARGETS[r.key]);
+
+  return (
+    <div style={{margin:"16px 16px 0"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:9}}>
+        <span style={{fontSize:11,fontWeight:700,letterSpacing:".07em",textTransform:"uppercase",color:C.text3,fontFamily:FONTS.ui}}>
+          Objectifs de la semaine
+        </span>
+        {allDone && (
+          <span style={{fontSize:10,fontWeight:700,color:C.green,fontFamily:FONTS.ui}}>Semaine réussie 🎉</span>
+        )}
+      </div>
+      <div style={{
+        background:C.surface,border:`1.5px solid ${allDone?C.greenBorder:C.border}`,
+        borderRadius:R.lg,padding:"12px 14px",
+      }}>
+        {rows.map((r,i)=>{
+          const done   = g[r.key] || 0;
+          const target = WEEKLY_TARGETS[r.key];
+          const hit    = done >= target;
+          return (
+            <div key={r.key} style={{
+              display:"flex",alignItems:"center",gap:10,
+              padding:i>0?"9px 0 0":"0",
+              marginTop:i>0?9:0,
+              borderTop:i>0?`1px dashed ${C.border}`:"none",
+            }}>
+              <Ti name={hit?"circle-check":r.icon} size={15} color={hit?C.green:r.color}/>
+              <span style={{flex:1,fontSize:12.5,fontWeight:600,color:C.text}}>{r.label}</span>
+              <div style={{width:72}}>
+                <ProgressBar pct={Math.min(100,(done/target)*100)} color={hit?C.green:r.color} h={5}/>
+              </div>
+              <span style={{fontSize:11.5,fontWeight:700,color:hit?C.green:C.text2,minWidth:36,textAlign:"right"}}>
+                {Math.min(done,target)}/{target}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ── Écran principal ───────────────────────────────────────────────────────────
 function HomeScreen({state,dispatch,navigate,content}) {
   const C = useC();
-  const xpInLevel = state.xp%300;
-  const lvlPct    = Math.round((xpInLevel/300)*100);
-  const xpToNext  = 300-xpInLevel;
+  const { xpInLevel, xpNeeded, pct: lvlPct, xpToNext } = levelProgress(state.xp);
 
   const reviewStats = useMemo(()=>{
     if(!content.quiz) return {toReview:0,eligible:0,pctMastered:0,mastered:0};
     return getReviewStats(content.quiz,state.reviewHistory||{},state.completedLessons);
   },[content.quiz,state.reviewHistory,state.completedLessons]);
 
-  const nextLesson = useMemo(()=>{
-    for(const course of content.courses)
-      for(const lesson of course.lessons)
-        if(!state.completedLessons[lesson.id]) return {course,lesson};
-    return null;
-  },[content,state.completedLessons]);
+  const nextLesson = useMemo(()=>
+    // Suit l'ordre du Parcours (unités débloquées) — cohérent avec l'onglet Parcours
+    getNextLesson(content, state),
+  [content,state.completedLessons,state.claimedUnits]);
 
   const dateStr = new Date().toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
 
@@ -269,7 +331,7 @@ function HomeScreen({state,dispatch,navigate,content}) {
           {v:Object.keys(state.completedLessons).length,l:"Leçons"},
           {v:Object.keys(state.quizResults||{}).length,l:"Quiz"},
           {v:Object.keys(state.completedExercises).length,l:"Exercices"},
-          {v:`${state.streak}🔥`,l:"Série",color:C.primaryD},
+          {v:`${state.streak}🔥`,l:(state.streakFreezes||0)>0?`Série · ${state.streakFreezes}❄️`:"Série",color:C.primaryD},
         ].map((s,i)=>(
           <div key={i} style={{flexShrink:0,background:C.surface,border:`1.5px solid ${C.border}`,borderRadius:R.md,padding:"10px 14px",minWidth:68,textAlign:"center"}}>
             <div style={{fontSize:17,fontWeight:800,color:s.color||C.text,letterSpacing:"-.3px"}}>{s.v}</div>
@@ -282,13 +344,16 @@ function HomeScreen({state,dispatch,navigate,content}) {
       <div style={{margin:"14px 16px 0"}}>
         <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
           <span style={{fontSize:13,fontWeight:700,color:C.text}}>Niveau {state.level}</span>
-          <span style={{fontSize:12,fontWeight:600,color:C.primary}}>{xpInLevel} / 300 XP</span>
+          <span style={{fontSize:12,fontWeight:600,color:C.primary}}>{xpInLevel} / {xpNeeded} XP</span>
         </div>
         <div style={{height:8,background:C.border,borderRadius:99,overflow:"hidden"}}>
           <div style={{width:`${lvlPct}%`,height:"100%",background:`linear-gradient(90deg,#FF9155,${C.primary})`,borderRadius:99,transition:"width .4s ease"}}/>
         </div>
         <div style={{fontSize:11,color:C.text3,marginTop:4}}>{xpToNext} XP pour le niveau {state.level+1}</div>
       </div>
+
+      {/* ── OBJECTIFS HEBDO ── */}
+      <WeeklyGoals state={state}/>
 
       {/* ── GROPI BLOCK ── */}
       <GropiBlock

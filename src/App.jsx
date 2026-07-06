@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// GuitarPath — App.jsx
+// Groply — App.jsx
 // Point d'entrée principal : auth, routing, chargement async du contenu.
 // Toute la logique métier est dans screens/ et store/.
 // ═══════════════════════════════════════════════════════════════════════════
@@ -12,7 +12,7 @@ import { Ti } from "./design/Ti.jsx";
 import { Toast } from "./design/ui.jsx";
 import { Gropi } from "./design/Gropi.jsx";
 import { ThemeProvider, useC } from "./design/ThemeContext.jsx";
-import { loadState, saveState, loadContent } from "./store/state.js";
+import { loadState, saveState, loadContent, mergeStates, STATE_KEY } from "./store/state.js";
 import { reducer } from "./store/reducer.js";
 import { BADGES, computeNewBadges } from "./store/badges.js";
 import { buildReviewSession } from "./store/reviewEngine.js";
@@ -47,7 +47,7 @@ let screens = null;
 // ── Navigation ────────────────────────────────────────────────────────────
 const TABS = [
   { id: "home",      label: "Accueil",   icon: "home" },
-  { id: "courses",   label: "Cours",     icon: "book-2" },
+  { id: "courses",   label: "Parcours",  icon: "route" },
   { id: "exercises", label: "Exercices", icon: "guitar-pick" },
   { id: "quiz",      label: "Quiz",      icon: "help-circle" },
   { id: "progress",  label: "Progrès",   icon: "chart-bar" },
@@ -58,9 +58,12 @@ const TABS = [
 // ═══════════════════════════════════════════════════════════════════════════
 export default function App() {
   // On lit le thème depuis localStorage directement (avant le state React)
-  // pour éviter le flash de couleur au premier rendu
+  // pour éviter le flash de couleur au premier rendu.
+  // BUGFIX : on passe par STATE_KEY (l'ancienne version lisait une clé
+  // codée en dur qui ne correspondait pas à celle où l'état était sauvegardé,
+  // donc le thème choisi n'était jamais relu au démarrage).
   const [theme, setTheme] = useState(() => {
-    try { const s = JSON.parse(localStorage.getItem("groply_state") || "{}"); return s.theme || "auto"; }
+    try { const s = JSON.parse(localStorage.getItem(STATE_KEY) || "{}"); return s.theme || "auto"; }
     catch { return "auto"; }
   });
   return (
@@ -168,7 +171,10 @@ function AppInner({ onThemeChange }) {
         if (safe.xp == null) delete safe.xp;
         if (safe.level == null) delete safe.level;
         if (safe.streak == null) delete safe.streak;
-        setState(prev => ({ ...prev, ...safe }));
+        // Merge champ par champ (multi-appareils) au lieu d'écraser :
+        // deux appareils utilisés le même jour ne se font plus perdre
+        // mutuellement leur progression.
+        setState(prev => mergeStates(prev, safe));
       }
       setProgressLoaded(true);
     });
