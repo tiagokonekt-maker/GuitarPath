@@ -6,7 +6,7 @@ import { CONTENT_KEY } from "../store/state.js";
 import { BADGES } from "../store/badges.js";
 import { gradeForLevel } from "../store/grades.js";
 
-import { useC, useTheme } from "../design/ThemeContext.jsx";
+import { useC } from "../design/ThemeContext.jsx";
 
 const todayStr = () => new Date().toISOString().slice(0,10);
 
@@ -33,11 +33,7 @@ function SettingsRow({ label, value, last }) {
 }
 
 function SettingsScreen({ state, dispatch, content, onClose, onImported, user, onSignOut }) {
-  const { C, resolvedTheme } = useTheme();
-  // Bandeau du haut : gris neutre uni (demande explicite), pas la teinte
-  // chaude de C.surface2 — mais on garde un gris différent en sombre, sinon
-  // un gris clair figé serait illisible/faux dans ce mode-là.
-  const headerBg = resolvedTheme === "dark" ? "#2A2A2A" : "#F0F0EE";
+  const C = useC();
   const [importStatus, setImportStatus] = useState(null);
 
   // Ne garde que les items qui ont un id exploitable — un import dont les
@@ -123,11 +119,16 @@ function SettingsScreen({ state, dispatch, content, onClose, onImported, user, o
   return (
     <div>
       {/* En-tête */}
-      <div style={{ background:headerBg, padding:"22px 20px 18px" }}>
-        <button onClick={onClose} style={{ background:C.surface, border:`1.5px solid ${C.border}`, borderRadius:R.sm, width:36, height:36, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", marginBottom:14 }}>
+      <div style={{
+        backgroundColor:"#4a4a4a", backgroundImage:"url('/atelier.jpg')",
+        backgroundSize:"cover", backgroundPosition:"center 60%",
+        padding:"22px 20px 18px", position:"relative", overflow:"hidden",
+      }}>
+        <div style={{ position:"absolute", inset:0, background:"rgba(20,18,16,.6)", pointerEvents:"none" }}/>
+        <button onClick={onClose} style={{ position:"relative", zIndex:1, background:C.surface, border:`1.5px solid ${C.border}`, borderRadius:R.sm, width:36, height:36, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", marginBottom:14 }}>
           <Ti name="arrow-left" size={17} color={C.text} />
         </button>
-        <div style={{ fontSize:26, fontWeight:800, color:C.text, letterSpacing:"-.4px" }}>Réglages</div>
+        <div style={{ position:"relative", zIndex:1, fontSize:26, fontWeight:800, color:"#fff", letterSpacing:"-.4px" }}>Réglages</div>
       </div>
 
       <div style={{ padding:"14px 20px 0" }}>
