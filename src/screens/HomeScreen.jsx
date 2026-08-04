@@ -316,7 +316,7 @@ function HomeScreen({state,dispatch,navigate,content}) {
     <div>
       {/* ── HERO ── */}
       <div style={{
-        backgroundImage:"url('/sunset.jpg')",
+        backgroundImage:"url('/alhambra.jpg')",
         backgroundSize:"cover",backgroundPosition:"center 30%",
         padding:"56px 20px 22px",position:"relative",overflow:"hidden",
       }}>

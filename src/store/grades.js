@@ -13,7 +13,7 @@ export const GRADES = [
     blurb: "Tu poses les bases, un accord à la fois.",
     rarity: "commun",
     tint: "amber",
-    icon: "ti-seeding",
+    icon: "ti-baby-carriage",
   },
   {
     id: "gratteur_dimanche",
