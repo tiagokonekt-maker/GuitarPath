@@ -331,7 +331,7 @@ export function OnboardingScreen({ content, onComplete, onEvent }) {
         {/* ── Résultat du test ──────────────────────────────────────── */}
         {phase === "results" && overallTier && (() => {
           const totalCorrect = TESTABLE_MODULES.reduce((sum, m) => sum + (results[m] || 0), 0);
-          const { grade } = startFromScore(totalCorrect, PLACEMENT_QUESTION_COUNT);
+          const { grade, level } = startFromScore(totalCorrect, PLACEMENT_QUESTION_COUNT);
           return (
           <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 14, paddingTop: 12 }}>
             <Gropi pose="celebrate" size={100} anim="cheer" />
@@ -341,6 +341,13 @@ export function OnboardingScreen({ content, onComplete, onEvent }) {
             <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: C.text, letterSpacing: "-.2px" }}>
               {grade.label}
             </h1>
+            <div style={{
+              fontSize: 11, fontWeight: 700, color: C.primary,
+              background: C.primaryL, border: `1px solid ${C.primaryBorder}`,
+              borderRadius: 999, padding: "3px 11px", letterSpacing: ".03em",
+            }}>
+              Niveau {level}
+            </div>
             <p style={{ margin: 0, fontSize: 13, color: C.text2, lineHeight: 1.55, maxWidth: 300 }}>
               {grade.blurb}
             </p>
