@@ -123,7 +123,7 @@ export function FretboardExplorer({ onBack }) {
           background: isPlaying ? C.primaryL : C.primary,
           cursor: isPlaying ? "default" : "pointer",
           display: "flex", alignItems: "center", justifyContent: "center",
-          boxShadow: isPlaying ? "none" : "0 2px 8px rgba(127,119,221,0.3)",
+          boxShadow: isPlaying ? "none" : "0 2px 8px rgba(232,93,26,0.3)",
         }}>
           <Ti name={isPlaying ? "loader" : "volume"} size={16} color={isPlaying ? C.primary : "#fff"} />
         </button>

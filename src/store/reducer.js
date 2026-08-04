@@ -90,7 +90,7 @@ function reducer(state, action) {
         // 1 jour manqué + un gel disponible → la série est sauvée ❄️
         s.streakFreezes = s.streakFreezes - 1;
         s.streak = s.streak + 1;
-        pushHistory(s, { type: "freeze", title: "Série sauvée par un gel ❄️", xp: 0, date: today });
+        pushHistory(s, { type: "freeze", title: "Série sauvée par un gel", xp: 0, date: today });
       } else {
         // Plus d'un jour manqué (ou pas de gel) → la série repart
         s.streak = 1;
@@ -134,12 +134,34 @@ function reducer(state, action) {
       s.unlockedBadges = [...new Set([...s.unlockedBadges, ...action.badgeIds])];
       break;
 
+    case "SUBMIT_UNIT_CHECK": {
+      // Vérification de fin d'unité : tentatives illimitées, on garde le
+      // meilleur score et le statut passed dès qu'il est atteint une fois.
+      // Les questions ratées rejoignent wrongQuiz (révision espacée), sans
+      // toucher l'XP ni quizResults — ce n'est pas une session de quiz normale.
+      const prev = s.unitChecks?.[action.unitId];
+      const passed = action.pct >= (action.passPct ?? 70);
+      s.unitChecks = {
+        ...(s.unitChecks || {}),
+        [action.unitId]: {
+          passed: !!(prev?.passed || passed),
+          score: Math.max(prev?.score || 0, action.pct),
+          attempts: (prev?.attempts || 0) + 1,
+          lastAttemptAt: today,
+        },
+      };
+      if (action.wrongIds?.length) {
+        s.wrongQuiz = [...new Set([...s.wrongQuiz, ...action.wrongIds])];
+      }
+      break;
+    }
+
     case "CLAIM_UNIT_BONUS":
       // Coffre de fin d'unité du Parcours — réclamable une seule fois
       if (!s.claimedUnits?.[action.unitId]) {
         s.claimedUnits = { ...(s.claimedUnits || {}), [action.unitId]: today };
         gainXp(s, action.xp || 40);
-        pushHistory(s, { type: "bonus", id: action.unitId, title: action.title || "Coffre d'unité ouvert 🎁", xp: action.xp || 40, date: today });
+        pushHistory(s, { type: "bonus", id: action.unitId, title: action.title || "Coffre d'unité ouvert", xp: action.xp || 40, date: today });
       }
       break;
 
@@ -149,6 +171,31 @@ function reducer(state, action) {
 
     case "SET_THEME":
       s.theme = action.theme; // "auto" | "light" | "dark"
+      break;
+
+    case "COMPLETE_ONBOARDING":
+      // Rempli une seule fois à la première ouverture, via le test de
+      // placement adaptatif. Réordonne le Parcours (weakestModule +
+      // preferredModule) et adapte le ton de Gropi, ne coche aucune leçon.
+      // startXp (issu de startFromOverallTier) crédite un point de départ
+      // cohérent avec la vraie courbe de niveaux : un joueur qui teste bien
+      // démarre au bon grade, pas toujours à "Bébé rockeur".
+      // Garde-fou : si jamais dispatché deux fois (double-clic sur
+      // "terminer" avant le re-rendu), on ne crédite pas le XP une 2e fois.
+      if (s.onboarding?.done) break;
+      if (action.startXp) gainXp(s, action.startXp);
+      s.onboarding = {
+        done: true,
+        goal: action.goal || null,
+        preferredModule: action.preferredModule || null,
+        timePerWeek: action.timePerWeek || null,
+        skillLevels: action.skillLevels || { neck: null, scales: null, harmony: null, rhythm: null, impro: null },
+        overallTier: action.overallTier || null,
+        weakestModule: action.weakestModule || null,
+        startXp: action.startXp || 0,
+        skipped: !!action.skipped,
+        completedAt: action.completedAt || today,
+      };
       break;
 
     case "RESET":

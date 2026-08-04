@@ -34,8 +34,4 @@ const DAILY_CHALLENGES = [
   "Improvise en alternant 1 mesure jeu / 1 mesure silence pendant 5 minutes.",
 ];
 
-// ═══════════════════════════════════════════════════════════════════════════
-// BADGES — 24 badges, 8 catégories, 4 raretés
-// ═══════════════════════════════════════════════════════════════════════════
-
 export { KEYS, MODES, TEMPOS, CONSTRAINTS, DAILY_CHALLENGES };

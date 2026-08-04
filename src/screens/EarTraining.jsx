@@ -81,7 +81,9 @@ export function EarTraining({ onBack, dispatch }) {
     return (
       <div style={{ padding: "24px 16px 32px", display: "flex", flexDirection: "column", gap: 14 }}>
         <div style={{ textAlign: "center", padding: "20px 0" }}>
-          <div style={{ fontSize: 48, marginBottom: 10 }}>{pct >= 75 ? "🎧" : pct >= 50 ? "👂" : "📚"}</div>
+          <div style={{ marginBottom: 10 }}>
+            <Ti name={pct >= 75 ? "headphones" : pct >= 50 ? "ear" : "book-2"} size={44} color={pct >= 75 ? C.green : pct >= 50 ? C.amber : C.text3} />
+          </div>
           <div style={{ fontSize: 22, fontWeight: 700, color: C.text, fontFamily: FONTS.title }}>
             {pct >= 75 ? "Belle oreille !" : pct >= 50 ? "Bon travail !" : "Continue l'entrainement !"}
           </div>
@@ -184,7 +186,7 @@ export function EarTraining({ onBack, dispatch }) {
                 cursor: isPlaying ? "default" : "pointer",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 margin: "0 auto",
-                boxShadow: isPlaying ? "none" : "0 4px 20px rgba(127,119,221,0.4)",
+                boxShadow: isPlaying ? "none" : "0 4px 20px rgba(232,93,26,0.4)",
                 transition: "all 0.2s",
               }}>
                 <Ti name={isPlaying ? "loader" : "player-play"} size={28} color={isPlaying ? C.primary : "#fff"} />

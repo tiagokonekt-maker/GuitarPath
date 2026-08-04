@@ -7,10 +7,18 @@ export function useAuth() {
 
   useEffect(() => {
     // Session existante au démarrage
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        setUser(session?.user ?? null);
+        setLoading(false);
+      })
+      .catch(() => {
+        // Coupure réseau ou erreur Supabase au démarrage : on ne bloque pas
+        // l'utilisateur indéfiniment sur le spinner, on le renvoie vers l'écran
+        // de connexion (offline-first, il pourra réessayer).
+        setUser(null);
+        setLoading(false);
+      });
 
     // Écoute les changements de session
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {

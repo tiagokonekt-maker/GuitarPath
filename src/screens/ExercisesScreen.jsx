@@ -1,5 +1,5 @@
 // Groply — screens/ExercisesScreen.jsx
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { FONTS, R } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
@@ -235,6 +235,8 @@ function ExerciseDetail({ ex, state, dispatch, onBack, content }) {
   const [checked, setChecked] = useState(saved);
   const [done, setDone]       = useState(false);
   const [pop,  setPop]        = useState(false);
+  const popTimerRef = useRef(null);
+  useEffect(() => () => { if (popTimerRef.current) clearTimeout(popTimerRef.current); }, []);
   const theme  = MODULE_THEME[ex.mod] || MODULE_THEME.neck;
   const lc     = LEVEL_COLORS[ex.lvl||1];
 
@@ -279,13 +281,11 @@ function ExerciseDetail({ ex, state, dispatch, onBack, content }) {
   const toggle = (i) => setChecked(prev => prev.includes(i) ? prev.filter(x=>x!==i) : [...prev, i]);
   const finish = () => {
     setPop(true);
-    setTimeout(() => {
-      setPop(false);
-      dispatch({ type:"COMPLETE_EXERCISE", id:ex.id, title:ex.title, xp:ex.xp });
-      dispatch({ type:"MARK_STREAK" });
-      dispatch({ type:"UPDATE_WEEKLY", field:"exercises" });
-      setDone(true);
-    }, 1200);
+    dispatch({ type:"COMPLETE_EXERCISE", id:ex.id, title:ex.title, xp:ex.xp });
+    dispatch({ type:"MARK_STREAK" });
+    dispatch({ type:"UPDATE_WEEKLY", field:"exercises" });
+    setDone(true);
+    popTimerRef.current = setTimeout(() => setPop(false), 1200);
   };
   const linkedLesson = ex.courseLink ? content.courses.flatMap(c=>c.lessons).find(l=>l.id===ex.courseLink) : null;
 

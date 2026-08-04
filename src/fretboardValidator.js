@@ -230,7 +230,7 @@ export function checkLastClick(string, fret, concept, opts = {}) {
 // ───────────────────────────────────────────────────────────────────────────
 function generateFeedback(result, concept, mode) {
   if (result.complete) {
-    return "✅ Parfait — toutes les positions trouvées !";
+    return "Parfait — toutes les positions trouvées !";
   }
   const parts = [];
   if (result.missed > 0) {
@@ -239,7 +239,7 @@ function generateFeedback(result, concept, mode) {
   if (result.extras > 0) {
     parts.push(`${result.extras} erreur${result.extras > 1 ? "s" : ""}`);
   }
-  return `🟡 ${parts.join(" · ")} — en orange = manqué, en rouge = erreur.`;
+  return `${parts.join(" · ")} — en orange = manqué, en rouge = erreur.`;
 }
 
 // ───────────────────────────────────────────────────────────────────────────

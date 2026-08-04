@@ -1,16 +1,49 @@
-# React + Vite
+# Groply
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Application d'apprentissage de la guitare — manche, gammes, harmonie, rythme et improvisation — gamifiée (XP, niveaux, grades, badges, séries) et pensée mobile-first.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- React 19 + Vite
+- Supabase (auth + synchronisation de la progression, avec repli hors-ligne sur `localStorage`)
+- Tone.js pour l'audio (oreille musicale, lecture de gammes/accords)
+- PWA installable (service worker, manifest)
 
-## React Compiler
+## Développement
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+npm install
+npm run dev       # serveur de dev Vite, http://localhost:5173
+npm run build      # build de production dans dist/
+npm run preview    # prévisualiser le build de production en local
+npm run lint
+```
 
-## Expanding the ESLint configuration
+Variables d'environnement requises dans `.env.local` (jamais commité, voir `.gitignore`) :
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```
+VITE_SUPABASE_URL=...
+VITE_SUPABASE_ANON_KEY=...
+```
+
+`VITE_SUPABASE_ANON_KEY` est la clé publique Supabase (`sb_publishable_...`), prévue pour être exposée côté client — la sécurité réelle des données repose sur les policies Row Level Security configurées côté Supabase, pas sur le secret de cette clé.
+
+## Notes de déploiement (Vercel)
+
+- Le dossier `.vercel/` est créé automatiquement en liant le projet à Vercel. Il ne doit jamais être commité (déjà couvert par `.gitignore`).
+- `project.json` contient l'identifiant du projet Vercel (`projectId`) et celui de l'organisation/utilisateur propriétaire (`orgId`).
+
+## Structure
+
+```
+src/
+  App.jsx              point d'entrée, routing, auth, chargement du contenu
+  main.jsx             montage React + error boundary de secours
+  content.js           tout le contenu pédagogique (cours, quiz, exercices)
+  diagrams.jsx         rendu des diagrammes de leçon (gammes, accords, rythme...)
+  Fretboard.jsx         manche interactif (quiz tactile, explorateur, exercices)
+  design/              design system (tokens, thème clair/sombre, icônes, mascotte Gropi)
+  store/               logique métier pure (reducer, XP/niveaux, grades, badges, Parcours...)
+  screens/             écrans de l'app
+  supabase/             auth + synchronisation cloud
+```

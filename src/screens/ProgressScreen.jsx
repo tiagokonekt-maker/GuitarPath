@@ -7,6 +7,7 @@ import { ProgressBar } from "../design/ui.jsx";
 import { buildModuleTheme } from "../store/moduleTheme.js";
 import { BADGES, buildBadgeTints, buildBadgeRarities, skillMastery } from "../store/badges.js";
 import { levelProgress } from "../store/leveling.js";
+import { gradeForLevel } from "../store/grades.js";
 import { Gropi, GropiTip } from "../design/Gropi.jsx";
 
 function ProgressScreen({ state, content, onOpenSettings }) {
@@ -15,6 +16,7 @@ function ProgressScreen({ state, content, onOpenSettings }) {
   const BADGE_TINTS = buildBadgeTints(C);
   const BADGE_RARITIES = buildBadgeRarities(C);
   const { xpInLevel, xpNeeded, xpToNext, pct: lvlPct, totalForNext } = levelProgress(state.xp);
+  const grade = gradeForLevel(state.level);
 
   const skills = useMemo(() => [
     { label:"Manche",   id:"neck",    color:C.amber,   colorD:C.amberD },
@@ -57,6 +59,12 @@ function ProgressScreen({ state, content, onOpenSettings }) {
           </button>
         </div>
 
+        {/* Grade */}
+        <div style={{ display:"flex", alignItems:"center", gap:7, marginBottom:10 }}>
+          <Ti name={grade.icon.replace("ti-", "")} size={19} color="#fff" />
+          <span style={{ fontSize:17, fontWeight:800, color:"#fff", letterSpacing:"-.2px" }}>{grade.label}</span>
+        </div>
+
         {/* Niveau + streak */}
         <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:14, flexWrap:"wrap" }}>
           <div style={{
@@ -77,7 +85,7 @@ function ProgressScreen({ state, content, onOpenSettings }) {
             <Ti name="flame" size={14} color="#fff" />
             {state.streak} jours
             {(state.streakFreezes||0) > 0 && (
-              <span style={{ fontSize:11, fontWeight:700, opacity:.85 }}>· {state.streakFreezes}❄️</span>
+              <span style={{ fontSize:11, fontWeight:700, opacity:.85 }}>· {state.streakFreezes} gel{state.streakFreezes>1?"s":""}</span>
             )}
           </div>
         </div>
@@ -123,11 +131,11 @@ function ProgressScreen({ state, content, onOpenSettings }) {
             eyebrow="Gropi te parle"
           >
             {state.streak >= 7
-              ? `${state.streak} jours d'affilée — tu construis une vraie habitude. Continue ! 🔥`
+              ? `${state.streak} jours d'affilée. Tu tiens une vraie habitude, continue.`
               : state.streak >= 3
               ? `Série de ${state.streak} jours. La régularité, c'est 80 % du chemin.`
               : state.streak === 0
-              ? "Ta flamme s'est éteinte — mais une seule session suffit pour la rallumer. 🎸"
+              ? "Ta série est retombée à zéro. Une seule session suffit pour en relancer une."
               : "Chaque session compte. Reviens demain pour continuer ta progression."}
           </GropiTip>
         </div>

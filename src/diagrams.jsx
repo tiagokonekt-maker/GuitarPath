@@ -11,41 +11,39 @@
 //   { type: "chord_diagram", data: { ... } }   → diagramme d'accord vertical
 //   { type: "caged_form",    data: { ... } }   → forme CAGED annotée
 //   { type: "note_grid",     data: { ... } }   → grille de notes sur 1 corde
+//   { type: "circle_of_fifths", data: { ... } } → cercle des quintes (majeures + relatifs mineurs)
+//   { type: "degree_chart",  data: { ... } }   → les 7 degrés d'une gamme (nom, chiffrage, fonction)
 //
 // UTILISATION dans content.js :
 //   { type: "fretboard", caption: "...", data: { ... } }
 //
 // ═══════════════════════════════════════════════════════════════════════════
 
-// ─── Palette partagée (identique à App.jsx C tokens) ───────────────────────
-const DC = {
-  bg:       "#F8F7F4",
-  surface:  "#FFFFFF",
-  border:   "#E8E6E0",
-  text:     "#1A1714",
-  text2:    "#5F5E5A",
-  text3:    "#888780",
-  primary:  "#4C42C8",
-  primaryL: "#F4F2FE",
-  green:    "#1D9E75",
-  greenL:   "#E8F5EE",
-  amber:    "#BA7517",
-  amberL:   "#FCF5E4",
-  coral:    "#D85A30",
-  coralL:   "#FBEDE5",
-  pink:     "#D4537E",
-  pinkL:    "#FBEAF1",
-  fret:     "#C8C4B8",       // couleur des frettes
-  string:   "#9B9890",       // couleur des cordes
-  nut:      "#1A1714",       // sillet
-  dot:      "#E8E6E0",       // points d'incrustation
-};
+import { useMemo } from "react";
+import { useC } from "./design/ThemeContext.jsx";
 
 const FONT = '"Josefin Sans", "Roboto", sans-serif';
 const STRING_NAMES = ["Mi", "Si", "Sol", "Ré", "La", "Mi"]; // c1→c6, affiché c6→c1
 
+// Palette des notes actives — fonction du thème courant (plus de couleurs figées)
+function getNoteColors(DC) {
+  return {
+    primary: { fill: DC.primary,  text: "#fff" },
+    green:   { fill: DC.green,    text: "#fff" },
+    amber:   { fill: DC.amber,    text: "#fff" },
+    coral:   { fill: DC.coral,    text: "#fff" },
+    pink:    { fill: DC.pink,     text: "#fff" },
+    neutral: { fill: DC.text2,    text: "#fff" },
+    ghost:   { fill: DC.border,   text: DC.text2 },
+    open:    { fill: DC.surface,  text: DC.primary, stroke: DC.primary }, // corde à vide
+    muted:   { fill: "none",      text: DC.coral },                       // corde étouffée (X)
+  };
+}
+
 // ─── Wrapper commun ────────────────────────────────────────────────────────
-function DiagramCard({ caption, children, accent = DC.primary }) {
+function DiagramCard({ caption, children, accent }) {
+  const DC = useC();
+  const dotColor = accent || DC.primary;
   return (
     <div style={{
       background: DC.surface, borderRadius: 14,
@@ -64,7 +62,7 @@ function DiagramCard({ caption, children, accent = DC.primary }) {
           borderTop: `1px solid ${DC.border}`,
           display: "flex", alignItems: "center", gap: 6,
         }}>
-          <span style={{ width: 6, height: 6, borderRadius: "50%", background: accent, flexShrink: 0 }} />
+          <span style={{ width: 6, height: 6, borderRadius: "50%", background: dotColor, flexShrink: 0 }} />
           {caption}
         </div>
       )}
@@ -90,19 +88,9 @@ function DiagramCard({ caption, children, accent = DC.primary }) {
 //   markerFrets: [3,5,7,9,12], // cases avec points d'incrustation
 // }
 // ═══════════════════════════════════════════════════════════════════════════
-const NOTE_COLORS = {
-  primary: { fill: DC.primary,  text: "#fff" },
-  green:   { fill: DC.green,    text: "#fff" },
-  amber:   { fill: DC.amber,    text: "#fff" },
-  coral:   { fill: DC.coral,    text: "#fff" },
-  pink:    { fill: DC.pink,     text: "#fff" },
-  neutral: { fill: DC.text2,    text: "#fff" },
-  ghost:   { fill: DC.border,   text: DC.text2 },
-  open:    { fill: DC.surface,  text: DC.primary, stroke: DC.primary }, // corde à vide
-  muted:   { fill: "none",      text: DC.coral },                       // corde étouffée (X)
-};
-
 export function FretboardDiagram({ data, caption }) {
+  const DC = useC();
+  const NOTE_COLORS = useMemo(() => getNoteColors(DC), [DC]);
   const {
     frets = 5,
     startFret = 0,
@@ -144,7 +132,7 @@ export function FretboardDiagram({ data, caption }) {
         {startFret === 0 && (
           <rect x={LEFT_PAD - 4} y={TOP_PAD - 2}
             width={5} height={(STRINGS - 1) * STRING_SPACING + 4}
-            fill={DC.nut} rx={2}
+            fill={DC.text} rx={2}
           />
         )}
 
@@ -153,7 +141,7 @@ export function FretboardDiagram({ data, caption }) {
           <line key={f}
             x1={LEFT_PAD + i * FRET_SPACING + FRET_SPACING} y1={TOP_PAD - 2}
             x2={LEFT_PAD + i * FRET_SPACING + FRET_SPACING} y2={TOP_PAD + (STRINGS - 1) * STRING_SPACING + 2}
-            stroke={DC.fret} strokeWidth={1.5}
+            stroke={DC.border} strokeWidth={1.5}
           />
         ))}
 
@@ -162,7 +150,7 @@ export function FretboardDiagram({ data, caption }) {
           <line key={s}
             x1={LEFT_PAD - 4} y1={sy(s)}
             x2={LEFT_PAD + frets * FRET_SPACING} y2={sy(s)}
-            stroke={DC.string}
+            stroke={DC.text3}
             strokeWidth={s === 1 ? 1 : s === 2 ? 1.2 : s === 3 ? 1.5 : s === 4 ? 1.8 : s === 5 ? 2.2 : 2.6}
           />
         ))}
@@ -173,11 +161,11 @@ export function FretboardDiagram({ data, caption }) {
           const isDouble = f % 12 === 0 && f !== 0;
           return isDouble ? (
             <g key={f}>
-              <circle cx={x} cy={sy(2)} r={4} fill={DC.dot} />
-              <circle cx={x} cy={sy(5)} r={4} fill={DC.dot} />
+              <circle cx={x} cy={sy(2)} r={4} fill={DC.border} />
+              <circle cx={x} cy={sy(5)} r={4} fill={DC.border} />
             </g>
           ) : (
-            <circle key={f} cx={x} cy={sy(3.5)} r={4} fill={DC.dot} />
+            <circle key={f} cx={x} cy={sy(3.5)} r={4} fill={DC.border} />
           );
         })}
 
@@ -233,6 +221,13 @@ export function FretboardDiagram({ data, caption }) {
           const x = LEFT_PAD + (f - startFret - 1) * FRET_SPACING + FRET_SPACING / 2;
           const y = sy(s);
 
+          if (f < startFret + 1 || f > startFret + frets) {
+            if (typeof console !== "undefined" && console.warn) {
+              console.warn(`FretboardDiagram: note case ${f} hors de la fenêtre [${startFret + 1},${startFret + frets}] ignorée (corde ${s}). Ajuste startFret/frets dans le contenu.`);
+            }
+            return null;
+          }
+
           return (
             <g key={i}>
               <circle cx={x} cy={y} r={NOTE_R}
@@ -272,6 +267,8 @@ export function FretboardDiagram({ data, caption }) {
 // }
 // ═══════════════════════════════════════════════════════════════════════════
 export function ScalePattern({ data, caption }) {
+  const DC = useC();
+  const NOTE_COLORS = useMemo(() => getNoteColors(DC), [DC]);
   const {
     strings = [],      // [c6, c5, c4, c3, c2, c1]
     startFret = 4,
@@ -311,7 +308,7 @@ export function ScalePattern({ data, caption }) {
           <line key={i}
             x1={LEFT_PAD + i * FRET_SPACING} y1={TOP_PAD - 2}
             x2={LEFT_PAD + i * FRET_SPACING} y2={TOP_PAD + (STRINGS - 1) * STRING_SPACING + 2}
-            stroke={i === 0 ? DC.nut : DC.fret}
+            stroke={i === 0 ? DC.text : DC.border}
             strokeWidth={i === 0 ? 3 : 1.5}
           />
         ))}
@@ -321,7 +318,7 @@ export function ScalePattern({ data, caption }) {
           <line key={s}
             x1={LEFT_PAD} y1={sy(s)}
             x2={LEFT_PAD + displayFrets * FRET_SPACING} y2={sy(s)}
-            stroke={DC.string}
+            stroke={DC.text3}
             strokeWidth={s === 0 ? 2.4 : s === 1 ? 2 : s === 2 ? 1.6 : s === 3 ? 1.3 : s === 4 ? 1.1 : 0.9}
           />
         ))}
@@ -346,6 +343,12 @@ export function ScalePattern({ data, caption }) {
         {stringsArr.map((str, s) => {
           const { frets = [], root = [] } = str;
           return frets.map(f => {
+            if (f < startFret || f > endFret) {
+              if (typeof console !== "undefined" && console.warn) {
+                console.warn(`ScalePattern: note case ${f} hors de la fenêtre [${startFret},${endFret}] ignorée (corde index ${s}). Ajuste startFret/endFret dans le contenu.`);
+              }
+              return null;
+            }
             const isRoot = root.includes(f);
             const col = isRoot ? NOTE_COLORS[rootColor] : NOTE_COLORS[noteColor];
             const key = `${f},${s}`;
@@ -374,6 +377,126 @@ export function ScalePattern({ data, caption }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// 9. CIRCLE OF FIFTHS — cercle des quintes, majeures + relatifs mineurs
+//
+// data = {
+//   highlight: ["Do", "Sol", "Ré"],  // tonalités majeures à mettre en valeur
+//   showMinors: true,                 // afficher l'anneau des relatifs mineurs (défaut: true)
+// }
+// ═══════════════════════════════════════════════════════════════════════════
+const FIFTHS_MAJORS = ["Do","Sol","Ré","La","Mi","Si","Fa#","Réb","Lab","Mib","Sib","Fa"];
+const FIFTHS_MINORS = ["Lam","Mim","Sim","Fa#m","Do#m","Sol#m","Ré#m","Sibm","Fam","Dom","Solm","Rém"];
+
+export function CircleOfFifths({ data, caption }) {
+  const DC = useC();
+  const { highlight = [], showMinors = true } = data || {};
+  const cx = 110, cy = 110;
+  const rMaj = showMinors ? 86 : 92;
+  const rMin = 54;
+  const svgSize = 220;
+
+  const pos = (r, i) => {
+    const angle = (-90 + i * 30) * Math.PI / 180;
+    return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
+  };
+
+  return (
+    <DiagramCard caption={caption || "Cercle des quintes"} accent={DC.primary}>
+      <svg
+        width="100%"
+        viewBox={`0 0 ${svgSize} ${svgSize}`}
+        style={{ display: "block", minWidth: 220, maxWidth: 280, margin: "0 auto" }}
+        aria-label={caption || "Cercle des quintes"}
+      >
+        <circle cx={cx} cy={cy} r={rMaj} fill="none" stroke={DC.border} strokeWidth={1} />
+        {showMinors && <circle cx={cx} cy={cy} r={rMin} fill="none" stroke={DC.border} strokeWidth={1} />}
+
+        {FIFTHS_MAJORS.map((name, i) => {
+          const { x, y } = pos(rMaj, i);
+          const isHi = highlight.includes(name);
+          return (
+            <g key={name}>
+              <circle cx={x} cy={y} r={15}
+                fill={isHi ? DC.primary : DC.surface}
+                stroke={isHi ? DC.primary : DC.border}
+                strokeWidth={isHi ? 0 : 1.5}
+              />
+              <text x={x} y={y + 4} textAnchor="middle"
+                fontSize={name.length > 2 ? 8.5 : 10.5} fontWeight={700}
+                fill={isHi ? "#fff" : DC.text} fontFamily={FONT}
+              >{name}</text>
+            </g>
+          );
+        })}
+
+        {showMinors && FIFTHS_MINORS.map((name, i) => {
+          const { x, y } = pos(rMin, i);
+          const isHi = highlight.includes(FIFTHS_MAJORS[i]);
+          return (
+            <g key={name}>
+              <circle cx={x} cy={y} r={13}
+                fill={isHi ? DC.primaryL : DC.bg}
+                stroke={isHi ? DC.primary : DC.border}
+                strokeWidth={1}
+              />
+              <text x={x} y={y + 3} textAnchor="middle"
+                fontSize={7} fontWeight={600}
+                fill={isHi ? DC.primary : DC.text3} fontFamily={FONT}
+              >{name}</text>
+            </g>
+          );
+        })}
+      </svg>
+    </DiagramCard>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 10. DEGREE CHART — les 7 degrés d'une gamme (nom, chiffrage, fonction...)
+//
+// data = {
+//   boxes: [
+//     { top: "I", label: "Tonique", tint: "green" },
+//     { top: "ii", label: "Sus-tonique", tint: "primary" },
+//     ... (jusqu'à 7 entrées, tint parmi les clés de NOTE_COLORS)
+//   ],
+// }
+// ═══════════════════════════════════════════════════════════════════════════
+export function DegreeChart({ data, caption }) {
+  const DC = useC();
+  const NOTE_COLORS = useMemo(() => getNoteColors(DC), [DC]);
+  const { boxes = [] } = data || {};
+  return (
+    <DiagramCard caption={caption || "Les degrés de la gamme"} accent={DC.primary}>
+      <div style={{ padding: "10px 12px" }}>
+        {boxes.map((b, i) => {
+          const col = NOTE_COLORS[b.tint] || NOTE_COLORS.neutral;
+          return (
+            <div key={i} style={{
+              display: "flex", alignItems: "center", gap: 10,
+              padding: "6px 8px", borderRadius: 8, marginBottom: 3,
+              background: col.fill + "18",
+            }}>
+              <div style={{
+                minWidth: 28, height: 22, padding: "0 4px", borderRadius: 6,
+                background: col.fill,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 10, fontWeight: 700, fontFamily: FONT,
+                color: col.text, flexShrink: 0,
+              }}>{b.top}</div>
+              <div style={{ flex: 1, fontSize: 11.5, fontFamily: FONT, color: DC.text, fontWeight: 600 }}>{b.label}</div>
+              {b.sub && (
+                <div style={{ fontSize: 10, fontFamily: FONT, color: DC.text3, flexShrink: 0 }}>{b.sub}</div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </DiagramCard>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // 3. INTERVAL CHART — tableau des 12 intervalles
 //
 // data = {
@@ -397,6 +520,8 @@ const INTERVALS = [
 ];
 
 export function IntervalChart({ data, caption }) {
+  const DC = useC();
+  const NOTE_COLORS = useMemo(() => getNoteColors(DC), [DC]);
   const { highlight = [], showOnGuitar = false } = data || {};
 
   return (
@@ -475,6 +600,7 @@ export function IntervalChart({ data, caption }) {
 const STRING_LABELS = ["Mi", "La", "Ré", "Sol", "Si", "Mi"]; // [c6..c1] affiché gauche→droite
 
 export function ChordDiagram({ data, caption }) {
+  const DC = useC();
   const { name = "", frets = [], fingers = [], startFret = 1, barre } = data;
 
   const STRINGS  = 6;
@@ -510,7 +636,7 @@ export function ChordDiagram({ data, caption }) {
         {startFret === 1
           ? <rect x={LEFT_PAD - 2} y={TOP_PAD - 4}
               width={(STRINGS - 1) * COL_W + 4} height={5}
-              fill={DC.nut} rx={2}
+              fill={DC.text} rx={2}
             />
           : <text x={LEFT_PAD - 6} y={TOP_PAD + ROW_H / 2 + 4}
               textAnchor="end" fontSize={9} fill={DC.text3} fontFamily={FONT}
@@ -522,7 +648,7 @@ export function ChordDiagram({ data, caption }) {
           <line key={i}
             x1={LEFT_PAD} y1={TOP_PAD + i * ROW_H}
             x2={LEFT_PAD + (STRINGS - 1) * COL_W} y2={TOP_PAD + i * ROW_H}
-            stroke={DC.fret} strokeWidth={1.5}
+            stroke={DC.border} strokeWidth={1.5}
           />
         ))}
 
@@ -531,7 +657,7 @@ export function ChordDiagram({ data, caption }) {
           <line key={i}
             x1={sx(i)} y1={TOP_PAD}
             x2={sx(i)} y2={TOP_PAD + FRET_ROWS * ROW_H}
-            stroke={DC.string}
+            stroke={DC.text3}
             strokeWidth={i === 0 ? 2.2 : i === 1 ? 1.9 : i === 2 ? 1.6 : i === 3 ? 1.3 : i === 4 ? 1.1 : 0.9}
           />
         ))}
@@ -577,6 +703,14 @@ export function ChordDiagram({ data, caption }) {
             );
           }
           // Note enfoncée
+          // Filet de sécurité : si la case est hors des FRET_ROWS lignes
+          // affichées (mauvais startFret, voicing trop étiré...), on ignore
+          // plutôt que de laisser le point déborder silencieusement du cadre.
+          const rowIdx = f - startFret;
+          if (rowIdx < 0 || rowIdx >= FRET_ROWS) {
+            console.warn(`[ChordDiagram] Note hors zone visible ignorée : corde ${i}, case ${f} (startFret=${startFret})`);
+            return null;
+          }
           const y = fy(f);
           const finger = fingers[i] || 0;
           return (
@@ -611,6 +745,8 @@ export function ChordDiagram({ data, caption }) {
 const CAGED_COLORS = { C: "green", A: "amber", G: "pink", E: "primary", D: "coral" };
 
 export function CAGEDForm({ data, caption }) {
+  const DC = useC();
+  const NOTE_COLORS = useMemo(() => getNoteColors(DC), [DC]);
   const { form = "E", root = "La", rootFret = 5, notes = [], startFret = 4, frets = 5 } = data;
   const color = CAGED_COLORS[form] || "primary";
   const tint = NOTE_COLORS[color];
@@ -655,6 +791,8 @@ export function CAGEDForm({ data, caption }) {
 // }
 // ═══════════════════════════════════════════════════════════════════════════
 export function NoteGrid({ data, caption }) {
+  const DC = useC();
+  const NOTE_COLORS = useMemo(() => getNoteColors(DC), [DC]);
   const { string: strNum = 6, stringName = "Corde", highlights = [], maxFret = 12 } = data;
   const CELL_W = 26;
   const H = 44;
@@ -679,14 +817,14 @@ export function NoteGrid({ data, caption }) {
       >
         {/* Corde */}
         <line x1={LEFT_PAD} y1={STRING_Y} x2={svgW - 4} y2={STRING_Y}
-          stroke={DC.string} strokeWidth={strNum >= 4 ? 2.2 : 1.4} />
+          stroke={DC.text3} strokeWidth={strNum >= 4 ? 2.2 : 1.4} />
 
         {/* Frettes */}
         {Array.from({ length: maxFret + 1 }, (_, i) => i).map(f => (
           <line key={f}
             x1={LEFT_PAD + f * CELL_W} y1={STRING_Y - NOTE_R - 2}
             x2={LEFT_PAD + f * CELL_W} y2={STRING_Y + NOTE_R + 2}
-            stroke={f === 0 ? DC.nut : DC.fret}
+            stroke={f === 0 ? DC.text : DC.border}
             strokeWidth={f === 0 ? 3 : 1.2}
           />
         ))}
@@ -695,7 +833,7 @@ export function NoteGrid({ data, caption }) {
         {MARKER_FRETS.filter(f => f <= maxFret).map(f => (
           <circle key={f}
             cx={LEFT_PAD + f * CELL_W + CELL_W / 2} cy={STRING_Y + NOTE_R + 8}
-            r={3} fill={DC.dot}
+            r={3} fill={DC.border}
           />
         ))}
 
@@ -754,6 +892,8 @@ export function renderDiagramBlock(block, key) {
     case "note_grid":      return <NoteGrid key={key} data={data} caption={caption} />;
     case "rhythm_grid":    return <RhythmGrid key={key} data={data} caption={caption} />;
     case "strum_pattern":  return <StrumPattern key={key} data={data} caption={caption} />;
+    case "circle_of_fifths": return <CircleOfFifths key={key} data={data} caption={caption} />;
+    case "degree_chart":   return <DegreeChart key={key} data={data} caption={caption} />;
     default:               return null;
   }
 }
@@ -770,6 +910,7 @@ export function renderDiagramBlock(block, key) {
 // }
 // ═══════════════════════════════════════════════════════════════════════════
 export function RhythmGrid({ data, caption }) {
+  const DC = useC();
   const {
     beats = 4,
     subdivision = 8,
@@ -801,6 +942,10 @@ export function RhythmGrid({ data, caption }) {
     const sub = i % (subdivision / 4);
     if (sub === 0) return String(beat);
     if (subdivision === 8) return "et";
+    if (subdivision === 12) {
+      if (sub === 1) return "trip";
+      if (sub === 2) return "let";
+    }
     if (subdivision === 16) {
       if (sub === 1) return "e";
       if (sub === 2) return "et";
@@ -831,7 +976,7 @@ export function RhythmGrid({ data, caption }) {
           <line key={b}
             x1={LEFT_PAD + b * (subdivision / 4) * CELL_W} y1={TOP_PAD - 4}
             x2={LEFT_PAD + b * (subdivision / 4) * CELL_W} y2={TOP_PAD + CELL_H + 4}
-            stroke={b === 0 || b === beats ? DC.nut : DC.fret}
+            stroke={b === 0 || b === beats ? DC.text : DC.border}
             strokeWidth={b === 0 || b === beats ? 2 : 1}
           />
         ))}
@@ -887,26 +1032,33 @@ export function RhythmGrid({ data, caption }) {
 //   bpm: 80,
 // }
 // ═══════════════════════════════════════════════════════════════════════════
-const STRUM_COLORS = {
-  B:  { bg: DC.primary,  text: "#fff",        label: "↓" },
-  H:  { bg: "#A78BFA",   text: "#fff",        label: "↑" },
-  BH: { bg: DC.primary,  text: "#fff",        label: "↓↑" },
-  "-H":{ bg: "#A78BFA",  text: "#fff",        label: "↑" },
-  "-":{ bg: DC.surface2, text: DC.text3,      label: "–" },
-  x:  { bg: DC.amber,    text: "#fff",        label: "×" },
-};
+function getStrumColors(DC) {
+  return {
+    B:  { bg: DC.primary,  text: "#fff",        label: "↓" },
+    H:  { bg: DC.blue,     text: "#fff",        label: "↑" },
+    BH: { bg: DC.primary,  text: "#fff",        label: "↓↑" },
+    "-H":{ bg: DC.blue,    text: "#fff",        label: "↑" },
+    "-":{ bg: DC.surface2, text: DC.text3,      label: "–" },
+    x:  { bg: DC.amber,    text: "#fff",        label: "×" },
+  };
+}
 
-const STYLE_COLORS = {
-  folk:    DC.green,
-  pop:     DC.primary,
-  rock:    DC.coral,
-  reggae:  DC.amber,
-  blues:   DC.amber,
-  bossa:   DC.pink,
-  funk:    DC.coral,
-};
+function getStyleColors(DC) {
+  return {
+    folk:    DC.green,
+    pop:     DC.primary,
+    rock:    DC.coral,
+    reggae:  DC.amber,
+    blues:   DC.amber,
+    bossa:   DC.pink,
+    funk:    DC.coral,
+  };
+}
 
 export function StrumPattern({ data, caption }) {
+  const DC = useC();
+  const STRUM_COLORS = useMemo(() => getStrumColors(DC), [DC]);
+  const STYLE_COLORS = useMemo(() => getStyleColors(DC), [DC]);
   const { pattern = [], beats = 4, style = "folk", bpm } = data;
   const CELL_W = 40;
   const CELL_H = 44;
@@ -962,7 +1114,7 @@ export function StrumPattern({ data, caption }) {
             <line key={b}
               x1={x} y1={TOP_PAD - 2}
               x2={x} y2={TOP_PAD + CELL_H + 2}
-              stroke={DC.fret} strokeWidth={1}
+              stroke={DC.border} strokeWidth={1}
             />
           );
         })}
@@ -974,25 +1126,4 @@ export function StrumPattern({ data, caption }) {
       </svg>
     </DiagramCard>
   );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// UPDATE renderDiagramBlock — ajouter les 2 nouveaux types
-// ═══════════════════════════════════════════════════════════════════════════
-// NOTE : remplace la fonction renderDiagramBlock existante dans ce fichier
-// par celle-ci (ou ajoute les 2 cases dans le switch existant)
-
-export function renderDiagramBlockV2(block, key) {
-  const { type, data, caption } = block;
-  switch (type) {
-    case "fretboard":      return <FretboardDiagram key={key} data={data} caption={caption} />;
-    case "scale_pattern":  return <ScalePattern key={key} data={data} caption={caption} />;
-    case "interval_chart": return <IntervalChart key={key} data={data} caption={caption} />;
-    case "chord_diagram":  return <ChordDiagram key={key} data={data} caption={caption} />;
-    case "caged_form":     return <CAGEDForm key={key} data={data} caption={caption} />;
-    case "note_grid":      return <NoteGrid key={key} data={data} caption={caption} />;
-    case "rhythm_grid":    return <RhythmGrid key={key} data={data} caption={caption} />;
-    case "strum_pattern":  return <StrumPattern key={key} data={data} caption={caption} />;
-    default:               return null;
-  }
 }

@@ -1,13 +1,16 @@
 {
-  "name": "GuitarPath",
-  "short_name": "GuitarPath",
-  "description": "Progresser à la guitare – impro, théorie, manche",
+  "name": "Groply",
+  "short_name": "Groply",
+  "description": "Progresser à la guitare, vraiment — impro, théorie, manche",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#7F77DD",
+  "background_color": "#FFF7F0",
+  "theme_color": "#E85D1A",
   "orientation": "portrait",
   "icons": [
-    { "src": "/logo.svg", "sizes": "any", "type": "image/svg+xml" }
+    { "src": "/logo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }

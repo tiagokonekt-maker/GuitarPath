@@ -32,6 +32,7 @@ const screensPromise = Promise.all([
   import("./screens/ReviewSession.jsx"),
   import("./screens/EarTraining.jsx"),
   import("./screens/ToolboxScreen.jsx"),
+  import("./onboarding/OnboardingScreen.jsx"),
 ]);
 
 // ── Contenu pédagogique (489kb) ───────────────────────────────────────────
@@ -81,6 +82,7 @@ function AppInner({ onThemeChange }) {
   const C = useC();   // thème dynamique — remplace l'import statique
   const [content, setContent] = useState(null);
   const [appReady, setAppReady] = useState(false);
+  const [loadError, setLoadError] = useState(null);
   const [screen, setScreen] = useState("home");
   const [reviewQuestions, setReviewQuestions] = useState([]);
   const [toast, setToast] = useState(null);
@@ -115,6 +117,7 @@ function AppInner({ onThemeChange }) {
         ReviewSession:       screenModules[10].ReviewSession,
         EarTraining:         screenModules[11].EarTraining,
         ToolboxScreen:       screenModules[12].ToolboxScreen,
+        OnboardingScreen:    screenModules[13].OnboardingScreen,
       };
 
       // Charger le contenu (merge localStorage)
@@ -127,11 +130,7 @@ function AppInner({ onThemeChange }) {
       setAppReady(true);
     }).catch(err => {
       console.error("Erreur chargement app:", err);
-      document.getElementById("root").innerHTML =
-        `<div style="padding:40px;font-family:monospace;color:#E85D1A;background:#1A1008;min-height:100vh">
-          <b>Erreur de chargement</b><br/><br/>${err?.message || err}<br/><br/>
-          <small>${err?.stack?.slice(0,400) || ""}</small>
-        </div>`;
+      setLoadError(err);
     });
   }, []);
 
@@ -140,9 +139,16 @@ function AppInner({ onThemeChange }) {
       const next = reducer(prev, action);
       saveState(next);
       if (action.type === "SET_THEME") onThemeChange(action.theme);
+      if (action.type === "RESET" && user) {
+        // RESET est annoncé à l'utilisateur comme irréversible — on ne peut
+        // pas attendre le debounce de 3s de la sauvegarde normale, sinon
+        // fermer l'app juste après laisse l'ancien état cloud "regagner"
+        // au prochain chargement et annuler silencieusement le reset.
+        saveProgress(next);
+      }
       return next;
     });
-  }, [onThemeChange]);
+  }, [onThemeChange, user, saveProgress]);
 
   // ── Badges ──────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -164,7 +170,9 @@ function AppInner({ onThemeChange }) {
   // ── Sync Supabase ────────────────────────────────────────────────────────
   useEffect(() => {
     if (!user || progressLoaded) return;
+    let cancelled = false;
     loadProgress().then(cloudState => {
+      if (cancelled) return; // l'utilisateur a changé pendant l'appel : réponse périmée, on l'ignore
       if (cloudState) {
         // Sanitiser — évite que null de Supabase écrase les valeurs par défaut
         const safe = { ...cloudState };
@@ -178,6 +186,7 @@ function AppInner({ onThemeChange }) {
       }
       setProgressLoaded(true);
     });
+    return () => { cancelled = true; };
   }, [user, progressLoaded, loadProgress]);
 
   useEffect(() => { if (!user) setProgressLoaded(false); }, [user]);
@@ -218,6 +227,37 @@ function AppInner({ onThemeChange }) {
   };
 
   // ── Loaders ──────────────────────────────────────────────────────────────
+  if (loadError) return (
+    <div style={{
+      minHeight: "100vh", display: "flex", flexDirection: "column",
+      alignItems: "center", justifyContent: "center", gap: 14,
+      background: C.bg, color: C.text, padding: 24, textAlign: "center",
+      fontFamily: FONTS.title,
+    }}>
+      <Gropi pose="think" size={90} />
+      <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: "-.2px" }}>Oups, une fausse note.</div>
+      <div style={{ fontSize: 13, color: C.text2, maxWidth: 300, lineHeight: 1.5 }}>
+        Le contenu n'a pas pu se charger. Vérifie ta connexion et recharge l'app.
+      </div>
+      <button
+        onClick={() => window.location.reload()}
+        style={{
+          marginTop: 6, background: C.primary, color: "#fff", border: "none",
+          borderRadius: 12, padding: "12px 24px", fontSize: 14, fontWeight: 700,
+          cursor: "pointer", fontFamily: FONTS.ui,
+        }}
+      >
+        Recharger Groply
+      </button>
+      <details style={{ marginTop: 8, fontSize: 11, color: C.text3, maxWidth: 320 }}>
+        <summary style={{ cursor: "pointer" }}>Détails techniques</summary>
+        <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-word", textAlign: "left", background: C.surface2, padding: 8, borderRadius: 8, marginTop: 6 }}>
+          {loadError?.message || String(loadError)}
+        </pre>
+      </details>
+    </div>
+  );
+
   if (authLoading) return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: C.bg }}>
       <Ti name="music" size={42} color={C.primary} />
@@ -235,7 +275,21 @@ function AppInner({ onThemeChange }) {
 
   const { HomeScreen, CoursesScreen, ExercisesScreen, QuizScreen,
           PracticeScreen, ChallengeScreen, ProgressScreen, SettingsScreen,
-          FretboardExplorer, JamSession, ReviewSession, EarTraining, ToolboxScreen } = screens;
+          FretboardExplorer, JamSession, ReviewSession, EarTraining, ToolboxScreen,
+          OnboardingScreen } = screens;
+
+  // ── Onboarding : test de placement adaptatif, une seule fois ────────────
+  // Tant que ce n'est pas fait (ou explicitement passé), on ne montre rien
+  // d'autre — c'est ce qui détermine le grade/XP de départ et la priorité
+  // du Parcours (module le plus faible en premier).
+  if (!state.onboarding?.done) {
+    return (
+      <OnboardingScreen
+        content={content}
+        onComplete={(answers) => dispatch({ type: "COMPLETE_ONBOARDING", ...answers })}
+      />
+    );
+  }
 
   // ── Rendu principal ──────────────────────────────────────────────────────
   const renderScreen = () => {

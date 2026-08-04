@@ -11,6 +11,7 @@ import { Ti } from "../design/Ti.jsx";
 import { ProgressBar, XPPop } from "../design/ui.jsx";
 import { buildModuleTheme } from "../store/moduleTheme.js";
 import { buildPath, getPathStats, UNIT_BONUS_XP } from "../store/pathEngine.js";
+import { UnitCheckScreen } from "./UnitCheckScreen.jsx";
 import { Gropi, GropiCoach, GropiBubble } from "../design/Gropi.jsx";
 
 export let _renderDiagramBlock = null;
@@ -144,18 +145,22 @@ function PathNode({ lesson, index, state, th, onSelect, isCurrent, isLocked, gro
 // ── Coffre de fin d'unité ─────────────────────────────────────────────────────
 // Remplace l'ancien checkpoint décoratif : celui-ci fait vraiment quelque chose.
 // États : verrouillé (gris) → en cours (x/y) → réclamable (rebond ambré) → ouvert.
-function UnitChest({ unit, th, onClaim }) {
+function UnitChest({ unit, th, onClaim, onCheck }) {
   const C = useC();
-  const { complete, bonusClaimable, bonusClaimed, done, total, unlocked } = unit;
+  const { complete, bonusClaimable, bonusClaimed, needsCheck, check, done, total, unlocked } = unit;
 
-  let bg, border, icon, iconColor, label, anim = "none", clickable = false;
+  let bg, border, icon, iconColor, label, anim = "none", clickable = false, action = null;
   if (bonusClaimed) {
     bg = C.greenL; border = C.greenBorder; icon = "check"; iconColor = C.green;
     label = `Coffre ouvert · +${UNIT_BONUS_XP} XP`;
   } else if (bonusClaimable) {
     bg = C.amberL; border = C.amber; icon = "gift"; iconColor = C.amber;
     label = `Ouvre ton coffre · +${UNIT_BONUS_XP} XP`;
-    anim = "chest-bounce 1.2s ease-in-out infinite"; clickable = true;
+    anim = "chest-bounce 1.2s ease-in-out infinite"; clickable = true; action = () => onClaim(unit);
+  } else if (needsCheck) {
+    bg = C.primaryL; border = C.primary; icon = "clipboard-check"; iconColor = C.primary;
+    label = check?.attempts ? `Retenter la vérification (${check.score}%)` : "Vérifier l'unité";
+    anim = "chest-bounce 1.2s ease-in-out infinite"; clickable = true; action = () => onCheck(unit);
   } else if (unlocked) {
     bg = C.surface; border = C.border; icon = "gift"; iconColor = C.text3;
     label = `Coffre · ${done}/${total} leçons`;
@@ -167,7 +172,7 @@ function UnitChest({ unit, th, onClaim }) {
   return (
     <div style={{display:"flex",flexDirection:"column",alignItems:"center",margin:"14px 0 8px"}}>
       <button
-        onClick={()=>clickable&&onClaim(unit)}
+        onClick={()=>clickable&&action?.()}
         disabled={!clickable}
         aria-label={label}
         style={{
@@ -176,14 +181,14 @@ function UnitChest({ unit, th, onClaim }) {
           display:"flex",alignItems:"center",justifyContent:"center",
           cursor:clickable?"pointer":"default",
           opacity:(!unlocked)?.55:1,
-          boxShadow:bonusClaimable?`0 6px 20px ${C.amber}44`:"none",
+          boxShadow:(bonusClaimable||needsCheck)?`0 6px 20px ${border}44`:"none",
           animation:anim,
         }}>
         <Ti name={icon} size={26} color={iconColor}/>
       </button>
       <div style={{
         fontSize:9,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",
-        color:bonusClaimable?C.amberD:C.text3,fontFamily:FONTS.ui,marginTop:7,textAlign:"center",
+        color:(bonusClaimable||needsCheck)?C.primaryD||C.primary:C.text3,fontFamily:FONTS.ui,marginTop:7,textAlign:"center",
       }}>
         {label}
       </div>
@@ -282,6 +287,7 @@ function CoursesScreen({ state, dispatch, content }) {
   const C = useC();
   const MODULE_THEME = buildModuleTheme(C);
   const [activeLesson, setActiveLesson] = useState(null);
+  const [checkingUnit, setCheckingUnit] = useState(null);
   const [chestPop, setChestPop] = useState(false);
   const currentRef = useRef(null);
   const scrolledOnce = useRef(false);
@@ -314,6 +320,11 @@ function CoursesScreen({ state, dispatch, content }) {
       onBack={()=>setActiveLesson(null)}/>
   );
 
+  if(checkingUnit) return (
+    <UnitCheckScreen unit={checkingUnit} content={content} dispatch={dispatch}
+      onDone={()=>setCheckingUnit(null)}/>
+  );
+
   return (
     <div>
       <style>{PULSE_CSS}</style>
@@ -339,6 +350,7 @@ function CoursesScreen({ state, dispatch, content }) {
       <div style={{display:"flex",gap:14,padding:"12px 20px 4px",flexWrap:"wrap"}}>
         {[
           {color:C.primary,          label:"En cours"},
+          {color:C.primary,          label:"À vérifier"},
           {color:C.green,            label:"Complétée"},
           {color:C.amber,            label:"Coffre"},
           {color:C.text3,            label:"Verrouillée"},
@@ -375,8 +387,8 @@ function CoursesScreen({ state, dispatch, content }) {
                   } else {
                     const remaining = unit.total - unit.done;
                     gropiTip = remaining > 1
-                      ? `Plus que ${remaining} leçons avant le coffre de l'unité ${unit.index+1} ! Tu peux les faire dans l'ordre que tu veux. 🎸`
-                      : `Dernière leçon de l'unité — le coffre t'attend juste après. Tu es prêt. 💪`;
+                      ? `Plus que ${remaining} leçons avant la vérification de l'unité ${unit.index+1}. Tu peux les faire dans l'ordre que tu veux.`
+                      : `Dernière leçon de l'unité. La vérification t'attend juste après, tu es prêt.`;
                   }
                 }
 
@@ -405,7 +417,7 @@ function CoursesScreen({ state, dispatch, content }) {
                 fromSide={(unit.lessons.length-1)%2===0?"left":"right"}
                 done={unit.complete}
               />
-              <UnitChest unit={unit} th={th} onClaim={claimChest}/>
+              <UnitChest unit={unit} th={th} onClaim={claimChest} onCheck={setCheckingUnit}/>
             </div>
           );
         })}
@@ -432,17 +444,18 @@ function LessonView({ lesson, state, dispatch, onBack }) {
   const C = useC();
   const [done,setDone] = useState(!!state.completedLessons[lesson.id]);
   const [pop, setPop]  = useState(false);
+  const popTimerRef = useRef(null);
+
+  useEffect(() => () => { if (popTimerRef.current) clearTimeout(popTimerRef.current); }, []);
 
   const finish = () => {
     if(!done) {
       setPop(true);
-      setTimeout(()=>{
-        setPop(false);
-        dispatch({type:"COMPLETE_LESSON",id:lesson.id,title:lesson.title});
-        dispatch({type:"MARK_STREAK"});
-        dispatch({type:"UPDATE_WEEKLY",field:"sessions"});
-        setDone(true);
-      },1000);
+      dispatch({type:"COMPLETE_LESSON",id:lesson.id,title:lesson.title});
+      dispatch({type:"MARK_STREAK"});
+      dispatch({type:"UPDATE_WEEKLY",field:"sessions"});
+      setDone(true);
+      popTimerRef.current = setTimeout(()=>setPop(false),1000);
     }
   };
 
@@ -465,8 +478,8 @@ function LessonView({ lesson, state, dispatch, onBack }) {
             if(b.type==="h") return <h3 key={i} style={{margin:"8px 0 0",fontSize:17,fontWeight:800,color:C.primary,letterSpacing:"-.2px"}}>{b.text}</h3>;
             if(b.type==="tip") return <GropiCoach key={i} variant="tip">{b.text}</GropiCoach>;
             if(b.type==="img") return (
-              <div key={i} style={{background:C.surface2,borderRadius:R.md,padding:12,textAlign:"center"}}>
-                <img src={b.src} alt={b.alt||""} style={{maxWidth:"100%",borderRadius:8}}/>
+              <div key={i} style={{textAlign:"center"}}>
+                <img src={b.src} alt={b.alt||""} style={{maxWidth:"56%",maxHeight:150,width:"auto",height:"auto",margin:"0 auto",display:"block"}}/>
                 {b.caption&&<p style={{fontSize:12,color:C.text3,marginTop:8,fontStyle:"italic"}}>{b.caption}</p>}
               </div>
             );
@@ -474,6 +487,20 @@ function LessonView({ lesson, state, dispatch, onBack }) {
             const diagram = _renderDiagramBlock?_renderDiagramBlock(b,i):null;
             if(diagram) return diagram;
             if(b.type==="fretboard_interactive"&&_FretboardLesson) return <div key={i}><_FretboardLesson block={b}/></div>;
+            // Paragraphe avec illustration détourée à côté : le texte habille
+            // l'image (float), donc aucune coupure dans la lecture. overflow
+            // hidden contient le float pour qu'il ne déborde pas sur le bloc
+            // suivant quand le paragraphe est plus court que l'image.
+            if(b.img) return (
+              <div key={i} style={{overflow:"hidden"}}>
+                <img src={b.img} alt={b.imgAlt||""} style={{
+                  float:b.imgSide==="left"?"left":"right",
+                  width:"34%", maxWidth:124, height:"auto",
+                  margin:b.imgSide==="left"?"0 14px 4px 0":"0 0 4px 14px",
+                }}/>
+                <p style={{margin:0,fontSize:15,lineHeight:1.7,color:C.text}}>{b.text}</p>
+              </div>
+            );
             return <p key={i} style={{margin:0,fontSize:15,lineHeight:1.7,color:C.text}}>{b.text}</p>;
           })}
         </div>
@@ -489,7 +516,7 @@ function LessonView({ lesson, state, dispatch, onBack }) {
           <div style={{ background:C.greenL, borderRadius:R.xl, padding:"22px 20px", textAlign:"center", border:`1.5px solid ${C.greenBorder}`, marginBottom:8 }}>
             <Gropi pose="celebrate" size={120} anim="cheer" style={{ margin:"0 auto" }}/>
             <div style={{ fontSize:20, fontWeight:800, color:C.greenD, letterSpacing:"-.3px", marginTop:8 }}>Leçon complétée !</div>
-            <div style={{ fontSize:13, color:C.green, marginTop:4 }}>+30 XP · Continue sur ta lancée 🎸</div>
+            <div style={{ fontSize:13, color:C.green, marginTop:4 }}>+30 XP · Continue sur ta lancée</div>
             <button onClick={onBack} style={{ marginTop:16, padding:"12px 32px", borderRadius:R.lg, border:"none", background:C.green, color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:FONTS.ui, boxShadow:`0 4px 14px ${C.green}44` }}>
               Retour au parcours
             </button>

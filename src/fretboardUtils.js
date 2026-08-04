@@ -212,12 +212,22 @@ export function getScalePositions(root, scaleKey, maxFret = 12) {
       if (scaleNotes.includes(note)) {
         // Calcul de l'intervalle en demi-tons depuis la fondamentale
         const semitones = (noteIdx - rootIdx + 12) % 12;
-        const degreeIdx = scale.intervals.indexOf(semitones);
+        // Certaines gammes/accords ont des intervalles étendus au-delà d'une
+        // octave (ex: 14 = 9e). On cherche d'abord la valeur réduite, puis
+        // sa version +12 pour les degrés composés (9e, 11e, 13e...) — et on
+        // garde cette valeur réelle pour l'affichage (INTERVAL_NAMES[14]="9",
+        // pas INTERVAL_NAMES[2]="2").
+        let degreeIdx = scale.intervals.indexOf(semitones);
+        let actualInterval = semitones;
+        if (degreeIdx === -1) {
+          degreeIdx = scale.intervals.indexOf(semitones + 12);
+          if (degreeIdx !== -1) actualInterval = semitones + 12;
+        }
         positions.push({
           string: s,
           fret: f,
           note,
-          interval: semitones,
+          interval: actualInterval,
           // Degré dans la gamme (1-based), ex: 1 = fondamentale, 5 = quinte
           degree: degreeIdx + 1,
           isRoot: note === rootNorm,
@@ -249,12 +259,19 @@ export function getChordPositions(root, chordType, maxFret = 12) {
       const noteIdx = CHROMATIC_NOTES.indexOf(note);
       if (chordNotes.includes(note)) {
         const semitones = (noteIdx - rootIdx + 12) % 12;
-        const degreeIdx = chord.intervals.indexOf(semitones);
+        // Idem : intervalles étendus (14 = 9e) pour maj9/min9/add9, en
+        // gardant la valeur réelle pour l'affichage (INTERVAL_NAMES[14]="9").
+        let degreeIdx = chord.intervals.indexOf(semitones);
+        let actualInterval = semitones;
+        if (degreeIdx === -1) {
+          degreeIdx = chord.intervals.indexOf(semitones + 12);
+          if (degreeIdx !== -1) actualInterval = semitones + 12;
+        }
         positions.push({
           string: s,
           fret: f,
           note,
-          interval: semitones,
+          interval: actualInterval,
           degree: degreeIdx + 1,
           isRoot: note === rootNorm,
         });

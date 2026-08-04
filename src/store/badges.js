@@ -2,6 +2,7 @@
 // Système de badges, conditions de déverrouillage
 
 import { LIGHT } from "../design/tokens.js";
+import { GRADES } from "./grades.js";
 
 const buildBadgeTints = (C) => ({
   primary: { bg: C.primaryL, border: C.primaryBorder, icon: C.primary, text: C.primaryD },
@@ -9,6 +10,7 @@ const buildBadgeTints = (C) => ({
   amber:   { bg: C.amberL,   border: C.amberBorder,   icon: C.amber,   text: C.amberD },
   coral:   { bg: C.coralL,   border: C.coralBorder,   icon: C.coral,   text: C.coralD },
   pink:    { bg: C.pinkL,    border: "#EFC4D5",        icon: C.pink,    text: "#85304E" },
+  blue:    { bg: C.blueL,    border: C.blueBorder,     icon: C.blue,    text: C.blueD },
 });
 const buildBadgeRarities = (C) => ({
   commun:    { label: "commun",   bg: "#E5E3DC", fg: "#5F5E5A" },
@@ -25,9 +27,13 @@ const skillMastery = (state, content, courseId) => {
   const exs = content.exercises.filter(e => e.mod === courseId);
   const qzs = content.quiz.filter(q => q.courseId === courseId);
   if (exs.length === 0 && qzs.length === 0) return 0;
-  const exDone = exs.filter(e => state.completedExercises[e.id]).length / Math.max(1, exs.length);
-  const qzOk = qzs.filter(q => state.quizResults[q.id]?.correct).length / Math.max(1, qzs.length);
-  return Math.round((exDone * 0.6 + qzOk * 0.4) * 100);
+  const exDone = exs.length > 0 ? exs.filter(e => state.completedExercises[e.id]).length / exs.length : null;
+  const qzOk = qzs.length > 0 ? qzs.filter(q => state.quizResults[q.id]?.correct).length / qzs.length : null;
+  // Pondération 60/40 quand exercices ET quiz existent ; sinon on s'appuie
+  // entièrement sur celui qui existe — évite qu'un module sans quiz (Impro)
+  // plafonne structurellement à 60% même à 100% des exercices complétés.
+  if (exDone !== null && qzOk !== null) return Math.round((exDone * 0.6 + qzOk * 0.4) * 100);
+  return Math.round((exDone ?? qzOk) * 100);
 };
 const allModulesMastered = (state, content) =>
   content.courses.every(c => {
@@ -37,6 +43,18 @@ const allModulesMastered = (state, content) =>
   });
 const perfectQuizCount = (state) =>
   Object.values(state.quizResults).filter(r => r.correct && r.attempts === 1).length;
+
+// Un badge par grade, généré depuis grades.js — le seuil et le libellé ne
+// vivent qu'à un seul endroit (grades.js), pas dupliqués ici.
+const GRADE_BADGES = GRADES.map(g => ({
+  id: `grade_${g.id}`,
+  cat: "Grade",
+  tint: g.tint,
+  rarity: g.rarity,
+  icon: g.icon,
+  label: g.label,
+  cond: s => s.level >= g.minLevel,
+}));
 
 const BADGES = [
   // ── Premiers pas
@@ -63,6 +81,8 @@ const BADGES = [
   { id: "skill_neck",    cat: "Skill", tint: "amber",   rarity: "rare", icon: "ti-map-2",   label: "Manche maîtrisé",   cond: (s, ctx) => skillMastery(s, ctx, "neck")    >= 80 },
   { id: "skill_scales",  cat: "Skill", tint: "green",   rarity: "rare", icon: "ti-music",   label: "Modes maîtrisés",   cond: (s, ctx) => skillMastery(s, ctx, "scales")  >= 80 },
   { id: "skill_harmony", cat: "Skill", tint: "primary", rarity: "rare", icon: "ti-stack-2", label: "Harmonie pro",       cond: (s, ctx) => skillMastery(s, ctx, "harmony") >= 80 },
+  { id: "skill_rhythm",  cat: "Skill", tint: "blue",    rarity: "rare", icon: "ti-metronome", label: "Rythme solide",    cond: (s, ctx) => skillMastery(s, ctx, "rhythm")  >= 80 },
+  { id: "skill_impro",   cat: "Skill", tint: "pink",    rarity: "rare", icon: "ti-wand",    label: "Improvisateur",     cond: (s, ctx) => skillMastery(s, ctx, "impro")   >= 80 },
 
   // ── Quiz
   { id: "quiz_perfect", cat: "Quiz", tint: "amber", rarity: "commun", icon: "ti-circle-check", label: "Quiz parfait",      cond: s => perfectQuizCount(s) >= 1 },
@@ -76,10 +96,13 @@ const BADGES = [
   // ── Pratique
   { id: "practice_10",   cat: "Pratique", tint: "coral", rarity: "rare",   icon: "ti-dice-5",   label: "10 défis libres",   cond: s => (s.practiceLibre?.count || 0) >= 10 },
   { id: "daily_30",      cat: "Pratique", tint: "coral", rarity: "epique", icon: "ti-bolt",     label: "30 défis du jour",  cond: s => (s.dailyChallengeCount || 0) >= 30 },
-  { id: "all_modules",   cat: "Pratique", tint: "green", rarity: "legend", icon: "ti-mountain", label: "4 modules finis",   cond: (s, ctx) => allModulesMastered(s, ctx) },
+  { id: "all_modules",   cat: "Pratique", tint: "green", rarity: "legend", icon: "ti-mountain", label: "5 modules finis",   cond: (s, ctx) => allModulesMastered(s, ctx) },
 
   // ── Régularité
   { id: "full_week", cat: "Régularité", tint: "pink", rarity: "rare", icon: "ti-calendar-check", label: "Semaine pleine", cond: s => s.streak >= 7 && (s.weeklyGoals?.sessions || 0) >= 7 },
+
+  // ── Grade (généré depuis grades.js)
+  ...GRADE_BADGES,
 ];
 
 const computeNewBadges = (state, content) => {

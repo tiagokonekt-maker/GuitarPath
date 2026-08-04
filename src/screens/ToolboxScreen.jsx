@@ -441,7 +441,7 @@ function Tuner() {
         <div style={{ textAlign:"center", padding:"10px 0 4px" }}>
           <Gropi pose="listen" size={120} anim="bob" style={{ margin:"0 auto 6px" }}/>
           <p style={{ fontSize:13, color:C.text2, lineHeight:1.55, maxWidth:260, margin:"0 auto 16px" }}>
-            Joue une corde à vide, Gropi écoute et te dit si tu es juste. 🎧
+            Joue une corde à vide, Gropi écoute et te dit si tu es juste.
           </p>
 
           {/* Sélecteur d'accordage */}
@@ -503,8 +503,8 @@ function Tuner() {
           </div>
 
           {inTune && (
-            <div style={{ textAlign:"center", fontSize:13, fontWeight:700, color:C.green, marginBottom:8 }}>
-              ✓ Juste !
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6, fontSize:13, fontWeight:700, color:C.green, marginBottom:8 }}>
+              <Ti name="check" size={15} color={C.green} /> Juste !
             </div>
           )}
 

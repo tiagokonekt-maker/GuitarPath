@@ -1,7 +1,7 @@
 // Groply — src/design/Gropi.jsx  v3
 // Mascotte officielle (taureau mariachi) — système complet
 // ───────────────────────────────────────────────────────────────────────────
-// 8 poses  :  happy · wave · celebrate · think · rocker · idea · pride · listen
+// 12 poses :  happy · wave · celebrate · think · rocker · idea · pride · listen · zen · mystere · choix · histoire
 // Anims    :  bob (flottement) · pop (apparition) · wiggle (salut) · cheer (joie)
 // Composants:
 //   <Gropi pose size anim/>                      → l'image animée
@@ -23,6 +23,10 @@ const POSE_SRC = {
   idea:      "/mascotte-idea.svg",
   pride:     "/mascotte-pride.svg",
   listen:    "/mascotte-listen.svg",
+  zen:       "/mascotte-zen.svg",
+  mystere:   "/mascotte-mystere.svg",
+  choix:     "/mascotte-choix.svg",
+  histoire:  "/mascotte-histoire.svg",
   // alias de repli
   plead:     "/mascotte-think.svg",
 };

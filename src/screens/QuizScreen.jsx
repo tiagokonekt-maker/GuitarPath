@@ -5,7 +5,6 @@ import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { ProgressBar, XPPop } from "../design/ui.jsx";
 import { Gropi } from "../design/Gropi.jsx";
-import { MODULE_THEME } from "../store/moduleTheme.js";
 
 export let _FretboardQuizQuestion = null;
 export const setFretboardQuizQuestion = (fn) => { _FretboardQuizQuestion = fn; };
@@ -234,12 +233,12 @@ function QuizPlayer({ pool, title, state, dispatch, content, onDone }) {
     const anim      = (redeemed || isPerfect) ? "cheer" : "pop";
     const heading   = redeemed ? "Tu as enfin réussi !" : isPerfect ? "Parfait !" : isGood ? "Très bien !" : "Continue !";
     const subtitle  = redeemed
-      ? "Ces questions te résistaient — et tu les as eues. Gropi en a la larme à l'œil. 🥹"
+      ? "Ces questions te résistaient, et tu les as enfin eues. Gropi est fier de toi."
       : isPerfect
-      ? "Toutes les réponses correctes — Gropi est fier de toi. 🎸"
+      ? "Toutes les réponses correctes. Gropi est fier de toi."
       : isGood
       ? "Bon travail ! Les questions ratées reviendront en révision."
-      : "Pas de panique — les erreurs sont dans la révision intelligente.";
+      : "Pas de panique, les erreurs repassent dans la révision intelligente.";
     const xpEarned  = score * 30;
 
     return (

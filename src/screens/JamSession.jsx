@@ -144,6 +144,10 @@ function BackingTrackPlayer({ context, root, bpm }) {
   const hihatRef    = useRef(null); // charleston
   const seqRef      = useRef(null); // séquenceur principal
   const beatSeqRef  = useRef(null); // séquenceur batterie
+  const bassFilterRef  = useRef(null);
+  const bassCompRef    = useRef(null);
+  const kickCompRef    = useRef(null);
+  const snareFilterRef = useRef(null);
   // Refs master chain
   const reverbRef   = useRef(null);
   const delayRef    = useRef(null);
@@ -157,15 +161,15 @@ function BackingTrackPlayer({ context, root, bpm }) {
   // Intervalles depuis la root, construits pour sonner comme une vraie main
   const VOICINGS = {
     // Voicing jazz : root basse, 3e, 5e, 7e en ordre montant
-    min7:  { intervals: [0, 10, 14, 17], desc: "x-R-b7-3-5" },
+    min7:  { intervals: [0, 10, 15, 19], desc: "x-R-b7-3-5" },
     maj7:  { intervals: [0, 11, 16, 19], desc: "x-R-7-3-5"  },
-    dom7:  { intervals: [0, 10, 16, 17], desc: "x-R-b7-3-5" },
+    dom7:  { intervals: [0, 10, 16, 19], desc: "x-R-b7-3-5" },
     // Pour le blues : accords ouverts plus puissants
     dom7b: { intervals: [0, 7, 10, 16],  desc: "R-5-b7-3"   },
   };
 
   function getVoicedChord(rootNote, quality, style = "jazz") {
-    const iBlues = style === "blues";
+    const iBlues = style === "blues" || style === "blues12";
     const voicing = iBlues && quality === "dom7"
       ? VOICINGS.dom7b
       : VOICINGS[quality] || VOICINGS.min7;
@@ -186,7 +190,7 @@ function BackingTrackPlayer({ context, root, bpm }) {
     const sixth  = toFlat(transposeNote(rootNote, 9));
     const b7     = toFlat(transposeNote(rootNote, 10));
 
-    if (style === "blues") {
+    if (style === "blues" || style === "blues12") {
       // Walking blues : R-5-6-b7
       return [
         { note: root2,           time: "0:0:0",   dur: "8n" },
@@ -322,6 +326,8 @@ function BackingTrackPlayer({ context, root, bpm }) {
       });
       const bassFilter = new Tone.Filter({ frequency: 280, type: "lowpass", rolloff: -24 });
       const bassComp = new Tone.Compressor({ threshold: -20, ratio: 6, attack: 0.002 });
+      bassFilterRef.current = bassFilter;
+      bassCompRef.current = bassComp;
       bassRef.current.chain(bassFilter, bassComp, compRef.current);
 
       // ── Batterie ──────────────────────────────────────────────────────
@@ -331,6 +337,7 @@ function BackingTrackPlayer({ context, root, bpm }) {
         volume: -8,
       });
       const kickComp = new Tone.Compressor({ threshold: -12, ratio: 8 });
+      kickCompRef.current = kickComp;
       kickRef.current.chain(kickComp, compRef.current);
 
       snareRef.current = new Tone.NoiseSynth({
@@ -339,6 +346,7 @@ function BackingTrackPlayer({ context, root, bpm }) {
         volume: -18,
       });
       const snareFilter = new Tone.Filter({ frequency: 1800, type: "highpass" });
+      snareFilterRef.current = snareFilter;
       snareRef.current.chain(snareFilter, reverbRef.current);
 
       hihatRef.current = new Tone.MetalSynth({
@@ -439,7 +447,8 @@ function BackingTrackPlayer({ context, root, bpm }) {
     [seqRef, beatSeqRef].forEach(r => {
       try { r.current?.stop(); r.current?.dispose(); r.current = null; } catch {}
     });
-    [samplerRef, bassRef, kickRef, snareRef, hihatRef, reverbRef, delayRef, compRef].forEach(r => {
+    [samplerRef, bassRef, kickRef, snareRef, hihatRef, reverbRef, delayRef, compRef,
+     bassFilterRef, bassCompRef, kickCompRef, snareFilterRef].forEach(r => {
       try { r.current?.releaseAll?.(); r.current?.dispose(); r.current = null; } catch {}
     });
     try { Tone.getTransport().stop(); Tone.getTransport().cancel(); } catch {}

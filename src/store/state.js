@@ -25,10 +25,29 @@ export const defaultState = () => ({
   dailyChallengeCount: 0,
   unlockedBadges: [],
   claimedUnits: {},          // coffres d'unités du Parcours déjà réclamés
+  unitChecks: {},            // { [unitId]: { passed, score, attempts, lastAttemptAt } }
   weeklyGoals: { sessions: 0, exercises: 0, quizzes: 0, week: "" },
   practiceLibre: { count: 0, totalMinutes: 0 },
   sessionHistory: [],
   gropiTipDate: "",
+
+  // ── Onboarding ──────────────────────────────────────────────────────────
+  // Rempli une seule fois à la première ouverture, via un vrai test de
+  // placement adaptatif (pas d'auto-évaluation) + objectif + temps dispo.
+  // Sert à réordonner le Parcours et adapter le ton de Gropi — ne coche
+  // jamais de leçon comme acquise à la place de l'utilisateur.
+  onboarding: {
+    done: false,
+    goal: null,            // "impro" | "theorie" | "manche" | "global"
+    preferredModule: null, // "impro" | "harmony" | "neck" | null (issu de l'objectif)
+    timePerWeek: null,     // "short" | "medium" | "long"
+    skillLevels: { neck: null, scales: null, harmony: null, rhythm: null, impro: null }, // "A1"|"A2"|"B1"|"B2"
+    overallTier: null,     // "A1" | "A2" | "B1" | "B2"
+    weakestModule: null,   // module à mettre en priorité (issu du test réel)
+    startXp: 0,             // XP de départ crédité selon le résultat du test
+    skipped: false,        // conservé pour compat historique / cas de secours
+    completedAt: "",
+  },
 });
 
 // ── Chargement + migration ────────────────────────────────────────────────
@@ -50,6 +69,14 @@ export const loadState = () => {
     // Le niveau est TOUJOURS dérivé de l'XP (source de vérité unique).
     // Corrige aussi les états créés avec l'ancienne formule linéaire.
     s.level = levelFromXp(s.xp);
+
+    // Les comptes déjà actifs avant l'introduction de l'onboarding ne
+    // doivent pas se le voir imposer rétroactivement (ils ont déjà de la
+    // progression = ils n'ont pas besoin d'être "accueillis").
+    if (!parsed.onboarding && Object.keys(parsed.completedLessons || {}).length > 0) {
+      s.onboarding = { ...s.onboarding, done: true, skipped: true };
+    }
+
     return s;
   } catch { return defaultState(); }
 };
@@ -139,6 +166,19 @@ export const mergeStates = (local, cloud) => {
   // Coffres d'unités : union (réclamé quelque part = réclamé partout)
   m.claimedUnits = { ...(C.claimedUnits || {}), ...(L.claimedUnits || {}) };
 
+  // Vérifications d'unité : une réussite sur un appareil reste une réussite partout
+  const allCheckIds = new Set([...Object.keys(L.unitChecks || {}), ...Object.keys(C.unitChecks || {})]);
+  m.unitChecks = {};
+  for (const id of allCheckIds) {
+    const a = L.unitChecks?.[id], b = C.unitChecks?.[id];
+    m.unitChecks[id] = {
+      passed: !!(a?.passed || b?.passed),
+      score: Math.max(a?.score || 0, b?.score || 0),
+      attempts: Math.max(a?.attempts || 0, b?.attempts || 0),
+      lastAttemptAt: (a?.lastAttemptAt || "") >= (b?.lastAttemptAt || "") ? (a?.lastAttemptAt || b?.lastAttemptAt) : (b?.lastAttemptAt || a?.lastAttemptAt),
+    };
+  }
+
   // Défi du jour : l'appareil le plus récent fait foi, le compteur prend le max
   const localDailyNewer = (L.dailyChallengeDate || "") >= (C.dailyChallengeDate || "");
   const dailySrc = localDailyNewer ? L : C;
@@ -178,6 +218,12 @@ export const mergeStates = (local, cloud) => {
   m.theme = L.theme || C.theme || "auto";
   m.gropiTipDate = maxStr(L.gropiTipDate, C.gropiTipDate);
 
+  // Onboarding : fait quelque part = fait partout (pas de re-proposition
+  // sur un 2e appareil une fois qu'il a été rempli sur le premier).
+  m.onboarding = (L.onboarding?.done || C.onboarding?.done)
+    ? (L.onboarding?.done ? L.onboarding : C.onboarding)
+    : (L.onboarding || C.onboarding || defaultState().onboarding);
+
   return m;
 };
 
@@ -193,9 +239,13 @@ export const mergeCourses = (defaults, imported) => {
   imported.forEach(c => {
     if (map.has(c.id)) {
       const existing = map.get(c.id);
-      const lessonMap = new Map((c.lessons || []).map(l => [l.id, l]));
-      existing.lessons.forEach(l => lessonMap.set(l.id, l));
-      map.set(c.id, { ...c, ...existing, lessons: Array.from(lessonMap.values()) });
+      // L'importé doit gagner sur le défaut pour les leçons en commun (c'est
+      // le sens même d'un import : personnaliser/mettre à jour le contenu de
+      // base) — pas l'inverse, sinon toute personnalisation est silencieusement
+      // écrasée par les valeurs par défaut à chaque rechargement de l'app.
+      const lessonMap = new Map((existing.lessons || []).map(l => [l.id, l]));
+      (c.lessons || []).forEach(l => lessonMap.set(l.id, l));
+      map.set(c.id, { ...existing, ...c, lessons: Array.from(lessonMap.values()) });
     } else {
       map.set(c.id, c);
     }

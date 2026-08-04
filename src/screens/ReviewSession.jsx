@@ -76,7 +76,6 @@ export function ReviewSession({ questions, state, dispatch, onDone }) {
     const incorrect = questions.length - correct;
     const pct = Math.round((correct / questions.length) * 100);
     const xpEarned = correct * 20;
-    const emoji = pct >= 80 ? "🏆" : pct >= 50 ? "💪" : "📚";
     const title = pct >= 80 ? "Excellent !" : pct >= 50 ? "Bien joue !" : "Continue !";
 
     // Questions ratees pour affichage
@@ -99,10 +98,10 @@ export function ReviewSession({ questions, state, dispatch, onDone }) {
           <div style={{ fontSize: 22, fontWeight: 700, color: C.text, fontFamily: FONTS.title, marginTop: 8 }}>{title}</div>
           <div style={{ fontSize: 13, color: C.text2, fontFamily: FONTS.ui, marginTop: 4 }}>
             {pct >= 80
-              ? "Excellente révision — ta mémoire se renforce. 🎸"
+              ? "Excellente révision, ta mémoire se renforce."
               : pct >= 50
               ? "Bon travail ! Les questions ratées reviennent bientôt."
-              : "Les erreurs sont normales — c'est comme ça qu'on progresse."}
+              : "Les erreurs sont normales, c'est comme ça qu'on progresse."}
           </div>
         </div>
 

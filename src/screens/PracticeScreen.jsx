@@ -1,5 +1,5 @@
 // GuitarPath — screens/PracticeScreen.jsx
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { FONTS, R } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
@@ -11,6 +11,9 @@ function PracticeScreen({ state, dispatch }) {
   const [tab, setTab] = useState("impro");
   const [current, setCurrent] = useState(null);
   const [pop, setPop] = useState(false);
+  const timerRef = useRef(null);
+
+  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
   const generateImpro = () => {
     const key = KEYS[Math.floor(Math.random() * KEYS.length)];
@@ -36,11 +39,11 @@ function PracticeScreen({ state, dispatch }) {
 
   const finish = () => {
     setPop(true);
-    setTimeout(() => {
+    dispatch({ type: "PRACTICE_DONE", minutes: current?.time || 5 });
+    dispatch({ type: "MARK_STREAK" });
+    dispatch({ type: "UPDATE_WEEKLY", field: "sessions" });
+    timerRef.current = setTimeout(() => {
       setPop(false);
-      dispatch({ type: "PRACTICE_DONE", minutes: current?.time || 5 });
-      dispatch({ type: "MARK_STREAK" });
-      dispatch({ type: "UPDATE_WEEKLY", field: "sessions" });
       setCurrent(null);
     }, 1000);
   };
@@ -106,9 +109,5 @@ function PracticeScreen({ state, dispatch }) {
     </div>
   );
 }
-
-// ═══════════════════════════════════════════════════════════════════════════
-// CHALLENGE (Défi du jour)
-// ═══════════════════════════════════════════════════════════════════════════
 
 export { PracticeScreen };

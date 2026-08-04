@@ -1,5 +1,5 @@
 // GuitarPath — screens/ChallengeScreen.jsx
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { FONTS, R } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
@@ -11,14 +11,17 @@ function ChallengeScreen({ state, dispatch, navigate }) {
   const ch = DAILY_CHALLENGES[state.dailyChallengeIdx % DAILY_CHALLENGES.length];
   const done = state.dailyChallengeDone;
   const [pop, setPop] = useState(false);
+  const timerRef = useRef(null);
+
+  // Si on quitte l'écran avant la fin de l'animation, on annule le dispatch
+  // en attente plutôt que de le laisser se déclencher hors écran.
+  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
   const finish = () => {
     setPop(true);
-    setTimeout(() => {
-      setPop(false);
-      dispatch({ type: "DAILY_CHALLENGE_DONE" });
-      dispatch({ type: "MARK_STREAK" });
-    }, 1000);
+    dispatch({ type: "DAILY_CHALLENGE_DONE" });
+    dispatch({ type: "MARK_STREAK" });
+    timerRef.current = setTimeout(() => setPop(false), 1000);
   };
 
   return (
@@ -61,9 +64,5 @@ function ChallengeScreen({ state, dispatch, navigate }) {
     </div>
   );
 }
-
-// ═══════════════════════════════════════════════════════════════════════════
-// PROGRESS
-// ═══════════════════════════════════════════════════════════════════════════
 
 export { ChallengeScreen };

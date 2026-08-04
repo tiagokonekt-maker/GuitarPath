@@ -1,30 +1,20 @@
 import { useState } from 'react';
-
-const C = {
-  primary:       '#E85D1A',
-  primaryL:      '#FFF0E8',
-  primaryD:      '#B84010',
-  primaryBorder: '#F5C4A8',
-  text:          '#18130F',
-  text2:         '#7A736A',
-  text3:         '#A09890',
-  bg:            '#FFFFFF',
-  bgSec:         '#FAF8F5',
-  border:        '#EDE9E3',
-  green:         '#1A8C52',
-  greenL:        '#DCF5E8',
-  greenBorder:   '#A8DEC0',
-  greenD:        '#0C3D22',
-  coral:         '#C4306A',
-  coralL:        '#FCE8F0',
-  coralBorder:   '#F0B0CC',
-  coralD:        '#6B0830',
-};
+import { useC } from '../design/ThemeContext.jsx';
+import { Ti } from '../design/Ti.jsx';
 
 const FONTS = '"Poppins", -apple-system, sans-serif';
 const BRAND_FONT = '"Nunito", "Poppins", sans-serif';
 
+// Style visuellement masqué mais toujours lu par les lecteurs d'écran —
+// les placeholder seuls ne suffisent pas comme label (ils disparaissent
+// dès la saisie, et certains lecteurs d'écran les ignorent).
+const srOnly = {
+  position: 'absolute', width: 1, height: 1, padding: 0, margin: -1,
+  overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0,
+};
+
 export function AuthScreen({ onSignIn, onSignUp }) {
+  const C = useC();
   const [mode, setMode]         = useState('login');
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
@@ -63,13 +53,13 @@ export function AuthScreen({ onSignIn, onSignUp }) {
       minHeight: '100vh',
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
-      background: C.bgSec, padding: '1.5rem',
+      background: C.bg, padding: '1.5rem',
       fontFamily: FONTS,
     }}>
       {/* Card */}
       <div style={{
         width: '100%', maxWidth: 380,
-        background: C.bg, borderRadius: 24,
+        background: C.surface, borderRadius: 24,
         padding: '2rem 1.75rem',
         boxShadow: '0 8px 40px rgba(232,93,26,0.10)',
         border: `1.5px solid ${C.border}`,
@@ -100,7 +90,7 @@ export function AuthScreen({ onSignIn, onSignUp }) {
 
         {/* Tabs */}
         <div style={{
-          display: 'flex', background: C.bgSec,
+          display: 'flex', background: C.surface2,
           borderRadius: 14, padding: 4, marginBottom: '1.25rem',
           border: `1.5px solid ${C.border}`,
         }}>
@@ -122,24 +112,30 @@ export function AuthScreen({ onSignIn, onSignUp }) {
 
         {/* Champs */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: '1rem' }}>
+          <label htmlFor="auth-email" style={srOnly}>Adresse email</label>
           <input
+            id="auth-email"
             type="email" placeholder="Email" value={email}
+            autoComplete="email"
             onChange={e => setEmail(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handle()}
             style={{
               padding: '13px 14px', borderRadius: 12,
               border: `1.5px solid ${C.border}`,
               fontSize: 14, outline: 'none',
-              background: C.bg, color: C.text,
+              background: C.surface, color: C.text,
               fontFamily: FONTS, fontWeight: 500,
             }}
           />
           {/* Mot de passe + bouton œil */}
           <div style={{ position: 'relative' }}>
+            <label htmlFor="auth-password" style={srOnly}>Mot de passe (6 caractères minimum)</label>
             <input
+              id="auth-password"
               type={showPwd ? 'text' : 'password'}
               placeholder="Mot de passe (6+ caractères)"
               value={password}
+              autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
               onChange={e => setPassword(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handle()}
               style={{
@@ -147,7 +143,7 @@ export function AuthScreen({ onSignIn, onSignUp }) {
                 padding: '13px 44px 13px 14px', borderRadius: 12,
                 border: `1.5px solid ${C.border}`,
                 fontSize: 14, outline: 'none',
-                background: C.bg, color: C.text,
+                background: C.surface, color: C.text,
                 fontFamily: FONTS, fontWeight: 500,
               }}
             />
@@ -162,22 +158,7 @@ export function AuthScreen({ onSignIn, onSignUp }) {
                 padding: 4, color: C.text3, lineHeight: 0,
               }}
             >
-              {showPwd ? (
-                /* Œil barré */
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-                  <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-                  <line x1="1" y1="1" x2="23" y2="23"/>
-                </svg>
-              ) : (
-                /* Œil ouvert */
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                  <circle cx="12" cy="12" r="3"/>
-                </svg>
-              )}
+              <Ti name={showPwd ? 'eye-off' : 'eye'} size={18} />
             </button>
           </div>
         </div>
@@ -190,7 +171,8 @@ export function AuthScreen({ onSignIn, onSignUp }) {
             fontSize: 13, color: C.coralD, fontWeight: 500,
             display: 'flex', gap: 7, alignItems: 'flex-start',
           }}>
-            <span>⚠</span> {error}
+            <Ti name="alert-circle" size={15} color={C.coralD} style={{ flexShrink: 0, marginTop: 1 }} />
+            <span>{error}</span>
           </div>
         )}
         {success && (
@@ -200,7 +182,8 @@ export function AuthScreen({ onSignIn, onSignUp }) {
             fontSize: 13, color: C.greenD, fontWeight: 500,
             display: 'flex', gap: 7, alignItems: 'flex-start',
           }}>
-            <span>✓</span> {success}
+            <Ti name="check" size={15} color={C.greenD} style={{ flexShrink: 0, marginTop: 1 }} />
+            <span>{success}</span>
           </div>
         )}
 

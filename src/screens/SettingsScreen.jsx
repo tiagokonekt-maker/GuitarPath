@@ -4,6 +4,7 @@ import { FONTS, R } from "../design/tokens.js";
 import { Ti } from "../design/Ti.jsx";
 import { CONTENT_KEY } from "../store/state.js";
 import { BADGES } from "../store/badges.js";
+import { gradeForLevel } from "../store/grades.js";
 
 import { useC } from "../design/ThemeContext.jsx";
 
@@ -35,6 +36,15 @@ function SettingsScreen({ state, dispatch, content, onClose, onImported, user, o
   const C = useC();
   const [importStatus, setImportStatus] = useState(null);
 
+  // Ne garde que les items qui ont un id exploitable — un import dont les
+  // items n'ont pas d'id valide écraserait sinon tout dans une seule clé
+  // `undefined` en silence (succès affiché, contenu réellement perdu).
+  const sanitizeItems = (arr) => {
+    if (!Array.isArray(arr)) return { valid: [], rejected: Array.isArray(arr) ? 0 : 1 };
+    const valid = arr.filter(it => it && typeof it === "object" && typeof it.id === "string" && it.id.trim() !== "");
+    return { valid, rejected: arr.length - valid.length };
+  };
+
   const handleFile = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -46,16 +56,27 @@ function SettingsScreen({ state, dispatch, content, onClose, onImported, user, o
           setImportStatus({ ok:false, msg:"Fichier JSON invalide. Le fichier doit contenir au moins une clé 'courses', 'quiz' ou 'exercises'." });
           return;
         }
+        const courses   = sanitizeItems(data.courses);
+        const quiz      = sanitizeItems(data.quiz);
+        const exercises = sanitizeItems(data.exercises);
+        const totalRejected = courses.rejected + quiz.rejected + exercises.rejected;
+
         let existing = { courses:[], quiz:[], exercises:[] };
         try { const raw = localStorage.getItem(CONTENT_KEY); if (raw) existing = JSON.parse(raw); } catch {}
         const merged = {
-          courses:   mergeCourses(existing.courses||[], data.courses||[]),
-          quiz:      mergeById(existing.quiz||[], data.quiz||[]),
-          exercises: mergeById(existing.exercises||[], data.exercises||[]),
+          courses:   mergeCourses(existing.courses||[], courses.valid),
+          quiz:      mergeById(existing.quiz||[], quiz.valid),
+          exercises: mergeById(existing.exercises||[], exercises.valid),
         };
         localStorage.setItem(CONTENT_KEY, JSON.stringify(merged));
-        const counts = { c:(data.courses||[]).length, q:(data.quiz||[]).length, e:(data.exercises||[]).length };
-        setImportStatus({ ok:true, msg:`Import réussi : +${counts.c} module(s), +${counts.q} quiz, +${counts.e} exercice(s).` });
+        const counts = { c:courses.valid.length, q:quiz.valid.length, e:exercises.valid.length };
+        const base = `Import réussi : +${counts.c} module(s), +${counts.q} quiz, +${counts.e} exercice(s).`;
+        setImportStatus({
+          ok: true,
+          msg: totalRejected > 0
+            ? `${base} ${totalRejected} item(s) ignoré(s) car sans identifiant valide.`
+            : base,
+        });
         if (onImported) onImported();
       } catch { setImportStatus({ ok:false, msg:"Erreur de lecture : le fichier n'est pas un JSON valide." }); }
     };
@@ -78,7 +99,7 @@ function SettingsScreen({ state, dispatch, content, onClose, onImported, user, o
   };
 
   const exportProgress = () => {
-    const payload = { exportedAt:new Date().toISOString(), app:"GuitarPath", version:4, state };
+    const payload = { exportedAt:new Date().toISOString(), app:"Groply", version:4, state };
     const blob = new Blob([JSON.stringify(payload,null,2)], { type:"application/json" });
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement("a");
@@ -162,6 +183,7 @@ function SettingsScreen({ state, dispatch, content, onClose, onImported, user, o
         {/* Progression */}
         <SettingsSection title="Ma progression">
           <SettingsRow label="XP total"          value={`${state.xp ?? 0} XP`} />
+          <SettingsRow label="Grade"              value={gradeForLevel(state.level).label} />
           <SettingsRow label="Niveau actuel"      value={state.level} />
           <SettingsRow label="Badges débloqués"   value={`${state.unlockedBadges.length} / ${BADGES.length}`} last />
         </SettingsSection>
@@ -193,20 +215,20 @@ function SettingsScreen({ state, dispatch, content, onClose, onImported, user, o
 
 // Helpers merge (inchangés)
 function mergeCourses(existing, incoming) {
-  const map = Object.fromEntries(existing.map(c=>[c.id,c]));
-  incoming.forEach(c => {
+  const map = Object.fromEntries((existing||[]).filter(c=>c?.id).map(c=>[c.id,c]));
+  (incoming||[]).filter(c=>c?.id).forEach(c => {
     if (!map[c.id]) { map[c.id]=c; return; }
     const merged = { ...map[c.id], ...c };
-    const lessonMap = Object.fromEntries((map[c.id].lessons||[]).map(l=>[l.id,l]));
-    (c.lessons||[]).forEach(l=>{ lessonMap[l.id]=l; });
+    const lessonMap = Object.fromEntries((map[c.id].lessons||[]).filter(l=>l?.id).map(l=>[l.id,l]));
+    (c.lessons||[]).filter(l=>l?.id).forEach(l=>{ lessonMap[l.id]=l; });
     merged.lessons = Object.values(lessonMap);
     map[c.id] = merged;
   });
   return Object.values(map);
 }
 function mergeById(existing, incoming) {
-  const map = Object.fromEntries(existing.map(x=>[x.id,x]));
-  incoming.forEach(x=>{ map[x.id]=x; });
+  const map = Object.fromEntries((existing||[]).filter(x=>x?.id).map(x=>[x.id,x]));
+  (incoming||[]).filter(x=>x?.id).forEach(x=>{ map[x.id]=x; });
   return Object.values(map);
 }
 

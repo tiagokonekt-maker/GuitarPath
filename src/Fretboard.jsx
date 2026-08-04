@@ -5,6 +5,8 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { useState, useMemo, useCallback } from "react";
+import { useC } from "./design/ThemeContext.jsx";
+import { Ti } from "./design/Ti.jsx";
 import {
   getNoteAtPosition,
   getScalePositions,
@@ -22,22 +24,6 @@ import {
   normalizeNote,
 } from "./fretboardUtils.js";
 
-// ───────────────────────────────────────────────────────────────────────────
-// DESIGN TOKENS — cohérence stricte avec App.jsx
-// ───────────────────────────────────────────────────────────────────────────
-const C = {
-  primary:  "#7F77DD",  primaryL:  "#EEEDFE",  primaryD:  "#3C3489",
-  green:    "#1D9E75",  greenL:    "#E1F5EE",   greenD:    "#085041",
-  amber:    "#BA7517",  amberL:    "#FAEEDA",   amberD:    "#633806",
-  coral:    "#D85A30",  coralL:    "#FAECE7",   coralD:    "#712B13",
-  blue:     "#185FA5",  blueL:     "#E6F1FB",   blueD:     "#042C53",
-  text:     "#1F1B2E",
-  muted:    "#6B6880",
-  bg:       "#FFFFFF",
-  bgSec:    "#F5F4FA",
-  border:   "#E5E3F0",
-};
-
 const FONTS = {
   title:    '"Clarendon LT", "Clarendon", "Playfair Display", Georgia, serif',
   ui:       '"Inter", "Helvetica Neue", -apple-system, sans-serif',
@@ -45,23 +31,25 @@ const FONTS = {
 };
 
 // ───────────────────────────────────────────────────────────────────────────
-// PALETTE DES NOTES ACTIVES
+// PALETTE DES NOTES ACTIVES — fonction du thème courant (plus de couleurs figées)
 // Les couleurs s'appliquent selon le rôle de la note (root, 3rd, 5th, etc.)
 // ───────────────────────────────────────────────────────────────────────────
-const NOTE_COLORS = {
-  root:     { bg: C.amber,   text: "#fff",    border: C.amberD  },
-  third:    { bg: C.primary, text: "#fff",    border: C.primaryD },
-  fifth:    { bg: C.green,   text: "#fff",    border: C.greenD  },
-  seventh:  { bg: C.coral,   text: "#fff",    border: C.coralD  },
-  other:    { bg: C.blue,    text: "#fff",    border: C.blueD   },
-  selected: { bg: C.primary, text: "#fff",    border: C.primaryD },
-  correct:  { bg: C.green,   text: "#fff",    border: C.greenD  },
-  wrong:    { bg: C.coral,   text: "#fff",    border: C.coralD  },
-  missed:   { bg: C.amber,   text: "#fff",    border: C.amberD  },
-};
+function getNoteColors(C) {
+  return {
+    root:     { bg: C.amber,   text: "#fff",    border: C.amberD  },
+    third:    { bg: C.primary, text: "#fff",    border: C.primaryD },
+    fifth:    { bg: C.green,   text: "#fff",    border: C.greenD  },
+    seventh:  { bg: C.coral,   text: "#fff",    border: C.coralD  },
+    other:    { bg: C.blue,    text: "#fff",    border: C.blueD   },
+    selected: { bg: C.primary, text: "#fff",    border: C.primaryD },
+    correct:  { bg: C.green,   text: "#fff",    border: C.greenD  },
+    wrong:    { bg: C.coral,   text: "#fff",    border: C.coralD  },
+    missed:   { bg: C.amber,   text: "#fff",    border: C.amberD  },
+  };
+}
 
 // Mapping degré → couleur (pour gammes 7 notes)
-function colorForDegree(degree, isRoot) {
+function colorForDegree(degree, isRoot, NOTE_COLORS) {
   if (isRoot) return NOTE_COLORS.root;
   const map = {
     2: NOTE_COLORS.other,
@@ -127,6 +115,7 @@ function NoteMarker({ label, color, size = 28, style = {} }) {
 
 // ── Repère visuel (point incrusté) ──────────────────────────────────────────
 function FretMarker({ fret, isDouble }) {
+  const C = useC();
   return (
     <div style={{
       display: "flex",
@@ -208,6 +197,8 @@ export function Fretboard({
   onNoteClick,
   selectedPositions: externalSelected,
 }) {
+  const C = useC();
+  const NOTE_COLORS = useMemo(() => getNoteColors(C), [C]);
   const [quizSelected, setQuizSelected] = useState([]);
   const [quizRevealed, setQuizRevealed] = useState(false);
 
@@ -243,24 +234,21 @@ export function Fretboard({
     const note = getNoteAtPosition(string, fret);
 
     if (mode === "quiz" && !quizRevealed) {
-      const key = `${string}-${fret}`;
-      const already = quizSelected.some(p => p.string === string && p.fret === fret);
-      const next = already
-        ? quizSelected.filter(p => !(p.string === string && p.fret === fret))
-        : [...quizSelected, { string, fret }];
-
-      setQuizSelected(next);
-      onQuizProgress?.({ selected: next, correct: activePositions });
-
-      const result = checkQuizCompletion(next, activePositions);
-      if (result.complete) {
-        onQuizComplete?.(result);
-      }
+      setQuizSelected(prev => {
+        const already = prev.some(p => p.string === string && p.fret === fret);
+        const next = already
+          ? prev.filter(p => !(p.string === string && p.fret === fret))
+          : [...prev, { string, fret }];
+        onQuizProgress?.({ selected: next, correct: activePositions });
+        const result = checkQuizCompletion(next, activePositions);
+        if (result.complete) onQuizComplete?.(result);
+        return next;
+      });
       return;
     }
 
     onNoteClick?.({ string, fret, note });
-  }, [mode, quizRevealed, quizSelected, activePositions, onNoteClick, onQuizProgress, onQuizComplete]);
+  }, [mode, quizRevealed, activePositions, onNoteClick, onQuizProgress, onQuizComplete]);
 
   // ── Layout du manche ────────────────────────────────────────────────────
   const fretRange = [];
@@ -286,7 +274,7 @@ export function Fretboard({
     justifyContent: "center",
     fontSize: compact ? 9 : 10,
     fontWeight: 700,
-    color: C.muted,
+    color: C.text3,
     fontFamily: FONTS.ui,
     flexShrink: 0,
   };
@@ -322,7 +310,7 @@ export function Fretboard({
                   alignItems: "center",
                   justifyContent: "center",
                   fontSize: 9,
-                  color: C.muted,
+                  color: C.text3,
                   fontFamily: FONTS.ui,
                   fontWeight: f % 12 === 0 ? 700 : 400,
                   flexShrink: 0,
@@ -523,7 +511,7 @@ export function Fretboard({
     const label = getNoteLabel(pos.note, pos.interval, pos.degree, displayMode, lang);
     const color = pos.isRoot
       ? NOTE_COLORS.root
-      : colorForDegree(pos.degree, false);
+      : colorForDegree(pos.degree, false, NOTE_COLORS);
 
     return (
       <NoteMarker
@@ -549,6 +537,7 @@ function getStringThickness(string) {
 // QUIZ CONTROLS
 // ───────────────────────────────────────────────────────────────────────────
 function QuizControls({ selected, correct, revealed, target, lang, onReveal, onReset }) {
+  const C = useC();
   const result = checkQuizCompletion(selected, correct);
   const label = lang === "fr" ? noteToFr(target) : target;
 
@@ -556,7 +545,7 @@ function QuizControls({ selected, correct, revealed, target, lang, onReveal, onR
     <div style={{
       marginTop: 12,
       padding: "12px 14px",
-      background: C.bgSec,
+      background: C.surface2,
       borderRadius: 12,
       border: `1px solid ${C.border}`,
     }}>
@@ -573,7 +562,7 @@ function QuizControls({ selected, correct, revealed, target, lang, onReveal, onR
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <div style={{
           fontSize: 12,
-          color: C.muted,
+          color: C.text3,
           fontFamily: FONTS.ui,
           flex: 1,
         }}>
@@ -609,7 +598,7 @@ function QuizControls({ selected, correct, revealed, target, lang, onReveal, onR
             borderRadius: 8,
             border: `1px solid ${C.border}`,
             background: C.bg,
-            color: C.muted,
+            color: C.text3,
             fontSize: 12,
             fontWeight: 600,
             cursor: "pointer",
@@ -664,6 +653,7 @@ function QuizControls({ selected, correct, revealed, target, lang, onReveal, onR
  * }
  */
 export function FretboardLesson({ block }) {
+  const C = useC();
   // Pour highlight et quiz, forcer "notes" — pas de degrés/intervalles sans structure harmonique
   const defaultDisplay = (block.mode === "highlight" || block.mode === "quiz") ? "notes" : (block.displayMode || "notes");
   const [displayMode, setDisplayMode] = useState(defaultDisplay);
@@ -692,7 +682,7 @@ export function FretboardLesson({ block }) {
 
   return (
     <div style={{
-      background: C.bgSec,
+      background: C.surface2,
       borderRadius: 14,
       border: `1px solid ${C.border}`,
       overflow: "hidden",
@@ -712,7 +702,7 @@ export function FretboardLesson({ block }) {
           <div style={{
             fontSize: 11,
             fontWeight: 700,
-            color: C.muted,
+            color: C.text3,
             fontFamily: FONTS.ui,
             letterSpacing: "0.08em",
             textTransform: "uppercase",
@@ -748,7 +738,7 @@ export function FretboardLesson({ block }) {
                   borderRadius: 6,
                   border: `1px solid ${displayMode === m.key ? C.primary : C.border}`,
                   background: displayMode === m.key ? C.primaryL : C.bg,
-                  color: displayMode === m.key ? C.primaryD : C.muted,
+                  color: displayMode === m.key ? C.primaryD : C.text3,
                   fontSize: 10,
                   fontWeight: 600,
                   cursor: "pointer",
@@ -809,6 +799,7 @@ export function FretboardLesson({ block }) {
 //   { type:"fretboard", fretMode:"find_chord",    root:"G",    chord:"maj7", q:"...", xp:50 }
 // ═══════════════════════════════════════════════════════════════════════════
 export function FretboardQuizQuestion({ question, onComplete, answered }) {
+  const C = useC();
   const [quizSelected, setQuizSelected] = useState([]);
   const [revealed, setRevealed] = useState(false);
 
@@ -855,12 +846,12 @@ export function FretboardQuizQuestion({ question, onComplete, answered }) {
 
   const handleCellClick = (string, fret) => {
     if (revealed || answered) return;
-    const note = getNoteAtPosition(string, fret);
-    const already = quizSelected.some(p => p.string === string && p.fret === fret);
-    const next = already
-      ? quizSelected.filter(p => !(p.string === string && p.fret === fret))
-      : [...quizSelected, { string, fret }];
-    setQuizSelected(next);
+    setQuizSelected(prev => {
+      const already = prev.some(p => p.string === string && p.fret === fret);
+      return already
+        ? prev.filter(p => !(p.string === string && p.fret === fret))
+        : [...prev, { string, fret }];
+    });
   };
 
   const verify = () => {
@@ -873,14 +864,14 @@ export function FretboardQuizQuestion({ question, onComplete, answered }) {
   const result = revealed ? checkQuizCompletion(quizSelected, targetPositions) : null;
 
   return (
-    <div style={{ background: C.bgSec, borderRadius: 14, border: `1px solid ${C.border}`, overflow: "hidden" }}>
+    <div style={{ background: C.surface2, borderRadius: 14, border: `1px solid ${C.border}`, overflow: "hidden" }}>
       {/* Header */}
       <div style={{ padding: "8px 14px 6px", borderBottom: `1px solid ${C.border}` }}>
         <div style={{ fontSize: 10, fontWeight: 700, color: C.amber, fontFamily: FONTS.ui, letterSpacing: "0.1em", textTransform: "uppercase" }}>
-          🎸 Manche interactif
+          Manche interactif
         </div>
         {question.hint && (
-          <div style={{ fontSize: 11, color: C.muted, marginTop: 2, fontFamily: FONTS.ui }}>{question.hint}</div>
+          <div style={{ fontSize: 11, color: C.text3, marginTop: 2, fontFamily: FONTS.ui }}>{question.hint}</div>
         )}
       </div>
 
@@ -900,7 +891,7 @@ export function FretboardQuizQuestion({ question, onComplete, answered }) {
       {/* Contrôles */}
       {!answered && (
         <div style={{ padding: "6px 12px 10px", display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ flex: 1, fontSize: 11, color: C.muted, fontFamily: FONTS.ui }}>
+          <div style={{ flex: 1, fontSize: 11, color: C.text3, fontFamily: FONTS.ui }}>
             {revealed
               ? `${result.found}/${result.total} correct${result.extras > 0 ? ` · ${result.extras} erreur${result.extras > 1 ? "s" : ""}` : ""}`
               : `${quizSelected.length} sélectionné${quizSelected.length > 1 ? "s" : ""}`
@@ -911,8 +902,8 @@ export function FretboardQuizQuestion({ question, onComplete, answered }) {
               onClick={verify}
               style={{
                 padding: "7px 14px", borderRadius: 8, border: "none",
-                background: quizSelected.length > 0 ? C.primary : C.bgSec,
-                color: quizSelected.length > 0 ? "#fff" : C.muted,
+                background: quizSelected.length > 0 ? C.primary : C.surface2,
+                color: quizSelected.length > 0 ? "#fff" : C.text3,
                 fontSize: 11, fontWeight: 700, cursor: quizSelected.length > 0 ? "pointer" : "default",
                 fontFamily: FONTS.ui,
               }}
@@ -926,7 +917,7 @@ export function FretboardQuizQuestion({ question, onComplete, answered }) {
               style={{
                 padding: "7px 10px", borderRadius: 8,
                 border: `1px solid ${C.border}`, background: C.bg,
-                color: C.muted, fontSize: 11, cursor: "pointer", fontFamily: FONTS.ui,
+                color: C.text3, fontSize: 11, cursor: "pointer", fontFamily: FONTS.ui,
               }}
             >
               Reset
@@ -940,6 +931,8 @@ export function FretboardQuizQuestion({ question, onComplete, answered }) {
 
 // ── Canvas interne du quiz fretboard ────────────────────────────────────────
 function FretboardQuizCanvas({ targetPositions, contextPositions, selected, revealed, onCellClick, compact, question }) {
+  const C = useC();
+  const NOTE_COLORS = useMemo(() => getNoteColors(C), [C]);
   const CW = 36, CH = 28, OW = 26, LW = 20, DOT = 20;
   const strings = [1, 2, 3, 4, 5, 6];
   const MAX_F = 12;
@@ -1008,13 +1001,13 @@ function FretboardQuizCanvas({ targetPositions, contextPositions, selected, reve
         <div style={{ width: LW, flexShrink: 0 }} />
         <div style={{ width: OW, flexShrink: 0 }} />
         {frets.map(f => (
-          <div key={f} style={{ width: CW, flexShrink: 0, textAlign: "center", fontSize: 8, color: C.muted, height: 12, lineHeight: "12px", fontFamily: FONTS.ui, fontWeight: f === 12 ? 700 : 400 }}>{f}</div>
+          <div key={f} style={{ width: CW, flexShrink: 0, textAlign: "center", fontSize: 8, color: C.text3, height: 12, lineHeight: "12px", fontFamily: FONTS.ui, fontWeight: f === 12 ? 700 : 400 }}>{f}</div>
         ))}
       </div>
 
       {strings.map(s => (
         <div key={s} style={{ display: "flex", alignItems: "center" }}>
-          <div style={{ width: LW, flexShrink: 0, textAlign: "center", fontSize: 8, fontWeight: 700, color: C.muted, fontFamily: FONTS.ui }}>{SLABELS[s]}</div>
+          <div style={{ width: LW, flexShrink: 0, textAlign: "center", fontSize: 8, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui }}>{SLABELS[s]}</div>
 
           {/* Case 0 — corde à vide */}
           <div
@@ -1072,6 +1065,7 @@ function FretboardQuizCanvas({ targetPositions, contextPositions, selected, reve
 import { validate, getTargetPositions } from "./fretboardValidator.js";
 
 export function FretboardExercise({ ex, onComplete, dispatch }) {
+  const C = useC();
   const [stageIdx, setStageIdx] = useState(0);
   const [stageSelected, setStageSelected] = useState([]);
   const [stageRevealed, setStageRevealed] = useState(false);
@@ -1128,10 +1122,11 @@ export function FretboardExercise({ ex, onComplete, dispatch }) {
   };
 
   const handleNext = () => {
-    setCompletedStages(prev => [...prev, { stageIdx, result: stageResult }]);
+    const updatedStages = [...completedStages, { stageIdx, result: stageResult }];
+    setCompletedStages(updatedStages);
     if (isLast) {
       setAllDone(true);
-      onComplete?.({ totalXp, stages: completedStages });
+      onComplete?.({ totalXp, stages: updatedStages });
     } else {
       setStageIdx(i => i + 1);
       setStageSelected([]);
@@ -1141,18 +1136,19 @@ export function FretboardExercise({ ex, onComplete, dispatch }) {
   };
 
   const handleSkip = () => {
-    setCompletedStages(prev => [...prev, { stageIdx, result: null, skipped: true }]);
-    if (isLast) { setAllDone(true); onComplete?.({ totalXp, stages: completedStages }); }
+    const updatedStages = [...completedStages, { stageIdx, result: null, skipped: true }];
+    setCompletedStages(updatedStages);
+    if (isLast) { setAllDone(true); onComplete?.({ totalXp, stages: updatedStages }); }
     else { setStageIdx(i => i + 1); setStageSelected([]); setStageRevealed(false); setStageResult(null); }
   };
 
   if (allDone) {
     return (
       <div style={{ textAlign: "center", padding: "24px 16px", background: C.greenL, borderRadius: 14, border: `1px solid ${C.border}` }}>
-        <div style={{ fontSize: 32, marginBottom: 8 }}>🏆</div>
+        <Ti name="trophy" size={32} color={C.green} style={{ marginBottom: 8 }} />
         <div style={{ fontSize: 18, fontWeight: 700, color: C.greenD, fontFamily: FONTS.ui }}>Exercice terminé !</div>
         <div style={{ fontSize: 13, color: C.green, marginTop: 4, fontFamily: FONTS.ui }}>+{totalXp} XP gagnés</div>
-        <div style={{ fontSize: 12, color: C.muted, marginTop: 8, fontFamily: FONTS.ui }}>
+        <div style={{ fontSize: 12, color: C.text3, marginTop: 8, fontFamily: FONTS.ui }}>
           {completedStages.filter(s => s.result?.complete).length}/{ex.stages.length} stages réussis
         </div>
       </div>
@@ -1176,7 +1172,7 @@ export function FretboardExercise({ ex, onComplete, dispatch }) {
       </div>
 
       {/* Header stage */}
-      <div style={{ background: C.bgSec, borderRadius: 12, border: `1px solid ${C.border}`, padding: "10px 14px" }}>
+      <div style={{ background: C.surface2, borderRadius: 12, border: `1px solid ${C.border}`, padding: "10px 14px" }}>
         <div style={{ fontSize: 10, fontWeight: 700, color: C.amber, fontFamily: FONTS.ui, letterSpacing: "0.08em", textTransform: "uppercase" }}>
           🎸 Étape {stageIdx + 1} / {ex.stages.length}
         </div>
@@ -1184,7 +1180,7 @@ export function FretboardExercise({ ex, onComplete, dispatch }) {
           {stage.instruction}
         </div>
         {stage.hint && !stageRevealed && (
-          <div style={{ fontSize: 11, color: C.muted, fontFamily: FONTS.ui, marginTop: 4, fontStyle: "italic" }}>
+          <div style={{ fontSize: 11, color: C.text3, fontFamily: FONTS.ui, marginTop: 4, fontStyle: "italic" }}>
             💡 {stage.hint}
           </div>
         )}
@@ -1194,7 +1190,7 @@ export function FretboardExercise({ ex, onComplete, dispatch }) {
       </div>
 
       {/* Manche */}
-      <div style={{ background: C.bgSec, borderRadius: 12, border: `1px solid ${C.border}`, overflow: "hidden" }}>
+      <div style={{ background: C.surface2, borderRadius: 12, border: `1px solid ${C.border}`, overflow: "hidden" }}>
         <div style={{ padding: "8px 8px 4px", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
           <ExerciseCanvas
             stage={stage}
@@ -1233,8 +1229,8 @@ export function FretboardExercise({ ex, onComplete, dispatch }) {
               disabled={stageSelected.length === 0}
               style={{
                 flex: 1, padding: "12px", borderRadius: 10, border: "none",
-                background: stageSelected.length > 0 ? C.primary : C.bgSec,
-                color: stageSelected.length > 0 ? "#fff" : C.muted,
+                background: stageSelected.length > 0 ? C.primary : C.surface2,
+                color: stageSelected.length > 0 ? "#fff" : C.text3,
                 fontSize: 13, fontWeight: 700, cursor: stageSelected.length > 0 ? "pointer" : "default",
                 fontFamily: FONTS.ui,
               }}
@@ -1246,7 +1242,7 @@ export function FretboardExercise({ ex, onComplete, dispatch }) {
               style={{
                 padding: "12px 14px", borderRadius: 10,
                 border: `1px solid ${C.border}`, background: C.bg,
-                color: C.muted, fontSize: 12, cursor: "pointer", fontFamily: FONTS.ui,
+                color: C.text3, fontSize: 12, cursor: "pointer", fontFamily: FONTS.ui,
               }}
             >
               Reset
@@ -1256,7 +1252,7 @@ export function FretboardExercise({ ex, onComplete, dispatch }) {
               style={{
                 padding: "12px 14px", borderRadius: 10,
                 border: `1px solid ${C.border}`, background: C.bg,
-                color: C.muted, fontSize: 11, cursor: "pointer", fontFamily: FONTS.ui,
+                color: C.text3, fontSize: 11, cursor: "pointer", fontFamily: FONTS.ui,
               }}
             >
               Passer
@@ -1281,6 +1277,8 @@ export function FretboardExercise({ ex, onComplete, dispatch }) {
 
 // ── Canvas du manche pour FretboardExercise ──────────────────────────────────
 function ExerciseCanvas({ stage, targetPositions, targetMap, selected, revealed, onCellClick }) {
+  const C = useC();
+  const NOTE_COLORS = useMemo(() => getNoteColors(C), [C]);
   const CW = 36, CH = 28, OW = 26, LW = 20, DOT = 20;
   const strings = [1, 2, 3, 4, 5, 6];
   const MAX_F = (stage.fretRange || [0, 12])[1];
@@ -1338,7 +1336,7 @@ function ExerciseCanvas({ stage, targetPositions, targetMap, selected, revealed,
     if (isContext && !isTarget) return mkDot(getLabel(contextMap[key]), NOTE_COLORS.other, DOT, 0.5);
     // Affichage notes visibles si showNotes
     if (showNotes) {
-      return mkDot(noteToFr(note), { bg: C.bgSec, text: C.muted, border: C.border }, DOT);
+      return mkDot(noteToFr(note), { bg: C.surface2, text: C.text3, border: C.border }, DOT);
     }
     return null;
   }
@@ -1365,13 +1363,13 @@ function ExerciseCanvas({ stage, targetPositions, targetMap, selected, revealed,
         <div style={{ width: LW, flexShrink: 0 }} />
         <div style={{ width: OW, flexShrink: 0 }} />
         {frets.map(f => (
-          <div key={f} style={{ width: CW, flexShrink: 0, textAlign: "center", fontSize: 8, color: C.muted, height: 12, lineHeight: "12px", fontFamily: FONTS.ui, fontWeight: f === 12 ? 700 : 400 }}>{f}</div>
+          <div key={f} style={{ width: CW, flexShrink: 0, textAlign: "center", fontSize: 8, color: C.text3, height: 12, lineHeight: "12px", fontFamily: FONTS.ui, fontWeight: f === 12 ? 700 : 400 }}>{f}</div>
         ))}
       </div>
 
       {strings.map(s => (
         <div key={s} style={{ display: "flex", alignItems: "center" }}>
-          <div style={{ width: LW, flexShrink: 0, textAlign: "center", fontSize: 8, fontWeight: 700, color: C.muted, fontFamily: FONTS.ui }}>{SLABELS[s]}</div>
+          <div style={{ width: LW, flexShrink: 0, textAlign: "center", fontSize: 8, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui }}>{SLABELS[s]}</div>
 
           {/* Case 0 */}
           {MIN_F === 0 && (

@@ -14,27 +14,27 @@ import { weekStr } from "../store/state.js";
 
 // ── Conseils contextuels ─────────────────────────────────────────────────────
 const GROPI_TIPS = [
-  { cond:(s,rs)=>rs.toReview>=10,   text:(_,rs)=>`Tu as ${rs.toReview} questions qui attendent d'être revues. La mémoire s'efface vite — c'est le moment. 🧠` },
-  { cond:(s)=>s.streak===0&&Object.keys(s.completedLessons||{}).length>0, text:()=>"Ta flamme s'est éteinte. Mais tu es là, c'est déjà tout. Rallume-la aujourd'hui. 🔥" },
-  { cond:(s)=>s.streak>=7,           text:(s)=>`${s.streak} jours d'affilée 🔥 La régularité, c'est 80 % du chemin. Continue.` },
-  { cond:(s)=>s.streak>=3,           text:(s)=>`Série de ${s.streak} jours — tu construis quelque chose. Ne la brise pas. 🎸` },
-  { cond:(s)=>s.level>=3&&levelProgress(s.xp).xpInLevel<30, text:()=>"Tu viens de passer un niveau — c'est le bon moment pour tenter quelque chose de nouveau." },
-  { cond:(s)=>Object.keys(s.completedLessons||{}).length===0, text:()=>"Commence par une leçon : 10 minutes aujourd'hui valent mieux qu'une heure dimanche. 🎵" },
-  { cond:()=>new Date().getDay()===1, text:()=>"Lundi = parfait pour revoir la semaine passée avant d'avancer. 🔄" },
-  { cond:()=>new Date().getDay()===5, text:()=>"Vendredi soir + guitare = combo gagnant. 15 minutes de Jam, et la semaine se termine bien. 🎶" },
-  { cond:()=>true, text:()=>"Accorde-toi avant de jouer — 30 secondes qui sauvent toute ta session. 🎸" },
-  { cond:()=>true, text:()=>"Entre cordes 3 et 2, le décalage est +4 cases, pas +5. C'est la fameuse cassure du manche — à graver." },
-  { cond:()=>true, text:()=>"Vise la tierce de chaque accord quand tu improvises : c'est elle qui raconte l'histoire. 🎵" },
-  { cond:()=>true, text:()=>"Le silence fait partie de la musique — laisser respirer une phrase la rend deux fois plus puissante." },
+  { cond:(s,rs)=>rs.toReview>=10,   text:(_,rs)=>`Tu as ${rs.toReview} questions qui attendent d'être revues. La mémoire s'efface vite, c'est le bon moment pour les reprendre.` },
+  { cond:(s)=>s.streak===0&&Object.keys(s.completedLessons||{}).length>0, text:()=>"Ta série est retombée à zéro. Tu es là, c'est déjà l'essentiel : rallume-la aujourd'hui." },
+  { cond:(s)=>s.streak>=7,           text:(s)=>`${s.streak} jours d'affilée. La régularité, c'est 80 % du chemin, continue comme ça.` },
+  { cond:(s)=>s.streak>=3,           text:(s)=>`Série de ${s.streak} jours. Tu construis une vraie habitude, ne la casse pas maintenant.` },
+  { cond:(s)=>s.level>=3&&levelProgress(s.xp).xpInLevel<30, text:()=>"Tu viens de passer un niveau. C'est le bon moment pour tenter quelque chose de nouveau." },
+  { cond:(s)=>Object.keys(s.completedLessons||{}).length===0, text:()=>"Commence par une leçon : 10 minutes aujourd'hui valent mieux qu'une heure dimanche." },
+  { cond:()=>new Date().getDay()===1, text:()=>"Lundi est un bon jour pour revoir la semaine passée avant d'avancer." },
+  { cond:()=>new Date().getDay()===5, text:()=>"Vendredi soir et guitare, ça marche bien ensemble. 15 minutes de Jam pour finir la semaine sur une bonne note." },
+  { cond:()=>true, text:()=>"Accorde-toi avant de jouer. 30 secondes qui évitent de fausser toute la session." },
+  { cond:()=>true, text:()=>"Entre cordes 3 et 2, le décalage est de 4 cases, pas 5. C'est la cassure du manche, un repère à retenir par cœur." },
+  { cond:()=>true, text:()=>"Vise la tierce de chaque accord quand tu improvises : c'est elle qui raconte l'histoire." },
+  { cond:()=>true, text:()=>"Le silence fait partie de la musique. Laisser respirer une phrase la rend souvent plus puissante." },
   { cond:()=>true, text:()=>"Joue lentement, puis accélère. Un tempo lent parfait vaut mieux qu'un tempo rapide raté." },
   { cond:()=>true, text:()=>"La pentatonique mineure position 1 fonctionne sur 90 % des jams en mineur. Maîtrise-la d'abord." },
-  { cond:()=>true, text:()=>"Le mode dorien = mineur naturel avec une 6te majeure. C'est la gamme de Santana, de Daft Punk. Écoute-les différemment." },
+  { cond:()=>true, text:()=>"Le mode dorien est un mineur naturel avec une 6te majeure. C'est la gamme de Santana ou de Daft Punk, écoute-les différemment." },
 ];
 
 function pickTip(state, rs) {
   const dayIdx = new Date().getDate() % 6; // rotation douce parmi les fallbacks
   const contextual = GROPI_TIPS.filter(t=>t.cond(state,rs));
-  return contextual[0]?.text(state,rs) || "Gropi est là pour toi. 🎸";
+  return contextual[0]?.text(state,rs) || "Gropi est là pour toi.";
 }
 
 // ── Mascotte (pose coucou) ───────────────────────────────────────────────────
@@ -61,11 +61,17 @@ function GropiBlock({ state, dispatch, navigate, reviewStats, nextLesson }) {
       sub:`${reviewStats.toReview} question${reviewStats.toReview>1?"s":""} à revoir`,
       dur:"5 min", action:"review",
     });
-    if(nextLesson) s.push({
+    if(nextLesson?.lesson) s.push({
       icon:"book-2", color:C.green,
       label:nextLesson.lesson.title,
       sub:nextLesson.course.title,
       dur:`${nextLesson.lesson.duration} min`, action:"courses",
+    });
+    else if(nextLesson?.needsCheck) s.push({
+      icon:"clipboard-check", color:C.primary,
+      label:"Vérifier ton unité",
+      sub:"Toutes les leçons sont vues, il ne reste que le contrôle",
+      dur:"5 min", action:"courses",
     });
     if(s.length===0) s.push({
       icon:"music", color:C.pink,
@@ -221,7 +227,7 @@ function WeeklyGoals({ state }) {
           Objectifs de la semaine
         </span>
         {allDone && (
-          <span style={{fontSize:10,fontWeight:700,color:C.green,fontFamily:FONTS.ui}}>Semaine réussie 🎉</span>
+          <span style={{fontSize:10,fontWeight:700,color:C.green,fontFamily:FONTS.ui}}>Semaine réussie</span>
         )}
       </div>
       <div style={{
@@ -299,8 +305,8 @@ function HomeScreen({state,dispatch,navigate,content}) {
         <div style={{display:"flex",alignItems:"flex-end",position:"relative",zIndex:2}}>
           <div style={{flex:"0 0 58%",maxWidth:"58%"}}>
             <div style={{fontSize:13,fontWeight:500,color:"rgba(255,255,255,.75)",marginBottom:2}}>{dateStr}</div>
-            <div style={{fontSize:22,fontWeight:800,color:"#fff",marginBottom:18,letterSpacing:"-.3px"}}>Bonjour 👋</div>
-            {nextLesson ? (
+            <div style={{fontSize:22,fontWeight:800,color:"#fff",marginBottom:18,letterSpacing:"-.3px"}}>Bonjour</div>
+            {nextLesson?.lesson ? (
               <button onClick={()=>navigate("courses")} style={{
                 width:"100%",background:"rgba(255,255,255,.18)",
                 border:"1.5px solid rgba(255,255,255,.28)",
@@ -314,9 +320,23 @@ function HomeScreen({state,dispatch,navigate,content}) {
                   <Ti name="player-play" size={13} color={C.primary}/>Continuer
                 </span>
               </button>
+            ) : nextLesson?.needsCheck ? (
+              <button onClick={()=>navigate("courses")} style={{
+                width:"100%",background:"rgba(255,255,255,.18)",
+                border:"1.5px solid rgba(255,255,255,.28)",
+                borderRadius:R.lg,padding:"14px 16px",
+                backdropFilter:"blur(6px)",cursor:"pointer",textAlign:"left",fontFamily:FONTS.title,
+              }}>
+                <div style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,.7)",letterSpacing:".08em",textTransform:"uppercase",marginBottom:3}}>Prochain objectif</div>
+                <div style={{fontSize:15,fontWeight:800,color:"#fff",letterSpacing:"-.2px",marginBottom:4}}>Vérifier ton unité</div>
+                <div style={{fontSize:11,fontWeight:500,color:"rgba(255,255,255,.7)",marginBottom:12}}>Toutes les leçons sont vues, il ne reste que le contrôle</div>
+                <span style={{display:"inline-flex",alignItems:"center",gap:7,background:"#fff",color:C.primary,borderRadius:99,padding:"8px 16px",fontSize:13,fontWeight:700}}>
+                  <Ti name="clipboard-check" size={13} color={C.primary}/>Continuer
+                </span>
+              </button>
             ):(
               <div style={{background:"rgba(255,255,255,.18)",border:"1.5px solid rgba(255,255,255,.28)",borderRadius:R.lg,padding:"16px 18px",backdropFilter:"blur(6px)"}}>
-                <div style={{fontSize:16,fontWeight:800,color:"#fff"}}>Tout est complété ! 🎉</div>
+                <div style={{fontSize:16,fontWeight:800,color:"#fff"}}>Tout est complété</div>
                 <div style={{fontSize:12,color:"rgba(255,255,255,.7)",marginTop:3}}>Reviens demain pour de nouveaux défis.</div>
               </div>
             )}

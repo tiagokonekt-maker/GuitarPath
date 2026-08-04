@@ -30,12 +30,12 @@ class ErrorBoundary extends React.Component {
         background: '#FFF7F0', color: '#18130F', padding: 24, textAlign: 'center',
         fontFamily: '"Poppins", -apple-system, sans-serif',
       }}>
-        <div style={{ fontSize: 44 }}>🎸</div>
+        <img src="/mascotte-think.svg" alt="" width="76" style={{ display: 'block', height: 'auto' }} />
         <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-.2px' }}>
           Oups, une fausse note.
         </div>
         <div style={{ fontSize: 13, color: '#7A736A', maxWidth: 300, lineHeight: 1.5 }}>
-          Une erreur inattendue s'est produite. Ta progression est sauvegardée —
+          Une erreur inattendue s'est produite. Ta progression est sauvegardée,
           recharge l'app pour reprendre.
         </div>
         <button
