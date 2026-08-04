@@ -18,8 +18,10 @@ import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { Gropi } from "../design/Gropi.jsx";
 import { ProgressBar } from "../design/ui.jsx";
+import { FretboardQuizQuestion } from "../Fretboard.jsx";
 import {
-  TESTABLE_MODULES, pickQuestion, startFromOverallTier, TIER_VALUE,
+  TESTABLE_MODULES, startFromScore, TIER_VALUE,
+  buildPlacementQueue, pickPlacementQuestion, PLACEMENT_QUESTION_COUNT,
   computeModuleTier, inferImproTier, computeOverallTier, weakestModule,
 } from "../store/placementEngine.js";
 
@@ -45,13 +47,18 @@ export function OnboardingScreen({ content, onComplete, onEvent }) {
   const [phase, setPhase] = useState("welcome");
 
   // ── Test de placement ────────────────────────────────────────────────
-  const [moduleIdx, setModuleIdx] = useState(0);
-  const [stage, setStage] = useState("pivot"); // "pivot" | "final"
+  // File fixe des 12 questions (facile×4 → intermédiaire×4 → difficile×4),
+  // construite une seule fois au lancement du test.
+  const [queue, setQueue] = useState(null);
+  const [qIdx, setQIdx] = useState(0);
   const [currentQ, setCurrentQ] = useState(null);
   const [selected, setSelected] = useState(null);
   const [answered, setAnswered] = useState(false);
-  const [pivotCorrect, setPivotCorrect] = useState(null);
+  const [forceReveal, setForceReveal] = useState(false);
   const [usedIds] = useState(() => new Set());
+  // Bonnes réponses par module au fil du test (0 à 3 une fois terminé) —
+  // remplace l'ancien pivotCorrect isolé.
+  const [results, setResults] = useState({ neck: 0, scales: 0, harmony: 0, rhythm: 0 });
   const [skillLevels, setSkillLevels] = useState({ neck: null, scales: null, harmony: null, rhythm: null, impro: null });
   const [overallTier, setOverallTier] = useState(null);
   const [weakest, setWeakest] = useState(null);
@@ -63,24 +70,33 @@ export function OnboardingScreen({ content, onComplete, onEvent }) {
   const emit = (name, props) => { try { onEvent?.(name, props); } catch { /* noop */ } };
   const quizBank = content?.quiz || [];
 
-  // ── Chargement d'une question pour le module/étape courants ─────────
-  function loadQuestion(modIdx, stg, pivotWasCorrect) {
-    const moduleId = TESTABLE_MODULES[modIdx];
-    const lvl = stg === "pivot" ? 2 : (pivotWasCorrect ? 3 : 1);
-    const q = pickQuestion(quizBank, moduleId, lvl, usedIds);
-    if (q) usedIds.add(q.id);
-    setCurrentQ(q ? { ...q, moduleId } : null);
+  // ── Chargement d'une question depuis la file, à un index donné ───────
+  function loadQuestion(idx, q) {
+    const { moduleId, lvl } = q[idx];
+    // La toute première question (Manche, palier facile) préfère une
+    // question "manche interactif" — ouvrir le test sur quelque chose de
+    // concret plutôt qu'un QCM de vocabulaire théorique.
+    const preferFretboard = moduleId === "neck" && lvl === 1;
+    const picked = pickPlacementQuestion(quizBank, moduleId, lvl, usedIds, preferFretboard);
+    if (picked) usedIds.add(picked.id);
+    setCurrentQ(picked);
     setSelected(null);
     setAnswered(false);
+    setForceReveal(false);
   }
 
   function startTest() {
     emit("placement_test_started");
     setPhase("testing");
-    setModuleIdx(0);
-    setStage("pivot");
-    setPivotCorrect(null);
-    loadQuestion(0, "pivot");
+    const q = buildPlacementQueue();
+    setQueue(q);
+    setQIdx(0);
+    setResults({ neck: 0, scales: 0, harmony: 0, rhythm: 0 });
+    loadQuestion(0, q);
+  }
+
+  function recordAnswer(moduleId, correct) {
+    setResults(prev => ({ ...prev, [moduleId]: prev[moduleId] + (correct ? 1 : 0) }));
   }
 
   function choose(i) {
@@ -88,72 +104,75 @@ export function OnboardingScreen({ content, onComplete, onEvent }) {
     setSelected(i);
     setAnswered(true);
     const correct = i === currentQ.a;
-    emit("placement_question_answered", { module: currentQ.moduleId, stage, correct, questionId: currentQ.id });
-    if (stage === "pivot") setPivotCorrect(correct);
+    emit("placement_question_answered", { module: currentQ.moduleId, correct, questionId: currentQ.id });
+    recordAnswer(currentQ.moduleId, correct);
   }
 
-  // "Je ne sais pas" : compte comme une réponse fausse pour l'escalier de
-  // difficulté (aucune option n'est sélectionnée, donc aucune ne s'affiche
-  // en rouge) — c'est un signal honnête, pas un échec à sanctionner.
+  // Réponse à une question "manche interactif" (fretboard) : le composant
+  // gère lui-même sa sélection et son propre bouton Vérifier, il renvoie
+  // juste le résultat une fois validé.
+  function chooseFretboard(result) {
+    if (answered) return;
+    setAnswered(true);
+    const correct = !!result?.complete;
+    emit("placement_question_answered", { module: currentQ.moduleId, correct, questionId: currentQ.id, fretboard: true });
+    recordAnswer(currentQ.moduleId, correct);
+  }
+
+  // "Je ne sais pas" : compte comme une réponse fausse pour le calcul du
+  // niveau (aucune option n'est sélectionnée, donc aucune ne s'affiche en
+  // rouge) — c'est un signal honnête, pas un échec à sanctionner.
   function chooseDontKnow() {
     if (answered) return;
     setSelected(null);
     setAnswered(true);
-    emit("placement_question_answered", { module: currentQ.moduleId, stage, correct: false, dontKnow: true, questionId: currentQ.id });
-    if (stage === "pivot") setPivotCorrect(false);
-  }
-
-  function recordModuleTierAndAdvance(moduleId, tier) {
-    const newLevels = { ...skillLevels, [moduleId]: tier };
-    emit("placement_module_result", { module: moduleId, tier });
-
-    if (moduleIdx + 1 < TESTABLE_MODULES.length) {
-      const nextIdx = moduleIdx + 1;
-      setSkillLevels(newLevels);
-      setModuleIdx(nextIdx);
-      setStage("pivot");
-      setPivotCorrect(null);
-      loadQuestion(nextIdx, "pivot");
-    } else {
-      const improTier = inferImproTier(newLevels);
-      const finalLevels = { ...newLevels, impro: improTier };
-      const overall = computeOverallTier(finalLevels);
-      const weak = weakestModule(finalLevels);
-      setSkillLevels(finalLevels);
-      setOverallTier(overall);
-      setWeakest(weak);
-      emit("placement_completed", { skillLevels: finalLevels, overallTier: overall, weakestModule: weak });
-      setPhase("results");
-    }
+    emit("placement_question_answered", { module: currentQ.moduleId, correct: false, dontKnow: true, questionId: currentQ.id });
+    recordAnswer(currentQ.moduleId, false);
   }
 
   function continueTest() {
-    const moduleId = TESTABLE_MODULES[moduleIdx];
-    if (stage === "pivot") {
-      setStage("final");
-      loadQuestion(moduleIdx, "final", pivotCorrect);
-    } else {
-      const finalCorrect = selected === currentQ.a;
-      const tier = computeModuleTier(pivotCorrect, finalCorrect);
-      recordModuleTierAndAdvance(moduleId, tier);
+    const nextIdx = qIdx + 1;
+    if (nextIdx < queue.length) {
+      setQIdx(nextIdx);
+      loadQuestion(nextIdx, queue);
+      return;
     }
+    // File terminée : le niveau de chaque module vient du nombre de bonnes
+    // réponses sur ses 3 questions (0 à 3), pas d'un pivot isolé.
+    const newLevels = { ...skillLevels };
+    for (const moduleId of TESTABLE_MODULES) {
+      const tier = computeModuleTier(results[moduleId]);
+      newLevels[moduleId] = tier;
+      emit("placement_module_result", { module: moduleId, tier, correctCount: results[moduleId] });
+    }
+    const improTier = inferImproTier(newLevels);
+    const finalLevels = { ...newLevels, impro: improTier };
+    const overall = computeOverallTier(finalLevels);
+    const weak = weakestModule(finalLevels);
+    setSkillLevels(finalLevels);
+    setOverallTier(overall);
+    setWeakest(weak);
+    emit("placement_completed", { skillLevels: finalLevels, overallTier: overall, weakestModule: weak });
+    setPhase("results");
   }
 
   // Filet de sécurité : si jamais le stock de questions manque pour un
   // module/niveau (ne devrait pas arriver vu le contenu actuel), on ne
-  // bloque pas l'utilisateur — on passe au module suivant avec un niveau
-  // neutre plutôt que de planter l'onboarding.
+  // bloque pas l'utilisateur — on passe à la question suivante plutôt que
+  // de planter l'onboarding.
   useEffect(() => {
-    if (phase === "testing" && !currentQ) {
-      const moduleId = TESTABLE_MODULES[moduleIdx];
-      recordModuleTierAndAdvance(moduleId, "A2");
+    if (phase === "testing" && queue && !currentQ) {
+      const nextIdx = qIdx + 1;
+      if (nextIdx < queue.length) { setQIdx(nextIdx); loadQuestion(nextIdx, queue); }
+      else continueTest();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, currentQ]);
+  }, [phase, currentQ, queue]);
 
   function finish() {
     const goalOpt = GOAL_OPTIONS.find(g => g.id === goal);
-    const { startXp } = startFromOverallTier(overallTier);
+    const totalCorrect = TESTABLE_MODULES.reduce((sum, m) => sum + (results[m] || 0), 0);
+    const { startXp } = startFromScore(totalCorrect, PLACEMENT_QUESTION_COUNT);
     const answers = {
       goal,
       preferredModule: goalOpt?.module || null,
@@ -168,11 +187,11 @@ export function OnboardingScreen({ content, onComplete, onEvent }) {
     onComplete(answers);
   }
 
-  const questionNumber = moduleIdx * 2 + (stage === "final" ? 2 : 1);
+  const questionNumber = qIdx + 1;
   const progressPct =
     phase === "welcome"   ? 0  :
     phase === "testIntro" ? 5  :
-    phase === "testing"   ? Math.round(5 + ((questionNumber - (answered ? 0 : 1)) / 8) * 65) :
+    phase === "testing"   ? Math.round(5 + ((questionNumber - (answered ? 0 : 1)) / PLACEMENT_QUESTION_COUNT) * 65) :
     phase === "results"   ? 75 :
     phase === "goal"      ? 85 :
     phase === "time"      ? 95 : 100;
@@ -214,7 +233,7 @@ export function OnboardingScreen({ content, onComplete, onEvent }) {
               Le test de placement
             </h2>
             <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.6, color: C.text2, maxWidth: 300 }}>
-              8 questions, 4 domaines (manche, gammes, harmonie, rythme). Les questions s'adaptent à tes réponses, comme un vrai test de niveau.
+              12 questions, 4 domaines (manche, gammes, harmonie, rythme). Ça commence simple, puis ça monte en difficulté. C'est normal de sécher sur les dernières.
             </p>
             <p style={{ margin: 0, fontSize: 12, color: C.text3, maxWidth: 280 }}>
               Pas de retour en arrière possible une fois lancé. Réponds au mieux : c'est fait pour révéler où tu es, pas pour te juger. Si tu ne sais pas, dis-le, ça compte aussi.
@@ -229,51 +248,80 @@ export function OnboardingScreen({ content, onComplete, onEvent }) {
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <Ti name={MODULE[currentQ.moduleId]?.icon || "music"} size={16} color={C.primary} />
               <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: C.primary, fontFamily: FONTS.ui }}>
-                {MODULE[currentQ.moduleId]?.label || currentQ.moduleId} · Question {questionNumber}/8
+                {MODULE[currentQ.moduleId]?.label || currentQ.moduleId} · Question {questionNumber}/{PLACEMENT_QUESTION_COUNT}
               </span>
             </div>
 
-            <div style={{ background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: 16 }}>
-              <p style={{ margin: 0, fontSize: 15, fontWeight: 600, lineHeight: 1.5, color: C.text }}>{currentQ.q}</p>
-            </div>
+            {currentQ.type === "fretboard" ? (
+              <>
+                <div style={{ background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: 16 }}>
+                  <p style={{ margin: 0, fontSize: 15, fontWeight: 600, lineHeight: 1.5, color: C.text }}>{currentQ.q}</p>
+                </div>
+                <FretboardQuizQuestion
+                  question={currentQ}
+                  onComplete={chooseFretboard}
+                  answered={answered}
+                  forceReveal={forceReveal}
+                />
+              </>
+            ) : (
+              <>
+                <div style={{ background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: 16 }}>
+                  <p style={{ margin: 0, fontSize: 15, fontWeight: 600, lineHeight: 1.5, color: C.text }}>{currentQ.q}</p>
+                </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {currentQ.o.map((opt, i) => {
-                let bg = C.surface, border = `1.5px solid ${C.border}`, col = C.text;
-                if (answered) {
-                  if (i === currentQ.a)      { bg = C.greenL; border = `1.5px solid ${C.green}`; col = C.greenD; }
-                  else if (i === selected)   { bg = C.coralL; border = `1.5px solid ${C.coral}`; col = C.coralD; }
-                }
-                return (
-                  <button key={i} onClick={() => choose(i)} disabled={answered} style={{
-                    textAlign: "left", minHeight: 48, padding: "12px 14px", borderRadius: R.md,
-                    background: bg, border, color: col, cursor: answered ? "default" : "pointer",
-                    fontSize: 14, fontWeight: 600, fontFamily: FONTS.title, transition: "all 0.15s",
-                  }}>
-                    {opt}
-                  </button>
-                );
-              })}
-            </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {currentQ.o.map((opt, i) => {
+                    let bg = C.surface, border = `1.5px solid ${C.border}`, col = C.text;
+                    if (answered) {
+                      if (i === currentQ.a)      { bg = C.greenL; border = `1.5px solid ${C.green}`; col = C.greenD; }
+                      else if (i === selected)   { bg = C.coralL; border = `1.5px solid ${C.coral}`; col = C.coralD; }
+                    }
+                    return (
+                      <button key={i} onClick={() => choose(i)} disabled={answered} style={{
+                        textAlign: "left", minHeight: 48, padding: "12px 14px", borderRadius: R.md,
+                        background: bg, border, color: col, cursor: answered ? "default" : "pointer",
+                        fontSize: 14, fontWeight: 600, fontFamily: FONTS.title, transition: "all 0.15s",
+                      }}>
+                        {opt}
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
 
             {!answered && (
-              <button onClick={chooseDontKnow} style={{
-                textAlign: "center", minHeight: 44, padding: "10px 14px", borderRadius: R.md,
-                background: "transparent", border: `1.5px dashed ${C.border}`, color: C.text3,
-                fontSize: 13, fontWeight: 600, fontFamily: FONTS.title, cursor: "pointer",
-              }}>
+              <button
+                onClick={currentQ.type === "fretboard" ? () => setForceReveal(true) : chooseDontKnow}
+                style={{
+                  textAlign: "center", minHeight: 44, padding: "10px 14px", borderRadius: R.md,
+                  background: "transparent", border: `1.5px dashed ${C.border}`, color: C.text3,
+                  fontSize: 13, fontWeight: 600, fontFamily: FONTS.title, cursor: "pointer",
+                }}>
                 Je ne sais pas
               </button>
             )}
 
             {answered && (
               <>
-                <p style={{
-                  margin: 0, fontSize: 12.5, color: C.text2, lineHeight: 1.5,
-                  display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden",
-                }}>
-                  {selected === null ? "Pas de souci, tu la reverras. " : ""}{currentQ.exp}
-                </p>
+                {/* Pour le manche interactif, les bonnes positions sont déjà
+                    montrées visuellement sur le manche (points colorés) —
+                    pas besoin de la notation "c6f8, c5f3..." en plus, elle
+                    ne veut rien dire pour quelqu'un qui découvre l'app. */}
+                {currentQ.type !== "fretboard" && (
+                  <p style={{
+                    margin: 0, fontSize: 12.5, color: C.text2, lineHeight: 1.5,
+                    display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden",
+                  }}>
+                    {selected === null ? "Pas de souci, tu la reverras. " : ""}{currentQ.exp}
+                  </p>
+                )}
+                {currentQ.type === "fretboard" && forceReveal && (
+                  <p style={{ margin: 0, fontSize: 12.5, color: C.text2, lineHeight: 1.5 }}>
+                    Pas de souci, tu la reverras. Les bonnes positions sont affichées sur le manche.
+                  </p>
+                )}
                 <PrimaryButton C={C} onClick={continueTest}>Continuer</PrimaryButton>
               </>
             )}
@@ -282,18 +330,13 @@ export function OnboardingScreen({ content, onComplete, onEvent }) {
 
         {/* ── Résultat du test ──────────────────────────────────────── */}
         {phase === "results" && overallTier && (() => {
-          const { grade } = startFromOverallTier(overallTier);
+          const totalCorrect = TESTABLE_MODULES.reduce((sum, m) => sum + (results[m] || 0), 0);
+          const { grade } = startFromScore(totalCorrect, PLACEMENT_QUESTION_COUNT);
           return (
           <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 14, paddingTop: 12 }}>
             <Gropi pose="celebrate" size={100} anim="cheer" />
             <div style={{ fontSize: 12, fontWeight: 700, color: C.text2, textTransform: "uppercase", letterSpacing: ".08em" }}>
               Ton profil Groply
-            </div>
-            <div style={{
-              width: 60, height: 60, borderRadius: "50%", background: C.primaryL,
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-              <Ti name={grade.icon.replace("ti-", "")} size={28} color={C.primary} />
             </div>
             <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: C.text, letterSpacing: "-.2px" }}>
               {grade.label}

@@ -4,7 +4,7 @@
 // Usage : import { Fretboard } from "./Fretboard.jsx"
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useC } from "./design/ThemeContext.jsx";
 import { Ti } from "./design/Ti.jsx";
 import {
@@ -798,10 +798,15 @@ export function FretboardLesson({ block }) {
 //   { type:"fretboard", fretMode:"find_root",     root:"A",    scale:"pentatonic_minor", q:"...", xp:50 }
 //   { type:"fretboard", fretMode:"find_chord",    root:"G",    chord:"maj7", q:"...", xp:50 }
 // ═══════════════════════════════════════════════════════════════════════════
-export function FretboardQuizQuestion({ question, onComplete, answered }) {
+export function FretboardQuizQuestion({ question, onComplete, answered, forceReveal }) {
   const C = useC();
   const [quizSelected, setQuizSelected] = useState([]);
   const [revealed, setRevealed] = useState(false);
+  // L'indice n'est jamais affiché par défaut — un "trouve tous les Do"
+  // dont l'indice donne déjà 2 des 6 positions dès l'ouverture, c'est
+  // donner la réponse avant même la question. L'utilisateur doit le
+  // demander explicitement s'il veut de l'aide.
+  const [showHint, setShowHint] = useState(false);
 
   // Réinitialiser quand la question change
   const questionKey = question.id;
@@ -809,6 +814,7 @@ export function FretboardQuizQuestion({ question, onComplete, answered }) {
   if (lastKey !== questionKey) {
     setQuizSelected([]);
     setRevealed(false);
+    setShowHint(false);
     setLastKey(questionKey);
   }
 
@@ -861,6 +867,16 @@ export function FretboardQuizQuestion({ question, onComplete, answered }) {
     onComplete(result);
   };
 
+  // Le parent peut demander la révélation depuis l'extérieur (ex: bouton
+  // "je ne sais pas" externe) — même mécanique que Vérifier, sur la
+  // sélection en cours (vide si rien n'a été touché). Montre les bonnes
+  // positions sur le manche plutôt que de laisser l'utilisateur sans
+  // aucun retour visuel.
+  useEffect(() => {
+    if (forceReveal && !revealed) verify();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forceReveal]);
+
   const result = revealed ? checkQuizCompletion(quizSelected, targetPositions) : null;
 
   return (
@@ -870,8 +886,20 @@ export function FretboardQuizQuestion({ question, onComplete, answered }) {
         <div style={{ fontSize: 10, fontWeight: 700, color: C.amber, fontFamily: FONTS.ui, letterSpacing: "0.1em", textTransform: "uppercase" }}>
           Manche interactif
         </div>
-        {question.hint && (
+        {question.hint && (revealed || showHint) && (
           <div style={{ fontSize: 11, color: C.text3, marginTop: 2, fontFamily: FONTS.ui }}>{question.hint}</div>
+        )}
+        {question.hint && !revealed && !showHint && (
+          <button
+            onClick={() => setShowHint(true)}
+            style={{
+              marginTop: 3, padding: 0, border: "none", background: "none",
+              fontSize: 11, color: C.primary, fontWeight: 600, fontFamily: FONTS.ui,
+              cursor: "pointer", textDecoration: "underline",
+            }}
+          >
+            Afficher un indice
+          </button>
         )}
       </div>
 
