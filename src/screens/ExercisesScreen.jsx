@@ -65,7 +65,7 @@ function ExercisesScreen({ state, dispatch, content }) {
     <div>
       {/* ── EN-TÊTE ──────────────────────────────────────────────────────── */}
       <div style={{
-        backgroundImage:"url('/beach.jpg')",
+        backgroundColor:"#e6af6d", backgroundImage:"url('/beach.jpg')",
         backgroundSize:"cover", backgroundPosition:"center 55%",
         padding:"24px 20px 20px", position:"relative", overflow:"hidden",
       }}>

@@ -51,7 +51,7 @@ function QuizScreen({ state, dispatch, content }) {
     <div>
       {/* ── EN-TÊTE ──────────────────────────────────────────────────────── */}
       <div style={{
-        backgroundImage:"url('/ocean.jpg')",
+        backgroundColor:"#36b3d7", backgroundImage:"url('/ocean.jpg')",
         backgroundSize:"cover", backgroundPosition:"center 30%",
         padding:"24px 20px 20px", position:"relative", overflow:"hidden",
       }}>

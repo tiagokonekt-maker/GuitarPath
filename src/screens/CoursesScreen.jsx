@@ -332,7 +332,7 @@ function CoursesScreen({ state, dispatch, content }) {
 
       {/* ── En-tête ── */}
       <div style={{
-        backgroundImage:"url('/lavender.jpg')",
+        backgroundColor:"#613878", backgroundImage:"url('/lavender.jpg')",
         backgroundSize:"cover",backgroundPosition:"center 60%",
         padding:"26px 20px 18px",position:"relative",overflow:"hidden",
       }}>

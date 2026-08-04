@@ -561,7 +561,7 @@ function ToolboxScreen({ onBack }) {
     <div style={{ paddingBottom: 30 }}>
       {/* Header */}
       <div style={{
-        backgroundImage:"url('/sunrise.jpg')", backgroundSize:"cover", backgroundPosition:"center 40%",
+        backgroundColor:"#b7a0c8", backgroundImage:"url('/sunrise.jpg')", backgroundSize:"cover", backgroundPosition:"center 40%",
         padding:"26px 20px 20px", position:"relative", overflow:"hidden",
       }}>
         <div style={{ position:"absolute", inset:0, background:"rgba(160,55,0,.5)" }}/>

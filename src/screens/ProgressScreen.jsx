@@ -39,7 +39,7 @@ function ProgressScreen({ state, content, onOpenSettings }) {
     <div>
       {/* ── EN-TÊTE HERO ─────────────────────────────────────────────────── */}
       <div style={{
-      backgroundImage:"url('/sunrise.jpg')",
+      backgroundColor:"#b7a0c8", backgroundImage:"url('/sunrise.jpg')",
       backgroundSize:"cover", backgroundPosition:"center 40%",
       padding:"24px 20px 20px", position:"relative", overflow:"hidden",
     }}>
