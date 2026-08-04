@@ -198,11 +198,12 @@ export function OnboardingScreen({ content, onComplete, onEvent }) {
 
   return (
     <div style={{
-      minHeight: "100vh", display: "flex", flexDirection: "column",
-      background: C.bg, fontFamily: FONTS.title, padding: "0 0 24px",
+      minHeight: "100dvh", display: "flex", flexDirection: "column",
+      background: C.bg, fontFamily: FONTS.title,
+      padding: "calc(env(safe-area-inset-top, 0px) + 12px) 0 24px",
     }}>
       {phase !== "welcome" && (
-        <div style={{ padding: "calc(env(safe-area-inset-top, 0px) + 16px) 20px 4px" }}>
+        <div style={{ padding: "0 20px 4px" }}>
           <ProgressBar pct={progressPct} />
         </div>
       )}
@@ -211,7 +212,7 @@ export function OnboardingScreen({ content, onComplete, onEvent }) {
 
         {/* ── Bienvenue ─────────────────────────────────────────────── */}
         {phase === "welcome" && (
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 18 }}>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 18, minHeight: 0 }}>
             <Gropi pose="wave" size={110} anim="bob" />
             <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: C.text, letterSpacing: "-.3px" }}>
               Bienvenue sur Groply

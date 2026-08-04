@@ -63,12 +63,17 @@ export function Gropi({ pose = "happy", size = 80, anim = "none", style, onClick
     <img
       src={src}
       alt=""
-      width={size}
       draggable={false}
       onClick={onClick}
       className={anim !== "none" ? "gropi-anim" : undefined}
       style={{
-        display: "block", height: "auto", flexShrink: 0, userSelect: "none",
+        display: "block", width: size, height: "auto",
+        // Garde-fou : si un fichier a un ratio inattendu (trop haut), il
+        // ne peut plus faire déborder la mise en page — object-fit:contain
+        // garantit que l'image se réduit proportionnellement plutôt que
+        // de se déformer si ce plafond se déclenche.
+        maxHeight: size * 1.6, objectFit: "contain",
+        flexShrink: 0, userSelect: "none",
         cursor: onClick ? "pointer" : undefined,
         ...(ANIM[anim] || {}),
         ...style,
