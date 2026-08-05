@@ -649,9 +649,16 @@ const CHORD_ROOTS = [
   ["C","Do"],["C#","Do#"],["D","Ré"],["D#","Ré#"],["E","Mi"],["F","Fa"],
   ["F#","Fa#"],["G","Sol"],["G#","Sol#"],["A","La"],["A#","La#"],["B","Si"],
 ];
-// Sous-ensemble volontairement restreint de CHORD_TYPES — les qualités les
-// plus utiles pour construire une progression, sans noyer l'interface.
-const CHORD_QUALITY_KEYS = ["maj","min","dom7","maj7","min7","sus4","dim"];
+// Qualités groupées par famille : à plat, 29 pastilles seraient illisibles
+// sur un écran de téléphone. On sélectionne d'abord la famille, ce qui garde
+// des zones tactiles confortables.
+const CHORD_FAMILIES = [
+  { id:"base",   label:"Base",    keys:["maj","min","dim","aug","sus2","sus4"] },
+  { id:"sept",   label:"7e / 6e", keys:["dom7","maj7","min7","min7b5","dim7","minMaj7","dom7sus4","maj6","min6"] },
+  { id:"neuf",   label:"9e",      keys:["dom9","maj9","min9","add9"] },
+  { id:"ext",    label:"11e / 13e", keys:["dom11","min11","maj7s11","dom13","min13","maj13"] },
+  { id:"alt",    label:"Altérés", keys:["dom7b9","dom7s9","dom7b5","dom7s5"] },
+];
 const SPEED_PRESETS = [
   { id:"lent",   label:"Lent",   secs:2.2 },
   { id:"normal", label:"Normal", secs:1.4 },
@@ -662,6 +669,7 @@ const MAX_CHORDS = 12;
 function ChordPlayer() {
   const C = useC();
   const [root, setRoot]     = useState("C");
+  const [family, setFamily] = useState("base");
   const [quality, setQuality] = useState("maj");
   const [sequence, setSequence] = useState([]); // [{root, type, label}]
   const [playing, setPlaying]   = useState(false);
@@ -682,7 +690,9 @@ function ChordPlayer() {
   const addChord = () => {
     if (sequence.length >= MAX_CHORDS) return;
     const rootFr = CHORD_ROOTS.find(r => r[0] === root)?.[1] || root;
-    const label = `${rootFr} ${CHORD_TYPES[quality]?.name || quality}`;
+    // Symbole conventionnel plutôt que le nom en clair : un guitariste lit
+    // "Do7♯9" immédiatement, là où "Do 7 dièse 9" demande un décodage.
+    const label = `${rootFr}${CHORD_TYPES[quality]?.sym ?? ""}`;
     setSequence(s => [...s, { root, type: quality, label }]);
   };
   const removeChord = (i) => {
@@ -722,18 +732,41 @@ function ChordPlayer() {
           ))}
         </div>
 
+        <div style={{ fontSize:12, fontWeight:700, color:C.text3, marginBottom:9, fontFamily:FONTS.ui }}>Famille</div>
+        <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:12 }}>
+          {CHORD_FAMILIES.map(f => (
+            <button key={f.id} onClick={() => {
+              setFamily(f.id);
+              // On bascule sur la première qualité de la famille, pour ne
+              // jamais laisser une sélection invisible dans un autre onglet.
+              setQuality(f.keys[0]);
+            }} style={{
+              ...chip, padding:"7px 10px", fontSize:12,
+              border:`1.5px solid ${family===f.id ? C.primary : C.border}`,
+              background: family===f.id ? C.primaryL : C.surface,
+              color: family===f.id ? C.primaryD : C.text2,
+            }}>
+              {f.label}
+            </button>
+          ))}
+        </div>
+
         <div style={{ fontSize:12, fontWeight:700, color:C.text3, marginBottom:9, fontFamily:FONTS.ui }}>Qualité</div>
         <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:14 }}>
-          {CHORD_QUALITY_KEYS.map(key => (
+          {(CHORD_FAMILIES.find(f => f.id === family)?.keys || []).map(key => (
             <button key={key} onClick={() => setQuality(key)} style={{
               ...chip,
               border:`1.5px solid ${quality===key ? C.primary : C.border}`,
               background: quality===key ? C.primaryL : C.surface,
               color: quality===key ? C.primaryD : C.text2,
             }}>
-              {CHORD_TYPES[key]?.name || key}
+              {CHORD_TYPES[key]?.sym || CHORD_TYPES[key]?.name || key}
             </button>
           ))}
+        </div>
+
+        <div style={{ fontSize:11.5, color:C.text3, marginBottom:12, fontFamily:FONTS.ui, minHeight:16 }}>
+          {CHORD_TYPES[quality]?.name}
         </div>
 
         <button onClick={addChord} disabled={sequence.length >= MAX_CHORDS} style={{

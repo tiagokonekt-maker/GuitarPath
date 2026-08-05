@@ -55,39 +55,40 @@ function fromMidi(midi) {
 
 // Construit un empilement ASCENDANT (indispensable : un grattage parcourt
 // les cordes de la plus grave à la plus aiguë, dans cet ordre).
-function buildGuitarVoicing(notes, voices) {
-  if (!notes.length) return [];
-  const rootIdx = CHROMATIC.indexOf(notes[0]);
-  const raw = notes.map(n => ((CHROMATIC.indexOf(n) - rootIdx) + 12) % 12);
-  // Une neuvième collée à la fondamentale ET à la tierce sonne pâteuse : un
-  // guitariste la place une octave plus haut. En revanche, sur un sus2 (pas
-  // de tierce), cette seconde EST la couleur de l'accord et reste en bas —
-  // la déplacer dénaturerait le voicing.
-  const hasThird = raw.some(o => o === 3 || o === 4);
-  const offsets = raw
-    .map(o => (hasThird && (o === 1 || o === 2)) ? o + 12 : o)
-    .sort((a, b) => a - b);
-  // Les accords étendus (9e...) ont besoin d'une voix de plus, sinon la
-  // couleur qui fait tout leur intérêt serait tout simplement coupée.
-  const target = voices || Math.max(5, offsets.length + 1);
+// On part des INTERVALLES réels (0, 4, 7, 14, 17, 21...) et non des noms de
+// notes : réduits à une octave, une onzième (17) serait indistinguable d'un
+// sus4 (5), et une treizième (21) d'une sixte (9). L'information d'octave
+// des extensions est ce qui fait toute leur couleur.
+function buildVoicingFromIntervals(rootName, intervals, voices) {
+  if (!intervals?.length) return [];
+  let degrees = [...new Set(intervals)].sort((a, b) => a - b);
+  // Une guitare a 6 cordes : un accord étendu ne peut pas tout faire sonner.
+  // La quinte juste est le degré le plus dispensable (elle n'apporte aucune
+  // couleur harmonique), c'est celle qu'un guitariste laisse tomber en
+  // premier pour garder la fondamentale, la tierce, la septième et les
+  // extensions qui caractérisent l'accord.
+  if (degrees.length > 5) degrees = degrees.filter(d => d !== 7);
+  const target = Math.min(6, Math.max(5, degrees.length + 1));
   const LOW = midiOf("C", 2), HIGH = midiOf("B", 4);
-  const bass = midiOf(notes[0], 2);
-  const rel = [0];
-  let i = 0;
-  while (rel.length < target) {
-    const off = offsets[i % offsets.length];
-    rel.push(off + 12 * (1 + Math.floor(i / offsets.length)));
-    i++;
+  const bass = midiOf(rootName, 2);
+  // Décalage d'octave adaptatif : empiler l'accord une octave au-dessus de
+  // la basse sonne mieux (basse dégagée, accord bien posé), mais sur une
+  // fondamentale aiguë avec une 13e, ça sort de la plage échantillonnée et
+  // l'extension — donc la couleur même de l'accord — serait perdue. Dans ce
+  // cas on pose l'accord directement sur la basse.
+  const span = Math.max(...degrees);
+  const bump = (bass + span + 12 <= HIGH) ? 12 : 0;
+  const rel = new Set([0]);
+  let i = 0, guard = 0;
+  while (rel.size < target && guard < 60) {
+    const off = degrees[i % degrees.length];
+    const val = off + bump + 12 * Math.floor(i / degrees.length);
+    if (bass + val <= HIGH) rel.add(val);
+    i++; guard++;
   }
-  // Trier en ordre ASCENDANT et dédoublonner : le grattage parcourt les
-  // cordes de la plus grave à la plus aiguë, l'ordre du tableau EST l'ordre
-  // dans lequel les notes sont attaquées. Les octaves ajoutées plus haut ne
-  // sortent pas forcément triées, il faut donc les remettre en ordre ici.
-  return [...new Set(rel)]
+  return [...rel]
     .sort((a, b) => a - b)
     .map(r => bass + r)
-    // Les samples couvrent les octaves 2 à 4 ; au-delà, Tone.js transpose
-    // artificiellement et le rendu devient métallique.
     .filter(m => m >= LOW && m <= HIGH)
     .map(fromMidi);
 }
@@ -235,10 +236,10 @@ export async function playScaleFromRoot(root, scaleKey, bpm = 80) {
 
 // Joue un accord depuis root + chordType
 export async function playChordFromRoot(root, chordType) {
-  const { getChordNotes } = await import("./fretboardUtils.js");
-  const notes = getChordNotes(root, chordType);
-  if (!notes.length) return;
-  await playChord(buildGuitarVoicing(notes), "2n");
+  const { CHORD_TYPES, normalizeNote } = await import("./fretboardUtils.js");
+  const intervals = CHORD_TYPES[chordType]?.intervals;
+  if (!intervals) return;
+  await playChord(buildVoicingFromIntervals(normalizeNote(root), intervals), "2n");
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -251,9 +252,9 @@ let progressionSeq = null;
 export async function playProgression(chords, secondsPerChord = 1.5, onStep) {
   if (!await ensureLoaded()) return;
   stopProgression();
-  const { getChordNotes } = await import("./fretboardUtils.js");
+  const { CHORD_TYPES, normalizeNote } = await import("./fretboardUtils.js");
   const voicedChords = chords.map(({ root, type }) =>
-    buildGuitarVoicing(getChordNotes(root, type))
+    buildVoicingFromIntervals(normalizeNote(root), CHORD_TYPES[type]?.intervals || [])
   );
   progressionSeq = new Tone.Sequence((time, idx) => {
     // Alternance du sens de grattage (bas / haut) comme un vrai jeu

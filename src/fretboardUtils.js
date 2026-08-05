@@ -71,22 +71,47 @@ export const SCALES = {
 // ───────────────────────────────────────────────────────────────────────────
 export const CHORD_TYPES = {
   // Triades
-  "maj":    { name: "Majeur",          intervals: [0, 4, 7] },
-  "min":    { name: "Mineur",          intervals: [0, 3, 7] },
-  "dim":    { name: "Diminué",         intervals: [0, 3, 6] },
-  "aug":    { name: "Augmenté",        intervals: [0, 4, 8] },
-  "sus2":   { name: "Sus2",            intervals: [0, 2, 7] },
-  "sus4":   { name: "Sus4",            intervals: [0, 5, 7] },
+  "maj":    { name: "Majeur",          sym: "",        intervals: [0, 4, 7] },
+  "min":    { name: "Mineur",          sym: "m",       intervals: [0, 3, 7] },
+  "dim":    { name: "Diminué",         sym: "dim",     intervals: [0, 3, 6] },
+  "aug":    { name: "Augmenté",        sym: "aug",     intervals: [0, 4, 8] },
+  "sus2":   { name: "Sus2",            sym: "sus2",    intervals: [0, 2, 7] },
+  "sus4":   { name: "Sus4",            sym: "sus4",    intervals: [0, 5, 7] },
+
+  // Sixtes
+  "maj6":   { name: "Sixte",           sym: "6",       intervals: [0, 4, 7, 9] },
+  "min6":   { name: "Mineur 6",        sym: "m6",      intervals: [0, 3, 7, 9] },
 
   // Tétrades
-  "maj7":   { name: "Maj7",            intervals: [0, 4, 7, 11] },
-  "min7":   { name: "Mineur 7",        intervals: [0, 3, 7, 10] },
-  "dom7":   { name: "Dominante 7",     intervals: [0, 4, 7, 10] },
-  "min7b5": { name: "Mi-diminué (ø)",  intervals: [0, 3, 6, 10] },
-  "dim7":   { name: "Diminué 7",       intervals: [0, 3, 6, 9] },
-  "maj9":   { name: "Maj9",            intervals: [0, 4, 7, 11, 14] },
-  "min9":   { name: "Mineur 9",        intervals: [0, 3, 7, 10, 14] },
-  "add9":   { name: "Add9",            intervals: [0, 4, 7, 14] },
+  "maj7":   { name: "Maj7",            sym: "maj7",    intervals: [0, 4, 7, 11] },
+  "min7":   { name: "Mineur 7",        sym: "m7",      intervals: [0, 3, 7, 10] },
+  "dom7":   { name: "Dominante 7",     sym: "7",       intervals: [0, 4, 7, 10] },
+  "min7b5": { name: "Mi-diminué (ø)",  sym: "m7♭5",    intervals: [0, 3, 6, 10] },
+  "dim7":   { name: "Diminué 7",       sym: "dim7",    intervals: [0, 3, 6, 9] },
+  "minMaj7":{ name: "Mineur Maj7",     sym: "mMaj7",   intervals: [0, 3, 7, 11] },
+  "dom7sus4":{ name: "7 sus4",         sym: "7sus4",   intervals: [0, 5, 7, 10] },
+
+  // Neuvièmes
+  "dom9":   { name: "Neuvième",        sym: "9",       intervals: [0, 4, 7, 10, 14] },
+  "maj9":   { name: "Maj9",            sym: "maj9",    intervals: [0, 4, 7, 11, 14] },
+  "min9":   { name: "Mineur 9",        sym: "m9",      intervals: [0, 3, 7, 10, 14] },
+  "add9":   { name: "Add9",            sym: "add9",    intervals: [0, 4, 7, 14] },
+
+  // Altérés (dominantes tendues)
+  "dom7b9": { name: "7 ♭9",            sym: "7♭9",     intervals: [0, 4, 7, 10, 13] },
+  "dom7s9": { name: "7 ♯9",            sym: "7♯9",     intervals: [0, 4, 7, 10, 15] },
+  "dom7b5": { name: "7 ♭5",            sym: "7♭5",     intervals: [0, 4, 6, 10] },
+  "dom7s5": { name: "7 ♯5",            sym: "7♯5",     intervals: [0, 4, 8, 10] },
+
+  // Onzièmes et treizièmes
+  // Sur un 11 de dominante, la tierce majeure est omise par convention :
+  // elle formerait une neuvième mineure avec la onzième, intervalle très dur.
+  "dom11":  { name: "Onzième",         sym: "11",      intervals: [0, 7, 10, 14, 17] },
+  "min11":  { name: "Mineur 11",       sym: "m11",     intervals: [0, 3, 7, 10, 14, 17] },
+  "maj7s11":{ name: "Maj7 ♯11",        sym: "maj7♯11", intervals: [0, 4, 7, 11, 18] },
+  "dom13":  { name: "Treizième",       sym: "13",      intervals: [0, 4, 7, 10, 14, 21] },
+  "min13":  { name: "Mineur 13",       sym: "m13",     intervals: [0, 3, 7, 10, 14, 21] },
+  "maj13":  { name: "Maj13",           sym: "maj13",   intervals: [0, 4, 7, 11, 14, 21] },
 };
 
 // ───────────────────────────────────────────────────────────────────────────
