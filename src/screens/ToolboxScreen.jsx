@@ -227,52 +227,104 @@ function freqToNote(freq) {
   return { name: NOTE_NAMES[(midi % 12 + 12) % 12], octave: Math.floor(midi / 12) - 1, cents };
 }
 
-// Autocorrélation (ACF2+) — optimisée pour la guitare acoustique
-// fftSize 8192 pour les cordes graves (Mi2 = 82 Hz)
-function autoCorrelate(buf, sampleRate) {
-  const SIZE = buf.length;
+// ─────────────────────────────────────────────────────────────────────────
+// DÉTECTION DE HAUTEUR
+// Plage utile réelle des accordages du catalogue : Ré2 (73 Hz) au plus grave,
+// Si4 (494 Hz) au plus aigu (guitare portugaise). On garde de la marge de
+// part et d'autre pour les cordes très désaccordées.
+// ─────────────────────────────────────────────────────────────────────────
+const PITCH_MIN_HZ = 60;
+const PITCH_MAX_HZ = 700;
 
-  // RMS — seuil bas pour capter les cordes acoustiques tenues à distance
-  let rms = 0;
-  for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
-  rms = Math.sqrt(rms / SIZE);
-  if (rms < 0.001) return -1;   // seuil bas pour guitares acoustiques douces
-
-  // Clipping léger (seuil réduit pour préserver les cordes graves)
-  let r1 = 0, r2 = SIZE - 1, thres = 0.1;  // 0.2 → 0.1
-  for (let i = 0; i < SIZE/2; i++) if (Math.abs(buf[i]) < thres) { r1 = i; break; }
-  for (let i = 1; i < SIZE/2; i++) if (Math.abs(buf[SIZE-i]) < thres) { r2 = SIZE - i; break; }
-  const b = buf.slice(r1, r2);
-  const L = b.length;
-  if (L < 2) return -1;
-
-  // Autocorrélation
-  const c = new Array(L).fill(0);
-  for (let i = 0; i < L; i++)
-    for (let j = 0; j < L - i; j++) c[i] += b[j] * b[j+i];
-
-  // Trouver le premier minimum local puis le maximum suivant
-  let d = 0;
-  while (d < L - 1 && c[d] > c[d+1]) d++;
-  let maxval = -1, maxpos = -1;
-  for (let i = d; i < L; i++) {
-    if (c[i] > maxval) { maxval = c[i]; maxpos = i; }
+// NSDF normalisée sur un écart donné, à la résolution demandée.
+function nsdfAt(x, N, lag) {
+  let acf = 0, energy = 0;
+  const n = N - lag;
+  for (let i = 0; i < n; i++) {
+    const a = x[i], b = x[i + lag];
+    acf += a * b;
+    energy += a * a + b * b;
   }
-  if (maxpos < 1) return -1;
+  return energy > 0 ? (2 * acf) / energy : 0;
+}
 
-  // Vérifier que la corrélation est suffisamment forte (évite les faux positifs)
-  if (c[maxpos] / c[0] < 0.3) return -1;   // nouveau : filtre les sons non périodiques
+function detectPitch(buf, sampleRate) {
+  // ── Décimation par 2 ──────────────────────────────────────────────────
+  // Le graphe audio coupe déjà tout au-dessus de 1400 Hz, donc diviser par
+  // deux la fréquence d'échantillonnage ne crée aucun repliement, et divise
+  // par quatre le coût de la recherche (moitié moins d'écarts à tester, sur
+  // moitié moins d'échantillons).
+  const R = 2;
+  const rate = sampleRate / R;
+  const minLag = Math.max(2, Math.floor(rate / PITCH_MAX_HZ));
+  const maxLag = Math.ceil(rate / PITCH_MIN_HZ);
+  // Trois périodes de la note la plus grave suffisent pour une mesure stable :
+  // inutile de balayer les 8192 échantillons de la fenêtre entière.
+  const N = Math.min(Math.floor(buf.length / R), maxLag * 3);
+  if (N < maxLag + 2) return -1;
 
-  // Interpolation parabolique pour plus de précision
-  let T0 = maxpos;
-  const x1 = c[T0-1] || 0, x2 = c[T0] || 0, x3 = c[T0+1] || 0;
-  const a = (x1 + x3 - 2*x2) / 2, bb = (x3 - x1) / 2;
-  if (a) T0 = T0 - bb / (2*a);
+  const x = new Float32Array(N);
+  for (let i = 0; i < N; i++) x[i] = buf[i * R];
 
-  // Limiter aux fréquences de guitare (Mi2 = 82 Hz → Mi4 = 330 Hz + harmoniques)
+  // ── Seuil de niveau ───────────────────────────────────────────────────
+  let e0 = 0;
+  for (let i = 0; i < N; i++) e0 += x[i] * x[i];
+  if (Math.sqrt(e0 / N) < 0.0012) return -1;
+
+  // ── Recherche grossière sur le signal décimé ──────────────────────────
+  // Version NORMALISÉE (entre -1 et 1) : contrairement à une autocorrélation
+  // brute dont l'amplitude dépend du volume joué, un seuil de confiance
+  // devient ici réellement comparable d'une note à l'autre.
+  const nsdf = new Float32Array(maxLag + 2);
+  let best = 0;
+  for (let lag = minLag; lag <= maxLag; lag++) {
+    const v = nsdfAt(x, N, lag);
+    nsdf[lag] = v;
+    if (v > best) best = v;
+  }
+  if (best < 0.35) return -1;   // non périodique : bruit, souffle, larsen
+
+  // ── Premier pic franc, PAS le maximum global ──────────────────────────
+  // Une corde de guitare est riche en harmoniques : le maximum global tombe
+  // fréquemment une octave en dessous (ou au-dessus) du vrai fondamental.
+  // Retenir le premier pic atteignant 85 % du meilleur évite ces erreurs
+  // d'octave, qui sont le défaut classique d'un accordeur de ce type.
+  const thresh = best * 0.85;
+  let coarse = -1;
+  for (let i = minLag + 1; i < maxLag; i++) {
+    if (nsdf[i] >= thresh && nsdf[i] >= nsdf[i-1] && nsdf[i] >= nsdf[i+1]) { coarse = i; break; }
+  }
+  if (coarse < 0) return -1;
+
+  // ── Affinage à la résolution complète ─────────────────────────────────
+  // La recherche décimée ne donne l'écart qu'à 2 échantillons près. Sans cet
+  // affinage la précision serait trop grossière sur les cordes aiguës : vers
+  // 330 Hz, un seul échantillon d'écart représente déjà ~25 cents.
+  const center = coarse * R;
+  const lo = Math.max(2, center - R - 1);
+  const hi = Math.min(Math.floor(buf.length / 3) - 1, center + R + 1);
+  const NF = Math.min(buf.length, hi * 3);
+  let bestLag = center, bestVal = -Infinity;
+  const vals = {};
+  for (let l = lo; l <= hi; l++) {
+    const v = nsdfAt(buf, NF, l);
+    vals[l] = v;
+    if (v > bestVal) { bestVal = v; bestLag = l; }
+  }
+
+  // Interpolation parabolique pour descendre sous l'échantillon (~1 cent).
+  let T0 = bestLag;
+  const y1 = vals[bestLag - 1], y2 = vals[bestLag], y3 = vals[bestLag + 1];
+  if (y1 !== undefined && y3 !== undefined) {
+    const a = (y1 + y3 - 2 * y2) / 2, b = (y3 - y1) / 2;
+    if (a !== 0) {
+      const shift = -b / (2 * a);
+      if (Math.abs(shift) <= 1) T0 = bestLag + shift;
+    }
+  }
+
   const freq = sampleRate / T0;
-  if (freq < 60 || freq > 1400) return -1;  // nouveau : filtre hors plage guitare
-
+  if (freq < PITCH_MIN_HZ || freq > PITCH_MAX_HZ) return -1;
   return freq;
 }
 
@@ -314,7 +366,6 @@ function Tuner() {
   const [freq, setFreq]       = useState(0);
   const [note, setNote]       = useState(null);
   const [error, setError]     = useState(null);
-  const [debug, setDebug]     = useState({ rms: 0, raw: 0 });
   const [tuningId, setTuningId] = useState("standard");
 
   const tuning  = TUNINGS.find(t => t.id === tuningId) || TUNINGS[0];
@@ -328,6 +379,15 @@ function Tuner() {
   const freqHistRef  = useRef([]);  // historique pour lissage
   const holdTimer    = useRef(null); // timer pour tenir la note après silence
   const lastNoteRef  = useRef(null); // dernière note valide
+  // Animation de l'aiguille : on écrit directement dans le DOM à chaque
+  // image, sans passer par un état React. Un setState 60 fois par seconde
+  // relancerait tout le rendu de l'écran pour déplacer un triangle, ce qui
+  // est précisément ce qui rend une jauge saccadée.
+  const needleRef      = useRef(null);
+  const needleLabelRef = useRef(null);
+  const centsTargetRef = useRef(0);   // dernière valeur détectée
+  const centsShownRef  = useRef(0);   // valeur affichée, lissée vers la cible
+  const hasSignalRef   = useRef(false);
 
   const stop = useCallback(() => {
     if (holdTimer.current) { clearTimeout(holdTimer.current); holdTimer.current = null; }
@@ -335,6 +395,10 @@ function Tuner() {
     if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
     if (ctxRef.current && ctxRef.current.state !== "closed") ctxRef.current.close();
     ctxRef.current = analyser.current = streamRef.current = null;
+    centsTargetRef.current = 0;
+    centsShownRef.current = 0;
+    hasSignalRef.current = false;
+    freqHistRef.current = [];
     setActive(false); setFreq(0); setNote(null);
   }, []);
 
@@ -372,49 +436,69 @@ function Tuner() {
       freqHistRef.current = [];
       setActive(true); setError(null);
 
-      let frameCount = 0;
+      let frame = 0;
       const tick = () => {
-        an.getFloatTimeDomainData(bufRef.current);
+        frame++;
 
-        // Debug : niveau audio brut (RMS) toutes les 6 frames (~10x/sec)
-        frameCount++;
-        if (frameCount % 6 === 0) {
-          let sum = 0, peak = 0;
-          for (let i = 0; i < bufRef.current.length; i++) {
-            const v = bufRef.current[i];
-            sum += v * v;
-            if (Math.abs(v) > peak) peak = Math.abs(v);
+        // ── Détection : une image sur deux (~30 Hz) ────────────────────
+        // Largement suffisant pour suivre une corde, et ça libère le temps
+        // de calcul nécessaire pour animer l'aiguille à 60 images/sec.
+        if (frame % 2 === 0) {
+          an.getFloatTimeDomainData(bufRef.current);
+          const f = detectPitch(bufRef.current, ctx.sampleRate);
+          if (f > 0) {
+            const hist = freqHistRef.current;
+            hist.push(f);
+            if (hist.length > 5) hist.shift();
+            const sorted = [...hist].sort((a,b)=>a-b);
+            const median = sorted[Math.floor(sorted.length/2)];
+            if (holdTimer.current) { clearTimeout(holdTimer.current); holdTimer.current = null; }
+            lastNoteRef.current = median;
+            const n = freqToNote(median);
+            centsTargetRef.current = Math.max(-50, Math.min(50, n.cents));
+            hasSignalRef.current = true;
+            // On ne relance le rendu React que si la note affichée change
+            // vraiment : le déplacement de l'aiguille, lui, est géré hors
+            // React juste en dessous.
+            setNote(prev =>
+              (prev && prev.name === n.name && prev.octave === n.octave && Math.abs(prev.cents - n.cents) < 3)
+                ? prev : n
+            );
+            if (frame % 12 === 0) setFreq(median);
+          } else {
+            const hist = freqHistRef.current;
+            if (hist.length > 0) hist.shift();
+            if (hist.length === 0 && !holdTimer.current) {
+              holdTimer.current = setTimeout(() => {
+                setFreq(0);
+                setNote(null);
+                lastNoteRef.current = null;
+                holdTimer.current = null;
+                hasSignalRef.current = false;
+                centsTargetRef.current = 0;
+              }, 1500);
+            }
           }
-          const rms = Math.sqrt(sum / bufRef.current.length);
-          setDebug({ rms: rms.toFixed(4), raw: peak.toFixed(3) });
         }
 
-        const f = autoCorrelate(bufRef.current, ctx.sampleRate);
-        if (f > 0) {
-          // Lissage : garder les 4 dernières fréquences valides
-          const hist = freqHistRef.current;
-          hist.push(f);
-          if (hist.length > 4) hist.shift();
-          // Médiane pour éviter les sauts
-          const sorted = [...hist].sort((a,b)=>a-b);
-          const median = sorted[Math.floor(sorted.length/2)];
-          // Annuler le timer de hold si une nouvelle note arrive
-          if (holdTimer.current) { clearTimeout(holdTimer.current); holdTimer.current = null; }
-          lastNoteRef.current = median;
-          setFreq(median);
-          setNote(freqToNote(median));
-        } else {
-          // Silence → vider l'historique mais tenir la dernière note 1.5s
-          const hist = freqHistRef.current;
-          if (hist.length > 0) hist.shift();
-          if (hist.length === 0 && !holdTimer.current) {
-            holdTimer.current = setTimeout(() => {
-              setFreq(0);
-              setNote(null);
-              lastNoteRef.current = null;
-              holdTimer.current = null;
-            }, 1500);
-          }
+        // ── Aiguille : à chaque image, sans repasser par React ─────────
+        // Lissage exponentiel vers la dernière valeur détectée : l'aiguille
+        // glisse au lieu de sauter d'une position à l'autre. Le facteur est
+        // un compromis — assez réactif pour suivre l'oreille, assez lent
+        // pour absorber les micro-variations d'une corde qui vibre.
+        const target = centsTargetRef.current;
+        const next = centsShownRef.current + (target - centsShownRef.current) * 0.16;
+        centsShownRef.current = next;
+        if (needleRef.current) {
+          // translateX en pourcentage sur un élément large de 100 % : le
+          // décalage vaut donc un pourcentage de la piste, et reste une
+          // transformation pure (accélérée, sans recalcul de mise en page).
+          needleRef.current.style.transform = `translateX(${next}%)`;
+        }
+        if (needleLabelRef.current) {
+          const shown = Math.round(next);
+          needleLabelRef.current.textContent =
+            hasSignalRef.current ? (shown > 0 ? `+${shown}` : `${shown}`) : "";
         }
         rafRef.current = requestAnimationFrame(tick);
       };
@@ -429,6 +513,7 @@ function Tuner() {
 
   const cents = note?.cents ?? 0;
   const inTune = active && note && Math.abs(cents) <= 5;
+  const needleColor = inTune ? C.green : Math.abs(cents) < 20 ? C.amber : C.pink;
   // chœur le plus proche (compare à toutes les notes cibles, paires incluses)
   const nearestCourse = freq > 0
     ? targets.reduce((best, t) => {
@@ -477,26 +562,27 @@ function Tuner() {
           </div>
 
           {/* Aiguille de justesse (-50 … +50 cents) */}
-          <div style={{ position:"relative", height:64, margin:"14px 0 8px" }}>
+          <div style={{ position:"relative", height:64, margin:"14px 0 8px", overflow:"hidden" }}>
             <div style={{ position:"absolute", left:0, right:0, top:30, height:3, background:C.border, borderRadius:2 }}/>
             {/* zone juste */}
             <div style={{ position:"absolute", left:"calc(50% - 18px)", width:36, top:26, height:11, background:`${C.green}33`, borderRadius:6 }}/>
             {/* repère central */}
             <div style={{ position:"absolute", left:"50%", top:18, width:2, height:27, background:C.green, transform:"translateX(-50%)" }}/>
-            {/* aiguille */}
-            <div style={{
-              position:"absolute", top:8,
-              left:`${50 + Math.max(-50, Math.min(50, cents))}%`,
-              transform:"translateX(-50%)", transition:"left .1s ease",
-            }}>
-              <div style={{
-                width:0, height:0, margin:"0 auto",
-                borderLeft:"7px solid transparent", borderRight:"7px solid transparent",
-                borderTop:`14px solid ${inTune ? C.green : Math.abs(cents) < 20 ? C.amber : C.pink}`,
-              }}/>
-              <div style={{ fontSize:11, fontWeight:700, textAlign:"center", marginTop:2,
-                color: inTune ? C.green : Math.abs(cents) < 20 ? C.amber : C.pink }}>
-                {note ? (cents > 0 ? `+${cents}` : cents) : ""}
+            {/* aiguille — piste large de 100 %, déplacée par transformation
+                pure : le pourcentage de translateX se rapporte alors à la
+                largeur de la piste, et rien ne recalcule la mise en page. */}
+            <div style={{ position:"absolute", left:0, right:0, top:8, pointerEvents:"none" }}>
+              <div ref={needleRef} style={{ width:"100%", transform:"translateX(0%)", willChange:"transform" }}>
+                <div style={{
+                  width:0, height:0, margin:"0 auto",
+                  borderLeft:"7px solid transparent", borderRight:"7px solid transparent",
+                  borderTop:`14px solid ${needleColor}`,
+                  transition:"border-top-color .18s",
+                }}/>
+                <div ref={needleLabelRef} style={{
+                  fontSize:11, fontWeight:700, textAlign:"center", marginTop:2,
+                  color: needleColor, transition:"color .18s",
+                }}/>
               </div>
             </div>
             {/* libellés trop bas/trop haut */}

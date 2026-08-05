@@ -42,6 +42,78 @@ function toToneNote(note, octave) {
 const CHROMATIC = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
 const OPEN_STRINGS = { 1:"E4", 2:"B3", 3:"G3", 4:"D3", 5:"A2", 6:"E2" };
 
+// ─────────────────────────────────────────────────────────────────────────
+// VOICING GUITARE — un accord de guitare fait sonner 5 à 6 cordes, pas 3
+// notes isolées. Un simple empilement de la triade sonne creux et
+// synthétique ; on double la fondamentale et la tierce à l'octave pour
+// retrouver l'épaisseur d'un vrai accord plaqué.
+// ─────────────────────────────────────────────────────────────────────────
+function midiOf(name, octave) { return CHROMATIC.indexOf(name) + 12 * (octave + 1); }
+function fromMidi(midi) {
+  return toToneNote(CHROMATIC[((midi % 12) + 12) % 12], Math.floor(midi / 12) - 1);
+}
+
+// Construit un empilement ASCENDANT (indispensable : un grattage parcourt
+// les cordes de la plus grave à la plus aiguë, dans cet ordre).
+function buildGuitarVoicing(notes, voices) {
+  if (!notes.length) return [];
+  const rootIdx = CHROMATIC.indexOf(notes[0]);
+  const raw = notes.map(n => ((CHROMATIC.indexOf(n) - rootIdx) + 12) % 12);
+  // Une neuvième collée à la fondamentale ET à la tierce sonne pâteuse : un
+  // guitariste la place une octave plus haut. En revanche, sur un sus2 (pas
+  // de tierce), cette seconde EST la couleur de l'accord et reste en bas —
+  // la déplacer dénaturerait le voicing.
+  const hasThird = raw.some(o => o === 3 || o === 4);
+  const offsets = raw
+    .map(o => (hasThird && (o === 1 || o === 2)) ? o + 12 : o)
+    .sort((a, b) => a - b);
+  // Les accords étendus (9e...) ont besoin d'une voix de plus, sinon la
+  // couleur qui fait tout leur intérêt serait tout simplement coupée.
+  const target = voices || Math.max(5, offsets.length + 1);
+  const LOW = midiOf("C", 2), HIGH = midiOf("B", 4);
+  const bass = midiOf(notes[0], 2);
+  const rel = [0];
+  let i = 0;
+  while (rel.length < target) {
+    const off = offsets[i % offsets.length];
+    rel.push(off + 12 * (1 + Math.floor(i / offsets.length)));
+    i++;
+  }
+  // Trier en ordre ASCENDANT et dédoublonner : le grattage parcourt les
+  // cordes de la plus grave à la plus aiguë, l'ordre du tableau EST l'ordre
+  // dans lequel les notes sont attaquées. Les octaves ajoutées plus haut ne
+  // sortent pas forcément triées, il faut donc les remettre en ordre ici.
+  return [...new Set(rel)]
+    .sort((a, b) => a - b)
+    .map(r => bass + r)
+    // Les samples couvrent les octaves 2 à 4 ; au-delà, Tone.js transpose
+    // artificiellement et le rendu devient métallique.
+    .filter(m => m >= LOW && m <= HIGH)
+    .map(fromMidi);
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// GRATTAGE — étale les cordes dans le temps et fait varier l'intensité.
+// C'est ce qui distingue le plus un accord "joué" d'un accord "déclenché" :
+// à intensité identique et à la milliseconde près, l'oreille entend un
+// orgue, pas une guitare.
+// ─────────────────────────────────────────────────────────────────────────
+function strumInto(notes, duration, when, direction = "down", spread = 0.026) {
+  const ordered = direction === "down" ? notes : [...notes].reverse();
+  const n = ordered.length;
+  ordered.forEach((note, i) => {
+    // Intensité : le médiator attaque un peu moins fort la première corde,
+    // appuie au centre du mouvement, s'allège en fin de course.
+    const curve = Math.sin(((i + 0.6) / n) * Math.PI);
+    const velocity = Math.max(0.35, Math.min(1, 0.55 + curve * 0.35 + (Math.random() - 0.5) * 0.07));
+    // Écart entre cordes légèrement irrégulier — un geste humain n'est
+    // jamais parfaitement régulier.
+    const jitter = (Math.random() - 0.5) * spread * 0.35;
+    const t = when + i * spread + jitter;
+    try { sampler.triggerAttackRelease(note, duration, t, velocity); } catch { /* noop */ }
+  });
+}
+
 // Calcule la note Tone.js depuis corde + case
 export function getToneNoteAtPosition(string, fret) {
   const open     = OPEN_STRINGS[string];
@@ -70,13 +142,17 @@ export function loadAudio() {
   if (loadPromise) return loadPromise;
   loadPromise = new Promise((resolve, reject) => {
     try {
-      const reverb = new Tone.Reverb({ decay: 1.2, wet: 0.12 });
+      // Une guitare est toujours entendue dans une pièce. Un signal trop
+      // sec et frontal sonne artificiel, même avec de vrais samples — un
+      // peu plus d'espace et de longueur suffisent à replacer l'instrument
+      // dans un lieu plutôt que dans un haut-parleur.
+      const reverb = new Tone.Reverb({ decay: 1.9, wet: 0.19 });
       reverb.toDestination();
 
       sampler = new Tone.Sampler({
         urls: SAMPLE_URLS,
         baseUrl: BASE_URL,
-        release: 1.2,
+        release: 1.6,
         onload: () => { isLoaded = true; resolve(true); },
         onerror: (err) => {
           loadError = err;
@@ -111,9 +187,13 @@ export async function playNote(note, duration = "4n") {
   catch (e) { console.warn("[audioEngine] playNote:", e); }
 }
 
-export async function playChord(notes, duration = "2n") {
+export async function playChord(notes, duration = "2n", opts = {}) {
   if (!await ensureLoaded()) return;
-  try { sampler.triggerAttackRelease(notes, duration); }
+  const { strum = true, direction = "down", spread = 0.026 } = opts;
+  try {
+    if (!strum) { sampler.triggerAttackRelease(notes, duration); return; }
+    strumInto(notes, duration, Tone.now(), direction, spread);
+  }
   catch (e) { console.warn("[audioEngine] playChord:", e); }
 }
 
@@ -158,8 +238,7 @@ export async function playChordFromRoot(root, chordType) {
   const { getChordNotes } = await import("./fretboardUtils.js");
   const notes = getChordNotes(root, chordType);
   if (!notes.length) return;
-  const voiced = notes.map((note, i) => toToneNote(note, i === 0 ? 2 : i <= 2 ? 3 : 4));
-  await playChord(voiced);
+  await playChord(buildGuitarVoicing(notes), "2n");
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -173,12 +252,17 @@ export async function playProgression(chords, secondsPerChord = 1.5, onStep) {
   if (!await ensureLoaded()) return;
   stopProgression();
   const { getChordNotes } = await import("./fretboardUtils.js");
-  const voicedChords = chords.map(({ root, type }) => {
-    const notes = getChordNotes(root, type);
-    return notes.map((note, i) => toToneNote(note, i === 0 ? 2 : i <= 2 ? 3 : 4));
-  });
+  const voicedChords = chords.map(({ root, type }) =>
+    buildGuitarVoicing(getChordNotes(root, type))
+  );
   progressionSeq = new Tone.Sequence((time, idx) => {
-    sampler.triggerAttackRelease(voicedChords[idx], secondsPerChord * 0.85, time);
+    // Alternance du sens de grattage (bas / haut) comme un vrai jeu
+    // rythmique, plutôt que le même coup identique en boucle.
+    const direction = idx % 2 === 0 ? "down" : "up";
+    // Micro-décalage : quelques millisecondes d'imprécision, ce qui
+    // suffit à sortir du rendu "machine" parfaitement métronomique.
+    const humanize = (Math.random() - 0.5) * 0.012;
+    strumInto(voicedChords[idx], secondsPerChord * 0.9, time + humanize, direction);
     Tone.Draw.schedule(() => onStep?.(idx), time);
   }, voicedChords.map((_, idx) => idx), secondsPerChord);
   progressionSeq.start(0);
