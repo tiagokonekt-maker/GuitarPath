@@ -131,10 +131,12 @@ const makeLevelColor = (C) => ({ "Facile": C.green, "Moyen": C.amber, "Difficile
 // Chaîne audio : instruments -> reverb/delay -> compresseur master
 // ─────────────────────────────────────────────────────────────────────────
 function BackingTrackPlayer({ context, root, bpm }) {
+  const C = useC();
   const [playing, setPlaying]       = useState(false);
   const [beat, setBeat]             = useState(0);
   const [currentChord, setCurrentChord] = useState(0);
   const [loading, setLoading]       = useState(false);
+  const [playError, setPlayError]   = useState(null);
 
   // Refs instruments
   const samplerRef  = useRef(null); // guitare steel samples
@@ -269,6 +271,7 @@ function BackingTrackPlayer({ context, root, bpm }) {
   // ── Démarrage du backing ────────────────────────────────────────────────
   async function startBacking() {
     setLoading(true);
+    setPlayError(null);
     try {
       await Tone.start();
       await Tone.getContext().resume();
@@ -438,6 +441,7 @@ function BackingTrackPlayer({ context, root, bpm }) {
 
     } catch (e) {
       console.warn("[BackingTrackPlayer] Erreur:", e);
+      setPlayError(e?.message || "Le lecteur n'a pas pu démarrer.");
     }
     setLoading(false);
   }
@@ -511,6 +515,25 @@ function BackingTrackPlayer({ context, root, bpm }) {
         </button>
       </div>
 
+      {playError && (
+        <div style={{
+          display: "flex", alignItems: "center", gap: 8, marginBottom: 10,
+          padding: "9px 12px", borderRadius: R.md,
+          background: C.coralL, border: `1px solid ${C.coral}`,
+        }}>
+          <Ti name="alert-circle" size={15} color={C.coralD} style={{ flexShrink: 0 }} />
+          <span style={{ fontSize: 12, color: C.coralD, fontFamily: FONTS.ui, lineHeight: 1.4, flex: 1 }}>
+            {playError}
+          </span>
+          <button onClick={startBacking} style={{
+            background: "none", border: "none", color: C.coralD, fontWeight: 700,
+            fontSize: 12, fontFamily: FONTS.ui, cursor: "pointer", flexShrink: 0, textDecoration: "underline",
+          }}>
+            Réessayer
+          </button>
+        </div>
+      )}
+
       {/* Visualiseur mesures */}
       <div style={{ display: "flex", gap: 3, marginBottom: 10 }}>
         {Array.from({ length: totalBars }).map((_, i) => (
@@ -562,6 +585,7 @@ function BackingTrackPlayer({ context, root, bpm }) {
 export function JamSession({ onBack }) {
   const C = useC();
   const LEVEL_COLOR = makeLevelColor(C);
+  const CONTEXTS = makeContexts(C);
   const [contextId, setContextId] = useState("blues_minor");
   const [root, setRoot]           = useState("A");
   const [displayMode, setDisplayMode] = useState("notes");
