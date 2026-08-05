@@ -6,6 +6,8 @@ import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { Gropi, GropiTip } from "../design/Gropi.jsx";
 import * as Tone from "tone";
+import { playProgression, stopProgression } from "../audioEngine.js";
+import { CHORD_TYPES } from "../fretboardUtils.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // MÉTRONOME
@@ -553,6 +555,187 @@ function Tuner() {
 // ═══════════════════════════════════════════════════════════════════════════
 // ÉCRAN
 // ═══════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════
+// LECTEUR D'ACCORDS — construis une suite d'accords, écoute-la jouée en
+// boucle avec le vrai son de guitare (même moteur que le reste de l'app).
+// ═══════════════════════════════════════════════════════════════════════════
+const CHORD_ROOTS = [
+  ["C","Do"],["C#","Do#"],["D","Ré"],["D#","Ré#"],["E","Mi"],["F","Fa"],
+  ["F#","Fa#"],["G","Sol"],["G#","Sol#"],["A","La"],["A#","La#"],["B","Si"],
+];
+// Sous-ensemble volontairement restreint de CHORD_TYPES — les qualités les
+// plus utiles pour construire une progression, sans noyer l'interface.
+const CHORD_QUALITY_KEYS = ["maj","min","dom7","maj7","min7","sus4","dim"];
+const SPEED_PRESETS = [
+  { id:"lent",   label:"Lent",   secs:2.2 },
+  { id:"normal", label:"Normal", secs:1.4 },
+  { id:"rapide", label:"Rapide", secs:0.8 },
+];
+const MAX_CHORDS = 12;
+
+function ChordPlayer() {
+  const C = useC();
+  const [root, setRoot]     = useState("C");
+  const [quality, setQuality] = useState("maj");
+  const [sequence, setSequence] = useState([]); // [{root, type, label}]
+  const [playing, setPlaying]   = useState(false);
+  const [activeIdx, setActiveIdx] = useState(-1);
+  const [speed, setSpeed] = useState("normal");
+
+  const stop = useCallback(() => {
+    stopProgression();
+    setPlaying(false);
+    setActiveIdx(-1);
+  }, []);
+
+  // Nettoyage : si on quitte l'onglet en cours de lecture, on arrête —
+  // sinon la progression continuerait à jouer en fond, ou entrerait en
+  // conflit avec le métronome qui partage le même transport audio.
+  useEffect(() => () => stopProgression(), []);
+
+  const addChord = () => {
+    if (sequence.length >= MAX_CHORDS) return;
+    const rootFr = CHORD_ROOTS.find(r => r[0] === root)?.[1] || root;
+    const label = `${rootFr} ${CHORD_TYPES[quality]?.name || quality}`;
+    setSequence(s => [...s, { root, type: quality, label }]);
+  };
+  const removeChord = (i) => {
+    setSequence(s => s.filter((_, idx) => idx !== i));
+  };
+  const clearAll = () => { stop(); setSequence([]); };
+
+  const play = async () => {
+    if (sequence.length === 0) return;
+    const secs = SPEED_PRESETS.find(p => p.id === speed)?.secs || 1.4;
+    setPlaying(true);
+    await playProgression(sequence, secs, (idx) => setActiveIdx(idx));
+  };
+
+  const toggle = () => (playing ? stop() : play());
+
+  const chip = {
+    padding:"8px 10px", borderRadius:10, border:`1.5px solid ${C.border}`,
+    background:C.surface, color:C.text2, fontWeight:700, fontSize:12.5, cursor:"pointer", fontFamily:FONTS.ui,
+  };
+
+  return (
+    <div>
+      {/* Choix de l'accord à ajouter */}
+      <div style={{ background:C.surface, border:`1.5px solid ${C.border}`, borderRadius:R.lg, padding:16 }}>
+        <div style={{ fontSize:12, fontWeight:700, color:C.text3, marginBottom:9, fontFamily:FONTS.ui }}>Fondamentale</div>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(6, 1fr)", gap:6, marginBottom:14 }}>
+          {CHORD_ROOTS.map(([code, fr]) => (
+            <button key={code} onClick={() => setRoot(code)} style={{
+              ...chip, padding:"9px 0",
+              border:`1.5px solid ${root===code ? C.primary : C.border}`,
+              background: root===code ? C.primaryL : C.surface,
+              color: root===code ? C.primaryD : C.text2,
+            }}>
+              {fr}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ fontSize:12, fontWeight:700, color:C.text3, marginBottom:9, fontFamily:FONTS.ui }}>Qualité</div>
+        <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:14 }}>
+          {CHORD_QUALITY_KEYS.map(key => (
+            <button key={key} onClick={() => setQuality(key)} style={{
+              ...chip,
+              border:`1.5px solid ${quality===key ? C.primary : C.border}`,
+              background: quality===key ? C.primaryL : C.surface,
+              color: quality===key ? C.primaryD : C.text2,
+            }}>
+              {CHORD_TYPES[key]?.name || key}
+            </button>
+          ))}
+        </div>
+
+        <button onClick={addChord} disabled={sequence.length >= MAX_CHORDS} style={{
+          width:"100%", padding:"11px 0", borderRadius:R.md, border:"none",
+          background: sequence.length >= MAX_CHORDS ? C.border : C.primary,
+          color:"#fff", fontWeight:700, fontSize:13.5, fontFamily:FONTS.ui,
+          cursor: sequence.length >= MAX_CHORDS ? "default" : "pointer",
+          display:"flex", alignItems:"center", justifyContent:"center", gap:6,
+        }}>
+          <Ti name="plus" size={15} color="#fff"/>
+          Ajouter à la suite
+        </button>
+      </div>
+
+      {/* Suite d'accords construite */}
+      <div style={{ background:C.surface, border:`1.5px solid ${C.border}`, borderRadius:R.lg, padding:16, marginTop:12 }}>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
+          <div style={{ fontSize:12, fontWeight:700, color:C.text3, fontFamily:FONTS.ui }}>
+            Ta suite ({sequence.length}/{MAX_CHORDS})
+          </div>
+          {sequence.length > 0 && (
+            <button onClick={clearAll} style={{
+              background:"none", border:"none", color:C.coral, fontSize:12, fontWeight:700,
+              fontFamily:FONTS.ui, cursor:"pointer", padding:0,
+            }}>
+              Vider
+            </button>
+          )}
+        </div>
+
+        {sequence.length === 0 ? (
+          <div style={{ textAlign:"center", padding:"18px 0", color:C.text3, fontSize:13, fontFamily:FONTS.ui }}>
+            Ajoute des accords ci-dessus pour construire ta suite.
+          </div>
+        ) : (
+          <div style={{ display:"flex", flexWrap:"wrap", gap:8, marginBottom:16 }}>
+            {sequence.map((c, i) => (
+              <div key={i} style={{
+                display:"flex", alignItems:"center", gap:6, padding:"8px 6px 8px 12px",
+                borderRadius:10, fontFamily:FONTS.ui, fontWeight:700, fontSize:13,
+                border:`1.5px solid ${activeIdx===i && playing ? C.primary : C.border}`,
+                background: activeIdx===i && playing ? C.primaryL : C.surface2,
+                color: activeIdx===i && playing ? C.primaryD : C.text,
+                transition:"all 0.15s",
+              }}>
+                {c.label}
+                <button onClick={() => removeChord(i)} style={{
+                  background:"none", border:"none", cursor:"pointer", padding:2,
+                  display:"flex", color:C.text3,
+                }}>
+                  <Ti name="x" size={13} color={C.text3}/>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Vitesse */}
+        <div style={{ display:"flex", gap:6, marginBottom:14 }}>
+          {SPEED_PRESETS.map(p => (
+            <button key={p.id} onClick={() => setSpeed(p.id)} disabled={playing} style={{
+              flex:1, padding:"8px 0", borderRadius:R.sm, fontFamily:FONTS.ui,
+              border:`1.5px solid ${speed===p.id ? C.primary : C.border}`,
+              background: speed===p.id ? C.primaryL : C.surface,
+              color: speed===p.id ? C.primaryD : C.text2,
+              fontWeight:700, fontSize:12.5, cursor: playing ? "default" : "pointer",
+              opacity: playing ? 0.6 : 1,
+            }}>
+              {p.label}
+            </button>
+          ))}
+        </div>
+
+        <button onClick={toggle} disabled={sequence.length === 0} style={{
+          width:"100%", padding:"13px 0", borderRadius:R.md, border:"none",
+          background: sequence.length === 0 ? C.border : (playing ? C.coral : C.primary),
+          color:"#fff", fontWeight:800, fontSize:14, fontFamily:FONTS.ui,
+          cursor: sequence.length === 0 ? "default" : "pointer",
+          display:"flex", alignItems:"center", justifyContent:"center", gap:7,
+        }}>
+          <Ti name={playing ? "player-stop" : "player-play"} size={16} color="#fff"/>
+          {playing ? "Arrêter" : "Écouter la suite"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function ToolboxScreen({ onBack }) {
   const C = useC();
   const [tab, setTab] = useState("metronome");
@@ -586,6 +769,7 @@ function ToolboxScreen({ onBack }) {
         {[
           { id:"metronome", label:"Métronome", icon:"clock" },
           { id:"tuner",     label:"Accordeur", icon:"microphone" },
+          { id:"chords",    label:"Accords",   icon:"music" },
         ].map(t => (
           <button key={t.id} onClick={()=>setTab(t.id)} style={{
             flex:1, padding:"10px 0", borderRadius:R.lg, cursor:"pointer", fontFamily:FONTS.ui,
@@ -602,7 +786,7 @@ function ToolboxScreen({ onBack }) {
 
       {/* Contenu */}
       <div style={{ padding:"18px 20px 0" }}>
-        {tab === "metronome" ? <Metronome/> : <Tuner/>}
+        {tab === "metronome" ? <Metronome/> : tab === "tuner" ? <Tuner/> : <ChordPlayer/>}
       </div>
     </div>
   );

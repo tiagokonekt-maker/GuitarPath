@@ -162,6 +162,37 @@ export async function playChordFromRoot(root, chordType) {
   await playChord(voiced);
 }
 
+// ─────────────────────────────────────────────────────────────────────────
+// PROGRESSION D'ACCORDS — enchaîne plusieurs accords, en boucle, avec un
+// callback synchronisé sur l'audio (Tone.Draw) pour surligner l'accord en
+// cours dans l'interface sans dépendre d'un minuteur séparé qui dériverait.
+// ─────────────────────────────────────────────────────────────────────────
+let progressionSeq = null;
+
+export async function playProgression(chords, secondsPerChord = 1.5, onStep) {
+  if (!await ensureLoaded()) return;
+  stopProgression();
+  const { getChordNotes } = await import("./fretboardUtils.js");
+  const voicedChords = chords.map(({ root, type }) => {
+    const notes = getChordNotes(root, type);
+    return notes.map((note, i) => toToneNote(note, i === 0 ? 2 : i <= 2 ? 3 : 4));
+  });
+  progressionSeq = new Tone.Sequence((time, idx) => {
+    sampler.triggerAttackRelease(voicedChords[idx], secondsPerChord * 0.85, time);
+    Tone.Draw.schedule(() => onStep?.(idx), time);
+  }, voicedChords.map((_, idx) => idx), secondsPerChord);
+  progressionSeq.start(0);
+  Tone.getTransport().start();
+}
+
+export function stopProgression() {
+  if (progressionSeq) {
+    try { progressionSeq.stop(); progressionSeq.dispose(); } catch {}
+    progressionSeq = null;
+  }
+  try { Tone.getTransport().stop(); Tone.getTransport().cancel(); } catch {}
+}
+
 export function stopAll() {
   try { sampler?.releaseAll(); } catch {}
 }
