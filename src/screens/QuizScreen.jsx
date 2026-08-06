@@ -5,6 +5,7 @@ import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { ProgressBar, XPPop } from "../design/ui.jsx";
 import { Gropi } from "../design/Gropi.jsx";
+import { makeEarQuizQuestion, loadAudio } from "../audioEngine.js";
 
 export let _FretboardQuizQuestion = null;
 export const setFretboardQuizQuestion = (fn) => { _FretboardQuizQuestion = fn; };
@@ -174,7 +175,25 @@ function QuizScreen({ state, dispatch, content }) {
 // ── QuizPlayer (logique 100% inchangée, layout retouché) ──────────────────────
 function QuizPlayer({ pool, title, state, dispatch, content, onDone }) {
   const C = useC();
-  const [questions] = useState(pool);
+  // On glisse 2 questions d'oreille dans la série, à des positions
+  // aléatoires. Le quiz devient multimodal : parfois de la théorie, parfois
+  // « quel intervalle entends-tu ? ». C'est cette imprévisibilité qui le
+  // rend vivant, plutôt qu'une suite homogène de QCM.
+  const [questions] = useState(() => {
+    const base = [...pool];
+    if (base.length < 3) return base;
+    const ears = [
+      makeEarQuizQuestion("interval"),
+      makeEarQuizQuestion("chord_quality"),
+    ].filter(Boolean);
+    for (const e of ears) {
+      // Jamais en première position : on laisse l'utilisateur entrer dans le
+      // quiz avant de lui demander d'activer le son.
+      const at = 1 + Math.floor(Math.random() * base.length);
+      base.splice(at, 0, e);
+    }
+    return base;
+  });
   const [idx, setIdx]   = useState(0);
   const [sel, setSel]   = useState(null);
   const [fretAnswered, setFretAnswered] = useState(false);
@@ -328,6 +347,22 @@ function QuizPlayer({ pool, title, state, dispatch, content, onDone }) {
       <div style={{ background:C.surface, border:`1.5px solid ${C.border}`, borderRadius:R.lg, padding:16, marginBottom:10 }}>
         <p style={{ margin:0, fontSize:15, fontWeight:600, lineHeight:1.55, color:C.text, fontFamily:FONTS.title }}>{q.q}</p>
       </div>
+
+      {/* Bouton d'écoute — questions d'oreille uniquement */}
+      {q.type === "ear" && (
+        <button
+          onClick={async () => { await loadAudio(); q.play?.(); }}
+          style={{
+            width:"100%", padding:"14px 0", marginBottom:10, borderRadius:R.lg,
+            border:`1.5px solid ${C.primary}`, background:C.primaryL, color:C.primaryD,
+            fontWeight:800, fontSize:14, fontFamily:FONTS.ui, cursor:"pointer",
+            display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+          }}
+        >
+          <Ti name="volume" size={18} color={C.primary} />
+          Écouter
+        </button>
+      )}
 
       {/* Fretboard ou QCM */}
       {isFretQ ? (

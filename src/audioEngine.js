@@ -391,3 +391,50 @@ export function generateEarTrainingQuestion(type = "interval") {
 
   return null;
 }
+
+/**
+ * Convertit une question d'oreille au format des questions de quiz.
+ *
+ * Le quiz attend { q, o: [libellés], a: index, exp }. L'entraînement d'oreille
+ * produit { options, answer, play() }. Cet adaptateur fait le pont, ce qui
+ * permet de mélanger théorie et oreille dans une même série — c'est
+ * l'imprévisibilité qui rend le quiz vivant.
+ *
+ * @param mode "interval" | "chord_quality"
+ */
+export function makeEarQuizQuestion(mode = "interval") {
+  const ear = generateEarTrainingQuestion(mode);
+  if (!ear) return null;
+
+  if (mode === "interval") {
+    const labels = ear.options.map(o => o.label?.fr || o.label?.short || String(o.label));
+    const answerIdx = ear.options.findIndex(o => o.semitones === ear.answer);
+    if (answerIdx < 0) return null;
+    return {
+      id: `ear-int-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      type: "ear",
+      courseId: "scales",
+      lvl: 2,
+      q: "Quel intervalle entends-tu ?",
+      o: labels,
+      a: answerIdx,
+      exp: "Écoute la distance entre les deux notes : c'est elle qui définit l'intervalle.",
+      play: ear.play,
+    };
+  }
+
+  const labels = ear.options.map(o => o.label);
+  const answerIdx = ear.options.findIndex(o => o.key === ear.answer);
+  if (answerIdx < 0) return null;
+  return {
+    id: `ear-chord-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+    type: "ear",
+    courseId: "harmony",
+    lvl: 2,
+    q: "Quelle est la couleur de cet accord ?",
+    o: labels,
+    a: answerIdx,
+    exp: "La tierce décide du caractère majeur ou mineur ; la septième ajoute la tension.",
+    play: ear.play,
+  };
+}
