@@ -416,23 +416,28 @@ function HomeScreen({state,dispatch,navigate,content}) {
       />
 
       {/* ── ACCÈS RAPIDE ── */}
+      {/* Réduit à 3 entrées, une par ACTIVITÉ qui fait progresser.
+          Retirés d'ici :
+          - « Boîte à outils » : doublon exact de la bulle Gropi flottante,
+            qui est présente sur tous les écrans (App.jsx) ;
+          - « Explorateur du manche » : c'est un outil de référence, pas une
+            activité de progression. Sa place est dans la boîte à outils,
+            avec le métronome, l'accordeur et le lecteur d'accords. */}
       <div style={{padding:"20px 16px 0"}}>
         <div style={{fontSize:11,fontWeight:700,letterSpacing:".07em",textTransform:"uppercase",color:C.text3,fontFamily:FONTS.ui,marginBottom:10}}>
           Accès rapide
         </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20}}>
-          <QuickCard icon="guitar-pick" iconBg={C.amberL}  iconColor={C.amber}  label="Explorateur du manche" onClick={()=>navigate("explorer")}/>
-          <QuickCard icon="music"       iconBg={C.pinkL}   iconColor={C.pink}   label="Jam Session"           onClick={()=>navigate("jam")}/>
-          <QuickCard icon="ear"         iconBg={C.greenL}  iconColor={C.green}  label="Ear Training"          onClick={()=>navigate("ear")}/>
+          <QuickCard icon="music" iconBg={C.pinkL}  iconColor={C.pink}  label="Jam Session"  onClick={()=>navigate("jam")}/>
+          <QuickCard icon="ear"   iconBg={C.greenL} iconColor={C.green} label="Ear Training" onClick={()=>navigate("ear")}/>
           <QuickCard
             icon={state.dailyChallengeDone?"trophy":"bolt"}
             iconBg={state.dailyChallengeDone?C.greenL:C.amberL}
             iconColor={state.dailyChallengeDone?C.green:C.amber}
-            label={state.dailyChallengeDone?"Défi terminé ✓":"Défi du jour"}
+            label={state.dailyChallengeDone?"Défi terminé":"Défi du jour"}
             done={state.dailyChallengeDone}
             onClick={()=>navigate("challenge")}
           />
-          <QuickCard icon="clock" iconBg={C.blueL} iconColor={C.blue} label="Boîte à outils" onClick={()=>navigate("toolbox")}/>
         </div>
       </div>
 

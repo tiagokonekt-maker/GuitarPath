@@ -8,6 +8,7 @@ import { Gropi, GropiTip } from "../design/Gropi.jsx";
 import * as Tone from "tone";
 import { playProgression, stopProgression } from "../audioEngine.js";
 import { CHORD_TYPES } from "../fretboardUtils.js";
+import { FretboardExplorer } from "./FretboardExplorer.jsx";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // MÉTRONOME
@@ -889,13 +890,14 @@ function ToolboxScreen({ onBack }) {
           { id:"metronome", label:"Métronome", icon:"clock" },
           { id:"tuner",     label:"Accordeur", icon:"microphone" },
           { id:"chords",    label:"Accords",   icon:"music" },
+          { id:"neck",      label:"Manche",    icon:"guitar-pick" },
         ].map(t => (
           <button key={t.id} onClick={()=>setTab(t.id)} style={{
             flex:1, padding:"10px 0", borderRadius:R.lg, cursor:"pointer", fontFamily:FONTS.ui,
             border:`1.5px solid ${tab===t.id?C.primary:C.border}`,
             background: tab===t.id?C.primaryL:C.surface,
-            color: tab===t.id?C.primaryD:C.text2, fontWeight:700, fontSize:13,
-            display:"flex", alignItems:"center", justifyContent:"center", gap:7,
+            color: tab===t.id?C.primaryD:C.text2, fontWeight:700, fontSize:11.5,
+            display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:3,
           }}>
             <Ti name={t.icon} size={15} color={tab===t.id?C.primary:C.text3}/>
             {t.label}
@@ -905,7 +907,10 @@ function ToolboxScreen({ onBack }) {
 
       {/* Contenu */}
       <div style={{ padding:"18px 20px 0" }}>
-        {tab === "metronome" ? <Metronome/> : tab === "tuner" ? <Tuner/> : <ChordPlayer/>}
+        {tab === "metronome" ? <Metronome/>
+         : tab === "tuner"     ? <Tuner/>
+         : tab === "chords"    ? <ChordPlayer/>
+         : <FretboardExplorer embedded />}
       </div>
     </div>
   );

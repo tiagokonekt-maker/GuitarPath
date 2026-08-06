@@ -198,14 +198,24 @@ export async function playChord(notes, duration = "2n", opts = {}) {
   catch (e) { console.warn("[audioEngine] playChord:", e); }
 }
 
-export async function playScale(notes, bpm = 80) {
+/**
+ * Joue une gamme note à note.
+ * @param onStep(index, note) appelé À CHAQUE note, synchronisé sur l'horloge
+ *        AUDIO via Tone.Draw — pas sur un minuteur séparé, qui dériverait et
+ *        désynchroniserait l'affichage du son.
+ */
+export async function playScale(notes, bpm = 80, onStep) {
   if (!await ensureLoaded()) return;
   const spb = 60 / bpm;
   try {
     const now = Tone.now();
     notes.forEach((note, i) => {
-      sampler.triggerAttackRelease(note, spb * 0.85, now + i * spb);
+      const t = now + i * spb;
+      sampler.triggerAttackRelease(note, spb * 0.85, t);
+      if (onStep) Tone.Draw.schedule(() => onStep(i, note), t);
     });
+    // Signale la fin, pour éteindre le dernier surlignage.
+    if (onStep) Tone.Draw.schedule(() => onStep(-1, null), now + notes.length * spb);
   } catch (e) { console.warn("[audioEngine] playScale:", e); }
 }
 
@@ -226,20 +236,53 @@ export async function playInterval(note1, note2, mode = "ascending") {
 }
 
 // Joue une gamme depuis root + scaleKey (utilise fretboardUtils)
-export async function playScaleFromRoot(root, scaleKey, bpm = 80) {
+export async function playScaleFromRoot(root, scaleKey, bpm = 80, onStep) {
   const { getScaleNotes } = await import("./fretboardUtils.js");
   const notes = getScaleNotes(root, scaleKey);
   if (!notes.length) return;
   const toneNotes = notes.map((note, i) => toToneNote(note, i < 5 ? 3 : 4));
-  await playScale(toneNotes, bpm);
+  // On renvoie le NOM de la note (Do, Ré...), pas la note Tone.js avec son
+  // octave : c'est le nom qui permet d'illuminer toutes ses positions sur
+  // le manche.
+  await playScale(toneNotes, bpm, onStep ? (i) => onStep(i, notes[i] ?? null) : undefined);
+  return notes;
+}
+
+/**
+ * Arpège un accord : ses notes une par une, en montant.
+ *
+ * Pour un accord PLAQUÉ, illuminer le manche n'apporte rien — toutes les
+ * notes sonnent, donc tout s'allume, ce qui revient à l'affichage statique.
+ * Arpégé, en revanche, on entend chaque degré séparément et on voit
+ * exactement quelle case le produit. C'est la façon dont on apprend une
+ * forme d'accord.
+ */
+export async function playArpeggioFromRoot(root, chordType, bpm = 132, onStep) {
+  const { getChordNotes } = await import("./fretboardUtils.js");
+  const names = getChordNotes(root, chordType);
+  if (!names.length) return;
+  // Empilement ascendant sur deux octaves pour rester dans une tessiture
+  // confortable, quel que soit le nombre de notes de l'accord.
+  const toneNotes = names.map((n, i) => toToneNote(n, i < 3 ? 3 : 4));
+  await playScale(toneNotes, bpm, onStep ? (i) => onStep(i, names[i] ?? null) : undefined);
+  return names;
 }
 
 // Joue un accord depuis root + chordType
-export async function playChordFromRoot(root, chordType) {
-  const { CHORD_TYPES, normalizeNote } = await import("./fretboardUtils.js");
+export async function playChordFromRoot(root, chordType, onStep) {
+  const { CHORD_TYPES, normalizeNote, getChordNotes } = await import("./fretboardUtils.js");
   const intervals = CHORD_TYPES[chordType]?.intervals;
   if (!intervals) return;
-  await playChord(buildVoicingFromIntervals(normalizeNote(root), intervals), "2n");
+  const voiced = buildVoicingFromIntervals(normalizeNote(root), intervals);
+  await playChord(voiced, "2n");
+  // Un accord sonne d'un bloc : on illumine donc TOUTES ses notes ensemble,
+  // puis on éteint. Le grattage étale les cordes sur ~26 ms, trop court pour
+  // qu'un surlignage note par note soit lisible.
+  if (onStep) {
+    const names = getChordNotes(root, chordType);
+    onStep(0, names);
+    setTimeout(() => onStep(-1, null), 1400);
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────

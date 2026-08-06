@@ -196,6 +196,11 @@ export function Fretboard({
   // Callbacks libres
   onNoteClick,
   selectedPositions: externalSelected,
+
+  // Illumination pendant la lecture : nom de note ("Do") ou tableau de noms
+  // pour un accord. Toutes les positions de ces notes s'allument, ce qui
+  // rend audible ET visible le lien entre le son et le manche.
+  flashNotes = null,
 }) {
   const C = useC();
   const NOTE_COLORS = useMemo(() => getNoteColors(C), [C]);
@@ -509,16 +514,30 @@ export function Fretboard({
     if (!pos) return null;
 
     const label = getNoteLabel(pos.note, pos.interval, pos.degree, displayMode, lang);
-    const color = pos.isRoot
+    const baseColor = pos.isRoot
       ? NOTE_COLORS.root
       : colorForDegree(pos.degree, false, NOTE_COLORS);
+
+    // La note en cours de lecture s'illumine : agrandie, bordure lumineuse,
+    // halo. C'est ce qui rend la gamme compréhensible visuellement — on voit
+    // exactement quelle case produit le son qu'on entend.
+    const flashList = flashNotes == null ? []
+      : Array.isArray(flashNotes) ? flashNotes : [flashNotes];
+    const isFlashing = flashList.some(n => n && normalizeNote(n) === normalizeNote(pos.note));
 
     return (
       <NoteMarker
         label={label}
-        color={color}
-        size={dotSz}
-        style={onNoteClick ? { cursor: "pointer" } : {}}
+        color={baseColor}
+        size={isFlashing ? Math.round(dotSz * 1.32) : dotSz}
+        style={{
+          ...(onNoteClick ? { cursor: "pointer" } : {}),
+          ...(isFlashing ? {
+            boxShadow: `0 0 0 3px ${C.bg}, 0 0 14px 4px ${baseColor.bg}`,
+            zIndex: 5,
+          } : {}),
+          transition: "width .12s, height .12s, box-shadow .12s",
+        }}
       />
     );
   }

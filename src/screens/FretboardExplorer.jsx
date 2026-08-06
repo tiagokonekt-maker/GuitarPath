@@ -5,8 +5,10 @@ import { FONTS, R } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { Fretboard } from "../Fretboard.jsx";
-import { SCALES, CHORD_TYPES, getScaleNotes, getChordNotes, noteToFr } from "../fretboardUtils.js";
-import { playScaleFromRoot, playChordFromRoot, isAudioLoaded } from "../audioEngine.js";
+import { SCALES, CHORD_TYPES, getScaleNotes, getChordNotes, noteToFr, normalizeNote } from "../fretboardUtils.js";
+import { getChordShapes } from "../music/chordShapes.js";
+import { ChordDiagram } from "../diagrams.jsx";
+import { playScaleFromRoot, playChordFromRoot, playArpeggioFromRoot, isAudioLoaded } from "../audioEngine.js";
 
 const ROOTS_FR = [
   { en: "C",  fr: "Do"   }, { en: "C#", fr: "Do#"  }, { en: "D",  fr: "Re"   },
@@ -69,7 +71,12 @@ const CHORD_INFO = {
   add9:   { desc: "Majeur avec une 9e ajoutee. Son moderne et riche.", formula: "1 - 3 - 5 - 9" },
 };
 
-export function FretboardExplorer({ onBack }) {
+/**
+ * @param embedded  true quand l'explorateur est affiché comme onglet de la
+ *                  boîte à outils : on masque alors son en-tête et son
+ *                  bouton retour, puisque l'écran hôte les fournit déjà.
+ */
+export function FretboardExplorer({ onBack, embedded = false }) {
   const C = useC();
   const [tab, setTab]             = useState("scale");
   const [root, setRoot]           = useState("A");
@@ -79,14 +86,44 @@ export function FretboardExplorer({ onBack }) {
   const [showRootPicker, setShowRootPicker] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
 
+  // Note(s) actuellement illuminée(s) sur le manche pendant la lecture.
+  const [flashNotes, setFlashNotes] = useState(null);
+  // Mode d'écoute des accords : arpégé (pédagogique) ou plaqué (sonorité
+  // réelle de l'accord). Arpégé par défaut : c'est le mode qui apprend.
+  const [arpeggio, setArpeggio] = useState(true);
+
+  // Formes jouables de l'accord courant. Chaque forme est validée contre la
+  // formule théorique de l'accord au moment de la génération : une forme
+  // contenant une note étrangère est écartée plutôt qu'affichée.
+  const shapes = useMemo(() => {
+    if (tab !== "chord") return [];
+    return getChordShapes(
+      normalizeNote(root), chordKey, 12,
+      CHORD_TYPES[chordKey]?.intervals || null
+    );
+  }, [tab, root, chordKey]);
+
   const handlePlay = async () => {
     if (isPlaying) return;
     setIsPlaying(true);
+    setFlashNotes(null);
+    // onStep est appelé depuis Tone.Draw, donc synchronisé sur l'horloge
+    // audio : l'illumination tombe exactement sur la note entendue.
+    const onStep = (i, note) => setFlashNotes(i < 0 ? null : note);
     try {
-      if (tab === "scale") await playScaleFromRoot(root, scaleKey, 90);
-      else await playChordFromRoot(root, chordKey);
+      if (tab === "scale") {
+        await playScaleFromRoot(root, scaleKey, 90, onStep);
+      } else if (arpeggio) {
+        // Arpégé : chaque note s'entend et s'illumine séparément.
+        await playArpeggioFromRoot(root, chordKey, 132, onStep);
+      } else {
+        // Plaqué : on n'illumine rien. Toutes les notes sonnant ensemble,
+        // le surlignage n'apporterait aucune information par rapport à
+        // l'affichage statique déjà visible.
+        await playChordFromRoot(root, chordKey);
+      }
     } catch {}
-    setTimeout(() => setIsPlaying(false), 3000);
+    setTimeout(() => { setIsPlaying(false); setFlashNotes(null); }, 3000);
   };
 
   const activeNotes = useMemo(() => {
@@ -107,14 +144,22 @@ export function FretboardExplorer({ onBack }) {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: C.bg }}>
+    <div style={embedded
+      ? { display: "flex", flexDirection: "column", background: "transparent" }
+      : { display: "flex", flexDirection: "column", minHeight: "100dvh", background: C.bg }}>
 
-      <div style={{ padding: "14px 16px 12px", display: "flex", alignItems: "center", gap: 10, borderBottom: `1px solid ${C.border}`, background: C.surface, position: "sticky", top: 0, zIndex: 10 }}>
-        <button onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", color: C.text2, padding: 0, display: "flex", alignItems: "center" }}>
-          <Ti name="chevron-left" size={22} />
-        </button>
+      <div style={embedded
+        ? { padding: "0 0 12px", display: "flex", alignItems: "center", gap: 10 }
+        : { padding: "14px 16px 12px", display: "flex", alignItems: "center", gap: 10, borderBottom: `1px solid ${C.border}`, background: C.surface, position: "sticky", top: 0, zIndex: 10 }}>
+        {!embedded && (
+          <button onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", color: C.text2, padding: 0, display: "flex", alignItems: "center" }}>
+            <Ti name="chevron-left" size={22} />
+          </button>
+        )}
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: C.text, fontFamily: FONTS.title }}>Explorateur du manche</div>
+          {!embedded && (
+            <div style={{ fontSize: 16, fontWeight: 700, color: C.text, fontFamily: FONTS.title }}>Explorateur du manche</div>
+          )}
           <div style={{ fontSize: 11, color: C.text3, fontFamily: FONTS.ui }}>{rootFr} - {activeLabel}</div>
         </div>
         {/* Bouton ecouter */}
@@ -226,9 +271,55 @@ export function FretboardExplorer({ onBack }) {
               displayMode={displayMode}
               lang="fr"
               compact={true}
+              flashNotes={flashNotes}
             />
           </div>
         </div>
+
+        {/* Mode d'écoute — uniquement pour les accords */}
+        {tab === "chord" && (
+          <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
+            {[
+              { id: true,  label: "Arpégé", hint: "note à note" },
+              { id: false, label: "Plaqué", hint: "d'un bloc" },
+            ].map(m => (
+              <button
+                key={String(m.id)}
+                onClick={() => setArpeggio(m.id)}
+                disabled={isPlaying}
+                style={{
+                  flex: 1, padding: "8px 0", borderRadius: R.md, cursor: isPlaying ? "default" : "pointer",
+                  border: `1.5px solid ${arpeggio === m.id ? C.primary : C.border}`,
+                  background: arpeggio === m.id ? C.primaryL : C.surface,
+                  color: arpeggio === m.id ? C.primaryD : C.text2,
+                  fontFamily: FONTS.ui, opacity: isPlaying ? 0.6 : 1,
+                }}
+              >
+                <div style={{ fontSize: 12.5, fontWeight: 700 }}>{m.label}</div>
+                <div style={{ fontSize: 10, opacity: 0.75, marginTop: 1 }}>{m.hint}</div>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Formes jouables sur le manche */}
+        {tab === "chord" && shapes.length > 0 && (
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
+              {shapes.length} façon{shapes.length > 1 ? "s" : ""} de le jouer
+            </div>
+            <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch" }}>
+              {shapes.map((sh, i) => (
+                <div key={i} style={{ flexShrink: 0, width: 150 }}>
+                  <ChordDiagram
+                    data={{ name: rootFr, frets: sh.frets, fingers: sh.fingers, startFret: sh.startFret, barre: sh.barre }}
+                    caption={`${sh.label} · case ${sh.startFret}`}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Notes actives */}
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: "12px 14px" }}>
