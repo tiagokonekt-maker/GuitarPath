@@ -1,0 +1,101 @@
+{
+  "id": "blues-shuffle",
+  "name": "Blues shuffle",
+  "tempoRange": [70, 110],
+  "defaultTempo": 88,
+
+  "feel": {
+    "subdivision": 12,
+    "swing": 0.9
+  },
+
+  "instruments": ["drums", "bass", "comp"],
+
+  "audioPack": "drums-vcsl",
+
+  "energyLevels": {
+    "1": { "instruments": ["drums"],                 "velocityRange": [0.30, 0.50] },
+    "2": { "instruments": ["drums", "bass"],         "velocityRange": [0.40, 0.62] },
+    "3": { "instruments": ["drums", "bass", "comp"], "velocityRange": [0.50, 0.78] },
+    "4": { "instruments": ["drums", "bass", "comp"], "velocityRange": [0.62, 0.90] },
+    "5": { "instruments": ["drums", "bass", "comp"], "velocityRange": [0.72, 1.00] }
+  },
+
+  "drumPatterns": [
+    {
+      "id": "shuffle-base",
+      "weight": 0.55,
+      "minEnergy": 1,
+      "grid": {
+        "kick":  "x..x..x..x..",
+        "snare": "...X.....X..",
+        "hihat": "x.xx.xx.xx.x"
+      }
+    },
+    {
+      "id": "shuffle-ghosts",
+      "weight": 0.28,
+      "minEnergy": 3,
+      "grid": {
+        "kick":  "x..x.ox..x..",
+        "snare": "..oX..o..X.o",
+        "hihat": "x.xx.xx.xx.x"
+      }
+    },
+    {
+      "id": "shuffle-open",
+      "weight": 0.17,
+      "minEnergy": 4,
+      "grid": {
+        "kick":  "x..x..x..x.x",
+        "snare": "...X..o..X..",
+        "hihat": "x.xO.xx.xO.x"
+      }
+    }
+  ],
+
+  "fills": [
+    {
+      "id": "fill-snare-2",
+      "weight": 0.4,
+      "minEnergy": 2,
+      "beats": 2,
+      "grid": { "snare": "......x.x.xX" }
+    },
+    {
+      "id": "fill-toms",
+      "weight": 0.35,
+      "minEnergy": 3,
+      "beats": 2,
+      "grid": {
+        "snare": "......x.....",
+        "tomMid": ".......x.x..",
+        "tomLow": "..........xX"
+      }
+    },
+    {
+      "id": "fill-short",
+      "weight": 0.25,
+      "minEnergy": 2,
+      "beats": 1,
+      "grid": { "snare": ".........xxX" }
+    }
+  ],
+
+  "humanize": {
+    "offsets": {
+      "kick": -3,
+      "snare": 4,
+      "hihat": 0,
+      "ride": 1,
+      "crash": -2,
+      "tomMid": 2,
+      "tomLow": 2
+    },
+    "jitterMs": 7,
+    "velSigma": 0.06
+  },
+
+  "bassStyle": { "approach": "shuffleWalk", "ghostNotes": true },
+  "compStyle": { "instrument": "guitar-clean", "rhythm": "shuffleChank", "register": [48, 64] }
+}

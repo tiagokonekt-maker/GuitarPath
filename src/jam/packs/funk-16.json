@@ -1,0 +1,100 @@
+{
+  "id": "funk-16",
+  "name": "Funk 16e",
+  "tempoRange": [84, 112],
+  "defaultTempo": 96,
+
+  "feel": {
+    "subdivision": 16,
+    "swing": 0.12
+  },
+
+  "instruments": ["drums", "bass", "comp"],
+  "audioPack": "drums-vcsl",
+
+  "energyLevels": {
+    "1": { "instruments": ["drums"],                 "velocityRange": [0.32, 0.52] },
+    "2": { "instruments": ["drums", "bass"],         "velocityRange": [0.42, 0.64] },
+    "3": { "instruments": ["drums", "bass", "comp"], "velocityRange": [0.52, 0.80] },
+    "4": { "instruments": ["drums", "bass", "comp"], "velocityRange": [0.64, 0.92] },
+    "5": { "instruments": ["drums", "bass", "comp"], "velocityRange": [0.74, 1.00] }
+  },
+
+  "drumPatterns": [
+    {
+      "id": "funk-base",
+      "weight": 0.5,
+      "minEnergy": 1,
+      "grid": {
+        "kick":  "x......x..x.....",
+        "snare": "....X.......X...",
+        "hihat": "x.x.x.x.x.x.x.x."
+      }
+    },
+    {
+      "id": "funk-ghosts",
+      "weight": 0.32,
+      "minEnergy": 3,
+      "grid": {
+        "kick":  "x..x...x..x...x.",
+        "snare": "..o.X..o..o.X..o",
+        "hihat": "xxxxxxxxxxxxxxxx"
+      }
+    },
+    {
+      "id": "funk-open",
+      "weight": 0.18,
+      "minEnergy": 4,
+      "grid": {
+        "kick":  "x..x...x..x.x...",
+        "snare": "..o.X..o..o.X.o.",
+        "hihat": "x.xOx.x.x.xOx.x."
+      }
+    }
+  ],
+
+  "fills": [
+    {
+      "id": "funk-fill-snare",
+      "weight": 0.45,
+      "minEnergy": 2,
+      "beats": 1,
+      "grid": { "snare": "............xoxX" }
+    },
+    {
+      "id": "funk-fill-toms",
+      "weight": 0.35,
+      "minEnergy": 3,
+      "beats": 2,
+      "grid": {
+        "snare":  "........x.x.....",
+        "tomMid": "............x.x.",
+        "tomLow": "..............xX"
+      }
+    },
+    {
+      "id": "funk-fill-hat",
+      "weight": 0.20,
+      "minEnergy": 2,
+      "beats": 1,
+      "grid": { "snare": "............x..X", "hihat": "............xxx." }
+    }
+  ],
+
+  "humanize": {
+    "offsets": {
+      "kick": -1,
+      "snare": 1,
+      "hihat": -1,
+      "ride": 0,
+      "crash": -2,
+      "tomMid": 1,
+      "tomLow": 1
+    },
+    "jitterMs": 4,
+    "velSigma": 0.05
+  },
+
+  "bassStyle": { "approach": "syncopated16", "ghostNotes": true, "octaveJumps": 0.15 },
+  "compStyle": { "instrument": "guitar-clean", "rhythm": "chank16", "register": [48, 64] }
+}
