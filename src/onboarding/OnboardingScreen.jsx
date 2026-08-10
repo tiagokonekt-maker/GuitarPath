@@ -308,7 +308,7 @@ export function OnboardingScreen({ content, onComplete, onEvent }) {
               <>
                 {/* Pour le manche interactif, les bonnes positions sont déjà
                     montrées visuellement sur le manche (points colorés) —
-                    pas besoin de la notation "c6f8, c5f3..." en plus, elle
+                    pas besoin de la notation "corde 6 case 8, corde 5 case 3..." en plus, elle
                     ne veut rien dire pour quelqu'un qui découvre l'app. */}
                 {currentQ.type !== "fretboard" && (
                   <p style={{

@@ -27,6 +27,7 @@ export const CHALLENGE_TYPES = {
   find_scale:    "find_scale",     // Trouve les notes d'une gamme
   find_interval: "find_interval",  // Trouve les positions d'un intervalle depuis une root
   find_roots:    "find_roots",     // Trouve toutes les fondamentales (alias de find_note)
+  find_shape:    "find_shape",     // Reproduis une FORME d'accord précise (positions exactes)
 };
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -46,6 +47,27 @@ const RESOLVERS = {
 
   find_roots: (concept, opts) => {
     return RESOLVERS.find_note(concept, opts);
+  },
+
+  /**
+   * Forme d'accord précise.
+   *
+   * Contrairement aux autres types, qui demandent TOUTES les occurrences
+   * d'une note ou d'un accord, celui-ci attend un doigté exact : la forme Mi
+   * de La majeur, c'est 5-7-7-6-5-5, pas « tous les La, Do# et Mi du
+   * manche ». Les positions viennent donc directement du concept.
+   *
+   * concept.positions : [{ string, fret }] — les cases à presser.
+   *   Les cordes à vide (case 0) et les cordes étouffées ne sont PAS
+   *   attendues : on ne peut pas « sélectionner » l'absence de doigt, et
+   *   demander de cliquer une corde à vide n'aurait pas de sens sur un
+   *   manche tactile.
+   */
+  find_shape: (concept) => {
+    const { positions = [] } = concept;
+    return positions
+      .filter(p => p && Number.isInteger(p.string) && Number.isInteger(p.fret) && p.fret > 0)
+      .map(p => ({ string: p.string, fret: p.fret }));
   },
 
   find_chord: (concept, opts) => {
@@ -178,14 +200,26 @@ export function validate(concept, selected, selectionRules = {}, opts = {}) {
   const stringRange = opts.stringRange || [1, 6];
   const correct = resolver(concept, { fretRange, stringRange });
 
+  // Positions "neutres" : des notes qui appartiennent bel et bien à ce
+  // qu'on demande (typiquement une corde à vide dans un accord), mais
+  // qu'on ne peut pas "sélectionner" puisqu'il n'y a rien à presser. Sur un
+  // manche tactile, rien ne distingue visuellement une corde à vide qui
+  // sonne d'une case à presser : un utilisateur qui voit la note affichée
+  // au sillet la sélectionne logiquement. On ignore ce clic plutôt que de
+  // le compter comme une erreur.
+  const neutral = concept.neutralPositions || [];
+  const effectiveSelected = selected.filter(s =>
+    !neutral.some(n => n.string === s.string && n.fret === s.fret)
+  );
+
   // 2. Appliquer la stratégie de matching
   let result;
   if (mode === "chord_build") {
-    result = MATCH_STRATEGIES.chord_build(selected, correct);
+    result = MATCH_STRATEGIES.chord_build(effectiveSelected, correct);
   } else if (mode === "any_n") {
-    result = MATCH_STRATEGIES.any_n(selected, correct, minSelections);
+    result = MATCH_STRATEGIES.any_n(effectiveSelected, correct, minSelections);
   } else {
-    result = MATCH_STRATEGIES.all(selected, correct);
+    result = MATCH_STRATEGIES.all(effectiveSelected, correct);
   }
 
   // 3. Générer le feedback

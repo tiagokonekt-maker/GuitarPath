@@ -6,6 +6,7 @@ import { Ti } from "../design/Ti.jsx";
 import { ProgressBar, XPPop } from "../design/ui.jsx";
 import { Gropi } from "../design/Gropi.jsx";
 import { makeEarQuizQuestion, loadAudio } from "../audioEngine.js";
+import { makeShapeQuestion } from "../music/shapeQuestions.js";
 
 export let _FretboardQuizQuestion = null;
 export const setFretboardQuizQuestion = (fn) => { _FretboardQuizQuestion = fn; };
@@ -20,6 +21,31 @@ const makeModules = (C) => [
 ];
 
 // ── QuizScreen ────────────────────────────────────────────────────────────────
+/**
+ * Niveau de question débloqué pour un module, d'après la progression RÉELLE
+ * dans ce module (leçons terminées), pas le niveau XP global.
+ *
+ * Le niveau XP est un mauvais indicateur ici : il monte avec n'importe quelle
+ * activité (pratique, séries, exercices), pas spécifiquement avec l'avancée
+ * en harmonie. Une personne qui a beaucoup joué mais peu avancé en théorie
+ * aurait un niveau XP élevé sans connaître pour autant les accords de 7e.
+ *
+ * On ne RESTREINT pas aux questions du niveau atteint : on autorise tout ce
+ * qui va de 1 jusqu'à ce niveau. Les questions de base restent donc
+ * éligibles au tirage même une fois le niveau 3 débloqué — revoir les
+ * fondamentaux doit rester possible tout au long de la progression, pas
+ * seulement au début.
+ */
+function unlockedQuizLvl(state, content, courseId) {
+  const course = content.courses.find(c => c.id === courseId);
+  if (!course || !course.lessons.length) return 1;
+  const done = course.lessons.filter(l => state.completedLessons[l.id]).length;
+  const frac = done / course.lessons.length;
+  if (frac < 0.30) return 1;
+  if (frac < 0.65) return 2;
+  return 3;
+}
+
 function QuizScreen({ state, dispatch, content }) {
   const C = useC();
   const MODULES = makeModules(C);
@@ -30,16 +56,34 @@ function QuizScreen({ state, dispatch, content }) {
   const pctDone       = totalQ ? Math.round(totalAnswered / totalQ * 100) : 0;
   const wrongCount    = state.wrongQuiz.length;
 
+  // Cache : la progression d'un module ne change pas pendant l'affichage
+  // du quiz, pas la peine de la recalculer à chaque question.
+  const unlockedLvl = {};
+  MODULES.forEach(m => { unlockedLvl[m.id] = unlockedQuizLvl(state, content, m.id); });
+
+  // Une question dont le module n'a pas de niveau connu (rare, contenu
+  // importé par exemple) reste éligible plutôt que d'être bloquée : mieux
+  // vaut une question mal calibrée qu'un quiz vide.
+  const isUnlocked = (q) => (q.lvl ?? 1) <= (unlockedLvl[q.courseId] ?? 3);
+
   const pools = {
     daily: () => {
+      // Les questions déjà ratées reviennent SANS filtre de niveau : si
+      // elles ont été vues, c'est qu'elles étaient déjà accessibles, et
+      // revoir une erreur passée est toujours pertinent, quel que soit le
+      // niveau atteint depuis.
       const wrong = content.quiz.filter(q => state.wrongQuiz.includes(q.id)).slice(0,3);
-      const fresh = content.quiz.filter(q => !state.quizResults[q.id] && !state.wrongQuiz.includes(q.id)).sort(() => Math.random()-.5).slice(0,4);
+      const fresh = content.quiz
+        .filter(q => !state.quizResults[q.id] && !state.wrongQuiz.includes(q.id) && isUnlocked(q))
+        .sort(() => Math.random()-.5).slice(0,4);
       return [...wrong, ...fresh].slice(0,7);
     },
     review: () => content.quiz.filter(q => state.wrongQuiz.includes(q.id)),
   };
   MODULES.forEach(m => {
-    pools[m.id] = () => content.quiz.filter(q => q.courseId===m.id).sort(() => Math.random()-.5).slice(0,7);
+    pools[m.id] = () => content.quiz
+      .filter(q => q.courseId===m.id && isUnlocked(q))
+      .sort(() => Math.random()-.5).slice(0,7);
   });
 
   const launch = (id, label) => setMode({ id, label, pool: pools[id]() });
@@ -182,9 +226,26 @@ function QuizPlayer({ pool, title, state, dispatch, content, onDone }) {
   const [questions] = useState(() => {
     const base = [...pool];
     if (base.length < 3) return base;
+    // Même logique que le reste du quiz : la progression réelle en
+    // harmonie décide, pas le niveau XP global (qui monte avec n'importe
+    // quelle activité, pas spécifiquement avec l'avancée en accords).
+    // shapeQuestions.js n'accepte que 1 à 4 : le niveau 3 "gammes/triades
+    // complètes" du reste du quiz devient le palier 3 des formes (positions
+    // hors du jeu ouvert), et le palier 4 (7e, add9) n'apparaît qu'une fois
+    // le module vraiment avancé.
+    // unlockedQuizLvl est appelée directement ici, pas via une variable du
+    // composant parent (QuizScreen) : QuizPlayer est un composant séparé,
+    // qui ne reçoit pas cette variable en prop.
+    const harmonyLvl = unlockedQuizLvl(state, content, "harmony");
+    const harmonyDone = content.courses.find(c => c.id === "harmony")?.lessons
+      .filter(l => state.completedLessons[l.id]).length ?? 0;
+    const harmonyTotal = content.courses.find(c => c.id === "harmony")?.lessons.length || 1;
+    const shapeLevel = harmonyLvl < 3 ? harmonyLvl
+      : (harmonyDone / harmonyTotal) > 0.85 ? 4 : 3;
     const ears = [
       makeEarQuizQuestion("interval"),
       makeEarQuizQuestion("chord_quality"),
+      makeShapeQuestion(shapeLevel),
     ].filter(Boolean);
     for (const e of ears) {
       // Jamais en première position : on laisse l'utilisateur entrer dans le

@@ -276,7 +276,7 @@ export const COURSES = [
           { type: "h", text: "Les 4 types de triades" },
           { type: "p", text: "Majeure (1-3-5) : tierce maj + quinte juste. Mineure (1-b3-5) : tierce min + quinte juste. Diminuée (1-b3-b5) : tierce min + quinte diminuée. Augmentée (1-3-#5) : tierce maj + quinte augmentée." },
           { type: "h", text: "Triades sur cordes 1-2-3 (set 1)" },
-          { type: "p", text: "Le set le plus utilisé. Aigu, brillant. Position fondamentale Do : Sol(c3-12), Do(c2-13), Mi(c1-12). 1ère inversion : Do(c3-5), Mi(c2-5), Sol(c1-3). 2e inversion : Mi(c3-9), Sol(c2-8), Do(c1-8)." },
+          { type: "p", text: "Le set le plus utilisé. Aigu, brillant. Position fondamentale Do : Sol(corde 3 case 12), Do(corde 2 case 13), Mi(corde 1 case 12). 1ère inversion : Do(corde 3 case 5), Mi(corde 2 case 5), Sol(corde 1 case 3). 2e inversion : Mi(corde 3 case 9), Sol(corde 2 case 8), Do(corde 1 case 8)." },
           {
             type: "chord_diagram",
             caption: "Do majeur — triade, état fondamental (cordes 1-2-3, case 12)",
@@ -302,9 +302,9 @@ export const COURSES = [
             },
           },
           { type: "h", text: "Triades sur cordes 2-3-4 (set 2)" },
-          { type: "p", text: "Son médium. Plus rond. Position fondamentale Do : Do(c4-10), Mi(c3-9), Sol(c2-8). Très utilisé en R&B et néo-soul." },
+          { type: "p", text: "Son médium. Plus rond. Position fondamentale Do : Do(corde 4 case 10), Mi(corde 3 case 9), Sol(corde 2 case 8). Très utilisé en R&B et néo-soul." },
           { type: "h", text: "Triades sur cordes 3-4-5 (set 3)" },
-          { type: "p", text: "Son médium-grave. Idéal pour les vamps funk et le rock indé. Position fondamentale Do : Do(c5-3), Mi(c4-2), Sol(c3-0)." },
+          { type: "p", text: "Son médium-grave. Idéal pour les vamps funk et le rock indé. Position fondamentale Do : Do(corde 5 case 3), Mi(corde 4 case 2), Sol(corde 3 à vide)." },
           { type: "h", text: "Inversions = mouvement" },
           { type: "p", text: "Au lieu de sauter de Do à Sol par un grand mouvement, utilise une inversion proche. Do (état fondamental) → Sol (1ère inversion une case plus loin). Le mouvement devient fluide, mélodique. C'est le voice-leading appliqué à la guitare." },
           { type: "tip", text: "Mini-projet : prends 4 accords d'une chanson pop. Joue-les uniquement en triades sur cordes 1-2-3. Tu obtiens un son moderne et sophistiqué instantanément." },
@@ -322,7 +322,7 @@ export const COURSES = [
           { type: "h", text: "Le triangle accord-arpège-gamme" },
           { type: "p", text: "L'accord (4 notes), l'arpège (les mêmes 4 notes jouées en mélodie) et la gamme (les 3 notes 'de remplissage' qui complètent les 7 de la tonalité). Sur le manche, ces 3 entités occupent toujours la même région." },
           { type: "h", text: "Exemple : Cmaj7 dans la zone case 8" },
-          { type: "p", text: "Accord Cmaj7 forme E barré case 8 : Do(c6-8), Sol(c5-10), Si(c4-9), Mi(c3-9), Sol(c2-8), Do(c1-8). Arpège Cmaj7 dans cette zone : mêmes notes en mélodie. Gamme de Do majeur en position correspondante : ajoute Ré, Fa, La aux notes de l'arpège. Tout cohabite." },
+          { type: "p", text: "Accord Cmaj7 forme E barré case 8 : Do(corde 6 case 8), Sol(corde 5 case 10), Si(corde 4 case 9), Mi(corde 3 case 9), Sol(corde 2 case 8), Do(corde 1 case 8). Arpège Cmaj7 dans cette zone : mêmes notes en mélodie. Gamme de Do majeur en position correspondante : ajoute Ré, Fa, La aux notes de l'arpège. Tout cohabite." },
           {
             type: "fretboard",
             caption: "Cmaj7 zone case 8 — notes d'accord (violet) + gamme de Do majeur (vert)",
@@ -696,7 +696,7 @@ export const COURSES = [
           { type: "h", text: "L'usage des cordes aiguës" },
           { type: "p", text: "Les cordes 2 et 1 sont LES cordes mélodiques par excellence. Elles portent la majorité des mélodies vocales transposées sur la guitare, des solos aigus, et des notes 'qui chantent'. Quand tu fais un solo dans la zone aiguë (cases 8-15 sur cordes 1 et 2), tu es dans le territoire des grands solistes." },
           { type: "h", text: "Triades sur cordes 1-2-3" },
-          { type: "p", text: "Les triades sur les 3 cordes aiguës sont la 'signature' du jeu moderne. Pour Do majeur en position fondamentale : Sol(c3-12 ou case 0), Do(c2-1 ou 13), Mi(c1-12 ou 0). Cette forme triangulaire est utilisée dans toute la pop, le R&B, le funk." },
+          { type: "p", text: "Les triades sur les 3 cordes aiguës sont la 'signature' du jeu moderne. Pour Do majeur en position fondamentale : Sol(corde 3 case 12 ou case 0), Do(corde 2 case 1 ou 13), Mi(corde 1 case 12 ou 0). Cette forme triangulaire est utilisée dans toute la pop, le R&B, le funk." },
           { type: "h", text: "Bilan : tu connais le manche !" },
           { type: "p", text: "Si tu as suivi les 5 dernières leçons, tu as maintenant cartographié les 6 cordes. C'est un travail de plusieurs semaines pour automatiser, mais la théorie est en place. Continue les drills, joue tous les jours, et dans 1-2 mois, tu connaîtras le manche aussi naturellement que ton alphabet." },
           { type: "ref", text: "Le solo final de 'Hotel California' (Eagles) utilise massivement les cordes 1 et 2 dans les zones aiguës. Si tu apprends ce solo, tu vas naturellement intégrer la position des notes sur ces cordes." },
@@ -877,7 +877,7 @@ export const COURSES = [
             },
           },
           { type: "h", text: "Position 2 (fondamentale sur c5)" },
-          { type: "p", text: "Pour Do majeur (case 3 sur c5) : Do(c5-3)-Ré(c5-5) | Mi(c4-2)-Fa(c4-3)-Sol(c4-5) | La(c3-2)-Si(c3-4) | Do(c2-1)-Ré(c2-3)-Mi(c2-5) | Fa(c1-1)-Sol(c1-3). Couvre une zone médium plus 'vocale'." },
+          { type: "p", text: "Pour Do majeur (case 3 sur c5) : Do(corde 5 case 3)-Ré(corde 5 case 5) | Mi(corde 4 case 2)-Fa(corde 4 case 3)-Sol(corde 4 case 5) | La(corde 3 case 2)-Si(corde 3 case 4) | Do(corde 2 case 1)-Ré(corde 2 case 3)-Mi(corde 2 case 5) | Fa(corde 1 case 1)-Sol(corde 1 case 3). Couvre une zone médium plus 'vocale'." },
           {
             type: "scale_pattern",
             caption: "Do majeur — Position 2 (fondamentale case 3, corde 5)",
@@ -1070,7 +1070,7 @@ export const COURSES = [
           { type: "h", text: "Exemples musicaux emblématiques" },
           { type: "p", text: "'So What' (Miles Davis, 1959) : Dm7 dorien pendant 16 mesures, puis Ebm7 dorien 8 mesures, retour Dm7 8 mesures. 'Oye Como Va' (Santana) : vamp Am7-D7 = La dorien. 'Light My Fire' (The Doors) : Am-F#m = La dorien. 'Scarborough Fair' (folk anglais) : entièrement en dorien." },
           { type: "h", text: "Patterns dorien sur le manche" },
-          { type: "p", text: "Position fondamentale (Ré sur c5-5) : c5 Ré(5)-Mi(7) | c4 Fa(3)-Sol(5)-La(7) | c3 Si(4)-Do(5) | c2 Ré(3)-Mi(5)-Fa(6) | c1 Sol(3)-La(5)-Si(7). Mémorise cette position pour Ré dorien — tu pourras la transposer." },
+          { type: "p", text: "Position fondamentale (Ré sur corde 5 case 5) : c5 Ré(5)-Mi(7) | c4 Fa(3)-Sol(5)-La(7) | c3 Si(4)-Do(5) | c2 Ré(3)-Mi(5)-Fa(6) | c1 Sol(3)-La(5)-Si(7). Mémorise cette position pour Ré dorien — tu pourras la transposer." },
           {
             type: "scale_pattern",
             caption: "Ré dorien — position fondamentale (case 5, c5). Note clé : Si = 6 majeure ↗",
@@ -1116,7 +1116,7 @@ export const COURSES = [
           { type: "h", text: "Exemples musicaux" },
           { type: "p", text: "Hendrix utilise mixolydien quasi exclusivement. 'Norwegian Wood' (Beatles) : E mixolydien. La plupart des riffs AC/DC, ZZ Top, Rolling Stones. 'Sweet Home Chicago' : E mixolydien. Le mode rock'n'roll par excellence." },
           { type: "h", text: "Position de Sol mixolydien" },
-          { type: "p", text: "Identique à Do majeur (Sol mixo = Do majeur en partant de Sol). Mais en pensant Sol comme tonique, tu mets en valeur les notes différemment. Position c6-3 (Sol) : c6 Sol(3)-La(5) | c5 Si(2)-Do(3)-Ré(5) | c4 Mi(2)-Fa(3)-Sol(5) | etc." },
+          { type: "p", text: "Identique à Do majeur (Sol mixo = Do majeur en partant de Sol). Mais en pensant Sol comme tonique, tu mets en valeur les notes différemment. Position corde 6 case 3 (Sol) : c6 Sol(3)-La(5) | c5 Si(2)-Do(3)-Ré(5) | c4 Mi(2)-Fa(3)-Sol(5) | etc." },
           {
             type: "scale_pattern",
             caption: "Sol mixolydien — case 3 (= Do majeur, fondamentale Sol). Note clé : Fa♮ = b7 ↓",
@@ -1819,7 +1819,7 @@ export const COURSES = [
           { type: "h", text: "Comment l'utiliser : la règle d'or" },
           { type: "p", text: "La blue note (b5) est une note de PASSAGE, jamais une note de RÉSOLUTION. Tu y passes brièvement, tu ne t'y attardes pas. Phrasé typique : tu joues Ré (4), tu glisses sur Ré# (b5), tu arrives sur Mi (5). La b5 est un 'pont' qui amène à la quinte. Si tu tiens trop longtemps une blue note, ça sonne faux. Si tu y passes vite, ça sonne 'blues parfait'." },
           { type: "h", text: "Position blues sur le manche" },
-          { type: "p", text: "Reprends la position 1 de La pentatonique mineure (case 5). Ajoute Ré# sur la corde 4, case 6. C'est tout. Tu peux maintenant jouer la gamme blues. Phrasé blues classique : Ré(c4-7) → Ré#(c4-6 en glissé) → Mi(c4-7 ?). Non, le Ré# est case 6 et Mi est case 7 sur la corde 4. Donc tu glisses entre case 6 et case 7." },
+          { type: "p", text: "Reprends la position 1 de La pentatonique mineure (case 5). Ajoute Ré# sur la corde 4, case 6. C'est tout. Tu peux maintenant jouer la gamme blues. Phrasé blues classique : Ré(corde 4 case 7) → Ré#(corde 4 case 6 en glissé) → Mi(corde 4 case 7 ?). Non, le Ré# est case 6 et Mi est case 7 sur la corde 4. Donc tu glisses entre case 6 et case 7." },
           {
             type: "scale_pattern",
             caption: "Gamme blues de La — penta mineure + blue note Ré# (case 6, c4) en corail",
@@ -2407,7 +2407,7 @@ export const COURSES = [
           { type: "h", text: "Guide tones : 3e et 7e" },
           { type: "p", text: "Dans un accord de 7e, la fondamentale et la quinte sont 'génériques'. Ce sont la 3e et la 7e qui définissent la couleur. Ces 2 notes sont les 'guide tones' — celles à cibler en impro pour 'sonner sur l'accord'. Sur Cmaj7 : guide tones = Mi (3) et Si (7). Sur G7 : Si (3) et Fa (b7)." },
           { type: "h", text: "Voicings shell (les guide tones suffisent)" },
-          { type: "p", text: "En jazz, on joue souvent uniquement la fondamentale + 3e + 7e (sans quinte). Ces 'shell voicings' sonnent étonnamment 'complets' tout en laissant de la place à la basse et au piano. Voicing G7 shell : Sol (c6-3) + Si (c5-2) + Fa (c4-3)." },
+          { type: "p", text: "En jazz, on joue souvent uniquement la fondamentale + 3e + 7e (sans quinte). Ces 'shell voicings' sonnent étonnamment 'complets' tout en laissant de la place à la basse et au piano. Voicing G7 shell : Sol (corde 6 case 3) + Si (corde 5 case 2) + Fa (corde 4 case 3)." },
           {
             type: "chord_diagram",
             caption: "Cmaj7 — 7e majeure (× 3 2 0 0 0 = Do Sol Do Mi Si)",
@@ -2447,7 +2447,7 @@ export const COURSES = [
           { type: "h", text: "Arpèges des accords de 7e" },
           { type: "p", text: "Maj7 : 1-3-5-7. m7 : 1-b3-5-b7. 7 : 1-3-5-b7. m7b5 : 1-b3-b5-b7. dim7 : 1-b3-b5-bb7. 4 notes, qui définissent intégralement l'accord. Apprendre ces 5 arpèges = avoir les 5 types d'accords sous les doigts en mélodie." },
           { type: "h", text: "Patterns d'arpèges sur le manche" },
-          { type: "p", text: "Pour Cmaj7 forme E (case 8) : Do(c6-8), Mi(c5-7), Sol(c5-10), Si(c4-9), Do(c3-5)... non, plutôt Do(c1-8), Mi(c1-12). Apprends chaque arpège dans 2-3 positions le long du manche." },
+          { type: "p", text: "Pour Cmaj7 forme E (case 8) : Do(corde 6 case 8), Mi(corde 5 case 7), Sol(corde 5 case 10), Si(corde 4 case 9), Do(corde 3 case 5)... non, plutôt Do(corde 1 case 8), Mi(corde 1 case 12). Apprends chaque arpège dans 2-3 positions le long du manche." },
           { type: "h", text: "Connecter arpèges et gamme" },
           { type: "p", text: "Pendant un solo : commence ta phrase par 2-3 notes d'arpège (les notes de l'accord), puis enrichis avec les notes de la gamme entre les notes d'arpège. Tu obtiens un solo qui suit l'harmonie et reste mélodique." },
           { type: "h", text: "Changer d'arpège sur changement d'accord" },
@@ -2770,21 +2770,21 @@ export const COURSES = [
           { type: "p", text: "Les inversions de triades s'utilisent surtout sur les cordes 1-2-3 et 2-3-4 (comme vu dans le module Manche). Sur un accord barré à 6 cordes, tu 'contiens' implicitement des inversions : certaines cordes jouent la tierce ou la quinte en position basse. Mais pour travailler les inversions explicitement, les triades à 3 cordes sont l'outil parfait." },
           {
             type: "chord_diagram",
-            caption: "Do maj — état fondamental (Do en basse, c5-3)",
+            caption: "Do maj — état fondamental (Do en basse, corde 5 case 3)",
             data: { name: "C", frets: [-1,3,2,0,1,0], fingers: [0,3,2,0,1,0], startFret: 1 },
           },
           {
             type: "chord_diagram",
-            caption: "Do/Mi — 1ère inversion (Mi en basse, c6-0)",
+            caption: "Do/Mi — 1ère inversion (Mi en basse, corde 6 à vide)",
             data: { name: "C/E", frets: [0,3,2,0,1,0], fingers: [0,3,2,0,1,0], startFret: 1 },
           },
           {
             type: "chord_diagram",
-            caption: "Do/Sol — 2e inversion (Sol en basse, c6-3 ou c4-0)",
+            caption: "Do/Sol — 2e inversion (Sol en basse, corde 6 case 3 ou corde 4 à vide)",
             data: { name: "C/G", frets: [3,3,2,0,1,0], fingers: [3,4,2,0,1,0], startFret: 1 },
           },
           { type: "ref", text: "'And I Love Her' (Beatles) : la ligne de basse utilise des inversions d'accords pour créer un mouvement descendant mélodique. La basse ne suit pas toujours la fondamentale — elle passe par des tierces et quintes. Résultat : la ligne de basse est aussi une mélodie. C'est le pouvoir des inversions." },
-          { type: "tip", text: "Drill inversions : prends Do majeur. Joue-le en état fondamental (c5-3, c4-2, c3-0). Puis 1ère inversion (c4-2, c3-0, c2-1 — Mi en basse). Puis 2e inversion (c3-0, c2-1, c1-0 — Sol en basse). 3 positions, 3 couleurs. Mémorise les 3 formes de Do majeur. Refais avec Sol, La mineur." },
+          { type: "tip", text: "Drill inversions : prends Do majeur. Joue-le en état fondamental (corde 5 case 3, corde 4 case 2, corde 3 à vide). Puis 1ère inversion (corde 4 case 2, corde 3 à vide, corde 2 case 1 — Mi en basse). Puis 2e inversion (corde 3 à vide, corde 2 case 1, corde 1 à vide — Sol en basse). 3 positions, 3 couleurs. Mémorise les 3 formes de Do majeur. Refais avec Sol, La mineur." },
         ],
         quiz: ["q-harm-c2-08", "q-harm-c2-09"],
       },
@@ -2898,7 +2898,7 @@ export const COURSES = [
           { type: "h", text: "Le mouvement chromatique des guide tones" },
           { type: "p", text: "Dans une progression Dm7-G7-Cmaj7 (ii-V-I), les guide tones se déplacent par demi-tons d'un accord à l'autre. 7e de Dm7 = Do → 3e de G7 = Si (descend d'un demi-ton). 3e de Dm7 = Fa → 7e de G7 = Fa (reste !). 3e de G7 = Si → 7e de Cmaj7 = Si (reste !). 7e de G7 = Fa → 3e de Cmaj7 = Mi (descend d'un demi-ton). Ce mouvement minimal est le 'fil rouge' qui relie les accords entre eux." },
           { type: "h", text: "Voicings 'shell' : jouer économe" },
-          { type: "p", text: "En jazz, on joue souvent des 'shell voicings' : fondamentale + 3e + 7e (sans quinte). 3 notes seulement, mais elles définissent parfaitement l'accord. Avantage : moins de doigts, son plus 'ouvert', laisse de la place pour d'autres musiciens (basse, piano). G7 shell : Sol (c6-3) + Si (c5-2) + Fa (c4-3). 3 notes, son immédiatement reconnaissable." },
+          { type: "p", text: "En jazz, on joue souvent des 'shell voicings' : fondamentale + 3e + 7e (sans quinte). 3 notes seulement, mais elles définissent parfaitement l'accord. Avantage : moins de doigts, son plus 'ouvert', laisse de la place pour d'autres musiciens (basse, piano). G7 shell : Sol (corde 6 case 3) + Si (corde 5 case 2) + Fa (corde 4 case 3). 3 notes, son immédiatement reconnaissable." },
           { type: "ref", text: "Les pianistes de jazz (Bill Evans, Herbie Hancock, Keith Jarrett) jouent presque exclusivement des shell voicings main gauche + lignes mélodiques main droite. Cette économie de notes, loin d'appauvrir le son, le rend plus clair et plus musical. Sur la guitare, c'est le même principe." },
           { type: "tip", text: "Drill guide tones : sur la progression Dm7-G7-Cmaj7, joue uniquement les guide tones de chaque accord (3e et 7e). Dm7 : Fa-Do. G7 : Si-Fa. Cmaj7 : Mi-Si. Joue-les lentement, 1 accord par mesure. Tu entendras la 'ligne intérieure' de l'harmonie — c'est ce que les pros entendent en permanence." },
         ],
@@ -2913,13 +2913,13 @@ export const COURSES = [
           { type: "h", text: "Définition d'un shell voicing" },
           { type: "p", text: "Un shell voicing = fondamentale + 3e + 7e (la quinte est omise). Ces 3 notes définissent complètement la qualité de l'accord (vu dans la leçon précédente). L'omission de la quinte n'est pas un manque — c'est un choix esthétique qui rend le son plus 'ouvert'." },
           { type: "h", text: "Les voicings shell sur la guitare (cordes 6-5-4)" },
-          { type: "p", text: "La disposition la plus pratique : fondamentale sur c6, 3e sur c5 (ou c4), 7e sur c4 (ou c3). Exemple Cmaj7 shell : Do (c6-8) + Mi (c4-10) + Si (c3-9). 3 doigts, 3 cordes, accord parfait. G7 shell : Sol (c6-3) + Si (c5-2) + Fa (c4-3). Dm7 shell : Ré (c6-10) + Fa (c5-8) + Do (c4-10)." },
+          { type: "p", text: "La disposition la plus pratique : fondamentale sur c6, 3e sur c5 (ou c4), 7e sur c4 (ou c3). Exemple Cmaj7 shell : Do (corde 6 case 8) + Mi (corde 4 case 10) + Si (corde 3 case 9). 3 doigts, 3 cordes, accord parfait. G7 shell : Sol (corde 6 case 3) + Si (corde 5 case 2) + Fa (corde 4 case 3). Dm7 shell : Ré (corde 6 case 10) + Fa (corde 5 case 8) + Do (corde 4 case 10)." },
           { type: "h", text: "Les voicings shell sur cordes 5-4-3" },
-          { type: "p", text: "Quand la fondamentale est sur c5 : Cmaj7 shell : Do (c5-3) + Mi (c4-2) + Si (c3-4). G7 shell : Sol (c5-10) + Si (c4-9) + Fa (c3-10). Cette position est plus aiguë, utile pour les progressions dans le médium du manche." },
+          { type: "p", text: "Quand la fondamentale est sur c5 : Cmaj7 shell : Do (corde 5 case 3) + Mi (corde 4 case 2) + Si (corde 3 case 4). G7 shell : Sol (corde 5 case 10) + Si (corde 4 case 9) + Fa (corde 3 case 10). Cette position est plus aiguë, utile pour les progressions dans le médium du manche." },
           { type: "h", text: "Pourquoi omettre la quinte ne pose pas problème" },
           { type: "p", text: "La quinte juste est le deuxième harmonique naturel de n'importe quelle note. Autrement dit, quand tu joues une fondamentale, son 2e harmonique naturel (déjà présent dans le son de la corde) EST la quinte. Ton oreille 'l'entend' même quand tu ne la joues pas. La quinte est implicite dans toute note fondamentale. C'est pourquoi l'omettre ne change pas la perception de l'accord." },
           { type: "h", text: "Application : comper sur ii-V-I en jazz" },
-          { type: "p", text: "Sur la progression Dm7-G7-Cmaj7 (ii-V-I en Do) en shell voicings : Dm7 (c6-10, c5-8, c4-10) → G7 (c6-3, c5-2, c4-3) → Cmaj7 (c6-8, c4-10, c3-9). Si tu joues ça à 80 BPM avec du rythme, tu sonnes jazz immédiatement. Les shell voicings sont le premier pas vers le son jazz sur la guitare." },
+          { type: "p", text: "Sur la progression Dm7-G7-Cmaj7 (ii-V-I en Do) en shell voicings : Dm7 (corde 6 case 10, corde 5 case 8, corde 4 case 10) → G7 (corde 6 case 3, corde 5 case 2, corde 4 case 3) → Cmaj7 (corde 6 case 8, corde 4 case 10, corde 3 case 9). Si tu joues ça à 80 BPM avec du rythme, tu sonnes jazz immédiatement. Les shell voicings sont le premier pas vers le son jazz sur la guitare." },
           {
             type: "chord_diagram",
             caption: "Cmaj7 shell — fondamentale c6 case 8 (Do-Mi-Si)",
@@ -2936,7 +2936,7 @@ export const COURSES = [
             data: { name: "G7", frets: [3,2,3,-1,-1,-1], fingers: [2,1,3,0,0,0], startFret: 1 },
           },
           { type: "ref", text: "Freddie Green (guitariste du Count Basie Orchestra, 1937-1987) a joué des shell voicings pendant toute sa carrière — 50 ans à comper des accords de 2-3 notes à 4 temps par mesure, à tempo swing. C'est l'utilisation ultime du shell voicing : économe, précis, rythmique, musical." },
-          { type: "tip", text: "Apprends ces 4 shell voicings 'par cœur' : Cmaj7 (c6-8, c4-10, c3-9), Dm7 (c6-10, c5-8, c4-10), G7 (c6-3, c5-2, c4-3), Am7 (c6-5, c5-3, c4-5). Ces 4 voicings te donnent la progression I-ii-V-vi en Do majeur en version jazz instantanée." },
+          { type: "tip", text: "Apprends ces 4 shell voicings 'par cœur' : Cmaj7 (corde 6 case 8, corde 4 case 10, corde 3 case 9), Dm7 (corde 6 case 10, corde 5 case 8, corde 4 case 10), G7 (corde 6 case 3, corde 5 case 2, corde 4 case 3), Am7 (corde 6 case 5, corde 5 case 3, corde 4 case 5). Ces 4 voicings te donnent la progression I-ii-V-vi en Do majeur en version jazz instantanée." },
         ],
         quiz: ["q-harm-c3-08"],
       },
@@ -4364,13 +4364,13 @@ export const QUIZ = [
   {id:"q-neck-03",courseId:"neck",lessonId:"neck-01",lvl:2,q:"Sur la corde 6, où se trouve la note Si ?",o:["Case 5","Case 7","Case 9","Case 11"],a:1,exp:"Mi(0)-Fa(1)-Sol(3)-La(5)-Si(7). Le Si est case 7 sur la corde 6. C'est l'une des 4 notes-repères principales (avec Sol-3, La-5, Do-8).",xp:30},
   {id:"q-neck-04",courseId:"neck",lessonId:"neck-02",lvl:2,q:"Quel est l'intervalle entre une note sur la corde 6 et la même case sur la corde 5 ?",o:["Tierce majeure","Quarte juste","Quinte juste","Octave"],a:1,exp:"Cordes 6 et 5 : accordage en quarte juste (5 demi-tons). Mi→La = quarte juste. C'est l'intervalle standard entre cordes adjacentes (sauf c3-c2 = tierce maj).",xp:35},
   {id:"q-neck-05",courseId:"neck",lessonId:"neck-02",lvl:2,q:"Tu joues Do (case 3, corde 5). Où se trouve son octave la plus proche, sur la corde 3 ?",o:["Case 3","Case 5","Case 7","Case 10"],a:1,exp:"Corde 5 vers corde 3 : le motif est +2 cases. Do en case 3 sur la corde 5 devient donc Do en case 5 sur la corde 3.",xp:40},
-  {id:"q-neck-06",courseId:"neck",lessonId:"neck-02",lvl:3,q:"Combien y a-t-il de Do sur les 12 premières cases d'une guitare 6 cordes en accordage standard ?",o:["3","4","5","6"],a:2,exp:"Do est présent sur : c5-3, c4-10, c3-5, c2-1, c2-13. Total = 5 occurrences sur les 12 premières cases. Bonus : c1-8 (Do en aigu) ferait 6 si on étend.",xp:50},
+  {id:"q-neck-06",courseId:"neck",lessonId:"neck-02",lvl:3,q:"Combien y a-t-il de Do sur les 12 premières cases d'une guitare 6 cordes en accordage standard ?",o:["3","4","5","6"],a:2,exp:"Do est présent sur : corde 5 case 3, corde 4 case 10, corde 3 case 5, corde 2 case 1, corde 2 case 13. Total = 5 occurrences sur les 12 premières cases. Bonus : corde 1 case 8 (Do en aigu) ferait 6 si on étend.",xp:50},
   {id:"q-neck-07",courseId:"neck",lessonId:"neck-03",lvl:1,q:"Combien de demi-tons fait une tierce mineure ?",o:["2","3","4","5"],a:1,exp:"Tierce mineure = 3 demi-tons. C'est cette tierce qui donne le caractère 'mineur' (sombre) à un accord ou une gamme.",xp:25},
   {id:"q-neck-08",courseId:"neck",lessonId:"neck-03",lvl:2,q:"L'intervalle Mi → Si♭ est…",o:["Quinte juste","Septième mineure","Quarte augmentée","Sixte majeure"],a:2,exp:"Mi→Si = quinte juste (7dt). Mi→Si♭ = quinte diminuée = quarte augmentée = triton (6dt). L'intervalle 'diabolus in musica' qui divise l'octave en deux.",xp:45},
   {id:"q-neck-09",courseId:"neck",lessonId:"neck-03",lvl:3,q:"Quel est l'intervalle inverse d'une tierce majeure ?",o:["Tierce mineure","Sixte majeure","Sixte mineure","Quarte juste"],a:2,exp:"Inversion d'intervalle : la somme avec son inverse = octave (12dt). Tierce maj = 4dt. Inverse = 12-4 = 8dt = sixte mineure. Règle : maj→min, juste→juste.",xp:50},
-  {id:"q-neck-10",courseId:"neck",lessonId:"neck-03",lvl:3,q:"Tu joues Do (c5-3) et Mi (c4-2). Quel intervalle sépare ces 2 notes ?",o:["Tierce mineure","Tierce majeure","Quarte juste","Sixte majeure"],a:1,exp:"Do→Mi = 4 demi-tons = tierce majeure. C'est la tierce de l'accord de Do majeur. Vérification facile sur le manche : 4 demi-tons = 4 cases d'écart sur la même corde.",xp:45},
+  {id:"q-neck-10",courseId:"neck",lessonId:"neck-03",lvl:3,q:"Tu joues Do (corde 5 case 3) et Mi (corde 4 case 2). Quel intervalle sépare ces 2 notes ?",o:["Tierce mineure","Tierce majeure","Quarte juste","Sixte majeure"],a:1,exp:"Do→Mi = 4 demi-tons = tierce majeure. C'est la tierce de l'accord de Do majeur. Vérification facile sur le manche : 4 demi-tons = 4 cases d'écart sur la même corde.",xp:45},
   {id:"q-neck-11",courseId:"neck",lessonId:"neck-04",lvl:2,q:"Dans le système CAGED, l'ordre des formes en montant le manche est…",o:["A-B-C-D-E","C-A-G-E-D","E-D-C-B-A","C-D-E-F-G"],a:1,exp:"Ordre fixe et cyclique : C → A → G → E → D, puis retour à C une octave plus haut. Cet ordre est valable pour TOUS les accords majeurs.",xp:30},
-  {id:"q-neck-12",courseId:"neck",lessonId:"neck-04",lvl:3,q:"La forme E barrée case 7 donne quel accord majeur ?",o:["La majeur","Si majeur","Sol majeur","Mi majeur"],a:1,exp:"Forme E = E majeur. Décalée case 7, on monte de 7 demi-tons : Mi + 7dt = Si. Donc Si majeur. Vérification : la fondamentale est sur c6-7 = Si.",xp:45},
+  {id:"q-neck-12",courseId:"neck",lessonId:"neck-04",lvl:3,q:"La forme E barrée case 7 donne quel accord majeur ?",o:["La majeur","Si majeur","Sol majeur","Mi majeur"],a:1,exp:"Forme E = E majeur. Décalée case 7, on monte de 7 demi-tons : Mi + 7dt = Si. Donc Si majeur. Vérification : la fondamentale est sur corde 6 case 7 = Si.",xp:45},
   {id:"q-neck-13",courseId:"neck",lessonId:"neck-04",lvl:3,q:"Pour Ré majeur, quelle est la forme CAGED en position ouverte (case 0) ?",o:["Forme C","Forme A","Forme G","Forme D"],a:3,exp:"Ré majeur en position ouverte = forme D (c'est l'accord D ouvert classique). Ses 5 formes : D ouverte, C barré case 5, A barré case 5... non, plus simple : forme D (ouverte) puis monte CAGED à partir.",xp:50},
   {id:"q-neck-14",courseId:"neck",lessonId:"neck-04",lvl:3,q:"Pourquoi le système CAGED comporte exactement 5 formes (et pas 6 ou 4) ?",o:["Coïncidence historique","5 manières uniques de jouer un accord majeur avec cordes à vide + frettes","Limitation due à 6 cordes","Convention pédagogique"],a:1,exp:"Il existe exactement 5 formes uniques d'accords majeurs ouverts (C, A, G, E, D) qui exploitent les cordes à vide. Au-delà, on retrouve les mêmes shapes décalées.",xp:55},
   {id:"q-neck-15",courseId:"neck",lessonId:"neck-05",lvl:2,q:"Une triade en 'première inversion' a quelle note à la basse ?",o:["La fondamentale","La tierce","La quinte","La septième"],a:1,exp:"État fondamental : basse = 1. 1ère inversion : basse = 3. 2e inversion : basse = 5. La 1ère inversion crée souvent du mouvement mélodique.",xp:35},
@@ -4474,11 +4474,11 @@ export const QUIZ = [
   {id:"q-logic-10",courseId:"scales",lessonId:"scales-02",lvl:3,q:"Pourquoi la pentatonique 'sonne juste' sur tant de progressions différentes ?",o:["Magique","Elle évite les notes les plus dissonantes (2 et b6)","Elle est plus simple","Convention culturelle"],a:1,exp:"Penta mineure = 1-b3-4-5-b7. Elle évite le 2 (forme demi-ton avec b3) et b6 (forme demi-ton avec 5). Sans ces 2 demi-tons tendus, elle 'pose' sur quasi tous les accords mineurs et blues.",xp:65},
 
 // ═══ QUIZ FRETBOARD INTERACTIFS — manche cliquable ═══
-  {id:"q-fret-neck-01",type:"fretboard",courseId:"neck",lessonId:"neck-02",lvl:1,q:"Trouve toutes les notes Do (C) sur le manche",concept:{type:"find_note",root:"C"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Case 8 corde 6, case 3 corde 5.",xp:40,exp:"Do se trouve en c6f8, c5f3, c4f10, c3f5, c2f1, c1f8."},
-  {id:"q-fret-neck-02",type:"fretboard",courseId:"neck",lessonId:"neck-02",lvl:1,q:"Trouve toutes les notes Sol (G) sur le manche",concept:{type:"find_note",root:"G"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Sol est la corde 3 à vide.",xp:40,exp:"Sol en : c6f3, c5f10, c4f5, c3f0, c2f3, c1f3."},
-  {id:"q-fret-neck-03",type:"fretboard",courseId:"neck",lessonId:"neck-02",lvl:1,q:"Trouve toutes les notes Mi (E) sur le manche",concept:{type:"find_note",root:"E"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Mi est à vide sur les cordes 6 et 1.",xp:40,exp:"Mi en : c6f0, c5f7, c4f2, c3f9, c2f5, c1f0."},
-  {id:"q-fret-neck-04",type:"fretboard",courseId:"neck",lessonId:"neck-02",lvl:1,q:"Trouve toutes les notes Ré (D) sur le manche",concept:{type:"find_note",root:"D"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Ré est à vide sur la corde 4.",xp:40,exp:"Ré en : c6f10, c5f5, c4f0, c3f7, c2f3, c1f10."},
-  {id:"q-fret-neck-05",type:"fretboard",courseId:"neck",lessonId:"neck-04",lvl:3,q:"CAGED : trouve toutes les fondamentales La (ancres des 5 formes)",concept:{type:"find_note",root:"A"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"La est à vide sur la corde 5. Cherche les octaves.",xp:50,exp:"La en : c6f5, c5f0, c4f7, c3f2, c2f10, c1f5. Ce sont tes ancres CAGED."},
+  {id:"q-fret-neck-01",type:"fretboard",courseId:"neck",lessonId:"neck-02",lvl:1,q:"Trouve toutes les notes Do (C) sur le manche",concept:{type:"find_note",root:"C"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Case 8 corde 6, case 3 corde 5.",xp:40,exp:"Do se trouve en corde 6 case 8, corde 5 case 3, corde 4 case 10, corde 3 case 5, corde 2 case 1, corde 1 case 8."},
+  {id:"q-fret-neck-02",type:"fretboard",courseId:"neck",lessonId:"neck-02",lvl:1,q:"Trouve toutes les notes Sol (G) sur le manche",concept:{type:"find_note",root:"G"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Sol est la corde 3 à vide.",xp:40,exp:"Sol en : corde 6 case 3, corde 5 case 10, corde 4 case 5, corde 3 à vide, corde 2 case 3, corde 1 case 3."},
+  {id:"q-fret-neck-03",type:"fretboard",courseId:"neck",lessonId:"neck-02",lvl:1,q:"Trouve toutes les notes Mi (E) sur le manche",concept:{type:"find_note",root:"E"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Mi est à vide sur les cordes 6 et 1.",xp:40,exp:"Mi en : corde 6 à vide, corde 5 case 7, corde 4 case 2, corde 3 case 9, corde 2 case 5, corde 1 à vide."},
+  {id:"q-fret-neck-04",type:"fretboard",courseId:"neck",lessonId:"neck-02",lvl:1,q:"Trouve toutes les notes Ré (D) sur le manche",concept:{type:"find_note",root:"D"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Ré est à vide sur la corde 4.",xp:40,exp:"Ré en : corde 6 case 10, corde 5 case 5, corde 4 à vide, corde 3 case 7, corde 2 case 3, corde 1 case 10."},
+  {id:"q-fret-neck-05",type:"fretboard",courseId:"neck",lessonId:"neck-04",lvl:3,q:"CAGED : trouve toutes les fondamentales La (ancres des 5 formes)",concept:{type:"find_note",root:"A"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"La est à vide sur la corde 5. Cherche les octaves.",xp:50,exp:"La en : corde 6 case 5, corde 5 à vide, corde 4 case 7, corde 3 case 2, corde 2 case 10, corde 1 case 5. Ce sont tes ancres CAGED."},
   {id:"q-fret-scales-01",type:"fretboard",courseId:"scales",lessonId:"scales-01",lvl:1,q:"Sélectionne les notes de Do majeur sur les cases 0-3",concept:{type:"find_scale",root:"C",quality:"major"},selectionRules:{mode:"all"},fretRange:[0,3],display:{showNotes:false},hint:"Do majeur = Do Ré Mi Fa Sol La Si.",xp:45,exp:"Do majeur en position ouverte : 7 notes naturelles cases 0-3."},
   {id:"q-fret-scales-02",type:"fretboard",courseId:"scales",lessonId:"scales-02",lvl:1,q:"Sélectionne les notes de la pentatonique mineure de La (cases 5-8)",concept:{type:"find_scale",root:"A",quality:"pentatonic_minor"},selectionRules:{mode:"all"},fretRange:[4,9],display:{showNotes:false},hint:"Position 1 classique autour de la case 5.",xp:50,exp:"Pentatonique mineure de La position 1 : La-Do-Ré-Mi-Sol."},
   {id:"q-fret-scales-03",type:"fretboard",courseId:"scales",lessonId:"scales-02",lvl:2,q:"Trouve toutes les notes de la gamme blues de La sur le manche",concept:{type:"find_scale",root:"A",quality:"blues"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Blues = pentatonique mineure + note bleue (b5 = Ré#).",xp:55,exp:"Blues de La : La-Do-Ré-Ré#-Mi-Sol. La note bleue Ré# est la caracteristique."},
@@ -4490,10 +4490,10 @@ export const QUIZ = [
   {id:"q-fret-harm-04",type:"fretboard",courseId:"harmony",lessonId:"harmony-02",lvl:3,q:"Trouve toutes les notes de G7 (Sol Si Ré Fa)",concept:{type:"find_chord",root:"G",quality:"dom7"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"G7 : guide tones = Si (3e) et Fa (7e mineure).",xp:55,exp:"G7 : Sol-Si-Ré-Fa. Si et Fa sont les guide tones qui définissent la tension dominante."},
   {id:"q-fret-harm-05",type:"fretboard",courseId:"harmony",lessonId:"harmony-02",lvl:3,q:"Trouve toutes les notes de Cmaj7 (Do Mi Sol Si)",concept:{type:"find_chord",root:"C",quality:"maj7"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Cmaj7 : guide tones = Mi (3e) et Si (7e majeure).",xp:60,exp:"Cmaj7 : Do-Mi-Sol-Si. La 7e majeure Si (vs Sib de C7) donne la couleur douce."},
   {id:"q-fret-harm-06",type:"fretboard",courseId:"harmony",lessonId:"harmony-03",lvl:3,q:"Trouve toutes les notes de l'arpège Dm7 (Ré Fa La Do)",concept:{type:"find_chord",root:"D",quality:"min7"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Dm7 = ii de Do majeur. Guide tones : Fa (3e) + Do (7e).",xp:55,exp:"Dm7 : Ré-Fa-La-Do. C'est le ii du ii-V-I en Do."},
-  {id:"q-fret-harm-07",type:"fretboard",courseId:"harmony",lessonId:"harmony-05",lvl:3,q:"ii-V-I : trouve toutes les fondamentales Ré (ancres du ii)",concept:{type:"find_note",root:"D"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Ré est à vide sur la corde 4.",xp:50,exp:"Ré en : c6f10, c5f5, c4f0, c3f7, c2f3, c1f10. Ancres du ii dans le ii-V-I."},
-  {id:"q-fret-harm-08",type:"fretboard",courseId:"harmony",lessonId:"harmony-06",lvl:3,q:"Sur G7 : trouve toutes les notes Si (3e — guide tone principal)",concept:{type:"find_note",root:"B"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Si est à vide sur la corde 2. C'est ta note cible d'arrivée sur G7.",xp:60,exp:"Si en : c6f7, c5f2, c4f9, c3f4, c2f0, c1f7. Cibles d'arrivée sur G7."},
-  {id:"q-fret-harm-09",type:"fretboard",courseId:"harmony",lessonId:"harmony-06",lvl:3,q:"Sur G7 : trouve toutes les notes Fa (7e — tension à résoudre)",concept:{type:"find_note",root:"F"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Fa est case 1 corde 1. La 7e de G7 veut se résoudre vers Mi (Cmaj7).",xp:60,exp:"Fa en : c6f1, c5f8, c4f3, c3f10, c2f6, c1f1. La résolution Fa→Mi est le mouvement fondamental du ii-V-I."},
-  {id:"q-fret-harm-10",type:"fretboard",courseId:"harmony",lessonId:"harmony-04",lvl:2,q:"Harmonisation Do majeur : trouve toutes les notes Mi (3e du I)",concept:{type:"find_note",root:"E"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Mi à vide sur cordes 6 et 1. Tierce de Do majeur.",xp:50,exp:"Mi en : c6f0, c5f7, c4f2, c3f9, c2f5, c1f0. La tierce majeure de Cmaj7."},
+  {id:"q-fret-harm-07",type:"fretboard",courseId:"harmony",lessonId:"harmony-05",lvl:3,q:"ii-V-I : trouve toutes les fondamentales Ré (ancres du ii)",concept:{type:"find_note",root:"D"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Ré est à vide sur la corde 4.",xp:50,exp:"Ré en : corde 6 case 10, corde 5 case 5, corde 4 à vide, corde 3 case 7, corde 2 case 3, corde 1 case 10. Ancres du ii dans le ii-V-I."},
+  {id:"q-fret-harm-08",type:"fretboard",courseId:"harmony",lessonId:"harmony-06",lvl:3,q:"Sur G7 : trouve toutes les notes Si (3e — guide tone principal)",concept:{type:"find_note",root:"B"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Si est à vide sur la corde 2. C'est ta note cible d'arrivée sur G7.",xp:60,exp:"Si en : corde 6 case 7, corde 5 case 2, corde 4 case 9, corde 3 case 4, corde 2 à vide, corde 1 case 7. Cibles d'arrivée sur G7."},
+  {id:"q-fret-harm-09",type:"fretboard",courseId:"harmony",lessonId:"harmony-06",lvl:3,q:"Sur G7 : trouve toutes les notes Fa (7e — tension à résoudre)",concept:{type:"find_note",root:"F"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Fa est case 1 corde 1. La 7e de G7 veut se résoudre vers Mi (Cmaj7).",xp:60,exp:"Fa en : corde 6 case 1, corde 5 case 8, corde 4 case 3, corde 3 case 10, corde 2 case 6, corde 1 case 1. La résolution Fa→Mi est le mouvement fondamental du ii-V-I."},
+  {id:"q-fret-harm-10",type:"fretboard",courseId:"harmony",lessonId:"harmony-04",lvl:2,q:"Harmonisation Do majeur : trouve toutes les notes Mi (3e du I)",concept:{type:"find_note",root:"E"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Mi à vide sur cordes 6 et 1. Tierce de Do majeur.",xp:50,exp:"Mi en : corde 6 à vide, corde 5 case 7, corde 4 case 2, corde 3 case 9, corde 2 case 5, corde 1 à vide. La tierce majeure de Cmaj7."},
 ];
 
 
@@ -4505,25 +4505,25 @@ export const EXERCISES = [
   // ═══ MANCHE ═══
   {id:"ex-neck-01",mod:"neck",lvl:1,title:"Ancres corde 6 (4 notes)",dur:8,bpm:null,courseLink:"neck-02",steps:["Sur la corde 6, joue successivement : Mi (0), La (5), Si (7), Mi (12).","Nomme chaque note à voix haute en la jouant.","Test : ferme les yeux, je dis 'Si' → ta main va case 7 sans hésiter.","Refais 5 cycles complets."],tip:"4 notes par corde suffisent à 'ancrer' tout le manche. Le reste se déduit.",xp:40},
   {id:"ex-neck-02",mod:"neck",lvl:1,title:"Notes naturelles corde 6",dur:10,bpm:60,courseLink:"neck-02",steps:["À 60 BPM, joue corde 6 : Mi-Fa (0-1), Sol-La (3-5), Si-Do (7-8), Ré-Mi (10-12).","Nomme chaque note à voix haute.","Concentre-toi sur les 2 demi-tons : Mi-Fa et Si-Do.","Refais en descendant : Mi-Ré-Do-Si-La-Sol-Fa-Mi."],tip:"Mi-Fa et Si-Do = seuls demi-tons sans dièse. Ancre-les visuellement.",xp:45},
-  {id:"ex-neck-03",mod:"neck",lvl:2,title:"Pattern octaves c6→c4",dur:10,bpm:null,courseLink:"neck-03",steps:["Joue Do (c6-8), puis son octave Do (c4-10). Pattern c6→c4 = +2 cases.","Refais avec Ré (c6-10 → c4-12).","Refais avec La (c6-5 → c4-7).","Joue ce pattern sur 5 fondamentales différentes."],tip:"Pattern c6→c4 = +2 cases. C'est ton réflexe principal.",xp:55},
+  {id:"ex-neck-03",mod:"neck",lvl:2,title:"Pattern octaves c6→c4",dur:10,bpm:null,courseLink:"neck-03",steps:["Joue Do (corde 6 case 8), puis son octave Do (corde 4 case 10). Pattern c6→c4 = +2 cases.","Refais avec Ré (corde 6 case 10 → corde 4 case 12).","Refais avec La (corde 6 case 5 → corde 4 case 7).","Joue ce pattern sur 5 fondamentales différentes."],tip:"Pattern c6→c4 = +2 cases. C'est ton réflexe principal.",xp:55},
   {id:"ex-neck-04",mod:"neck",lvl:2,title:"Octaves 4 patterns",dur:12,bpm:null,courseLink:"neck-03",steps:["Pattern 1 (c6→c4) : +2 cases","Pattern 2 (c5→c3) : +2 cases","Pattern 3 (c4→c2) : +3 cases (à cause de la tierce maj entre c3-c2)","Pattern 4 (c3→c1) : +3 cases","Pour chaque pattern, joue 5 fondamentales différentes."],tip:"Mémorise : +2 / +2 / +3 / +3. Cette asymétrie = la 'cassure' guitare.",xp:65},
   {id:"ex-neck-05",mod:"neck",lvl:2,title:"CAGED Am — 5 formes",dur:15,bpm:null,courseLink:"neck-04",steps:["Forme E barrée case 5 = Am (forme classique).","Forme D barrée case 7 (cordes 1-2-3-4) = Am.","Forme C barrée case 12 = Am (aigu).","Forme A en position ouverte case 0 = Am.","Forme G barrée case 2 = Am (difficile mais existe). Joue les 5 formes en remontant le manche."],tip:"Toutes les formes ne sont pas confortables, mais les connaître = liberté totale.",xp:75},
-  {id:"ex-neck-06",mod:"neck",lvl:3,title:"Triades Do majeur — 3 inversions",dur:12,bpm:65,courseLink:"neck-05",steps:["Cordes 1-2-3, position fondamentale (c1-12, c2-13, c3-12) : Mi-Do-Sol... arrange en C-E-G correctement.","1ère inversion (basse = Mi) : c3-9, c2-13, c1-12.","2e inversion (basse = Sol) : c3-12, c2-13, c1-15... ajuste.","Joue les 3 inversions en boucle à 65 BPM."],tip:"Triades = unité minimale d'harmonie. 3 voicings par accord = 9 manières d'enrichir une chanson.",xp:65},
-  {id:"ex-neck-07",mod:"neck",lvl:3,title:"Connexion accord-arpège-gamme",dur:15,bpm:60,courseLink:"neck-06",steps:["Plaque Cmaj7 forme E case 8.","Identifie ses 4 notes : Do (c6-8 / c1-8), Mi (c4-9), Sol (c2-8), Si (c3-8).","Joue l'arpège Cmaj7 ascendant (Do-Mi-Sol-Si-Do).","Joue Do majeur position 5 (c6 case 8) : 7 notes incluant l'arpège."],tip:"Voir l'accord, l'arpège et la gamme dans la même région = vision unifiée.",xp:80},
+  {id:"ex-neck-06",mod:"neck",lvl:3,title:"Triades Do majeur — 3 inversions",dur:12,bpm:65,courseLink:"neck-05",steps:["Cordes 1-2-3, position fondamentale (corde 1 case 12, corde 2 case 13, corde 3 case 12) : Mi-Do-Sol... arrange en C-E-G correctement.","1ère inversion (basse = Mi) : corde 3 case 9, corde 2 case 13, corde 1 case 12.","2e inversion (basse = Sol) : corde 3 case 12, corde 2 case 13, corde 1 case 15... ajuste.","Joue les 3 inversions en boucle à 65 BPM."],tip:"Triades = unité minimale d'harmonie. 3 voicings par accord = 9 manières d'enrichir une chanson.",xp:65},
+  {id:"ex-neck-07",mod:"neck",lvl:3,title:"Connexion accord-arpège-gamme",dur:15,bpm:60,courseLink:"neck-06",steps:["Plaque Cmaj7 forme E case 8.","Identifie ses 4 notes : Do (corde 6 case 8 / corde 1 case 8), Mi (corde 4 case 9), Sol (corde 2 case 8), Si (corde 3 case 8).","Joue l'arpège Cmaj7 ascendant (Do-Mi-Sol-Si-Do).","Joue Do majeur position 5 (c6 case 8) : 7 notes incluant l'arpège."],tip:"Voir l'accord, l'arpège et la gamme dans la même région = vision unifiée.",xp:80},
 
   // ═══ GAMMES ═══
   {id:"ex-scales-01",mod:"scales",lvl:1,title:"Penta Am pos. 1 propre",dur:12,bpm:60,courseLink:"scales-02",steps:["Index case 5, annulaire case 7, auriculaire case 8.","Joue corde 6 → 1 montant à 60 BPM. Chaque note doit sonner claire.","Redescends c1 → c6 même tempo.","Augmente progressivement : 70, 80, 90 BPM."],tip:"Lenteur = propreté. Propreté = vélocité future.",xp:50},
   {id:"ex-scales-02",mod:"scales",lvl:2,title:"Penta Am 5 positions enchaînées",dur:20,bpm:60,courseLink:"scales-02",steps:["Position 5 (case 3) → 1 (case 5) → 2 (case 8) → 3 (case 10) → 4 (case 12).","Boucle 3 fois à 60 BPM en montant.","Boucle 3 fois en descendant.","Identifie les notes-pivot (case 5, 8, 10, 12)."],tip:"4-6 semaines de pratique pour automatiser. C'est le boss de la pentatonique.",xp:90},
-  {id:"ex-scales-03",mod:"scales",lvl:2,title:"Sol majeur 2 octaves",dur:12,bpm:65,courseLink:"scales-01",steps:["Sol(c6-3)-La(c6-5)-Si(c5-2)-Do(c5-3)-Ré(c5-5)-Mi(c4-2)-Fa#(c4-4)-Sol(c4-5).","Continue : La(c3-2)-Si(c3-4)-Do(c2-1)-Ré(c2-3)-Mi(c2-5)-Fa#(c1-2)-Sol(c1-3).","Descends pareil. 5 cycles complets.","Identifie Sol et Si comme repères visuels."],tip:"Cette position couvre 2 octaves. Mémorise-la, c'est ta base en Sol.",xp:70},
+  {id:"ex-scales-03",mod:"scales",lvl:2,title:"Sol majeur 2 octaves",dur:12,bpm:65,courseLink:"scales-01",steps:["Sol(corde 6 case 3)-La(corde 6 case 5)-Si(corde 5 case 2)-Do(corde 5 case 3)-Ré(corde 5 case 5)-Mi(corde 4 case 2)-Fa#(corde 4 case 4)-Sol(corde 4 case 5).","Continue : La(corde 3 case 2)-Si(corde 3 case 4)-Do(corde 2 case 1)-Ré(corde 2 case 3)-Mi(corde 2 case 5)-Fa#(corde 1 case 2)-Sol(corde 1 case 3).","Descends pareil. 5 cycles complets.","Identifie Sol et Si comme repères visuels."],tip:"Cette position couvre 2 octaves. Mémorise-la, c'est ta base en Sol.",xp:70},
   {id:"ex-scales-04",mod:"scales",lvl:3,title:"Ré dorien sur drone",dur:15,bpm:80,courseLink:"scales-04",steps:["Lance backing 'Dm7 vamp 80 BPM' (YouTube) ou drone Ré.","Joue Ré dorien : Ré-Mi-Fa-Sol-La-Si-Do.","Mets en valeur Si (la sixte caractéristique) toutes les 2 mesures.","10 minutes non-stop. Enregistre-toi."],tip:"Sans le Si, ça sonnera mineur générique. Le Si fait toute la différence.",xp:85},
   {id:"ex-scales-05",mod:"scales",lvl:3,title:"Sol mixolydien sur G7",dur:12,bpm:75,courseLink:"scales-05",steps:["Backing G7 75 BPM ou blues en Sol.","Joue Sol mixolydien : Sol-La-Si-Do-Ré-Mi-Fa.","Mets en avant le Fa naturel (b7 caractéristique).","Compare 5 min avec Sol majeur (Fa#) — entends la différence."],tip:"Le Fa naturel = LA note mixolydienne. C'est la 7e de l'accord.",xp:80},
   {id:"ex-scales-06",mod:"scales",lvl:3,title:"Mineure harmonique sur V7",dur:12,bpm:80,courseLink:"scales-07",steps:["Sur la cadence E7→Am, joue La mineure harmonique sur le E7.","La harmonique = La-Si-Do-Ré-Mi-Fa-Sol#.","Le Sol# crée la tension parfaite vers Am.","Compare avec La éolien (Sol naturel) — moins de tension."],tip:"Sol# de l'harmonique = la 3 de E7. Match parfait pour la résolution.",xp:80},
 
   // ═══ HARMONIE ═══
   {id:"ex-harm-01",mod:"harmony",lvl:1,title:"Construire 7 triades majeures",dur:10,bpm:null,courseLink:"harmony-01",steps:["Sans guitare : écris les notes de Do, Ré, Mi, Fa, Sol, La, Si majeur.","Vérifie : Do=Do-Mi-Sol, Ré=Ré-Fa#-La, Mi=Mi-Sol#-Si, Fa=Fa-La-Do, Sol=Sol-Si-Ré, La=La-Do#-Mi, Si=Si-Ré#-Fa#.","Trouve chaque triade en position fondamentale sur cordes 1-2-3.","Joue les 7 triades en arpège montant."],tip:"Formule : 1 + 4dt + 7dt. Quand tu sais le faire de tête, tu connais l'harmonie.",xp:55},
-  {id:"ex-harm-02",mod:"harmony",lvl:2,title:"Voicings 7e shell",dur:12,bpm:60,courseLink:"harmony-02",steps:["Cmaj7 shell : Do(c6-8) + Mi(c4-9) + Si(c3-8). Pas de Sol (5e omise).","Dm7 shell : Ré(c6-10) + Fa(c4-3) + Do(c3-5).","G7 shell : Sol(c6-3) + Si(c5-2) + Fa(c4-3).","Joue ii-V-I (Dm7-G7-Cmaj7) en shell, 4 mesures par accord."],tip:"Shells = 3 notes seulement. Sonnent étonnamment 'complets'. Base du jazz pratique.",xp:75},
+  {id:"ex-harm-02",mod:"harmony",lvl:2,title:"Voicings 7e shell",dur:12,bpm:60,courseLink:"harmony-02",steps:["Cmaj7 shell : Do(corde 6 case 8) + Mi(corde 4 case 9) + Si(corde 3 case 8). Pas de Sol (5e omise).","Dm7 shell : Ré(corde 6 case 10) + Fa(corde 4 case 3) + Do(corde 3 case 5).","G7 shell : Sol(corde 6 case 3) + Si(corde 5 case 2) + Fa(corde 4 case 3).","Joue ii-V-I (Dm7-G7-Cmaj7) en shell, 4 mesures par accord."],tip:"Shells = 3 notes seulement. Sonnent étonnamment 'complets'. Base du jazz pratique.",xp:75},
   {id:"ex-harm-03",mod:"harmony",lvl:2,title:"ii-V-I dans 3 tonalités",dur:15,bpm:70,courseLink:"harmony-05",steps:["En Do : Dm7 (case 5) - G7 (case 3) - Cmaj7 (case 8). 4 mesures par accord.","En Sol : Am7 - D7 - Gmaj7. Mêmes formes décalées.","En Ré : Em7 - A7 - Dmaj7.","Boucle les 3 progressions à 70 BPM."],tip:"Le ii-V-I est universel. 3 tonalités d'entraînement → applicable aux 12.",xp:75},
-  {id:"ex-harm-04",mod:"harmony",lvl:3,title:"Arpèges Cmaj7 dans 3 positions",dur:15,bpm:60,courseLink:"harmony-03",steps:["Position 1 (case 8 forme E) : Do(c6-8)-Mi(c5-7)-Sol(c5-10)-Si(c4-9).","Position 2 (case 3 forme C) : Do(c5-3)-Mi(c4-2)-Sol(c3-0)-Si(c3-4).","Position 3 (case 12 aigu) : Do(c1-8)-Mi(c1-12)-Sol(c1-15)-Si... ajuste.","Connecte les 3 positions en arpège continu."],tip:"3 positions par arpège = couverture complète du manche.",xp:80},
+  {id:"ex-harm-04",mod:"harmony",lvl:3,title:"Arpèges Cmaj7 dans 3 positions",dur:15,bpm:60,courseLink:"harmony-03",steps:["Position 1 (case 8 forme E) : Do(corde 6 case 8)-Mi(corde 5 case 7)-Sol(corde 5 case 10)-Si(corde 4 case 9).","Position 2 (case 3 forme C) : Do(corde 5 case 3)-Mi(corde 4 case 2)-Sol(corde 3 à vide)-Si(corde 3 case 4).","Position 3 (case 12 aigu) : Do(corde 1 case 8)-Mi(corde 1 case 12)-Sol(corde 1 case 15)-Si... ajuste.","Connecte les 3 positions en arpège continu."],tip:"3 positions par arpège = couverture complète du manche.",xp:80},
   {id:"ex-harm-05",mod:"harmony",lvl:3,title:"Harmoniser Sol majeur",dur:12,bpm:null,courseLink:"harmony-04",steps:["Construis les 7 accords diatoniques de Sol : Gmaj7, Am7, Bm7, Cmaj7, D7, Em7, F#m7b5.","Joue chaque accord en arpège montant.","Joue la progression complète I-ii-iii-IV-V-vi-vii°-I à 60 BPM.","Test : nomme chaque accord en chiffrage Nashville (1 à 7)."],tip:"Si tu connais l'harmonisation de Sol, tu connais celle des 12 majeures par transposition.",xp:80},
 
   // ═══ RYTHME ═══
@@ -4534,7 +4534,7 @@ export const EXERCISES = [
   {id:"ex-rhy-05",mod:"rhythm",lvl:3,title:"Phrasing Q&A pur",dur:10,bpm:60,courseLink:"rhythm-04",steps:["Métronome 60 BPM. Solo Am, max 4 notes par phrase.","Min 2 mesures de SILENCE entre chaque phrase.","Phrase 1 = question (finit en suspension). Phrase 2 = réponse (finit sur La).","5 minutes non-stop avec ces contraintes."],tip:"Cette contrainte t'oblige à phraser. Le silence devient ton allié.",xp:65},
 
   // ═══ IMPRO ═══
-  {id:"ex-impro-01",mod:"impro",lvl:1,title:"Impro 3 notes Am",dur:10,bpm:70,courseLink:"scales-02",steps:["Backing Am 70 BPM. Joue UNIQUEMENT 3 notes : La (c5-7), Do (c4-5), Mi (c4-7).","5 minutes : varie le rythme et l'ordre, jamais les notes.","Ajoute 2 notes : Ré (c3-7), Sol (c3-5).","5 min avec ces 5 notes = penta complète pos. 1."],tip:"Contrainte = créativité. Plus de notes ≠ plus de musicalité.",xp:55},
+  {id:"ex-impro-01",mod:"impro",lvl:1,title:"Impro 3 notes Am",dur:10,bpm:70,courseLink:"scales-02",steps:["Backing Am 70 BPM. Joue UNIQUEMENT 3 notes : La (corde 5 case 7), Do (corde 4 case 5), Mi (corde 4 case 7).","5 minutes : varie le rythme et l'ordre, jamais les notes.","Ajoute 2 notes : Ré (corde 3 case 7), Sol (corde 3 case 5).","5 min avec ces 5 notes = penta complète pos. 1."],tip:"Contrainte = créativité. Plus de notes ≠ plus de musicalité.",xp:55},
   {id:"ex-impro-02",mod:"impro",lvl:2,title:"Cibler les guide tones",dur:12,bpm:80,courseLink:"harmony-06",steps:["Backing Dm7-G7-Cmaj7 80 BPM.","Sur Dm7 : termine ta phrase sur Fa (3) ou Do (b7).","Sur G7 : cible Si (3) ou Fa (b7).","Sur Cmaj7 : cible Mi (3) ou Si (M7)."],tip:"Cibler les guide tones = sonner immédiatement 'sur l'accord'. Truc n°1 du jazz.",xp:80},
   {id:"ex-impro-03",mod:"impro",lvl:3,title:"Impro modale dorien 10 min",dur:15,bpm:90,courseLink:"scales-04",steps:["Drone Ré (corde 5 vide ou app drone).","Joue uniquement Ré dorien : Ré-Mi-Fa-Sol-La-Si-Do.","Construis des phrases de 4-8 notes contenant TOUTES Si.","10 min non-stop. Enregistre. Écoute après."],tip:"Sans Si, dorien sonne mineur générique. Avec Si, c'est une autre couleur.",xp:90},
   {id:"ex-impro-04",mod:"impro",lvl:3,title:"Approche chromatique",dur:12,bpm:70,courseLink:"harmony-06",steps:["Backing Cmaj7 70 BPM. Cible Mi (3 de Cmaj7).","Avant chaque Mi, joue Fa (1/2 ton au-dessus). Phrase : Fa→Mi.","Ou : joue Mib (1/2 ton en dessous). Phrase : Mib→Mi.","Mélange les 2 approches dans une impro de 5 min."],tip:"Chromatisme = note tendue → note cible. Source du son bebop.",xp:75},
@@ -4556,7 +4556,7 @@ export const EXERCISES = [
         fretRange:[0,12], stringRange:[1,6],
         display:{showNotes:false},
         hint:"Commence par la corde 6 (Mi grave). Do est case 8.",
-        exp:"Do en c6f8, c5f3, c4f10, c3f5, c2f1, c1f8.",
+        exp:"Do en corde 6 case 8, corde 5 case 3, corde 4 case 10, corde 3 case 5, corde 2 case 1, corde 1 case 8.",
         xp:15
       },
       {
@@ -4566,7 +4566,7 @@ export const EXERCISES = [
         fretRange:[0,12], stringRange:[1,6],
         display:{showNotes:false},
         hint:"Sol est à vide sur la corde 3.",
-        exp:"Sol en c6f3, c5f10, c4f5, c3f0, c2f3, c1f3.",
+        exp:"Sol en corde 6 case 3, corde 5 case 10, corde 4 case 5, corde 3 à vide, corde 2 case 3, corde 1 case 3.",
         xp:15
       },
       {
@@ -4576,7 +4576,7 @@ export const EXERCISES = [
         fretRange:[0,12], stringRange:[1,6],
         display:{showNotes:false},
         hint:"Ré est à vide sur la corde 4.",
-        exp:"Ré en c6f10, c5f5, c4f0, c3f7, c2f3, c1f10.",
+        exp:"Ré en corde 6 case 10, corde 5 case 5, corde 4 à vide, corde 3 case 7, corde 2 case 3, corde 1 case 10.",
         xp:15
       },
       {
@@ -4586,7 +4586,7 @@ export const EXERCISES = [
         fretRange:[0,12], stringRange:[1,6],
         display:{showNotes:false},
         hint:"La est à vide sur la corde 5.",
-        exp:"La en c6f5, c5f0, c4f7, c3f2, c2f10, c1f5. Ce sont tes ancres CAGED.",
+        exp:"La en corde 6 case 5, corde 5 à vide, corde 4 case 7, corde 3 case 2, corde 2 case 10, corde 1 case 5. Ce sont tes ancres CAGED.",
         xp:25
       }
     ],
@@ -4606,7 +4606,7 @@ export const EXERCISES = [
         fretRange:[0,12], stringRange:[1,6],
         display:{showNotes:false},
         hint:"La quinte de Mi est Si. Si est à vide sur la corde 2.",
-        exp:"Si en c6f7, c5f2, c4f9, c3f4, c2f0, c1f7.",
+        exp:"Si en corde 6 case 7, corde 5 case 2, corde 4 case 9, corde 3 case 4, corde 2 à vide, corde 1 case 7.",
         xp:20
       },
       {
@@ -4616,7 +4616,7 @@ export const EXERCISES = [
         fretRange:[0,12], stringRange:[1,6],
         display:{showNotes:false},
         hint:"La quinte de La est Mi. Mi est à vide sur cordes 6 et 1.",
-        exp:"Mi en c6f0, c5f7, c4f2, c3f9, c2f5, c1f0.",
+        exp:"Mi en corde 6 à vide, corde 5 case 7, corde 4 case 2, corde 3 case 9, corde 2 case 5, corde 1 à vide.",
         xp:20
       },
       {
@@ -4626,7 +4626,7 @@ export const EXERCISES = [
         fretRange:[0,12], stringRange:[1,6],
         display:{showNotes:false},
         hint:"La tierce majeure de Do est Mi (4 demi-tons au-dessus).",
-        exp:"Mi en c6f0, c5f7, c4f2, c3f9, c2f5, c1f0. Même note que la quinte de La !",
+        exp:"Mi en corde 6 à vide, corde 5 case 7, corde 4 case 2, corde 3 case 9, corde 2 case 5, corde 1 à vide. Même note que la quinte de La !",
         xp:20
       },
       {
@@ -4636,7 +4636,7 @@ export const EXERCISES = [
         fretRange:[0,12], stringRange:[1,6],
         display:{showNotes:false},
         hint:"La tierce mineure de La est Do (3 demi-tons). Do = case 8 corde 6.",
-        exp:"Do en c6f8, c5f3, c4f10, c3f5, c2f1, c1f8.",
+        exp:"Do en corde 6 case 8, corde 5 case 3, corde 4 case 10, corde 3 case 5, corde 2 case 1, corde 1 case 8.",
         xp:20
       }
     ],
@@ -4656,7 +4656,7 @@ export const EXERCISES = [
         fretRange:[0,12], stringRange:[1,6],
         display:{showNotes:false},
         hint:"Sol est à vide corde 3. C'est la fondamentale de la forme G.",
-        exp:"Sol en c6f3, c5f10, c4f5, c3f0, c2f3, c1f3.",
+        exp:"Sol en corde 6 case 3, corde 5 case 10, corde 4 case 5, corde 3 à vide, corde 2 case 3, corde 1 case 3.",
         xp:20
       },
       {
@@ -4666,7 +4666,7 @@ export const EXERCISES = [
         fretRange:[0,12], stringRange:[1,6],
         display:{showNotes:false},
         hint:"Am = La + Do (3ce mineure) + Mi (quinte). Compare avec Am7 (+ Sol).",
-        exp:"Am : La (c6f5, c5f0, c4f7, c3f2, c2f10, c1f5), Do, Mi — tout le manche.",
+        exp:"Am : La (corde 6 case 5, corde 5 à vide, corde 4 case 7, corde 3 case 2, corde 2 case 10, corde 1 case 5), Do, Mi — tout le manche.",
         xp:25
       },
       {
@@ -4676,7 +4676,7 @@ export const EXERCISES = [
         fretRange:[0,12], stringRange:[1,6],
         display:{showNotes:false},
         hint:"Chaque La est le centre d'une des 5 formes CAGED.",
-        exp:"La en : c6f5 (forme E), c5f0 (forme A), c4f7 (forme D ?), c3f2, c2f10, c1f5.",
+        exp:"La en : corde 6 case 5 (forme E), corde 5 à vide (forme A), corde 4 case 7 (forme D ?), corde 3 case 2, corde 2 case 10, corde 1 case 5.",
         xp:30
       }
     ],
@@ -4856,7 +4856,7 @@ export const EXERCISES = [
         fretRange:[0,12], stringRange:[1,6],
         display:{showNotes:false},
         hint:"Si est à vide sur la corde 2. Ce sont tes notes d'arrivée sur G7.",
-        exp:"Si en c6f7, c5f2, c4f9, c3f4, c2f0, c1f7. Cibles d'arrivée sur G7.",
+        exp:"Si en corde 6 case 7, corde 5 case 2, corde 4 case 9, corde 3 case 4, corde 2 à vide, corde 1 case 7. Cibles d'arrivée sur G7.",
         xp:25
       },
       {
@@ -4866,7 +4866,7 @@ export const EXERCISES = [
         fretRange:[0,12], stringRange:[1,6],
         display:{showNotes:false},
         hint:"Fa est case 1 corde 1. Cette note veut descendre vers Mi (résolution).",
-        exp:"Fa en c6f1, c5f8, c4f3, c3f10, c2f6, c1f1. Tension → résolution vers Mi de Cmaj7.",
+        exp:"Fa en corde 6 case 1, corde 5 case 8, corde 4 case 3, corde 3 case 10, corde 2 case 6, corde 1 case 1. Tension → résolution vers Mi de Cmaj7.",
         xp:25
       },
       {
@@ -4876,7 +4876,7 @@ export const EXERCISES = [
         fretRange:[0,12], stringRange:[1,6],
         display:{showNotes:false},
         hint:"Mi est à vide sur les cordes 6 et 1. Note de repos de Cmaj7.",
-        exp:"Mi en c6f0, c5f7, c4f2, c3f9, c2f5, c1f0. Résolution naturelle depuis Fa de G7.",
+        exp:"Mi en corde 6 à vide, corde 5 case 7, corde 4 case 2, corde 3 case 9, corde 2 case 5, corde 1 à vide. Résolution naturelle depuis Fa de G7.",
         xp:25
       }
     ],

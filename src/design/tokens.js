@@ -30,8 +30,8 @@ const shared = {
   purple:        "#6B4FCC",
   purpleBorder:  "#C4B8F0",
 
-  pink:          "#C4306A",
-  pinkBorder:    "#F0B0CC",
+  pink:          "#C430A5",
+  pinkBorder:    "#F0B0E6",
   coral:         "#C4306A",
   coralBorder:   "#F0B0CC",
 
@@ -76,8 +76,8 @@ export const LIGHT = {
   purpleD:       "#2D1A7A",
 
   // ── Pink / Coral ──────────────────────────────────────
-  pinkL:         "#FCE8F0",
-  pinkD:         "#6B0830",
+  pinkL:         "#FCE8F8",
+  pinkD:         "#6B0858",
   coralL:        "#FCE8F0",
   coralD:        "#6B0830",
 
@@ -127,8 +127,8 @@ export const DARK = {
   purpleD:       "#C4B4F8",
 
   // ── Pink / Coral ──────────────────────────────────────
-  pinkL:         "#2A0818",
-  pinkD:         "#F4A0C8",
+  pinkL:         "#2A0826",
+  pinkD:         "#F4A0EA",
   coralL:        "#2A0818",
   coralD:        "#F4A0C8",
 
