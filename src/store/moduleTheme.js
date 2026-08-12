@@ -10,6 +10,9 @@ function buildModuleTheme(C) {
     harmony: { icon: "ti-stack-2",   color: C.purple,  colorL: C.purpleL,  colorD: C.purpleD,  colorBorder: C.purpleBorder },
     rhythm:  { icon: "ti-metronome", color: C.blue,    colorL: C.blueL,    colorD: C.blueD,    colorBorder: C.blueBorder },
     impro:   { icon: "ti-wand",      color: C.pink,    colorL: C.pinkL,    colorD: C.pinkD,    colorBorder: C.pinkBorder },
+    // Thème neutre pour une unité-palier : elle mélange plusieurs
+    // disciplines, aucune couleur de module ne lui appartient en propre.
+    palier:  { icon: "ti-stairs",    color: C.primary, colorL: C.primaryL, colorD: C.primaryD, colorBorder: C.primaryBorder },
   };
 }
 

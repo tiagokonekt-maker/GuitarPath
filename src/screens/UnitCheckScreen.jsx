@@ -150,7 +150,7 @@ export function UnitCheckScreen({ unit, content, dispatch, onDone }) {
       </div>
 
       <div style={{ fontSize: 10, color: C.text3, marginBottom: 8, textTransform: "uppercase", letterSpacing: ".1em", fontWeight: 600 }}>
-        Vérification · {unit.courseTitle} · Unité {unit.moduleUnitIndex}
+        Vérification · {unit.title}
       </div>
 
       <div style={{ background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: 16, marginBottom: 10 }}>

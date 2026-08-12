@@ -92,17 +92,22 @@ function PathNode({ lesson, index, state, th, onSelect, isCurrent, isLocked, gro
         )}
       </button>
 
-      {/* Bulle d'info (leçon débloquée) */}
+      {/* Bulle d'info (leçon débloquée) — toute la carte est cliquable sur
+          le nœud courant, pas seulement le petit cercle : "Commencer" était
+          un simple texte décoratif sans la moindre action au clic. */}
       {!isLocked&&(
-        <div style={{
-          marginTop:6,
-          background:isCurrent?C.primaryL:C.surface,
-          border:`1.5px solid ${isCurrent?C.primaryBorder:C.border}`,
-          borderRadius:R.md, padding:"9px 12px",
-          maxWidth:186,
-          alignSelf:side==="left"?"flex-start":"flex-end",
-          boxShadow:isCurrent?`0 4px 14px ${C.primary}22`:"none",
-        }}>
+        <div
+          onClick={isCurrent ? () => onSelect(lesson) : undefined}
+          style={{
+            marginTop:6,
+            background:isCurrent?C.primaryL:C.surface,
+            border:`1.5px solid ${isCurrent?C.primaryBorder:C.border}`,
+            borderRadius:R.md, padding:"9px 12px",
+            maxWidth:186,
+            alignSelf:side==="left"?"flex-start":"flex-end",
+            boxShadow:isCurrent?`0 4px 14px ${C.primary}22`:"none",
+            cursor:isCurrent?"pointer":"default",
+          }}>
           {isCurrent&&(
             <div style={{fontSize:8.5,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:C.primary,marginBottom:3}}>
               En cours
@@ -124,9 +129,13 @@ function PathNode({ lesson, index, state, th, onSelect, isCurrent, isLocked, gro
         </div>
       )}
 
-      {/* Gropi compagnon — uniquement sur le nœud en cours */}
+      {/* Gropi compagnon — uniquement sur le nœud en cours, cliquable
+          au même titre que la carte pour accéder à la leçon. */}
       {isCurrent && (
-        <div style={{ marginTop: 10, alignSelf: side === "left" ? "flex-start" : "flex-end" }}>
+        <div
+          onClick={() => onSelect(lesson)}
+          style={{ marginTop: 10, alignSelf: side === "left" ? "flex-start" : "flex-end", cursor: "pointer" }}
+        >
           <GropiBubble
             pose="wave"
             size={68}
@@ -220,7 +229,7 @@ function PathConnector({ fromSide, done }) {
 function CurrentUnitBanner({ stats, MODULE_THEME }) {
   const C = useC();
   const u = stats.currentUnit;
-  const th = u ? (MODULE_THEME[u.courseId]||{icon:"ti-book-2",color:C.primary,colorL:C.primaryL,colorD:C.primaryD}) : null;
+  const th = u ? (MODULE_THEME.palier) : null;
 
   return (
     <div style={{
@@ -241,7 +250,7 @@ function CurrentUnitBanner({ stats, MODULE_THEME }) {
           {u ? `Unité ${u.index+1} sur ${stats.units}` : "Parcours"}
         </div>
         <div style={{fontSize:15,fontWeight:800,color:th?th.colorD:C.greenD,letterSpacing:"-.2px",marginTop:2}}>
-          {u ? `${u.courseTitle} · ${u.moduleUnitIndex}/${u.moduleUnitCount}` : "Parcours terminé ! 🎉"}
+          {u ? `${u.title} · ${u.done}/${u.total} leçons` : "Parcours terminé ! 🎉"}
         </div>
         <div style={{display:"flex",alignItems:"center",gap:9,marginTop:7}}>
           <div style={{flex:1,height:5,background:"rgba(0,0,0,.08)",borderRadius:99,overflow:"hidden"}}>
@@ -274,7 +283,7 @@ function UnitHeader({ unit, th }) {
           fontSize:10,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",
           color:unit.unlocked?th.colorD:C.text3,fontFamily:FONTS.ui,
         }}>
-          Unité {unit.index+1} · {unit.courseTitle}
+          {unit.title}
         </span>
       </div>
       <div style={{flex:1,height:1.5,background:unit.unlocked?`${th.color}44`:C.border}}/>
@@ -292,10 +301,15 @@ function CoursesScreen({ state, dispatch, content }) {
   const currentRef = useRef(null);
   const scrolledOnce = useRef(false);
 
+  // state.unitChecks manquait ici : c'est lui qui porte le resultat du
+  // controle de fin d'unite (passed: true/false). Sans cette dependance,
+  // React ne recalculait jamais la liste des unites apres un controle
+  // reussi — le coffre restait bloque sur "a verifier", et l'unite
+  // suivante ne se debloquait jamais, meme apres avoir reclame le coffre.
   const path  = useMemo(()=>buildPath(content, state),
-    [content, state.completedLessons, state.claimedUnits]);
+    [content, state.completedLessons, state.claimedUnits, state.unitChecks]);
   const stats = useMemo(()=>getPathStats(content, state),
-    [content, state.completedLessons, state.claimedUnits]);
+    [content, state.completedLessons, state.claimedUnits, state.unitChecks]);
 
   // Auto-scroll vers l'unité courante (une seule fois, si progression existante)
   useEffect(()=>{
@@ -310,7 +324,7 @@ function CoursesScreen({ state, dispatch, content }) {
 
   const claimChest = (unit) => {
     dispatch({ type:"CLAIM_UNIT_BONUS", unitId:unit.id, xp:UNIT_BONUS_XP,
-               title:`Coffre — Unité ${unit.index+1} · ${unit.courseTitle}` });
+               title:`Coffre — ${unit.title}` });
     setChestPop(true);
     setTimeout(()=>setChestPop(false), 1400);
   };
@@ -365,14 +379,14 @@ function CoursesScreen({ state, dispatch, content }) {
       {/* ── Le parcours ── */}
       <div style={{padding:"8px 20px 40px"}}>
         {path.map(unit=>{
-          const th = MODULE_THEME[unit.courseId]||{icon:"ti-book-2",color:C.primary,colorL:C.primaryL,colorD:C.primaryD};
+          const th = MODULE_THEME.palier;
           // Leçon courante = première non complétée de l'unité courante
           const currentLessonId = unit.isCurrent
             ? (unit.lessons.find(l=>!state.completedLessons[l.id])?.id ?? null)
             : null;
 
           return (
-            <div key={unit.id} ref={unit.isCurrent?currentRef:null}>
+            <div key={unit.id}>
               <UnitHeader unit={unit} th={th}/>
 
               {unit.lessons.map((lesson,li)=>{
@@ -393,7 +407,7 @@ function CoursesScreen({ state, dispatch, content }) {
                 }
 
                 return (
-                  <div key={lesson.id}>
+                  <div key={lesson.id} ref={isCurrent?currentRef:null}>
                     {li>0&&(
                       <PathConnector
                         fromSide={prevSide}
@@ -445,6 +459,16 @@ function LessonView({ lesson, state, dispatch, onBack }) {
   const [done,setDone] = useState(!!state.completedLessons[lesson.id]);
   const [pop, setPop]  = useState(false);
   const popTimerRef = useRef(null);
+
+  // Toujours remonter en haut à l'ouverture d'une leçon. LessonView n'a pas
+  // de key unique par leçon (App passe juste activeLesson en prop) : React
+  // peut donc réutiliser la même instance sans la remonter si on change de
+  // leçon sans repasser par le Parcours. Un scroll au seul montage ne
+  // suffirait pas — la dépendance sur lesson.id garantit que ça se
+  // redéclenche à chaque changement de leçon, remontage ou pas.
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
+  }, [lesson.id]);
 
   useEffect(() => () => { if (popTimerRef.current) clearTimeout(popTimerRef.current); }, []);
 

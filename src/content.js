@@ -22,62 +22,7 @@ export const COURSES = [
     lessons: [
 
       {
-        id: "neck-01",
-        title: "Architecture du manche",
-        duration: 10,
-        content: [
-          { type: "p", text: "La guitare est désaccordée par rapport à elle-même. Cinq cordes consécutives sont en quartes (5 demi-tons), sauf entre les cordes 3 et 2 qui forment une tierce majeure (4 demi-tons). Cette anomalie historique vient de la guitare baroque et facilite les accords ouverts au prix d'une asymétrie de visualisation." },
-          { type: "h", text: "Conséquences pratiques" },
-          { type: "p", text: "Une note ou un motif joué sur les cordes 6-5-4-3 se transpose +5 cases par corde voisine. Mais entre la corde 3 et la corde 2, le décalage devient +4 cases. C'est la 'cassure' qu'il faut intégrer dans tous les patterns." },
-          { type: "h", text: "Les 4 zones du manche" },
-          { type: "p", text: "Zone grave (cases 0-4), zone médium-grave (cases 5-8), zone médium-aigu (cases 8-12), zone aiguë (cases 12-22). Chaque zone a son timbre : la zone grave sonne ronde et puissante, l'aiguë cristalline et tranchante. Un bon improvisateur navigue entre les 4 zones consciemment." },
-          { type: "h", text: "Les amers visuels" },
-          { type: "p", text: "Points d'incrustation aux cases 3, 5, 7, 9 et double point case 12 (octave). Ce sont tes repères. Mémorise les notes des cases 5 et 7 sur les cordes 6 et 5 — elles sont les ancres principales." },
-          {
-            type: "note_grid",
-            caption: "Notes naturelles sur la corde 6 (Mi grave) — 1 case = 1 demi-ton",
-            data: {
-              string: 6, stringName: "Mi grave", maxFret: 12,
-              highlights: [
-                { fret: 0,  label: "Mi",  color: "amber" },
-                { fret: 1,  label: "Fa",  color: "neutral" },
-                { fret: 3,  label: "Sol", color: "neutral" },
-                { fret: 5,  label: "La",  color: "green" },
-                { fret: 7,  label: "Si",  color: "neutral" },
-                { fret: 8,  label: "Do",  color: "primary" },
-                { fret: 10, label: "Ré",  color: "neutral" },
-                { fret: 12, label: "Mi",  color: "amber" },
-              ],
-            },
-          },
-          {
-            type: "fretboard",
-            caption: "Notes-ancres sur les cordes 6 et 5 — mémorise ces 8 notes en priorité",
-            data: {
-              frets: 12, startFret: 0,
-              showStringNames: true, showFretNumbers: true,
-              markerFrets: [3, 5, 7, 9, 12],
-              notes: [
-                { string: 6, fret: 0,  label: "Mi",  color: "amber",   root: true },
-                { string: 6, fret: 5,  label: "La",  color: "amber",   root: true },
-                { string: 6, fret: 7,  label: "Si",  color: "neutral" },
-                { string: 6, fret: 8,  label: "Do",  color: "primary" },
-                { string: 6, fret: 12, label: "Mi",  color: "amber",   root: true },
-                { string: 5, fret: 0,  label: "La",  color: "green",   root: true },
-                { string: 5, fret: 5,  label: "Ré",  color: "green",   root: true },
-                { string: 5, fret: 7,  label: "Mi",  color: "neutral" },
-                { string: 5, fret: 12, label: "La",  color: "green",   root: true },
-              ],
-            },
-          },
-          { type: "tip", text: "Test : ferme les yeux, mets ton index sur une case au hasard. Ouvre les yeux et nomme la note en moins de 2 secondes. Refais 10 fois par jour." },
-          { type: "fretboard_interactive", mode: "highlight", notes: ["E","A","D","G","B"], caption: "Explore : notes naturelles sur tout le manche", lang: "fr", compact: true },
-        ],
-        quiz: ["q-neck-01", "q-neck-02", "q-neck-03"],
-      },
-
-      {
-        id: "neck-02",
+        id: "neck-02", level: 4, role: "synthesis",
         title: "Notes sur les 6 cordes (méthode systématique)",
         duration: 12,
         content: [
@@ -147,7 +92,7 @@ export const COURSES = [
       },
 
       {
-        id: "neck-03",
+        id: "neck-03", level: 4,
         title: "Intervalles : entendre les distances",
         duration: 14,
         content: [
@@ -200,7 +145,7 @@ export const COURSES = [
       },
 
       {
-        id: "neck-04",
+        id: "neck-04", level: 9,
         title: "Le système CAGED — théorie complète",
         duration: 16,
         content: [
@@ -268,7 +213,7 @@ export const COURSES = [
       },
 
       {
-        id: "neck-05",
+        id: "neck-05", level: 5,
         title: "Triades — l'unité minimale d'harmonie",
         duration: 14,
         content: [
@@ -314,7 +259,7 @@ export const COURSES = [
       },
 
       {
-        id: "neck-06",
+        id: "neck-06", level: 9,
         title: "Connexions accords-gammes-arpèges",
         duration: 14,
         content: [
@@ -361,7 +306,7 @@ export const COURSES = [
     
       // ─── Leçons supplémentaires — neck (intégrées depuis JSON) ───────────
       {
-        id: "neck-c1-01",
+        id: "neck-c1-01", level: 1,
         title: "Architecture du manche",
         duration: 8,
         content: [
@@ -393,12 +338,19 @@ export const COURSES = [
               ],
             },
           },
-          { type: "tip", text: "Mnémonique pour retenir l'accordage standard : 'Mi La Ré Sol Si Mi' (du grave à l'aigu). En anglais : 'E A D G B E' (Eddie Ate Dynamite Good Bye Eddie). Cette base est non-négociable." },
+          { type: "tip", text: "Mnémonique pour retenir l'accordage standard : 'Mi La Ré Sol Si Mi' (du grave à l'aigu). En anglais : 'E A D G B E' (Eddie Ate Dynamite Good Bye Eddie). Cette base est non-négociable." },{ type: "h", text: "Une même note, partout sur le manche" },
+                { type: "p", text: "Voici la conséquence directe de tout ce qu'on vient de voir : la note Do, par exemple, n'existe pas qu'à un seul endroit. Elle apparaît sur chaque corde, à une case différente selon l'accordage de cette corde. Regarde où elle se trouve sur les 6 cordes — ce sont exactement les mêmes cases-demi-tons qu'on vient d'expliquer, juste appliquées 6 fois." },
+                { type: "fretboard", caption: "Toutes les positions de la note Do sur le manche", data: { frets: 12, startFret: 0, showStringNames: true, showFretNumbers: true, markerFrets: [3,5,7,9,12], notes: [{ string: 6, fret: 8, label: "Do", color: "primary", root: true },{ string: 5, fret: 3, label: "Do", color: "primary", root: true },{ string: 4, fret: 10, label: "Do", color: "primary", root: true },{ string: 3, fret: 5, label: "Do", color: "primary", root: true },{ string: 2, fret: 1, label: "Do", color: "primary", root: true },{ string: 1, fret: 8, label: "Do", color: "primary", root: true }] } },
+                { type: "p", text: "Remarque : sur les cordes 6 et 1 (toutes les deux accordées en Mi), le Do tombe à la même case, case 8. Logique, elles ont le même accordage. Mais regarde la corde 2 (Si) : le Do y tombe case 1, beaucoup plus tôt que sur les autres cordes. C'est exactement la cassure dont on vient de parler qui produit ce décalage." },
+                { type: "h", text: "À toi de jouer" },
+                { type: "p", text: "Avant de continuer, un rapide test pour vérifier que la notion case=demi-ton est bien passée. Pas besoin d'aller vite, prends le temps de calculer plutôt que de deviner." },
+                { type: "fretboard_interactive", mode: "quiz", quizTarget: "A", instructions: "Trouve toutes les positions de la note La sur le manche (indice : tu en connais déjà une, c'est une corde à vide)." },
+                
         ],
-        quiz: ["q-neck-c1-01", "q-neck-c1-02", "q-neck-c1-03"],
+        quiz: [],
       },
       {
-        id: "neck-c1-02",
+        id: "neck-c1-02", level: 2,
         title: "La logique des octaves",
         duration: 8,
         content: [
@@ -433,10 +385,10 @@ export const COURSES = [
           { type: "ref", text: "David Gilmour (Pink Floyd) est un maître de l'utilisation des octaves. Dans le solo de 'Comfortably Numb', il joue la même phrase mélodique d'abord dans le médium, puis une octave plus haut pour le climax. C'est le contraste d'octaves qui crée la montée émotionnelle." },
           { type: "tip", text: "Test simple : sur la corde de Mi grave, joue case 0, puis case 12, puis case 24 (si tu as 24 frettes). Tu joues 3 fois la même note (Mi), à 3 octaves différentes. Écoute la transformation du timbre : grave et puissant → médium et présent → aigu et brillant." },
         ],
-        quiz: ["q-neck-c1-04", "q-neck-c1-05"],
+        quiz: [],
       },
       {
-        id: "neck-c1-03",
+        id: "neck-c1-03", level: 3,
         title: "Les amers visuels du manche",
         duration: 7,
         content: [
@@ -470,10 +422,10 @@ export const COURSES = [
           { type: "ref", text: "Sur la plupart des guitares de qualité (Gibson, Fender, Martin, Taylor...), les amers ont des designs spécifiques selon le luthier. Les Les Paul ont des trapèzes de nacre, les Stratocaster des points blancs, les Telecaster aussi. Mais dans tous les cas, leur emplacement est identique : cases 3, 5, 7, 9, 12, 15, 17, 19, 21." },
           { type: "tip", text: "Drill quotidien (1 minute) : ferme les yeux, mets ton index sur une case au hasard. Ouvre les yeux et nomme la note instantanément. Refais 10 fois. En 2 semaines, ton cerveau aura cartographié le manche." },
         ],
-        quiz: ["q-neck-c1-06"],
+        quiz: [],
       },
       {
-        id: "neck-c2-01",
+        id: "neck-c2-01", level: 3,
         title: "Les notes de la corde de Mi grave (corde 6)",
         duration: 10,
         content: [
@@ -510,10 +462,10 @@ export const COURSES = [
           { type: "ref", text: "Pratique immédiate : prends une chanson avec des accords barrés (la plupart des chansons rock/pop). Identifie la fondamentale de chaque accord sur la corde 6. Si tu joues La majeur en barré case 5, dis-toi : 'Je joue La parce que case 5 corde 6 = La'. Cette habitude grave les notes dans ta tête en moins d'une semaine." },
           { type: "tip", text: "Drill du soir (3 min) : sur la corde 6, joue case par case en nommant la note à voix haute. Mi-Fa-Fa#-Sol-Sol#-La-La#-Si-Do-Do#-Ré-Ré#-Mi. Refais en descendant. Cet exercice 'parlé' connecte ton cerveau au manche en quelques jours." },
         ],
-        quiz: ["q-neck-c2-01", "q-neck-c2-02", "q-neck-c2-03"],
+        quiz: ["q-neck-03","q-neck-04","q-neck-05"],
       },
       {
-        id: "neck-c2-02",
+        id: "neck-c2-02", level: 3,
         title: "Les notes de la corde de La (corde 5)",
         duration: 9,
         content: [
@@ -563,10 +515,10 @@ export const COURSES = [
           { type: "ref", text: "Pratique : joue Ré barré case 5 (corde 5). Identifie la fondamentale (Ré) sur la corde 5 case 5. Maintenant joue La barré case 5 (corde 6). Identifie la fondamentale (La) sur la corde 6 case 5. Ces deux accords se forment de la même façon, mais sur des cordes différentes. La logique du barré devient claire." },
           { type: "tip", text: "Drill connecté : joue la même note sur c6 et c5 en décalage. Ex : Mi (c6 case 0) puis Mi (c5 case 7). Do (c6 case 8) puis Do (c5 case 3). Ce drill développe ta vision globale du manche." },
         ],
-        quiz: ["q-neck-c2-04", "q-neck-c2-05"],
+        quiz: [],
       },
       {
-        id: "neck-c2-03",
+        id: "neck-c2-03", level: 4,
         title: "Les notes de la corde de Ré (corde 4)",
         duration: 8,
         content: [
@@ -603,10 +555,10 @@ export const COURSES = [
           { type: "ref", text: "Le riff principal de 'Smoke on the Water' (Deep Purple) se joue sur la corde 4 (en open tuning à l'origine, mais transposable en standard). Apprendre les notes de la corde 4 te permet de déchiffrer beaucoup de tablatures rock classiques." },
           { type: "tip", text: "Drill 'cordes basses' : joue la même note sur c6, c5, c4 successivement. Ex : trouve Sol sur les 3 cordes basses (c6 case 3, c5 case 10, c4 case 5). Cette triple localisation grave les correspondances dans ta mémoire." },
         ],
-        quiz: ["q-neck-c2-06"],
+        quiz: ["q-neck-06","q-neck-09"],
       },
       {
-        id: "neck-c2-04",
+        id: "neck-c2-04", level: 4,
         title: "Les notes de la corde de Sol (corde 3)",
         duration: 8,
         content: [
@@ -643,10 +595,10 @@ export const COURSES = [
           { type: "ref", text: "Le solo emblématique de 'Beat It' (Eddie Van Halen sur le morceau de Michael Jackson) commence par un bend sur Sol (c3 case 7) → La. Cette technique bend du Sol corde 3 est partout dans le rock 80s." },
           { type: "tip", text: "Drill rapide : joue Sol c6 case 3, puis Sol c4 case 5, puis Sol c3 case 0. Trois Sol à différentes octaves. Identifie chaque note. Tu commences à 'voir' le manche en 3D." },
         ],
-        quiz: ["q-neck-c2-07"],
+        quiz: [],
       },
       {
-        id: "neck-c2-05",
+        id: "neck-c2-05", level: 4,
         title: "Les notes des cordes Si et Mi aigu (cordes 2 et 1)",
         duration: 9,
         content: [
@@ -702,10 +654,10 @@ export const COURSES = [
           { type: "ref", text: "Le solo final de 'Hotel California' (Eagles) utilise massivement les cordes 1 et 2 dans les zones aiguës. Si tu apprends ce solo, tu vas naturellement intégrer la position des notes sur ces cordes." },
           { type: "tip", text: "Drill spécifique aux cordes aiguës : joue une note simple sur la corde 1 (ex : Sol case 3). Trouve immédiatement le même Sol sur la corde 6 case 3. Comprends que c'est la même note, à 2 octaves d'écart. Refais avec La, Si, Do, Ré." },
         ],
-        quiz: ["q-neck-c2-08", "q-neck-c2-09"],
+        quiz: [],
       },
       {
-        id: "neck-c3-01",
+        id: "neck-c3-01", level: 5,
         title: "Pattern octave 1 : corde 6 → corde 4",
         duration: 9,
         content: [
@@ -740,10 +692,10 @@ export const COURSES = [
           { type: "ref", text: "Le riff de 'Smoke On The Water' joué en octaves doublées sonne comme un riff funky. Essaie : joue le riff sur la corde 6, et simultanément les mêmes notes sur la corde 4 +2 cases. Effet immédiat." },
           { type: "tip", text: "Drill 'octaves c6→c4' : choisis une note (ex Sol). Trouve-la sur c6 (case 3), puis joue son octave c4 (case 5). Refais avec 5 notes différentes. En 5 minutes par jour pendant une semaine, ce pattern devient instinctif." },
         ],
-        quiz: ["q-neck-c3-01", "q-neck-c3-02"],
+        quiz: ["q-neck-16","q-neck-17"],
       },
       {
-        id: "neck-c3-02",
+        id: "neck-c3-02", level: 5,
         title: "Pattern octave 2 : corde 5 → corde 3",
         duration: 8,
         content: [
@@ -778,10 +730,10 @@ export const COURSES = [
           { type: "ref", text: "Wes Montgomery, le légendaire guitariste de jazz, utilisait massivement ces patterns d'octaves. Son style 'octaves' est instantanément reconnaissable. Écoute son album 'The Incredible Jazz Guitar' (1960) : 80% des thèmes sont joués en octaves doublées." },
           { type: "tip", text: "Drill combiné : choisis une note, trouve-la sur c5, son octave sur c3 (pattern 2). Puis trouve-la sur c6, son octave sur c4 (pattern 1). 4 positions de la même note. Refais avec 5 notes. Tu commences à 'voir' le manche en 3D." },
         ],
-        quiz: ["q-neck-c3-03"],
+        quiz: ["q-neck-19","q-neck-20"],
       },
       {
-        id: "neck-c3-03",
+        id: "neck-c3-03", level: 5,
         title: "Patterns octaves 3 et 4 : l'asymétrie corde 2-3",
         duration: 9,
         content: [
@@ -820,7 +772,7 @@ export const COURSES = [
           { type: "ref", text: "Cette méthode des patterns d'octaves est enseignée par tous les grands pédagogues de la guitare moderne (Tomo Fujita, Frank Gambale, Tom Hess). Elle est la base de la 'visualisation harmonique' qui distingue les guitaristes débutants des intermédiaires." },
           { type: "tip", text: "Drill final : prends une note (ex La). Trouve-la dans les 6 zones disponibles sur le manche (avec patterns). Compte à voix haute 'La 1, La 2, La 3...'. Tu auras visualisé 6 La. Refais avec Do, Sol, Ré, Mi. En 2 semaines, tu navigues le manche les yeux fermés." },
         ],
-        quiz: ["q-neck-c3-04", "q-neck-c3-05"],
+        quiz: ["q-neck-06","q-neck-09"],
       },
 
 ],
@@ -839,7 +791,7 @@ export const COURSES = [
     lessons: [
 
       {
-        id: "scales-01",
+        id: "scales-01", level: 5, role: "synthesis",
         title: "La gamme majeure — matrice de la tonalité",
         duration: 14,
         content: [
@@ -910,7 +862,7 @@ export const COURSES = [
       },
 
       {
-        id: "scales-02",
+        id: "scales-02", level: 6, role: "synthesis",
         title: "Pentatoniques mineure & majeure",
         duration: 14,
         content: [
@@ -1004,7 +956,7 @@ export const COURSES = [
       },
 
       {
-        id: "scales-03",
+        id: "scales-03", level: 8, role: "synthesis",
         title: "Les 7 modes — théorie complète",
         duration: 18,
         content: [
@@ -1058,174 +1010,7 @@ export const COURSES = [
       },
 
       {
-        id: "scales-04",
-        title: "Mode dorien — son jazz/funk/rock",
-        duration: 12,
-        content: [
-          { type: "p", text: "Dorien est le mode mineur le plus polyvalent. Il combine la couleur mineure (b3) avec une 6 majeure qui apporte de la lumière. C'est le son du jazz modal, du funk, du blues-rock, du R&B." },
-          { type: "h", text: "La sixte majeure : note clef" },
-          { type: "p", text: "Ré dorien = Ré-Mi-Fa-Sol-La-Si-Do. Le Si (sixte majeure) est ce qui distingue Dorien d'Éolien (qui aurait Sib). Quand tu joues en dorien, mets Si en valeur — sur les temps forts, en notes longues. Sinon ça sonnera mineur générique." },
-          { type: "h", text: "Sur quels accords l'utiliser" },
-          { type: "p", text: "1) Tout accord m7 dans un contexte modal (vamp d'un seul accord). Ex: Dm7 tenu pendant 8 mesures. 2) Sur le ii d'un ii-V modal qui ne résout pas. Ex: Em7-A7 sans aller vers Dmaj7. 3) Sur des progressions Im-IV (caractère dorien classique) comme Dm-G ou Am-D." },
-          { type: "h", text: "Exemples musicaux emblématiques" },
-          { type: "p", text: "'So What' (Miles Davis, 1959) : Dm7 dorien pendant 16 mesures, puis Ebm7 dorien 8 mesures, retour Dm7 8 mesures. 'Oye Como Va' (Santana) : vamp Am7-D7 = La dorien. 'Light My Fire' (The Doors) : Am-F#m = La dorien. 'Scarborough Fair' (folk anglais) : entièrement en dorien." },
-          { type: "h", text: "Patterns dorien sur le manche" },
-          { type: "p", text: "Position fondamentale (Ré sur corde 5 case 5) : c5 Ré(5)-Mi(7) | c4 Fa(3)-Sol(5)-La(7) | c3 Si(4)-Do(5) | c2 Ré(3)-Mi(5)-Fa(6) | c1 Sol(3)-La(5)-Si(7). Mémorise cette position pour Ré dorien — tu pourras la transposer." },
-          {
-            type: "scale_pattern",
-            caption: "Ré dorien — position fondamentale (case 5, c5). Note clé : Si = 6 majeure ↗",
-            data: {
-              startFret: 3, endFret: 9,
-              rootColor: "primary", noteColor: "green",
-              strings: [
-                { frets: [], root: [] },
-                { frets: [5, 7], root: [5] },
-                { frets: [3, 5, 7], root: [] },
-                { frets: [4, 5], root: [] },
-                { frets: [3, 5, 6], root: [3] },
-                { frets: [3, 5, 7], root: [] },
-              ],
-              noteMap: {
-                
-                "5,1":"Ré","7,1":"Mi",
-                "3,2":"Fa","5,2":"Sol","7,2":"La",
-                "4,3":"Si","5,3":"Do",
-                "3,4":"Ré","5,4":"Mi","6,4":"Fa",
-                "3,5":"Sol","5,5":"La","7,5":"Si",
-              }
-            },
-          },
-          { type: "h", text: "Vocabulaire dorien typique (licks)" },
-          { type: "p", text: "Lick 1 : 1-b3-4-5-6-5 (montée vers la 6 puis retour à la 5). Lick 2 : 6-5-4-b3-2-1 (descente cible la 6 majeure en ouverture). Lick 3 : 1-2-b3-5-6-b7 (zigzag dorien classique). Apprends 3-5 licks types pour avoir un vocabulaire de base." },
-          { type: "tip", text: "Drone Ré (corde 5 vide ou app drone). Joue Ré dorien 5 minutes en visant Si toutes les 2 mesures. Tu sentiras la couleur 'dorien pur' s'ancrer dans ton oreille." },
-          { type: "fretboard_interactive", mode: "scale", root: "A", scale: "dorian", caption: "Dorien de La — explore les positions sur tout le manche", displayMode: "intervals", lang: "fr", compact: true },
-        ],
-        quiz: ["q-scales-14", "q-scales-15"],
-      },
-
-      {
-        id: "scales-05",
-        title: "Mode mixolydien — son rock/blues/country",
-        duration: 12,
-        content: [
-          { type: "p", text: "Mixolydien = gamme majeure avec la 7 abaissée. Fondamental pour le rock, le blues, le country, le funk. C'est le mode des accords de dominante (X7), de la musique celtique et de tout le rock'n'roll." },
-          { type: "h", text: "La b7 : note caractéristique" },
-          { type: "p", text: "Sol mixolydien = Sol-La-Si-Do-Ré-Mi-Fa. Le Fa naturel (au lieu de Fa# en Sol majeur) est la b7 caractéristique. Cette note crée la sensation d'une dominante non résolue — comme si l'accord 'voulait' aller vers Do mais ne le faisait jamais." },
-          { type: "h", text: "Sur quels accords" },
-          { type: "p", text: "1) Tout accord 7 (dominante) dans un contexte non-résolu. Sur G7 : Sol mixolydien. 2) Tous les blues. 3) Vamps I-bVII en rock (ex: D-C-D-C en Ré mixolydien). 4) Riffs de hard rock (Whole Lotta Love, Smoke on the Water utilisent mixolydien)." },
-          { type: "h", text: "Exemples musicaux" },
-          { type: "p", text: "Hendrix utilise mixolydien quasi exclusivement. 'Norwegian Wood' (Beatles) : E mixolydien. La plupart des riffs AC/DC, ZZ Top, Rolling Stones. 'Sweet Home Chicago' : E mixolydien. Le mode rock'n'roll par excellence." },
-          { type: "h", text: "Position de Sol mixolydien" },
-          { type: "p", text: "Identique à Do majeur (Sol mixo = Do majeur en partant de Sol). Mais en pensant Sol comme tonique, tu mets en valeur les notes différemment. Position corde 6 case 3 (Sol) : c6 Sol(3)-La(5) | c5 Si(2)-Do(3)-Ré(5) | c4 Mi(2)-Fa(3)-Sol(5) | etc." },
-          {
-            type: "scale_pattern",
-            caption: "Sol mixolydien — case 3 (= Do majeur, fondamentale Sol). Note clé : Fa♮ = b7 ↓",
-            data: {
-              startFret: 1, endFret: 6,
-              rootColor: "coral", noteColor: "primary",
-              strings: [
-                { frets: [3, 5], root: [3] },
-                { frets: [2, 3, 5], root: [] },
-                { frets: [2, 3, 5], root: [] },
-                { frets: [2, 4], root: [] },
-                { frets: [1, 3, 5], root: [] },
-                { frets: [3, 5], root: [3] },
-              ],
-              noteMap: {
-                "3,0":"Sol","5,0":"La",
-                "2,1":"Si","3,1":"Do","5,1":"Ré",
-                "2,2":"Mi","3,2":"Fa","5,2":"Sol",
-                "2,3":"La","4,3":"Si",
-                "1,4":"Do","3,4":"Ré","5,4":"Mi",
-                "3,5":"Sol","5,5":"La",
-              }
-            },
-          },
-          { type: "h", text: "Le 'truc' rock-blues" },
-          { type: "p", text: "Beaucoup d'improvisateurs rock combinent : pentatonique majeure (1-2-3-5-6) + b3 (blue note) + b7 (mixolydien). Ça donne 1-2-b3-3-5-6-b7. Cette gamme hybride sonne 'rock-blues' immédiatement et est plus facile à utiliser que mixolydien pur." },
-          { type: "h", text: "Lien avec les autres modes" },
-          { type: "p", text: "Sol mixolydien = Do majeur = Ré dorien = Mi phrygien = Fa lydien = La éolien = Si locrien. Tous les mêmes notes ! Seule la fondamentale change. Maîtriser un mode en Do = maîtriser les 7 modes dans la même tonalité." },
-          { type: "tip", text: "Test pratique : joue un blues en La (A7-D7-E7). Sur A7 → La mixo. Sur D7 → Ré mixo. Sur E7 → Mi mixo. Chaque accord a 'son' mode. Le solo sonne immédiatement bluesy-jazz." },
-          { type: "fretboard_interactive", mode: "scale", root: "G", scale: "mixolydian", caption: "Mixolydien de Sol — la b7 qui donne le son blues/rock", displayMode: "intervals", lang: "fr", compact: true },
-        ],
-        quiz: ["q-scales-16", "q-scales-17"],
-      },
-
-      {
-        id: "scales-06",
-        title: "Modes lydien, phrygien — couleurs avancées",
-        duration: 14,
-        content: [
-          { type: "p", text: "Lydien et phrygien sont les deux modes les plus 'caractérisés'. Lydien évoque le ciel, l'espace, le rêve. Phrygien évoque l'Espagne, le mystère, le danger. À utiliser pour colorer une composition ou un solo." },
-          { type: "h", text: "Mode lydien — théorie" },
-          { type: "p", text: "Lydien = gamme majeure avec #4 (quarte augmentée). Do lydien = Do-Ré-Mi-Fa#-Sol-La-Si. Le Fa# crée une couleur 'flottante', non-résolue, magique. C'est le mode des bandes-son de Spielberg/Williams (Star Wars, E.T., Indiana Jones)." },
-          {
-            type: "scale_pattern",
-            caption: "Do lydien — case 8, note clé Fa# (#4) en rose",
-            data: {
-              startFret: 7, endFret: 11,
-              rootColor: "primary", noteColor: "green",
-              strings: [
-                { frets: [8, 10], root: [8] },
-                { frets: [9, 10], root: [] },
-                { frets: [7, 9, 10], root: [] },
-                { frets: [7, 9], root: [] },
-                { frets: [8, 10], root: [8] },
-                { frets: [8, 10], root: [8] },
-              ],
-              noteMap: {
-                "8,0":"Do","10,0":"Ré",
-                "9,1":"Fa#","10,1":"Sol",
-                "7,2":"La","9,2":"Si","10,2":"Do",
-                "7,3":"Ré","9,3":"Mi",
-                "8,4":"Sol","10,4":"La",
-                "8,5":"Do","10,5":"Ré",
-              }
-            },
-          },
-          { type: "h", text: "Mode phrygien — théorie" },
-          { type: "p", text: "Phrygien = gamme mineure avec b2. Mi phrygien = Mi-Fa-Sol-La-Si-Do-Ré. La b2 (Fa) crée le son 'flamenco', 'oriental'. Le demi-ton entre 1 et b2 est la signature." },
-          {
-            type: "scale_pattern",
-            caption: "Mi phrygien — case 0, note caractéristique Fa (b2) en corail",
-            data: {
-              startFret: 0, endFret: 4,
-              rootColor: "coral", noteColor: "primary",
-              strings: [
-                { frets: [0, 1, 3], root: [0] },
-                { frets: [0, 2, 3], root: [] },
-                { frets: [0, 2], root: [] },
-                { frets: [0, 2, 4], root: [] },
-                { frets: [0, 1], root: [] },
-                { frets: [0, 1, 3], root: [0] },
-              ],
-              noteMap: {
-                "0,0":"Mi","1,0":"Fa","3,0":"Sol",
-                "0,1":"La","2,1":"Si","3,1":"Do",
-                "0,2":"Ré","2,2":"Mi",
-                "0,3":"Sol","2,3":"La","4,3":"Si",
-                "0,4":"Si","1,4":"Do",
-                "0,5":"Mi","1,5":"Fa","3,5":"Sol",
-              }
-            },
-          },
-          { type: "p", text: "Sur un accord IVmaj7 (4e degré majeur) qui ne résout pas. Sur des vamps Maj7-Maj7 distantes d'un ton (ex: Cmaj7-Dmaj7 = Do lydien). Très utilisé en jazz fusion (Pat Metheny) et en composition cinématographique." },
-          { type: "h", text: "Mode phrygien — théorie" },
-          { type: "p", text: "Phrygien = gamme mineure avec b2. Mi phrygien = Mi-Fa-Sol-La-Si-Do-Ré. La b2 (Fa) crée le son 'flamenco', 'oriental'. Le demi-ton entre 1 et b2 est la signature." },
-          { type: "h", text: "Phrygien : sur quels accords" },
-          { type: "p", text: "Sur des accords Im (mineur) dans un contexte espagnol/flamenco. Sur la cadence flamenco classique : Im-bVII-bVI-V (Am-G-F-E en La phrygien-dominant). Utilisé par Santana, Steve Vai, Joe Satriani, Metallica." },
-          { type: "h", text: "Phrygien dominant (variante essentielle)" },
-          { type: "p", text: "Phrygien dominant = phrygien avec 3 majeure (1-b2-3-4-5-b6-b7). Mi phrygien dom = Mi-Fa-Sol#-La-Si-Do-Ré. C'est le mode du flamenco authentique, du klezmer juif, et de la musique du Moyen-Orient. Couleur ultra-caractérisée." },
-          { type: "h", text: "Lydien et phrygien : pour qui ?" },
-          { type: "p", text: "Ces modes ne sont pas pour les standards pop ou blues. Ils servent à colorer des moments précis : intro mystérieuse (lydien), pont dramatique (phrygien dominant), bridge filmique (lydien). À utiliser avec parcimonie pour un effet maximal." },
-          { type: "tip", text: "Compose 8 mesures en lydien (drone Do, joue Do lydien) et 8 mesures en phrygien dominant (drone Mi, joue Mi phrygien dominant). Tu auras 2 ambiances ultra-typées dans ton vocabulaire." },
-          { type: "fretboard_interactive", mode: "scale", root: "F", scale: "lydian", caption: "Lydien de Fa — le #4 caractéristique (couleur flottante)", displayMode: "intervals", lang: "fr", compact: true },
-        ],
-        quiz: ["q-scales-18", "q-scales-19"],
-      },
-
-      {
-        id: "scales-07",
+        id: "scales-07", level: 9, role: "synthesis",
         title: "Gamme mineure mélodique & harmonique",
         duration: 13,
         content: [
@@ -1277,7 +1062,7 @@ export const COURSES = [
     
       // ─── Leçons supplémentaires — scales (intégrées depuis JSON) ───────────
       {
-        id: "scales-c1-01",
+        id: "scales-c1-01", level: 1,
         title: "L'alphabet musical : les 7 notes naturelles",
         duration: 8,
         content: [
@@ -1291,10 +1076,10 @@ export const COURSES = [
           { type: "ref", text: "Écoute les premières notes de 'Do-Ré-Mi' (chanson tirée de 'La Mélodie du bonheur', 1965) : c'est littéralement la gamme majeure de Do chantée note par note. Une oreille qui connaît cette mélodie connaît déjà l'ordre des 7 notes." },
           { type: "tip", text: "Avant d'aller plus loin, mémorise cet ordre dans les deux notations : Do=C, Ré=D, Mi=E, Fa=F, Sol=G, La=A, Si=B. C'est le b.a.-ba." },
         ],
-        quiz: ["q-scales-c1-01", "q-scales-c1-02"],
+        quiz: [],
       },
       {
-        id: "scales-c1-02",
+        id: "scales-c1-02", level: 2,
         title: "Les altérations : dièses et bémols",
         duration: 9,
         content: [
@@ -1332,10 +1117,10 @@ export const COURSES = [
           { type: "ref", text: "Pour visualiser : sur la corde de Mi grave (corde 6), joue case 0 (Mi), case 1 (Fa), case 2 (Fa#), case 3 (Sol)... jusqu'à case 12 où tu retombes sur Mi (1 octave plus haut). Tu viens de jouer la gamme chromatique." },
           { type: "tip", text: "Sur le manche : 1 case = 1 cran d'altération. Monter d'une case = +1 dièse. Descendre = +1 bémol. Cette équivalence est ta meilleure amie pour comprendre la guitare." },
         ],
-        quiz: ["q-scales-c1-03", "q-scales-c1-04"],
+        quiz: [],
       },
       {
-        id: "scales-c1-03",
+        id: "scales-c1-03", level: 2,
         title: "Tons et demi-tons : la mesure des distances",
         duration: 10,
         content: [
@@ -1368,10 +1153,10 @@ export const COURSES = [
           { type: "ref", text: "Exercice immédiat : sur la corde de Mi grave, monte case par case en disant à voix haute : 'Mi (case 0) - Fa (case 1, +1/2 ton) - Sol (case 3, +1 ton) - La (case 5, +1 ton) - Si (case 7, +1 ton) - Do (case 8, +1/2 ton) - Ré (case 10, +1 ton) - Mi (case 12, +1 ton)'. Tu viens de jouer la gamme majeure de Mi en parlant à haute voix le pattern T-T-DT-T-T-T-DT." },
           { type: "tip", text: "Mnémonique pour ne jamais oublier les demi-tons naturels : 'Mi-Fa Si-Do, ce sont eux qui se collent'. Cette phrase pourrait sauver ta vie de musicien." },
         ],
-        quiz: ["q-scales-c1-05", "q-scales-c1-06", "q-scales-c1-07"],
+        quiz: [],
       },
       {
-        id: "scales-c1-04",
+        id: "scales-c1-04", level: 3,
         title: "Les enharmonies : pourquoi Do# = Réb ?",
         duration: 7,
         content: [
@@ -1385,10 +1170,10 @@ export const COURSES = [
           { type: "ref", text: "Anecdote : la chanson 'Yesterday' (The Beatles) est en Fa majeur. Elle contient des Si bémol, jamais des La dièse — pourtant ce serait la même note. C'est juste une question d'orthographe musicale cohérente avec la tonalité." },
           { type: "tip", text: "Au début, accepte simplement qu'une même case puisse avoir deux noms. Ce sera plus clair quand on parlera de tonalités, dans les prochaines leçons." },
         ],
-        quiz: ["q-scales-c1-08"],
+        quiz: [],
       },
       {
-        id: "scales-c1-05",
+        id: "scales-c1-05", level: 3,
         title: "Les intervalles simples : seconde, tierce, quarte, quinte",
         duration: 11,
         content: [
@@ -1411,10 +1196,10 @@ export const COURSES = [
           { type: "ref", text: "Reconnaître une quinte juste à l'oreille : les 2 premières notes du générique de Star Wars, c'est une quinte. Les premières notes de 'Twinkle Twinkle Little Star' (Au clair de la lune en France), c'est aussi une quinte ascendante. Une fois que ton oreille les a, tu les entendras partout." },
           { type: "tip", text: "Apprends d'abord les 5 intervalles 'piliers' : seconde majeure (1 ton), tierce majeure (2 tons), quarte juste (5 demi-tons), quinte juste (7 demi-tons), octave. Tout le reste se déduit." },
         ],
-        quiz: ["q-scales-c1-09", "q-scales-c1-10", "q-scales-c1-11"],
+        quiz: [],
       },
       {
-        id: "scales-c1-06",
+        id: "scales-c1-06", level: 4,
         title: "Les intervalles complets : sixtes, septièmes, octave",
         duration: 9,
         content: [
@@ -1437,10 +1222,10 @@ export const COURSES = [
           { type: "ref", text: "Reconnaître un triton à l'oreille : le célèbre riff d'intro de 'Black Sabbath' (le morceau, 1970) est un triton. La sonnerie 'Maria' de West Side Story commence aussi par un triton (puis se résout sur la quinte). Une fois que tu l'as entendu, tu ne l'oublieras plus." },
           { type: "tip", text: "Drill quotidien (2 min) : sur la corde de La (5e), choisis une case au hasard. Joue cette note puis trouve sa quinte juste (+7 cases) sans regarder. Refais avec sa tierce majeure (+4 cases). Cet exercice cale les intervalles dans tes doigts." },
         ],
-        quiz: ["q-scales-c1-12", "q-scales-c1-13"],
+        quiz: [],
       },
       {
-        id: "scales-c2-01",
+        id: "scales-c2-01", level: 5,
         title: "Qu'est-ce qu'une gamme (vraiment) ?",
         duration: 8,
         content: [
@@ -1458,10 +1243,10 @@ export const COURSES = [
           { type: "ref", text: "Comparaison utile : une gamme, c'est comme une palette de couleurs pour un peintre. La gamme majeure = palette joyeuse et lumineuse. La gamme mineure = palette mélancolique. La gamme blues = palette urbaine, dramatique. Le choix de la gamme = le choix de l'ambiance." },
           { type: "tip", text: "Ne mémorise pas une gamme comme une suite de notes (Do-Ré-Mi...). Mémorise-la comme une formule d'intervalles (T-T-DT-T-T-T-DT). Ainsi tu peux la reconstruire dans n'importe quelle tonalité." },
         ],
-        quiz: ["q-scales-c2-01"],
+        quiz: ["q-scales-14","q-scales-16"],
       },
       {
-        id: "scales-c2-02",
+        id: "scales-c2-02", level: 5,
         title: "La gamme majeure : la matrice de tout",
         duration: 12,
         content: [
@@ -1503,10 +1288,10 @@ export const COURSES = [
           { type: "ref", text: "Pour entendre la gamme majeure 'pure' : la mélodie de 'Joy to the World' (chant de Noël) descend toute la gamme majeure du degré 8 au degré 1. C'est un exercice d'écoute parfait. Ou encore, l'intro de 'Let It Be' (The Beatles) est en Do majeur — toutes les notes des couplets viennent de cette gamme." },
           { type: "tip", text: "Sur la guitare, la position la plus pratique pour jouer une gamme majeure se trouve avec la fondamentale sur la corde 6. Ex: Sol majeur, fondamentale case 3 corde 6. Apprends cette 'forme' et tu peux la transposer en glissant le long du manche pour avoir n'importe quelle gamme majeure." },
         ],
-        quiz: ["q-scales-c2-02", "q-scales-c2-03", "q-scales-c2-04"],
+        quiz: ["q-scales-20","q-impro-04","q-logic-01"],
       },
       {
-        id: "scales-c2-03",
+        id: "scales-c2-03", level: 5,
         title: "Les degrés et leurs noms",
         duration: 10,
         content: [
@@ -1539,10 +1324,10 @@ export const COURSES = [
           { type: "ref", text: "Test toi : la chanson 'Let It Be' (Beatles) suit la progression I-V-vi-IV en Do majeur (Do-Sol-Lam-Fa). 'No Woman No Cry' (Bob Marley) suit la même progression en Do majeur. 'With Or Without You' (U2) suit la même en Ré majeur (Ré-La-Sim-Sol). Une fois que tu entends 'I-V-vi-IV', tu l'entendras dans 30% de la pop mondiale." },
           { type: "tip", text: "Apprends à PENSER en degrés plutôt qu'en notes. Au lieu de te dire 'je vais jouer un Sol', dis-toi 'je vais jouer le V de Do majeur'. Cette habitude transforme ton cerveau musical." },
         ],
-        quiz: ["q-scales-c2-05", "q-scales-c2-06", "q-scales-c2-07"],
+        quiz: ["q-scales-02","q-scales-06","q-scales-07"],
       },
       {
-        id: "scales-c2-04",
+        id: "scales-c2-04", level: 6,
         title: "Le cycle des quintes : la carte des tonalités",
         duration: 10,
         content: [
@@ -1568,10 +1353,10 @@ export const COURSES = [
           { type: "ref", text: "Pour visualiser le cycle des quintes : représente-le comme une horloge. À midi : Do (0 altération). En tournant à droite (heures 1, 2, 3...) on monte par quintes et on ajoute des dièses : Sol, Ré, La, Mi, Si... À 6h : Fa# (6 altérations, milieu du cycle). Continue à droite : Ré♭, La♭, Mi♭, Si♭, Fa, et retour à Do à midi. C'est une boucle complète." },
           { type: "tip", text: "Apprends d'abord les 5 tonalités les plus courantes : Do (0), Sol (1#), Ré (2#), La (3#), Fa (1♭). Ces 5 tonalités couvrent 80% des chansons que tu joueras dans ta vie." },
         ],
-        quiz: ["q-scales-c2-08", "q-scales-c2-09"],
+        quiz: ["q-scales-09","q-scales-10"],
       },
       {
-        id: "scales-c2-05",
+        id: "scales-c2-05", level: 5,
         title: "Jouer la gamme majeure sur le manche",
         duration: 12,
         content: [
@@ -1638,10 +1423,10 @@ export const COURSES = [
           { type: "ref", text: "Pour mettre tes nouvelles positions en pratique : la chanson 'Wonderwall' (Oasis) est en Sol majeur. Tu peux improviser un solo simple par-dessus en utilisant uniquement les notes de la gamme de Sol majeur en position 1. Toutes les notes que tu joueras sonneront 'justes'." },
           { type: "tip", text: "Méthode anti-frustration : pendant les 7 premiers jours, ne joue QUE la position 1 dans UNE seule tonalité (Sol majeur). Pas de précipitation. Une vraie maîtrise = 100 répétitions, pas 5. Ta position deviendra automatique." },
         ],
-        quiz: ["q-scales-c2-10", "q-scales-c2-11"],
+        quiz: ["q-scales-14","q-scales-16"],
       },
       {
-        id: "scales-c3-01",
+        id: "scales-c3-01", level: 6,
         title: "La pentatonique mineure : la gamme universelle",
         duration: 11,
         content: [
@@ -1683,10 +1468,10 @@ export const COURSES = [
           { type: "ref", text: "L'intro du solo de 'Stairway to Heaven' (Led Zeppelin) est en La pentatonique mineure. Le solo de 'Sweet Child O' Mine' (Guns N' Roses) aussi. Le riff de 'Smoke on the Water' (Deep Purple) utilise la même gamme. Une fois que tu la connais, tu reconnaîtras la pentatonique mineure dans 80% des solos rock que tu écoutes." },
           { type: "tip", text: "Programme intensif : pendant 7 jours, fais 10 minutes par jour de pentatonique mineure de La position 1, à 60 BPM en montant et en descendant. Au bout d'une semaine, c'est sous tes doigts à vie." },
         ],
-        quiz: ["q-scales-c3-01", "q-scales-c3-02"],
+        quiz: ["q-scales-20","q-impro-04"],
       },
       {
-        id: "scales-c3-02",
+        id: "scales-c3-02", level: 6,
         title: "Les 5 positions de la pentatonique",
         duration: 14,
         content: [
@@ -1757,10 +1542,10 @@ export const COURSES = [
           { type: "ref", text: "Pour visualiser : David Gilmour (Pink Floyd) utilise les 5 positions dans le solo de 'Comfortably Numb'. Il commence en position 1, monte en position 2, atteint un climax en position 4 (aigu), puis redescend en position 5. C'est une démonstration parfaite de l'utilisation pédagogique des 5 positions." },
           { type: "tip", text: "Plan d'apprentissage 5 semaines : 1 semaine par position. Chaque jour : 10 min de la position du moment. À la fin de la semaine 5, tu connais les 5 positions. À la fin de la semaine 7, tu les connectes fluide. C'est l'investissement le plus rentable pour un guitariste rock/blues." },
         ],
-        quiz: ["q-scales-c3-03", "q-scales-c3-04"],
+        quiz: ["q-logic-01","q-scales-02"],
       },
       {
-        id: "scales-c3-03",
+        id: "scales-c3-03", level: 6,
         title: "Pentatonique majeure et son lien avec la mineure",
         duration: 9,
         content: [
@@ -1802,10 +1587,10 @@ export const COURSES = [
           { type: "ref", text: "Reconnaître une pentatonique majeure : 'My Girl' (The Temptations) commence par une mélodie pure pentatonique majeure de Do. 'Stand By Me' (Ben E. King) utilise la pentatonique majeure de La. Le riff principal de 'Sweet Home Alabama' (Lynyrd Skynyrd) est en pentatonique majeure. Country, soul, classic rock — partout." },
           { type: "tip", text: "Astuce d'impro : pour passer de 'son blues' à 'son country' sans changer de position, garde la même forme sur le manche mais commence/termine tes phrases sur une note différente (la fondamentale majeure au lieu de la mineure). Ta tonalité change, mais pas ton effort technique." },
         ],
-        quiz: ["q-scales-c3-05", "q-scales-c3-06"],
+        quiz: ["q-scales-06","q-scales-07"],
       },
       {
-        id: "scales-c3-04",
+        id: "scales-c3-04", level: 6,
         title: "La gamme blues : l'ajout de la blue note",
         duration: 10,
         content: [
@@ -1847,10 +1632,10 @@ export const COURSES = [
           { type: "ref", text: "Pour entendre la blue note 'pure' : 'The Thrill is Gone' (B.B. King) regorge de blue notes. Le solo final de 'Crossroads' (Cream/Eric Clapton) utilise massivement la gamme blues. 'Texas Flood' (Stevie Ray Vaughan) est un cours magistral sur la gamme blues complète." },
           { type: "tip", text: "Pratique du soir : sur une backing track de blues en La (12 mesures), improvise pendant 10 minutes en utilisant exclusivement la gamme blues. Force-toi à utiliser la b5 au moins 5 fois — toujours en passage, jamais en résolution. Tu vas développer un vrai feel blues en quelques semaines." },
         ],
-        quiz: ["q-scales-c3-07", "q-scales-c3-08"],
+        quiz: ["q-scales-09","q-scales-10"],
       },
       {
-        id: "scales-c4-01",
+        id: "scales-c4-01", level: 7,
         title: "Mineur naturel et majeur : deux faces d'une même pièce",
         duration: 10,
         content: [
@@ -1892,10 +1677,10 @@ export const COURSES = [
           { type: "ref", text: "Test sonore : 'Greensleeves' (chanson traditionnelle anglaise du XVIe siècle) est en La mineur. 'Stairway to Heaven' (Led Zeppelin) commence en La mineur. À l'inverse, 'Joy to the World' (chant de Noël) est en Do majeur. Tu peux jouer les deux mélodies avec exactement les mêmes 7 notes (Do-Ré-Mi-Fa-Sol-La-Si), mais l'une sonnera triste, l'autre joyeuse. La fondamentale ressentie fait toute la différence." },
           { type: "tip", text: "Cette leçon est la pierre angulaire de tout ce qui suit. Si tu comprends que 'mêmes notes + fondamentale différente = ambiance différente', tu es prêt pour les modes. Si pas encore, relis cette leçon avant d'avancer." },
         ],
-        quiz: ["q-scales-c4-01", "q-scales-c4-02", "q-scales-c4-03"],
+        quiz: ["q-scales-14","q-scales-16","q-scales-20"],
       },
       {
-        id: "scales-c4-02",
+        id: "scales-c4-02", level: 7,
         title: "Qu'est-ce qu'un mode (la grande révélation)",
         duration: 12,
         content: [
@@ -1915,10 +1700,10 @@ export const COURSES = [
           { type: "ref", text: "Pour entendre la différence : prends un drone (note tenue) en Ré sur ta basse ou via une app. Joue Do majeur (Do-Ré-Mi-Fa-Sol-La-Si). Tu entendras du dorien : couleur mineure mais lumineuse. Maintenant change de drone vers Mi et joue les MÊMES notes : tu entendras du phrygien, espagnol et tendu. Mêmes notes, ambiances opposées. C'est ça, les modes." },
           { type: "tip", text: "Ne te décourage pas si les modes paraissent complexes. Ils ne le sont pas — ils sont juste nouveaux. Dans les 7 prochaines leçons, on va prendre chaque mode un par un et tu vas le maîtriser." },
         ],
-        quiz: ["q-scales-c4-04", "q-scales-c4-05", "q-scales-c4-06"],
+        quiz: ["q-scales-03","q-scales-04","q-scales-08"],
       },
       {
-        id: "scales-c4-03",
+        id: "scales-c4-03", level: 7,
         title: "Comment l'oreille perçoit un mode (le rôle du drone)",
         duration: 8,
         content: [
@@ -1936,10 +1721,10 @@ export const COURSES = [
           { type: "ref", text: "Démonstration : 'So What' (Miles Davis, 1959) est joué sur une vamp Dm7 (qui agit comme un drone harmonique). Toute la pièce reste en Ré dorien pendant 16 mesures. Aucune ambiguïté : l'oreille s'installe dans le dorien et y reste. Sans le drone harmonique de Dm7, le morceau aurait sonné comme du Do majeur ordinaire." },
           { type: "tip", text: "Quand tu pratiques un mode, lance toujours un drone ou une vamp d'accord modal. Sans support harmonique, tu travailles dans le vide — ton oreille ne perçoit pas la couleur du mode." },
         ],
-        quiz: ["q-scales-c4-07", "q-scales-c4-08"],
+        quiz: ["q-scales-11","q-scales-12"],
       },
       {
-        id: "scales-c5-01",
+        id: "scales-c5-01", level: 7,
         title: "Ionien — la lumière pure (= majeur)",
         duration: 8,
         content: [
@@ -1957,10 +1742,10 @@ export const COURSES = [
           { type: "ref", text: "Exemples emblématiques : 'Let It Be' (Beatles) en Do ionien. 'Twist and Shout' (Beatles), 'Can't Help Falling in Love' (Elvis), 'Imagine' (John Lennon) — tous en mode ionien. C'est le langage par défaut de la pop." },
           { type: "tip", text: "Si tu sais déjà improviser en gamme majeure, tu sais improviser en ionien. Le seul changement, c'est ta façon de penser : au lieu de te dire 'je joue la gamme majeure', dis-toi 'je joue le mode ionien'. Cette nuance prépare ton cerveau aux 6 autres modes." },
         ],
-        quiz: ["q-scales-c5-01"],
+        quiz: ["q-scales-13","q-scales-15"],
       },
       {
-        id: "scales-c5-02",
+        id: "scales-c5-02", level: 8,
         title: "Dorien — le mode caméléon",
         duration: 12,
         content: [
@@ -2004,10 +1789,10 @@ export const COURSES = [
           { type: "ref", text: "Exemples emblématiques : 'So What' (Miles Davis, 1959) — 16 mesures de Dm7 en Ré dorien, puis 8 mesures de Mi♭m7 en Mi♭ dorien, puis retour. C'est le manifeste du jazz modal. 'Oye Como Va' (Santana) : vamp Am7-D7 = La dorien. 'Light My Fire' (The Doors) : Am-F#m = La dorien. 'Smoke on the Water' (Deep Purple) : riff principal en Sol dorien." },
           { type: "tip", text: "Drill dorien efficace : drone Ré (corde 5 vide ou app drone). Joue Ré dorien (= notes de Do majeur en partant de Ré) pendant 5 minutes en plaçant un Si appuyé toutes les 2 mesures. Tu sentiras la couleur 'dorien pur' s'installer dans tes oreilles. Refais ça 7 jours de suite : c'est gravé." },
         ],
-        quiz: ["q-scales-c5-02", "q-scales-c5-03", "q-scales-c5-04"],
+        quiz: ["q-scales-17","q-scales-18","q-scales-19"],
       },
       {
-        id: "scales-c5-03",
+        id: "scales-c5-03", level: 8,
         title: "Phrygien — l'âme andalouse",
         duration: 11,
         content: [
@@ -2053,10 +1838,10 @@ export const COURSES = [
           { type: "ref", text: "Exemples emblématiques : 'Spain' (Chick Corea) en Ré phrygien dominant. 'Smoke on the Water' utilise des inflexions phrygiennes dans son intro. 'War' (Yngwie Malmsteen) en Mi phrygien dominant. Toute la musique flamenco traditionnelle 'soleá' et 'siguiriya' est en phrygien. Si tu écoutes 'Concierto de Aranjuez' (Joaquín Rodrigo, 1939), tu entends la quintessence du phrygien espagnol." },
           { type: "tip", text: "Pour goûter au phrygien : joue le riff suivant en boucle sur la corde de Mi grave : Mi(0) - Fa(1) - Sol(3) - Mi(0). Tu viens d'esquisser l'âme du phrygien. Reproduis ça avec la b2 toujours en évidence et tu sentiras l'Andalousie venir à toi." },
         ],
-        quiz: ["q-scales-c5-05", "q-scales-c5-06"],
+        quiz: ["q-scales-21","q-impro-07"],
       },
       {
-        id: "scales-c5-04",
+        id: "scales-c5-04", level: 8,
         title: "Lydien — l'évasion onirique",
         duration: 10,
         content: [
@@ -2100,10 +1885,10 @@ export const COURSES = [
           { type: "ref", text: "Exemples emblématiques : Le thème de 'E.T.' (John Williams, 1982) commence sur la #4 en Fa lydien — c'est cette note qui donne instantanément l'effet 'magie'. La musique de 'Princesse Mononoké' (Joe Hisaishi) utilise le lydien. 'Joy' (Bach, BWV 147 — 'Jésus que ma joie demeure') a des passages en lydien. 'Flying in a Blue Dream' (Joe Satriani) est en mi lydien. Le morceau 'Dreams' de Fleetwood Mac est en La lydien." },
           { type: "tip", text: "Pour expérimenter le lydien : prends un accord Cmaj7 et tiens-le en arrière-plan. Joue uniquement Si naturel (la #4 de Fa lydien... mais en Cmaj7, ça serait la 7). Mauvais exemple. Reprends : tiens un accord Fmaj7. Joue uniquement Si naturel par-dessus. Tu entends la magie ? C'est le lydien." },
         ],
-        quiz: ["q-scales-c5-07", "q-scales-c5-08"],
+        quiz: ["q-impro-09","q-impro-11"],
       },
       {
-        id: "scales-c5-05",
+        id: "scales-c5-05", level: 8,
         title: "Mixolydien — le roi du rock",
         duration: 11,
         content: [
@@ -2148,10 +1933,10 @@ export const COURSES = [
           { type: "ref", text: "Exemples emblématiques : 'Sweet Home Chicago' (Robert Johnson) en Mi mixolydien. 'Norwegian Wood' (Beatles) en Mi mixolydien. 'Whole Lotta Love' (Led Zeppelin) en Mi mixolydien. 'Sweet Home Alabama' (Lynyrd Skynyrd) en Sol mixolydien. 'Free Falling' (Tom Petty) en Fa mixolydien. La grande majorité des solos d'Eric Clapton, Hendrix, Stevie Ray Vaughan dans un contexte rock-blues sont en mixolydien." },
           { type: "tip", text: "Astuce mixolydien : sur un blues en La, tu connais probablement déjà la pentatonique mineure de La. Pour 'colorer' ton solo en mixolydien, ajoute la 3 majeure (Do#) et la 6 (Fa#) à ta penta. Ça te donnera les notes de La mixolydien sans tout réapprendre. Le truc des bluesmen depuis 100 ans." },
         ],
-        quiz: ["q-scales-c5-09", "q-scales-c5-10", "q-scales-c5-11"],
+        quiz: ["q-impro-14","q-logic-03","q-logic-08"],
       },
       {
-        id: "scales-c5-06",
+        id: "scales-c5-06", level: 8,
         title: "Éolien — la mélancolie naturelle",
         duration: 9,
         content: [
@@ -2195,10 +1980,10 @@ export const COURSES = [
           { type: "ref", text: "Exemples emblématiques : 'Stairway to Heaven' (Led Zeppelin) en La éolien. 'House of the Rising Sun' (The Animals) en La éolien. 'Mad World' (Tears for Fears / Gary Jules) en Mi éolien. La quasi-totalité des chansons traditionnelles celtiques, des ballades folk russes, et de la musique 'gypsy' moderne. Quand tu entends une chanson 'qui sent l'automne', il y a 70% de chances qu'elle soit en éolien." },
           { type: "tip", text: "Tu connais déjà l'éolien si tu as travaillé la pentatonique mineure (qui en est extraite). Pour passer de la penta à l'éolien complet, ajoute simplement le 2 (la seconde majeure) et la b6 (la sixte mineure). Tu as la gamme complète." },
         ],
-        quiz: ["q-scales-c5-12"],
+        quiz: ["q-logic-10","q-scales-03"],
       },
       {
-        id: "scales-c5-07",
+        id: "scales-c5-07", level: 8,
         title: "Locrien — le mode interdit",
         duration: 9,
         content: [
@@ -2218,10 +2003,10 @@ export const COURSES = [
           { type: "ref", text: "Exemples (rares) : 'Army of Me' (Björk) utilise des couleurs locriennes. Certains passages de 'YYZ' (Rush) jouent avec le locrien. Black Sabbath et Slayer ont des riffs locriens dans leurs morceaux les plus sombres. Mais honnêtement, peu de morceaux sont 'entièrement' en locrien — il est souvent utilisé en passage." },
           { type: "tip", text: "Le locrien n'est pas une priorité pour ton apprentissage. Connais son existence, comprends pourquoi il est rare, et passe à autre chose. À ce stade, te concentrer sur le dorien, mixolydien et lydien sera infiniment plus rentable musicalement." },
         ],
-        quiz: ["q-scales-c5-13"],
+        quiz: ["q-scales-04","q-scales-08"],
       },
       {
-        id: "scales-c6-01",
+        id: "scales-c6-01", level: 9,
         title: "La gamme mineure harmonique",
         duration: 10,
         content: [
@@ -2264,10 +2049,10 @@ export const COURSES = [
           { type: "ref", text: "Exemples emblématiques : 'Sonate au clair de lune' (Beethoven, mouvement 1) utilise la mineure harmonique. 'Hava Nagila' (chant traditionnel juif) en Ré mineur harmonique. Toute la musique de Yngwie Malmsteen ('Black Star', 'Far Beyond the Sun'). Le solo d'intro de 'Sweet Child O' Mine' (Guns N' Roses) utilise la mineure harmonique de Ré." },
           { type: "tip", text: "Pour intégrer la mineure harmonique : sur un blues mineur en La (Am-Dm-E7), joue La pentatonique sur Am et Dm, mais switch vers La mineure harmonique sur le E7. Tu obtiens immédiatement le son 'minor blues sophistiqué' typique de B.B. King ou de Carlos Santana." },
         ],
-        quiz: ["q-scales-c6-01", "q-scales-c6-02"],
+        quiz: ["q-scales-11","q-scales-12"],
       },
       {
-        id: "scales-c6-02",
+        id: "scales-c6-02", level: 9,
         title: "La gamme mineure mélodique",
         duration: 9,
         content: [
@@ -2311,10 +2096,10 @@ export const COURSES = [
           { type: "ref", text: "Exemples : 'Beautiful Love' (standard de jazz) utilise la mineure mélodique. La plupart des solos de jazz fusion (Pat Metheny, John Scofield, Mike Stern) regorgent de mélodique. Allan Holdsworth en a fait un art." },
           { type: "tip", text: "La mineure mélodique est une gamme 'avancée'. Si tu débutes en théorie, garde-la pour plus tard. Concentre-toi d'abord sur la maîtrise de la majeure, des modes courants (dorien, mixolydien) et de la mineure harmonique." },
         ],
-        quiz: ["q-scales-c6-03"],
+        quiz: ["q-scales-13","q-scales-15"],
       },
       {
-        id: "scales-c6-03",
+        id: "scales-c6-03", level: 9,
         title: "Comment choisir une gamme en improvisation",
         duration: 12,
         content: [
@@ -2336,7 +2121,7 @@ export const COURSES = [
           { type: "ref", text: "Test pratique : prends 3 chansons de styles différents (une pop type Beatles, un blues, un standard de jazz). Identifie leur tonalité, leur style, et choisis la gamme la plus appropriée pour improviser. Avec 10 chansons analysées comme ça, tu vas développer un instinct musical solide." },
           { type: "tip", text: "L'improvisation, c'est 30% de théorie + 70% d'oreille. La théorie te donne les options, mais c'est ton oreille qui choisit la bonne au moment juste. Plus tu joues, plus tu écoutes, plus ton instinct devient précis. Le but n'est pas de calculer, c'est d'entendre — et de réagir." },
         ],
-        quiz: ["q-scales-c6-04", "q-scales-c6-05"],
+        quiz: ["q-scales-17","q-scales-18"],
       },
 
 ],
@@ -2355,7 +2140,7 @@ export const COURSES = [
     lessons: [
 
       {
-        id: "harmony-01",
+        id: "harmony-01", level: 5, role: "synthesis",
         title: "Triades — les 4 types et leurs constructions",
         duration: 14,
         content: [
@@ -2397,7 +2182,7 @@ export const COURSES = [
       },
 
       {
-        id: "harmony-02",
+        id: "harmony-02", level: 7, role: "synthesis",
         title: "Accords de 7e — les 5 types essentiels",
         duration: 14,
         content: [
@@ -2435,7 +2220,7 @@ export const COURSES = [
       },
 
       {
-        id: "harmony-03",
+        id: "harmony-03", level: 7,
         title: "Arpèges — l'accord en mélodie",
         duration: 12,
         content: [
@@ -2460,7 +2245,7 @@ export const COURSES = [
       },
 
       {
-        id: "harmony-04",
+        id: "harmony-04", level: 7, role: "synthesis",
         title: "Harmonisation de la gamme majeure",
         duration: 14,
         content: [
@@ -2484,7 +2269,7 @@ export const COURSES = [
       },
 
       {
-        id: "harmony-05",
+        id: "harmony-05", level: 8, role: "synthesis",
         title: "ii-V-I — le moteur du jazz",
         duration: 14,
         content: [
@@ -2542,7 +2327,7 @@ export const COURSES = [
       },
 
       {
-        id: "harmony-06",
+        id: "harmony-06", level: 7,
         title: "Cibler les notes d'accord en impro",
         duration: 14,
         content: [
@@ -2587,7 +2372,7 @@ export const COURSES = [
     
       // ─── Leçons supplémentaires — harmony (intégrées depuis JSON) ───────────
       {
-        id: "harm-c1-01",
+        id: "harm-c1-01", level: 1,
         title: "Qu'est-ce que l'harmonie ?",
         duration: 8,
         content: [
@@ -2605,10 +2390,10 @@ export const COURSES = [
           { type: "ref", text: "Pour entendre l'harmonie 'en action' : écoute 'What a Wonderful World' (Louis Armstrong). La mélodie que tu fredonneras est simple. Mais écoute les accords en dessous : ils changent constamment, créant des émotions différentes sous la même mélodie. C'est l'harmonie qui fait que certains passages te touchent plus que d'autres." },
           { type: "tip", text: "Exercice d'écoute : prends une chanson que tu connais bien. Écoute-la en te concentrant uniquement sur les accords (pas la mélodie, pas la batterie). Combien y a-t-il d'accords différents ? À quel moment changent-ils ? C'est ton premier pas vers l'analyse harmonique." },
         ],
-        quiz: ["q-harm-c1-01", "q-harm-c1-02"],
+        quiz: [],
       },
       {
-        id: "harm-c1-02",
+        id: "harm-c1-02", level: 2,
         title: "Consonance et dissonance",
         duration: 9,
         content: [
@@ -2631,10 +2416,10 @@ export const COURSES = [
           { type: "ref", text: "'Black Sabbath' (Black Sabbath, 1970) : le riff d'intro est construit sur un triton (Mi-Si♭), l'intervalle le plus dissonant. En 1970, c'était délibérément provocateur et 'satanique'. Aujourd'hui, ce riff est étudié dans les conservatoires. La perception de la dissonance évolue avec le temps et la culture." },
           { type: "tip", text: "Drill auditif : joue ces 3 intervalles sur ta guitare (depuis Do c5 case 3) : Do+Mi (tierce majeure, consonant), Do+Fa# (triton, très dissonant), Do+Sol (quinte, très consonant). Écoute la différence de 'tension' entre les 3. Ton oreille apprend à reconnaître consonance/dissonance." },
         ],
-        quiz: ["q-harm-c1-03", "q-harm-c1-04"],
+        quiz: [],
       },
       {
-        id: "harm-c2-01",
+        id: "harm-c2-01", level: 5,
         title: "Les 4 types de triades",
         duration: 11,
         content: [
@@ -2669,10 +2454,10 @@ export const COURSES = [
           { type: "ref", text: "Pour entendre chaque type dans un contexte réel : 'Happy Birthday' (majeur), 'Scarborough Fair' (mineur), le passage entre les accords dans 'Hark the Herald Angels Sing' (diminué en transition), 'Oh ! You Pretty Things' de David Bowie commence sur un accord augmenté. Écoute ces passages et identifie la couleur." },
           { type: "tip", text: "Drill des 4 types : depuis Do (c5 case 3), joue successivement : Do majeur (Do-Mi-Sol), Do mineur (Do-Mib-Sol), Do diminué (Do-Mib-Solb), Do augmenté (Do-Mi-Sol#). Écoute la progression de couleur : de brillant à sombre à tendu à flottant. 4 accords, 4 univers." },
         ],
-        quiz: ["q-harm-c2-01", "q-harm-c2-02", "q-harm-c2-03"],
+        quiz: ["q-harm-01","q-harm-05","q-harm-01"],
       },
       {
-        id: "harm-c2-02",
+        id: "harm-c2-02", level: 5,
         title: "Construire une triade depuis n'importe quelle note",
         duration: 10,
         content: [
@@ -2705,10 +2490,10 @@ export const COURSES = [
           { type: "ref", text: "Test pratique : la chanson 'La Bamba' (traditionnelle mexicaine) utilise les accords La-Ré-Mi. Si tu transposes en Do, tu joues Do-Fa-Sol. Même structure harmonique (I-IV-V), notes différentes. Tu viens d'appliquer la construction de triades à la transposition." },
           { type: "tip", text: "Drill quotidien (3 min) : tire une note au hasard (nomme-en une). Construis sa triade majeure en 5 secondes. Puis sa triade mineure. Puis diminuée. Au bout de 2 semaines, c'est instantané. C'est l'investissement le plus rentable en théorie musicale." },
         ],
-        quiz: ["q-harm-c2-04", "q-harm-c2-05"],
+        quiz: ["q-harm-02","q-harm-03"],
       },
       {
-        id: "harm-c2-03",
+        id: "harm-c2-03", level: 6,
         title: "Les 12 triades majeures — mémorisation",
         duration: 9,
         content: [
@@ -2748,10 +2533,10 @@ export const COURSES = [
           { type: "ref", text: "Jeu pratique : prends une radio ou une playlist et écoute les premières secondes de chaque chanson. Essaie d'identifier le premier accord joué. Est-ce majeur ou mineur ? Puis essaie de trouver de quelle tonalité il s'agit. Cet exercice d'écoute active développe l'oreille harmonique plus vite que n'importe quelle mémorisation théorique." },
           { type: "tip", text: "Mémo visuel : écris les 12 triades majeures sur une feuille, avec fondamentale / tierce / quinte en colonnes. Colle-la dans ta chambre. Regarde-la chaque jour. En 3 semaines de simple exposition visuelle, tu les mémoriseras sans effort conscient." },
         ],
-        quiz: ["q-harm-c2-06", "q-harm-c2-07"],
+        quiz: ["q-harm-06","q-harm-09"],
       },
       {
-        id: "harm-c2-04",
+        id: "harm-c2-04", level: 6,
         title: "Les inversions de triades et leur usage",
         duration: 10,
         content: [
@@ -2786,10 +2571,10 @@ export const COURSES = [
           { type: "ref", text: "'And I Love Her' (Beatles) : la ligne de basse utilise des inversions d'accords pour créer un mouvement descendant mélodique. La basse ne suit pas toujours la fondamentale — elle passe par des tierces et quintes. Résultat : la ligne de basse est aussi une mélodie. C'est le pouvoir des inversions." },
           { type: "tip", text: "Drill inversions : prends Do majeur. Joue-le en état fondamental (corde 5 case 3, corde 4 case 2, corde 3 à vide). Puis 1ère inversion (corde 4 case 2, corde 3 à vide, corde 2 case 1 — Mi en basse). Puis 2e inversion (corde 3 à vide, corde 2 case 1, corde 1 à vide — Sol en basse). 3 positions, 3 couleurs. Mémorise les 3 formes de Do majeur. Refais avec Sol, La mineur." },
         ],
-        quiz: ["q-harm-c2-08", "q-harm-c2-09"],
+        quiz: ["q-harm-12","q-harm-13"],
       },
       {
-        id: "harm-c3-01",
+        id: "harm-c3-01", level: 7,
         title: "Pourquoi ajouter une 7e ?",
         duration: 9,
         content: [
@@ -2822,10 +2607,10 @@ export const COURSES = [
           { type: "ref", text: "'Autumn Leaves' (standard de jazz, 1945) : toute la progression utilise des accords de 7e (Am7-D7-Gmaj7-Cmaj7...). Sans les 7e, le morceau sonnerait 'enfantin'. Avec les 7e, il sonne adulte, sophistiqué, musical. Le même principe s'applique à n'importe quelle chanson pop : remplace les triades par des 7e et tu obtiens instantanément un son plus moderne." },
           { type: "tip", text: "Test simple : prends une chanson pop (par ex I-V-vi-IV en Do). Joue-la d'abord avec des triades simples (C-G-Am-F). Puis joue-la avec des 7e (Cmaj7-G7-Am7-Fmaj7). Entends la différence de sophistication. Les 7e te coûtent souvent juste 1 doigt supplémentaire, mais la différence sonore est énorme." },
         ],
-        quiz: ["q-harm-c3-01", "q-harm-c3-02"],
+        quiz: ["q-harm-16","q-harm-24"],
       },
       {
-        id: "harm-c3-02",
+        id: "harm-c3-02", level: 7,
         title: "Les 5 types d'accords de septième",
         duration: 12,
         content: [
@@ -2862,10 +2647,10 @@ export const COURSES = [
           { type: "ref", text: "Pour entendre les 5 types dans un standard : 'All The Things You Are' (Jerome Kern, 1939) contient les 5 types d'accords de 7e dans ses 36 premières mesures. C'est pourquoi ce morceau est considéré comme l'un des meilleurs 'exercices' d'harmonie pour les jazzmen. Écoute une version piano solo pour entendre clairement chaque couleur." },
           { type: "tip", text: "Drill 'reconnaissance' : joue successivement Cmaj7 (Do-Mi-Sol-Si), Cm7 (Do-Mib-Sol-Sib), C7 (Do-Mi-Sol-Sib), Cm7b5 (Do-Mib-Solb-Sib), Cdim7 (Do-Mib-Solb-La). Nomme chaque type à voix haute en le jouant. Puis joue-les les yeux fermés et identifie-les par l'oreille. En 2 semaines, tu les distingues à l'écoute." },
         ],
-        quiz: ["q-harm-c3-03", "q-harm-c3-04", "q-harm-c3-05"],
+        quiz: ["q-impro-02","q-logic-04","q-harm-02"],
       },
       {
-        id: "harm-c3-03",
+        id: "harm-c3-03", level: 7,
         title: "Les guide tones : 3e et 7e",
         duration: 10,
         content: [
@@ -2902,10 +2687,10 @@ export const COURSES = [
           { type: "ref", text: "Les pianistes de jazz (Bill Evans, Herbie Hancock, Keith Jarrett) jouent presque exclusivement des shell voicings main gauche + lignes mélodiques main droite. Cette économie de notes, loin d'appauvrir le son, le rend plus clair et plus musical. Sur la guitare, c'est le même principe." },
           { type: "tip", text: "Drill guide tones : sur la progression Dm7-G7-Cmaj7, joue uniquement les guide tones de chaque accord (3e et 7e). Dm7 : Fa-Do. G7 : Si-Fa. Cmaj7 : Mi-Si. Joue-les lentement, 1 accord par mesure. Tu entendras la 'ligne intérieure' de l'harmonie — c'est ce que les pros entendent en permanence." },
         ],
-        quiz: ["q-harm-c3-06", "q-harm-c3-07"],
+        quiz: ["q-harm-03","q-harm-06"],
       },
       {
-        id: "harm-c3-04",
+        id: "harm-c3-04", level: 8,
         title: "Les voicings shell : économe et efficace",
         duration: 8,
         content: [
@@ -2938,10 +2723,10 @@ export const COURSES = [
           { type: "ref", text: "Freddie Green (guitariste du Count Basie Orchestra, 1937-1987) a joué des shell voicings pendant toute sa carrière — 50 ans à comper des accords de 2-3 notes à 4 temps par mesure, à tempo swing. C'est l'utilisation ultime du shell voicing : économe, précis, rythmique, musical." },
           { type: "tip", text: "Apprends ces 4 shell voicings 'par cœur' : Cmaj7 (corde 6 case 8, corde 4 case 10, corde 3 case 9), Dm7 (corde 6 case 10, corde 5 case 8, corde 4 case 10), G7 (corde 6 case 3, corde 5 case 2, corde 4 case 3), Am7 (corde 6 case 5, corde 5 case 3, corde 4 case 5). Ces 4 voicings te donnent la progression I-ii-V-vi en Do majeur en version jazz instantanée." },
         ],
-        quiz: ["q-harm-c3-08"],
+        quiz: ["q-harm-09","q-harm-12"],
       },
       {
-        id: "harm-c4-01",
+        id: "harm-c4-01", level: 9,
         title: "La 9e, la 11e, la 13e : les extensions",
         duration: 10,
         content: [
@@ -2971,10 +2756,10 @@ export const COURSES = [
           { type: "ref", text: "'Purple Haze' (Jimi Hendrix, 1967) : le riff utilise un accord E7#9 (Mi7 avec 9e augmentée). Le Sol# (3e majeure) et le Sol naturel (#9 = enharmonique de lab ≈ sol) coexistent, créant l'ambiguïté majeur/mineur si caractéristique du son psychédélique Hendrix. Un seul accord, un son reconnaissable en 1 seconde." },
           { type: "tip", text: "Commence avec une seule extension : ajoute une 9e à tes accords habituels. Dm → Dm9 (ajouter Mi). Gmaj7 → Gmaj9 (ajouter La). Am7 → Am9 (ajouter Si). Ces petites modifications raffinent immédiatement ton son sans complexifier ton jeu." },
         ],
-        quiz: ["q-harm-c4-01", "q-harm-c4-02"],
+        quiz: ["q-harm-13","q-harm-16"],
       },
       {
-        id: "harm-c4-02",
+        id: "harm-c4-02", level: 9,
         title: "Tensions et résolutions : comment les extensions fonctionnent",
         duration: 9,
         content: [
@@ -2994,10 +2779,10 @@ export const COURSES = [
           { type: "ref", text: "John Coltrane ('A Love Supreme', 1964) est le maître de la gestion tension-résolution. Il pousse la dissonance très loin (extensions altérées, superpositions modales) avant de résoudre. L'effet est cathartique — la résolution est d'autant plus satisfaisante que la tension était intense." },
           { type: "tip", text: "Drill tension-résolution : sur Cmaj7, improvise en utilisant le Fa (avoid note) comme note de passage vers Mi ou Sol, jamais comme note tenue. Pratique ce geste jusqu'à ce qu'il devienne naturel : entrer sur Fa, ressortir immédiatement sur Mi ou Sol. Tu viens d'apprendre à gérer une tension harmonique." },
         ],
-        quiz: ["q-harm-c4-03", "q-harm-c4-04"],
+        quiz: ["q-harm-24","q-impro-02"],
       },
       {
-        id: "harm-c5-01",
+        id: "harm-c5-01", level: 7,
         title: "Harmoniser la gamme majeure",
         duration: 12,
         content: [
@@ -3035,10 +2820,10 @@ export const COURSES = [
           { type: "ref", text: "Analyse pratique : 'Let It Be' (Beatles) en Do majeur = C-G-Am-F = I-V-vi-IV. 'Stairway to Heaven' (Led Zeppelin) commence sur Am (vi de Do majeur). 'House of the Rising Sun' (The Animals) en La mineur = Am-C-D-F-Am = i-III-IV-VI-i (en mineur, les chiffres changent légèrement). L'harmonisation de la gamme est partout." },
           { type: "tip", text: "Exercice : prends 5 chansons pop que tu connais. Trouve leur tonalité. Identifie les accords. Traduis en chiffrage romain (I, ii, iii...). Tu vas découvrir que 80% des chansons pop utilisent 4-5 progressions identiques. C'est illuminant." },
         ],
-        quiz: ["q-harm-c5-01", "q-harm-c5-02", "q-harm-c5-03"],
+        quiz: ["q-logic-04","q-harm-02","q-harm-03"],
       },
       {
-        id: "harm-c5-02",
+        id: "harm-c5-02", level: 7,
         title: "Le chiffrage romain et le système Nashville",
         duration: 9,
         content: [
@@ -3071,10 +2856,10 @@ export const COURSES = [
           { type: "ref", text: "Anecdote : à Nashville, les musiciens de session (bassiste, guitariste, pianiste) peuvent jouer une session d'enregistrement entière à la vue d'une 'Nashville chart' qu'ils n'ont jamais vue avant. Une feuille A4 avec des chiffres leur suffit pour jouer un arrangement complet. C'est la preuve ultime de l'efficacité de ce système." },
           { type: "tip", text: "Adopte le chiffrage romain dès aujourd'hui. À chaque chanson que tu joues, traduis les accords en chiffres. En 1 mois, tu penseras directement en degrés — et tu pourras transposer n'importe quelle chanson instantanément." },
         ],
-        quiz: ["q-harm-c5-04", "q-harm-c5-05"],
+        quiz: ["q-harm-04","q-harm-07"],
       },
       {
-        id: "harm-c5-03",
+        id: "harm-c5-03", level: 8,
         title: "Les familles fonctionnelles",
         duration: 10,
         content: [
@@ -3109,10 +2894,10 @@ export const COURSES = [
           { type: "ref", text: "'The Beatles' sont des maîtres des fonctions harmoniques. 'Twist and Shout' : I-IV-V sans sophistication, maximum d'énergie. 'Yesterday' : harmonisation bien plus complexe, toujours respectant les fonctions. 'Penny Lane' mélange les 3 familles de façon surprenante. Écouter les Beatles en analysant les fonctions T-SD-D est un cours de théorie musicale à lui seul." },
           { type: "tip", text: "Drill : dans une chanson, identifie chaque accord et classe-le dans sa famille (T, SD ou D). Puis identifie les moments de 'tension' (D) et de 'repos' (T). Tu vas comprendre pourquoi certains moments t'émeuvent plus que d'autres : c'est souvent à la résolution D→T." },
         ],
-        quiz: ["q-harm-c5-06", "q-harm-c5-07", "q-harm-c5-08"],
+        quiz: ["q-harm-08","q-harm-10","q-harm-11"],
       },
       {
-        id: "harm-c6-01",
+        id: "harm-c6-01", level: 7,
         title: "I-IV-V : le blues et le rock",
         duration: 10,
         content: [
@@ -3147,10 +2932,10 @@ export const COURSES = [
           { type: "ref", text: "'Sweet Home Chicago' (Robert Johnson, 1936) est le blues I-IV-V par excellence en Mi. 80 ans plus tard, 'Pride and Joy' (Stevie Ray Vaughan) utilise exactement la même structure harmonique en Mi. L'ossature harmonique n'a pas changé, mais l'expression musicale a évolué. C'est ça la transmission musicale." },
           { type: "tip", text: "Drill I-IV-V : dans 5 tonalités différentes (La, Mi, Ré, Sol, Do), trouve les 3 accords I-IV-V et joue-les en boucle à un tempo de blues (80 BPM). Improvise par-dessus avec la pentatonique de la tonalité. En 30 minutes, tu joues un blues convaincant dans 5 tonalités." },
         ],
-        quiz: ["q-harm-c6-01", "q-harm-c6-02"],
+        quiz: ["q-harm-14","q-harm-15"],
       },
       {
-        id: "harm-c6-02",
+        id: "harm-c6-02", level: 7,
         title: "I-V-vi-IV : la progression pop",
         duration: 9,
         content: [
@@ -3180,10 +2965,10 @@ export const COURSES = [
           { type: "ref", text: "YouTube : cherche 'Axis of Awesome 4 chords'. C'est une vidéo culte où le groupe joue des dizaines de chansons différentes sur la même progression I-V-vi-IV sans s'arrêter. Écouter ça en entier est à la fois comique et profondément éclairant sur la nature de la pop music." },
           { type: "tip", text: "Exercice de composition : utilise I-V-vi-IV comme base. Mais au lieu de plaquer les accords bêtement, essaie différentes rythmiques (arpèges, strumming, picking), différents registres (graves, medium, aigus), différentes vitesses (lente et mélancolique, rapide et énergique). Même progression, 10 morceaux différents possibles." },
         ],
-        quiz: ["q-harm-c6-03", "q-harm-c6-04"],
+        quiz: ["q-harm-17","q-harm-18"],
       },
       {
-        id: "harm-c6-03",
+        id: "harm-c6-03", level: 8,
         title: "ii-V-I : le moteur du jazz",
         duration: 12,
         content: [
@@ -3220,10 +3005,10 @@ export const COURSES = [
           { type: "ref", text: "Miles Davis et son quintet (1955-1960) ont développé un langage harmonique basé entièrement sur des ii-V-I sophistiqués. Écoute 'Autumn Leaves' ou 'Walkin'' : chaque phrase du solo de Davis vise les guide tones des ii-V-I. C'est un cours de musique appliqué à l'improvisation jazz." },
           { type: "tip", text: "Drill ii-V-I : apprends la progression Dm7-G7-Cmaj7 en shell voicings (vu précédemment). Joue-la en boucle à 70 BPM. Improvise par-dessus en Do majeur en visant Mi (guide tone de Dm7), Si (guide tone de G7), Mi (guide tone de Cmaj7) comme fins de phrases. En 2 semaines, tu maîtrises le principe du ii-V-I." },
         ],
-        quiz: ["q-harm-c6-05", "q-harm-c6-06", "q-harm-c6-07"],
+        quiz: ["q-harm-19","q-harm-20","q-harm-21"],
       },
       {
-        id: "harm-c6-04",
+        id: "harm-c6-04", level: 8,
         title: "Les progressions modales",
         duration: 9,
         content: [
@@ -3243,10 +3028,10 @@ export const COURSES = [
           { type: "ref", text: "'Riders on the Storm' (The Doors) : vamp Dm7-Em7 en Ré dorien pendant tout le morceau. 'Oye Como Va' (Santana) : Am7-D7 en La dorien. 'Scarborough Fair' (Simon & Garfunkel) : mélodie en Mi dorien avec progressions modales. Ces morceaux montrent comment une vamp simple peut créer une atmosphère inoubliable." },
           { type: "tip", text: "Compose une vamp modale : choisis un mode (commence par dorien ou mixolydien). Construis 2 accords qui capturent sa couleur. Ex : Dm7-G (dorien) ou A7-G (mixolydien). Boucle ces 2 accords pendant 5 minutes et improvise par-dessus avec le mode correspondant. Tu viens de composer une pièce modale." },
         ],
-        quiz: ["q-harm-c6-08"],
+        quiz: ["q-harm-22","q-harm-23"],
       },
       {
-        id: "harm-c7-01",
+        id: "harm-c7-01", level: 9,
         title: "Les accords empruntés",
         duration: 10,
         content: [
@@ -3276,10 +3061,10 @@ export const COURSES = [
           { type: "ref", text: "'Creep' (Radiohead, 1992) utilise la progression I-III-IV-iv (en Sol : Sol-Si-Do-Do mineur). Le Do mineur (iv) est emprunté à Sol mineur. Ce passage entre Do majeur et Do mineur est le moment émotionnellement le plus fort de la chanson — l'emprunt crée la surprise harmonique qui accompagne le pivot textuel 'I'm a creep'." },
           { type: "tip", text: "Expérimente l'emprunt : prends I-IV-V-I en Do (Do-Fa-Sol-Do). Remplace le IV par iv (Do-Fa mineur-Sol-Do). Entends la différence. C'est ça, l'emprunt : 1 accord différent, tout l'effet change. Essaie aussi de remplacer le V par bVII (Do-Fa-Sib-Do) pour un effet rock." },
         ],
-        quiz: ["q-harm-c7-01", "q-harm-c7-02"],
+        quiz: ["q-harm-25","q-impro-03"],
       },
       {
-        id: "harm-c7-02",
+        id: "harm-c7-02", level: 9,
         title: "La substitution tritonique",
         duration: 9,
         content: [
@@ -3299,10 +3084,10 @@ export const COURSES = [
           { type: "ref", text: "Charlie Parker, Dizzy Gillespie et les autres fondateurs du bebop (années 1940) ont codifié la substitution tritonique comme outil standard. Écoute 'Donna Lee' ou 'Anthropology' de Parker : les reharmonisations rapides que tu entends utilisent massivement les substitutions tritoniques." },
           { type: "tip", text: "Exercice simple : joue Am7-G7-Cmaj7 en boucle. Maintenant remplace G7 par Db7 : Am7-Db7-Cmaj7. Entends la différence ? La ligne de basse La-Réb-Do contre La-Sol-Do. La substitution crée une descente chromatique. C'est élégant et ça ne coûte qu'1 note de changement." },
         ],
-        quiz: ["q-harm-c7-03", "q-harm-c7-04"],
+        quiz: ["q-impro-05","q-impro-06"],
       },
       {
-        id: "harm-c7-03",
+        id: "harm-c7-03", level: 9,
         title: "Les modulations : changer de tonalité",
         duration: 10,
         content: [
@@ -3330,10 +3115,10 @@ export const COURSES = [
           { type: "ref", text: "'Modulation magique' la plus célèbre de la pop : 'Man in the Mirror' (Michael Jackson). Après le refrain, la musique monte d'un demi-ton. Puis encore un demi-ton. L'effet d'élévation émotionnelle est spectaculaire. C'est une modulation directe répétée — simple mais efficace. En live, ça 'soulève' littéralement le public." },
           { type: "tip", text: "Compose une modulation simple : joue I-IV-V-I en Do majeur. Puis joue immédiatement I-IV-V-I en Ré majeur (juste 1 ton plus haut). Le contraste est frappant. Maintenant essaie une transition plus douce : Do-A7-Ré majeur (la A7 prépare Ré). Entends la différence entre modulation abrupte et préparée." },
         ],
-        quiz: ["q-harm-c7-05"],
+        quiz: ["q-impro-08","q-impro-10"],
       },
       {
-        id: "harm-c8-01",
+        id: "harm-c8-01", level: 7,
         title: "Cibler les notes d'accord en temps réel",
         duration: 11,
         content: [
@@ -3355,10 +3140,10 @@ export const COURSES = [
           { type: "ref", text: "Joe Pass (guitare jazz, 1929-1994) est le maître absolu du ciblage harmonique. Regarde ses vidéos de guitare solo (particulièrement 'Virtuoso', 1973) : chaque note d'accord est mise en valeur au bon moment, la gamme et les chromatismes comblent l'espace entre les cibles. C'est la définition du solo harmoniquement connecté." },
           { type: "tip", text: "Drill ciblage (10 min) : sur Dm7-G7-Cmaj7 à 60 BPM. Jeu 1 : improvise librement sans chercher à cibler. Jeu 2 : joue UNIQUEMENT les guide tones de chaque accord (Fa-Do sur Dm7, Si-Fa sur G7, Mi-Si sur Cmaj7). Jeu 3 : mélange librement, en arrivant sur les guide tones au temps 1 de chaque nouvel accord. Entends la différence entre les 3 modes." },
         ],
-        quiz: ["q-harm-c8-01", "q-harm-c8-02"],
+        quiz: ["q-impro-12","q-impro-15"],
       },
       {
-        id: "harm-c8-02",
+        id: "harm-c8-02", level: 9,
         title: "Construire un solo qui suit les accords",
         duration: 11,
         content: [
@@ -3380,7 +3165,7 @@ export const COURSES = [
           { type: "ref", text: "Analyse du solo de David Gilmour sur 'Comfortably Numb' (Pink Floyd, 1979) : il commence par des phrases courtes et espacées (intro calme), développe progressivement (densité augmente), atteint un climax sur des bends expressifs dans l'aigu, et résout avec des phrases descendantes. 3 minutes de solo parfaitement structuré. Écoute en te concentrant uniquement sur la forme, pas les notes." },
           { type: "tip", text: "Plan de travail pour improviser sur ii-V-I : Semaine 1 : joue uniquement les arpèges. Semaine 2 : ajoute la gamme entre les notes d'arpège. Semaine 3 : ajoute des chromatismes d'approche. Semaine 4 : développe un motif sur 8 mesures. Semaine 5 : applique l'arc narratif (intro-développement-climax-résolution). En 5 semaines, tu improvises musicalement sur une grille jazz." },
         ],
-        quiz: ["q-harm-c8-03", "q-harm-c8-04"],
+        quiz: ["q-logic-02","q-logic-05"],
       },
 
 ],
@@ -3399,7 +3184,7 @@ export const COURSES = [
     lessons: [
 
       {
-        id: "rhythm-01",
+        id: "rhythm-01", level: 4, role: "synthesis",
         title: "Subdivisions et lecture rythmique",
         duration: 12,
         content: [
@@ -3440,7 +3225,7 @@ export const COURSES = [
       },
 
       {
-        id: "rhythm-02",
+        id: "rhythm-02", level: 6, role: "synthesis",
         title: "Syncope et anticipation",
         duration: 12,
         content: [
@@ -3484,7 +3269,7 @@ export const COURSES = [
       },
 
       {
-        id: "rhythm-03",
+        id: "rhythm-03", level: 7, role: "synthesis",
         title: "Patterns de strumming par genre",
         duration: 14,
         content: [
@@ -3531,7 +3316,7 @@ export const COURSES = [
       },
 
       {
-        id: "rhythm-04",
+        id: "rhythm-04", level: 9, role: "synthesis",
         title: "Phrasing et placement musical",
         duration: 14,
         content: [
@@ -3558,7 +3343,7 @@ export const COURSES = [
     
       // ─── Leçons supplémentaires — rhythm (intégrées depuis JSON) ───────────
       {
-        id: "rhy-c1-01",
+        id: "rhy-c1-01", level: 1,
         title: "Qu'est-ce que le rythme ?",
         duration: 8,
         content: [
@@ -3585,10 +3370,10 @@ export const COURSES = [
           { type: "ref", text: "James Brown, le 'Godfather of Soul', avait un sens du rythme si précis qu'il pouvait arrêter et reprendre une chanson n'importe où en claquant des doigts, et l'orchestre entier le suivait sans décalage. Ce n'est pas un don — c'est le résultat de milliers d'heures de pratique rythmique. Son secret : il faisait autant attention au rythme qu'aux notes." },
           { type: "tip", text: "Exercice fondamental : tape le pied sur les temps (1-2-3-4) en gardant un tempo parfaitement régulier pendant 1 minute. Facile ? Maintenant fais-le à 60 BPM en regardant une montre. Sans accélérer, sans ralentir. Si tu dévies, recommence. Ce simple exercice révèle la qualité de ton sens rythmique interne." },
         ],
-        quiz: ["q-rhy-c1-01", "q-rhy-c1-02"],
+        quiz: ["q-rhy-01"],
       },
       {
-        id: "rhy-c1-02",
+        id: "rhy-c1-02", level: 2,
         title: "La mesure à 4/4 : le temps de référence",
         duration: 9,
         content: [
@@ -3626,10 +3411,10 @@ export const COURSES = [
           { type: "ref", text: "'Money' (Pink Floyd, 1973) est en 7/4 — 7 temps par mesure. La ligne de basse iconique (7 notes) est la signature de la mesure. En live, les musiciens doivent compter constamment pour ne pas se perdre. C'est le contraste avec le 4/4 habituel qui rend ce morceau si particulier. Écoute-le en comptant 1-2-3-4-5-6-7 : tu sentiras l'asymétrie." },
           { type: "tip", text: "Drill : mets un métronome à 80 BPM et compte les mesures à voix haute pendant 2 minutes. '1-2-3-4, 2-2-3-4, 3-2-3-4...' (numéro de mesure + numéro de temps). Simple mais révélateur : combien de mesures perdent leur numéro ? Développe ce comptage instinctif." },
         ],
-        quiz: ["q-rhy-c1-03", "q-rhy-c1-04"],
+        quiz: ["q-rhy-01"],
       },
       {
-        id: "rhy-c1-03",
+        id: "rhy-c1-03", level: 2,
         title: "Le métronome : ton meilleur ennemi",
         duration: 9,
         content: [
@@ -3659,10 +3444,10 @@ export const COURSES = [
           { type: "ref", text: "Jeff Porcaro (batteur de Toto, l'un des grands batteurs de studio des années 80) s'entraînait au métronome tous les matins pendant 30 minutes avant toute session. Sa précision légendaire ('Rosanna groove') venait directement de cette discipline quotidienne. Les musiciens de studio les plus demandés sont ceux dont le 'time' est impeccable." },
           { type: "tip", text: "Défi du mois : chaque jour de pratique, commence par 5 minutes de métronome pur. Pas de mélodie, pas d'accords — juste frapper sur chaque temps (ou chaque contretemps) avec une seule note. 5 minutes par jour × 30 jours = un sens du temps transformé." },
         ],
-        quiz: ["q-rhy-c1-05"],
+        quiz: [],
       },
       {
-        id: "rhy-c2-01",
+        id: "rhy-c2-01", level: 3,
         title: "Rondes, blanches, noires : les valeurs de base",
         duration: 9,
         content: [
@@ -3711,10 +3496,10 @@ export const COURSES = [
           { type: "ref", text: "'With or Without You' (U2) : la ligne de basse et la guitare d'Adam Clayton/The Edge jouent principalement des rondes et blanches pendant les couplets. Cette lenteur délibérée crée l'espace émotionnel de la chanson. Les notes longues ont autant de puissance expressive que les notes rapides." },
           { type: "tip", text: "Drill des valeurs : à 60 BPM, joue 4 mesures en rondes, 4 en blanches, 4 en noires sur un accord de Am. Puis redescends (noires → blanches → rondes). Entends comment la densité change sans que le tempo ne bouge. C'est le premier exercice de subdivisions." },
         ],
-        quiz: ["q-rhy-c2-01", "q-rhy-c2-02"],
+        quiz: [],
       },
       {
-        id: "rhy-c2-02",
+        id: "rhy-c2-02", level: 4,
         title: "Croches et doubles-croches",
         duration: 10,
         content: [
@@ -3752,10 +3537,10 @@ export const COURSES = [
           { type: "ref", text: "'Superstition' (Stevie Wonder, 1972) : le riff de clavicorde joue des doubles-croches syncopées. La batterie aussi. C'est le pattern de doubles-croches qui crée le groove irrésistible. Sur guitare, pour reproduire ce son funk, tu dois penser en doubles-croches : main droite qui bouge en permanence à 16 coups par mesure." },
           { type: "tip", text: "Drill progression : à 70 BPM, joue 2 mesures de noires, 2 de croches, 2 de doubles-croches, puis reviens (doubles-croches → croches → noires). Sans t'arrêter. La transition entre les valeurs doit être fluide. C'est le drill de base de tout professeur de rythme." },
         ],
-        quiz: ["q-rhy-c2-03", "q-rhy-c2-04"],
+        quiz: [],
       },
       {
-        id: "rhy-c2-03",
+        id: "rhy-c2-03", level: 6,
         title: "Les triolets : le feel ternaire",
         duration: 10,
         content: [
@@ -3785,10 +3570,10 @@ export const COURSES = [
           { type: "ref", text: "Pour entendre le triolet pur : 'My Favorite Things' (Coltrane version, 1960) est en 3/4 avec des triolets omniprésents. 'Hit the Road Jack' (Ray Charles) a un riff de piano en triolets de croches. Le générique de 'Star Wars' (John Williams) commence sur un triolet. Une fois que tu l'entends, il est partout." },
           { type: "tip", text: "Drill triolets : à 60 BPM, alterne 2 mesures de croches normales (1-et-2-et-3-et-4-et) et 2 mesures de triolets (1-trip-let-2-trip-let). Sans t'arrêter entre les transitions. L'objectif : que ton corps sente la différence binaire/ternaire sans avoir à calculer." },
         ],
-        quiz: ["q-rhy-c2-05", "q-rhy-c2-06"],
+        quiz: ["q-rhy-11","q-impro-13"],
       },
       {
-        id: "rhy-c2-04",
+        id: "rhy-c2-04", level: 4,
         title: "Les silences : la musique dans le vide",
         duration: 8,
         content: [
@@ -3816,10 +3601,10 @@ export const COURSES = [
           { type: "ref", text: "Chet Atkins (guitare country/fingerstyle, l'un des plus grands guitaristes du XXe siècle) était célèbre pour ses silences expressifs. Dans ses solos, des mesures entières pouvaient ne contenir que 2-3 notes avec beaucoup d'espace. L'effet était hypnotique — chaque note semblait plus importante parce qu'elle était entourée de silence." },
           { type: "tip", text: "Drill silence conscient : improvise 4 minutes sur Am. Règle : tu dois laisser au moins 1 mesure entière de silence toutes les 8 mesures. Compte les silences à voix basse. Résultat : ton improvisation va immédiatement sonner plus 'musicale' et moins 'brouillonne'." },
         ],
-        quiz: ["q-rhy-c2-07"],
+        quiz: ["q-logic-06","q-rhy-02"],
       },
       {
-        id: "rhy-c3-01",
+        id: "rhy-c3-01", level: 5,
         title: "La syncope : décaler l'accent",
         duration: 11,
         content: [
@@ -3851,10 +3636,10 @@ export const COURSES = [
           { type: "ref", text: "'Superstition' (Stevie Wonder, 1972) : le riff principal est entièrement construit sur des accents syncopés. Les notes importantes tombent sur les contretemps. C'est pour ça que ce riff 'danse'. 'Papa's Got a Brand New Bag' (James Brown, 1965) : le hit qui a lancé le funk, construit sur la syncope 'sur le 1' (l'accent est sur le premier temps, mais les notes précédentes créent l'anticipation)." },
           { type: "tip", text: "Drill syncope (10 min) : sur Am, joue un accord sur chaque 'et' (contretemps) pendant 2 minutes. Puis alterne : accord sur le temps 1, accord sur le 'et-de-2', accord sur le temps 3, accord sur le 'et-de-4'. 2 minutes. Puis crée ton propre pattern syncopé. Enregistre-toi et écoute : sonne-t-il groovy ?" },
         ],
-        quiz: ["q-rhy-c3-01", "q-rhy-c3-02"],
+        quiz: ["q-rhy-03","q-rhy-05"],
       },
       {
-        id: "rhy-c3-02",
+        id: "rhy-c3-02", level: 6,
         title: "L'anticipation : jouer avant le temps",
         duration: 9,
         content: [
@@ -3883,10 +3668,10 @@ export const COURSES = [
           { type: "ref", text: "'Fly Me to the Moon' (chanté par Sinatra, arrangé par Count Basie) : la phrase vocale 'Fly me to the moon' anticipe chaque nouveau mot d'une croche. Cette anticipation constante donne à la mélodie son caractère coulant et naturel. L'équivalent guitare serait de changer d'accord une croche en avance." },
           { type: "tip", text: "Exercice d'anticipation : joue I-V-vi-IV en Do. D'abord, change d'accord exactement sur le temps 1 de chaque mesure (normal). Ensuite, anticipe chaque changement d'une croche : change sur le 'et-du-4' de la mesure précédente. Compare les deux versions. La deuxième sonne plus 'professionnelle' et 'moderne'." },
         ],
-        quiz: ["q-rhy-c3-03"],
+        quiz: ["q-rhy-08","q-rhy-11"],
       },
       {
-        id: "rhy-c3-03",
+        id: "rhy-c3-03", level: 6,
         title: "Le groove : qu'est-ce qui fait qu'un rythme 'sent bon' ?",
         duration: 11,
         content: [
@@ -3908,10 +3693,10 @@ export const COURSES = [
           { type: "ref", text: "Clyde Stubblefield, le batteur de James Brown sur 'Funky Drummer' (1970), joue un break de batterie qui a été samplé des centaines de fois par des rappeurs et des producteurs. Ce beat 'groovy' est construit sur des ghost notes, des syncopes précises, et une régularité métronomique. C'est l'exemple parfait de tout ce qui crée le groove." },
           { type: "tip", text: "Test groove personnel : enregistre 2 minutes de guitare rythmique sur un accord de Am avec métronome à 90 BPM. Joue le pattern le plus simple possible (une croche par temps, alternance bas-haut). Écoute l'enregistrement : est-ce que ça groove ? Si non, identifie les moments où le temps 'coule' : c'est là que tu travailles." },
         ],
-        quiz: ["q-rhy-c3-04", "q-rhy-c3-05"],
+        quiz: ["q-impro-13","q-logic-06"],
       },
       {
-        id: "rhy-c4-01",
+        id: "rhy-c4-01", level: 3,
         title: "La main droite : mouvement pendulaire et continuité",
         duration: 10,
         content: [
@@ -3936,10 +3721,10 @@ export const COURSES = [
           { type: "ref", text: "Tommy Emmanuel (guitariste australien virtuose de fingerstyle et flatpicking) passe les premières 10 minutes de chaque session à travailler uniquement le mouvement pendulaire de la main droite sur une corde. Il dit que c'est cet exercice quotidien qui lui a permis de développer le groove qu'il a aujourd'hui après 50 ans de guitare." },
           { type: "tip", text: "Drill main droite (5 min) : pas d'accords. Une seule corde (c5 vide). Mouvement pendulaire continu à 80 BPM. Accent légèrement plus fort sur les coups bas. Ne t'arrête pas, ne regarde pas ta main. Si tu dévies du métronome, c'est là où tu travailles." },
         ],
-        quiz: ["q-rhy-c4-01"],
+        quiz: [],
       },
       {
-        id: "rhy-c4-02",
+        id: "rhy-c4-02", level: 4,
         title: "Patterns de strumming : folk, pop, rock",
         duration: 12,
         content: [
@@ -3981,10 +3766,10 @@ export const COURSES = [
           { type: "ref", text: "Noel Gallagher (Oasis) utilise principalement 2 patterns : un pattern pop syncopé pour les ballades ('Wonderwall', 'Don't Look Back in Anger') et des downstrokes rock pour les morceaux énergiques. Écoute ces deux chansons en te concentrant uniquement sur sa main droite." },
           { type: "tip", text: "Apprentissage des patterns : prends le pattern pop syncopé. Joue-le d'abord sur UNE SEULE corde à 60 BPM. Quand c'est fluide, joue sur 2 cordes. Puis sur l'accord complet. Cette progression évite de gérer trop de variables en même temps." },
         ],
-        quiz: ["q-rhy-c4-02", "q-rhy-c4-03"],
+        quiz: [],
       },
       {
-        id: "rhy-c4-03",
+        id: "rhy-c4-03", level: 6,
         title: "Le palm mute : étouffer pour créer du groove",
         duration: 9,
         content: [
@@ -4009,10 +3794,10 @@ export const COURSES = [
           },
           { type: "tip", text: "Drill palm mute : sur la corde de Mi grave (c6), joue en downstrokes à 80 BPM avec PM sur les temps 1, 2, 3 et note ouverte sur le temps 4. Boucle 2 minutes. Quand c'est fluide, ajoute la corde de La (c5) pour former un E5 power chord. Tu joues le riff de base du rock." },
         ],
-        quiz: ["q-rhy-c4-04"],
+        quiz: ["q-rhy-07","q-rhy-09"],
       },
       {
-        id: "rhy-c5-01",
+        id: "rhy-c5-01", level: 6,
         title: "Blues shuffle : le feel ternaire appliqué",
         duration: 11,
         content: [
@@ -4042,10 +3827,10 @@ export const COURSES = [
           { type: "ref", text: "'Pride and Joy' (Stevie Ray Vaughan, 1983) : le riff d'intro est un Texas shuffle parfait en Mi. Écoute le feel 'longue-courte' sur chaque temps. 'Everyday I Have the Blues' (B.B. King) : Chicago shuffle épuré en Fa. 'Hound Dog' (Elvis, version Big Mama Thornton originale) : shuffle en Mi. Ces 3 morceaux = 3 déclinaisons du même feel." },
           { type: "tip", text: "Drill shuffle 20 min : mets un backing track de blues shuffle en La à 80 BPM (YouTube). Joue le riff boogie-woogie sur la corde 6 pendant 5 min. Puis improvise en pentatonique Am avec le feel shuffle (fais sonner tes phrases en longue-courte). Enregistre-toi. Tu entendras directement si le feel est là ou non." },
         ],
-        quiz: ["q-rhy-c5-01", "q-rhy-c5-02"],
+        quiz: ["q-rhy-10","q-rhy-12"],
       },
       {
-        id: "rhy-c5-02",
+        id: "rhy-c5-02", level: 8,
         title: "Reggae et ska : jouer sur les contretemps",
         duration: 10,
         content: [
@@ -4070,10 +3855,10 @@ export const COURSES = [
           { type: "ref", text: "'No Woman No Cry' (Bob Marley, 1975) : écoute la guitare et le piano dans le fond. Ils skanquent sur les contretemps pendant que la basse de Family Man Barrett tient les temps. 'The Harder They Come' (Jimmy Cliff, 1972) : exemple de ska à la limite du reggae early. 'What I Got' (Sublime, 1996) : ska-punk où la guitare skanque à tempo rapide." },
           { type: "tip", text: "Drill skank (10 min) : backing reggae en Do à 75 BPM (YouTube). Joue UNIQUEMENT sur les 'et' de chaque temps avec des accords courts et étouffés. Commence lentement (60 BPM). Compte à voix haute : 'silence(1) - chord(et) - silence(2) - chord(et)...' Ton oreille va s'inverser — après 5 minutes, le 'et' devient ta référence naturelle." },
         ],
-        quiz: ["q-rhy-c5-03"],
+        quiz: ["q-rhy-04","q-rhy-06"],
       },
       {
-        id: "rhy-c5-03",
+        id: "rhy-c5-03", level: 8,
         title: "Funk : les 16e notes et les ghost notes",
         duration: 12,
         content: [
@@ -4108,10 +3893,10 @@ export const COURSES = [
           { type: "ref", text: "'Le Freak' (CHIC, 1978) : le riff de guitare de Nile Rodgers = parfait exemple de ghost notes + accents en 16e. 'Get Up (I Feel Like Being a) Sex Machine' (James Brown, 1970) : riff de guitare en 16e avec ghost notes omniprésents. 'Give It Away' (Red Hot Chili Peppers, 1991) : John Frusciante adapte le funk au rock en maintenant les 16e continues." },
           { type: "tip", text: "Drill funk (15 min) : sur Am9 (accord Am avec 9e = La-Do-Mi-Si), joue un flux continu de 16e notes à 85 BPM. Main gauche : alterne pression complète (son) et relâchement (ghost). Main droite : bas-haut permanent. Commence avec un accent sur le 1 et sur le 'et-2', ghost partout ailleurs. Augmente progressivement la complexité rythmique." },
         ],
-        quiz: ["q-rhy-c5-04", "q-rhy-c5-05"],
+        quiz: ["q-rhy-07","q-rhy-09"],
       },
       {
-        id: "rhy-c5-04",
+        id: "rhy-c5-04", level: 9,
         title: "Bossa nova : le pattern classique",
         duration: 10,
         content: [
@@ -4136,10 +3921,10 @@ export const COURSES = [
           { type: "ref", text: "'The Girl from Ipanema' (Tom Jobim / Vinicius de Moraes, 1962 créée par João Gilberto) : la version originale fingerstyle de João Gilberto est la référence. 'Corcovado' (Quiet Nights) et 'Desafinado' sont aussi des exemples emblématiques. Pour la guitare seule, cherche les arrangements de Baden Powell ou de João Bosco." },
           { type: "tip", text: "Plan bossa sur 2 semaines : Semaine 1 - joue uniquement les accords sur les contretemps à 65 BPM (pattern simplifié). Semaine 2 - ajoute le pouce sur les temps forts. L'indépendance viendra progressivement. Ne force pas — la bossa demande de la patience mais récompense magnifiquement." },
         ],
-        quiz: ["q-rhy-c5-06"],
+        quiz: ["q-rhy-10","q-rhy-12"],
       },
       {
-        id: "rhy-c5-05",
+        id: "rhy-c5-05", level: 9,
         title: "Gypsy jazz : la pompe Django",
         duration: 10,
         content: [
@@ -4164,10 +3949,10 @@ export const COURSES = [
           { type: "ref", text: "'Minor Swing' (Django Reinhardt & Stéphane Grappelli, 1937) : LE standard gypsy jazz par excellence. La pompe de Rhythm Guitar Sec (le second guitariste du Quintette) sur ce morceau = exemple parfait. Écoute 'La Mer' (Charles Trenet) dans une version jazz pour la pompe appliquée à une chanson française." },
           { type: "tip", text: "La pompe gypsy est physique. Commence par 5 minutes maximum par session pour éviter les tendinites. Après 2 semaines, augmente à 10 minutes. La pompe gypsy est un marathon, pas un sprint." },
         ],
-        quiz: ["q-rhy-c5-07"],
+        quiz: ["q-rhy-04","q-rhy-06"],
       },
       {
-        id: "rhy-c6-01",
+        id: "rhy-c6-01", level: 9,
         title: "Jouer laid-back, on-top, in-the-pocket",
         duration: 10,
         content: [
@@ -4187,10 +3972,10 @@ export const COURSES = [
           { type: "ref", text: "Écoute comparative : 'Freddie King Is a Blues Master' (Freddie King) = laid-back extrême, les notes traînent. 'Bireli Lagrene joue Minor Swing' = on-top, chaque note pousse. 'James Brown - Super Bad' = in-the-pocket parfait, les musiciens 'lockés' comme des machines. Trois feels, trois émotions complètement différentes." },
           { type: "tip", text: "Exercice de micro-timing : joue une gamme de Do avec un métronome à 60 BPM. D'abord in-the-pocket (pile sur le clic). Puis essaie de jouer chaque note 20% plus tard (laid-back). Puis 20% plus tôt (on-top). Tu vas probablement avoir du mal à contrôler ces variations — c'est normal. Ce contrôle se développe sur des années de pratique consciente." },
         ],
-        quiz: ["q-rhy-c6-01", "q-rhy-c6-02"],
+        quiz: ["q-rhy-07","q-rhy-09"],
       },
       {
-        id: "rhy-c6-02",
+        id: "rhy-c6-02", level: 9,
         title: "Construire un riff rythmique personnel",
         duration: 11,
         content: [
@@ -4212,7 +3997,7 @@ export const COURSES = [
           { type: "ref", text: "Keith Richards (Rolling Stones) dit qu'il enregistre toutes ses idées de riffs la nuit avec un petit dictaphone. Beaucoup de ses riffs célèbres sont nés à 3h du matin. 'Satisfaction' est venu dans son sommeil — il s'est réveillé, a mis le dictaphone en marche, a joué le riff, puis s'est rendormi. Le lendemain, l'enregistrement était là." },
           { type: "tip", text: "Projet riff : crée 1 riff par semaine. Chaque lundi, tu as un nouveau riff à créer sur la base du style étudié (blues la semaine 1, reggae la semaine 2, funk la semaine 3, etc.). En 10 semaines, tu as 10 riffs personnels. C'est le début de ton vocabulaire musical propre." },
         ],
-        quiz: ["q-rhy-c6-03"],
+        quiz: ["q-rhy-10","q-rhy-12"],
       },
 
 ],
@@ -4232,7 +4017,7 @@ export const COURSES = [
       lessons: [
   
         {
-          id: "impro-01",
+          id: "impro-01", level: 6,
           title: "Penser en phrases musicales",
           duration: 12,
           content: [
@@ -4253,7 +4038,7 @@ export const COURSES = [
         },
   
         {
-          id: "impro-02",
+          id: "impro-02", level: 7,
           title: "Cibler les notes d'accord",
           duration: 15,
           content: [
@@ -4273,7 +4058,7 @@ export const COURSES = [
         },
   
         {
-          id: "impro-03",
+          id: "impro-03", level: 8,
           title: "Tension et résolution",
           duration: 15,
           content: [
@@ -4292,7 +4077,7 @@ export const COURSES = [
         },
   
         {
-          id: "impro-04",
+          id: "impro-04", level: 9,
           title: "Jouer sur les changements d'accords",
           duration: 18,
           content: [
@@ -4311,7 +4096,7 @@ export const COURSES = [
         },
   
         {
-          id: "impro-05",
+          id: "impro-05", level: 9,
           title: "Construire un solo",
           duration: 15,
           content: [
@@ -4329,7 +4114,7 @@ export const COURSES = [
         },
   
         {
-          id: "impro-06",
+          id: "impro-06", level: 8,
           title: "Vocabulaire blues et jazz",
           duration: 18,
           content: [
@@ -4359,9 +4144,9 @@ export const COURSES = [
 export const QUIZ = [
 
   // ═══ MANCHE — 20 questions ═══
-  {id:"q-neck-01",courseId:"neck",lessonId:"neck-01",lvl:1,q:"Quel intervalle sépare les cordes 3 et 2 (Sol et Si) sur une guitare en accordage standard ?",o:["Quarte juste","Tierce majeure","Quinte juste","Tierce mineure"],a:1,exp:"Sol→Si = 4 demi-tons = tierce majeure. C'est l'unique 'cassure' de l'accordage standard, toutes les autres cordes consécutives étant en quartes (5 demi-tons).",xp:30},
-  {id:"q-neck-02",courseId:"neck",lessonId:"neck-01",lvl:1,q:"Pourquoi les cases 12, 24 sont-elles marquées d'un double point ?",o:["Convention esthétique","Elles marquent les octaves de la corde à vide","Elles indiquent les notes naturelles","Elles séparent les zones graves/aiguës"],a:1,exp:"Le double point marque l'octave (case 12 = même note que corde à vide, +1 octave). Case 24 = +2 octaves. Repères de navigation cruciaux.",xp:25},
-  {id:"q-neck-03",courseId:"neck",lessonId:"neck-01",lvl:2,q:"Sur la corde 6, où se trouve la note Si ?",o:["Case 5","Case 7","Case 9","Case 11"],a:1,exp:"Mi(0)-Fa(1)-Sol(3)-La(5)-Si(7). Le Si est case 7 sur la corde 6. C'est l'une des 4 notes-repères principales (avec Sol-3, La-5, Do-8).",xp:30},
+  {id:"q-neck-01",courseId:"neck",lessonId: "neck-c1-01",lvl:1,q:"Quel intervalle sépare les cordes 3 et 2 (Sol et Si) sur une guitare en accordage standard ?",o:["Quarte juste","Tierce majeure","Quinte juste","Tierce mineure"],a:1,exp:"Sol→Si = 4 demi-tons = tierce majeure. C'est l'unique 'cassure' de l'accordage standard, toutes les autres cordes consécutives étant en quartes (5 demi-tons).",xp:30},
+  {id:"q-neck-02",courseId:"neck",lessonId: "neck-c1-01",lvl:1,q:"Pourquoi les cases 12, 24 sont-elles marquées d'un double point ?",o:["Convention esthétique","Elles marquent les octaves de la corde à vide","Elles indiquent les notes naturelles","Elles séparent les zones graves/aiguës"],a:1,exp:"Le double point marque l'octave (case 12 = même note que corde à vide, +1 octave). Case 24 = +2 octaves. Repères de navigation cruciaux.",xp:25},
+  {id:"q-neck-03",courseId:"neck",lessonId: "neck-c1-01",lvl:2,q:"Sur la corde 6, où se trouve la note Si ?",o:["Case 5","Case 7","Case 9","Case 11"],a:1,exp:"Mi(0)-Fa(1)-Sol(3)-La(5)-Si(7). Le Si est case 7 sur la corde 6. C'est l'une des 4 notes-repères principales (avec Sol-3, La-5, Do-8).",xp:30},
   {id:"q-neck-04",courseId:"neck",lessonId:"neck-02",lvl:2,q:"Quel est l'intervalle entre une note sur la corde 6 et la même case sur la corde 5 ?",o:["Tierce majeure","Quarte juste","Quinte juste","Octave"],a:1,exp:"Cordes 6 et 5 : accordage en quarte juste (5 demi-tons). Mi→La = quarte juste. C'est l'intervalle standard entre cordes adjacentes (sauf c3-c2 = tierce maj).",xp:35},
   {id:"q-neck-05",courseId:"neck",lessonId:"neck-02",lvl:2,q:"Tu joues Do (case 3, corde 5). Où se trouve son octave la plus proche, sur la corde 3 ?",o:["Case 3","Case 5","Case 7","Case 10"],a:1,exp:"Corde 5 vers corde 3 : le motif est +2 cases. Do en case 3 sur la corde 5 devient donc Do en case 5 sur la corde 3.",xp:40},
   {id:"q-neck-06",courseId:"neck",lessonId:"neck-02",lvl:3,q:"Combien y a-t-il de Do sur les 12 premières cases d'une guitare 6 cordes en accordage standard ?",o:["3","4","5","6"],a:2,exp:"Do est présent sur : corde 5 case 3, corde 4 case 10, corde 3 case 5, corde 2 case 1, corde 2 case 13. Total = 5 occurrences sur les 12 premières cases. Bonus : corde 1 case 8 (Do en aigu) ferait 6 si on étend.",xp:50},
@@ -4394,12 +4179,12 @@ export const QUIZ = [
   {id:"q-scales-11",courseId:"scales",lessonId:"scales-03",lvl:3,q:"Quelle note caractérise le mode lydien par rapport à l'ionien ?",o:["b7","#4","#5","b3"],a:1,exp:"Lydien = ionien (majeur) avec #4. Do lydien = Do-Ré-Mi-Fa#-Sol-La-Si. Le Fa# crée une couleur 'flottante', filmique (Star Wars, E.T.).",xp:45},
   {id:"q-scales-12",courseId:"scales",lessonId:"scales-03",lvl:3,q:"En La majeur, quel est le mode joué en partant de Do# ?",o:["Do# dorien","Do# phrygien","Do# lydien","Do# locrien"],a:1,exp:"En La majeur, Do# est le 3e degré. Le 3e mode = phrygien. Do# phrygien = La majeur en partant de Do#. Notes : Do#-Ré-Mi-Fa#-Sol#-La-Si.",xp:55},
   {id:"q-scales-13",courseId:"scales",lessonId:"scales-03",lvl:3,q:"Quelle paire de modes a EXACTEMENT les mêmes notes que Do majeur ?",o:["Ré dorien et Sol mixolydien","Mi dorien et Fa lydien","Sol dorien et La éolien","Si phrygien et Do# locrien"],a:0,exp:"Tous les modes de Do majeur partagent les mêmes 7 notes. Ré dorien (II) et Sol mixolydien (V) sont 2 modes de Do majeur. Aussi : Mi phrygien, Fa lydien, La éolien, Si locrien.",xp:55},
-  {id:"q-scales-14",courseId:"scales",lessonId:"scales-04",lvl:2,q:"Sur un accord Dm7 tenu (vamp modale), quel mode privilégier ?",o:["Ré phrygien","Ré dorien","Ré locrien","Ré mixolydien"],a:1,exp:"Sur tout accord m7 dans un contexte modal, le dorien est le mode 'naturel'. Ré dorien sur Dm7 = 'So What' (Miles Davis). Son polyvalent jazz/funk/rock.",xp:45},
-  {id:"q-scales-15",courseId:"scales",lessonId:"scales-04",lvl:3,q:"Quelle note de Ré dorien faut-il mettre en valeur pour 'affirmer' le mode ?",o:["Fa (b3)","Si (6 majeure)","La (5)","Ré (1)"],a:1,exp:"Ré dorien = Ré-Mi-Fa-Sol-La-Si-Do. Le Si (6 majeure) distingue dorien d'éolien. Mets-le en valeur (temps forts, notes longues) pour affirmer la couleur dorien.",xp:50},
-  {id:"q-scales-16",courseId:"scales",lessonId:"scales-05",lvl:2,q:"Sur un accord G7 (dominante non-résolue), quel mode utiliser ?",o:["Sol ionien","Sol mixolydien","Sol dorien","Sol lydien"],a:1,exp:"Sur tout accord 7 (dominante), le mixolydien correspond. Sol mixolydien = Sol-La-Si-Do-Ré-Mi-Fa. Le Fa naturel (b7) = la 7e de l'accord G7.",xp:40},
-  {id:"q-scales-17",courseId:"scales",lessonId:"scales-05",lvl:3,q:"Que se passe-t-il si tu joues Sol majeur (au lieu de Sol mixolydien) sur un accord G7 ?",o:["Rien, c'est identique","Le Fa# de Sol maj sonne dissonant sur G7 qui contient Fa","Plus joyeux","Aucune différence"],a:1,exp:"Sol majeur contient Fa#. G7 contient Fa naturel (la b7). Le Fa# entre en conflit avec le Fa de l'accord. Mixolydien (Fa naturel) = match parfait avec G7.",xp:55},
-  {id:"q-scales-18",courseId:"scales",lessonId:"scales-06",lvl:3,q:"Le mode phrygien dominant a quelle formule ?",o:["1-b2-b3-4-5-b6-b7","1-b2-3-4-5-b6-b7","1-2-b3-4-5-6-7","1-b2-b3-4-b5-b6-b7"],a:1,exp:"Phrygien dominant = phrygien avec 3 majeure (au lieu de b3). Formule 1-b2-3-4-5-b6-b7. Mode du flamenco authentique, du klezmer juif, et du Moyen-Orient.",xp:55},
-  {id:"q-scales-19",courseId:"scales",lessonId:"scales-06",lvl:3,q:"Le mode lydien évoque typiquement quelle ambiance ?",o:["Tristesse","Tension dramatique","Espace, rêve, magie","Énergie blues"],a:2,exp:"Lydien (#4) crée une couleur 'flottante', non-résolue. Son utilisé par John Williams (Star Wars, E.T.), Spielberg. Ambiance ouverte, magique, filmique.",xp:45},
+  {id:"q-scales-14",courseId:"scales",lessonId: "scales-c5-02",lvl:2,q:"Sur un accord Dm7 tenu (vamp modale), quel mode privilégier ?",o:["Ré phrygien","Ré dorien","Ré locrien","Ré mixolydien"],a:1,exp:"Sur tout accord m7 dans un contexte modal, le dorien est le mode 'naturel'. Ré dorien sur Dm7 = 'So What' (Miles Davis). Son polyvalent jazz/funk/rock.",xp:45},
+  {id:"q-scales-15",courseId:"scales",lessonId: "scales-c5-02",lvl:3,q:"Quelle note de Ré dorien faut-il mettre en valeur pour 'affirmer' le mode ?",o:["Fa (b3)","Si (6 majeure)","La (5)","Ré (1)"],a:1,exp:"Ré dorien = Ré-Mi-Fa-Sol-La-Si-Do. Le Si (6 majeure) distingue dorien d'éolien. Mets-le en valeur (temps forts, notes longues) pour affirmer la couleur dorien.",xp:50},
+  {id:"q-scales-16",courseId:"scales",lessonId: "scales-c5-05",lvl:2,q:"Sur un accord G7 (dominante non-résolue), quel mode utiliser ?",o:["Sol ionien","Sol mixolydien","Sol dorien","Sol lydien"],a:1,exp:"Sur tout accord 7 (dominante), le mixolydien correspond. Sol mixolydien = Sol-La-Si-Do-Ré-Mi-Fa. Le Fa naturel (b7) = la 7e de l'accord G7.",xp:40},
+  {id:"q-scales-17",courseId:"scales",lessonId: "scales-c5-05",lvl:3,q:"Que se passe-t-il si tu joues Sol majeur (au lieu de Sol mixolydien) sur un accord G7 ?",o:["Rien, c'est identique","Le Fa# de Sol maj sonne dissonant sur G7 qui contient Fa","Plus joyeux","Aucune différence"],a:1,exp:"Sol majeur contient Fa#. G7 contient Fa naturel (la b7). Le Fa# entre en conflit avec le Fa de l'accord. Mixolydien (Fa naturel) = match parfait avec G7.",xp:55},
+  {id:"q-scales-18",courseId:"scales",lessonId: "scales-c5-03",lvl:3,q:"Le mode phrygien dominant a quelle formule ?",o:["1-b2-b3-4-5-b6-b7","1-b2-3-4-5-b6-b7","1-2-b3-4-5-6-7","1-b2-b3-4-b5-b6-b7"],a:1,exp:"Phrygien dominant = phrygien avec 3 majeure (au lieu de b3). Formule 1-b2-3-4-5-b6-b7. Mode du flamenco authentique, du klezmer juif, et du Moyen-Orient.",xp:55},
+  {id:"q-scales-19",courseId:"scales",lessonId: "scales-c5-04",lvl:3,q:"Le mode lydien évoque typiquement quelle ambiance ?",o:["Tristesse","Tension dramatique","Espace, rêve, magie","Énergie blues"],a:2,exp:"Lydien (#4) crée une couleur 'flottante', non-résolue. Son utilisé par John Williams (Star Wars, E.T.), Spielberg. Ambiance ouverte, magique, filmique.",xp:45},
   {id:"q-scales-20",courseId:"scales",lessonId:"scales-07",lvl:2,q:"La gamme mineure harmonique se distingue de la mineure naturelle par…",o:["Une 6e majeure","Une 7e majeure","Une 4e augmentée","Une 2e mineure"],a:1,exp:"Mineure harmonique = mineure naturelle avec 7 majeure. La harmonique = La-Si-Do-Ré-Mi-Fa-Sol#. Le Sol# permet la cadence V-I forte en mineur.",xp:50},
   {id:"q-scales-21",courseId:"scales",lessonId:"scales-07",lvl:3,q:"La gamme mineure mélodique 'jazz' a quelle formule ?",o:["1-2-b3-4-5-b6-b7","1-2-b3-4-5-6-7","1-b2-b3-4-5-b6-7","1-2-3-4-5-6-b7"],a:1,exp:"Mélodique jazz = 1-2-b3-4-5-6-7. Mineure naturelle avec 6 ET 7 majeures. La mélodique jazz = La-Si-Do-Ré-Mi-Fa#-Sol#. Presque une majeure avec juste b3.",xp:55},
 
@@ -4451,14 +4236,14 @@ export const QUIZ = [
   {id:"q-impro-04",courseId:"scales",lessonId:"scales-02",lvl:2,q:"En jouant La pentatonique mineure sur un Cmaj7, ça sonne…",o:["Faux","Bluesy avec une note évitée (Fa) absente","Trop simple","Pareil qu'avec C majeur"],a:1,exp:"La penta min = La-Do-Ré-Mi-Sol. Toutes ces notes sont dans Do majeur SAUF que Fa (avoid note de Cmaj7) est absent. Résultat : son blues 'safe' sur Cmaj7.",xp:55},
   {id:"q-impro-05",courseId:"harmony",lessonId:"harmony-02",lvl:3,q:"Pour faire sonner Am7 'jazz', quelle pentatonique majeure jouer ?",o:["La majeure","Do majeure","Sol majeure","Mi majeure"],a:1,exp:"Penta majeure de la bIII (Do) sur Im7 (Am7). Notes : Do-Ré-Mi-Sol-La = b3, 4, 5, b7, 1 de Am7. Toutes des extensions jazz élégantes.",xp:60},
   {id:"q-impro-06",courseId:"harmony",lessonId:"harmony-06",lvl:3,q:"Tu joues sur G7. Quelle note crée le plus de tension à résoudre vers Cmaj7 ?",o:["Sol","Si","Fa","Lab"],a:3,exp:"G7 + Lab = G7(b9). Cette note (b9) crée une tension extrême qui résout magnifiquement vers Sol (1 de Cmaj7) ou Mi (3 de Cmaj7). Classique du jazz.",xp:65},
-  {id:"q-impro-07",courseId:"scales",lessonId:"scales-04",lvl:3,q:"Sur la progression Dm7-G7 (vamp ii-V), tu joues Ré dorien. Sur G7 ça donne quel mode ?",o:["Sol mixolydien","Sol ionien","Ré dorien (mêmes notes)","Sol dorien"],a:2,exp:"Ré dorien = Mi-Fa-Sol-La-Si-Do (mêmes notes que Do majeur). Sur G7, c'est mixolydien... mais comme Ré dorien = Sol mixolydien (même notes), tu joues les deux à la fois.",xp:65},
+  {id:"q-impro-07",courseId:"scales",lessonId: "scales-c5-02",lvl:3,q:"Sur la progression Dm7-G7 (vamp ii-V), tu joues Ré dorien. Sur G7 ça donne quel mode ?",o:["Sol mixolydien","Sol ionien","Ré dorien (mêmes notes)","Sol dorien"],a:2,exp:"Ré dorien = Mi-Fa-Sol-La-Si-Do (mêmes notes que Do majeur). Sur G7, c'est mixolydien... mais comme Ré dorien = Sol mixolydien (même notes), tu joues les deux à la fois.",xp:65},
   {id:"q-impro-08",courseId:"harmony",lessonId:"harmony-05",lvl:3,q:"Substitution tritonique appliquée à Dm7-G7-Cmaj7 donne…",o:["Dm7-Db7-Cmaj7","Dm7-G7-C#maj7","D#m7-G7-Cmaj7","Dm7-Bb7-Cmaj7"],a:0,exp:"Sub trito du V (G7) = Db7. Donc Dm7-Db7-Cmaj7. La basse descend chromatiquement Ré→Réb→Do. Mouvement très élégant.",xp:65},
   {id:"q-impro-09",courseId:"scales",lessonId:"scales-07",lvl:3,q:"Sur le V7 dans une cadence mineure (ex: E7→Am), quelle gamme privilégier ?",o:["Mi mixolydien","La mineure naturelle","La mineure harmonique (sur Am7)","E7 alteré ou phrygien dominant"],a:3,exp:"Sur le V7 résolvant en mineur, on utilise La mineure harmonique (= Mi phrygien dominant). Le Sol# de cette gamme est la 3 de E7 et résout sur La.",xp:70},
   {id:"q-impro-10",courseId:"harmony",lessonId:"harmony-06",lvl:3,q:"L''enclosure' (encadrement chromatique) consiste à…",o:["Jouer un accord enrichi","Encadrer une note cible par 2 notes voisines (1 chrome au-dessus, 1 au-dessous)","Rester dans une seule position","Jouer plus fort"],a:1,exp:"Enclosure = note cible Si encadrée par Do (chrome au-dessus) et Sib (chrome en dessous). Joue Do-Sib-Si. Crée une 'arrivée' élégante sur la cible.",xp:65},
   {id:"q-impro-11",courseId:"scales",lessonId:"scales-03",lvl:3,q:"Quelle gamme jouer sur un accord Cmaj7#11 ?",o:["Do majeure","Do lydien","Do mixolydien","Do dorien"],a:1,exp:"Maj7#11 contient un #4. Le mode lydien (1-2-3-#4-5-6-7) correspond exactement. Do lydien sur Cmaj7#11 = match parfait.",xp:65},
   {id:"q-impro-12",courseId:"harmony",lessonId:"harmony-02",lvl:3,q:"Sur un accord altéré G7alt (V7 vers Cm), quelle gamme ?",o:["Sol mixolydien","Sol diminué","Sol altéré (= 7e mode de Lab mineure mélodique)","Sol majeur"],a:2,exp:"Gamme altérée = mineure mélodique débutée sur le degré 7. Lab mélodique = Lab-Sib-Cb-Réb-Mib-Fa-Sol. Sol altéré = Sol-Lab-Sib-Cb-Réb-Mib-Fa = toutes les altérations possibles de G7.",xp:75},
   {id:"q-impro-13",courseId:"rhythm",lessonId:"rhythm-04",lvl:2,q:"Le 'climax' d'un solo se place idéalement…",o:["Au début","À la fin","Aux 2/3","Au milieu exact"],a:2,exp:"Règle des 2/3 : climax aux 2/3 → montée naturelle puis résolution satisfaisante. C'est la structure narrative classique. 'Comfortably Numb' (Gilmour) en est l'archétype.",xp:50},
-  {id:"q-impro-14",courseId:"scales",lessonId:"scales-05",lvl:3,q:"Sur un blues en La (A7-D7-E7), tu peux jouer La mixolydien sur tout. Pourquoi ça marche ?",o:["Coïncidence","La mixolydien contient les notes des 3 dominantes","Ce ne marche pas","C'est plus simple ainsi"],a:1,exp:"La mixolydien = La-Si-Do#-Ré-Mi-Fa#-Sol. Contient le Do# (3 de A7), Ré (1 de D7), Mi (1 de E7), Sol (b7 de A7), Fa# (3 de D7). 'Universel' pour ce blues.",xp:70},
+  {id:"q-impro-14",courseId:"scales",lessonId: "scales-c5-05",lvl:3,q:"Sur un blues en La (A7-D7-E7), tu peux jouer La mixolydien sur tout. Pourquoi ça marche ?",o:["Coïncidence","La mixolydien contient les notes des 3 dominantes","Ce ne marche pas","C'est plus simple ainsi"],a:1,exp:"La mixolydien = La-Si-Do#-Ré-Mi-Fa#-Sol. Contient le Do# (3 de A7), Ré (1 de D7), Mi (1 de E7), Sol (b7 de A7), Fa# (3 de D7). 'Universel' pour ce blues.",xp:70},
   {id:"q-impro-15",courseId:"harmony",lessonId:"harmony-06",lvl:3,q:"Tu finis ta phrase sur la 9e d'un accord Maj7 (ex: Ré sur Cmaj7). Effet ?",o:["Dissonant","Couleur jazz sophistiquée, 'flottante'","Identique à finir sur la tonique","Mauvaise note"],a:1,exp:"Finir sur la 9 (Ré sur Cmaj7) crée une couleur 'colored' = pas de résolution complète, tension douce qui invite à continuer. Très utilisé en jazz/bossa.",xp:65},
 
   // ═══ LOGIQUE MUSICALE — 10 questions ═══
@@ -4482,8 +4267,8 @@ export const QUIZ = [
   {id:"q-fret-scales-01",type:"fretboard",courseId:"scales",lessonId:"scales-01",lvl:1,q:"Sélectionne les notes de Do majeur sur les cases 0-3",concept:{type:"find_scale",root:"C",quality:"major"},selectionRules:{mode:"all"},fretRange:[0,3],display:{showNotes:false},hint:"Do majeur = Do Ré Mi Fa Sol La Si.",xp:45,exp:"Do majeur en position ouverte : 7 notes naturelles cases 0-3."},
   {id:"q-fret-scales-02",type:"fretboard",courseId:"scales",lessonId:"scales-02",lvl:1,q:"Sélectionne les notes de la pentatonique mineure de La (cases 5-8)",concept:{type:"find_scale",root:"A",quality:"pentatonic_minor"},selectionRules:{mode:"all"},fretRange:[4,9],display:{showNotes:false},hint:"Position 1 classique autour de la case 5.",xp:50,exp:"Pentatonique mineure de La position 1 : La-Do-Ré-Mi-Sol."},
   {id:"q-fret-scales-03",type:"fretboard",courseId:"scales",lessonId:"scales-02",lvl:2,q:"Trouve toutes les notes de la gamme blues de La sur le manche",concept:{type:"find_scale",root:"A",quality:"blues"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Blues = pentatonique mineure + note bleue (b5 = Ré#).",xp:55,exp:"Blues de La : La-Do-Ré-Ré#-Mi-Sol. La note bleue Ré# est la caracteristique."},
-  {id:"q-fret-scales-04",type:"fretboard",courseId:"scales",lessonId:"scales-04",lvl:2,q:"Trouve toutes les notes du dorien de Ré sur le manche",concept:{type:"find_scale",root:"D",quality:"dorian"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Dorien = mineur avec 6te majeure. Ré dorien = Ré Mi Fa Sol La Si Do.",xp:55,exp:"Ré dorien = notes de Do majeur depuis Ré. Le Si (6te M) est la note caractéristique."},
-  {id:"q-fret-scales-05",type:"fretboard",courseId:"scales",lessonId:"scales-05",lvl:2,q:"Trouve les notes du mixolydien de Sol (cases 0-5)",concept:{type:"find_scale",root:"G",quality:"mixolydian"},selectionRules:{mode:"all"},fretRange:[0,5],display:{showNotes:false},hint:"Mixolydien = majeure avec 7e mineure. Sol-La-Si-Do-Ré-Mi-Fa.",xp:55,exp:"Sol mixolydien : le Fa naturel (pas Fa#) est la note caractéristique."},
+  {id:"q-fret-scales-04",type:"fretboard",courseId:"scales",lessonId: "scales-c5-02",lvl:2,q:"Trouve toutes les notes du dorien de Ré sur le manche",concept:{type:"find_scale",root:"D",quality:"dorian"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Dorien = mineur avec 6te majeure. Ré dorien = Ré Mi Fa Sol La Si Do.",xp:55,exp:"Ré dorien = notes de Do majeur depuis Ré. Le Si (6te M) est la note caractéristique."},
+  {id:"q-fret-scales-05",type:"fretboard",courseId:"scales",lessonId: "scales-c5-05",lvl:2,q:"Trouve les notes du mixolydien de Sol (cases 0-5)",concept:{type:"find_scale",root:"G",quality:"mixolydian"},selectionRules:{mode:"all"},fretRange:[0,5],display:{showNotes:false},hint:"Mixolydien = majeure avec 7e mineure. Sol-La-Si-Do-Ré-Mi-Fa.",xp:55,exp:"Sol mixolydien : le Fa naturel (pas Fa#) est la note caractéristique."},
   {id:"q-fret-harm-01",type:"fretboard",courseId:"harmony",lessonId:"harmony-01",lvl:1,q:"Trouve toutes les notes de Do majeur (Do Mi Sol) sur le manche",concept:{type:"find_chord",root:"C",quality:"maj"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Do majeur = Do + Mi (3ce M) + Sol (5te).",xp:45,exp:"Triade Do majeur : 3 notes distinctes, nombreuses positions sur le manche."},
   {id:"q-fret-harm-02",type:"fretboard",courseId:"harmony",lessonId:"harmony-01",lvl:2,q:"Trouve toutes les notes de La mineur (La Do Mi)",concept:{type:"find_chord",root:"A",quality:"min"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"La mineur = La + Do (3ce m) + Mi (5te). Compare avec La majeur (Do#).",xp:45,exp:"Am : La-Do-Mi. La tierce mineure (Do vs Do#) fait toute la différence."},
   {id:"q-fret-harm-03",type:"fretboard",courseId:"harmony",lessonId:"harmony-02",lvl:3,q:"Trouve toutes les notes de Am7 (La Do Mi Sol)",concept:{type:"find_chord",root:"A",quality:"min7"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Am7 = Am + Sol (7e mineure). 4 notes sur tout le manche.",xp:55,exp:"Am7 : La-Do-Mi-Sol. La 7e mineure Sol est la couleur funk/jazz."},
@@ -4515,8 +4300,8 @@ export const EXERCISES = [
   {id:"ex-scales-01",mod:"scales",lvl:1,title:"Penta Am pos. 1 propre",dur:12,bpm:60,courseLink:"scales-02",steps:["Index case 5, annulaire case 7, auriculaire case 8.","Joue corde 6 → 1 montant à 60 BPM. Chaque note doit sonner claire.","Redescends c1 → c6 même tempo.","Augmente progressivement : 70, 80, 90 BPM."],tip:"Lenteur = propreté. Propreté = vélocité future.",xp:50},
   {id:"ex-scales-02",mod:"scales",lvl:2,title:"Penta Am 5 positions enchaînées",dur:20,bpm:60,courseLink:"scales-02",steps:["Position 5 (case 3) → 1 (case 5) → 2 (case 8) → 3 (case 10) → 4 (case 12).","Boucle 3 fois à 60 BPM en montant.","Boucle 3 fois en descendant.","Identifie les notes-pivot (case 5, 8, 10, 12)."],tip:"4-6 semaines de pratique pour automatiser. C'est le boss de la pentatonique.",xp:90},
   {id:"ex-scales-03",mod:"scales",lvl:2,title:"Sol majeur 2 octaves",dur:12,bpm:65,courseLink:"scales-01",steps:["Sol(corde 6 case 3)-La(corde 6 case 5)-Si(corde 5 case 2)-Do(corde 5 case 3)-Ré(corde 5 case 5)-Mi(corde 4 case 2)-Fa#(corde 4 case 4)-Sol(corde 4 case 5).","Continue : La(corde 3 case 2)-Si(corde 3 case 4)-Do(corde 2 case 1)-Ré(corde 2 case 3)-Mi(corde 2 case 5)-Fa#(corde 1 case 2)-Sol(corde 1 case 3).","Descends pareil. 5 cycles complets.","Identifie Sol et Si comme repères visuels."],tip:"Cette position couvre 2 octaves. Mémorise-la, c'est ta base en Sol.",xp:70},
-  {id:"ex-scales-04",mod:"scales",lvl:3,title:"Ré dorien sur drone",dur:15,bpm:80,courseLink:"scales-04",steps:["Lance backing 'Dm7 vamp 80 BPM' (YouTube) ou drone Ré.","Joue Ré dorien : Ré-Mi-Fa-Sol-La-Si-Do.","Mets en valeur Si (la sixte caractéristique) toutes les 2 mesures.","10 minutes non-stop. Enregistre-toi."],tip:"Sans le Si, ça sonnera mineur générique. Le Si fait toute la différence.",xp:85},
-  {id:"ex-scales-05",mod:"scales",lvl:3,title:"Sol mixolydien sur G7",dur:12,bpm:75,courseLink:"scales-05",steps:["Backing G7 75 BPM ou blues en Sol.","Joue Sol mixolydien : Sol-La-Si-Do-Ré-Mi-Fa.","Mets en avant le Fa naturel (b7 caractéristique).","Compare 5 min avec Sol majeur (Fa#) — entends la différence."],tip:"Le Fa naturel = LA note mixolydienne. C'est la 7e de l'accord.",xp:80},
+  {id:"ex-scales-04",mod:"scales",lvl:3,title:"Ré dorien sur drone",dur:15,bpm:80,courseLink: "scales-c5-02",steps:["Lance backing 'Dm7 vamp 80 BPM' (YouTube) ou drone Ré.","Joue Ré dorien : Ré-Mi-Fa-Sol-La-Si-Do.","Mets en valeur Si (la sixte caractéristique) toutes les 2 mesures.","10 minutes non-stop. Enregistre-toi."],tip:"Sans le Si, ça sonnera mineur générique. Le Si fait toute la différence.",xp:85},
+  {id:"ex-scales-05",mod:"scales",lvl:3,title:"Sol mixolydien sur G7",dur:12,bpm:75,courseLink: "scales-c5-05",steps:["Backing G7 75 BPM ou blues en Sol.","Joue Sol mixolydien : Sol-La-Si-Do-Ré-Mi-Fa.","Mets en avant le Fa naturel (b7 caractéristique).","Compare 5 min avec Sol majeur (Fa#) — entends la différence."],tip:"Le Fa naturel = LA note mixolydienne. C'est la 7e de l'accord.",xp:80},
   {id:"ex-scales-06",mod:"scales",lvl:3,title:"Mineure harmonique sur V7",dur:12,bpm:80,courseLink:"scales-07",steps:["Sur la cadence E7→Am, joue La mineure harmonique sur le E7.","La harmonique = La-Si-Do-Ré-Mi-Fa-Sol#.","Le Sol# crée la tension parfaite vers Am.","Compare avec La éolien (Sol naturel) — moins de tension."],tip:"Sol# de l'harmonique = la 3 de E7. Match parfait pour la résolution.",xp:80},
 
   // ═══ HARMONIE ═══
@@ -4536,7 +4321,7 @@ export const EXERCISES = [
   // ═══ IMPRO ═══
   {id:"ex-impro-01",mod:"impro",lvl:1,title:"Impro 3 notes Am",dur:10,bpm:70,courseLink:"scales-02",steps:["Backing Am 70 BPM. Joue UNIQUEMENT 3 notes : La (corde 5 case 7), Do (corde 4 case 5), Mi (corde 4 case 7).","5 minutes : varie le rythme et l'ordre, jamais les notes.","Ajoute 2 notes : Ré (corde 3 case 7), Sol (corde 3 case 5).","5 min avec ces 5 notes = penta complète pos. 1."],tip:"Contrainte = créativité. Plus de notes ≠ plus de musicalité.",xp:55},
   {id:"ex-impro-02",mod:"impro",lvl:2,title:"Cibler les guide tones",dur:12,bpm:80,courseLink:"harmony-06",steps:["Backing Dm7-G7-Cmaj7 80 BPM.","Sur Dm7 : termine ta phrase sur Fa (3) ou Do (b7).","Sur G7 : cible Si (3) ou Fa (b7).","Sur Cmaj7 : cible Mi (3) ou Si (M7)."],tip:"Cibler les guide tones = sonner immédiatement 'sur l'accord'. Truc n°1 du jazz.",xp:80},
-  {id:"ex-impro-03",mod:"impro",lvl:3,title:"Impro modale dorien 10 min",dur:15,bpm:90,courseLink:"scales-04",steps:["Drone Ré (corde 5 vide ou app drone).","Joue uniquement Ré dorien : Ré-Mi-Fa-Sol-La-Si-Do.","Construis des phrases de 4-8 notes contenant TOUTES Si.","10 min non-stop. Enregistre. Écoute après."],tip:"Sans Si, dorien sonne mineur générique. Avec Si, c'est une autre couleur.",xp:90},
+  {id:"ex-impro-03",mod:"impro",lvl:3,title:"Impro modale dorien 10 min",dur:15,bpm:90,courseLink: "scales-c5-02",steps:["Drone Ré (corde 5 vide ou app drone).","Joue uniquement Ré dorien : Ré-Mi-Fa-Sol-La-Si-Do.","Construis des phrases de 4-8 notes contenant TOUTES Si.","10 min non-stop. Enregistre. Écoute après."],tip:"Sans Si, dorien sonne mineur générique. Avec Si, c'est une autre couleur.",xp:90},
   {id:"ex-impro-04",mod:"impro",lvl:3,title:"Approche chromatique",dur:12,bpm:70,courseLink:"harmony-06",steps:["Backing Cmaj7 70 BPM. Cible Mi (3 de Cmaj7).","Avant chaque Mi, joue Fa (1/2 ton au-dessus). Phrase : Fa→Mi.","Ou : joue Mib (1/2 ton en dessous). Phrase : Mib→Mi.","Mélange les 2 approches dans une impro de 5 min."],tip:"Chromatisme = note tendue → note cible. Source du son bebop.",xp:75},
   {id:"ex-impro-05",mod:"impro",lvl:3,title:"Enclosure de Sol sur Cmaj7",dur:10,bpm:75,courseLink:"harmony-06",steps:["Cible : Sol (5 de Cmaj7).","Encadre Sol par : Lab (chrome au-dessus) et Fa# (chrome en dessous).","Lick : Lab-Fa#-Sol. Joue cette enclosure 10 fois.","Intègre dans une impro libre sur Cmaj7."],tip:"Enclosure = arrivée 'parfaite' sur la cible. Très utilisé en bebop.",xp:80},
 
@@ -4727,7 +4512,7 @@ export const EXERCISES = [
     id:"ex-fret-05", type:"fretboard_exercise", mod:"scales", lvl:2,
     title:"Gammes et modes — exploration", dur:15, xp:90,
     unlockedBy:["scales-03","scales-04"],
-    courseLink:"scales-04",
+    courseLink: "scales-c5-02",
     stages:[
       {
         instruction:"Trouve toutes les notes de Do majeur sur le manche",

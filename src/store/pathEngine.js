@@ -24,60 +24,64 @@
 //   • Unité complète (leçons + vérification) → un coffre de +40 XP est
 //     réclamable (une seule fois).
 
-export const UNIT_SIZE = 3;
 export const UNIT_BONUS_XP = 40;
 export const UNIT_CHECK_PASS_PCT = 70;   // % minimum pour valider une unité
 export const UNIT_CHECK_MAX_QUESTIONS = 8;
 export const MODULE_ORDER = ["neck", "scales", "harmony", "rhythm", "impro"];
-
-/** Découpe les leçons d'un module en unités de 3 (fusion si reste de 1). */
-export function chunkLessons(lessons, size = UNIT_SIZE) {
-  const out = [];
-  for (let i = 0; i < lessons.length; i += size) out.push(lessons.slice(i, i + size));
-  if (out.length >= 2 && out[out.length - 1].length === 1) {
-    const orphan = out.pop();
-    out[out.length - 1] = [...out[out.length - 1], ...orphan];
-  }
-  return out;
-}
+export const MAX_LEVEL = 9;
+// Au-delà de ce nombre de leçons, un palier est scindé en deux unités
+// successives : le document de refonte visait 10-14 leçons par étape
+// ("franchissable en 1-2 semaines"), mais certains paliers (7, 9) en
+// comptent jusqu'à 19 une fois le contenu réel réparti.
+const SPLIT_THRESHOLD = 15;
 
 /**
- * Construit la séquence d'unités entrelacées (sans statut).
- * @param {Array} courses - liste des modules/cours
- * @param {string|string[]|null} priorityModules - id(s) de module à mettre
- *        en tête de rotation, dans l'ordre de priorité (ex: [moduleFaible,
- *        moduleObjectif]). Accepte une chaîne unique pour compat historique.
+ * Construit la séquence d'unités PAR PALIER (sans statut).
+ *
+ * C'est le cœur de la refonte pédagogique : une unité n'est plus un groupe
+ * de 3 leçons d'une seule discipline, c'est un palier entier — manche,
+ * gammes, harmonie et rythme mélangés selon ce qui est réellement
+ * accessible à ce stade, pas selon une étiquette de matière. Le Palier 1
+ * (4 leçons, une par discipline) n'aurait aucun sens éclaté en 4 unités
+ * séparées : le mélange est la leçon elle-même, pas d'une simple présentation.
+ *
+ * Chaque leçon reçoit ici son propre courseId/courseTitle d'origine (le
+ * champ n'existe pas nativement sur l'objet leçon dans content.js) — c'est
+ * ce qui permet au reste de l'app (thème visuel, "prochaine leçon", badges
+ * par module) de continuer à savoir de quelle discipline elle vient, même
+ * regroupée dans une unité multi-disciplines.
  */
-export function buildUnits(courses = [], priorityModules = null) {
-  const raw = Array.isArray(priorityModules) ? priorityModules : (priorityModules ? [priorityModules] : []);
-  const priorities = [...new Set(raw.filter(id => MODULE_ORDER.includes(id)))];
-  const order = priorities.length > 0
-    ? [...priorities, ...MODULE_ORDER.filter(id => !priorities.includes(id))]
-    : MODULE_ORDER;
-  const ordered = [
-    ...order.map(id => courses.find(c => c.id === id)).filter(Boolean),
-    ...courses.filter(c => !MODULE_ORDER.includes(c.id)),
-  ];
-  const perModule = ordered
-    .map(c => ({ course: c, chunks: chunkLessons(c.lessons || []) }))
-    .filter(m => m.chunks.length > 0);
+export function buildUnits(courses = []) {
+  const allLessons = courses.flatMap(c =>
+    (c.lessons || []).map(l => ({ ...l, courseId: c.id, courseTitle: c.title }))
+  );
+  // Leçons sans level explicite (contenu importé, oubli) : rattachées au
+  // dernier palier plutôt qu'exclues silencieusement du Parcours.
+  for (const l of allLessons) if (l.level == null) l.level = MAX_LEVEL;
 
   const units = [];
-  const maxRounds = perModule.reduce((a, m) => Math.max(a, m.chunks.length), 0);
-  for (let round = 0; round < maxRounds; round++) {
-    for (const m of perModule) {
-      if (round < m.chunks.length) {
-        units.push({
-          id: `${m.course.id}-u${round + 1}`,   // stable tant que l'ordre des leçons l'est
-          courseId: m.course.id,
-          courseTitle: m.course.title,
-          courseDesc: m.course.desc || "",
-          moduleUnitIndex: round + 1,
-          moduleUnitCount: m.chunks.length,
-          lessons: m.chunks[round],
-        });
-      }
-    }
+  for (let level = 1; level <= MAX_LEVEL; level++) {
+    const lessons = allLessons.filter(l => l.level === level);
+    if (lessons.length === 0) continue;
+    // Ordre fixe et déterministe à l'intérieur d'un palier — jamais
+    // aléatoire, l'apprenant doit toujours savoir dans quel ordre les
+    // disciplines se présentent. Le tri est stable : deux leçons d'un
+    // même cours gardent leur ordre d'origine.
+    lessons.sort((a, b) => MODULE_ORDER.indexOf(a.courseId) - MODULE_ORDER.indexOf(b.courseId));
+
+    const chunks = lessons.length > SPLIT_THRESHOLD
+      ? [lessons.slice(0, Math.ceil(lessons.length / 2)), lessons.slice(Math.ceil(lessons.length / 2))]
+      : [lessons];
+
+    chunks.forEach((chunk, partIdx) => {
+      units.push({
+        id: chunks.length > 1 ? `palier-${level}-${partIdx + 1}` : `palier-${level}`,
+        level,
+        title: chunks.length > 1 ? `Palier ${level} · partie ${partIdx + 1}` : `Palier ${level}`,
+        courseIds: [...new Set(chunk.map(l => l.courseId))],
+        lessons: chunk,
+      });
+    });
   }
   return units;
 }
@@ -86,18 +90,18 @@ export function buildUnits(courses = [], priorityModules = null) {
  * Le parcours complet avec statuts :
  * chaque unité reçoit { done, total, complete, unlocked, isCurrent,
  * bonusClaimable, bonusClaimed, index }.
- * @param {string|string[]|null} priorityModules - par défaut, combine
- *        state.onboarding.weakestModule (issu du vrai test de placement —
- *        priorité la plus forte, on renforce les bases en premier) et
- *        state.onboarding.preferredModule (issu de l'objectif choisi).
- *        Pas besoin de le repasser manuellement depuis les écrans existants.
+ * @param {string|string[]|null} priorityModules - conservé pour compatibilité
+ *        d'appel, mais sans effet sur l'ordre : celui-ci suit désormais les
+ *        paliers, dans un ordre fixe (1 à 9), plus une rotation de modules.
+ *        La vraie personnalisation par la faiblesse détectée au placement
+ *        se fera au niveau du déblocage initial (à implémenter), pas de
+ *        l'ordre de présentation.
  */
 export function buildPath(content, state, priorityModules = null) {
   const completed = state?.completedLessons || {};
   const claimed   = state?.claimedUnits || {};
   const checks    = state?.unitChecks || {};
-  const defaultPriorities = [state?.onboarding?.weakestModule, state?.onboarding?.preferredModule].filter(Boolean);
-  const units = buildUnits(content?.courses || [], priorityModules ?? defaultPriorities);
+  const units = buildUnits(content?.courses || []);
 
   let prevComplete = true;      // la toute première unité est toujours ouverte
   let currentAssigned = false;
@@ -154,7 +158,7 @@ export function getNextLesson(content, state) {
     if (u.needsCheck && !pendingCheckUnit) pendingCheckUnit = u;
     for (const lesson of u.lessons) {
       if (!completed[lesson.id]) {
-        const course = (content?.courses || []).find(c => c.id === u.courseId);
+        const course = (content?.courses || []).find(c => c.id === lesson.courseId);
         return { course, lesson, unit: u };
       }
     }
