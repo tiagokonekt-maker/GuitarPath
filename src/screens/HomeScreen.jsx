@@ -105,6 +105,21 @@ function GropiBlock({ state, dispatch, navigate, reviewStats, nextLesson }) {
       sub:"Toutes les leçons sont vues, il ne reste que le contrôle",
       dur:"5 min", action:"courses",
     });
+    // Le Défi du jour rejoint la routine quotidienne, à sa vraie place.
+    // Affiché même une fois terminé (mais barré/validé), parce que voir
+    // ce qu'on a déjà accompli aujourd'hui fait partie de la motivation.
+    s.push(state.dailyChallengeDone ? {
+      icon:"trophy", color:C.green,
+      label:"Défi du jour terminé",
+      sub:"Reviens demain pour le suivant",
+      dur:"✓", action:"challenge", done:true,
+    } : {
+      icon:"bolt", color:C.amber,
+      label:"Défi du jour",
+      sub:"Un exercice court, tiré au hasard",
+      dur:"3 min", action:"challenge",
+    });
+
     if(s.length===0) s.push({
       icon:"music", color:C.pink,
       label:"Jam Session libre",
@@ -112,10 +127,17 @@ function GropiBlock({ state, dispatch, navigate, reviewStats, nextLesson }) {
       dur:"∞", action:"jam",
     });
     return s;
-  },[reviewStats.toReview,nextLesson]);
+  },[reviewStats.toReview,nextLesson,state.dailyChallengeDone]);
 
-  const totalMin = steps.reduce((a,s)=>a+(parseInt(s.dur)||5),0);
-  const mainAction = steps[0]?.action || "jam";
+  // Les étapes déjà terminées ne comptent pas dans le temps annoncé : le
+  // repli `|| 5` transformait sinon un "✓" en 5 minutes fantômes.
+  const totalMin = steps
+    .filter(s => !s.done)
+    .reduce((a,s)=>a+(parseInt(s.dur)||5),0);
+  // L'action principale est la première étape NON terminée : sans ce
+  // filtre, quelqu'un ayant tout fait sauf le défi verrait le bouton
+  // pointer vers une étape déjà validée.
+  const mainAction = (steps.find(s => !s.done) || steps[0])?.action || "jam";
 
   return (
     <div style={{
@@ -178,13 +200,20 @@ function GropiBlock({ state, dispatch, navigate, reviewStats, nextLesson }) {
             borderTop:i>0?`1px dashed ${C.borderSoft}`:"none",
           }}>
             <div style={{
-              width:32,height:32,borderRadius:10,background:C.surface2,
+              width:32,height:32,borderRadius:10,
+              background: step.done ? C.greenL : C.surface2,
               display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,
             }}>
               <Ti name={step.icon} size={15} color={step.color}/>
             </div>
             <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:13,fontWeight:700,color:C.text,letterSpacing:"-.1px"}}>{step.label}</div>
+              {/* Une étape terminée s'affiche estompée : on la voit (ça
+                  compte, on l'a faite) sans qu'elle attire l'oeil comme
+                  une action restante. */}
+              <div style={{
+                fontSize:13,fontWeight:700,letterSpacing:"-.1px",
+                color: step.done ? C.text3 : C.text,
+              }}>{step.label}</div>
               <div style={{fontSize:10.5,color:C.text3,marginTop:1}}>{step.sub}</div>
             </div>
             <span style={{fontSize:11,fontWeight:700,color:C.text2,flexShrink:0}}>{step.dur}</span>
@@ -427,17 +456,15 @@ function HomeScreen({state,dispatch,navigate,content}) {
         <div style={{fontSize:11,fontWeight:700,letterSpacing:".07em",textTransform:"uppercase",color:C.text3,fontFamily:FONTS.ui,marginBottom:10}}>
           Accès rapide
         </div>
+        {/* Le Défi du jour a quitté cette section : Jam Session et Ear
+            Training sont des OUTILS (disponibles en permanence, on y va
+            quand on veut), alors que le Défi est une ACTIVITÉ QUOTIDIENNE
+            — il expire et se réinitialise. Le mêler aux outils lui faisait
+            perdre son caractère d'urgence. Il est désormais une étape de
+            "Ta session du jour", là où il a du sens. */}
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20}}>
           <QuickCard icon="music" iconBg={C.pinkL}  iconColor={C.pink}  label="Jam Session"  onClick={()=>navigate("jam")}/>
           <QuickCard icon="ear"   iconBg={C.greenL} iconColor={C.green} label="Ear Training" onClick={()=>navigate("ear")}/>
-          <QuickCard
-            icon={state.dailyChallengeDone?"trophy":"bolt"}
-            iconBg={state.dailyChallengeDone?C.greenL:C.amberL}
-            iconColor={state.dailyChallengeDone?C.green:C.amber}
-            label={state.dailyChallengeDone?"Défi terminé":"Défi du jour"}
-            done={state.dailyChallengeDone}
-            onClick={()=>navigate("challenge")}
-          />
         </div>
       </div>
 

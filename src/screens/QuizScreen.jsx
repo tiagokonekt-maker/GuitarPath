@@ -55,6 +55,7 @@ function unlockedQuizLvl(state, content, courseId) {
  */
 function QuizScreen({ state, dispatch, content, embedded = false }) {
   const C = useC();
+  const [showModules, setShowModules] = useState(false);
   const MODULES = makeModules(C);
   const [mode, setMode] = useState(null);
 
@@ -160,44 +161,46 @@ function QuizScreen({ state, dispatch, content, embedded = false }) {
           <Ti name="arrow-right" size={18} color={C.primary} />
         </button>
 
-        {/* ── QUIZ PAR MODULE ──────────────────────────────────────────────── */}
-        <div style={{ fontSize:11, fontWeight:700, color:C.text3, letterSpacing:".07em", textTransform:"uppercase", marginBottom:10 }}>
-          Par module
-        </div>
+        {/* ── EXPLORER PAR MODULE — replié ─────────────────────────────────
+            La grille de 5 cartes avec barres de progression a été retirée :
+            c'était de l'information de SUIVI (16% en Manche, 7% en Gammes)
+            sur laquelle on n'agit pas, affichée en permanence sur un écran
+            d'ACTION. Ces chiffres appartiennent à l'écran Progrès.
+            Ce qui reste ici est la seule chose actionnable : choisir un
+            module pour le travailler. Replié, parce que le fil directeur
+            c'est "Quiz du jour" — le reste est une exploration volontaire. */}
+        <button
+          onClick={() => setShowModules(v => !v)}
+          style={{
+            width:"100%", background:"none", border:"none", cursor:"pointer",
+            padding:"6px 0 10px", display:"flex", alignItems:"center", gap:7,
+            fontFamily:FONTS.ui, textAlign:"left",
+          }}>
+          <Ti name={showModules ? "chevron-down" : "chevron-right"} size={15} color={C.text3} />
+          <span style={{ fontSize:11, fontWeight:700, color:C.text3, letterSpacing:".07em", textTransform:"uppercase" }}>
+            Cibler un module
+          </span>
+        </button>
 
-        {MODULES.map(m => {
-          const total   = content.quiz.filter(q => q.courseId===m.id).length;
-          const done    = content.quiz.filter(q => q.courseId===m.id && state.quizResults[q.id]).length;
-          const wrong   = content.quiz.filter(q => q.courseId===m.id && state.wrongQuiz.includes(q.id)).length;
-          const pct     = total ? Math.round(done/total*100) : 0;
-          if (total === 0) return null;
-
-          return (
-            <button key={m.id} onClick={() => launch(m.id, m.label)} style={{
-              width:"100%", background:C.surface, border:`1.5px solid ${C.border}`,
-              borderRadius:R.lg, padding:"13px 16px",
-              display:"flex", alignItems:"center", gap:12,
-              cursor:"pointer", textAlign:"left",
-              fontFamily:FONTS.title, marginBottom:8,
-            }}>
-              <div style={{ width:44, height:44, borderRadius:R.md, background:m.colorL, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-                <Ti name={m.icon} size={20} color={m.color} />
-              </div>
-              <div style={{ flex:1 }}>
-                <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
-                  <span style={{ fontSize:14, fontWeight:700, color:C.text }}>{m.label}</span>
-                  <span style={{ fontSize:12, fontWeight:700, color:m.color }}>{pct}%</span>
-                </div>
-                <ProgressBar pct={pct} color={m.color} h={4} />
-                <div style={{ display:"flex", justifyContent:"space-between", marginTop:4 }}>
-                  <span style={{ fontSize:11, color:C.text3 }}>{done}/{total} répondues</span>
-                  {wrong > 0 && <span style={{ fontSize:11, fontWeight:600, color:C.pink }}>{wrong} à revoir</span>}
-                </div>
-              </div>
-              <Ti name="chevron-right" size={15} color={C.text3} />
-            </button>
-          );
-        })}
+        {showModules && (
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:8 }}>
+            {MODULES.map(m => {
+              const total = content.quiz.filter(q => q.courseId===m.id && isUnlocked(q)).length;
+              if (total === 0) return null;
+              return (
+                <button key={m.id} onClick={() => launch(m.id, m.label)} style={{
+                  background:C.surface, border:`1.5px solid ${C.border}`,
+                  borderRadius:R.md, padding:"11px 12px",
+                  display:"flex", alignItems:"center", gap:9,
+                  cursor:"pointer", textAlign:"left", fontFamily:FONTS.ui,
+                }}>
+                  <Ti name={m.icon} size={17} color={m.color} />
+                  <span style={{ fontSize:13, fontWeight:700, color:C.text }}>{m.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         <div style={{ height:24 }} />
       </div>

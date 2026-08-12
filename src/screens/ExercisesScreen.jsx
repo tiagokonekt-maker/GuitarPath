@@ -22,6 +22,7 @@ const DIFF_STARS = { 1:"★☆☆", 2:"★★☆", 3:"★★★" };
  *                  image, fourni par l'écran hôte.
  */
 function ExercisesScreen({ state, dispatch, content, embedded = false }) {
+  const [showFilters, setShowFilters] = useState(false);
   const C = useC();
   const MODULE_THEME = buildModuleTheme(C);
   const LEVEL_COLORS = makeLevelColors(C);
@@ -88,21 +89,45 @@ function ExercisesScreen({ state, dispatch, content, embedded = false }) {
         </div>
       </div>}
 
-      {/* ── FILTRES ──────────────────────────────────────────────────────── */}
-      <div style={{ display:"flex", gap:6, padding:"12px 20px", overflowX:"auto" }}>
-        {cats.map(c => (
-          <button key={c.id} onClick={() => setFilter(c.id)} style={{
-            padding:"7px 14px", borderRadius:99,
-            border:`1.5px solid ${filter===c.id ? C.primary : C.border}`,
-            background: filter===c.id ? C.primary : C.surface,
-            color: filter===c.id ? "#fff" : C.text2,
-            fontSize:12, fontWeight:600, cursor:"pointer",
-            whiteSpace:"nowrap", flexShrink:0, fontFamily:FONTS.ui,
-          }}>{c.label}</button>
-        ))}
-      </div>
+
 
       <div style={{ padding:"0 20px" }}>
+
+        {/* ── CIBLER UNE MATIÈRE — replié, APRÈS la recommandation ───────
+            Les pastilles de filtre étaient auparavant le PREMIER élément de
+            l'écran : elles imposaient un choix avant même de savoir ce qu'on
+            cherchait, et sur la taxonomie par matière qu'on a abandonnée
+            ailleurs. Elles restent disponibles (utile guitare en main, pour
+            travailler un point précis) mais après la recommandation, et
+            repliées par défaut. */}
+        <button
+          onClick={() => setShowFilters(v => !v)}
+          style={{
+            width:"100%", background:"none", border:"none", cursor:"pointer",
+            padding:"2px 0 10px", display:"flex", alignItems:"center", gap:7,
+            fontFamily:FONTS.ui, textAlign:"left",
+          }}>
+          <Ti name={showFilters ? "chevron-down" : "chevron-right"} size={15} color={C.text3} />
+          <span style={{ fontSize:11, fontWeight:700, color:C.text3, letterSpacing:".07em", textTransform:"uppercase" }}>
+            {filter === "all" ? "Cibler une matière" : `Filtré : ${cats.find(c=>c.id===filter)?.label}`}
+          </span>
+        </button>
+
+        {showFilters && (
+          <div style={{ display:"flex", gap:6, overflowX:"auto", paddingBottom:12 }}>
+            {cats.map(c => (
+              <button key={c.id} onClick={() => setFilter(c.id)} style={{
+                padding:"7px 14px", borderRadius:99,
+                border:`1.5px solid ${filter===c.id ? C.primary : C.border}`,
+                background: filter===c.id ? C.primary : C.surface,
+                color: filter===c.id ? "#fff" : C.text2,
+                fontSize:12, fontWeight:600, cursor:"pointer",
+                whiteSpace:"nowrap", flexShrink:0, fontFamily:FONTS.ui,
+              }}>{c.label}</button>
+            ))}
+          </div>
+        )}
+
 
         {/* ── RECOMMANDÉ ───────────────────────────────────────────────────── */}
         {recommended && (
