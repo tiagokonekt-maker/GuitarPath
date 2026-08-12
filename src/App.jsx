@@ -24,6 +24,7 @@ const screensPromise = Promise.all([
   import("./screens/ExercisesScreen.jsx"),
   import("./screens/QuizScreen.jsx"),
   import("./screens/PracticeScreen.jsx"),
+  import("./screens/TrainingScreen.jsx"),
   import("./screens/ChallengeScreen.jsx"),
   import("./screens/ProgressScreen.jsx"),
   import("./screens/SettingsScreen.jsx"),
@@ -47,11 +48,13 @@ let screens = null;
 
 // ── Navigation ────────────────────────────────────────────────────────────
 const TABS = [
-  { id: "home",      label: "Accueil",   icon: "home" },
-  { id: "courses",   label: "Parcours",  icon: "route" },
-  { id: "exercises", label: "Exercices", icon: "guitar-pick" },
-  { id: "quiz",      label: "Quiz",      icon: "help-circle" },
-  { id: "progress",  label: "Progrès",   icon: "chart-bar" },
+  { id: "home",      label: "Accueil",  icon: "home" },
+  { id: "courses",   label: "Parcours", icon: "route" },
+  // "Exercices" et "Quiz" fusionnés en un seul onglet "Pratique" : deux
+  // sous-onglets (Théorie / Guitare en main) plutôt que deux entrées de
+  // navigation distinctes qui piochaient dans le même contenu.
+  { id: "training",  label: "Pratique", icon: "target-arrow" },
+  { id: "progress",  label: "Progrès",  icon: "chart-bar" },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -109,15 +112,16 @@ function AppInner({ onThemeChange }) {
         ExercisesScreen:     screenModules[2].ExercisesScreen,
         QuizScreen:          screenModules[3].QuizScreen,
         PracticeScreen:      screenModules[4].PracticeScreen,
-        ChallengeScreen:     screenModules[5].ChallengeScreen,
-        ProgressScreen:      screenModules[6].ProgressScreen,
-        SettingsScreen:      screenModules[7].SettingsScreen,
-        FretboardExplorer:   screenModules[8].FretboardExplorer,
-        JamSession:          screenModules[9].JamSession,
-        ReviewSession:       screenModules[10].ReviewSession,
-        EarTraining:         screenModules[11].EarTraining,
-        ToolboxScreen:       screenModules[12].ToolboxScreen,
-        OnboardingScreen:    screenModules[13].OnboardingScreen,
+        TrainingScreen:      screenModules[5].TrainingScreen,
+        ChallengeScreen:     screenModules[6].ChallengeScreen,
+        ProgressScreen:      screenModules[7].ProgressScreen,
+        SettingsScreen:      screenModules[8].SettingsScreen,
+        FretboardExplorer:   screenModules[9].FretboardExplorer,
+        JamSession:          screenModules[10].JamSession,
+        ReviewSession:       screenModules[11].ReviewSession,
+        EarTraining:         screenModules[12].EarTraining,
+        ToolboxScreen:       screenModules[13].ToolboxScreen,
+        OnboardingScreen:    screenModules[14].OnboardingScreen,
       };
 
       // Charger le contenu (merge localStorage)
@@ -217,7 +221,11 @@ function AppInner({ onThemeChange }) {
   };
 
   const navigate = (s) => {
-    if (TABS.find(t => t.id === s) || ["challenge","practice","explorer","jam","review","ear","toolbox"].includes(s)) {
+    // "exercises" et "quiz" ne sont plus des onglets, mais restent
+    // acceptees : l'app memorise le dernier ecran visite, et quelqu'un qui
+    // avait quitte sur l'ancien onglet Quiz doit pouvoir etre restaure
+    // (la route redirige vers le nouvel onglet fusionne).
+    if (TABS.find(t => t.id === s) || ["challenge","practice","explorer","jam","review","ear","toolbox","exercises","quiz"].includes(s)) {
       if (s === "review" && content) {
         const session = buildReviewSession(content.quiz, state.reviewHistory || {}, state.completedLessons, { targetCount: 12 });
         setReviewQuestions(session.questions);
@@ -274,7 +282,7 @@ function AppInner({ onThemeChange }) {
   );
 
   const { HomeScreen, CoursesScreen, ExercisesScreen, QuizScreen,
-          PracticeScreen, ChallengeScreen, ProgressScreen, SettingsScreen,
+          PracticeScreen, TrainingScreen, ChallengeScreen, ProgressScreen, SettingsScreen,
           FretboardExplorer, JamSession, ReviewSession, EarTraining, ToolboxScreen,
           OnboardingScreen } = screens;
 
@@ -301,8 +309,12 @@ function AppInner({ onThemeChange }) {
     switch (screen) {
       case "home":      return <HomeScreen state={state} dispatch={dispatch} navigate={navigate} content={content} />;
       case "courses":   return <CoursesScreen state={state} dispatch={dispatch} content={content} />;
-      case "exercises": return <ExercisesScreen state={state} dispatch={dispatch} content={content} />;
-      case "quiz":      return <QuizScreen state={state} dispatch={dispatch} content={content} />;
+      case "training":  return <TrainingScreen state={state} dispatch={dispatch} content={content} />;
+      // Anciennes routes conservees : elles redirigent vers le nouvel onglet
+      // fusionne plutot que de casser un lien profond ou un raccourci deja
+      // enregistre par quelqu'un (l'app memorise le dernier ecran visite).
+      case "exercises":
+      case "quiz":      return <TrainingScreen state={state} dispatch={dispatch} content={content} />;
       case "ear":       return <EarTraining onBack={() => setScreen("home")} dispatch={dispatch} />;
       case "explorer":  return <FretboardExplorer onBack={() => setScreen("home")} />;
       case "jam":       return <JamSession onBack={() => setScreen("home")} />;

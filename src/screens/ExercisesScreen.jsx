@@ -6,6 +6,7 @@ import { Ti } from "../design/Ti.jsx";
 import { ProgressBar, XPPop } from "../design/ui.jsx";
 import { Gropi } from "../design/Gropi.jsx";
 import { buildModuleTheme } from "../store/moduleTheme.js";
+import { updateReviewHistory } from "../store/reviewEngine.js";
 
 export let _FretboardExercise = null;
 export const setFretboardExercise = (fn) => { _FretboardExercise = fn; };
@@ -16,7 +17,11 @@ const makeLevelColors = (C) => ({ 1:{ bg:C.greenL, border:C.greenBorder, text:C.
 const DIFF_STARS = { 1:"★☆☆", 2:"★★☆", 3:"★★★" };
 
 // ── ExercisesScreen ───────────────────────────────────────────────────────────
-function ExercisesScreen({ state, dispatch, content }) {
+/**
+ * @param embedded  true dans l'onglet Pratique : masque le grand en-tête
+ *                  image, fourni par l'écran hôte.
+ */
+function ExercisesScreen({ state, dispatch, content, embedded = false }) {
   const C = useC();
   const MODULE_THEME = buildModuleTheme(C);
   const LEVEL_COLORS = makeLevelColors(C);
@@ -63,8 +68,8 @@ function ExercisesScreen({ state, dispatch, content }) {
 
   return (
     <div>
-      {/* ── EN-TÊTE ──────────────────────────────────────────────────────── */}
-      <div style={{
+      {/* ── EN-TÊTE ── (masqué en mode intégré : l'hôte le fournit) ────── */}
+      {!embedded && <div style={{
         backgroundColor:"#e6af6d", backgroundImage:"url('/beach.jpg')",
         backgroundSize:"cover", backgroundPosition:"center 55%",
         padding:"24px 20px 20px", position:"relative", overflow:"hidden",
@@ -81,7 +86,7 @@ function ExercisesScreen({ state, dispatch, content }) {
         </div>
         <ProgressBar pct={pctGlobal} color={C.amber} h={7} />
         </div>
-      </div>
+      </div>}
 
       {/* ── FILTRES ──────────────────────────────────────────────────────── */}
       <div style={{ display:"flex", gap:6, padding:"12px 20px", overflowX:"auto" }}>
@@ -253,10 +258,22 @@ function ExerciseDetail({ ex, state, dispatch, onBack, content }) {
 
   // Exercice fretboard interactif
   if (ex.type === "fretboard_exercise") {
-    const finishFretboard = ({ totalXp }) => {
+    const finishFretboard = ({ totalXp, stages }) => {
       dispatch({ type:"COMPLETE_EXERCISE", id:ex.id, title:ex.title, xp:totalXp||ex.xp });
       dispatch({ type:"MARK_STREAK" });
       dispatch({ type:"UPDATE_WEEKLY", field:"exercises" });
+
+      // Score réel plutôt que le simple booléen d'avant : un exercice à
+      // plusieurs étapes n'est "réussi" pour la répétition espacée que si
+      // la majorité des étapes l'ont été (même seuil que le contrôle de
+      // fin d'unité, pour rester cohérent dans toute l'app). Un exercice
+      // sauté (skipped) ne compte jamais comme réussi.
+      const total = stages?.length || 1;
+      const passed = stages?.filter(s => s.result?.complete && !s.skipped).length || 0;
+      const correct = (passed / total) >= 0.7;
+      const today = new Date().toISOString().split("T")[0];
+      const newHistory = updateReviewHistory(state.exerciseHistory, ex.id, correct, today);
+      dispatch({ type:"EXERCISE_MASTERY_ANSWER", history: newHistory });
     };
     const linkedLesson = ex.courseLink ? content.courses.flatMap(c=>c.lessons).find(l=>l.id===ex.courseLink) : null;
     return (
@@ -284,6 +301,16 @@ function ExerciseDetail({ ex, state, dispatch, onBack, content }) {
     dispatch({ type:"COMPLETE_EXERCISE", id:ex.id, title:ex.title, xp:ex.xp });
     dispatch({ type:"MARK_STREAK" });
     dispatch({ type:"UPDATE_WEEKLY", field:"exercises" });
+
+    // Pas de score gradué possible sur une simple liste à cocher — la
+    // finalisation compte comme un succès. Ça reste un progrès net par
+    // rapport à l'ancien booléen : l'exercice revient maintenant selon
+    // le même calendrier de répétition espacée que le quiz (1 jour, puis
+    // 4, 10, 30...), au lieu de disparaître pour toujours une fois cochée.
+    const today = new Date().toISOString().split("T")[0];
+    const newHistory = updateReviewHistory(state.exerciseHistory, ex.id, true, today);
+    dispatch({ type:"EXERCISE_MASTERY_ANSWER", history: newHistory });
+
     setDone(true);
     popTimerRef.current = setTimeout(() => setPop(false), 1200);
   };

@@ -852,6 +852,13 @@ export function FretboardQuizQuestion({ question, onComplete, answered, forceRev
          fretMode === "find_chord" || fretMode === "find_scale_root") && (target || root)) {
       return getQuizTargetPositions(target || root);
     }
+    // find_shape : les positions sont donnees TELLES QUELLES dans le concept
+    // (un doigte precis), pas deduites d'une note cible. Sans cette branche,
+    // targetPositions restait vide et TOUTE reponse etait refusee, meme la
+    // bonne — ce composant ne connaissait que les 4 types ci-dessus.
+    if (fretMode === "find_shape" && Array.isArray(question.concept?.positions)) {
+      return question.concept.positions.filter(p => p && p.fret > 0);
+    }
     return [];
   }, [question.id]);
 
@@ -879,10 +886,20 @@ export function FretboardQuizQuestion({ question, onComplete, answered, forceRev
     });
   };
 
+  // Cordes a vide qui SONNENT dans la forme demandee : on ne peut pas
+  // "presser" une corde a vide, et rien ne la distingue visuellement d'une
+  // case a presser sur un manche tactile. Cliquer dessus est donc un
+  // reflexe legitime — on ignore ce clic au lieu de le compter comme une
+  // erreur (meme logique que les positions neutres de validate()).
+  const neutralPositions = question.concept?.neutralPositions || [];
+  const stripNeutral = (sel) => sel.filter(
+    s => !neutralPositions.some(n => n.string === s.string && n.fret === s.fret)
+  );
+
   const verify = () => {
     if (revealed) return;
     setRevealed(true);
-    const result = checkQuizCompletion(quizSelected, targetPositions);
+    const result = checkQuizCompletion(stripNeutral(quizSelected), targetPositions);
     onComplete(result);
   };
 
@@ -896,7 +913,7 @@ export function FretboardQuizQuestion({ question, onComplete, answered, forceRev
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [forceReveal]);
 
-  const result = revealed ? checkQuizCompletion(quizSelected, targetPositions) : null;
+  const result = revealed ? checkQuizCompletion(stripNeutral(quizSelected), targetPositions) : null;
 
   return (
     <div style={{ background: C.surface2, borderRadius: 14, border: `1px solid ${C.border}`, overflow: "hidden" }}>

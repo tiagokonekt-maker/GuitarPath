@@ -5,11 +5,13 @@ import { FONTS, R } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { Gropi } from "../design/Gropi.jsx";
-import { loadAudio, isAudioLoaded, generateEarTrainingQuestion, playInterval, playChord } from "../audioEngine.js";
+import { loadAudio, isAudioLoaded, generateEarTrainingQuestion, playInterval, playChord, stopProgression } from "../audioEngine.js";
 
 const MODES = [
   { key: "interval",      label: "Intervalles",      icon: "arrows-up-down",  desc: "Identifie l'ecart entre deux notes" },
   { key: "chord_quality", label: "Qualite d'accord", icon: "music",           desc: "Majeur, mineur, dominant..." },
+  { key: "chord_full",    label: "Accord complet",   icon: "music-plus",      desc: "Nomme l'accord : La mineur, Do7..." },
+  { key: "progression",   label: "Suites d'accords", icon: "list-numbers",    desc: "Nomme la suite entiere" },
 ];
 
 export function EarTraining({ onBack, dispatch }) {
@@ -40,6 +42,11 @@ export function EarTraining({ onBack, dispatch }) {
   }, [audioReady, mode]);
 
   const nextQuestion = () => {
+    // Couper le son en cours avant de generer la suivante : une suite
+    // d'accords lancee juste avant continuerait sinon de jouer par-dessus
+    // la nouvelle question.
+    try { stopProgression(); } catch {}
+    setIsPlaying(false);
     setSelected(null);
     setQuestion(generateEarTrainingQuestion(mode));
   };
@@ -49,7 +56,29 @@ export function EarTraining({ onBack, dispatch }) {
     setIsPlaying(true);
     try { await question.play(); }
     catch {}
-    setTimeout(() => setIsPlaying(false), 2000);
+    // Duree reelle de lecture : une suite de 4 accords a 1,6 s chacun dure
+    // plus de 6 secondes. Le delai fixe de 2 s reactivait le bouton pendant
+    // que la musique jouait encore, ce qui permettait de relancer par-dessus.
+    // chord_full ne joue plus qu'un accord (la reference est devenue un
+    // bouton distinct), donc sa duree redevient celle d'un accord simple.
+    const playMs = question?.chords
+      ? question.chords.length * 1600 + 400
+      : 2000;
+    setTimeout(() => setIsPlaying(false), playMs);
+  };
+
+  // Arret de la lecture. Indispensable pour les suites d'accords : elles
+  // durent jusqu'a 6,8 secondes et tournent sur le transport Tone.js, donc
+  // sans ce bouton on ne pouvait ni les couper ni relancer avant la fin.
+  const stopPlayback = () => {
+    try { stopProgression(); } catch {}
+    setIsPlaying(false);
+  };
+
+  // Note de reference (mode accord complet) : aide optionnelle, sur demande.
+  const playRef = async () => {
+    if (!question?.playReference) return;
+    try { await question.playReference(); } catch {}
   };
 
   const handleAnswer = (option) => {
@@ -67,6 +96,10 @@ export function EarTraining({ onBack, dispatch }) {
   };
 
   const changeMode = (m) => {
+    // Couper le son en cours : sans ca, une suite d'accords continuait de
+    // jouer par-dessus la nouvelle question apres un changement de mode.
+    try { stopProgression(); } catch {}
+    setIsPlaying(false);
     setMode(m);
     setQuestion(null);
     setSelected(null);
@@ -177,23 +210,42 @@ export function EarTraining({ onBack, dispatch }) {
         {audioReady && question && (
           <>
             <div style={{ textAlign: "center", padding: "16px 0 8px" }}>
-              <button onClick={playQuestion} disabled={isPlaying} style={{
+              {/* Un seul bouton, qui bascule lecture / arret — plutot qu'un
+                  bouton desactive pendant toute la duree du son. */}
+              <button onClick={isPlaying ? stopPlayback : playQuestion} style={{
                 width: 80, height: 80, borderRadius: "50%",
                 border: "none",
-                background: isPlaying
-                  ? `linear-gradient(135deg, ${C.primaryL}, ${C.primaryBorder})`
-                  : `linear-gradient(135deg, ${C.primary}, ${C.primaryD})`,
-                cursor: isPlaying ? "default" : "pointer",
+                background: `linear-gradient(135deg, ${C.primary}, ${C.primaryD})`,
+                cursor: "pointer",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 margin: "0 auto",
-                boxShadow: isPlaying ? "none" : "0 4px 20px rgba(232,93,26,0.4)",
+                boxShadow: "0 4px 20px rgba(232,93,26,0.4)",
                 transition: "all 0.2s",
               }}>
-                <Ti name={isPlaying ? "loader" : "player-play"} size={28} color={isPlaying ? C.primary : "#fff"} />
+                <Ti name={isPlaying ? "player-stop" : "player-play"} size={28} color="#fff" />
               </button>
               <div style={{ fontSize: 12, color: C.text3, fontFamily: FONTS.ui, marginTop: 10 }}>
-                {mode === "interval" ? "Ecoute l'intervalle" : "Ecoute l'accord"}
+                {mode === "interval" ? "Ecoute l'intervalle"
+                  : mode === "progression" ? "Ecoute la suite d'accords"
+                  : "Ecoute l'accord"}
               </div>
+
+              {/* Reference optionnelle — uniquement quand elle a un sens.
+                  Nommer une fondamentale dans l'absolu demande l'oreille
+                  absolue ; ce bouton donne un point d'ancrage a qui en a
+                  besoin, sans l'imposer a tout le monde. */}
+              {question.playReference && selected === null && (
+                <button onClick={playRef} style={{
+                  marginTop: 12, padding: "7px 14px", borderRadius: 999,
+                  border: `1.5px solid ${C.border}`, background: C.surface,
+                  color: C.text2, fontSize: 11.5, fontWeight: 700,
+                  fontFamily: FONTS.ui, cursor: "pointer",
+                  display: "inline-flex", alignItems: "center", gap: 6,
+                }}>
+                  <Ti name="tuning-fork" size={13} color={C.text3} />
+                  Entendre le {question.referenceLabel} de référence
+                </button>
+              )}
               {selected === null && (
                 <div style={{ fontSize: 11, color: C.text3, fontFamily: FONTS.ui, marginTop: 4, fontStyle: "italic" }}>
                   Tu peux réécouter autant de fois que tu veux

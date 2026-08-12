@@ -17,7 +17,7 @@ export const defaultState = () => ({
   xp: 0, level: 1, streak: 0, lastSessionDate: "",
   streakFreezes: 1,          // gels de série — protègent 1 jour manqué
   theme: "auto",             // "auto" | "light" | "dark"
-  completedExercises: {}, exerciseProgress: {},
+  completedExercises: {}, exerciseProgress: {}, exerciseHistory: {},
   quizResults: {}, wrongQuiz: [],
   completedLessons: {},
   reviewHistory: {},
@@ -158,6 +158,18 @@ export const mergeStates = (local, cloud) => {
       (lh.attempts || 0) > (ch.attempts || 0) ||
       ((lh.attempts || 0) === (ch.attempts || 0) && (lh.lastSeen || "") >= (ch.lastSeen || ""));
     m.reviewHistory[id] = pickLocal ? lh : ch;
+  }
+
+  // Même logique pour l'historique de maîtrise des exercices (nouveau,
+  // mais suit exactement le même principe que reviewHistory ci-dessus).
+  m.exerciseHistory = { ...(C.exerciseHistory || {}) };
+  for (const [id, lh] of Object.entries(L.exerciseHistory || {})) {
+    const ch = m.exerciseHistory[id];
+    if (!ch) { m.exerciseHistory[id] = lh; continue; }
+    const pickLocal =
+      (lh.attempts || 0) > (ch.attempts || 0) ||
+      ((lh.attempts || 0) === (ch.attempts || 0) && (lh.lastSeen || "") >= (ch.lastSeen || ""));
+    m.exerciseHistory[id] = pickLocal ? lh : ch;
   }
 
   // Badges : union

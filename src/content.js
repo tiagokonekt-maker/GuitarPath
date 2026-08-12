@@ -347,7 +347,7 @@ export const COURSES = [
                 { type: "fretboard_interactive", mode: "quiz", quizTarget: "A", instructions: "Trouve toutes les positions de la note La sur le manche (indice : tu en connais déjà une, c'est une corde à vide)." },
                 
         ],
-        quiz: [],
+        quiz: ["q-base-01","q-base-02"],
       },
       {
         id: "neck-c1-02", level: 2,
@@ -385,7 +385,7 @@ export const COURSES = [
           { type: "ref", text: "David Gilmour (Pink Floyd) est un maître de l'utilisation des octaves. Dans le solo de 'Comfortably Numb', il joue la même phrase mélodique d'abord dans le médium, puis une octave plus haut pour le climax. C'est le contraste d'octaves qui crée la montée émotionnelle." },
           { type: "tip", text: "Test simple : sur la corde de Mi grave, joue case 0, puis case 12, puis case 24 (si tu as 24 frettes). Tu joues 3 fois la même note (Mi), à 3 octaves différentes. Écoute la transformation du timbre : grave et puissant → médium et présent → aigu et brillant." },
         ],
-        quiz: [],
+        quiz: ["q-base-08"],
       },
       {
         id: "neck-c1-03", level: 3,
@@ -422,7 +422,7 @@ export const COURSES = [
           { type: "ref", text: "Sur la plupart des guitares de qualité (Gibson, Fender, Martin, Taylor...), les amers ont des designs spécifiques selon le luthier. Les Les Paul ont des trapèzes de nacre, les Stratocaster des points blancs, les Telecaster aussi. Mais dans tous les cas, leur emplacement est identique : cases 3, 5, 7, 9, 12, 15, 17, 19, 21." },
           { type: "tip", text: "Drill quotidien (1 minute) : ferme les yeux, mets ton index sur une case au hasard. Ouvre les yeux et nomme la note instantanément. Refais 10 fois. En 2 semaines, ton cerveau aura cartographié le manche." },
         ],
-        quiz: [],
+        quiz: ["q-base-15"],
       },
       {
         id: "neck-c2-01", level: 3,
@@ -462,7 +462,7 @@ export const COURSES = [
           { type: "ref", text: "Pratique immédiate : prends une chanson avec des accords barrés (la plupart des chansons rock/pop). Identifie la fondamentale de chaque accord sur la corde 6. Si tu joues La majeur en barré case 5, dis-toi : 'Je joue La parce que case 5 corde 6 = La'. Cette habitude grave les notes dans ta tête en moins d'une semaine." },
           { type: "tip", text: "Drill du soir (3 min) : sur la corde 6, joue case par case en nommant la note à voix haute. Mi-Fa-Fa#-Sol-Sol#-La-La#-Si-Do-Do#-Ré-Ré#-Mi. Refais en descendant. Cet exercice 'parlé' connecte ton cerveau au manche en quelques jours." },
         ],
-        quiz: ["q-neck-03","q-neck-04","q-neck-05"],
+        quiz: ["q-neck-03","q-neck-04","q-neck-05","q-base-16"],
       },
       {
         id: "neck-c2-02", level: 3,
@@ -515,7 +515,7 @@ export const COURSES = [
           { type: "ref", text: "Pratique : joue Ré barré case 5 (corde 5). Identifie la fondamentale (Ré) sur la corde 5 case 5. Maintenant joue La barré case 5 (corde 6). Identifie la fondamentale (La) sur la corde 6 case 5. Ces deux accords se forment de la même façon, mais sur des cordes différentes. La logique du barré devient claire." },
           { type: "tip", text: "Drill connecté : joue la même note sur c6 et c5 en décalage. Ex : Mi (c6 case 0) puis Mi (c5 case 7). Do (c6 case 8) puis Do (c5 case 3). Ce drill développe ta vision globale du manche." },
         ],
-        quiz: [],
+        quiz: ["q-base-17"],
       },
       {
         id: "neck-c2-03", level: 4,
@@ -1076,7 +1076,7 @@ export const COURSES = [
           { type: "ref", text: "Écoute les premières notes de 'Do-Ré-Mi' (chanson tirée de 'La Mélodie du bonheur', 1965) : c'est littéralement la gamme majeure de Do chantée note par note. Une oreille qui connaît cette mélodie connaît déjà l'ordre des 7 notes." },
           { type: "tip", text: "Avant d'aller plus loin, mémorise cet ordre dans les deux notations : Do=C, Ré=D, Mi=E, Fa=F, Sol=G, La=A, Si=B. C'est le b.a.-ba." },
         ],
-        quiz: [],
+        quiz: ["q-base-03","q-base-04"],
       },
       {
         id: "scales-c1-02", level: 2,
@@ -1117,7 +1117,7 @@ export const COURSES = [
           { type: "ref", text: "Pour visualiser : sur la corde de Mi grave (corde 6), joue case 0 (Mi), case 1 (Fa), case 2 (Fa#), case 3 (Sol)... jusqu'à case 12 où tu retombes sur Mi (1 octave plus haut). Tu viens de jouer la gamme chromatique." },
           { type: "tip", text: "Sur le manche : 1 case = 1 cran d'altération. Monter d'une case = +1 dièse. Descendre = +1 bémol. Cette équivalence est ta meilleure amie pour comprendre la guitare." },
         ],
-        quiz: [],
+        quiz: ["q-base-09","q-base-10"],
       },
       {
         id: "scales-c1-03", level: 2,
@@ -1153,7 +1153,7 @@ export const COURSES = [
           { type: "ref", text: "Exercice immédiat : sur la corde de Mi grave, monte case par case en disant à voix haute : 'Mi (case 0) - Fa (case 1, +1/2 ton) - Sol (case 3, +1 ton) - La (case 5, +1 ton) - Si (case 7, +1 ton) - Do (case 8, +1/2 ton) - Ré (case 10, +1 ton) - Mi (case 12, +1 ton)'. Tu viens de jouer la gamme majeure de Mi en parlant à haute voix le pattern T-T-DT-T-T-T-DT." },
           { type: "tip", text: "Mnémonique pour ne jamais oublier les demi-tons naturels : 'Mi-Fa Si-Do, ce sont eux qui se collent'. Cette phrase pourrait sauver ta vie de musicien." },
         ],
-        quiz: [],
+        quiz: ["q-base-11","q-base-12"],
       },
       {
         id: "scales-c1-04", level: 3,
@@ -1170,7 +1170,7 @@ export const COURSES = [
           { type: "ref", text: "Anecdote : la chanson 'Yesterday' (The Beatles) est en Fa majeur. Elle contient des Si bémol, jamais des La dièse — pourtant ce serait la même note. C'est juste une question d'orthographe musicale cohérente avec la tonalité." },
           { type: "tip", text: "Au début, accepte simplement qu'une même case puisse avoir deux noms. Ce sera plus clair quand on parlera de tonalités, dans les prochaines leçons." },
         ],
-        quiz: [],
+        quiz: ["q-base-18"],
       },
       {
         id: "scales-c1-05", level: 3,
@@ -2390,7 +2390,7 @@ export const COURSES = [
           { type: "ref", text: "Pour entendre l'harmonie 'en action' : écoute 'What a Wonderful World' (Louis Armstrong). La mélodie que tu fredonneras est simple. Mais écoute les accords en dessous : ils changent constamment, créant des émotions différentes sous la même mélodie. C'est l'harmonie qui fait que certains passages te touchent plus que d'autres." },
           { type: "tip", text: "Exercice d'écoute : prends une chanson que tu connais bien. Écoute-la en te concentrant uniquement sur les accords (pas la mélodie, pas la batterie). Combien y a-t-il d'accords différents ? À quel moment changent-ils ? C'est ton premier pas vers l'analyse harmonique." },
         ],
-        quiz: [],
+        quiz: ["q-base-05"],
       },
       {
         id: "harm-c1-02", level: 2,
@@ -2416,7 +2416,7 @@ export const COURSES = [
           { type: "ref", text: "'Black Sabbath' (Black Sabbath, 1970) : le riff d'intro est construit sur un triton (Mi-Si♭), l'intervalle le plus dissonant. En 1970, c'était délibérément provocateur et 'satanique'. Aujourd'hui, ce riff est étudié dans les conservatoires. La perception de la dissonance évolue avec le temps et la culture." },
           { type: "tip", text: "Drill auditif : joue ces 3 intervalles sur ta guitare (depuis Do c5 case 3) : Do+Mi (tierce majeure, consonant), Do+Fa# (triton, très dissonant), Do+Sol (quinte, très consonant). Écoute la différence de 'tension' entre les 3. Ton oreille apprend à reconnaître consonance/dissonance." },
         ],
-        quiz: [],
+        quiz: ["q-base-13"],
       },
       {
         id: "harm-c2-01", level: 5,
@@ -3370,7 +3370,7 @@ export const COURSES = [
           { type: "ref", text: "James Brown, le 'Godfather of Soul', avait un sens du rythme si précis qu'il pouvait arrêter et reprendre une chanson n'importe où en claquant des doigts, et l'orchestre entier le suivait sans décalage. Ce n'est pas un don — c'est le résultat de milliers d'heures de pratique rythmique. Son secret : il faisait autant attention au rythme qu'aux notes." },
           { type: "tip", text: "Exercice fondamental : tape le pied sur les temps (1-2-3-4) en gardant un tempo parfaitement régulier pendant 1 minute. Facile ? Maintenant fais-le à 60 BPM en regardant une montre. Sans accélérer, sans ralentir. Si tu dévies, recommence. Ce simple exercice révèle la qualité de ton sens rythmique interne." },
         ],
-        quiz: ["q-rhy-01"],
+        quiz: ["q-rhy-01","q-base-06","q-base-07"],
       },
       {
         id: "rhy-c1-02", level: 2,
@@ -3411,7 +3411,7 @@ export const COURSES = [
           { type: "ref", text: "'Money' (Pink Floyd, 1973) est en 7/4 — 7 temps par mesure. La ligne de basse iconique (7 notes) est la signature de la mesure. En live, les musiciens doivent compter constamment pour ne pas se perdre. C'est le contraste avec le 4/4 habituel qui rend ce morceau si particulier. Écoute-le en comptant 1-2-3-4-5-6-7 : tu sentiras l'asymétrie." },
           { type: "tip", text: "Drill : mets un métronome à 80 BPM et compte les mesures à voix haute pendant 2 minutes. '1-2-3-4, 2-2-3-4, 3-2-3-4...' (numéro de mesure + numéro de temps). Simple mais révélateur : combien de mesures perdent leur numéro ? Développe ce comptage instinctif." },
         ],
-        quiz: ["q-rhy-01"],
+        quiz: ["q-rhy-01","q-base-14"],
       },
       {
         id: "rhy-c1-03", level: 2,
@@ -3496,7 +3496,7 @@ export const COURSES = [
           { type: "ref", text: "'With or Without You' (U2) : la ligne de basse et la guitare d'Adam Clayton/The Edge jouent principalement des rondes et blanches pendant les couplets. Cette lenteur délibérée crée l'espace émotionnel de la chanson. Les notes longues ont autant de puissance expressive que les notes rapides." },
           { type: "tip", text: "Drill des valeurs : à 60 BPM, joue 4 mesures en rondes, 4 en blanches, 4 en noires sur un accord de Am. Puis redescends (noires → blanches → rondes). Entends comment la densité change sans que le tempo ne bouge. C'est le premier exercice de subdivisions." },
         ],
-        quiz: [],
+        quiz: ["q-base-19"],
       },
       {
         id: "rhy-c2-02", level: 4,
@@ -4142,6 +4142,34 @@ export const COURSES = [
 // Format : { id, courseId, lessonId, lvl (1-3), q, o[], a, exp, xp }
 // ───────────────────────────────────────────────────────────────────────────
 export const QUIZ = [
+  // ─── FONDAMENTAUX (paliers 1 a 3) ─────────────────────────────────────
+  // Ecrites parce que la banque n avait aucune question sur les tout
+  // premiers concepts : alphabet musical, architecture du manche, ce
+  // qu est le rythme / l harmonie. Consequence : les unites 1 et 2
+  // n avaient qu une seule question de controle.
+  // Conception : reponse jamais presente dans l enonce, distracteurs de
+  // longueur comparable a la bonne reponse, affirmations musicales
+  // verifiees par calcul.
+  {id:"q-base-01",courseId:"neck",lessonId:"neck-c1-01",lvl:1,q:"En accordage standard, quelle est la corde la plus grave (la plus épaisse) ?",o:["La corde de Mi","La corde de La","La corde de Sol","La corde de Si"],a:0,exp:"La corde 6, la plus épaisse, est accordée en Mi. De la plus grave à la plus aiguë : Mi, La, Ré, Sol, Si, Mi.",xp:25},
+  {id:"q-base-02",courseId:"neck",lessonId:"neck-c1-01",lvl:1,q:"Sur une guitare, avancer d'une case vers le corps de l'instrument fait…",o:["Monter d'un demi-ton","Monter d'un ton entier","Descendre d'un demi-ton","Monter d'une quinte"],a:0,exp:"Chaque case représente exactement un demi-ton. C'est la règle de base qui rend le manche entièrement prévisible.",xp:25},
+  {id:"q-base-03",courseId:"scales",lessonId:"scales-c1-01",lvl:1,q:"Combien de notes naturelles (sans dièse ni bémol) la musique occidentale utilise-t-elle ?",o:["7","5","8","12"],a:0,exp:"Do, Ré, Mi, Fa, Sol, La, Si : 7 notes naturelles, qui se répètent ensuite à l'octave.",xp:25},
+  {id:"q-base-04",courseId:"scales",lessonId:"scales-c1-01",lvl:1,q:"Quelle note vient juste après Si quand on monte la gamme naturelle ?",o:["Do","Ré","La","Mi"],a:0,exp:"Après Si, la suite recommence sur Do. L'alphabet musical boucle en permanence : Do Ré Mi Fa Sol La Si Do…",xp:25},
+  {id:"q-base-05",courseId:"harmony",lessonId:"harm-c1-01",lvl:1,q:"L'harmonie, en musique, désigne avant tout…",o:["Plusieurs sons joués simultanément","Une suite de notes jouées seule","La vitesse d'un morceau","Le placement des accents"],a:0,exp:"L'harmonie naît de la superposition des sons. La mélodie est horizontale (une note après l'autre), l'harmonie verticale (plusieurs notes ensemble).",xp:25},
+  {id:"q-base-06",courseId:"rhythm",lessonId:"rhy-c1-01",lvl:1,q:"Dans l'histoire de l'humanité, qu'est-ce qui est apparu en premier ?",o:["Le rythme","La mélodie","L'harmonie","Les gammes"],a:0,exp:"Le rythme précède tout le reste de plusieurs millénaires : battements, pas, mains qui frappent. C'est le premier langage musical humain.",xp:25},
+  {id:"q-base-07",courseId:"rhythm",lessonId:"rhy-c1-01",lvl:1,q:"La 'pulsation' d'un morceau correspond à…",o:["Le battement régulier de fond","La hauteur des notes jouées","Le nombre de cordes utilisées","La durée totale du morceau"],a:0,exp:"La pulsation est ce battement régulier qu'on tape du pied naturellement. Tout le rythme s'organise autour d'elle.",xp:25},
+  {id:"q-base-08",courseId:"neck",lessonId:"neck-c1-02",lvl:1,q:"Sur une même corde, combien de cases faut-il monter pour retrouver la même note à l'octave ?",o:["12","7","8","10"],a:0,exp:"12 cases = 12 demi-tons = une octave complète. La note porte le même nom, une octave plus haut.",xp:30},
+  {id:"q-base-09",courseId:"scales",lessonId:"scales-c1-02",lvl:1,q:"Combien de sons différents existe-t-il avant que la boucle recommence à l'octave ?",o:["12","7","5","24"],a:0,exp:"7 notes naturelles plus 5 altérations donnent 12 sons — exactement les 12 cases d'une corde avant l'octave.",xp:30},
+  {id:"q-base-10",courseId:"scales",lessonId:"scales-c1-02",lvl:1,q:"Un dièse (#) placé devant une note signifie…",o:["Un demi-ton plus haut","Un demi-ton plus bas","Un ton plus haut","Une octave plus haut"],a:0,exp:"Le dièse monte la note d'un demi-ton, le bémol la descend d'un demi-ton. Sur la guitare : une case dans un sens ou dans l'autre.",xp:30},
+  {id:"q-base-11",courseId:"scales",lessonId:"scales-c1-03",lvl:1,q:"Un ton entier représente combien de demi-tons ?",o:["2","1","3","4"],a:0,exp:"Un ton = 2 demi-tons = 2 cases sur la guitare. Le demi-ton reste la plus petite unité du système occidental.",xp:30},
+  {id:"q-base-12",courseId:"scales",lessonId:"scales-c1-03",lvl:1,q:"Entre lesquelles de ces paires de notes naturelles n'y a-t-il qu'un demi-ton ?",o:["Mi et Fa","Do et Ré","Sol et La","La et Si"],a:0,exp:"Mi-Fa et Si-Do sont les deux seules paires naturelles séparées d'un simple demi-ton. Toutes les autres sont à un ton entier.",xp:30},
+  {id:"q-base-13",courseId:"harmony",lessonId:"harm-c1-02",lvl:1,q:"Deux notes qui sonnent tendues ensemble, sans stabilité, sont dites…",o:["Dissonantes","Consonantes","Enharmoniques","Chromatiques"],a:0,exp:"La dissonance crée la tension, la consonance la stabilité. Aucune n'est un défaut : c'est leur alternance qui donne vie à la musique.",xp:30},
+  {id:"q-base-14",courseId:"rhythm",lessonId:"rhy-c1-02",lvl:1,q:"Dans une signature en 4/4, que représente le chiffre du haut ?",o:["Le nombre de temps par mesure","La durée de chaque note","Le tempo en battements","Le nombre de mesures"],a:0,exp:"Le chiffre du haut donne le nombre de temps par mesure, celui du bas l'unité de temps (4 = la noire).",xp:30},
+  {id:"q-base-15",courseId:"neck",lessonId:"neck-c1-03",lvl:2,q:"Quelle case porte traditionnellement un repère double sur le manche ?",o:["La 12e","La 7e","La 9e","La 5e"],a:0,exp:"Les repères simples sont aux cases 3, 5, 7 et 9 ; la case 12 porte un repère double car elle marque l'octave complète.",xp:35},
+  {id:"q-base-16",courseId:"neck",lessonId:"neck-c2-01",lvl:2,q:"Sur la corde de Mi grave (corde 6), quelle note trouve-t-on case 3 ?",o:["Sol","Fa","La","Fa#"],a:0,exp:"Depuis Mi à vide : case 1 Fa, case 2 Fa#, case 3 Sol. C'est cette corde qui porte la fondamentale des accords barrés en forme de Mi.",xp:35},
+  {id:"q-base-17",courseId:"neck",lessonId:"neck-c2-02",lvl:2,q:"Sur la corde de La (corde 5), quelle note trouve-t-on case 3 ?",o:["Do","Si","Ré","Do#"],a:0,exp:"Depuis La à vide : case 1 La#, case 2 Si, case 3 Do. Cette corde porte la fondamentale des accords barrés en forme de La.",xp:35},
+  {id:"q-base-18",courseId:"scales",lessonId:"scales-c1-04",lvl:2,q:"Deux notes qui sonnent identiques mais portent deux noms différents sont dites…",o:["Enharmoniques","Dissonantes","Chromatiques","Diatoniques"],a:0,exp:"Do# et Réb sont enharmoniques : même case sur la guitare, même son, deux écritures selon le contexte tonal.",xp:35},
+  {id:"q-base-19",courseId:"rhythm",lessonId:"rhy-c2-01",lvl:2,q:"En 4/4, combien de temps dure une ronde ?",o:["4","2","1","8"],a:0,exp:"La ronde vaut 4 temps, la blanche 2, la noire 1. Chaque valeur vaut la moitié de la précédente.",xp:35},
+
 
   // ═══ MANCHE — 20 questions ═══
   {id:"q-neck-01",courseId:"neck",lessonId: "neck-c1-01",lvl:1,q:"Quel intervalle sépare les cordes 3 et 2 (Sol et Si) sur une guitare en accordage standard ?",o:["Quarte juste","Tierce majeure","Quinte juste","Tierce mineure"],a:1,exp:"Sol→Si = 4 demi-tons = tierce majeure. C'est l'unique 'cassure' de l'accordage standard, toutes les autres cordes consécutives étant en quartes (5 demi-tons).",xp:30},
@@ -4154,7 +4182,7 @@ export const QUIZ = [
   {id:"q-neck-08",courseId:"neck",lessonId:"neck-03",lvl:2,q:"L'intervalle Mi → Si♭ est…",o:["Quinte juste","Septième mineure","Quarte augmentée","Sixte majeure"],a:2,exp:"Mi→Si = quinte juste (7dt). Mi→Si♭ = quinte diminuée = quarte augmentée = triton (6dt). L'intervalle 'diabolus in musica' qui divise l'octave en deux.",xp:45},
   {id:"q-neck-09",courseId:"neck",lessonId:"neck-03",lvl:3,q:"Quel est l'intervalle inverse d'une tierce majeure ?",o:["Tierce mineure","Sixte majeure","Sixte mineure","Quarte juste"],a:2,exp:"Inversion d'intervalle : la somme avec son inverse = octave (12dt). Tierce maj = 4dt. Inverse = 12-4 = 8dt = sixte mineure. Règle : maj→min, juste→juste.",xp:50},
   {id:"q-neck-10",courseId:"neck",lessonId:"neck-03",lvl:3,q:"Tu joues Do (corde 5 case 3) et Mi (corde 4 case 2). Quel intervalle sépare ces 2 notes ?",o:["Tierce mineure","Tierce majeure","Quarte juste","Sixte majeure"],a:1,exp:"Do→Mi = 4 demi-tons = tierce majeure. C'est la tierce de l'accord de Do majeur. Vérification facile sur le manche : 4 demi-tons = 4 cases d'écart sur la même corde.",xp:45},
-  {id:"q-neck-11",courseId:"neck",lessonId:"neck-04",lvl:2,q:"Dans le système CAGED, l'ordre des formes en montant le manche est…",o:["A-B-C-D-E","C-A-G-E-D","E-D-C-B-A","C-D-E-F-G"],a:1,exp:"Ordre fixe et cyclique : C → A → G → E → D, puis retour à C une octave plus haut. Cet ordre est valable pour TOUS les accords majeurs.",xp:30},
+  {id:"q-neck-11",courseId:"neck",lessonId:"neck-04",lvl:2,q:"En partant de la forme de Do et en montant le manche, quelle forme vient juste après ?",o:["La forme de La","La forme de Sol","La forme de Mi","La forme de Ré"],a:0,exp:"Ordre fixe et cyclique : C → A → G → E → D, puis retour à C une octave plus haut. Cet ordre est valable pour TOUS les accords majeurs.",xp:30},
   {id:"q-neck-12",courseId:"neck",lessonId:"neck-04",lvl:3,q:"La forme E barrée case 7 donne quel accord majeur ?",o:["La majeur","Si majeur","Sol majeur","Mi majeur"],a:1,exp:"Forme E = E majeur. Décalée case 7, on monte de 7 demi-tons : Mi + 7dt = Si. Donc Si majeur. Vérification : la fondamentale est sur corde 6 case 7 = Si.",xp:45},
   {id:"q-neck-13",courseId:"neck",lessonId:"neck-04",lvl:3,q:"Pour Ré majeur, quelle est la forme CAGED en position ouverte (case 0) ?",o:["Forme C","Forme A","Forme G","Forme D"],a:3,exp:"Ré majeur en position ouverte = forme D (c'est l'accord D ouvert classique). Ses 5 formes : D ouverte, C barré case 5, A barré case 5... non, plus simple : forme D (ouverte) puis monte CAGED à partir.",xp:50},
   {id:"q-neck-14",courseId:"neck",lessonId:"neck-04",lvl:3,q:"Pourquoi le système CAGED comporte exactement 5 formes (et pas 6 ou 4) ?",o:["Coïncidence historique","5 manières uniques de jouer un accord majeur avec cordes à vide + frettes","Limitation due à 6 cordes","Convention pédagogique"],a:1,exp:"Il existe exactement 5 formes uniques d'accords majeurs ouverts (C, A, G, E, D) qui exploitent les cordes à vide. Au-delà, on retrouve les mêmes shapes décalées.",xp:55},

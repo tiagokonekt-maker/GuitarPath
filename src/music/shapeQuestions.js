@@ -89,7 +89,13 @@ export function makeShapeQuestion(level = 1, rng = Math.random) {
     let q, hint;
     if (spec.openOnly) {
       q = `Montre la forme de ${chordName} en position ouverte`;
-      hint = `Les cordes à vide sonnent : ne place que les doigts nécessaires.`;
+      // Accord singulier/pluriel : "la corde 4 sonne" vs "les cordes 4, 3 sonnent".
+      const oc = openPositions.map(p => p.string);
+      hint = oc.length === 0
+        ? `Place uniquement les doigts nécessaires.`
+        : oc.length === 1
+          ? `Place uniquement les doigts. La corde ${oc[0]} sonne à vide, tu n'as pas à la sélectionner.`
+          : `Place uniquement les doigts. Les cordes ${oc.join(", ")} sonnent à vide, tu n'as pas à les sélectionner.`;
     } else if (spec.barreOnly) {
       q = `Montre ${chordName} en barré, ${shape.label.toLowerCase()}`;
       hint = `L'index barre la case ${shape.startFret}.`;
@@ -117,7 +123,11 @@ export function makeShapeQuestion(level = 1, rng = Math.random) {
       fretRange: [Math.max(0, shape.startFret - 1), Math.min(12, shape.startFret + 4)],
       xp: spec.xp,
       exp: `${chordName} · ${shape.label} · case ${shape.startFret}. `
-         + `Cases à presser : ${positions.map(p => `c${p.string}f${p.fret}`).join(", ")}.`,
+         + `À presser : ${positions.map(p => `corde ${p.string} case ${p.fret}`).join(", ")}.`
+         + (openPositions.length === 0 ? ""
+            : openPositions.length === 1
+              ? ` La corde ${openPositions[0].string} sonne à vide : rien à y placer.`
+              : ` Les cordes ${openPositions.map(p => p.string).join(", ")} sonnent à vide : rien à y placer.`),
     };
   }
   return null;

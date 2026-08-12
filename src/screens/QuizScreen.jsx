@@ -7,6 +7,7 @@ import { ProgressBar, XPPop } from "../design/ui.jsx";
 import { Gropi } from "../design/Gropi.jsx";
 import { makeEarQuizQuestion, loadAudio } from "../audioEngine.js";
 import { makeShapeQuestion } from "../music/shapeQuestions.js";
+import { buildReviewSession } from "../store/reviewEngine.js";
 
 export let _FretboardQuizQuestion = null;
 export const setFretboardQuizQuestion = (fn) => { _FretboardQuizQuestion = fn; };
@@ -46,7 +47,13 @@ function unlockedQuizLvl(state, content, courseId) {
   return 3;
 }
 
-function QuizScreen({ state, dispatch, content }) {
+/**
+ * @param embedded  true quand l'écran est affiché dans l'onglet Pratique :
+ *                  on masque alors son grand en-tête image et son titre,
+ *                  puisque l'écran hôte les fournit déjà. Sans ça, trois
+ *                  strates d'en-tête s'empilaient avant le premier contenu.
+ */
+function QuizScreen({ state, dispatch, content, embedded = false }) {
   const C = useC();
   const MODULES = makeModules(C);
   const [mode, setMode] = useState(null);
@@ -67,18 +74,29 @@ function QuizScreen({ state, dispatch, content }) {
   const isUnlocked = (q) => (q.lvl ?? 1) <= (unlockedLvl[q.courseId] ?? 3);
 
   const pools = {
+    // Avant : les 3 premières questions ratées (dans l'ordre du tableau,
+    // pas par urgence) + 4 fraîches au hasard. Ça ne tenait jamais compte
+    // du VRAI calendrier de révision espacée (streak, intervalle 1/4/10/30
+    // jours) déjà calculé ailleurs pour l'affichage — juste ignoré ici.
+    // Maintenant : le moteur SM-2 choisit vraiment, priorité par urgence.
     daily: () => {
-      // Les questions déjà ratées reviennent SANS filtre de niveau : si
-      // elles ont été vues, c'est qu'elles étaient déjà accessibles, et
-      // revoir une erreur passée est toujours pertinent, quel que soit le
-      // niveau atteint depuis.
-      const wrong = content.quiz.filter(q => state.wrongQuiz.includes(q.id)).slice(0,3);
-      const fresh = content.quiz
-        .filter(q => !state.quizResults[q.id] && !state.wrongQuiz.includes(q.id) && isUnlocked(q))
-        .sort(() => Math.random()-.5).slice(0,4);
-      return [...wrong, ...fresh].slice(0,7);
+      const eligible = content.quiz.filter(isUnlocked);
+      // Pool de secours : contenu d'un cran au-dessus du niveau debloque,
+      // utilise SEULEMENT si les questions dues ne remplissent pas la
+      // session. Sans ca, quelqu'un qui a tout maitrise reboucle sur les
+      // memes 2 questions a chaque lancement. On borne volontairement a
+      // +1 niveau : donner un apercu de la suite, jamais sauter des etapes.
+      const lookahead = content.quiz.filter(q => {
+        const cap = unlockedLvl[q.courseId] ?? 3;
+        const lvl = q.lvl ?? 1;
+        return lvl === cap + 1;
+      });
+      const { questions } = buildReviewSession(eligible, state.reviewHistory, state.completedLessons, {
+        targetCount: 7,
+        lookaheadQuestions: lookahead,
+      });
+      return questions;
     },
-    review: () => content.quiz.filter(q => state.wrongQuiz.includes(q.id)),
   };
   MODULES.forEach(m => {
     pools[m.id] = () => content.quiz
@@ -94,8 +112,8 @@ function QuizScreen({ state, dispatch, content }) {
 
   return (
     <div>
-      {/* ── EN-TÊTE ──────────────────────────────────────────────────────── */}
-      <div style={{
+      {/* ── EN-TÊTE ── (masqué en mode intégré : l'hôte le fournit) ────── */}
+      {!embedded && <div style={{
         backgroundColor:"#36b3d7", backgroundImage:"url('/ocean.jpg')",
         backgroundSize:"cover", backgroundPosition:"center 30%",
         padding:"24px 20px 20px", position:"relative", overflow:"hidden",
@@ -112,9 +130,9 @@ function QuizScreen({ state, dispatch, content }) {
         </div>
         <ProgressBar pct={pctDone} color={C.teal} h={7} />
         </div>
-      </div>
+      </div>}
 
-      <div style={{ padding:"16px 20px 0" }}>
+      <div style={{ padding: embedded ? "4px 20px 0" : "16px 20px 0" }}>
 
         {/* ── BLOC PRIORITAIRE : quiz du jour + révision ───────────────────── */}
         <div style={{ fontSize:11, fontWeight:700, color:C.text3, letterSpacing:".07em", textTransform:"uppercase", marginBottom:10 }}>
@@ -140,35 +158,6 @@ function QuizScreen({ state, dispatch, content }) {
             <div style={{ fontSize:12, color:C.text3, marginTop:2 }}>Adapté à ta progression · ~5 min</div>
           </div>
           <Ti name="arrow-right" size={18} color={C.primary} />
-        </button>
-
-        {/* Révision */}
-        <button
-          onClick={() => wrongCount > 0 && launch("review", `Révision (${wrongCount})`)}
-          disabled={wrongCount === 0}
-          style={{
-            width:"100%",
-            background: wrongCount > 0 ? `linear-gradient(135deg, ${C.pinkL}, ${C.surface})` : C.surface2,
-            border:`2px solid ${wrongCount > 0 ? C.pinkBorder : C.border}`,
-            borderRadius:R.xl, padding:16,
-            cursor: wrongCount > 0 ? "pointer" : "default",
-            textAlign:"left", fontFamily:FONTS.title, marginBottom:24,
-            display:"flex", gap:14, alignItems:"center",
-            opacity: wrongCount === 0 ? 0.5 : 1,
-          }}>
-          <div style={{ width:52, height:52, borderRadius:R.lg, background: wrongCount > 0 ? C.pink : C.border, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-            <Ti name="refresh" size={24} color="#fff" />
-          </div>
-          <div style={{ flex:1 }}>
-            <div style={{ fontSize:10, fontWeight:700, color: wrongCount > 0 ? C.pink : C.text3, letterSpacing:".08em", textTransform:"uppercase", marginBottom:3 }}>
-              {wrongCount > 0 ? `${wrongCount} à revoir` : "Aucune question à réviser"}
-            </div>
-            <div style={{ fontSize:15, fontWeight:800, color:C.text, letterSpacing:"-.2px" }}>Révision intelligente</div>
-            <div style={{ fontSize:12, color:C.text3, marginTop:2 }}>
-              {wrongCount > 0 ? "Renforce tes points faibles · ~5 min" : "Tu es à jour !"}
-            </div>
-          </div>
-          {wrongCount > 0 && <Ti name="arrow-right" size={18} color={C.pink} />}
         </button>
 
         {/* ── QUIZ PAR MODULE ──────────────────────────────────────────────── */}

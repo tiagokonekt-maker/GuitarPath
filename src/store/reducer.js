@@ -69,6 +69,15 @@ function reducer(state, action) {
       break;
     }
 
+    case "EXERCISE_MASTERY_ANSWER": {
+      // Même principe que REVIEW_ANSWER, appliqué à l'historique des
+      // exercices : l'appelant a déjà recalculé l'historique via
+      // updateReviewHistory(state.exerciseHistory, ...) et le transmet
+      // ici tout fait — le reducer ne fait qu'enregistrer.
+      s.exerciseHistory = action.history;
+      break;
+    }
+
     case "REVIEW_SESSION_DONE":
       gainXp(s, action.xp || 0);
       pushHistory(s, { type: "review", title: "Session de révision", xp: action.xp, score: action.score, date: today });
