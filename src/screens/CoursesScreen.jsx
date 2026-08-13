@@ -20,6 +20,7 @@ import { Gropi, GropiCoach, GropiBubble } from "../design/Gropi.jsx";
 // fragilité — si un écran se rendait avant l'injection, le composant valait
 // null. Un contexte React rend l'ordre de rendu sans importance.
 import { useRenderers } from "../renderers.jsx";
+import { playLessonComplete, playChestOpen } from "../audioEngine.js";
 
 // ── Animation CSS partagée ────────────────────────────────────────────────────
 const PULSE_CSS = `
@@ -39,10 +40,74 @@ const PULSE_CSS = `
 `;
 
 // ── Nœud individuel ───────────────────────────────────────────────────────────
-function PathNode({ lesson, index, state, th, onSelect, isCurrent, isLocked, gropiTip }) {
+// ── Tracé du chemin ───────────────────────────────────────────────────────────
+// L'ancienne version alternait strictement gauche / droite (`index % 2`), ce
+// qui donnait un zigzag parfaitement régulier : joli une fois, monotone sur
+// 100 leçons, et surtout ça ne ressemble pas à un chemin.
+//
+// Ici on garde le principe du serpentin — indispensable en mobile-first, il
+// faut que le doigt suive une ligne lisible et que rien ne sorte des 440 px
+// de large — mais on introduit deux variations :
+//
+//   • le CÔTÉ suit un motif de 7 (au lieu de 2), qui inclut deux positions
+//     centrales : le chemin passe parfois par le milieu au lieu de rebondir
+//     systématiquement d'un bord à l'autre ;
+//   • le DÉCALAGE horizontal varie de quelques pixels par nœud.
+//
+// Le tout est DÉTERMINISTE : dérivé de l'identifiant de la leçon, pas de
+// Math.random(). Un tracé qui changerait à chaque rendu — ou au retour d'une
+// leçon — serait désorientant, et casserait la mémoire visuelle du parcours
+// (« ma prochaine leçon est celle en bas à droite »).
+
+/** Hash entier stable à partir d'une chaîne (FNV-1a, 32 bits). */
+function hashId(str) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = (h * 0x01000193) >>> 0;
+  }
+  return h;
+}
+
+// Motif de côtés sur 7 positions. Les deux "center" sont ce qui casse le
+// zigzag mécanique ; le motif reste équilibré (3 gauche, 2 centre, 2 droite)
+// pour que le chemin ne dérive pas d'un côté sur une longue unité.
+const SIDE_PATTERN = ["left", "right", "center", "right", "left", "center", "left"];
+
+/**
+ * Position d'un nœud : côté + décalage horizontal.
+ * `unitId` entre dans le hash pour que deux unités de même longueur n'aient
+ * pas exactement le même dessin.
+ */
+function nodeLayout(lessonId, unitId, index) {
+  const h = hashId(`${unitId}:${lessonId}`);
+  // Décalage du motif propre à chaque unité : le serpentin ne repart pas
+  // toujours du même pied.
+  const offset = h % SIDE_PATTERN.length;
+  const side = SIDE_PATTERN[(index + offset) % SIDE_PATTERN.length];
+  // Dérive horizontale de 0 à 15 px. Volontairement modeste : au-delà, sur
+  // un écran de 390 px, les cartes de titre commencent à se décaler
+  // visiblement et le chemin devient brouillon.
+  const drift = (h >> 8) % 16;
+  return { side, drift };
+}
+
+/** Position horizontale (en %) du centre d'un nœud, pour tracer le lien. */
+function sideToX(side, drift) {
+  const base = side === "left" ? 21 : side === "right" ? 79 : 50;
+  // La dérive pousse vers le centre, jamais vers l'extérieur : on ne risque
+  // pas de sortir du cadre.
+  const towardCenter = side === "left" ? +1 : side === "right" ? -1 : (drift % 2 ? +1 : -1);
+  return base + towardCenter * (drift / 3.2);
+}
+
+function PathNode({ lesson, index, state, th, onSelect, isCurrent, isLocked, gropiTip, layout }) {
   const C = useC();
   const done = !!state.completedLessons[lesson.id];
-  const side = index%2===0 ? "left" : "right";
+  const { side, drift } = layout;
+  // Les bulles de titre et Gropi ne peuvent pas être "centrées" sans casser
+  // la lisibilité : on les rabat sur le bord le plus proche.
+  const textSide = side === "center" ? (drift % 2 ? "left" : "right") : side;
 
   let bg, border, iconEl;
   if(done)         { bg=th.colorL;    border=th.color;   iconEl=<Ti name="check" size={isCurrent?22:18} color={th.color}/>; }
@@ -55,10 +120,12 @@ function PathNode({ lesson, index, state, th, onSelect, isCurrent, isLocked, gro
   return (
     <div style={{
       display:"flex", flexDirection:"column",
-      alignItems: side==="left" ? "flex-start" : "flex-end",
+      alignItems: side==="left" ? "flex-start" : side==="right" ? "flex-end" : "center",
       width:"100%",
-      paddingLeft:  side==="left"  ? 26 : 0,
-      paddingRight: side==="right" ? 26 : 0,
+      // Le décalage vient s'ajouter au retrait de bord : c'est lui qui donne
+      // l'irrégularité, sans jamais pousser vers l'extérieur du cadre.
+      paddingLeft:  side==="left"  ? 26 + drift : 0,
+      paddingRight: side==="right" ? 26 + drift : 0,
       marginBottom: 4,
     }}>
       <button
@@ -106,7 +173,7 @@ function PathNode({ lesson, index, state, th, onSelect, isCurrent, isLocked, gro
             border:`1.5px solid ${isCurrent?C.primaryBorder:C.border}`,
             borderRadius:R.md, padding:"9px 12px",
             maxWidth:186,
-            alignSelf:side==="left"?"flex-start":"flex-end",
+            alignSelf:textSide==="left"?"flex-start":"flex-end",
             boxShadow:isCurrent?`0 4px 14px ${C.primary}22`:"none",
             cursor:isCurrent?"pointer":"default",
           }}>
@@ -136,14 +203,14 @@ function PathNode({ lesson, index, state, th, onSelect, isCurrent, isLocked, gro
       {isCurrent && (
         <div
           onClick={() => onSelect(lesson)}
-          style={{ marginTop: 10, alignSelf: side === "left" ? "flex-start" : "flex-end", cursor: "pointer" }}
+          style={{ marginTop: 10, alignSelf: textSide === "left" ? "flex-start" : "flex-end", cursor: "pointer" }}
         >
           <GropiBubble
             pose="wave"
             size={68}
             tint="primary"
             eyebrow={`Gropi · ${lesson.title}`}
-            side={side}
+            side={textSide}
           >
             {gropiTip}
           </GropiBubble>
@@ -208,19 +275,44 @@ function UnitChest({ unit, th, onClaim, onCheck }) {
 }
 
 // ── Connecteur tiretillé ──────────────────────────────────────────────────────
-function PathConnector({ fromSide, done }) {
+// Relie deux nœuds quelconques, et non plus deux bords fixes.
+// L'ancienne version ne connaissait que deux tracés en dur (gauche→droite et
+// droite→gauche), ce qui imposait le zigzag régulier. Ici la courbe est
+// calculée entre les positions réelles des deux nœuds, ce qui permet les
+// passages par le centre et les décalages.
+//
+// `stroke` ne doit pas être une couleur codée en dur : "#E0D8CE" restait
+// clair sur le fond sombre du thème dark, d'où un chemin qui ressortait plus
+// que les nœuds eux-mêmes.
+function PathConnector({ from, to, done }) {
   const C = useC();
-  const stroke = done ? C.green : "#E0D8CE";
+  const stroke = done ? C.green : C.border;
+
+  const x1 = sideToX(from.side, from.drift);
+  const x2 = sideToX(to.side, to.drift);
+
+  // Hauteur du lien : un saut de bord à bord a besoin de plus de place pour
+  // que la courbe reste douce ; un petit décalage se relie presque droit.
+  const ecart = Math.abs(x2 - x1);
+  const h = ecart < 12 ? 26 : ecart < 40 ? 34 : 42;
+
+  // Courbe de Bézier : les points de contrôle restent sur la verticale de
+  // départ et d'arrivée, ce qui donne un raccord tangent aux nœuds — le
+  // chemin "sort" du nœud par le bas et "entre" dans le suivant par le haut.
+  const d = `M ${x1} 0 C ${x1} ${h * 0.55}, ${x2} ${h * 0.45}, ${x2} ${h}`;
+
   return (
-    <div style={{position:"relative",height:38,overflow:"visible",margin:"0 26px"}} aria-hidden="true">
-      <svg viewBox="0 0 300 38" preserveAspectRatio="none"
+    <div style={{position:"relative",height:h,overflow:"visible"}} aria-hidden="true">
+      <svg viewBox={`0 0 100 ${h}`} preserveAspectRatio="none"
            style={{position:"absolute",inset:0,width:"100%",height:"100%"}}>
         <path
-          d={fromSide==="left"
-            ? "M 64 0 C 64 19, 236 19, 236 38"
-            : "M 236 0 C 236 19, 64 19, 64 38"}
+          d={d}
           fill="none" stroke={stroke} strokeWidth="2.5"
           strokeDasharray="6 8" strokeLinecap="round"
+          // vectorEffect empêche le trait d'être étiré par le
+          // preserveAspectRatio="none" : sans ça, l'épaisseur variait avec la
+          // largeur de l'écran et le pointillé se déformait.
+          vectorEffect="non-scaling-stroke"
         />
       </svg>
     </div>
@@ -301,7 +393,10 @@ function CoursesScreen({ state, dispatch, content }) {
   const [checkingUnit, setCheckingUnit] = useState(null);
   const [chestPop, setChestPop] = useState(false);
   const currentRef = useRef(null);
-  const scrolledOnce = useRef(false);
+  // Identifiant de la leçon sur laquelle on a scrollé la dernière fois. Sert à
+  // ne pas re-scroller à chaque rendu, tout en re-scrollant bien quand la
+  // cible change — c'est-à-dire au retour d'une leçon terminée.
+  const scrolledTo = useRef(null);
 
   // state.unitChecks manquait ici : c'est lui qui porte le resultat du
   // controle de fin d'unite (passed: true/false). Sans cette dependance,
@@ -313,19 +408,59 @@ function CoursesScreen({ state, dispatch, content }) {
   const stats = useMemo(()=>getPathStats(content, state),
     [content, state.completedLessons, state.claimedUnits, state.unitChecks]);
 
-  // Auto-scroll vers l'unité courante (une seule fois, si progression existante)
+  // Tracés de chemin, calculés une fois par unité. `useMemo` sur le contenu
+  // seulement : le dessin ne doit PAS bouger quand la progression change,
+  // sinon le parcours se réorganiserait sous les yeux à chaque leçon finie.
+  const unitLayouts = useMemo(()=>{
+    const out = {};
+    for (const unit of path) {
+      out[unit.id] = unit.lessons.map((l, i) => nodeLayout(l.id, unit.id, i));
+    }
+    return out;
+  }, [path]);
+
+  // Leçon courante, au niveau de l'écran : c'est la cible du scroll.
+  const currentLessonIdGlobal = useMemo(()=>{
+    const u = path.find(x => x.isCurrent);
+    return u ? (u.lessons.find(l => !state.completedLessons[l.id])?.id ?? null) : null;
+  }, [path, state.completedLessons]);
+
+  // Auto-scroll vers la leçon courante.
+  //
+  // Avant, un `scrolledOnce` passait à true au premier scroll et n'était
+  // jamais remis à zéro : au retour d'une leçon, on retombait donc là où la
+  // page avait été laissée — c'est-à-dire au-dessus de la leçon suivante,
+  // qu'il fallait aller chercher en descendant. C'est le comportement que tu
+  // as signalé.
+  //
+  // Maintenant on mémorise SUR QUELLE leçon on a scrollé. Quand la leçon
+  // courante change (donc quand on vient d'en terminer une), la cible ne
+  // correspond plus et on recadre. Aucun scroll parasite pendant la
+  // consultation d'une leçon, et aucun scroll répété si rien n'a bougé.
   useEffect(()=>{
-    if (activeLesson || scrolledOnce.current) return;
-    if (stats.doneLessons === 0) { scrolledOnce.current = true; return; }
+    if (activeLesson || checkingUnit) return;
+    if (!currentLessonIdGlobal) return;
+    if (scrolledTo.current === currentLessonIdGlobal) return;
+
+    // Court délai : le nœud doit être monté et mesuré avant qu'on cadre
+    // dessus, sinon scrollIntoView vise une position qui va encore changer.
     const t = setTimeout(()=>{
-      currentRef.current?.scrollIntoView({ behavior:"smooth", block:"center" });
-      scrolledOnce.current = true;
-    }, 200);
+      currentRef.current?.scrollIntoView({
+        behavior: scrolledTo.current === null ? "auto" : "smooth",
+        block: "center",
+      });
+      scrolledTo.current = currentLessonIdGlobal;
+    }, 120);
     return ()=>clearTimeout(t);
-  }, [activeLesson, stats.doneLessons]);
+  }, [activeLesson, checkingUnit, currentLessonIdGlobal]);
 
   const claimChest = (unit) => {
-    dispatch({ type:"CLAIM_UNIT_BONUS", unitId:unit.id, xp:UNIT_BONUS_XP,
+    try { playChestOpen(); } catch { /* jamais bloquant */ }
+    try { navigator.vibrate?.([15, 50, 25, 50, 35]); } catch { /* non supporté */ }
+    // L'XP du coffre est proportionnelle à la taille de l'unité (unit.bonusXp),
+    // et non plus une constante de 40 XP : 4 leçons et 15 leçons ne méritent
+    // pas la même récompense.
+    dispatch({ type:"CLAIM_UNIT_BONUS", unitId:unit.id, xp:unit.bonusXp ?? UNIT_BONUS_XP,
                title:`Coffre — ${unit.title}` });
     setChestPop(true);
     setTimeout(()=>setChestPop(false), 1400);
@@ -338,7 +473,7 @@ function CoursesScreen({ state, dispatch, content }) {
 
   if(checkingUnit) return (
     <UnitCheckScreen unit={checkingUnit} content={content} dispatch={dispatch}
-      onDone={()=>setCheckingUnit(null)}/>
+      state={state} onDone={()=>setCheckingUnit(null)}/>
   );
 
   return (
@@ -393,7 +528,10 @@ function CoursesScreen({ state, dispatch, content }) {
 
               {unit.lessons.map((lesson,li)=>{
                 const isCurrent = lesson.id===currentLessonId;
-                const prevSide  = li===0 ? null : (li-1)%2===0?"left":"right";
+                // Position de ce nœud et du précédent : le connecteur a besoin
+                // des deux pour tracer sa courbe.
+                const lay     = unitLayouts[unit.id][li];
+                const prevLay = li===0 ? null : unitLayouts[unit.id][li-1];
 
                 // Tip contextuel de Gropi sur le nœud en cours
                 let gropiTip = null;
@@ -412,7 +550,7 @@ function CoursesScreen({ state, dispatch, content }) {
                   <div key={lesson.id} ref={isCurrent?currentRef:null}>
                     {li>0&&(
                       <PathConnector
-                        fromSide={prevSide}
+                        from={prevLay} to={lay}
                         done={!!state.completedLessons[unit.lessons[li-1].id]}
                       />
                     )}
@@ -423,14 +561,17 @@ function CoursesScreen({ state, dispatch, content }) {
                       isCurrent={isCurrent}
                       isLocked={!unit.unlocked}
                       gropiTip={gropiTip}
+                      layout={lay}
                     />
                   </div>
                 );
               })}
 
-              {/* Connecteur → coffre */}
+              {/* Connecteur → coffre. Le coffre est centré, donc l'arrivée
+                  est au milieu quelle que soit la position du dernier nœud. */}
               <PathConnector
-                fromSide={(unit.lessons.length-1)%2===0?"left":"right"}
+                from={unitLayouts[unit.id][unit.lessons.length-1]}
+                to={{ side:"center", drift:0 }}
                 done={unit.complete}
               />
               <UnitChest unit={unit} th={th} onClaim={claimChest} onCheck={setCheckingUnit}/>
@@ -478,6 +619,17 @@ function LessonView({ lesson, state, dispatch, onBack }) {
   const finish = () => {
     if(!done) {
       setPop(true);
+      // Petite fioriture de guitare en même temps que Gropi apparaît.
+      // playLessonComplete() ne déclenche PAS le chargement des samples : si
+      // l'audio n'est pas déjà en mémoire, elle ne fait rien et renvoie false.
+      // Télécharger plusieurs mégaoctets pour un jingle de 400 ms serait
+      // absurde, surtout en 4G — la récompense sonore est un bonus, pas un
+      // prérequis.
+      try { playLessonComplete(); } catch { /* jamais bloquant */ }
+      // Vibration courte : sur mobile, l'écran est souvent hors du champ de
+      // vision (guitare dans les mains), le retour haptique porte autant que
+      // l'animation.
+      try { navigator.vibrate?.([12, 40, 18]); } catch { /* non supporté */ }
       dispatch({type:"COMPLETE_LESSON",id:lesson.id,title:lesson.title});
       dispatch({type:"MARK_STREAK"});
       dispatch({type:"UPDATE_WEEKLY",field:"sessions"});

@@ -1,18 +1,34 @@
-// GuitarPath -- src/audioEngine.js
+// Groply — src/audioEngine.js
 // Moteur audio Tone.js + samples FatBoy acoustic_guitar_steel
 // Noms de fichiers : Ab2.mp3, Bb3.mp3, Db4.mp3, Eb3.mp3, Gb3.mp3 (convention bemols)
 
-import * as Tone from "tone";
-// Import STATIQUE plutôt que les 4 `await import("./fretboardUtils.js")`
-// dispersés dans ce fichier. fretboardUtils.js n'importe rien lui-même : il
-// n'y a donc aucun risque de cycle, et l'import dynamique n'apportait qu'un
-// inconvénient — une requête réseau séparée déclenchée au moment du clic,
-// qui peut échouer silencieusement (chunk manquant, souci de cache) sans
-// qu'aucune erreur ne soit visible pour l'utilisateur. C'était le suspect
-// n°1 du "la suite d'accords ne joue aucun son" : playProgression est la
-// seule fonction de lecture à dépendre de ce module au moment de l'appel,
-// alors que playChord/playInterval n'en ont pas besoin — ce qui explique
-// que les autres modes marchent et que celui-ci, spécifiquement, reste muet.
+// ── Tone.js est chargé DYNAMIQUEMENT ──────────────────────────────────────
+// Avant : `import * as Tone from "tone"` en statique. Comme audioEngine était
+// importé par EarTraining, FretboardExplorer, QuizScreen et ToolboxScreen —
+// tous préchargés au démarrage — Tone.js (~200 Ko gzip) se retrouvait dans le
+// chemin critique du premier écran, y compris pour quelqu'un qui ne jouera
+// jamais une note.
+let Tone = null;
+let tonePromise = null;
+
+async function chargerTone() {
+  if (Tone) return Tone;
+  if (!tonePromise) tonePromise = import("tone").then(m => { Tone = m; return m; });
+  return tonePromise;
+}
+
+/** Vrai si Tone.js est déjà en mémoire (permet d'éviter un await inutile). */
+export const isToneReady = () => Tone !== null;
+
+// fretboardUtils, en revanche, est importé STATIQUEMENT : le module n'importe
+// rien lui-même (aucun risque de cycle), il est léger, et les 4
+// `await import("./fretboardUtils.js")` qu'il y avait ici créaient une requête
+// réseau déclenchée au moment du clic, capable d'échouer silencieusement
+// (chunk manquant, souci de cache) sans aucune erreur visible.
+// C'était la cause du "la suite d'accords ne joue aucun son" : playProgression
+// est la seule fonction de lecture à en dépendre au moment de l'appel, alors
+// que playChord et playInterval n'en ont pas besoin — d'où le fait que les
+// autres modes fonctionnaient et que celui-là, spécifiquement, restait muet.
 import { CHORD_TYPES, normalizeNote, getScaleNotes, getChordNotes } from "./fretboardUtils.js";
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -36,6 +52,12 @@ const SAMPLE_URLS = {
 
 const BASE_URL = "/audio/guitar/";
 
+/**
+ * URLs complètes des samples — utilisées par les Réglages pour proposer
+ * « rendre l'audio disponible hors-ligne » (le service worker les met alors
+ * en cache). Le precache automatique serait plusieurs mégaoctets imposés sur
+ * le réseau mobile de l'utilisateur : ça se demande.
+ */
 export const listSampleUrls = () => Object.values(SAMPLE_URLS).map(f => BASE_URL + f);
 export const SAMPLE_COUNT = Object.keys(SAMPLE_URLS).length;
 
@@ -142,6 +164,9 @@ export function getToneNoteAtPosition(string, fret) {
 // ─────────────────────────────────────────────────────────────────────────
 // ETAT INTERNE
 // ─────────────────────────────────────────────────────────────────────────
+const DEV = typeof import.meta !== "undefined" && import.meta.env?.DEV;
+const warn = (...a) => { if (DEV) console.warn("[audioEngine]", ...a); };
+
 let sampler      = null;
 let loadPromise  = null;
 let isLoaded     = false;
@@ -155,7 +180,14 @@ export function getLoadError()  { return loadError; }
 // ─────────────────────────────────────────────────────────────────────────
 export function loadAudio() {
   if (loadPromise) return loadPromise;
-  loadPromise = new Promise((resolve, reject) => {
+  // IMPORTANT : en cas d'échec, `loadPromise` est remis à null (voir plus
+  // bas). Avant, la promesse rejetée restait mémorisée : si le premier
+  // chargement échouait — réseau coupé, un .mp3 manquant — `ensureLoaded()`
+  // renvoyait false pour le reste de la session. Plus aucun son jusqu'au
+  // rechargement complet de l'app, et sans aucun message.
+  loadPromise = (async () => {
+    await chargerTone();
+    return new Promise((resolve, reject) => {
     try {
       // Une guitare est toujours entendue dans une pièce. Un signal trop
       // sec et frontal sonne artificiel, même avec de vrais samples — un
@@ -171,7 +203,7 @@ export function loadAudio() {
         onload: () => { isLoaded = true; resolve(true); },
         onerror: (err) => {
           loadError = err;
-          console.warn("[audioEngine] Erreur samples:", err);
+          warn("Erreur samples:", err);
           reject(err);
         },
       }).connect(reverb);
@@ -180,16 +212,77 @@ export function loadAudio() {
       loadError = err;
       reject(err);
     }
-  });
+    });
+  })();
+
+  loadPromise.catch(() => { loadPromise = null; isLoaded = false; });
   return loadPromise;
 }
 
+/** Remet le moteur à zéro pour permettre une nouvelle tentative. */
+export function resetAudio() {
+  try { sampler?.dispose?.(); } catch { /* noop */ }
+  sampler = null; loadPromise = null; isLoaded = false; loadError = null;
+}
+
+/**
+ * À appeler EN PREMIER dans le gestionnaire d'appui, avant toute autre
+ * opération asynchrone.
+ *
+ * iOS Safari exige que l'AudioContext soit créé ou reprix à l'intérieur d'un
+ * geste utilisateur direct. L'ancienne version faisait :
+ *     await loadAudio();          // téléchargement de ~60 samples
+ *     await Tone.start();         // ← la chaîne du geste est déjà rompue
+ * Symptôme classique : « il faut appuyer deux fois pour avoir du son ».
+ *
+ * On démarre donc le contexte d'abord, on charge ensuite.
+ */
+export async function unlockAudio() {
+  try {
+    await chargerTone();
+    if (Tone.context.state !== "running") await Tone.start();
+    return Tone.context.state === "running";
+  } catch { return false; }
+}
+
 async function ensureLoaded() {
+  try {
+    await chargerTone();
+  } catch { return false; }
+
+  // Le contexte d'abord — y compris l'état "interrupted" propre à iOS (appel
+  // entrant, retrait du casque, dialogue système), que Tone.context.resume()
+  // ne traite pas : cf. Tone.js #767.
+  const etat = Tone.context.state;
+  if (etat !== "running") {
+    try {
+      await Tone.start();
+      if (Tone.context.state !== "running") await Tone.context.rawContext?.resume?.();
+    } catch { /* on tente quand même la lecture */ }
+  }
+
   if (!isLoaded) {
     try { await loadAudio(); } catch { return false; }
   }
-  if (Tone.context.state !== "running") await Tone.start();
   return isLoaded;
+}
+
+/**
+ * Met le contexte audio en veille quand l'app passe en arrière-plan.
+ * Sans ça, l'AudioContext continue de tourner et consomme de la batterie
+ * pendant que l'écran est éteint.
+ */
+if (typeof document !== "undefined") {
+  document.addEventListener("visibilitychange", () => {
+    if (!Tone) return;
+    try {
+      if (document.visibilityState === "hidden") {
+        stopProgression();
+        sampler?.releaseAll?.();
+        Tone.context.rawContext?.suspend?.();
+      }
+    } catch { /* noop */ }
+  });
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -199,7 +292,7 @@ async function ensureLoaded() {
 export async function playNote(note, duration = "4n") {
   if (!await ensureLoaded()) return;
   try { sampler.triggerAttackRelease(note, duration); }
-  catch (e) { console.warn("[audioEngine] playNote:", e); }
+  catch (e) { warn("playNote:", e); }
 }
 
 export async function playChord(notes, duration = "2n", opts = {}) {
@@ -209,7 +302,7 @@ export async function playChord(notes, duration = "2n", opts = {}) {
     if (!strum) { sampler.triggerAttackRelease(notes, duration); return; }
     strumInto(notes, duration, Tone.now(), direction, spread);
   }
-  catch (e) { console.warn("[audioEngine] playChord:", e); }
+  catch (e) { warn("playChord:", e); }
 }
 
 /**
@@ -230,7 +323,7 @@ export async function playScale(notes, bpm = 80, onStep) {
     });
     // Signale la fin, pour éteindre le dernier surlignage.
     if (onStep) Tone.Draw.schedule(() => onStep(-1, null), now + notes.length * spb);
-  } catch (e) { console.warn("[audioEngine] playScale:", e); }
+  } catch (e) { warn("playScale:", e); }
 }
 
 export async function playInterval(note1, note2, mode = "ascending") {
@@ -246,7 +339,7 @@ export async function playInterval(note1, note2, mode = "ascending") {
       sampler.triggerAttackRelease(note1, "4n", now);
       sampler.triggerAttackRelease(note2, "4n", now + 0.65);
     }
-  } catch (e) { console.warn("[audioEngine] playInterval:", e); }
+  } catch (e) { warn("playInterval:", e); }
 }
 
 // Joue une gamme depuis root + scaleKey (utilise fretboardUtils)
@@ -310,21 +403,26 @@ export async function playProgression(chords, secondsPerChord = 1.5, onStep) {
   const voicedChords = chords.map(({ root, type }) =>
     buildVoicingFromIntervals(normalizeNote(root), CHORD_TYPES[type]?.intervals || [])
   );
-
-  // Scheduling direct depuis Tone.now() — sans Tone.Sequence ni Transport.
-  // La Sequence + Transport causait des silences quand on relançait vite :
-  // le transport gardait sa position précédente et refusait de redémarrer
-  // proprement après un stop()/cancel(). strumInto() schedule ses notes
-  // directement dans le contexte audio, ce qui est suffisant ici.
+  // Scheduling direct depuis Tone.now(), sans Tone.Sequence ni Transport.
+  // Sequence + Transport imposait un état global partagé : après un
+  // stop()/cancel(), le transport gardait sa position et refusait de
+  // redémarrer proprement, d'où des relances silencieuses. strumInto()
+  // planifie déjà ses notes dans le contexte audio, le Transport n'apportait
+  // rien ici — et un accord de plus ne justifie pas une horloge globale.
   const start = Tone.now() + 0.05;
   voicedChords.forEach((voiced, idx) => {
+    // Alternance du sens de grattage (bas / haut), comme un vrai jeu
+    // rythmique plutôt que le même coup identique en boucle.
     const direction = idx % 2 === 0 ? "down" : "up";
+    // Micro-décalage : quelques millisecondes d'imprécision, ce qui suffit
+    // à sortir du rendu "machine" parfaitement métronomique.
     const humanize = (Math.random() - 0.5) * 0.012;
     const when = start + idx * secondsPerChord + humanize;
     strumInto(voiced, secondsPerChord * 0.9, when, direction);
     Tone.Draw.schedule(() => onStep?.(idx), when);
   });
 
+  // Signale la fin, pour éteindre le dernier surlignage.
   const totalMs = voicedChords.length * secondsPerChord * 1000 + 300;
   progressionTimer = setTimeout(() => {
     progressionTimer = null;
@@ -338,6 +436,68 @@ export function stopProgression() {
     try { progressionSeq.stop(); progressionSeq.dispose(); } catch {}
     progressionSeq = null;
   }
+  // Plus de Transport à arrêter : les notes sont planifiées directement dans
+  // le contexte audio. On coupe simplement ce qui sonne encore.
+  try { sampler?.releaseAll?.(); } catch { /* noop */ }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// FANFARES — récompenses sonores
+// ─────────────────────────────────────────────────────────────────────────
+// Choix de conception : pas de "ding" de synthé générique. On a une vraie
+// guitare échantillonnée sous la main, donc la récompense est un geste de
+// guitariste — un arpège très rapide en montant, joué léger, dans l'aigu.
+// C'est ce qu'un prof fait spontanément quand un élève réussit son passage :
+// il balance une petite fioriture. Ça reste dans l'univers de l'instrument
+// au lieu de sonner comme une notification de téléphone.
+//
+// Règle importante : ces fanfares ne déclenchent JAMAIS le chargement des
+// samples. Si l'audio n'est pas déjà en mémoire, on ne joue rien — imposer
+// plusieurs mégaoctets de téléchargement pour un jingle de 400 ms serait
+// absurde, surtout en 4G.
+
+/** Joue une suite de notes très rapprochées, en fondu d'intensité. */
+function fioriture(notes, { gap = 0.055, duration = "8n", from = 0.62, to = 0.30 } = {}) {
+  if (!isLoaded || !sampler || !Tone) return false;
+  const now = Tone.now() + 0.01;
+  notes.forEach((note, i) => {
+    // L'intensité décroît le long de la montée : le geste s'allège, comme
+    // un vrai balayage au médiator qui finit en effleurement.
+    const t = notes.length === 1 ? 0 : i / (notes.length - 1);
+    const velocity = from + (to - from) * t;
+    try { sampler.triggerAttackRelease(note, duration, now + i * gap, velocity); }
+    catch { /* noop */ }
+  });
+  return true;
+}
+
+/**
+ * Leçon terminée — arpège majeur avec neuvième, court et lumineux.
+ * La neuvième (le Ré sur un accord de Do) est ce qui donne la couleur
+ * "ouverte, ça continue" plutôt qu'un accord parfait qui referme la phrase.
+ * C'est exactement le message : bravo, et enchaîne.
+ */
+export function playLessonComplete() {
+  return fioriture(["C4", "E4", "G4", "D4"], { gap: 0.052, duration: "8n" });
+}
+
+/**
+ * Unité validée — même idée, mais la montée va plus loin et se termine sur
+ * l'octave : une phrase qui se referme, parce que là on a vraiment bouclé
+ * quelque chose.
+ */
+export function playUnitComplete() {
+  return fioriture(["C3", "G3", "C4", "E4", "G4", "C4"], { gap: 0.062, duration: "4n", to: 0.42 });
+}
+
+/** Coffre ouvert — deux notes tenues, plus larges, façon carillon. */
+export function playChestOpen() {
+  return fioriture(["G3", "D4"], { gap: 0.10, duration: "2n", from: 0.55, to: 0.45 });
+}
+
+/** Badge débloqué — quarte ascendante, courte et affirmative. */
+export function playBadgeUnlocked() {
+  return fioriture(["D4", "G4"], { gap: 0.085, duration: "4n", from: 0.58, to: 0.48 });
 }
 
 export function stopAll() {
@@ -345,7 +505,7 @@ export function stopAll() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// EAR TRAINING — generation de questions
+// ENTRAÎNEMENT DE L'OREILLE — génération de questions
 // ─────────────────────────────────────────────────────────────────────────
 export function generateEarTrainingQuestion(type = "interval") {
   const NOTES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
@@ -355,7 +515,7 @@ export function generateEarTrainingQuestion(type = "interval") {
     5:  "Quarte juste",
     7:  "Quinte juste",
     9:  "Sixte majeure",
-    10: "Septieme mineure",
+    10: "Septième mineure",
     12: "Octave",
   };
 
@@ -563,7 +723,10 @@ export function makeEarQuizQuestion(mode = "interval") {
   if (!ear) return null;
 
   if (mode === "interval") {
-    const labels = ear.options.map(o => o.label?.fr || o.label?.short || String(o.label));
+    // INTERVAL_NAMES ne produit que des chaînes : les branches `label.fr` /
+    // `label.short` de l'ancienne version ne pouvaient jamais s'exécuter, et
+    // auraient masqué un changement de format au lieu de le signaler.
+    const labels = ear.options.map(o => String(o.label));
     const answerIdx = ear.options.findIndex(o => o.semitones === ear.answer);
     if (answerIdx < 0) return null;
     return {

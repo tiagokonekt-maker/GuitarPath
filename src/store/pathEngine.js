@@ -194,18 +194,74 @@ export function buildPath(content, state, priorityModules = null) {
 }
 
 /**
- * Pool de questions pour la vérification de fin d'unité : union des quiz
- * associés à chaque leçon de l'unité, dédupliqués, dans l'ordre des leçons.
+ * Pool de questions pour la vérification de fin d'unité.
+ *
+ * ── Le problème (signalé à l'usage) ──────────────────────────────────────
+ * L'ancienne version ne renvoyait QUE les quiz listés dans `lesson.quiz`.
+ * Sur le contenu réel :
+ *
+ *     palier-1 : 4 leçons →  8 questions dans le pool, 8 tirées
+ *     palier-2 : 6 leçons →  8 questions dans le pool, 8 tirées
+ *
+ * Le pool ÉTAIT l'échantillon. Refaire la vérification juste après avoir vu
+ * les corrections revenait à la revalider de mémoire, sans avoir compris
+ * l'unité. Le contrôle ne contrôlait plus rien.
+ *
+ * ── Ce que renvoie cette version ─────────────────────────────────────────
+ *   { core, extra }
+ *
+ *   core   les quiz explicitement rattachés aux leçons de l'unité.
+ *          C'est la matière de l'unité, elle reste prioritaire au tirage.
+ *
+ *   extra  les quiz du ou des MÊMES modules dont la leçon d'origine est déjà
+ *          complétée. Même discipline, contenu déjà vu : légitime dans un
+ *          contrôle, et ça fait passer les premiers paliers de 8 à 25+
+ *          questions disponibles.
+ *
+ * Note importante : on ne filtre PAS sur le niveau de difficulté. `q.lvl` va
+ * de 1 à 3 (difficulté de la question) alors que `lesson.level` va de 1 à 9
+ * (palier du parcours) — les comparer était une erreur de catégorie, et
+ * c'est ce qui faisait que le renfort ne remontait rien au-delà du palier 3.
+ *
+ * @param unit              l'unité concernée
+ * @param allQuiz           la banque complète (content.quiz) — facultatif
+ * @param completedLessons  pour n'admettre que du contenu déjà vu
  */
-export function getUnitQuizPool(unit) {
+export function getUnitQuizPool(unit, allQuiz = null, completedLessons = null) {
   const seen = new Set();
-  const ids = [];
+  const core = [];
   for (const lesson of unit?.lessons || []) {
     for (const qid of lesson.quiz || []) {
-      if (!seen.has(qid)) { seen.add(qid); ids.push(qid); }
+      if (!seen.has(qid)) { seen.add(qid); core.push(qid); }
     }
   }
-  return ids;
+
+  // Sans la banque complète, on garde le comportement historique : un simple
+  // tableau d'identifiants. Les appelants existants continuent de marcher.
+  if (!Array.isArray(allQuiz) || allQuiz.length === 0) {
+    return Object.assign([...core], { core, extra: [] });
+  }
+
+  const modules   = new Set(unit?.courseIds || []);
+  const lessonIds = new Set((unit?.lessons || []).map(l => l.id));
+
+  const extra = [];
+  for (const q of allQuiz) {
+    if (seen.has(q.id)) continue;
+    if (!modules.has(q.courseId)) continue;
+    // Une question rattachée à une leçon extérieure à l'unité n'est admise
+    // que si cette leçon a été complétée : on ne teste jamais sur du contenu
+    // que l'utilisateur n'a pas encore ouvert.
+    if (q.lessonId && !lessonIds.has(q.lessonId) && !completedLessons?.[q.lessonId]) continue;
+    // Une question sans leçon de rattachement est acceptée : elle appartient
+    // au module et n'appartient à aucune leçon en particulier.
+    seen.add(q.id);
+    extra.push(q.id);
+  }
+
+  // Le tableau reste itérable comme avant (compatibilité), avec `core` et
+  // `extra` accessibles pour les appelants qui savent les exploiter.
+  return Object.assign([...core, ...extra], { core, extra });
 }
 
 /**

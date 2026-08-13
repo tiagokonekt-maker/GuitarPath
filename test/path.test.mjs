@@ -152,3 +152,87 @@ test("un contenu vide ne fait rien planter", () => {
   assert.equal(getNextLesson({ courses: [] }, defaultState()), null);
   assert.equal(getPathStats({ courses: [] }, defaultState()).pct, 0);
 });
+
+// ── Pool de la vérification d'unité ───────────────────────────────────────
+// Avant, le pool faisait exactement la taille de l'échantillon sur les
+// premiers paliers (8 questions pour 8 tirées) : les questions étaient
+// toujours les mêmes, et refaire la vérification juste après avoir vu les
+// corrections revenait à la valider de mémoire.
+import { getUnitQuizPool } from "../src/store/pathEngine.js";
+
+const contenuAvecQuiz = () => {
+  const courses = [
+    { id: "neck", title: "N", lessons: [
+      { id: "n1", level: 1, quiz: ["qn1", "qn2"] },
+      { id: "n2", level: 1, quiz: ["qn3"] },
+      { id: "n3", level: 2, quiz: ["qn4"] },
+    ] },
+    { id: "scales", title: "S", lessons: [
+      { id: "s1", level: 1, quiz: ["qs1"] },
+      { id: "s2", level: 2, quiz: ["qs2"] },
+    ] },
+  ];
+  const quiz = [
+    { id: "qn1", courseId: "neck",   lessonId: "n1", lvl: 1 },
+    { id: "qn2", courseId: "neck",   lessonId: "n1", lvl: 2 },
+    { id: "qn3", courseId: "neck",   lessonId: "n2", lvl: 1 },
+    { id: "qn4", courseId: "neck",   lessonId: "n3", lvl: 3 },
+    { id: "qs1", courseId: "scales", lessonId: "s1", lvl: 1 },
+    { id: "qs2", courseId: "scales", lessonId: "s2", lvl: 2 },
+    // Question de module sans leçon de rattachement : admissible en renfort
+    { id: "qn5", courseId: "neck",   lessonId: null, lvl: 2 },
+    // Autre module : jamais admissible
+    { id: "qh1", courseId: "harmony", lessonId: null, lvl: 1 },
+  ];
+  return { courses, quiz };
+};
+
+test("sans banque fournie, le pool garde son comportement historique", () => {
+  const { courses } = contenuAvecQuiz();
+  const u = buildUnits(courses)[0];
+  const pool = getUnitQuizPool(u);
+  assert.ok(Array.isArray(pool));
+  assert.deepEqual([...pool].sort(), ["qn1", "qn2", "qn3", "qs1"].sort());
+});
+
+test("le pool s'élargit avec le renfort du même module", () => {
+  const { courses, quiz } = contenuAvecQuiz();
+  const u = buildUnits(courses)[0];
+  const done = { n1: "2026-01-01", n2: "2026-01-01", s1: "2026-01-01", n3: "2026-01-01" };
+  const pool = getUnitQuizPool(u, quiz, done);
+  assert.ok(pool.length > pool.core.length, "le renfort doit apporter des questions");
+  assert.ok(pool.extra.includes("qn5"), "une question de module sans leçon est admissible");
+  assert.ok(pool.extra.includes("qn4"), "une leçon complétée hors unité est admissible");
+});
+
+test("le renfort n'admet jamais un autre module", () => {
+  const { courses, quiz } = contenuAvecQuiz();
+  const u = buildUnits(courses)[0];
+  const pool = getUnitQuizPool(u, quiz, { n1: "x", n2: "x", n3: "x", s1: "x", s2: "x" });
+  assert.ok(!pool.includes("qh1"), "harmony n'est pas un module de cette unité");
+});
+
+test("le renfort n'admet jamais une leçon non complétée", () => {
+  const { courses, quiz } = contenuAvecQuiz();
+  const u = buildUnits(courses)[0];
+  // n3 n'est PAS complétée : sa question qn4 ne doit pas apparaître.
+  const pool = getUnitQuizPool(u, quiz, { n1: "x", n2: "x", s1: "x" });
+  assert.ok(!pool.includes("qn4"), "on ne teste pas sur du contenu jamais ouvert");
+});
+
+test("aucun doublon entre le coeur et le renfort", () => {
+  const { courses, quiz } = contenuAvecQuiz();
+  const u = buildUnits(courses)[0];
+  const pool = getUnitQuizPool(u, quiz, { n1: "x", n2: "x", n3: "x", s1: "x", s2: "x" });
+  assert.equal(new Set(pool).size, pool.length);
+  for (const id of pool.core) assert.ok(!pool.extra.includes(id));
+});
+
+test("le nombre de questions de vérification ne dépasse jamais le stock", () => {
+  const { courses } = contenuAvecQuiz();
+  for (const u of buildUnits(courses)) {
+    const stock = new Set(u.lessons.flatMap(l => l.quiz || [])).size;
+    assert.ok(u.checkSize <= Math.max(3, stock),
+      `${u.id} demande ${u.checkSize} questions pour ${stock} disponibles`);
+  }
+});
