@@ -2,20 +2,46 @@ import { useState } from 'react';
 import { useC } from '../design/ThemeContext.jsx';
 import { Ti } from '../design/Ti.jsx';
 
+// ── Ce qui change (audit §1.2, §1.3, §1.5, §6.2, §8.2) ────────────────────
+// • Parcours « mot de passe oublié » + définition du nouveau mot de passe,
+//   + renvoi de l'email de confirmation. Sans ça, perdre son mot de passe
+//   revenait à perdre son compte et sa progression.
+// • Les erreurs Supabase sont traduites (fait dans useAuth).
+// • `outline: none` sans remplacement est supprimé : le focus est visible
+//   (classe .gr-focus définie dans index.css).
+// • Longueur minimale portée à 8 caractères, avec un indicateur de robustesse.
+// • Vrai <form> : les gestionnaires de mots de passe et le bouton « Aller »
+//   du clavier mobile fonctionnent correctement.
+// • Liens vers les CGU et la politique de confidentialité — un produit
+//   européen qui collecte un email doit informer avant de collecter.
+
 const FONTS = '"Poppins", -apple-system, sans-serif';
 const BRAND_FONT = '"Nunito", "Poppins", sans-serif';
 
-// Style visuellement masqué mais toujours lu par les lecteurs d'écran —
-// les placeholder seuls ne suffisent pas comme label (ils disparaissent
-// dès la saisie, et certains lecteurs d'écran les ignorent).
+const MIN_PWD = 8;
+
 const srOnly = {
   position: 'absolute', width: 1, height: 1, padding: 0, margin: -1,
   overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0,
 };
 
-export function AuthScreen({ onSignIn, onSignUp }) {
+/** Robustesse indicative — informe, ne bloque pas au-delà du minimum. */
+function forcePwd(pwd) {
+  let n = 0;
+  if (pwd.length >= MIN_PWD) n++;
+  if (pwd.length >= 12) n++;
+  if (/[a-z]/.test(pwd) && /[A-Z]/.test(pwd)) n++;
+  if (/\d/.test(pwd)) n++;
+  if (/[^\w\s]/.test(pwd)) n++;
+  return Math.min(4, n);
+}
+
+export function AuthScreen({
+  onSignIn, onSignUp, onResetPassword, onUpdatePassword, onResendConfirmation,
+  recovery = false,
+}) {
   const C = useC();
-  const [mode, setMode]         = useState('login');
+  const [mode, setMode]         = useState(recovery ? 'newPassword' : 'login');
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading]   = useState(false);
@@ -23,193 +49,261 @@ export function AuthScreen({ onSignIn, onSignUp }) {
   const [success, setSuccess]   = useState(null);
   const [showPwd, setShowPwd]   = useState(false);
 
-  const handle = async () => {
-    setError(null); setSuccess(null);
-    if (!email || !password) { setError('Remplis tous les champs.'); return; }
-    if (password.length < 6) { setError('Mot de passe : 6 caractères minimum.'); return; }
+  const isRecovery = recovery || mode === 'newPassword';
+  const needsPwd   = mode !== 'forgot';
+  const force      = forcePwd(password);
+
+  const clear = () => { setError(null); setSuccess(null); };
+
+  const submit = async (e) => {
+    e?.preventDefault?.();
+    clear();
+
+    if (needsPwd && !password)            return setError('Renseigne ton mot de passe.');
+    if (!isRecovery && !email.trim())     return setError('Renseigne ton adresse email.');
+    if (needsPwd && password.length < MIN_PWD)
+      return setError(`Mot de passe : ${MIN_PWD} caractères minimum.`);
+
     setLoading(true);
     try {
       if (mode === 'login') {
         await onSignIn(email, password);
-      } else {
+      } else if (mode === 'signup') {
         await onSignUp(email, password);
-        setSuccess('Compte créé ! Vérifie ton email pour confirmer, puis connecte-toi.');
+        setSuccess('Compte créé. Ouvre l\'email de confirmation, puis connecte-toi.');
         setMode('login');
+        setPassword('');
+      } else if (mode === 'forgot') {
+        await onResetPassword?.(email);
+        setSuccess('Si un compte existe pour cet email, tu vas recevoir un lien de réinitialisation.');
+      } else if (mode === 'newPassword') {
+        await onUpdatePassword?.(password);
+        setSuccess('Mot de passe mis à jour. Te voilà connecté.');
       }
-    } catch (e) {
-      const msg = e.message || 'Erreur inconnue';
-      if (msg.includes('Invalid login'))           setError('Email ou mot de passe incorrect.');
-      else if (msg.includes('already registered')) setError('Cet email est déjà utilisé.');
-      else setError(msg);
+    } catch (err) {
+      setError(err?.message || 'Une erreur est survenue.');
     } finally {
       setLoading(false);
     }
   };
 
+  const resend = async () => {
+    clear();
+    if (!email.trim()) return setError('Renseigne d\'abord ton adresse email.');
+    setLoading(true);
+    try {
+      await onResendConfirmation?.(email);
+      setSuccess('Email de confirmation renvoyé.');
+    } catch (err) {
+      setError(err?.message || 'Une erreur est survenue.');
+    } finally { setLoading(false); }
+  };
+
+  const champ = {
+    padding: '13px 14px', borderRadius: 12,
+    border: `1.5px solid ${C.border}`,
+    fontSize: 16,                       // 16px : évite le zoom automatique iOS
+    background: C.surface, color: C.text,
+    fontFamily: FONTS, fontWeight: 500, width: '100%', boxSizing: 'border-box',
+  };
+
+  const titre =
+    mode === 'forgot'      ? 'Mot de passe oublié' :
+    mode === 'newPassword' ? 'Nouveau mot de passe' : null;
+
   return (
-    <>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@800&display=swap');`}</style>
     <div style={{
-      minHeight: '100vh',
+      minHeight: '100dvh',
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
       background: C.bg, padding: '1.5rem',
       fontFamily: FONTS,
     }}>
-      {/* Card */}
       <div style={{
         width: '100%', maxWidth: 380,
-        background: C.surface, borderRadius: 24,
-        padding: '2rem 1.75rem',
-        boxShadow: '0 8px 40px rgba(232,93,26,0.10)',
+        background: C.surface, borderRadius: 22,
         border: `1.5px solid ${C.border}`,
+        padding: '26px 22px',
+        boxShadow: '0 10px 40px rgba(0,0,0,.06)',
       }}>
-
-        {/* Logo + nom */}
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          {/* Dégradé hero derrière le logo */}
-          <div style={{
-            width: 72, height: 72, borderRadius: 20,
-            background: 'linear-gradient(135deg, #FF9155, #E85D1A)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            margin: '0 auto 14px',
-            boxShadow: '0 4px 20px rgba(232,93,26,0.30)',
-          }}>
-            <img src="/logo.svg" alt="Groply" style={{ width: 44, height: 44, filter: 'brightness(0) invert(1)' }} />
-          </div>
-          <h1 style={{
-            margin: 0, fontSize: 28, fontWeight: 800,
-            color: C.text, letterSpacing: '.5px', fontFamily: BRAND_FONT,
-          }}>
-            Groply
-          </h1>
-          <p style={{ margin: '5px 0 0', fontSize: 13, color: C.text3, fontWeight: 500 }}>
-            {mode === 'login' ? 'Connecte-toi pour continuer' : 'Crée ton compte gratuit'}
-          </p>
-        </div>
-
-        {/* Tabs */}
         <div style={{
-          display: 'flex', background: C.surface2,
-          borderRadius: 14, padding: 4, marginBottom: '1.25rem',
-          border: `1.5px solid ${C.border}`,
-        }}>
-          {[['login', 'Connexion'], ['signup', 'Inscription']].map(([id, label]) => (
-            <button key={id}
-              onClick={() => { setMode(id); setError(null); setSuccess(null); }}
-              style={{
-                flex: 1, padding: '9px', borderRadius: 10, border: 'none',
-                background: mode === id ? C.primary : 'transparent',
-                color: mode === id ? '#fff' : C.text3,
-                fontWeight: 700, fontSize: 13,
-                cursor: 'pointer', fontFamily: FONTS,
-                transition: 'all 0.18s',
-              }}>
-              {label}
-            </button>
-          ))}
-        </div>
+          fontFamily: BRAND_FONT, fontSize: 30, fontWeight: 800,
+          color: C.primary, letterSpacing: '-.5px', textAlign: 'center', marginBottom: 4,
+        }}>Groply</div>
+        <p style={{ textAlign: 'center', fontSize: 13, color: C.text2, margin: '0 0 20px' }}>
+          {titre || 'Progresser à la guitare, vraiment.'}
+        </p>
 
-        {/* Champs */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: '1rem' }}>
-          <label htmlFor="auth-email" style={srOnly}>Adresse email</label>
-          <input
-            id="auth-email"
-            type="email" placeholder="Email" value={email}
-            autoComplete="email"
-            onChange={e => setEmail(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handle()}
-            style={{
-              padding: '13px 14px', borderRadius: 12,
-              border: `1.5px solid ${C.border}`,
-              fontSize: 14, outline: 'none',
-              background: C.surface, color: C.text,
-              fontFamily: FONTS, fontWeight: 500,
-            }}
-          />
-          {/* Mot de passe + bouton œil */}
-          <div style={{ position: 'relative' }}>
-            <label htmlFor="auth-password" style={srOnly}>Mot de passe (6 caractères minimum)</label>
-            <input
-              id="auth-password"
-              type={showPwd ? 'text' : 'password'}
-              placeholder="Mot de passe (6+ caractères)"
-              value={password}
-              autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-              onChange={e => setPassword(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handle()}
-              style={{
-                width: '100%', boxSizing: 'border-box',
-                padding: '13px 44px 13px 14px', borderRadius: 12,
-                border: `1.5px solid ${C.border}`,
-                fontSize: 14, outline: 'none',
-                background: C.surface, color: C.text,
-                fontFamily: FONTS, fontWeight: 500,
-              }}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPwd(v => !v)}
-              aria-label={showPwd ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-              style={{
-                position: 'absolute', right: 12, top: '50%',
-                transform: 'translateY(-50%)',
-                background: 'none', border: 'none', cursor: 'pointer',
-                padding: 4, color: C.text3, lineHeight: 0,
-              }}
-            >
-              <Ti name={showPwd ? 'eye-off' : 'eye'} size={18} />
-            </button>
-          </div>
-        </div>
-
-        {/* Messages */}
-        {error && (
-          <div style={{
-            background: C.coralL, border: `1.5px solid ${C.coralBorder}`,
-            borderRadius: 12, padding: '10px 13px', marginBottom: '1rem',
-            fontSize: 13, color: C.coralD, fontWeight: 500,
-            display: 'flex', gap: 7, alignItems: 'flex-start',
+        {/* Bascule connexion / inscription — masquée dans les parcours de
+            récupération, où il n'y a qu'une seule action possible. */}
+        {!isRecovery && mode !== 'forgot' && (
+          <div role="tablist" aria-label="Connexion ou inscription" style={{
+            display: 'flex', gap: 6, padding: 4, marginBottom: 16,
+            background: C.surface2, borderRadius: 14,
           }}>
-            <Ti name="alert-circle" size={15} color={C.coralD} style={{ flexShrink: 0, marginTop: 1 }} />
-            <span>{error}</span>
-          </div>
-        )}
-        {success && (
-          <div style={{
-            background: C.greenL, border: `1.5px solid ${C.greenBorder}`,
-            borderRadius: 12, padding: '10px 13px', marginBottom: '1rem',
-            fontSize: 13, color: C.greenD, fontWeight: 500,
-            display: 'flex', gap: 7, alignItems: 'flex-start',
-          }}>
-            <Ti name="check" size={15} color={C.greenD} style={{ flexShrink: 0, marginTop: 1 }} />
-            <span>{success}</span>
+            {[{ id: 'login', label: 'Connexion' }, { id: 'signup', label: 'Inscription' }].map(({ id, label }) => (
+              <button
+                key={id} type="button" role="tab"
+                aria-selected={mode === id}
+                onClick={() => { setMode(id); clear(); }}
+                className="gr-focus"
+                style={{
+                  flex: 1, padding: '11px 9px', borderRadius: 10, border: 'none',
+                  background: mode === id ? C.primary : 'transparent',
+                  color: mode === id ? '#fff' : C.text2,
+                  fontWeight: 700, fontSize: 13, minHeight: 44,
+                  cursor: 'pointer', fontFamily: FONTS,
+                }}>
+                {label}
+              </button>
+            ))}
           </div>
         )}
 
-        {/* Bouton CTA */}
-        <button onClick={handle} disabled={loading} style={{
-          width: '100%', padding: '14px', borderRadius: 14, border: 'none',
-          background: loading
-            ? C.primaryL
-            : 'linear-gradient(135deg, #FF9155, #E85D1A)',
-          color: loading ? C.primaryD : '#fff',
-          fontSize: 15, fontWeight: 700,
-          cursor: loading ? 'default' : 'pointer',
-          fontFamily: FONTS, letterSpacing: '-.1px',
-          boxShadow: loading ? 'none' : '0 4px 16px rgba(232,93,26,0.30)',
-          transition: 'all 0.18s',
-        }}>
-          {loading ? '…' : mode === 'login' ? 'Se connecter' : 'Créer mon compte'}
-        </button>
+        <form onSubmit={submit} noValidate>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: '1rem' }}>
+            {!isRecovery && (
+              <>
+                <label htmlFor="auth-email" style={srOnly}>Adresse email</label>
+                <input
+                  id="auth-email" name="email" type="email" inputMode="email"
+                  placeholder="Email" value={email}
+                  autoComplete="email" autoCapitalize="none" spellCheck="false"
+                  onChange={e => setEmail(e.target.value)}
+                  className="gr-focus" style={champ}
+                />
+              </>
+            )}
 
+            {needsPwd && (
+              <div style={{ position: 'relative' }}>
+                <label htmlFor="auth-password" style={srOnly}>
+                  Mot de passe ({MIN_PWD} caractères minimum)
+                </label>
+                <input
+                  id="auth-password" name="password"
+                  type={showPwd ? 'text' : 'password'}
+                  placeholder={`Mot de passe (${MIN_PWD}+ caractères)`}
+                  value={password}
+                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                  onChange={e => setPassword(e.target.value)}
+                  className="gr-focus"
+                  style={{ ...champ, padding: '13px 48px 13px 14px' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPwd(v => !v)}
+                  aria-label={showPwd ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                  className="gr-focus"
+                  style={{
+                    position: 'absolute', right: 4, top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    width: 44, height: 44, display: 'flex',
+                    alignItems: 'center', justifyContent: 'center',
+                    color: C.text2, borderRadius: 10,
+                  }}
+                >
+                  <Ti name={showPwd ? 'eye-off' : 'eye'} size={18} />
+                </button>
+              </div>
+            )}
+
+            {/* Robustesse : informe sans bloquer */}
+            {needsPwd && mode !== 'login' && password.length > 0 && (
+              <div aria-live="polite">
+                <div style={{ display: 'flex', gap: 4, marginBottom: 4 }}>
+                  {[0, 1, 2, 3].map(i => (
+                    <div key={i} style={{
+                      flex: 1, height: 4, borderRadius: 99,
+                      background: i < force
+                        ? (force <= 1 ? C.danger : force === 2 ? C.amber : C.green)
+                        : C.border,
+                    }} />
+                  ))}
+                </div>
+                <div style={{ fontSize: 11, color: C.text2 }}>
+                  {force <= 1 ? 'Mot de passe faible' : force === 2 ? 'Correct' : force === 3 ? 'Bon' : 'Excellent'}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {error && (
+            <div role="alert" style={{
+              background: C.dangerL, border: `1.5px solid ${C.danger}`,
+              borderRadius: 12, padding: '10px 13px', marginBottom: '1rem',
+              fontSize: 13, color: C.text, fontWeight: 500,
+              display: 'flex', gap: 7, alignItems: 'flex-start',
+            }}>
+              <Ti name="alert-circle" size={15} color={C.danger} style={{ flexShrink: 0, marginTop: 1 }} />
+              <span>{error}</span>
+            </div>
+          )}
+          {success && (
+            <div role="status" style={{
+              background: C.greenL, border: `1.5px solid ${C.greenBorder}`,
+              borderRadius: 12, padding: '10px 13px', marginBottom: '1rem',
+              fontSize: 13, color: C.greenD, fontWeight: 500,
+              display: 'flex', gap: 7, alignItems: 'flex-start',
+            }}>
+              <Ti name="check" size={15} color={C.greenD} style={{ flexShrink: 0, marginTop: 1 }} />
+              <span>{success}</span>
+            </div>
+          )}
+
+          <button type="submit" disabled={loading} className="gr-focus" style={{
+            width: '100%', padding: '15px', borderRadius: 14, border: 'none',
+            background: loading ? C.surface2 : C.primary,
+            color: loading ? C.text2 : '#fff',
+            fontSize: 15, fontWeight: 700, minHeight: 48,
+            cursor: loading ? 'default' : 'pointer',
+            fontFamily: FONTS, letterSpacing: '-.1px',
+          }}>
+            {loading ? 'Un instant…'
+              : mode === 'login'  ? 'Se connecter'
+              : mode === 'signup' ? 'Créer mon compte'
+              : mode === 'forgot' ? 'Envoyer le lien'
+              : 'Enregistrer le mot de passe'}
+          </button>
+        </form>
+
+        {/* Liens secondaires */}
+        <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {mode === 'login' && (
+            <>
+              <button type="button" onClick={() => { setMode('forgot'); clear(); }}
+                className="gr-focus" style={lien(C)}>
+                Mot de passe oublié ?
+              </button>
+              <button type="button" onClick={resend} className="gr-focus" style={lien(C)}>
+                Renvoyer l'email de confirmation
+              </button>
+            </>
+          )}
+          {(mode === 'forgot' || mode === 'newPassword') && (
+            <button type="button" onClick={() => { setMode('login'); clear(); }}
+              className="gr-focus" style={lien(C)}>
+              Retour à la connexion
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Baseline discrète */}
-      <p style={{ marginTop: 20, fontSize: 12, color: C.text3, fontFamily: FONTS }}>
-        Groply · Apprends la guitare, vraiment.
+      {/* Mentions légales — obligatoires avant toute collecte d'email (RGPD) */}
+      <p style={{ marginTop: 18, fontSize: 11, color: C.text2, fontFamily: FONTS, textAlign: 'center', maxWidth: 340, lineHeight: 1.6 }}>
+        En créant un compte, tu acceptes les{' '}
+        <a href="/cgu.html" style={{ color: C.primary }}>conditions d'utilisation</a> et la{' '}
+        <a href="/confidentialite.html" style={{ color: C.primary }}>politique de confidentialité</a>.
+        <br />Groply conserve ton email et ta progression, rien d'autre.
       </p>
     </div>
-    </>
   );
 }
+
+const lien = (C) => ({
+  background: 'none', border: 'none', cursor: 'pointer',
+  color: C.text2, fontSize: 12.5, fontFamily: FONTS,
+  textDecoration: 'underline', padding: '11px 4px', minHeight: 44,
+  textAlign: 'center', width: '100%',
+});

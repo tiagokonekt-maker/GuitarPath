@@ -8,8 +8,12 @@ import { Gropi } from "../design/Gropi.jsx";
 import { buildModuleTheme } from "../store/moduleTheme.js";
 import { updateReviewHistory } from "../store/reviewEngine.js";
 
-export let _FretboardExercise = null;
-export const setFretboardExercise = (fn) => { _FretboardExercise = fn; };
+// ── Composants de rendu injectés par contexte ─────────────────────────────
+// Avant, App.jsx MUTAIT ce module au démarrage (`setXxx(...)`) : un singleton
+// mutable au niveau module, avec des gardes défensives qui trahissaient la
+// fragilité — si un écran se rendait avant l'injection, le composant valait
+// null. Un contexte React rend l'ordre de rendu sans importance.
+import { useRenderers } from "../renderers.jsx";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const LEVEL_LABELS = { 1:"Fondamentaux", 2:"Intermédiaire", 3:"Avancé" };
@@ -258,6 +262,7 @@ function ExercisesScreen({ state, dispatch, content, embedded = false }) {
 
 // ── ExerciseDetail (logique inchangée, layout redesigné) ──────────────────────
 function ExerciseDetail({ ex, state, dispatch, onBack, content }) {
+  const { FretboardExercise } = useRenderers();
   const C = useC();
   const MODULE_THEME = buildModuleTheme(C);
   const LEVEL_COLORS = makeLevelColors(C);
@@ -307,7 +312,7 @@ function ExerciseDetail({ ex, state, dispatch, onBack, content }) {
         <div style={{ padding:"0 20px" }}>
           <ExHeader ex={ex} theme={theme} lc={lc} />
           {linkedLesson && <LinkedLesson lesson={linkedLesson} />}
-          {_FretboardExercise && <_FretboardExercise ex={ex} onComplete={finishFretboard} dispatch={dispatch} />}
+          {FretboardExercise && <FretboardExercise ex={ex} onComplete={finishFretboard} dispatch={dispatch} />}
           {ex.tip && <Tip text={ex.tip} />}
           <div style={{ height:24 }} />
         </div>

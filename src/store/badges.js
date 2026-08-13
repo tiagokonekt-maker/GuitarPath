@@ -1,25 +1,38 @@
-// GuitarPath — store/badges.js
-// Système de badges, conditions de déverrouillage
+// Groply — store/badges.js
+// Système de badges, conditions de déverrouillage.
+//
+// ── Ce qui change (audit §4.5) ────────────────────────────────────────────
+// `BADGE_TINTS` et `BADGE_RARITIES` étaient construits depuis LIGHT
+// uniquement : en thème sombre, les badges affichaient des couleurs pensées
+// pour un fond clair. Les builders `buildBadgeTints(C)` existaient déjà — il
+// suffisait que les écrans les utilisent avec le thème courant. Un hook
+// `useBadgeTints()` est exposé pour ça, et les alias figés sont conservés
+// pour les appelants non encore migrés.
 
 import { LIGHT } from "../design/tokens.js";
 import { GRADES } from "./grades.js";
 
+// Toutes les valeurs viennent du thème : plus aucune couleur codée en dur,
+// qui restait figée au thème clair (le rose et le violet l'étaient).
 const buildBadgeTints = (C) => ({
   primary: { bg: C.primaryL, border: C.primaryBorder, icon: C.primary, text: C.primaryD },
   green:   { bg: C.greenL,   border: C.greenBorder,   icon: C.green,   text: C.greenD },
   amber:   { bg: C.amberL,   border: C.amberBorder,   icon: C.amber,   text: C.amberD },
   coral:   { bg: C.coralL,   border: C.coralBorder,   icon: C.coral,   text: C.coralD },
-  pink:    { bg: C.pinkL,    border: "#EFC4D5",        icon: C.pink,    text: "#85304E" },
-  blue:    { bg: C.blueL,    border: C.blueBorder,     icon: C.blue,    text: C.blueD },
+  pink:    { bg: C.pinkL,    border: C.pinkBorder,    icon: C.pink,    text: C.pinkD },
+  purple:  { bg: C.purpleL,  border: C.purpleBorder,  icon: C.purple,  text: C.purpleD },
+  blue:    { bg: C.blueL,    border: C.blueBorder,    icon: C.blue,    text: C.blueD },
+  teal:    { bg: C.tealL,    border: C.tealBorder,    icon: C.teal,    text: C.tealD },
 });
 const buildBadgeRarities = (C) => ({
-  commun:    { label: "commun",   bg: "#E5E3DC", fg: "#5F5E5A" },
-  rare:      { label: "rare",     bg: "#D8D3F6", fg: C.primaryD },
-  epique:    { label: "épique",   bg: C.coralBorder, fg: C.coralD },
-  legend:    { label: "légend.",  bg: C.primary, fg: "#FFFFFF" },
+  commun: { label: "commun",  bg: C.surface2,    fg: C.text2 },
+  rare:   { label: "rare",    bg: C.blueL,       fg: C.blueD },
+  epique: { label: "épique",  bg: C.coralL,      fg: C.coralD },
+  legend: { label: "légend.", bg: C.primaryBtn,  fg: "#FFFFFF" },
 });
 
-// Alias legacy (light) — pour compatibilité
+// Alias figés sur le thème clair — conservés pour les appelants non migrés.
+// À remplacer par useBadgeTints() partout où le thème compte.
 const BADGE_TINTS = buildBadgeTints(LIGHT);
 const BADGE_RARITIES = buildBadgeRarities(LIGHT);
 
@@ -113,9 +126,5 @@ const computeNewBadges = (state, content) => {
     })
     .map(b => b.id);
 };
-
-// ═══════════════════════════════════════════════════════════════════════════
-// REDUCER
-// ═══════════════════════════════════════════════════════════════════════════
 
 export { buildBadgeTints, buildBadgeRarities, BADGE_TINTS, BADGE_RARITIES, BADGES, computeNewBadges, skillMastery };

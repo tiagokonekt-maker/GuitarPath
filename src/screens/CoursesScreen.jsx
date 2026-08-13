@@ -14,10 +14,12 @@ import { buildPath, getPathStats, UNIT_BONUS_XP } from "../store/pathEngine.js";
 import { UnitCheckScreen } from "./UnitCheckScreen.jsx";
 import { Gropi, GropiCoach, GropiBubble } from "../design/Gropi.jsx";
 
-export let _renderDiagramBlock = null;
-export let _FretboardLesson    = null;
-export const setDiagramRenderer = (fn) => { _renderDiagramBlock = fn; };
-export const setFretboardLesson  = (fn) => { _FretboardLesson    = fn; };
+// ── Composants de rendu injectés par contexte ─────────────────────────────
+// Avant, App.jsx MUTAIT ce module au démarrage (`setXxx(...)`) : un singleton
+// mutable au niveau module, avec des gardes défensives qui trahissaient la
+// fragilité — si un écran se rendait avant l'injection, le composant valait
+// null. Un contexte React rend l'ordre de rendu sans importance.
+import { useRenderers } from "../renderers.jsx";
 
 // ── Animation CSS partagée ────────────────────────────────────────────────────
 const PULSE_CSS = `
@@ -455,6 +457,7 @@ function CoursesScreen({ state, dispatch, content }) {
 
 // ── Contenu d'une leçon ───────────────────────────────────────────────────────
 function LessonView({ lesson, state, dispatch, onBack }) {
+  const { renderDiagramBlock, FretboardLesson } = useRenderers();
   const C = useC();
   const [done,setDone] = useState(!!state.completedLessons[lesson.id]);
   const [pop, setPop]  = useState(false);
@@ -508,9 +511,9 @@ function LessonView({ lesson, state, dispatch, onBack }) {
               </div>
             );
             if(b.type==="ref") return <GropiCoach key={i} variant="ref">{b.text}</GropiCoach>;
-            const diagram = _renderDiagramBlock?_renderDiagramBlock(b,i):null;
+            const diagram = renderDiagramBlock?renderDiagramBlock(b,i):null;
             if(diagram) return diagram;
-            if(b.type==="fretboard_interactive"&&_FretboardLesson) return <div key={i}><_FretboardLesson block={b}/></div>;
+            if(b.type==="fretboard_interactive"&&FretboardLesson) return <div key={i}><FretboardLesson block={b}/></div>;
             // Paragraphe avec illustration détourée à côté : le texte habille
             // l'image (float), donc aucune coupure dans la lecture. overflow
             // hidden contient le float pour qu'il ne déborde pas sur le bloc

@@ -83,7 +83,12 @@ export function Gropi({ pose = "happy", size = 80, anim = "none", style, onClick
 }
 
 // ── Résolution d'une teinte du thème ──────────────────────────────────────────
-function tintColors(tint) {
+// Renommé en `useTintColors` : cette fonction appelle useC(), c'est donc un
+// hook. Sous son ancien nom, ESLint ne pouvait pas vérifier ses conditions
+// d'appel — elle marchait par chance parce qu'elle était toujours appelée
+// inconditionnellement en tête de rendu. Le premier appel conditionnel aurait
+// planté sans avertissement préalable.
+function useTintColors(tint) {
   const C = useC();
   return {
     light:  C[tint + "L"]      || C.primaryL,
@@ -95,7 +100,7 @@ function tintColors(tint) {
 // ── Bulle de conseil statique (compat : API inchangée) ────────────────────────
 export function GropiTip({ pose = "wave", tint = "primary", eyebrow = "Conseil de Gropi", onClose, children }) {
   const C = useC();
-  const { light, border, deep } = tintColors(tint);
+  const { light, border, deep } = useTintColors(tint);
   return (
     <div style={{
       display: "flex", gap: 11, alignItems: "flex-start", position: "relative",
@@ -108,14 +113,16 @@ export function GropiTip({ pose = "wave", tint = "primary", eyebrow = "Conseil d
           borderTop: "7px solid transparent", borderBottom: "7px solid transparent",
           borderRight: `7px solid ${light}`,
         }} />
-        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".09em", textTransform: "uppercase", color: deep, fontFamily: FONTS.ui }}>{eyebrow}</div>
-        <p style={{ margin: "3px 0 0", fontSize: 12.5, lineHeight: 1.5, fontWeight: 500, color: C.text, fontFamily: FONTS.body }}>{children}</p>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: deep, fontFamily: FONTS.ui }}>{eyebrow}</div>
+        <p style={{ margin: "3px 0 0", fontSize: 14, lineHeight: 1.55, fontWeight: 500, color: C.text, fontFamily: FONTS.body }}>{children}</p>
       </div>
       {onClose && (
         <button onClick={onClose} aria-label="Fermer" style={{
-          position: "absolute", top: 8, right: 11, background: "none", border: 0,
-          cursor: "pointer", fontSize: 14, fontWeight: 600, color: C.text3, padding: 2,
-        }}>✕</button>
+          position: "absolute", top: 2, right: 2, background: "none", border: 0,
+          cursor: "pointer", fontSize: 15, fontWeight: 600, color: C.text2,
+          width: 44, height: 44, display: "flex", alignItems: "center",
+          justifyContent: "center", borderRadius: 12,
+        }} className="gr-focus">✕</button>
       )}
     </div>
   );
@@ -132,7 +139,7 @@ const COACH = {
 export function GropiCoach({ variant = "tip", eyebrow, children }) {
   const C = useC();
   const cfg = COACH[variant] || COACH.tip;
-  const { light, border, deep } = tintColors(cfg.tint);
+  const { light, border, deep } = useTintColors(cfg.tint);
   return (
     <div style={{ display: "flex", gap: 9, alignItems: "flex-end", margin: "2px 0" }}>
       <Gropi pose={cfg.pose} size={54} anim="bob" style={{ marginBottom: 2 }} />
@@ -146,10 +153,10 @@ export function GropiCoach({ variant = "tip", eyebrow, children }) {
           borderTop: "7px solid transparent", borderBottom: "7px solid transparent",
           borderRight: `7px solid ${light}`,
         }} />
-        <div style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: deep, fontFamily: FONTS.ui, marginBottom: 3 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: deep, fontFamily: FONTS.ui, marginBottom: 3 }}>
           {eyebrow || cfg.eyebrow}
         </div>
-        <p style={{ margin: 0, fontSize: 12.5, lineHeight: 1.55, color: C.text, fontFamily: FONTS.body }}>{children}</p>
+        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: C.text, fontFamily: FONTS.body }}>{children}</p>
       </div>
     </div>
   );
@@ -162,7 +169,7 @@ export function GropiBubble({
 }) {
   const C = useC();
   const [open, setOpen] = useState(defaultOpen);
-  const { light, border, deep } = tintColors(tint);
+  const { light, border, deep } = useTintColors(tint);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: side === "right" ? "flex-start" : "flex-end" }}>
@@ -183,10 +190,10 @@ export function GropiBubble({
           boxShadow: `0 6px 20px ${deep}22`,
           animation: "gropi-bubble-in .22s ease both",
         }}>
-          <div style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: deep, fontFamily: FONTS.ui, marginBottom: 3 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: deep, fontFamily: FONTS.ui, marginBottom: 3 }}>
             {eyebrow}
           </div>
-          <p style={{ margin: 0, fontSize: 12.5, lineHeight: 1.55, color: C.text, fontFamily: FONTS.body }}>{children}</p>
+          <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: C.text, fontFamily: FONTS.body }}>{children}</p>
         </div>
       )}
     </div>

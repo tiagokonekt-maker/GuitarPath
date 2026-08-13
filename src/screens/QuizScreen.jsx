@@ -9,8 +9,12 @@ import { makeEarQuizQuestion, loadAudio } from "../audioEngine.js";
 import { makeShapeQuestion } from "../music/shapeQuestions.js";
 import { buildReviewSession } from "../store/reviewEngine.js";
 
-export let _FretboardQuizQuestion = null;
-export const setFretboardQuizQuestion = (fn) => { _FretboardQuizQuestion = fn; };
+// ── Composants de rendu injectés par contexte ─────────────────────────────
+// Avant, App.jsx MUTAIT ce module au démarrage (`setXxx(...)`) : un singleton
+// mutable au niveau module, avec des gardes défensives qui trahissaient la
+// fragilité — si un écran se rendait avant l'injection, le composant valait
+// null. Un contexte React rend l'ordre de rendu sans importance.
+import { useRenderers } from "../renderers.jsx";
 
 // ── Données modules quiz ──────────────────────────────────────────────────────
 const makeModules = (C) => [
@@ -54,6 +58,7 @@ function unlockedQuizLvl(state, content, courseId) {
  *                  strates d'en-tête s'empilaient avant le premier contenu.
  */
 function QuizScreen({ state, dispatch, content, embedded = false }) {
+  const { FretboardQuizQuestion } = useRenderers();
   const C = useC();
   const [showModules, setShowModules] = useState(false);
   const MODULES = makeModules(C);
@@ -420,7 +425,7 @@ function QuizPlayer({ pool, title, state, dispatch, content, onDone }) {
       {/* Fretboard ou QCM */}
       {isFretQ ? (
         <>
-          {_FretboardQuizQuestion && <_FretboardQuizQuestion question={q} onComplete={handleFretComplete} answered={fretAnswered} />}
+          {FretboardQuizQuestion && <FretboardQuizQuestion question={q} onComplete={handleFretComplete} answered={fretAnswered} />}
           {fretAnswered && (
             <>
               <FeedbackBox ok={fretCorrect} xp={q.xp||40} exp={q.exp} lesson={null} />

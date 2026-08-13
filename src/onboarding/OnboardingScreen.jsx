@@ -12,7 +12,7 @@
 //   onComplete(answers)  — appelé à la fin
 //   onEvent(name, props) — instrumentation analytics (funnel, drop-off)
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { FONTS, R, MODULE } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
@@ -22,7 +22,8 @@ import { FretboardQuizQuestion } from "../Fretboard.jsx";
 import {
   TESTABLE_MODULES, startFromScore, TIER_VALUE,
   buildPlacementQueue, pickPlacementQuestion, PLACEMENT_QUESTION_COUNT,
-  computeModuleTier, inferImproTier, computeOverallTier, weakestModule,
+  computeModuleTier, inferMissingTier, computeOverallTier, weakestModule,
+  availableModules, placementQuestionCount,
 } from "../store/placementEngine.js";
 
 const GOAL_OPTIONS = [
@@ -38,7 +39,10 @@ const TIME_OPTIONS = [
   { id: "long",   label: "1h ou plus / semaine" },
 ];
 
-const ALL_PROFILE_MODULES = [...TESTABLE_MODULES, "impro"];
+// TESTABLE_MODULES inclut désormais l'impro (elle en était exclue faute de
+// questions taguées). L'ancien `[...TESTABLE_MODULES, "impro"]` la ferait
+// apparaître deux fois dans l'écran de résultat.
+const ALL_PROFILE_MODULES = [...new Set([...TESTABLE_MODULES, "impro"])];
 
 export function OnboardingScreen({ content, onComplete, onEvent }) {
   const C = useC();
@@ -58,7 +62,14 @@ export function OnboardingScreen({ content, onComplete, onEvent }) {
   const [usedIds] = useState(() => new Set());
   // Bonnes réponses par module au fil du test (0 à 3 une fois terminé) —
   // remplace l'ancien pivotCorrect isolé.
-  const [results, setResults] = useState({ neck: 0, scales: 0, harmony: 0, rhythm: 0 });
+  // Les modules testés sont DÉDUITS DU CONTENU, plus codés en dur. Depuis le
+  // retag des questions q-impro-* (scripts/retag-impro.mjs), l'improvisation
+  // entre dans le test : c'était l'objectif n°1 du produit et le seul module
+  // jamais évalué.
+  const modulesTestes = useMemo(() => availableModules(content?.quiz || []), [content]);
+  const nbQuestions   = useMemo(() => placementQuestionCount(content?.quiz || []), [content]);
+  const [results, setResults] = useState(() =>
+    Object.fromEntries(TESTABLE_MODULES.map(m => [m, 0])));
   const [skillLevels, setSkillLevels] = useState({ neck: null, scales: null, harmony: null, rhythm: null, impro: null });
   const [overallTier, setOverallTier] = useState(null);
   const [weakest, setWeakest] = useState(null);
@@ -88,10 +99,10 @@ export function OnboardingScreen({ content, onComplete, onEvent }) {
   function startTest() {
     emit("placement_test_started");
     setPhase("testing");
-    const q = buildPlacementQueue();
+    const q = buildPlacementQueue(quizBank);
     setQueue(q);
     setQIdx(0);
-    setResults({ neck: 0, scales: 0, harmony: 0, rhythm: 0 });
+    setResults(Object.fromEntries(TESTABLE_MODULES.map(m => [m, 0])));
     loadQuestion(0, q);
   }
 
@@ -140,15 +151,19 @@ export function OnboardingScreen({ content, onComplete, onEvent }) {
     // File terminée : le niveau de chaque module vient du nombre de bonnes
     // réponses sur ses 3 questions (0 à 3), pas d'un pivot isolé.
     const newLevels = { ...skillLevels };
-    for (const moduleId of TESTABLE_MODULES) {
+    for (const moduleId of modulesTestes) {
       const tier = computeModuleTier(results[moduleId]);
       newLevels[moduleId] = tier;
       emit("placement_module_result", { module: moduleId, tier, correctCount: results[moduleId] });
     }
-    const improTier = inferImproTier(newLevels);
-    const finalLevels = { ...newLevels, impro: improTier };
-    const overall = computeOverallTier(finalLevels);
-    const weak = weakestModule(finalLevels);
+    // Un module écarté faute de contenu suffisant reçoit la moyenne des
+    // modules réellement testés — jamais une valeur inventée.
+    const finalLevels = { ...newLevels };
+    for (const m of TESTABLE_MODULES) {
+      if (!modulesTestes.includes(m)) finalLevels[m] = inferMissingTier(finalLevels, modulesTestes);
+    }
+    const overall = computeOverallTier(finalLevels, modulesTestes);
+    const weak = weakestModule(finalLevels, modulesTestes);
     setSkillLevels(finalLevels);
     setOverallTier(overall);
     setWeakest(weak);
@@ -171,8 +186,10 @@ export function OnboardingScreen({ content, onComplete, onEvent }) {
 
   function finish() {
     const goalOpt = GOAL_OPTIONS.find(g => g.id === goal);
-    const totalCorrect = TESTABLE_MODULES.reduce((sum, m) => sum + (results[m] || 0), 0);
-    const { startXp } = startFromScore(totalCorrect, PLACEMENT_QUESTION_COUNT);
+    const totalCorrect = modulesTestes.reduce((sum, m) => sum + (results[m] || 0), 0);
+    // Le dénominateur est le nombre de questions RÉELLEMENT posées, pas une
+    // constante : sinon un module écarté faisait chuter le score de départ.
+    const { startXp, startLevel } = startFromScore(totalCorrect, nbQuestions);
     const answers = {
       goal,
       preferredModule: goalOpt?.module || null,
@@ -181,6 +198,7 @@ export function OnboardingScreen({ content, onComplete, onEvent }) {
       overallTier,
       weakestModule: weakest,
       startXp,
+      startLevel,
       completedAt: new Date().toISOString(),
     };
     emit("onboarding_completed", answers);
@@ -191,7 +209,7 @@ export function OnboardingScreen({ content, onComplete, onEvent }) {
   const progressPct =
     phase === "welcome"   ? 0  :
     phase === "testIntro" ? 5  :
-    phase === "testing"   ? Math.round(5 + ((questionNumber - (answered ? 0 : 1)) / PLACEMENT_QUESTION_COUNT) * 65) :
+    phase === "testing"   ? Math.round(5 + ((questionNumber - (answered ? 0 : 1)) / Math.max(1, nbQuestions)) * 65) :
     phase === "results"   ? 75 :
     phase === "goal"      ? 85 :
     phase === "time"      ? 95 : 100;

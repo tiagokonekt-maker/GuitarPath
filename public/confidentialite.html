@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Groply · Politique de confidentialité</title>
+<style>
+  :root{--t:#18130F;--t2:#6E6760;--bg:#FFE8CF;--s:#fff;--p:#B8430E;--b:#E8C9A0}
+  @media(prefers-color-scheme:dark){:root{--t:#F5E8D8;--t2:#C0A882;--bg:#1A1008;--s:#26180A;--p:#FFAA78;--b:#4A2E14}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--t);font:16px/1.7 "Poppins",system-ui,sans-serif}
+  main{max-width:680px;margin:0 auto;padding:32px 20px 64px}
+  h1{font-size:28px;letter-spacing:-.5px;margin:0 0 4px}
+  .maj{color:var(--t2);font-size:13px;margin-bottom:28px}
+  h2{font-size:19px;margin:32px 0 8px;letter-spacing:-.2px}
+  p,li{color:var(--t2)}
+  li{margin-bottom:6px}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--b);vertical-align:top}
+  th{color:var(--t);font-weight:700}
+  a{color:var(--p)}
+  .box{background:var(--s);border:1.5px solid var(--b);border-radius:14px;padding:16px 18px;margin:20px 0}
+  code{background:var(--s);padding:2px 6px;border-radius:5px;font-size:14px}
+</style>
+</head>
+<body>
+<main>
+  <h1>Politique de confidentialité</h1>
+  <p class="maj">Dernière mise à jour : <!-- METTRE À JOUR -->13 août 2026</p>
+
+  <div class="box">
+    <p style="margin:0"><strong style="color:var(--t)">En une phrase :</strong> Groply
+    conserve ton adresse email et ta progression d'apprentissage. Rien d'autre.
+    Aucune revente, aucune publicité, aucun traçage publicitaire.</p>
+  </div>
+
+  <h2>1. Qui est responsable du traitement</h2>
+  <p><!-- À COMPLÉTER OBLIGATOIREMENT -->
+  <strong style="color:var(--t)">[Nom ou raison sociale]</strong>, [adresse postale],
+  joignable à <a href="mailto:contact@exemple.fr">contact@exemple.fr</a>.
+  Ces mentions sont légalement obligatoires : remplace-les avant toute mise en
+  ligne publique.</p>
+
+  <h2>2. Quelles données, pourquoi, et pour combien de temps</h2>
+  <table>
+    <tr><th>Donnée</th><th>Finalité</th><th>Base légale</th><th>Conservation</th></tr>
+    <tr>
+      <td>Adresse email</td>
+      <td>Créer ton compte, te connecter, réinitialiser ton mot de passe</td>
+      <td>Exécution du contrat (art. 6.1.b RGPD)</td>
+      <td>Jusqu'à la suppression du compte</td>
+    </tr>
+    <tr>
+      <td>Mot de passe</td>
+      <td>Authentification</td>
+      <td>Exécution du contrat</td>
+      <td>Idem — stocké uniquement sous forme de condensat (bcrypt), jamais en clair</td>
+    </tr>
+    <tr>
+      <td>Progression : XP, niveau, leçons faites, réponses aux quiz, séries,
+          historique de révision, résultat du test de placement</td>
+      <td>Te permettre de retrouver ta progression sur tous tes appareils et
+          adapter les révisions à ce que tu maîtrises</td>
+      <td>Exécution du contrat</td>
+      <td>Jusqu'à la suppression du compte</td>
+    </tr>
+    <tr>
+      <td>Événements d'usage : écrans consultés, leçons ouvertes, sessions
+          terminées, horodatage</td>
+      <td>Comprendre où les gens décrochent pour améliorer le programme</td>
+      <td>Intérêt légitime (art. 6.1.f) — mesure d'audience interne, sans
+          profilage publicitaire</td>
+      <td>13 mois</td>
+    </tr>
+  </table>
+  <p>Groply ne demande jamais ton nom, ta date de naissance, ta localisation, ni
+  l'accès à ton micro, ta caméra ou tes contacts.</p>
+
+  <h2>3. Ce qui reste sur ton appareil</h2>
+  <p>Ta progression est également stockée en local (<code>localStorage</code>)
+  pour que l'application fonctionne hors connexion. Ce stockage n'est pas un
+  cookie de traçage : il ne sert qu'à toi, sur ton appareil, et disparaît si tu
+  vides les données du site.</p>
+  <p>Aucun cookie publicitaire ni pixel de suivi tiers n'est déposé.</p>
+
+  <h2>4. Sous-traitants</h2>
+  <ul>
+    <li><strong style="color:var(--t)">Supabase</strong> — hébergement de la
+    base de données et de l'authentification. <!-- VÉRIFIER --> Région de
+    l'instance : [à préciser]. Choisir une région européenne évite tout
+    transfert hors UE.</li>
+    <li><strong style="color:var(--t)">Vercel</strong> — hébergement et diffusion
+    de l'application.</li>
+    <li><strong style="color:var(--t)">Google Fonts</strong> et
+    <strong style="color:var(--t)">jsDelivr</strong> — polices et icônes. Ces
+    services reçoivent ton adresse IP lors du chargement.
+    <!-- À SUPPRIMER une fois les polices auto-hébergées : voir CHANGELOG §3.2 --></li>
+  </ul>
+
+  <h2>5. Tes droits</h2>
+  <p>Tu disposes d'un droit d'accès, de rectification, d'effacement, de
+  limitation, d'opposition et de portabilité :</p>
+  <ul>
+    <li><strong style="color:var(--t)">Accès et portabilité</strong> :
+    Réglages → « Exporter ma progression (JSON) ». Le fichier contient
+    l'intégralité de tes données de progression, dans un format réutilisable.</li>
+    <li><strong style="color:var(--t)">Effacement</strong> :
+    Réglages → « Supprimer mon compte et mes données ». La suppression est
+    immédiate et définitive, côté serveur comme sur l'appareil.</li>
+    <li><strong style="color:var(--t)">Opposition à la mesure d'audience</strong> :
+    active « Do Not Track » (ou le contrôle global de confidentialité) dans ton
+    navigateur — Groply le respecte et n'envoie alors aucun événement.</li>
+    <li>Pour toute autre demande, écris à
+    <a href="mailto:contact@exemple.fr">contact@exemple.fr</a>. Réponse sous
+    un mois.</li>
+  </ul>
+  <p>Tu peux aussi introduire une réclamation auprès de la
+  <a href="https://www.cnil.fr/fr/plaintes" rel="noopener">CNIL</a>.</p>
+
+  <h2>6. Sécurité</h2>
+  <p>Les échanges sont chiffrés (HTTPS). L'accès aux données est cloisonné par
+  compte au niveau de la base elle-même (Row Level Security) : techniquement,
+  un utilisateur ne peut pas lire la progression d'un autre.</p>
+
+  <h2>7. Mineurs</h2>
+  <p>Groply n'est pas destiné aux moins de 15 ans sans l'accord d'un titulaire
+  de l'autorité parentale.</p>
+
+  <h2>8. Modifications</h2>
+  <p>Toute évolution de cette politique sera signalée dans l'application avant
+  son entrée en vigueur.</p>
+
+  <p style="margin-top:36px"><a href="/">← Retour à Groply</a></p>
+</main>
+</body>
+</html>

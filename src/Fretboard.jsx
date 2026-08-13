@@ -1,12 +1,47 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// GuitarPath — Fretboard.jsx
+// Groply — Fretboard.jsx
 // Composant manche interactif, mobile-first.
-// Usage : import { Fretboard } from "./Fretboard.jsx"
+//
+// ── Cibles tactiles (audit §5.1) ──────────────────────────────────────────
+// C'est l'interaction centrale du produit. Les cases mesuraient 36 × 28 px,
+// cordes contiguës, sans espacement. Le plancher WCAG 2.2 SC 2.5.8 (AA) est
+// de 24 px, donc c'était conforme — mais 24 px est un plancher, pas une
+// recommandation : Apple préconise 44 pt, Material 48 dp, et le critère AAA
+// demande 44. Or sur un manche, se tromper de corde d'une case, c'est se
+// tromper d'intervalle : l'utilisateur attribuera l'erreur à l'app, ou pire,
+// à lui-même.
+// Les tailles viennent maintenant de design/tokens.js (TAP.fret = 44) et les
+// zones tactiles ont un espacement réel entre cordes.
+//
+// ── Affordance de défilement (audit §5.2) ─────────────────────────────────
+// Le conteneur porte la classe .gr-hscroll (barre discrète mais VISIBLE) et
+// .gr-hscroll-wrap (dégradés de bord). L'ancienne règle globale
+// `*::-webkit-scrollbar { display: none }` masquait tout sur Safari et Chrome,
+// donc rien n'indiquait que le manche défilait — on pouvait ne jamais
+// découvrir les cases hautes.
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useC } from "./design/ThemeContext.jsx";
 import { Ti } from "./design/Ti.jsx";
+import { TAP, T } from "./design/tokens.js";
+
+// ── Retour haptique ───────────────────────────────────────────────────────
+// Sur un manche, la confirmation tactile compte autant que la confirmation
+// visuelle : l'utilisateur a les yeux sur sa guitare, pas sur l'écran.
+const vibrer = (ms = 8) => {
+  try { navigator.vibrate?.(ms); } catch { /* non supporté */ }
+};
+
+/**
+ * Libellé lu par un lecteur d'écran pour une case du manche.
+ * Fretboard.jsx ne comportait AUCUN attribut aria : les cases étaient des
+ * <div> cliquables muettes.
+ */
+const labelCase = (corde, fret, note) =>
+  fret === 0
+    ? `Corde ${corde} à vide, ${note || ""}`.trim()
+    : `Corde ${corde}, case ${fret}${note ? `, ${note}` : ""}`;
 import {
   getNoteAtPosition,
   getScalePositions,
@@ -264,11 +299,14 @@ export function Fretboard({
   const strings = [1, 2, 3, 4, 5, 6];
 
   // ── Tailles adaptées au mode compact ────────────────────────────────────
-  const cellW  = compact ? 38 : 46;
-  const cellH  = compact ? 32 : 40;
-  const dotSz  = compact ? 22 : 28;
-  const openW  = compact ? 30 : 36;
-  const labelW = compact ? 22 : 28;
+  // Le mode « compact » servait à insérer le manche dans une leçon. Il
+  // descendait à 32 px de haut, soit sous le seuil confortable, alors que
+  // l'écran fait 440 px de large : la place ne manquait pas.
+  const cellW  = compact ? TAP.fretW : 48;
+  const cellH  = compact ? TAP.fret  : TAP.comfy;
+  const dotSz  = compact ? 26 : 30;
+  const openW  = compact ? 34 : 38;
+  const labelW = compact ? 26 : 30;
 
   // ── Styles communs ───────────────────────────────────────────────────────
   const stringNameStyle = {
@@ -277,7 +315,7 @@ export function Fretboard({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: compact ? 9 : 10,
+    fontSize: T.micro,   // 11 px : plancher de lisibilité (était 9)
     fontWeight: 700,
     color: C.text3,
     fontFamily: FONTS.ui,
@@ -288,15 +326,11 @@ export function Fretboard({
 
   return (
     <div style={{ width: "100%", userSelect: "none" }}>
-      {/* Scroll horizontal sur mobile */}
-      <div style={{
-        overflowX: "auto",
-        WebkitOverflowScrolling: "touch",
-        paddingBottom: 4,
-        // Cache la scrollbar sur webkit (reste accessible)
-        scrollbarWidth: "thin",
-        scrollbarColor: `${C.border} transparent`,
-      }}>
+      {/* Défilement horizontal. Les classes viennent d'index.css : barre
+          discrète mais visible + dégradés de bord, pour qu'on SACHE que le
+          manche continue à droite. */}
+      <div className="gr-hscroll-wrap">
+      <div className="gr-hscroll" role="group" aria-label="Manche de guitare, défile horizontalement">
         <div style={{ minWidth: "fit-content", paddingBottom: 2 }}>
 
           {/* ── Numéros de cases ────────────────────────────────────── */}
@@ -338,7 +372,10 @@ export function Fretboard({
               {/* Cordes à vide */}
               {showOpenStrings && (
                 <div
-                  onClick={() => handleCellClick(s, 0)}
+                  onClick={() => { vibrer(); handleCellClick(s, 0); }}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); vibrer(); handleCellClick(s, 0); } }}
+                  role="button" tabIndex={0}
+                  aria-label={labelCase(s, 0, getNoteAtPosition(s, 0))}
                   style={{
                     width: openW,
                     height: cellH,
@@ -381,7 +418,10 @@ export function Fretboard({
                 return (
                   <div
                     key={f}
-                    onClick={() => handleCellClick(s, f)}
+                    onClick={() => { vibrer(); handleCellClick(s, f); }}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); vibrer(); handleCellClick(s, f); } }}
+                    role="button" tabIndex={0}
+                    aria-label={labelCase(s, f, getNoteAtPosition(s, f))}
                     style={{
                       width: cellW,
                       height: cellH,
@@ -452,6 +492,7 @@ export function Fretboard({
 
         </div>
       </div>
+      </div>{/* /gr-hscroll-wrap */}
 
       {/* ── Interface quiz ────────────────────────────────────────────── */}
       {mode === "quiz" && (
@@ -997,7 +1038,9 @@ export function FretboardQuizQuestion({ question, onComplete, answered, forceRev
 function FretboardQuizCanvas({ targetPositions, contextPositions, selected, revealed, onCellClick, compact, question }) {
   const C = useC();
   const NOTE_COLORS = useMemo(() => getNoteColors(C), [C]);
-  const CW = 36, CH = 28, OW = 26, LW = 20, DOT = 20;
+  // En mode quiz, on ne compacte JAMAIS : c'est le moment où une erreur de
+  // visée coûte le plus cher. 44 px de haut = recommandation Apple.
+  const CW = TAP.fretW, CH = TAP.fret, OW = 34, LW = 26, DOT = 26;
   const strings = [1, 2, 3, 4, 5, 6];
   const MAX_F = 12;
   const SLABELS = { 6: "E₂", 5: "A₂", 4: "D₃", 3: "G₃", 2: "B₃", 1: "E₄" };
@@ -1065,17 +1108,20 @@ function FretboardQuizCanvas({ targetPositions, contextPositions, selected, reve
         <div style={{ width: LW, flexShrink: 0 }} />
         <div style={{ width: OW, flexShrink: 0 }} />
         {frets.map(f => (
-          <div key={f} style={{ width: CW, flexShrink: 0, textAlign: "center", fontSize: 8, color: C.text3, height: 12, lineHeight: "12px", fontFamily: FONTS.ui, fontWeight: f === 12 ? 700 : 400 }}>{f}</div>
+          <div key={f} style={{ width: CW, flexShrink: 0, textAlign: "center", fontSize: T.micro, color: C.text3, height: 16, lineHeight: "16px", fontFamily: FONTS.ui, fontWeight: f === 12 ? 700 : 400 }}>{f}</div>
         ))}
       </div>
 
       {strings.map(s => (
         <div key={s} style={{ display: "flex", alignItems: "center" }}>
-          <div style={{ width: LW, flexShrink: 0, textAlign: "center", fontSize: 8, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui }}>{SLABELS[s]}</div>
+          <div style={{ width: LW, flexShrink: 0, textAlign: "center", fontSize: T.micro, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui }}>{SLABELS[s]}</div>
 
           {/* Case 0 — corde à vide */}
           <div
-            onClick={() => onCellClick(s, 0)}
+            onClick={() => { vibrer(); onCellClick(s, 0); }}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); vibrer(); onCellClick(s, 0); } }}
+              role="button" tabIndex={0}
+              aria-label={labelCase(s, 0, getNoteAtPosition(s, 0))}
             style={{ width: OW, height: CH, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", cursor: revealed ? "default" : "pointer" }}
             onMouseEnter={e => { if (!revealed) e.currentTarget.style.background = `${C.primary}0A`; }}
             onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
@@ -1088,7 +1134,10 @@ function FretboardQuizCanvas({ targetPositions, contextPositions, selected, reve
           {frets.map((f, fi) => (
             <div
               key={f}
-              onClick={() => onCellClick(s, f)}
+              onClick={() => { vibrer(); onCellClick(s, f); }}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); vibrer(); onCellClick(s, f); } }}
+              role="button" tabIndex={0}
+              aria-label={labelCase(s, f, getNoteAtPosition(s, f))}
               style={{ width: CW, height: CH, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", cursor: revealed ? "default" : "pointer" }}
               onMouseEnter={e => { if (!revealed) e.currentTarget.style.background = `${C.primary}0A`; }}
               onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
@@ -1343,7 +1392,7 @@ export function FretboardExercise({ ex, onComplete, dispatch }) {
 function ExerciseCanvas({ stage, targetPositions, targetMap, selected, revealed, onCellClick }) {
   const C = useC();
   const NOTE_COLORS = useMemo(() => getNoteColors(C), [C]);
-  const CW = 36, CH = 28, OW = 26, LW = 20, DOT = 20;
+  const CW = TAP.fretW, CH = TAP.fret, OW = 34, LW = 26, DOT = 26;
   const strings = [1, 2, 3, 4, 5, 6];
   const MAX_F = (stage.fretRange || [0, 12])[1];
   const MIN_F = (stage.fretRange || [0, 12])[0];
@@ -1427,18 +1476,21 @@ function ExerciseCanvas({ stage, targetPositions, targetMap, selected, revealed,
         <div style={{ width: LW, flexShrink: 0 }} />
         <div style={{ width: OW, flexShrink: 0 }} />
         {frets.map(f => (
-          <div key={f} style={{ width: CW, flexShrink: 0, textAlign: "center", fontSize: 8, color: C.text3, height: 12, lineHeight: "12px", fontFamily: FONTS.ui, fontWeight: f === 12 ? 700 : 400 }}>{f}</div>
+          <div key={f} style={{ width: CW, flexShrink: 0, textAlign: "center", fontSize: T.micro, color: C.text3, height: 16, lineHeight: "16px", fontFamily: FONTS.ui, fontWeight: f === 12 ? 700 : 400 }}>{f}</div>
         ))}
       </div>
 
       {strings.map(s => (
         <div key={s} style={{ display: "flex", alignItems: "center" }}>
-          <div style={{ width: LW, flexShrink: 0, textAlign: "center", fontSize: 8, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui }}>{SLABELS[s]}</div>
+          <div style={{ width: LW, flexShrink: 0, textAlign: "center", fontSize: T.micro, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui }}>{SLABELS[s]}</div>
 
           {/* Case 0 */}
           {MIN_F === 0 && (
             <div
-              onClick={() => onCellClick(s, 0)}
+              onClick={() => { vibrer(); onCellClick(s, 0); }}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); vibrer(); onCellClick(s, 0); } }}
+              role="button" tabIndex={0}
+              aria-label={labelCase(s, 0, getNoteAtPosition(s, 0))}
               style={{ width: OW, height: CH, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", cursor: revealed ? "default" : "pointer" }}
               onMouseEnter={e => { if (!revealed) e.currentTarget.style.background = `${C.primary}0A`; }}
               onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
@@ -1452,7 +1504,10 @@ function ExerciseCanvas({ stage, targetPositions, targetMap, selected, revealed,
           {frets.map((f, fi) => (
             <div
               key={f}
-              onClick={() => onCellClick(s, f)}
+              onClick={() => { vibrer(); onCellClick(s, f); }}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); vibrer(); onCellClick(s, f); } }}
+              role="button" tabIndex={0}
+              aria-label={labelCase(s, f, getNoteAtPosition(s, f))}
               style={{ width: CW, height: CH, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", cursor: revealed ? "default" : "pointer" }}
               onMouseEnter={e => { if (!revealed) e.currentTarget.style.background = `${C.primary}0A`; }}
               onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}

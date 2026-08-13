@@ -1,111 +1,209 @@
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+/* ═══════════════════════════════════════════════════════════════════════════
+   Groply — index.css
+   Feuille de styles réelle. Le fichier précédent était le template Vite par
+   défaut, jamais importé — et un piège : son `#root { width: 1126px;
+   text-align: center; border-inline: 1px solid }` aurait cassé toute la mise
+   en page mobile le jour où quelqu'un l'aurait importé.
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+   Ce fichier remplace aussi le bloc <style> que App.jsx injectait à chaque
+   rendu. Trois raisons :
+     • les @import de polices et d'icônes y étaient découverts tardivement
+       (après le montage de React) et sérialisés → premier rendu sans aucune
+       icône, y compris dans l'écran de chargement ;
+     • le bloc dépendait de la couleur de fond du thème, donc était recréé à
+       chaque rendu ;
+     • aucun :hover / :focus-visible n'est exprimable en style inline, ce qui
+       rendait le focus clavier invisible partout (WCAG 2.4.7).
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+   Les variables CSS reprennent design/tokens.js et sont pilotées par
+   l'attribut data-theme que ThemeContext pose déjà sur <html>.
+   ═══════════════════════════════════════════════════════════════════════════ */
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+/* ── Thème clair (défaut) ─────────────────────────────────────────────── */
+:root,
+[data-theme="light"] {
+  --gr-bg:            #FFE8CF;
+  --gr-surface:       #FFFFFF;
+  --gr-surface-2:     #F9DFC0;
+  --gr-border:        #E8C9A0;
+  --gr-border-strong: #9E7238;
+  --gr-text:          #18130F;
+  --gr-text-2:        #6E6760;
+  --gr-text-3:        #6B645B;
+  --gr-primary:       #E85D1A;
+  --gr-primary-btn:   #C64E12;
+  --gr-primary-ink:   #B8430E;
+  --gr-focus:         #0A4FB0;
+  --gr-shadow:        0 6px 24px rgba(60, 30, 10, .10);
+  color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+/* ── Thème sombre ─────────────────────────────────────────────────────── */
+[data-theme="dark"] {
+  --gr-bg:            #1A1008;
+  --gr-surface:       #26180A;
+  --gr-surface-2:     #321F0D;
+  --gr-border:        #4A2E14;
+  --gr-border-strong: #8B6636;
+  --gr-text:          #F5E8D8;
+  --gr-text-2:        #C0A882;
+  --gr-text-3:        #A08A74;
+  --gr-primary:       #F2762F;
+  --gr-primary-btn:   #E85D1A;
+  --gr-primary-ink:   #FFAA78;
+  --gr-focus:         #8CBCF5;
+  --gr-shadow:        0 6px 24px rgba(0, 0, 0, .45);
+  color-scheme: dark;
+}
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+/* ── Réinitialisation minimale ────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  /* Rien de plus haut que 16px sur les champs : en dessous, iOS zoome
+     automatiquement au focus et casse la mise en page. */
+  -webkit-text-size-adjust: 100%;
+  background: var(--gr-bg);
+}
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  background: var(--gr-bg);
 }
 
 body {
-  margin: 0;
+  font-family: "Poppins", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--gr-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;   /* pas de « pull to refresh » accidentel */
+  /* Hauteur dynamique : 100vh ignore la barre d'URL sur iOS Safari. */
+  min-height: 100dvh;
 }
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
+button, input, textarea, select { font: inherit; color: inherit; }
+button { -webkit-tap-highlight-color: transparent; }
+img, svg { max-width: 100%; }
+
+/* ── Focus visible (WCAG 2.4.7, niveau AA) ────────────────────────────
+   Le focus n'était visible NULLE PART : deux `outline: none` sans
+   remplacement dans l'écran de connexion, et aucun :focus-visible ailleurs
+   (impossible en style inline). La navigation clavier était impraticable.
+
+   :focus-visible plutôt que :focus → l'anneau n'apparaît pas au doigt ni à
+   la souris, uniquement au clavier. */
+:focus { outline: none; }
+
+:focus-visible,
+.gr-focus:focus-visible {
+  outline: 3px solid var(--gr-focus);
+  outline-offset: 2px;
+  border-radius: 8px;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+/* ── Cibles tactiles ──────────────────────────────────────────────────
+   Agrandit la zone tappable SANS changer le rendu visuel : utile pour les
+   petites icônes qu'on ne veut pas grossir. */
+.gr-tap { position: relative; }
+.gr-tap::after {
+  content: "";
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: 44px; height: 44px;
+  transform: translate(-50%, -50%);
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
+/* ── Défilement horizontal (le manche) ────────────────────────────────
+   L'ancienne règle globale masquait TOUTES les barres de défilement, y
+   compris via ::-webkit-scrollbar — un pseudo-élément qu'aucun style inline
+   ne peut neutraliser. Résultat : sur Safari et Chrome (donc la quasi-totalité
+   de la cible), rien n'indiquait que le manche défilait, et l'utilisateur
+   pouvait ne jamais découvrir les cases hautes.
+
+   On garde donc les barres sur les conteneurs horizontaux, discrètes, et on
+   ajoute des dégradés de bord comme affordance. */
+.gr-hscroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+  overscroll-behavior-x: contain;   /* pas de navigation « retour » au swipe */
+  scrollbar-width: thin;
+  scrollbar-color: var(--gr-border-strong) transparent;
+  padding-bottom: 6px;
+}
+.gr-hscroll::-webkit-scrollbar { height: 6px; }
+.gr-hscroll::-webkit-scrollbar-track { background: transparent; }
+.gr-hscroll::-webkit-scrollbar-thumb {
+  background: var(--gr-border-strong);
+  border-radius: 99px;
+}
+
+/* Conteneur avec dégradés de bord : indique qu'il reste du contenu. */
+.gr-hscroll-wrap { position: relative; }
+.gr-hscroll-wrap::before,
+.gr-hscroll-wrap::after {
+  content: "";
+  position: absolute;
+  top: 0; bottom: 6px;
+  width: 26px;
+  pointer-events: none;
+  z-index: 2;
+}
+.gr-hscroll-wrap::before {
+  left: 0;
+  background: linear-gradient(to right, var(--gr-surface), transparent);
+}
+.gr-hscroll-wrap::after {
+  right: 0;
+  background: linear-gradient(to left, var(--gr-surface), transparent);
+}
+
+/* Masquage limité au défilement VERTICAL des écrans, où la barre n'apporte
+   rien sur mobile et où le contenu occupe toute la largeur. */
+.gr-vscroll { scrollbar-width: none; }
+.gr-vscroll::-webkit-scrollbar { display: none; }
+
+/* ── Animations ───────────────────────────────────────────────────────── */
+@keyframes gr-fade-up {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  20%  { opacity: 1; }
+  80%  { opacity: 1; }
+  to   { opacity: 0; transform: translate(-50%, -22px); }
+}
+/* Nom historique conservé : ui.jsx référence `fadeUp`. */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  20%  { opacity: 1; }
+  80%  { opacity: 1; }
+  to   { opacity: 0; transform: translate(-50%, -22px); }
+}
+@keyframes gr-slide-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Mouvement réduit ─────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
   }
 }
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
+
+/* ── Contraste élevé ──────────────────────────────────────────────────── */
+@media (prefers-contrast: more) {
+  :root { --gr-border: var(--gr-border-strong); }
+  :focus-visible { outline-width: 4px; }
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+/* ── Impression (fiches d'exercice) ───────────────────────────────────── */
+@media print {
+  body { background: #fff; color: #000; }
+  .gr-no-print { display: none !important; }
 }

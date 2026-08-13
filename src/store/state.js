@@ -2,21 +2,28 @@
 // État initial, persistance localStorage, migration des anciennes clés,
 // merge multi-appareils et merge des packs de contenu.
 
-import { levelFromXp } from "./leveling.js";
+import { levelFromXp, sanitizeXp } from "./leveling.js";
+import { defaultDailyXp } from "./xp.js";
+// Les dates vivent maintenant dans dates.js (heure LOCALE, pas UTC).
+// Réexportées ici pour ne casser aucun import existant.
+import { todayStr, weekStr, dayStr, daysAgoStr, daysBetween, normalizeWeek, compareWeeks } from "./dates.js";
+export { todayStr, weekStr, dayStr, daysAgoStr, daysBetween, normalizeWeek, compareWeeks };
 
 // ── Clés de stockage ───────────────────────────────────────────────────────
-// Nom définitif : Groply. Les anciennes clés GuitarPath sont migrées
-// automatiquement au premier chargement (aucune perte de progression).
 export const STATE_KEY   = "groply_state";
 export const CONTENT_KEY = "groply_content";
 
 const LEGACY_STATE_KEYS   = ["guitarpath_v4_state", "guitarpath_v3_state"];
 const LEGACY_CONTENT_KEYS = ["guitarpath_v3_content"];
 
+/** Version du schéma d'état — sert aux migrations idempotentes. */
+export const STATE_VERSION = 5;
+
 export const defaultState = () => ({
+  version: STATE_VERSION,
   xp: 0, level: 1, streak: 0, lastSessionDate: "",
-  streakFreezes: 1,          // gels de série — protègent 1 jour manqué
-  theme: "auto",             // "auto" | "light" | "dark"
+  streakFreezes: 1,
+  theme: "auto",
   completedExercises: {}, exerciseProgress: {}, exerciseHistory: {},
   quizResults: {}, wrongQuiz: [],
   completedLessons: {},
@@ -24,95 +31,158 @@ export const defaultState = () => ({
   dailyChallengeIdx: 0, dailyChallengeDone: false, dailyChallengeDate: "",
   dailyChallengeCount: 0,
   unlockedBadges: [],
-  claimedUnits: {},          // coffres d'unités du Parcours déjà réclamés
-  unitChecks: {},            // { [unitId]: { passed, score, attempts, lastAttemptAt } }
+  claimedUnits: {},
+  unitChecks: {},
   weeklyGoals: { sessions: 0, exercises: 0, quizzes: 0, week: "" },
   practiceLibre: { count: 0, totalMinutes: 0 },
   sessionHistory: [],
   gropiTipDate: "",
 
-  // ── Onboarding ──────────────────────────────────────────────────────────
-  // Rempli une seule fois à la première ouverture, via un vrai test de
-  // placement adaptatif (pas d'auto-évaluation) + objectif + temps dispo.
-  // Sert à réordonner le Parcours et adapter le ton de Gropi — ne coche
-  // jamais de leçon comme acquise à la place de l'utilisateur.
+  // Compteur quotidien d'XP d'entretien (plafonne le farming — voir xp.js)
+  dailyXp: defaultDailyXp(),
+
+  // Horodatage du dernier RESET volontaire. Sert de départage au merge :
+  // sans lui, un reset était systématiquement annulé par n'importe quel
+  // autre appareil encore porteur de l'ancienne progression (audit §2.3).
+  resetAt: "",
+
+  // Dernier crédit d'XP réellement accordé — permet aux écrans d'afficher
+  // le vrai montant plutôt qu'une valeur nominale.
+  lastGain: { xp: 0, kind: "", at: "" },
+
   onboarding: {
     done: false,
-    goal: null,            // "impro" | "theorie" | "manche" | "global"
-    preferredModule: null, // "impro" | "harmony" | "neck" | null (issu de l'objectif)
-    timePerWeek: null,     // "short" | "medium" | "long"
-    skillLevels: { neck: null, scales: null, harmony: null, rhythm: null, impro: null }, // "A1"|"A2"|"B1"|"B2"
-    overallTier: null,     // "A1" | "A2" | "B1" | "B2"
-    weakestModule: null,   // module à mettre en priorité (issu du test réel)
-    startXp: 0,             // XP de départ crédité selon le résultat du test
-    skipped: false,        // conservé pour compat historique / cas de secours
+    goal: null,
+    preferredModule: null,
+    timePerWeek: null,
+    skillLevels: { neck: null, scales: null, harmony: null, rhythm: null, impro: null },
+    overallTier: null,
+    weakestModule: null,
+    startXp: 0,
+    startLevel: 1,
+    skipped: false,
     completedAt: "",
   },
 });
+
+// ── Migrations ─────────────────────────────────────────────────────────────
+// Chaque migration doit être IDEMPOTENTE : appliquée deux fois, elle donne
+// le même résultat. C'est ce qui permet de les rejouer sans risque quand un
+// état revient du cloud dans un format ancien.
+function migrate(parsed) {
+  const s = { ...defaultState(), ...parsed };
+
+  // v4 → v5 : les clés de semaine n'étaient pas paddées ("2026-W9"), ce qui
+  // les rendait incomparables comme chaînes. On normalise en lecture.
+  if (s.weeklyGoals?.week) {
+    s.weeklyGoals = { ...s.weeklyGoals, week: normalizeWeek(s.weeklyGoals.week) };
+  }
+
+  // Le niveau est TOUJOURS dérivé de l'XP (source de vérité unique), et
+  // l'XP est assainie (NaN, négatif, Infinity venant d'un import bricolé).
+  s.xp = sanitizeXp(s.xp);
+  s.level = levelFromXp(s.xp);
+
+  // Champs ajoutés après coup : on garantit leur forme.
+  if (!s.dailyXp || typeof s.dailyXp !== "object") s.dailyXp = defaultDailyXp();
+  if (!Array.isArray(s.wrongQuiz)) s.wrongQuiz = [];
+  if (!Array.isArray(s.unlockedBadges)) s.unlockedBadges = [];
+  if (!Array.isArray(s.sessionHistory)) s.sessionHistory = [];
+  if (typeof s.resetAt !== "string") s.resetAt = "";
+  s.onboarding = { ...defaultState().onboarding, ...(s.onboarding || {}) };
+
+  // Les comptes déjà actifs avant l'introduction de l'onboarding ne doivent
+  // pas se le voir imposer rétroactivement.
+  if (!parsed?.onboarding && Object.keys(parsed?.completedLessons || {}).length > 0) {
+    s.onboarding = { ...s.onboarding, done: true, skipped: true };
+  }
+
+  s.version = STATE_VERSION;
+  return s;
+}
 
 // ── Chargement + migration ────────────────────────────────────────────────
 export const loadState = () => {
   try {
     let raw = localStorage.getItem(STATE_KEY);
 
-    // Migration : reprendre l'ancienne clé la plus récente disponible
     if (!raw) {
       for (const key of LEGACY_STATE_KEYS) {
         const legacy = localStorage.getItem(key);
         if (legacy) { raw = legacy; break; }
       }
-      if (raw) localStorage.setItem(STATE_KEY, raw); // écrire sous la nouvelle clé
+      if (raw) { try { localStorage.setItem(STATE_KEY, raw); } catch { /* quota */ } }
     }
 
     const parsed = raw ? JSON.parse(raw) : {};
-    const s = { ...defaultState(), ...parsed };
-    // Le niveau est TOUJOURS dérivé de l'XP (source de vérité unique).
-    // Corrige aussi les états créés avec l'ancienne formule linéaire.
-    s.level = levelFromXp(s.xp);
-
-    // Les comptes déjà actifs avant l'introduction de l'onboarding ne
-    // doivent pas se le voir imposer rétroactivement (ils ont déjà de la
-    // progression = ils n'ont pas besoin d'être "accueillis").
-    if (!parsed.onboarding && Object.keys(parsed.completedLessons || {}).length > 0) {
-      s.onboarding = { ...s.onboarding, done: true, skipped: true };
-    }
-
-    return s;
+    return migrate(parsed);
   } catch { return defaultState(); }
 };
 
+/**
+ * Écrit l'état. Renvoie true/false plutôt que d'échouer en silence : le
+ * quota localStorage (~5 Mo) peut être atteint si un gros pack de contenu a
+ * été importé, et perdre la progression sans le dire est le pire scénario.
+ */
 export const saveState = (s) => {
-  try { localStorage.setItem(STATE_KEY, JSON.stringify(s)); } catch {}
-};
-
-// ── Dates ─────────────────────────────────────────────────────────────────
-export const todayStr = () => new Date().toISOString().split("T")[0];
-
-// Semaine ISO 8601 (lundi = premier jour, semaine 1 = celle du premier jeudi).
-// L'ancienne formule approximative pouvait décaler la semaine en début d'année.
-export const weekStr = (date = new Date()) => {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const dayNum = d.getUTCDay() || 7;              // dimanche → 7
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);      // jeudi de la semaine courante
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  const week = Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
-  return `${d.getUTCFullYear()}-W${week}`;
+  try {
+    localStorage.setItem(STATE_KEY, JSON.stringify(s));
+    return true;
+  } catch (e) {
+    // Dernier recours : on tente de libérer le pack de contenu importé,
+    // qui est reconstructible, plutôt que de perdre la progression, qui ne
+    // l'est pas.
+    try {
+      localStorage.removeItem(CONTENT_KEY);
+      localStorage.setItem(STATE_KEY, JSON.stringify(s));
+      return true;
+    } catch {
+      console.error("Groply — impossible de sauvegarder la progression :", e);
+      return false;
+    }
+  }
 };
 
 // ── Merge multi-appareils ─────────────────────────────────────────────────
-// Fusionne l'état local et l'état cloud champ par champ, au lieu d'écraser.
-// Règle générale : on garde le "plus avancé" des deux (max, union, plus récent).
+// Fusionne l'état local et l'état cloud champ par champ. Règle générale :
+// on garde le « plus avancé » des deux (max, union, plus récent).
 const maxStr = (a = "", b = "") => (a > b ? a : b);
 const maxNum = (a, b) => Math.max(Number(a) || 0, Number(b) || 0);
 
+/**
+ * Un RESET volontaire doit gagner contre un état plus « avancé ».
+ * On considère qu'un côté a été réinitialisé APRÈS l'autre si son `resetAt`
+ * est postérieur à la dernière activité connue de l'autre côté. Dans ce
+ * cas, la progression de l'autre côté est écartée au lieu d'être fusionnée.
+ */
+function resetWins(a, b) {
+  if (!a?.resetAt) return false;
+  const otherActivity = maxStr(b?.lastSessionDate || "", (b?.resetAt || "").slice(0, 10));
+  return a.resetAt.slice(0, 10) >= otherActivity;
+}
+
 export const mergeStates = (local, cloud) => {
   if (!cloud) return local;
-  if (!local) return { ...defaultState(), ...cloud };
-  const L = local, C = cloud;
+  if (!local) return migrate(cloud);
+
+  const L = migrate(local), C = migrate(cloud);
+
+  // ── Départage par RESET ────────────────────────────────────────────────
+  // Avant ce garde-fou, la confirmation « action irréversible » mentait :
+  // Math.max(0, 4200) rendait 4200 dès que le second appareil se
+  // resynchronisait, et la progression ressuscitait.
+  if (resetWins(L, C) && !resetWins(C, L)) {
+    return { ...L, resetAt: L.resetAt };
+  }
+  if (resetWins(C, L) && !resetWins(L, C)) {
+    return { ...C, theme: L.theme || C.theme, resetAt: C.resetAt };
+  }
+
   const m = { ...L };
+  m.resetAt = maxStr(L.resetAt, C.resetAt);
 
   // Progression globale
-  m.xp = maxNum(L.xp, C.xp);
+  m.xp = sanitizeXp(maxNum(L.xp, C.xp));
   m.level = levelFromXp(m.xp);
   m.streak = maxNum(L.streak, C.streak);
   m.lastSessionDate = maxStr(L.lastSessionDate, C.lastSessionDate);
@@ -149,28 +219,21 @@ export const mergeStates = (local, cloud) => {
   m.wrongQuiz = [...new Set([...(L.wrongQuiz || []), ...(C.wrongQuiz || [])])]
     .filter(id => !m.quizResults[id]?.correct);
 
-  // Révision espacée : on garde l'entrée la plus travaillée (puis la plus récente)
-  m.reviewHistory = { ...(C.reviewHistory || {}) };
-  for (const [id, lh] of Object.entries(L.reviewHistory || {})) {
-    const ch = m.reviewHistory[id];
-    if (!ch) { m.reviewHistory[id] = lh; continue; }
-    const pickLocal =
-      (lh.attempts || 0) > (ch.attempts || 0) ||
-      ((lh.attempts || 0) === (ch.attempts || 0) && (lh.lastSeen || "") >= (ch.lastSeen || ""));
-    m.reviewHistory[id] = pickLocal ? lh : ch;
-  }
-
-  // Même logique pour l'historique de maîtrise des exercices (nouveau,
-  // mais suit exactement le même principe que reviewHistory ci-dessus).
-  m.exerciseHistory = { ...(C.exerciseHistory || {}) };
-  for (const [id, lh] of Object.entries(L.exerciseHistory || {})) {
-    const ch = m.exerciseHistory[id];
-    if (!ch) { m.exerciseHistory[id] = lh; continue; }
-    const pickLocal =
-      (lh.attempts || 0) > (ch.attempts || 0) ||
-      ((lh.attempts || 0) === (ch.attempts || 0) && (lh.lastSeen || "") >= (ch.lastSeen || ""));
-    m.exerciseHistory[id] = pickLocal ? lh : ch;
-  }
+  // Révision espacée : on garde l'entrée la plus travaillée, puis la plus récente
+  const mergeHistories = (a = {}, b = {}) => {
+    const out = { ...b };
+    for (const [id, lh] of Object.entries(a)) {
+      const ch = out[id];
+      if (!ch) { out[id] = lh; continue; }
+      const pickLocal =
+        (lh.attempts || 0) > (ch.attempts || 0) ||
+        ((lh.attempts || 0) === (ch.attempts || 0) && (lh.lastSeen || "") >= (ch.lastSeen || ""));
+      out[id] = pickLocal ? lh : ch;
+    }
+    return out;
+  };
+  m.reviewHistory   = mergeHistories(L.reviewHistory,   C.reviewHistory);
+  m.exerciseHistory = mergeHistories(L.exerciseHistory, C.exerciseHistory);
 
   // Badges : union
   m.unlockedBadges = [...new Set([...(L.unlockedBadges || []), ...(C.unlockedBadges || [])])];
@@ -178,7 +241,7 @@ export const mergeStates = (local, cloud) => {
   // Coffres d'unités : union (réclamé quelque part = réclamé partout)
   m.claimedUnits = { ...(C.claimedUnits || {}), ...(L.claimedUnits || {}) };
 
-  // Vérifications d'unité : une réussite sur un appareil reste une réussite partout
+  // Vérifications d'unité : une réussite reste une réussite partout
   const allCheckIds = new Set([...Object.keys(L.unitChecks || {}), ...Object.keys(C.unitChecks || {})]);
   m.unitChecks = {};
   for (const id of allCheckIds) {
@@ -187,27 +250,42 @@ export const mergeStates = (local, cloud) => {
       passed: !!(a?.passed || b?.passed),
       score: Math.max(a?.score || 0, b?.score || 0),
       attempts: Math.max(a?.attempts || 0, b?.attempts || 0),
-      lastAttemptAt: (a?.lastAttemptAt || "") >= (b?.lastAttemptAt || "") ? (a?.lastAttemptAt || b?.lastAttemptAt) : (b?.lastAttemptAt || a?.lastAttemptAt),
+      lastAttemptAt: (a?.lastAttemptAt || "") >= (b?.lastAttemptAt || "")
+        ? (a?.lastAttemptAt || b?.lastAttemptAt)
+        : (b?.lastAttemptAt || a?.lastAttemptAt),
     };
   }
 
   // Défi du jour : l'appareil le plus récent fait foi, le compteur prend le max
   const localDailyNewer = (L.dailyChallengeDate || "") >= (C.dailyChallengeDate || "");
   const dailySrc = localDailyNewer ? L : C;
-  m.dailyChallengeIdx  = dailySrc.dailyChallengeIdx ?? 0;
-  m.dailyChallengeDone = dailySrc.dailyChallengeDone ?? false;
-  m.dailyChallengeDate = dailySrc.dailyChallengeDate ?? "";
+  m.dailyChallengeIdx   = dailySrc.dailyChallengeIdx ?? 0;
+  m.dailyChallengeDone  = dailySrc.dailyChallengeDone ?? false;
+  m.dailyChallengeDate  = dailySrc.dailyChallengeDate ?? "";
   m.dailyChallengeCount = maxNum(L.dailyChallengeCount, C.dailyChallengeCount);
 
-  // Objectifs hebdo : même semaine → max champ par champ, sinon la plus récente
-  const lw = L.weeklyGoals || {}, cw = C.weeklyGoals || {};
+  // Compteur d'XP d'entretien : on garde le plus élevé du jour courant,
+  // sinon celui du jour le plus récent (sinon on offrirait un second
+  // plafond quotidien en changeant d'appareil).
+  const ld = L.dailyXp || {}, cd = C.dailyXp || {};
+  m.dailyXp = ld.date === cd.date
+    ? { date: ld.date || "", repeat: maxNum(ld.repeat, cd.repeat), practice: maxNum(ld.practice, cd.practice) }
+    : ((ld.date || "") >= (cd.date || "") ? { ...defaultDailyXp(), ...ld } : { ...defaultDailyXp(), ...cd });
+
+  // Objectifs hebdo : même semaine → max champ par champ, sinon la PLUS
+  // RÉCENTE. La comparaison passe par compareWeeks(), qui normalise le
+  // padding : "2026-W9" vs "2026-W12" était comparé comme une chaîne et
+  // faisait gagner la semaine 9 (audit §2.2).
+  const lw = { ...(L.weeklyGoals || {}) }, cw = { ...(C.weeklyGoals || {}) };
+  lw.week = normalizeWeek(lw.week); cw.week = normalizeWeek(cw.week);
   m.weeklyGoals = lw.week === cw.week
     ? { week: lw.week || "",
         sessions:  maxNum(lw.sessions,  cw.sessions),
         exercises: maxNum(lw.exercises, cw.exercises),
         quizzes:   maxNum(lw.quizzes,   cw.quizzes) }
-    : ((lw.week || "") >= (cw.week || "") ? { ...defaultState().weeklyGoals, ...lw }
-                                           : { ...defaultState().weeklyGoals, ...cw });
+    : (compareWeeks(lw.week, cw.week) >= 0
+        ? { ...defaultState().weeklyGoals, ...lw }
+        : { ...defaultState().weeklyGoals, ...cw });
 
   // Pratique libre
   m.practiceLibre = {
@@ -230,8 +308,7 @@ export const mergeStates = (local, cloud) => {
   m.theme = L.theme || C.theme || "auto";
   m.gropiTipDate = maxStr(L.gropiTipDate, C.gropiTipDate);
 
-  // Onboarding : fait quelque part = fait partout (pas de re-proposition
-  // sur un 2e appareil une fois qu'il a été rempli sur le premier).
+  // Onboarding : fait quelque part = fait partout
   m.onboarding = (L.onboarding?.done || C.onboarding?.done)
     ? (L.onboarding?.done ? L.onboarding : C.onboarding)
     : (L.onboarding || C.onboarding || defaultState().onboarding);
@@ -239,7 +316,7 @@ export const mergeStates = (local, cloud) => {
   return m;
 };
 
-// ── Merge des packs de contenu (inchangé) ─────────────────────────────────
+// ── Merge des packs de contenu ────────────────────────────────────────────
 export const mergeById = (defaults, imported) => {
   const map = new Map(defaults.map(item => [item.id, item]));
   imported.forEach(item => map.set(item.id, item));
@@ -251,10 +328,6 @@ export const mergeCourses = (defaults, imported) => {
   imported.forEach(c => {
     if (map.has(c.id)) {
       const existing = map.get(c.id);
-      // L'importé doit gagner sur le défaut pour les leçons en commun (c'est
-      // le sens même d'un import : personnaliser/mettre à jour le contenu de
-      // base) — pas l'inverse, sinon toute personnalisation est silencieusement
-      // écrasée par les valeurs par défaut à chaque rechargement de l'app.
       const lessonMap = new Map((existing.lessons || []).map(l => [l.id, l]));
       (c.lessons || []).forEach(l => lessonMap.set(l.id, l));
       map.set(c.id, { ...existing, ...c, lessons: Array.from(lessonMap.values()) });
@@ -269,19 +342,18 @@ export const loadContent = (defaults, CONTENT_KEY_PARAM) => {
   const key = CONTENT_KEY_PARAM || CONTENT_KEY;
   try {
     let raw = localStorage.getItem(key);
-    // Migration du pack de contenu importé (ancienne clé GuitarPath)
     if (!raw && key === CONTENT_KEY) {
       for (const legacy of LEGACY_CONTENT_KEYS) {
         const old = localStorage.getItem(legacy);
-        if (old) { raw = old; localStorage.setItem(CONTENT_KEY, old); break; }
+        if (old) { raw = old; try { localStorage.setItem(CONTENT_KEY, old); } catch {} break; }
       }
     }
     if (!raw) return defaults;
     const imported = JSON.parse(raw);
     return {
-      courses:   mergeCourses(defaults.courses,   imported.courses   || []),
-      quiz:      mergeById(defaults.quiz,          imported.quiz      || []),
-      exercises: mergeById(defaults.exercises,     imported.exercises || []),
+      courses:   mergeCourses(defaults.courses, imported.courses   || []),
+      quiz:      mergeById(defaults.quiz,       imported.quiz      || []),
+      exercises: mergeById(defaults.exercises,  imported.exercises || []),
     };
   } catch { return defaults; }
 };

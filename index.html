@@ -1,11 +1,41 @@
 <!doctype html>
-<html lang="fr">
+<html lang="fr" data-theme="light">
   <head>
     <meta charset="UTF-8" />
 
+    <!-- ══════════════════════════════════════════════════════════════════
+         POLICES — découvertes immédiatement par le preload scanner.
+         Avant, elles étaient chargées par @import DANS un <style> injecté
+         par React : la requête ne partait qu'après le montage, et @import
+         est sérialisant. Résultat, un premier rendu sans aucune icône —
+         y compris dans l'écran de chargement, qui affiche une icône.
+
+         L'objectif final reste l'auto-hébergement (voir CHANGELOG §3.2) :
+         cela supprime deux tiers qui reçoivent l'IP de chaque visiteur
+         (Google Fonts, jsDelivr) sans consentement, ce qui est aussi un
+         point RGPD. En attendant, preconnect + link non bloquant.
+         ══════════════════════════════════════════════════════════════════ -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Nunito:wght@800&display=swap"
+      media="print" onload="this.media='all'" />
+    <noscript>
+      <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Nunito:wght@800&display=swap" />
+    </noscript>
+    <!-- Les icônes ne sont PAS différées : toute l'iconographie de l'app en
+         dépend (Ti.jsx rend <i class="ti ti-…">). Une icône absente n'est pas
+         un défaut de style, c'est un bouton vide. -->
+    <link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.20.0/dist/tabler-icons.min.css" />
+
     <!-- PWA core -->
     <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#E85D1A" id="theme-color-meta" />
+    <meta name="theme-color" content="#FFE8CF" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1A1008" media="(prefers-color-scheme: dark)" />
 
     <!-- iOS PWA -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -18,44 +48,34 @@
     <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
 
-    <!-- SEO -->
+    <!-- SEO / partage -->
     <meta name="description" content="Progresser à la guitare — impro, théorie, manche" />
+    <meta property="og:type" content="website" />
     <meta property="og:title" content="Groply" />
     <meta property="og:description" content="Progresser à la guitare — impro, théorie, manche" />
     <meta property="og:image" content="/icon-512.png" />
+    <meta name="twitter:card" content="summary" />
 
-    <!-- Viewport -->
+    <!-- Viewport. `maximum-scale` et `user-scalable=no` sont volontairement
+         ABSENTS : les interdire empêche le zoom, ce qui est un échec WCAG
+         1.4.4 et une plaie pour lire une tablature. -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
-    <title>Groply</title>
+    <title>Groply — progresser à la guitare</title>
+
+    <!-- Fond posé avant le premier rendu : évite le flash blanc au lancement
+         de la PWA, sans attendre le JS. -->
+    <style>
+      html { background: #FFE8CF; }
+      @media (prefers-color-scheme: dark) { html { background: #1A1008; } }
+    </style>
   </head>
 
   <body>
     <div id="root"></div>
+    <noscript style="display:block;padding:24px;font-family:sans-serif;text-align:center">
+      Groply a besoin de JavaScript pour fonctionner. Active-le puis recharge la page.
+    </noscript>
     <script type="module" src="/src/main.jsx"></script>
-
-    <!-- Service Worker (production uniquement — jamais en dev, ça casse le live-reload de Vite) -->
-    <script type="module">
-      if (import.meta.env.PROD && 'serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').then(reg => {
-            reg.addEventListener('updatefound', () => {
-              const sw = reg.installing;
-              if (!sw) return;
-              sw.addEventListener('statechange', () => {
-                if (sw.state === 'installed' && navigator.serviceWorker.controller) {
-                  sw.postMessage('SKIP_WAITING');
-                  navigator.serviceWorker.addEventListener('controllerchange',
-                    () => window.location.reload(), { once: true });
-                }
-              });
-            });
-          }).catch(() => {});
-        });
-      }
-      // Shortcuts
-      const sc = new URLSearchParams(location.search).get('shortcut');
-      if (sc) window.__GROPLY_SHORTCUT = sc;
-    </script>
   </body>
 </html>

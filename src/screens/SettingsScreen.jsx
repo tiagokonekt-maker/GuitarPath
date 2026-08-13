@@ -1,20 +1,34 @@
 // Groply — screens/SettingsScreen.jsx
+//
+// ── Ce qui change ─────────────────────────────────────────────────────────
+// §5.6 Les deux `window.confirm` (réinitialiser la progression, supprimer le
+//      contenu importé) sont remplacés par ConfirmDialog : dialogue système
+//      hors design system, parfois en anglais selon l'appareil, pour les
+//      actions les plus irréversibles de l'app.
+// §8.1 SUPPRESSION DE COMPTE (RGPD art. 17). `RESET` réinitialisait l'état
+//      applicatif mais ne supprimait ni la ligne `progress` ni le compte
+//      `auth.users` : le droit à l'effacement n'était pas exerçable.
+// §2.8 Option « rendre l'audio disponible hors-ligne » : les ~60 samples de
+//      guitare n'étaient pas mis en cache, donc la fonction audio — cœur du
+//      produit — ne marchait pas hors-ligne. On le propose au lieu de
+//      télécharger plusieurs mégaoctets sans rien demander.
+// §2.1 `todayStr` local, importé au lieu d'être redéfini en UTC ici.
 import { useState } from "react";
-import { FONTS, R } from "../design/tokens.js";
+import { FONTS, R, T } from "../design/tokens.js";
 import { Ti } from "../design/Ti.jsx";
-import { CONTENT_KEY } from "../store/state.js";
+import { CONTENT_KEY, todayStr } from "../store/state.js";
 import { BADGES } from "../store/badges.js";
 import { gradeForLevel } from "../store/grades.js";
+import { ConfirmDialog } from "../design/ui.jsx";
+import { listSampleUrls, SAMPLE_COUNT } from "../audioEngine.js";
 
 import { useC } from "../design/ThemeContext.jsx";
-
-const todayStr = () => new Date().toISOString().slice(0,10);
 
 function SettingsSection({ title, children }) {
   const C = useC();
   return (
     <div style={{ background:C.surface, border:`1.5px solid ${C.border}`, borderRadius:R.lg, marginBottom:10, overflow:"hidden" }}>
-      <div style={{ padding:"12px 16px 0", fontSize:10, fontWeight:700, letterSpacing:".07em", textTransform:"uppercase", color:C.text3 }}>
+      <div style={{ padding:"12px 16px 0", fontSize:11, fontWeight:700, letterSpacing:".07em", textTransform:"uppercase", color:C.text2 }}>
         {title}
       </div>
       <div style={{ marginTop:8 }}>{children}</div>
@@ -26,15 +40,21 @@ function SettingsRow({ label, value, last }) {
   const C = useC();
   return (
     <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"11px 16px", borderBottom: last ? "none" : `1px solid ${C.borderSoft}` }}>
-      <span style={{ fontSize:13, fontWeight:600, color:C.text }}>{label}</span>
-      <span style={{ fontSize:12, fontWeight:600, color:C.text2 }}>{value}</span>
+      <span style={{ fontSize:T.small, fontWeight:600, color:C.text }}>{label}</span>
+      <span style={{ fontSize:T.small, fontWeight:600, color:C.text2 }}>{value}</span>
     </div>
   );
 }
 
-function SettingsScreen({ state, dispatch, content, onClose, onImported, user, onSignOut }) {
+function SettingsScreen({ state, dispatch, content, onClose, onImported, user, onSignOut, onDeleteAccount }) {
   const C = useC();
   const [importStatus, setImportStatus] = useState(null);
+  // `null` | "resetContent" | "resetProgress" | "deleteAccount"
+  const [confirmation, setConfirmation] = useState(null);
+  const [saisie, setSaisie] = useState("");
+  const [audioOffline, setAudioOffline] = useState(null);
+
+  const fermerConfirmation = () => { setConfirmation(null); setSaisie(""); };
 
   // Ne garde que les items qui ont un id exploitable — un import dont les
   // items n'ont pas d'id valide écraserait sinon tout dans une seule clé
@@ -83,19 +103,56 @@ function SettingsScreen({ state, dispatch, content, onClose, onImported, user, o
     reader.readAsText(file);
   };
 
-  const resetContent = () => {
-    if (window.confirm("Supprimer tout le contenu importé et revenir au contenu de base ?")) {
-      localStorage.removeItem(CONTENT_KEY);
-      if (onImported) onImported();
-      setImportStatus({ ok:true, msg:"Contenu remis à l'état initial." });
-    }
+  const faireResetContent = () => {
+    try { localStorage.removeItem(CONTENT_KEY); } catch { /* noop */ }
+    if (onImported) onImported();
+    setImportStatus({ ok:true, msg:"Contenu remis à l'état initial." });
+    fermerConfirmation();
   };
 
-  const resetProgress = () => {
-    if (window.confirm("Réinitialiser TOUTE ta progression (XP, badges, etc.) ? Action irréversible.")) {
-      dispatch({ type:"RESET" });
-      setImportStatus({ ok:true, msg:"Progression réinitialisée." });
+  const faireResetProgress = () => {
+    dispatch({ type:"RESET" });
+    setImportStatus({ ok:true, msg:"Progression réinitialisée. Cette remise à zéro sera propagée à tes autres appareils." });
+    fermerConfirmation();
+  };
+
+  const faireSuppressionCompte = async () => {
+    fermerConfirmation();
+    setImportStatus({ ok:true, msg:"Suppression en cours…" });
+    const res = await onDeleteAccount?.();
+    if (!res?.ok) {
+      setImportStatus({ ok:false, msg:`La suppression a échoué : ${res?.error || "erreur inconnue"}. Réessaie ou écris-nous.` });
     }
+    // En cas de succès, useProgress a déjà déconnecté : l'app repart sur
+    // l'écran d'authentification, il n'y a rien à afficher ici.
+  };
+
+  /**
+   * Demande au service worker de mettre les samples en cache. On passe par le
+   * SW plutôt que par un fetch direct : c'est lui qui détient le cache
+   * consulté ensuite par le moteur audio.
+   */
+  const activerAudioOffline = () => {
+    if (!("serviceWorker" in navigator)) {
+      setAudioOffline({ ok:false, msg:"Ton navigateur ne gère pas le mode hors-ligne." });
+      return;
+    }
+    navigator.serviceWorker.getRegistration().then(reg => {
+      if (!reg?.active) {
+        setAudioOffline({ ok:false, msg:"Mode hors-ligne indisponible pour l'instant. Recharge l'app et réessaie." });
+        return;
+      }
+      setAudioOffline({ ok:true, msg:`Téléchargement des ${SAMPLE_COUNT} sons…` });
+      const auMessage = (e) => {
+        if (e.data?.type !== "AUDIO_CACHED") return;
+        navigator.serviceWorker.removeEventListener("message", auMessage);
+        setAudioOffline(e.data.count === e.data.total
+          ? { ok:true, msg:`Les ${e.data.count} sons sont disponibles hors-ligne.` }
+          : { ok:false, msg:`${e.data.count} sons sur ${e.data.total} enregistrés. Réessaie avec une meilleure connexion.` });
+      };
+      navigator.serviceWorker.addEventListener("message", auMessage);
+      reg.active.postMessage({ type:"PRECACHE_AUDIO", urls: listSampleUrls() });
+    });
   };
 
   const exportProgress = () => {
@@ -110,7 +167,7 @@ function SettingsScreen({ state, dispatch, content, onClose, onImported, user, o
   };
 
   const btn = (color, border) => ({
-    width:"100%", padding:"13px 16px", borderRadius:R.md, fontSize:13, fontWeight:700,
+    width:"100%", padding:"14px 16px", borderRadius:R.md, fontSize:T.small, fontWeight:700, minHeight:48,
     cursor:"pointer", fontFamily:FONTS.ui, display:"flex", alignItems:"center",
     justifyContent:"center", gap:6, marginBottom:8,
     background:C.surface, color:color, border:`1.5px solid ${border||color}`,
@@ -137,7 +194,7 @@ function SettingsScreen({ state, dispatch, content, onClose, onImported, user, o
         <SettingsSection title="Apparence">
           <div style={{ padding:"12px 16px 14px" }}>
             <div style={{ fontSize:12, color:C.text2, marginBottom:10 }}>Thème de l'application</div>
-            <div style={{ display:"flex", gap:8 }}>
+            <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
               {[
                 { val:"auto",  label:"Auto",   icon:"device-desktop",   desc:"Suit le système" },
                 { val:"light", label:"Clair",  icon:"sun",              desc:"Toujours clair" },
@@ -145,17 +202,20 @@ function SettingsScreen({ state, dispatch, content, onClose, onImported, user, o
               ].map(opt => {
                 const active = (state.theme || "auto") === opt.val;
                 return (
-                  <button key={opt.val} onClick={() => dispatch({ type:"SET_THEME", theme:opt.val })}
+                  <button key={opt.val} onClick={() => dispatch({ type:"SET_THEME", theme:opt.val })} className="gr-focus" aria-pressed={active}
                     style={{
-                      flex:1, padding:"10px 6px", borderRadius:R.md, cursor:"pointer",
-                      fontFamily:FONTS.ui, textAlign:"center",
-                      border:`1.5px solid ${active ? C.primary : C.border}`,
+                      width:"100%", padding:"13px 14px", borderRadius:R.md, cursor:"pointer",
+                      fontFamily:FONTS.ui, textAlign:"left", minHeight:48,
+                      border:`1.5px solid ${active ? C.primary : C.borderStrong}`,
                       background: active ? C.primaryL : C.surface,
-                      display:"flex", flexDirection:"column", alignItems:"center", gap:5,
+                      display:"flex", alignItems:"center", gap:12,
                     }}>
-                    <Ti name={opt.icon} size={18} color={active ? C.primary : C.text3}/>
-                    <span style={{ fontSize:11, fontWeight:700, color:active ? C.primaryD : C.text2 }}>{opt.label}</span>
-                    <span style={{ fontSize:9.5, color:C.text3, lineHeight:1.3 }}>{opt.desc}</span>
+                    <Ti name={opt.icon} size={20} color={active ? C.primaryInk : C.text2}/>
+                    <span style={{ flex:1 }}>
+                      <span style={{ display:"block", fontSize:T.small, fontWeight:700, color:active ? C.primaryD : C.text }}>{opt.label}</span>
+                      <span style={{ display:"block", fontSize:T.micro, color:C.text2, lineHeight:1.4 }}>{opt.desc}</span>
+                    </span>
+                    {active && <Ti name="check" size={18} color={C.primaryInk}/>}
                   </button>
                 );
               })}
@@ -167,8 +227,8 @@ function SettingsScreen({ state, dispatch, content, onClose, onImported, user, o
         <SettingsSection title="Compte">
           <SettingsRow label="Email" value={user?.email || "—"} last />
         </SettingsSection>
-        <button onClick={onSignOut} style={btn(C.danger)}>
-          <Ti name="logout" size={14} color={C.danger} /> Se déconnecter
+        <button onClick={onSignOut} className="gr-focus" style={btn(C.text2, C.borderStrong)}>
+          <Ti name="logout" size={16} color={C.text2} /> Se déconnecter
         </button>
 
         {/* Contenu */}
@@ -181,7 +241,7 @@ function SettingsScreen({ state, dispatch, content, onClose, onImported, user, o
           <Ti name="upload" size={14} color={C.primary} /> Importer un fichier JSON
           <input type="file" accept=".json,application/json" onChange={handleFile} style={{ display:"none" }} />
         </label>
-        <button onClick={resetContent} style={btn(C.text2, C.border)}>
+        <button onClick={() => setConfirmation("resetContent")} className="gr-focus" style={btn(C.text2, C.borderStrong)}>
           <Ti name="trash" size={14} color={C.text2} /> Supprimer le contenu importé
         </button>
 
@@ -192,28 +252,108 @@ function SettingsScreen({ state, dispatch, content, onClose, onImported, user, o
           <SettingsRow label="Niveau actuel"      value={state.level} />
           <SettingsRow label="Badges débloqués"   value={`${state.unlockedBadges.length} / ${BADGES.length}`} last />
         </SettingsSection>
-        <button onClick={exportProgress} style={btn(C.text2, C.border)}>
+        <button onClick={exportProgress} className="gr-focus" style={btn(C.text2, C.borderStrong)}>
           <Ti name="download" size={14} color={C.text2} /> Exporter ma progression (JSON)
         </button>
-        <button onClick={resetProgress} style={btn(C.danger)}>
+        <button onClick={() => setConfirmation("resetProgress")} className="gr-focus" style={btn(C.danger)}>
           <Ti name="refresh" size={14} color={C.danger} /> Réinitialiser ma progression
         </button>
+
+        {/* Audio hors-ligne */}
+        <SettingsSection title="Audio">
+          <div style={{ padding:"4px 16px 14px" }}>
+            <p style={{ margin:"0 0 12px", fontSize:T.small, color:C.text2, lineHeight:1.6 }}>
+              Les sons de guitare sont téléchargés à la première écoute. Tu peux
+              les enregistrer maintenant pour qu'ils fonctionnent sans connexion
+              — compte quelques mégaoctets, à faire de préférence en Wi-Fi.
+            </p>
+            <button onClick={activerAudioOffline} className="gr-focus" style={{ ...btn(C.text2, C.borderStrong), marginBottom:0 }}>
+              <Ti name="download" size={16} color={C.text2} /> Rendre l'audio disponible hors-ligne
+            </button>
+            {audioOffline && (
+              <p role="status" style={{
+                margin:"10px 0 0", fontSize:T.micro, lineHeight:1.5,
+                color: audioOffline.ok ? C.greenD : C.dangerInk,
+              }}>{audioOffline.msg}</p>
+            )}
+          </div>
+        </SettingsSection>
+
+        {/* Zone de danger — séparée visuellement du reste : ces actions ne
+            doivent pas se trouver à côté d'un réglage anodin. */}
+        <div style={{
+          border:`1.5px solid ${C.danger}`, borderRadius:R.lg,
+          padding:"14px 16px", marginTop:18, marginBottom:10, background:C.surface,
+        }}>
+          <div style={{ fontSize:T.micro, fontWeight:700, letterSpacing:".07em", textTransform:"uppercase", color:C.dangerInk, marginBottom:10 }}>
+            Zone irréversible
+          </div>
+          <p style={{ margin:"0 0 12px", fontSize:T.small, color:C.text2, lineHeight:1.6 }}>
+            La suppression de compte efface définitivement ton email, ta
+            progression et ton historique de nos serveurs. Aucune sauvegarde
+            n'est conservée. Pense à exporter ta progression avant, si tu veux
+            en garder une copie.
+          </p>
+          <button onClick={() => setConfirmation("deleteAccount")} className="gr-focus"
+            style={{ ...btn(C.dangerInk, C.danger), marginBottom:0 }}>
+            <Ti name="trash" size={16} color={C.dangerInk} /> Supprimer mon compte et mes données
+          </button>
+        </div>
+
+        {/* Mentions légales */}
+        <div style={{ display:"flex", gap:14, justifyContent:"center", marginTop:6, flexWrap:"wrap" }}>
+          <a href="/cgu.html" style={{ fontSize:T.micro, color:C.text2 }}>Conditions d'utilisation</a>
+          <a href="/confidentialite.html" style={{ fontSize:T.micro, color:C.text2 }}>Confidentialité</a>
+        </div>
 
         {/* Feedback import */}
         {importStatus && (
           <div style={{
-            background: importStatus.ok ? C.greenL : C.coralL,
-            border:`1.5px solid ${importStatus.ok ? C.greenBorder : C.coralBorder}`,
+            background: importStatus.ok ? C.greenL : C.dangerL,
+            border:`1.5px solid ${importStatus.ok ? C.greenBorder : C.dangerBorder}`,
             borderRadius:R.md, padding:"11px 14px", marginTop:12,
             display:"flex", gap:8, alignItems:"flex-start",
-          }}>
-            <Ti name={importStatus.ok?"check":"alert-circle"} size={15} color={importStatus.ok?C.green:C.coral} />
-            <p style={{ margin:0, fontSize:12, color:importStatus.ok?C.greenD:C.coralD, lineHeight:1.5 }}>{importStatus.msg}</p>
+          }} role="status">
+            <Ti name={importStatus.ok?"check":"alert-circle"} size={16} color={importStatus.ok?C.greenD:C.dangerInk} />
+            <p style={{ margin:0, fontSize:T.small, color:importStatus.ok?C.greenD:C.text, lineHeight:1.5 }}>{importStatus.msg}</p>
           </div>
         )}
 
         <div style={{ height:28 }} />
       </div>
+
+      {confirmation === "resetContent" && (
+        <ConfirmDialog
+          titre="Supprimer le contenu importé ?"
+          message="Tu reviendras au contenu pédagogique de base. Ta progression n'est pas touchée."
+          confirmLabel="Supprimer le contenu"
+          onConfirm={faireResetContent} onCancel={fermerConfirmation}
+        />
+      )}
+
+      {confirmation === "resetProgress" && (
+        <ConfirmDialog
+          danger
+          titre="Réinitialiser ta progression ?"
+          message="XP, niveau, badges, séries, historique de révision : tout repart de zéro, sur cet appareil comme sur les autres. Ton objectif et ton temps disponible sont conservés. Cette action est définitive."
+          confirmLabel="Tout réinitialiser"
+          motDeConfirmation="EFFACER"
+          saisie={saisie} onSaisie={setSaisie}
+          onConfirm={faireResetProgress} onCancel={fermerConfirmation}
+        />
+      )}
+
+      {confirmation === "deleteAccount" && (
+        <ConfirmDialog
+          danger
+          titre="Supprimer ton compte ?"
+          message={`Le compte ${user?.email || ""} et toutes ses données seront effacés de nos serveurs, sans possibilité de récupération. Tu seras déconnecté immédiatement.`}
+          confirmLabel="Supprimer définitivement"
+          motDeConfirmation="SUPPRIMER"
+          saisie={saisie} onSaisie={setSaisie}
+          onConfirm={faireSuppressionCompte} onCancel={fermerConfirmation}
+        />
+      )}
     </div>
   );
 }

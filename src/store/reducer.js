@@ -1,50 +1,110 @@
 // Groply — store/reducer.js
 // Reducer principal — toutes les actions de l'app.
+//
+// Deux changements structurels par rapport à la version précédente :
+//   1. Le crédit d'XP passe TOUJOURS par xpPreview() (store/xp.js), qui
+//      rend l'XP idempotente pour une première réussite et réduite/plafonnée
+//      pour les répétitions. Avant, refaire un exercice ou re-répondre à un
+//      quiz créditait l'XP nominale à l'infini.
+//   2. Le reducer ne persiste plus lui-même. L'écriture localStorage est
+//      faite une seule fois, dans un effet, côté App.jsx — avant, elle avait
+//      lieu deux fois par action (ici + dans le dispatch), et depuis
+//      l'intérieur d'un updater React, que React se réserve le droit
+//      d'appeler deux fois.
 
-import { todayStr, weekStr, saveState, defaultState } from "./state.js";
-import { levelFromXp } from "./leveling.js";
+import { todayStr, weekStr, daysBetween, defaultState } from "./state.js";
+import { levelFromXp, sanitizeXp } from "./leveling.js";
+import { xpPreview, rollDaily, LESSON_XP, DAILY_PRACTICE_CAP } from "./xp.js";
 import { DAILY_CHALLENGES } from "./challenges.js";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
-// Point d'entrée UNIQUE pour gagner de l'XP : le niveau est toujours recalculé
-// depuis la courbe (leveling.js), jamais à la main.
-const gainXp = (s, amount) => {
-  s.xp += amount;
-  s.level = levelFromXp(s.xp);
-};
+const MAX_FREEZES = 2;
+const HISTORY_MAX = 10;
+
+/**
+ * Point d'entrée UNIQUE pour gagner de l'XP.
+ * `kind` + `id` permettent d'appliquer les règles d'idempotence et de
+ * plafond. Le niveau est toujours recalculé depuis la courbe.
+ */
+function gainXp(s, kind, id, nominal) {
+  const today = todayStr();
+  const preview = xpPreview(s, kind, id, nominal);
+  const granted = preview.xp;
+
+  if (granted > 0) {
+    s.xp = sanitizeXp(s.xp + granted);
+    s.level = levelFromXp(s.xp);
+    // Comptabilisation dans les plafonds du jour
+    const daily = rollDaily(s.dailyXp, today);
+    if (!preview.first && (kind === "quiz" || kind === "exercise" || kind === "review")) {
+      daily.repeat += granted;
+    }
+    if (kind === "practice") daily.practice += 1;
+    s.dailyXp = daily;
+  } else if (kind === "practice") {
+    // Session non créditée mais on garde le compteur du jour à jour
+    s.dailyXp = rollDaily(s.dailyXp, today);
+  }
+
+  s.lastGain = { xp: granted, kind, at: today, first: preview.first, reason: preview.reason };
+  return granted;
+}
 
 const pushHistory = (s, entry) => {
-  s.sessionHistory = [entry, ...(s.sessionHistory || [])].slice(0, 10);
+  s.sessionHistory = [entry, ...(s.sessionHistory || [])].slice(0, HISTORY_MAX);
 };
 
-const daysAgoStr = (n) =>
-  new Date(Date.now() - n * 86400000).toISOString().split("T")[0];
-
-const MAX_FREEZES = 2;
-
 function reducer(state, action) {
-  let s = { ...state };
+  const s = { ...state };
   const today = todayStr();
+
+  // Le compteur quotidien se réinitialise dès la première action du jour :
+  // sans ça, le plafond d'XP d'entretien de la veille restait actif.
+  s.dailyXp = rollDaily(s.dailyXp, today);
+  // Chaque action repart d'un lastGain neutre, pour qu'un écran ne réaffiche
+  // pas le gain de l'action précédente.
+  s.lastGain = { xp: 0, kind: "", at: today, first: false, reason: "none" };
+
   switch (action.type) {
 
     case "ADD_XP":
-      gainXp(s, action.xp);
+      // Action générique (bonus divers). Bornée, non répétable à l'infini
+      // via un id facultatif — sans id, elle reste un crédit direct.
+      s.xp = sanitizeXp(s.xp + Math.max(0, Math.round(Number(action.xp) || 0)));
+      s.level = levelFromXp(s.xp);
+      s.lastGain = { xp: Number(action.xp) || 0, kind: "bonus", at: today, first: true, reason: "first" };
       break;
 
-    case "COMPLETE_LESSON":
-      if (!s.completedLessons[action.id]) {
-        s.completedLessons = { ...s.completedLessons, [action.id]: today };
-        gainXp(s, 30);
-        pushHistory(s, { type: "lesson", id: action.id, title: action.title || "Leçon", xp: 30, date: today });
-      }
+    case "COMPLETE_LESSON": {
+      if (s.completedLessons[action.id]) break;   // déjà lu : rien à créditer
+      // L'ordre compte : gainXp() consulte l'état pour décider s'il s'agit
+      // d'une première fois. On crédite AVANT de marquer la leçon comme
+      // faite, sinon elle apparaît déjà acquise à ses propres yeux.
+      const g = gainXp(s, "lesson", action.id, LESSON_XP);
+      s.completedLessons = { ...s.completedLessons, [action.id]: today };
+      pushHistory(s, { type: "lesson", id: action.id, title: action.title || "Leçon", xp: g, date: today });
       break;
+    }
 
-    case "COMPLETE_EXERCISE":
-      s.completedExercises = { ...s.completedExercises, [action.id]: { completedAt: today, count: (s.completedExercises[action.id]?.count || 0) + 1 } };
-      delete s.exerciseProgress[action.id];
-      gainXp(s, action.xp);
-      pushHistory(s, { type: "exercise", id: action.id, title: action.title || "Exercice", xp: action.xp, date: today });
+    case "COMPLETE_EXERCISE": {
+      // CORRECTIF : l'XP dépend maintenant du fait que ce soit la première
+      // complétion ou une répétition (XP d'entretien réduite et plafonnée).
+      const g = gainXp(s, "exercise", action.id, action.xp);
+      const prev = s.completedExercises[action.id];
+      s.completedExercises = {
+        ...s.completedExercises,
+        [action.id]: {
+          completedAt: prev?.completedAt || today,   // on garde la 1re date
+          lastAt: today,
+          count: (prev?.count || 0) + 1,
+        },
+      };
+      const nextProgress = { ...s.exerciseProgress };
+      delete nextProgress[action.id];
+      s.exerciseProgress = nextProgress;
+      pushHistory(s, { type: "exercise", id: action.id, title: action.title || "Exercice", xp: g, date: today });
       break;
+    }
 
     case "SAVE_EXERCISE_PROGRESS":
       s.exerciseProgress = { ...s.exerciseProgress, [action.id]: action.checkedSteps };
@@ -52,36 +112,41 @@ function reducer(state, action) {
 
     case "QUIZ_ANSWER": {
       const prev = s.quizResults[action.id] || { correct: false, attempts: 0 };
-      s.quizResults = { ...s.quizResults, [action.id]: { correct: action.correct, attempts: prev.attempts + 1, lastAttempt: today } };
+      // CORRECTIF : plus d'XP pleine à chaque bonne réponse répétée.
       if (action.correct) {
-        gainXp(s, action.xp);
+        gainXp(s, "quiz", action.id, action.xp);
         s.wrongQuiz = s.wrongQuiz.filter(id => id !== action.id);
-      } else {
-        if (!s.wrongQuiz.includes(action.id)) s.wrongQuiz = [...s.wrongQuiz, action.id];
+      } else if (!s.wrongQuiz.includes(action.id)) {
+        s.wrongQuiz = [...s.wrongQuiz, action.id];
       }
+      s.quizResults = {
+        ...s.quizResults,
+        [action.id]: {
+          // Une réussite acquise reste acquise : une erreur ultérieure la
+          // renvoie en révision (wrongQuiz) mais ne la « dé-valide » pas,
+          // sinon l'XP de première réussite serait re-créditable.
+          correct: !!(prev.correct || action.correct),
+          attempts: prev.attempts + 1,
+          lastAttempt: today,
+        },
+      };
       break;
     }
 
-    case "REVIEW_ANSWER": {
-      // Mise à jour de l'historique de révision (SM-2)
+    case "REVIEW_ANSWER":
       s.reviewHistory = action.history;
-      if (action.correct && action.xp) gainXp(s, action.xp);
+      if (action.correct && action.xp) gainXp(s, "review", action.id || "review", action.xp);
       break;
-    }
 
-    case "EXERCISE_MASTERY_ANSWER": {
-      // Même principe que REVIEW_ANSWER, appliqué à l'historique des
-      // exercices : l'appelant a déjà recalculé l'historique via
-      // updateReviewHistory(state.exerciseHistory, ...) et le transmet
-      // ici tout fait — le reducer ne fait qu'enregistrer.
+    case "EXERCISE_MASTERY_ANSWER":
       s.exerciseHistory = action.history;
       break;
-    }
 
-    case "REVIEW_SESSION_DONE":
-      gainXp(s, action.xp || 0);
-      pushHistory(s, { type: "review", title: "Session de révision", xp: action.xp, score: action.score, date: today });
+    case "REVIEW_SESSION_DONE": {
+      const g = gainXp(s, "review", "review-session", action.xp || 0);
+      pushHistory(s, { type: "review", title: "Session de révision", xp: g, score: action.score, date: today });
       break;
+    }
 
     case "QUIZ_SESSION_DONE":
       pushHistory(s, { type: "quiz", id: action.id || "session", title: action.title || "Quiz", xp: action.xp, date: today, score: action.score });
@@ -89,65 +154,78 @@ function reducer(state, action) {
 
     case "MARK_STREAK": {
       if (s.lastSessionDate === today) break;
-      const yesterday = daysAgoStr(1);
-      const dayBefore = daysAgoStr(2);
 
-      if (s.lastSessionDate === yesterday) {
-        // Série continue normalement
-        s.streak = s.streak + 1;
-      } else if (s.lastSessionDate === dayBefore && (s.streakFreezes || 0) > 0) {
-        // 1 jour manqué + un gel disponible → la série est sauvée ❄️
+      // On raisonne en écart de jours calendaires plutôt qu'en comparaison
+      // de chaînes construites à l'avance : plus lisible, et robuste aux
+      // changements d'heure (l'écart passe par Date.UTC dans dates.js).
+      const gap = daysBetween(s.lastSessionDate, today);
+
+      if (gap === 1) {
+        s.streak = (s.streak || 0) + 1;
+      } else if (gap === 2 && (s.streakFreezes || 0) > 0) {
         s.streakFreezes = s.streakFreezes - 1;
-        s.streak = s.streak + 1;
+        s.streak = (s.streak || 0) + 1;
         pushHistory(s, { type: "freeze", title: "Série sauvée par un gel", xp: 0, date: today });
       } else {
-        // Plus d'un jour manqué (ou pas de gel) → la série repart
         s.streak = 1;
       }
       s.lastSessionDate = today;
 
-      // Récompense de régularité : +1 gel tous les 7 jours de série (max 2)
+      // +1 gel tous les 7 jours de série (max 2)
       if (s.streak > 0 && s.streak % 7 === 0) {
         s.streakFreezes = Math.min(MAX_FREEZES, (s.streakFreezes || 0) + 1);
       }
       break;
     }
 
-    case "DAILY_CHALLENGE_DONE":
+    case "DAILY_CHALLENGE_DONE": {
+      // CORRECTIF : garde-fou d'idempotence — le défi ne peut être validé
+      // qu'une fois par jour, même en cas de double dispatch.
+      if (s.dailyChallengeDone && s.dailyChallengeDate === today) break;
+      gainXp(s, "daily", "daily", 80);          // avant de marquer : cf. COMPLETE_LESSON
       s.dailyChallengeDone = true;
       s.dailyChallengeDate = today;
       s.dailyChallengeCount = (s.dailyChallengeCount || 0) + 1;
-      gainXp(s, 80);
       break;
+    }
 
     case "ROTATE_DAILY":
       if (s.dailyChallengeDate !== today) {
-        s.dailyChallengeIdx = (s.dailyChallengeIdx + 1) % DAILY_CHALLENGES.length;
-        s.dailyChallengeDone = false; s.dailyChallengeDate = "";
+        s.dailyChallengeIdx = ((s.dailyChallengeIdx || 0) + 1) % DAILY_CHALLENGES.length;
+        s.dailyChallengeDone = false;
+        s.dailyChallengeDate = "";
       }
       break;
 
-    case "PRACTICE_DONE":
-      s.practiceLibre = { count: (s.practiceLibre?.count || 0) + 1, totalMinutes: (s.practiceLibre?.totalMinutes || 0) + (action.minutes || 5) };
-      gainXp(s, 50);
+    case "PRACTICE_DONE": {
+      // CORRECTIF : plafonné à DAILY_PRACTICE_CAP sessions créditées/jour.
+      const g = gainXp(s, "practice", "practice", 50);
+      s.practiceLibre = {
+        count: (s.practiceLibre?.count || 0) + 1,
+        totalMinutes: (s.practiceLibre?.totalMinutes || 0) + (action.minutes || 5),
+      };
+      if (g > 0) {
+        pushHistory(s, { type: "practice", title: "Pratique libre", xp: g, date: today });
+      }
       break;
+    }
 
     case "UPDATE_WEEKLY": {
       const w = weekStr();
-      if (s.weeklyGoals.week !== w) s.weeklyGoals = { sessions: 0, exercises: 0, quizzes: 0, week: w };
-      s.weeklyGoals = { ...s.weeklyGoals, [action.field]: s.weeklyGoals[action.field] + 1 };
+      const base = s.weeklyGoals?.week === w
+        ? s.weeklyGoals
+        : { sessions: 0, exercises: 0, quizzes: 0, week: w };
+      const field = action.field;
+      if (!["sessions", "exercises", "quizzes"].includes(field)) { s.weeklyGoals = base; break; }
+      s.weeklyGoals = { ...base, week: w, [field]: (base[field] || 0) + 1 };
       break;
     }
 
     case "UNLOCK_BADGES":
-      s.unlockedBadges = [...new Set([...s.unlockedBadges, ...action.badgeIds])];
+      s.unlockedBadges = [...new Set([...s.unlockedBadges, ...(action.badgeIds || [])])];
       break;
 
     case "SUBMIT_UNIT_CHECK": {
-      // Vérification de fin d'unité : tentatives illimitées, on garde le
-      // meilleur score et le statut passed dès qu'il est atteint une fois.
-      // Les questions ratées rejoignent wrongQuiz (révision espacée), sans
-      // toucher l'XP ni quizResults — ce n'est pas une session de quiz normale.
       const prev = s.unitChecks?.[action.unitId];
       const passed = action.pct >= (action.passPct ?? 70);
       s.unitChecks = {
@@ -165,57 +243,76 @@ function reducer(state, action) {
       break;
     }
 
-    case "CLAIM_UNIT_BONUS":
-      // Coffre de fin d'unité du Parcours — réclamable une seule fois
-      if (!s.claimedUnits?.[action.unitId]) {
-        s.claimedUnits = { ...(s.claimedUnits || {}), [action.unitId]: today };
-        gainXp(s, action.xp || 40);
-        pushHistory(s, { type: "bonus", id: action.unitId, title: action.title || "Coffre d'unité ouvert", xp: action.xp || 40, date: today });
-      }
+    case "CLAIM_UNIT_BONUS": {
+      if (s.claimedUnits?.[action.unitId]) break;
+      const g = gainXp(s, "unit", action.unitId, action.xp || 40);   // avant de marquer
+      s.claimedUnits = { ...(s.claimedUnits || {}), [action.unitId]: today };
+      pushHistory(s, { type: "bonus", id: action.unitId, title: action.title || "Coffre d'unité ouvert", xp: g, date: today });
       break;
+    }
 
     case "DISMISS_GROPI_TIP":
       s.gropiTipDate = today;
       break;
 
     case "SET_THEME":
-      s.theme = action.theme; // "auto" | "light" | "dark"
+      if (["auto", "light", "dark"].includes(action.theme)) s.theme = action.theme;
       break;
 
     case "COMPLETE_ONBOARDING":
-      // Rempli une seule fois à la première ouverture, via le test de
-      // placement adaptatif. Réordonne le Parcours (weakestModule +
-      // preferredModule) et adapte le ton de Gropi, ne coche aucune leçon.
-      // startXp (issu de startFromOverallTier) crédite un point de départ
-      // cohérent avec la vraie courbe de niveaux : un joueur qui teste bien
-      // démarre au bon grade, pas toujours à "Bébé rockeur".
-      // Garde-fou : si jamais dispatché deux fois (double-clic sur
-      // "terminer" avant le re-rendu), on ne crédite pas le XP une 2e fois.
+      // Garde-fou : si dispatché deux fois (double-clic avant le re-rendu),
+      // on ne crédite pas l'XP de départ une seconde fois.
       if (s.onboarding?.done) break;
-      if (action.startXp) gainXp(s, action.startXp);
+      if (action.startXp) {
+        s.xp = sanitizeXp(s.xp + Math.max(0, Math.round(Number(action.startXp) || 0)));
+        s.level = levelFromXp(s.xp);
+      }
       s.onboarding = {
         done: true,
         goal: action.goal || null,
         preferredModule: action.preferredModule || null,
         timePerWeek: action.timePerWeek || null,
-        skillLevels: action.skillLevels || { neck: null, scales: null, harmony: null, rhythm: null, impro: null },
+        skillLevels: action.skillLevels || defaultState().onboarding.skillLevels,
         overallTier: action.overallTier || null,
         weakestModule: action.weakestModule || null,
         startXp: action.startXp || 0,
+        startLevel: action.startLevel || levelFromXp(s.xp),
         skipped: !!action.skipped,
         completedAt: action.completedAt || today,
       };
       break;
 
     case "RESET":
-      // On repart de zéro mais on garde la préférence de thème
-      s = { ...defaultState(), theme: s.theme };
-      break;
+      // On repart de zéro sur la progression, mais on garde :
+      //   • la préférence de thème ;
+      //   • les RÉPONSES d'onboarding (objectif, temps disponible) sans
+      //     l'XP de départ — réimposer 12 questions de placement à
+      //     quelqu'un qui vient de tout effacer serait de la friction
+      //     gratuite, et re-créditer startXp contredirait « je repars de
+      //     zéro ».
+      // Et on HORODATE le reset : c'est ce qui permet à mergeStates de ne
+      // pas le laisser annuler par un autre appareil (state.js/resetWins).
+      return {
+        ...defaultState(),
+        theme: s.theme,
+        resetAt: new Date().toISOString(),
+        onboarding: {
+          ...defaultState().onboarding,
+          done: true,
+          goal: s.onboarding?.goal || null,
+          preferredModule: s.onboarding?.preferredModule || null,
+          timePerWeek: s.onboarding?.timePerWeek || null,
+          completedAt: s.onboarding?.completedAt || today,
+          startXp: 0,
+          startLevel: 1,
+        },
+      };
 
-    default: break;
+    default:
+      return state;   // action inconnue : aucun nouvel objet, pas de rendu inutile
   }
-  saveState(s);
+
   return s;
 }
 
-export { reducer };
+export { reducer, gainXp };

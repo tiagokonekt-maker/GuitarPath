@@ -1,5 +1,5 @@
-// GuitarPath -- screens/ReviewSession.jsx
-// Session de revision intelligente -- mix QCM + fretboard
+// Groply — screens/ReviewSession.jsx
+// Session de révision espacée — mélange QCM et manche interactif
 import { useState, useCallback } from "react";
 import { FONTS, R } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
@@ -7,11 +7,15 @@ import { Ti } from "../design/Ti.jsx";
 import { Gropi } from "../design/Gropi.jsx";
 import { updateReviewHistory } from "../store/reviewEngine.js";
 
-// Fretboard injecte depuis App.jsx
-export let _FretboardQuizQuestion = null;
-export const setFretboardQuizQuestion = (fn) => { _FretboardQuizQuestion = fn; };
+// ── Composants de rendu injectés par contexte ─────────────────────────────
+// Avant, App.jsx MUTAIT ce module au démarrage (`setXxx(...)`) : un singleton
+// mutable au niveau module, avec des gardes défensives qui trahissaient la
+// fragilité — si un écran se rendait avant l'injection, le composant valait
+// null. Un contexte React rend l'ordre de rendu sans importance.
+import { useRenderers } from "../renderers.jsx";
 
 export function ReviewSession({ questions, state, dispatch, onDone }) {
+  const { FretboardQuizQuestion } = useRenderers();
   const C = useC();
   const [idx, setIdx]           = useState(0);
   const [sel, setSel]           = useState(null);
@@ -231,8 +235,8 @@ export function ReviewSession({ questions, state, dispatch, onDone }) {
       {/* Question fretboard */}
       {isFret ? (
         <>
-          {_FretboardQuizQuestion && (
-            <_FretboardQuizQuestion
+          {FretboardQuizQuestion && (
+            <FretboardQuizQuestion
               question={q}
               onComplete={handleFretComplete}
               answered={fretAnswered}
