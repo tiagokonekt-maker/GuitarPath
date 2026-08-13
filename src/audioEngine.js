@@ -275,12 +275,25 @@ async function ensureLoaded() {
 if (typeof document !== "undefined") {
   document.addEventListener("visibilitychange", () => {
     if (!Tone) return;
+    if (document.visibilityState !== "hidden") return;
     try {
-      if (document.visibilityState === "hidden") {
-        stopProgression();
-        sampler?.releaseAll?.();
-        Tone.context.rawContext?.suspend?.();
-      }
+      // On coupe ce que CE module a lancé : la suite d'accords en cours et
+      // les cordes qui résonnent.
+      stopProgression();
+      sampler?.releaseAll?.();
+
+      // On ne suspend SURTOUT PAS l'AudioContext.
+      //
+      // L'AudioContext est partagé avec tout le reste de l'application —
+      // JamSession, le métronome de la boîte à outils — qui possèdent leur
+      // propre transport et leurs propres instruments. Le suspendre ici
+      // coupait leur lecture, et rien ne la réveillait : il suffisait de
+      // changer d'onglet pendant un jam pour que le son disparaisse
+      // définitivement, avec un bouton qui affichait toujours "en cours".
+      //
+      // Le gain de batterie ne valait pas ça, d'autant que le navigateur
+      // limite déjà l'audio en arrière-plan et qu'iOS suspend le contexte
+      // de lui-même quand l'app passe en fond.
     } catch { /* noop */ }
   });
 }
@@ -394,50 +407,73 @@ export async function playChordFromRoot(root, chordType, onStep) {
 // callback synchronisé sur l'audio (Tone.Draw) pour surligner l'accord en
 // cours dans l'interface sans dépendre d'un minuteur séparé qui dériverait.
 // ─────────────────────────────────────────────────────────────────────────
-let progressionSeq = null;
+// Minuteurs des accords à venir. C'est ce tableau qui rend l'arrêt possible.
+let progressionTimers = [];
 let progressionTimer = null;
 
+/**
+ * Enchaîne des accords, avec un callback synchronisé pour surligner l'accord
+ * en cours dans l'interface.
+ *
+ * ── Pourquoi des minuteurs JavaScript et non le Transport de Tone ─────────
+ * Trois approches ont été essayées, autant l'écrire :
+ *
+ *  1. `Tone.Sequence` + `Transport` : après un stop()/cancel(), le transport
+ *     gardait sa position et refusait de redémarrer proprement — la lecture
+ *     suivante partait en silence.
+ *  2. Tout planifier d'avance dans le contexte audio (`Tone.now() + i * durée`) :
+ *     ça réglait le silence, mais rendait l'arrêt IMPOSSIBLE. Une fois une
+ *     note remise au contexte audio, on ne peut plus l'annuler — d'où le
+ *     bouton stop qui ne stoppait rien. C'était une régression de ma part.
+ *  3. Celle-ci : un minuteur par accord. Au déclenchement, l'accord est
+ *     gratté immédiatement (et son grattage interne, lui, reste planifié à
+ *     la milliseconde dans le contexte audio). `clearTimeout` sur les
+ *     minuteurs restants suffit alors à interrompre réellement la suite.
+ *
+ * La précision d'un setTimeout est de quelques millisecondes ; sur des
+ * accords espacés de 1,6 s, c'est inaudible. Et l'arrêt fonctionne.
+ */
 export async function playProgression(chords, secondsPerChord = 1.5, onStep) {
   if (!await ensureLoaded()) return;
   stopProgression();
+
   const voicedChords = chords.map(({ root, type }) =>
     buildVoicingFromIntervals(normalizeNote(root), CHORD_TYPES[type]?.intervals || [])
   );
-  // Scheduling direct depuis Tone.now(), sans Tone.Sequence ni Transport.
-  // Sequence + Transport imposait un état global partagé : après un
-  // stop()/cancel(), le transport gardait sa position et refusait de
-  // redémarrer proprement, d'où des relances silencieuses. strumInto()
-  // planifie déjà ses notes dans le contexte audio, le Transport n'apportait
-  // rien ici — et un accord de plus ne justifie pas une horloge globale.
-  const start = Tone.now() + 0.05;
+
   voicedChords.forEach((voiced, idx) => {
-    // Alternance du sens de grattage (bas / haut), comme un vrai jeu
-    // rythmique plutôt que le même coup identique en boucle.
-    const direction = idx % 2 === 0 ? "down" : "up";
-    // Micro-décalage : quelques millisecondes d'imprécision, ce qui suffit
-    // à sortir du rendu "machine" parfaitement métronomique.
-    const humanize = (Math.random() - 0.5) * 0.012;
-    const when = start + idx * secondsPerChord + humanize;
-    strumInto(voiced, secondsPerChord * 0.9, when, direction);
-    Tone.Draw.schedule(() => onStep?.(idx), when);
+    const jouer = () => {
+      // Alternance du sens de grattage (bas / haut), comme un vrai jeu
+      // rythmique plutôt que le même coup identique en boucle.
+      const direction = idx % 2 === 0 ? "down" : "up";
+      // Micro-décalage : quelques millisecondes d'imprécision, ce qui suffit
+      // à sortir du rendu "machine" parfaitement métronomique.
+      const humanize = (Math.random() - 0.5) * 0.012;
+      strumInto(voiced, secondsPerChord * 0.9, Tone.now() + 0.02 + humanize, direction);
+      onStep?.(idx);
+    };
+    if (idx === 0) jouer();
+    else progressionTimers.push(setTimeout(jouer, idx * secondsPerChord * 1000));
   });
 
   // Signale la fin, pour éteindre le dernier surlignage.
-  const totalMs = voicedChords.length * secondsPerChord * 1000 + 300;
+  const totalMs = voicedChords.length * secondsPerChord * 1000 + 200;
   progressionTimer = setTimeout(() => {
     progressionTimer = null;
     onStep?.(-1);
   }, totalMs);
 }
 
+/**
+ * Interrompt réellement la suite d'accords : les accords à venir sont
+ * annulés, et les cordes qui sonnent encore sont relâchées.
+ */
 export function stopProgression() {
+  for (const t of progressionTimers) clearTimeout(t);
+  progressionTimers = [];
   if (progressionTimer) { clearTimeout(progressionTimer); progressionTimer = null; }
-  if (progressionSeq) {
-    try { progressionSeq.stop(); progressionSeq.dispose(); } catch {}
-    progressionSeq = null;
-  }
-  // Plus de Transport à arrêter : les notes sont planifiées directement dans
-  // le contexte audio. On coupe simplement ce qui sonne encore.
+  // releaseAll() coupe ce qui résonne à l'instant. Sans lui, l'accord en
+  // cours continuerait de sonner sa seconde et demie après l'appui sur stop.
   try { sampler?.releaseAll?.(); } catch { /* noop */ }
 }
 

@@ -58,7 +58,6 @@ function unlockedQuizLvl(state, content, courseId) {
  *                  strates d'en-tête s'empilaient avant le premier contenu.
  */
 function QuizScreen({ state, dispatch, content, embedded = false }) {
-  const { FretboardQuizQuestion } = useRenderers();
   const C = useC();
   const [showModules, setShowModules] = useState(false);
   const MODULES = makeModules(C);
@@ -215,6 +214,7 @@ function QuizScreen({ state, dispatch, content, embedded = false }) {
 
 // ── QuizPlayer (logique 100% inchangée, layout retouché) ──────────────────────
 function QuizPlayer({ pool, title, state, dispatch, content, onDone }) {
+  const { FretboardQuizQuestion } = useRenderers();
   const C = useC();
   // On glisse 2 questions d'oreille dans la série, à des positions
   // aléatoires. Le quiz devient multimodal : parfois de la théorie, parfois

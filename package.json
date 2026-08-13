@@ -8,13 +8,16 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "node --test \"test/**/*.test.mjs\"",
-    "test:watch": "node --test --watch \"test/**/*.test.mjs\""
+    "test": "node --test \"test/**/*.test.mjs\" && npm run verify",
+    "test:watch": "node --test --watch \"test/**/*.test.mjs\"",
+    "verify": "node scripts/verifier-imports.mjs && node scripts/verifier-contenu.mjs",
+    "smoke": "node smoke/build.mjs && node smoke/render.mjs",
+    "check": "npm run test && npm run smoke"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.1",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "tone": "^15.1.22"
   },
   "devDependencies": {
@@ -22,6 +25,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
+    "esbuild": "^0.28.1",
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",

@@ -41,73 +41,78 @@ const PULSE_CSS = `
 
 // ── Nœud individuel ───────────────────────────────────────────────────────────
 // ── Tracé du chemin ───────────────────────────────────────────────────────────
-// L'ancienne version alternait strictement gauche / droite (`index % 2`), ce
-// qui donnait un zigzag parfaitement régulier : joli une fois, monotone sur
-// 100 leçons, et surtout ça ne ressemble pas à un chemin.
+// Historique de ce fichier, parce que je me suis trompé une fois :
 //
-// Ici on garde le principe du serpentin — indispensable en mobile-first, il
-// faut que le doigt suive une ligne lisible et que rien ne sorte des 440 px
-// de large — mais on introduit deux variations :
+//   v1  alternance stricte gauche / droite (`index % 2`). Lisible, mais un
+//       zigzag parfaitement régulier sur 100 leçons — mécanique.
+//   v2  j'ai introduit des positions CENTRALES pour casser la régularité.
+//       Mauvaise idée : un nœud centré laisse deux vides de part et d'autre,
+//       et sa carte de titre doit malgré tout se rabattre à gauche ou à
+//       droite, ce qui décale tout. Résultat : des trous dans la page.
+//   v3  celle-ci. On revient à l'alternance STRICTE — c'est elle qui garantit
+//       qu'aucun côté ne reste vide et que le regard suit une seule ligne.
+//       L'irrégularité vient d'ailleurs : c'est l'AMPLITUDE du zigzag qui
+//       varie, pas le côté.
 //
-//   • le CÔTÉ suit un motif de 7 (au lieu de 2), qui inclut deux positions
-//     centrales : le chemin passe parfois par le milieu au lieu de rebondir
-//     systématiquement d'un bord à l'autre ;
-//   • le DÉCALAGE horizontal varie de quelques pixels par nœud.
+// Concrètement, chaque nœud reste à gauche ou à droite en alternance, mais
+// son retrait par rapport au bord change (de 6 à 46 px). Le chemin serpente
+// donc avec des boucles larges puis serrées, comme un vrai sentier, sans
+// jamais laisser une moitié d'écran inoccupée. La hauteur du lien suit
+// l'écart réel entre deux nœuds : deux nœuds proches sont reliés court, deux
+// nœuds éloignés ont la place d'une vraie courbe.
 //
-// Le tout est DÉTERMINISTE : dérivé de l'identifiant de la leçon, pas de
-// Math.random(). Un tracé qui changerait à chaque rendu — ou au retour d'une
-// leçon — serait désorientant, et casserait la mémoire visuelle du parcours
-// (« ma prochaine leçon est celle en bas à droite »).
+// Tout est DÉTERMINISTE, dérivé de l'identifiant de la leçon — jamais
+// Math.random(). Un tracé qui changerait entre deux visites casserait la
+// mémoire visuelle du parcours (« ma prochaine leçon est la boucle serrée
+// après le coffre »).
 
 /** Hash entier stable à partir d'une chaîne (FNV-1a, 32 bits). */
 function hashId(str) {
   let h = 0x811c9dc5;
-  for (let i = 0; i < str.length; i++) {
-    h ^= str.charCodeAt(i);
+  for (let i = 0; i < String(str).length; i++) {
+    h ^= String(str).charCodeAt(i);
     h = (h * 0x01000193) >>> 0;
   }
   return h;
 }
 
-// Motif de côtés sur 7 positions. Les deux "center" sont ce qui casse le
-// zigzag mécanique ; le motif reste équilibré (3 gauche, 2 centre, 2 droite)
-// pour que le chemin ne dérive pas d'un côté sur une longue unité.
-const SIDE_PATTERN = ["left", "right", "center", "right", "left", "center", "left"];
+// Amplitudes possibles du zigzag, en pixels de retrait par rapport au bord.
+// L'ordre est volontairement non monotone : enchaîner 6 → 40 → 18 → 46 → 12
+// donne une impression de sentier, là où 6 → 12 → 18 → 24 donnerait une
+// spirale trop régulière.
+const AMPLITUDES = [6, 40, 18, 46, 12, 32, 24];
 
 /**
- * Position d'un nœud : côté + décalage horizontal.
+ * Position d'un nœud : côté (alterné strictement) + retrait du bord.
  * `unitId` entre dans le hash pour que deux unités de même longueur n'aient
  * pas exactement le même dessin.
  */
 function nodeLayout(lessonId, unitId, index) {
   const h = hashId(`${unitId}:${lessonId}`);
-  // Décalage du motif propre à chaque unité : le serpentin ne repart pas
-  // toujours du même pied.
-  const offset = h % SIDE_PATTERN.length;
-  const side = SIDE_PATTERN[(index + offset) % SIDE_PATTERN.length];
-  // Dérive horizontale de 0 à 15 px. Volontairement modeste : au-delà, sur
-  // un écran de 390 px, les cartes de titre commencent à se décaler
-  // visiblement et le chemin devient brouillon.
-  const drift = (h >> 8) % 16;
-  return { side, drift };
+  const side = index % 2 === 0 ? "left" : "right";
+  const inset = AMPLITUDES[(h + index) % AMPLITUDES.length];
+  return { side, inset };
 }
 
-/** Position horizontale (en %) du centre d'un nœud, pour tracer le lien. */
-function sideToX(side, drift) {
-  const base = side === "left" ? 21 : side === "right" ? 79 : 50;
-  // La dérive pousse vers le centre, jamais vers l'extérieur : on ne risque
-  // pas de sortir du cadre.
-  const towardCenter = side === "left" ? +1 : side === "right" ? -1 : (drift % 2 ? +1 : -1);
-  return base + towardCenter * (drift / 3.2);
+/**
+ * Position horizontale (0-100) du centre d'un nœud, pour tracer le lien.
+ * Le nœud fait 54 à 64 px de large dans un conteneur d'environ 400 px : son
+ * centre se situe donc à peu près à (retrait + 30) px du bord.
+ */
+function sideToX(side, inset) {
+  const pct = ((inset + 30) / 400) * 100;
+  if (side === "left")  return Math.max(8, Math.min(50, pct));
+  if (side === "right") return Math.min(92, Math.max(50, 100 - pct));
+  return 50;   // le coffre, toujours centré
 }
 
 function PathNode({ lesson, index, state, th, onSelect, isCurrent, isLocked, gropiTip, layout }) {
   const C = useC();
   const done = !!state.completedLessons[lesson.id];
-  const { side, drift } = layout;
-  // Les bulles de titre et Gropi ne peuvent pas être "centrées" sans casser
-  // la lisibilité : on les rabat sur le bord le plus proche.
-  const textSide = side === "center" ? (drift % 2 ? "left" : "right") : side;
+  const { side, inset } = layout;
+  // Le côté est toujours franc (gauche ou droite) : la carte de titre et
+  // Gropi s'alignent donc naturellement, sans rabattement arbitraire.
+  const textSide = side;
 
   let bg, border, iconEl;
   if(done)         { bg=th.colorL;    border=th.color;   iconEl=<Ti name="check" size={isCurrent?22:18} color={th.color}/>; }
@@ -120,12 +125,13 @@ function PathNode({ lesson, index, state, th, onSelect, isCurrent, isLocked, gro
   return (
     <div style={{
       display:"flex", flexDirection:"column",
-      alignItems: side==="left" ? "flex-start" : side==="right" ? "flex-end" : "center",
+      alignItems: side==="left" ? "flex-start" : "flex-end",
       width:"100%",
-      // Le décalage vient s'ajouter au retrait de bord : c'est lui qui donne
-      // l'irrégularité, sans jamais pousser vers l'extérieur du cadre.
-      paddingLeft:  side==="left"  ? 26 + drift : 0,
-      paddingRight: side==="right" ? 26 + drift : 0,
+      // Le retrait varie d'un nœud à l'autre : c'est lui qui fait serpenter
+      // le chemin. Borné à 46 px, ce qui laisse toujours la place de la carte
+      // de titre (186 px) sur un écran de 390 px.
+      paddingLeft:  side==="left"  ? inset : 0,
+      paddingRight: side==="right" ? inset : 0,
       marginBottom: 4,
     }}>
       <button
@@ -288,8 +294,8 @@ function PathConnector({ from, to, done }) {
   const C = useC();
   const stroke = done ? C.green : C.border;
 
-  const x1 = sideToX(from.side, from.drift);
-  const x2 = sideToX(to.side, to.drift);
+  const x1 = sideToX(from.side, from.inset);
+  const x2 = sideToX(to.side, to.inset);
 
   // Hauteur du lien : un saut de bord à bord a besoin de plus de place pour
   // que la courbe reste douce ; un petit décalage se relie presque droit.
@@ -419,10 +425,33 @@ function CoursesScreen({ state, dispatch, content }) {
     return out;
   }, [path]);
 
-  // Leçon courante, au niveau de l'écran : c'est la cible du scroll.
-  const currentLessonIdGlobal = useMemo(()=>{
+  // Cible du scroll : la prochaine chose à faire.
+  //
+  // Ce n'est PAS toujours une leçon. Quand on valide la dernière leçon d'une
+  // unité, il n'y a plus de leçon incomplète : la suite du parcours, c'est la
+  // VÉRIFICATION de l'unité, matérialisée par le coffre. La version
+  // précédente ne visait que les leçons, donc à ce moment précis elle ne
+  // trouvait plus de cible et laissait la page où elle était — il fallait
+  // redescendre à la main pour trouver le quiz. C'est le second point que tu
+  // as signalé.
+  //
+  // On renvoie donc une clé qui désigne soit une leçon, soit un coffre, et le
+  // ref de cadrage est posé sur l'un ou l'autre.
+  const focus = useMemo(()=>{
+    // 1. Une unité dont les leçons sont finies mais la vérification en
+    //    attente : c'est l'action la plus urgente.
+    const aVerifier = path.find(u => u.unlocked && u.needsCheck);
+    if (aVerifier) return { type:"chest", id:aVerifier.id, key:`chest:${aVerifier.id}` };
+
+    // 2. Un coffre gagné mais pas encore ouvert : on ne laisse pas une
+    //    récompense derrière soi.
+    const aOuvrir = path.find(u => u.bonusClaimable);
+    if (aOuvrir) return { type:"chest", id:aOuvrir.id, key:`chest:${aOuvrir.id}` };
+
+    // 3. Sinon, la prochaine leçon à faire.
     const u = path.find(x => x.isCurrent);
-    return u ? (u.lessons.find(l => !state.completedLessons[l.id])?.id ?? null) : null;
+    const lid = u ? (u.lessons.find(l => !state.completedLessons[l.id])?.id ?? null) : null;
+    return lid ? { type:"lesson", id:lid, key:`lesson:${lid}` } : null;
   }, [path, state.completedLessons]);
 
   // Auto-scroll vers la leçon courante.
@@ -439,8 +468,8 @@ function CoursesScreen({ state, dispatch, content }) {
   // consultation d'une leçon, et aucun scroll répété si rien n'a bougé.
   useEffect(()=>{
     if (activeLesson || checkingUnit) return;
-    if (!currentLessonIdGlobal) return;
-    if (scrolledTo.current === currentLessonIdGlobal) return;
+    if (!focus) return;
+    if (scrolledTo.current === focus.key) return;
 
     // Court délai : le nœud doit être monté et mesuré avant qu'on cadre
     // dessus, sinon scrollIntoView vise une position qui va encore changer.
@@ -449,10 +478,10 @@ function CoursesScreen({ state, dispatch, content }) {
         behavior: scrolledTo.current === null ? "auto" : "smooth",
         block: "center",
       });
-      scrolledTo.current = currentLessonIdGlobal;
-    }, 120);
+      scrolledTo.current = focus.key;
+    }, 140);
     return ()=>clearTimeout(t);
-  }, [activeLesson, checkingUnit, currentLessonIdGlobal]);
+  }, [activeLesson, checkingUnit, focus]);
 
   const claimChest = (unit) => {
     try { playChestOpen(); } catch { /* jamais bloquant */ }
@@ -547,7 +576,8 @@ function CoursesScreen({ state, dispatch, content }) {
                 }
 
                 return (
-                  <div key={lesson.id} ref={isCurrent?currentRef:null}>
+                  <div key={lesson.id}
+                       ref={focus?.type==="lesson" && focus.id===lesson.id ? currentRef : null}>
                     {li>0&&(
                       <PathConnector
                         from={prevLay} to={lay}
@@ -571,10 +601,12 @@ function CoursesScreen({ state, dispatch, content }) {
                   est au milieu quelle que soit la position du dernier nœud. */}
               <PathConnector
                 from={unitLayouts[unit.id][unit.lessons.length-1]}
-                to={{ side:"center", drift:0 }}
+                to={{ side:"center", inset:0 }}
                 done={unit.complete}
               />
-              <UnitChest unit={unit} th={th} onClaim={claimChest} onCheck={setCheckingUnit}/>
+              <div ref={focus?.type==="chest" && focus.id===unit.id ? currentRef : null}>
+                <UnitChest unit={unit} th={th} onClaim={claimChest} onCheck={setCheckingUnit}/>
+              </div>
             </div>
           );
         })}

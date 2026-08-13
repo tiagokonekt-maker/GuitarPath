@@ -5,7 +5,7 @@ import { FONTS, R } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { Gropi } from "../design/Gropi.jsx";
-import { loadAudio, isAudioLoaded, generateEarTrainingQuestion, playInterval, playChord, stopProgression } from "../audioEngine.js";
+import { loadAudio, isAudioLoaded, generateEarTrainingQuestion, playInterval, playChord, stopProgression, unlockAudio } from "../audioEngine.js";
 
 const MODES = [
   { key: "interval",      label: "Intervalles",      icon: "arrows-up-down",  desc: "Identifie l'ecart entre deux notes" },
@@ -72,6 +72,12 @@ export function EarTraining({ onBack, dispatch }) {
   const playQuestion = async () => {
     if (!question || isPlaying) return;
     setIsPlaying(true);
+    // unlockAudio() DOIT être appelé ici, en tête du gestionnaire d'appui :
+    // iOS Safari exige que l'AudioContext soit démarré à l'intérieur d'un
+    // geste utilisateur direct. Placé après le téléchargement des samples, il
+    // arrive trop tard — la chaîne du geste est rompue, et il faut appuyer
+    // deux fois pour avoir du son.
+    try { await unlockAudio(); } catch {}
     try { await question.play(); }
     catch {}
     // Duree reelle de lecture : une suite de 4 accords a 1,6 s chacun dure

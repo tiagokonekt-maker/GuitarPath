@@ -47,7 +47,18 @@ function shuffle(arr) {
 function buildSample(unit, content, completedLessons, dejaVues = []) {
   const pool = getUnitQuizPool(unit, content.quiz, completedLessons);
   const parId = new Map(content.quiz.map(q => [q.id, q]));
-  const resoudre = (ids) => ids.map(id => parId.get(id)).filter(Boolean);
+
+  // Cet écran ne sait afficher que des QCM : il rend `q.o` en liste de
+  // boutons. Les questions de type "fretboard" n'ont pas de tableau
+  // d'options (elles se répondent sur le manche) — en laisser passer une
+  // provoquerait un crash au rendu. Il y en a 20 dans la banque, et le pool
+  // élargi peut désormais en atteindre, ce qui n'était pas le cas quand il
+  // se limitait aux `lesson.quiz`.
+  const utilisable = (q) =>
+    q && q.type !== "fretboard" && Array.isArray(q.o) && q.o.length >= 2
+      && typeof q.a === "number" && q.a >= 0 && q.a < q.o.length;
+
+  const resoudre = (ids) => ids.map(id => parId.get(id)).filter(utilisable);
 
   const taille = Math.min(
     unit.checkSize ?? UNIT_CHECK_MAX_QUESTIONS,

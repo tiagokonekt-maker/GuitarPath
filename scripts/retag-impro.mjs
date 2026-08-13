@@ -24,12 +24,15 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { readFileSync, writeFileSync, copyFileSync, existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 const CIBLE = new URL("../src/content.js", import.meta.url);
 const ECRIRE = process.argv.includes("--write");
 
 if (!existsSync(CIBLE)) {
-  console.error("content.js introuvable :", CIBLE.pathname);
+  // fileURLToPath et non .pathname : sous Windows, .pathname renvoie
+  // "/C:/Users/Tiago%20BRITO/..." — inutilisable tel quel.
+  console.error("content.js introuvable :", fileURLToPath(CIBLE));
   process.exit(1);
 }
 
