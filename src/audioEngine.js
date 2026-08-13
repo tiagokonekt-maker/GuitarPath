@@ -25,6 +25,9 @@ const SAMPLE_URLS = {
 
 const BASE_URL = "/audio/guitar/";
 
+export const listSampleUrls = () => Object.values(SAMPLE_URLS).map(f => BASE_URL + f);
+export const SAMPLE_COUNT = Object.keys(SAMPLE_URLS).length;
+
 // ─────────────────────────────────────────────────────────────────────────
 // CONVERSION : note GuitarPath (C#, D#...) -> notation Tone.js avec octave
 // Tone.js accepte les deux : "C#4" ou "Db4"
