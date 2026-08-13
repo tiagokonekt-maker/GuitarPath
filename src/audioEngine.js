@@ -303,29 +303,24 @@ export async function playProgression(chords, secondsPerChord = 1.5, onStep) {
   const voicedChords = chords.map(({ root, type }) =>
     buildVoicingFromIntervals(normalizeNote(root), CHORD_TYPES[type]?.intervals || [])
   );
-  progressionSeq = new Tone.Sequence((time, idx) => {
-    // Alternance du sens de grattage (bas / haut) comme un vrai jeu
-    // rythmique, plutôt que le même coup identique en boucle.
-    const direction = idx % 2 === 0 ? "down" : "up";
-    // Micro-décalage : quelques millisecondes d'imprécision, ce qui
-    // suffit à sortir du rendu "machine" parfaitement métronomique.
-    const humanize = (Math.random() - 0.5) * 0.012;
-    strumInto(voicedChords[idx], secondsPerChord * 0.9, time + humanize, direction);
-    Tone.Draw.schedule(() => onStep?.(idx), time);
-  }, voicedChords.map((_, idx) => idx), secondsPerChord);
-  // Tone.Sequence BOUCLE par défaut — c'est son comportement natif. Sans
-  // ce réglage, la suite d'accords tournait indéfiniment, et il fallait
-  // penser à appuyer sur stop pour l'arrêter.
-  progressionSeq.loop = false;
-  progressionSeq.start(0);
-  Tone.getTransport().start();
 
-  // Nettoyage automatique après le dernier accord : on libère la séquence
-  // et on arrête le transport, sinon il continue de tourner à vide et la
-  // lecture suivante démarre sur un transport déjà avancé.
-  const totalMs = voicedChords.length * secondsPerChord * 1000 + 200;
+  // Scheduling direct depuis Tone.now() — sans Tone.Sequence ni Transport.
+  // La Sequence + Transport causait des silences quand on relançait vite :
+  // le transport gardait sa position précédente et refusait de redémarrer
+  // proprement après un stop()/cancel(). strumInto() schedule ses notes
+  // directement dans le contexte audio, ce qui est suffisant ici.
+  const start = Tone.now() + 0.05;
+  voicedChords.forEach((voiced, idx) => {
+    const direction = idx % 2 === 0 ? "down" : "up";
+    const humanize = (Math.random() - 0.5) * 0.012;
+    const when = start + idx * secondsPerChord + humanize;
+    strumInto(voiced, secondsPerChord * 0.9, when, direction);
+    Tone.Draw.schedule(() => onStep?.(idx), when);
+  });
+
+  const totalMs = voicedChords.length * secondsPerChord * 1000 + 300;
   progressionTimer = setTimeout(() => {
-    stopProgression();
+    progressionTimer = null;
     onStep?.(-1);
   }, totalMs);
 }
@@ -336,7 +331,6 @@ export function stopProgression() {
     try { progressionSeq.stop(); progressionSeq.dispose(); } catch {}
     progressionSeq = null;
   }
-  try { Tone.getTransport().stop(); Tone.getTransport().cancel(); } catch {}
 }
 
 export function stopAll() {
