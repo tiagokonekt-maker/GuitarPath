@@ -14,6 +14,24 @@ const MODES = [
   { key: "progression",   label: "Suites d'accords", icon: "list-numbers",    desc: "Nomme la suite entiere" },
 ];
 
+// Assombrit une couleur hex d'une quantité fixe, quel que soit le thème.
+// Le bouton utilisait `C.primaryD`, qui est en réalité une couleur de TEXTE
+// (claire en thème sombre, pour rester lisible sur un fond teinté) — pas une
+// couleur de fond de bouton. En thème sombre, le dégradé partait donc de
+// l'orange vers un pêche pâle, et l'icône blanche devenait quasi invisible
+// dessus (contraste ~1.9:1). `shade()` assombrit toujours PAR RAPPORT à la
+// couleur de base elle-même, donc le résultat reste correct dans les deux
+// thèmes sans dépendre de la sémantique d'un token particulier.
+function shade(hex, amount) {
+  const h = hex.replace("#", "");
+  const num = parseInt(h, 16);
+  let r = (num >> 16) + amount, g = ((num >> 8) & 0xff) + amount, b = (num & 0xff) + amount;
+  r = Math.max(0, Math.min(255, r));
+  g = Math.max(0, Math.min(255, g));
+  b = Math.max(0, Math.min(255, b));
+  return "#" + ((r << 16) | (g << 8) | b).toString(16).padStart(6, "0");
+}
+
 export function EarTraining({ onBack, dispatch }) {
   const C = useC();
   const [audioReady, setAudioReady]   = useState(isAudioLoaded());
@@ -215,7 +233,7 @@ export function EarTraining({ onBack, dispatch }) {
               <button onClick={isPlaying ? stopPlayback : playQuestion} style={{
                 width: 80, height: 80, borderRadius: "50%",
                 border: "none",
-                background: `linear-gradient(135deg, ${C.primary}, ${C.primaryD})`,
+                background: `linear-gradient(135deg, ${C.primary}, ${shade(C.primary, -45)})`,
                 cursor: "pointer",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 margin: "0 auto",

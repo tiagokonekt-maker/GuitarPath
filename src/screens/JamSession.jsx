@@ -11,6 +11,24 @@ import { generateWalkingBar, toToneNote as toToneNoteFromMidi, toToneTime } from
 import { createComper, beatToToneTime } from "../music/compRhythm.js";
 import * as Tone from "tone";
 
+// Assombrit une couleur hex d'une quantité fixe, quel que soit le thème.
+// Les boutons de lecture utilisaient `colorD` (celui de `context`, ou
+// `C.primaryD`) comme second point de dégradé — or ce token est une couleur
+// de TEXTE, claire en thème sombre pour rester lisible sur un fond teinté,
+// pas une couleur de fond de bouton. Résultat en thème sombre : un dégradé
+// qui allait vers une teinte pâle, avec l'icône blanche presque invisible
+// dessus. `shade()` assombrit toujours PAR RAPPORT à la couleur de base,
+// donc le résultat reste correct dans les deux thèmes.
+function shade(hex, amount) {
+  const h = hex.replace("#", "");
+  const num = parseInt(h, 16);
+  let r = (num >> 16) + amount, g = ((num >> 8) & 0xff) + amount, b = (num & 0xff) + amount;
+  r = Math.max(0, Math.min(255, r));
+  g = Math.max(0, Math.min(255, g));
+  b = Math.max(0, Math.min(255, b));
+  return "#" + ((r << 16) | (g << 8) | b).toString(16).padStart(6, "0");
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 // CONTEXTES
 // ─────────────────────────────────────────────────────────────────────────
@@ -714,8 +732,8 @@ function BackingTrackPlayer({ context, root, bpm }) {
           background: loading
             ? C.surface2
             : playing
-            ? `linear-gradient(135deg, ${context.color}, ${context.colorD})`
-            : `linear-gradient(135deg, ${C.primary}, ${C.primaryD})`,
+            ? `linear-gradient(135deg, ${context.color}, ${shade(context.color, -45)})`
+            : `linear-gradient(135deg, ${C.primary}, ${shade(C.primary, -45)})`,
           cursor: loading ? "default" : "pointer",
           display: "flex", alignItems: "center", justifyContent: "center",
           boxShadow: playing

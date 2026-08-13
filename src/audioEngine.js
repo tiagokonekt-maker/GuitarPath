@@ -3,6 +3,17 @@
 // Noms de fichiers : Ab2.mp3, Bb3.mp3, Db4.mp3, Eb3.mp3, Gb3.mp3 (convention bemols)
 
 import * as Tone from "tone";
+// Import STATIQUE plutôt que les 4 `await import("./fretboardUtils.js")`
+// dispersés dans ce fichier. fretboardUtils.js n'importe rien lui-même : il
+// n'y a donc aucun risque de cycle, et l'import dynamique n'apportait qu'un
+// inconvénient — une requête réseau séparée déclenchée au moment du clic,
+// qui peut échouer silencieusement (chunk manquant, souci de cache) sans
+// qu'aucune erreur ne soit visible pour l'utilisateur. C'était le suspect
+// n°1 du "la suite d'accords ne joue aucun son" : playProgression est la
+// seule fonction de lecture à dépendre de ce module au moment de l'appel,
+// alors que playChord/playInterval n'en ont pas besoin — ce qui explique
+// que les autres modes marchent et que celui-ci, spécifiquement, reste muet.
+import { CHORD_TYPES, normalizeNote, getScaleNotes, getChordNotes } from "./fretboardUtils.js";
 
 // ─────────────────────────────────────────────────────────────────────────
 // SAMPLES — noms exacts des fichiers dans public/audio/guitar/
@@ -240,7 +251,6 @@ export async function playInterval(note1, note2, mode = "ascending") {
 
 // Joue une gamme depuis root + scaleKey (utilise fretboardUtils)
 export async function playScaleFromRoot(root, scaleKey, bpm = 80, onStep) {
-  const { getScaleNotes } = await import("./fretboardUtils.js");
   const notes = getScaleNotes(root, scaleKey);
   if (!notes.length) return;
   const toneNotes = notes.map((note, i) => toToneNote(note, i < 5 ? 3 : 4));
@@ -261,7 +271,6 @@ export async function playScaleFromRoot(root, scaleKey, bpm = 80, onStep) {
  * forme d'accord.
  */
 export async function playArpeggioFromRoot(root, chordType, bpm = 132, onStep) {
-  const { getChordNotes } = await import("./fretboardUtils.js");
   const names = getChordNotes(root, chordType);
   if (!names.length) return;
   // Empilement ascendant sur deux octaves pour rester dans une tessiture
@@ -273,7 +282,6 @@ export async function playArpeggioFromRoot(root, chordType, bpm = 132, onStep) {
 
 // Joue un accord depuis root + chordType
 export async function playChordFromRoot(root, chordType, onStep) {
-  const { CHORD_TYPES, normalizeNote, getChordNotes } = await import("./fretboardUtils.js");
   const intervals = CHORD_TYPES[chordType]?.intervals;
   if (!intervals) return;
   const voiced = buildVoicingFromIntervals(normalizeNote(root), intervals);
@@ -299,7 +307,6 @@ let progressionTimer = null;
 export async function playProgression(chords, secondsPerChord = 1.5, onStep) {
   if (!await ensureLoaded()) return;
   stopProgression();
-  const { CHORD_TYPES, normalizeNote } = await import("./fretboardUtils.js");
   const voicedChords = chords.map(({ root, type }) =>
     buildVoicingFromIntervals(normalizeNote(root), CHORD_TYPES[type]?.intervals || [])
   );
