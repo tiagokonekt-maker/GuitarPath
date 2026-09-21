@@ -20,8 +20,10 @@ __export(tone_stub_exports, {
   Draw: () => Draw,
   FeedbackDelay: () => FeedbackDelay,
   Filter: () => Filter,
+  Gain: () => Gain,
   Loop: () => Loop,
   MembraneSynth: () => MembraneSynth,
+  MetalSynth: () => MetalSynth,
   NoiseSynth: () => NoiseSynth,
   Part: () => Part,
   Players: () => Players,
@@ -45,7 +47,7 @@ function getTransport() {
   }, cancel() {
   } };
 }
-var now, context, Draw, Sampler, Reverb, getContext, getDraw, Time, Compressor, FeedbackDelay, Synth, Filter, Players, MembraneSynth, NoiseSynth, Sequence, Part, Loop;
+var now, context, Draw, Sampler, Reverb, getContext, getDraw, Time, Compressor, FeedbackDelay, Synth, Filter, Players, MembraneSynth, NoiseSynth, Sequence, Part, Loop, FauxParam, Gain, MetalSynth;
 var init_tone_stub = __esm({
   "stub:tone-stub"() {
     now = () => 0;
@@ -110,6 +112,7 @@ var init_tone_stub = __esm({
     };
     Synth = class {
       constructor() {
+        this.volume = { value: 0 };
       }
       connect() {
         return this;
@@ -124,6 +127,8 @@ var init_tone_stub = __esm({
     };
     Filter = class {
       constructor() {
+        this.frequency = { value: 0, setValueAtTime() {
+        } };
       }
       connect() {
         return this;
@@ -157,6 +162,7 @@ var init_tone_stub = __esm({
     };
     MembraneSynth = class {
       constructor() {
+        this.volume = { value: 0 };
       }
       connect() {
         return this;
@@ -171,6 +177,7 @@ var init_tone_stub = __esm({
     };
     NoiseSynth = class {
       constructor() {
+        this.volume = { value: 0 };
       }
       connect() {
         return this;
@@ -217,6 +224,50 @@ var init_tone_stub = __esm({
       }
       stop() {
         return this;
+      }
+      dispose() {
+      }
+    };
+    FauxParam = class {
+      constructor(v) {
+        this.value = v;
+      }
+      cancelScheduledValues() {
+        return this;
+      }
+      setValueAtTime(v) {
+        this.value = v;
+        return this;
+      }
+      linearRampToValueAtTime(v) {
+        this.value = v;
+        return this;
+      }
+    };
+    Gain = class {
+      constructor(v) {
+        this.gain = new FauxParam(v ?? 1);
+      }
+      toDestination() {
+        return this;
+      }
+      connect() {
+        return this;
+      }
+      dispose() {
+      }
+    };
+    MetalSynth = class {
+      constructor() {
+        this.volume = new FauxParam(0);
+      }
+      toDestination() {
+        return this;
+      }
+      connect() {
+        return this;
+      }
+      triggerAttackRelease() {
       }
       dispose() {
       }
@@ -482,17 +533,127 @@ function useTheme() {
   return useContext(ThemeContext);
 }
 
+// src/design/icons.js
+var ICONS = {
+  "tuning-fork": [0, '<path d="M9 3v7a3 3 0 0 0 6 0v-7" /> <path d="M12 13v8" /> <path d="M8 3h2" /> <path d="M14 3h2" />'],
+  "alert-circle": [0, '<path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /> <path d="M12 8v4" /> <path d="M12 16h.01" />'],
+  "alert-triangle": [0, '<path d="M12 9v4" /> <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" /> <path d="M12 16h.01" />'],
+  "arrow-left": [0, '<path d="M5 12l14 0" /> <path d="M5 12l6 6" /> <path d="M5 12l6 -6" />'],
+  "arrow-narrow-right": [0, '<path d="M5 12l14 0" /> <path d="M15 16l4 -4" /> <path d="M15 8l4 4" />'],
+  "arrow-right": [0, '<path d="M5 12l14 0" /> <path d="M13 18l6 -6" /> <path d="M13 6l6 6" />'],
+  "arrows-up-down": [0, '<path d="M7 3l0 18" /> <path d="M10 6l-3 -3l-3 3" /> <path d="M20 18l-3 3l-3 -3" /> <path d="M17 21l0 -18" />'],
+  "baby-carriage": [0, '<path d="M8 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /> <path d="M18 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /> <path d="M2 5h2.5l1.632 4.897a6 6 0 0 0 5.693 4.103h2.675a5.5 5.5 0 0 0 0 -11h-.5v6" /> <path d="M6 9h14" /> <path d="M9 17l1 -3" /> <path d="M16 14l1 3" />'],
+  "bolt": [0, '<path d="M13 3l0 7l6 0l-8 11l0 -7l-6 0l8 -11" />'],
+  "book-2": [0, '<path d="M19 4v16h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12z" /> <path d="M19 16h-12a2 2 0 0 0 -2 2" /> <path d="M9 8h6" />'],
+  "books": [0, '<path d="M5 4m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z" /> <path d="M9 4m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z" /> <path d="M5 8h4" /> <path d="M9 16h4" /> <path d="M13.803 4.56l2.184 -.53c.562 -.135 1.133 .19 1.282 .732l3.695 13.418a1.02 1.02 0 0 1 -.634 1.219l-.133 .041l-2.184 .53c-.562 .135 -1.133 -.19 -1.282 -.732l-3.695 -13.418a1.02 1.02 0 0 1 .634 -1.219l.133 -.041z" /> <path d="M14 9l4 -1" /> <path d="M16 16l3.923 -.98" />'],
+  "bulb": [0, '<path d="M3 12h1m8 -9v1m8 8h1m-15.4 -6.4l.7 .7m12.1 -.7l-.7 .7" /> <path d="M9 16a5 5 0 1 1 6 0a3.5 3.5 0 0 0 -1 3a2 2 0 0 1 -4 0a3.5 3.5 0 0 0 -1 -3" /> <path d="M9.7 17l4.6 0" />'],
+  "calendar-check": [0, '<path d="M11.5 21h-5.5a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v6" /> <path d="M16 3v4" /> <path d="M8 3v4" /> <path d="M4 11h16" /> <path d="M15 19l2 2l4 -4" />'],
+  "campfire": [0, '<path d="M4 21l16 -4" /> <path d="M20 21l-16 -4" /> <path d="M12 15a4 4 0 0 0 4 -4c0 -3 -2 -3 -2 -8c-4 2 -6 5 -6 8a4 4 0 0 0 4 4z" />'],
+  "chart-bar": [0, '<path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /> <path d="M15 9a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /> <path d="M9 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /> <path d="M4 20h14" />'],
+  "check": [0, '<path d="M5 12l5 5l10 -10" />'],
+  "chevron-down": [0, '<path d="M6 9l6 6l6 -6" />'],
+  "chevron-left": [0, '<path d="M15 6l-6 6l6 6" />'],
+  "chevron-right": [0, '<path d="M9 6l6 6l-6 6" />'],
+  "chevron-up": [0, '<path d="M6 15l6 -6l6 6" />'],
+  "circle-check": [0, '<path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /> <path d="M9 12l2 2l4 -4" />'],
+  "circle-check-filled": [1, '<path d="M17 3.34a10 10 0 1 1 -14.995 8.984l-.005 -.324l.005 -.324a10 10 0 0 1 14.995 -8.336zm-1.293 5.953a1 1 0 0 0 -1.32 -.083l-.094 .083l-3.293 3.292l-1.293 -1.292l-.094 -.083a1 1 0 0 0 -1.403 1.403l.083 .094l2 2l.094 .083a1 1 0 0 0 1.226 0l.094 -.083l4 -4l.083 -.094a1 1 0 0 0 -.083 -1.32z" />'],
+  "clipboard-check": [0, '<path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2" /> <path d="M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z" /> <path d="M9 14l2 2l4 -4" />'],
+  "clock": [0, '<path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /> <path d="M12 7v5l3 3" />'],
+  "crown": [0, '<path d="M12 6l4 6l5 -4l-2 10h-14l-2 -10l5 4z" />'],
+  "device-desktop": [0, '<path d="M3 5a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1v-10z" /> <path d="M7 20h10" /> <path d="M9 16v4" /> <path d="M15 16v4" />'],
+  "dice-5": [0, '<path d="M3 3m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z" /> <circle cx="8.5" cy="8.5" r=".5" fill="currentColor" /> <circle cx="15.5" cy="8.5" r=".5" fill="currentColor" /> <circle cx="15.5" cy="15.5" r=".5" fill="currentColor" /> <circle cx="8.5" cy="15.5" r=".5" fill="currentColor" /> <circle cx="12" cy="12" r=".5" fill="currentColor" />'],
+  "download": [0, '<path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /> <path d="M7 11l5 5l5 -5" /> <path d="M12 4l0 12" />'],
+  "ear": [0, '<path d="M6 10a7 7 0 1 1 13 3.6a10 10 0 0 1 -2 2a8 8 0 0 0 -2 3a4.5 4.5 0 0 1 -6.8 1.4" /> <path d="M10 10a3 3 0 1 1 5 2.2" />'],
+  "eye": [0, '<path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /> <path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />'],
+  "eye-off": [0, '<path d="M10.585 10.587a2 2 0 0 0 2.829 2.828" /> <path d="M16.681 16.673a8.717 8.717 0 0 1 -4.681 1.327c-3.6 0 -6.6 -2 -9 -6c1.272 -2.12 2.712 -3.678 4.32 -4.674m2.86 -1.146a9.055 9.055 0 0 1 1.82 -.18c3.6 0 6.6 2 9 6c-.666 1.11 -1.379 2.067 -2.138 2.87" /> <path d="M3 3l18 18" />'],
+  "flag": [0, '<path d="M5 5a5 5 0 0 1 7 0a5 5 0 0 0 7 0v9a5 5 0 0 1 -7 0a5 5 0 0 0 -7 0v-9z" /> <path d="M5 21v-7" />'],
+  "flame": [0, '<path d="M12 12c2 -2.96 0 -7 -1 -8c0 3.038 -1.773 4.741 -3 6c-1.226 1.26 -2 3.24 -2 5a6 6 0 1 0 12 0c0 -1.532 -1.056 -3.94 -2 -5c-1.786 3 -2.791 3 -4 2z" />'],
+  "guitar-pick": [0, '<path d="M16 18.5c2 -2.5 4 -6.5 4 -10.5c0 -2.946 -2.084 -4.157 -4.204 -4.654c-.864 -.23 -2.13 -.346 -3.796 -.346c-1.667 0 -2.932 .115 -3.796 .346c-2.12 .497 -4.204 1.708 -4.204 4.654c0 3.312 2 8 4 10.5c.297 .37 .618 .731 .963 1.081l.354 .347a3.9 3.9 0 0 0 5.364 0a14.05 14.05 0 0 0 1.319 -1.428z" />'],
+  "hand-finger-down": [0, '<path d="M8 12v8.5a1.5 1.5 0 0 0 3 0v-7.5" /> <path d="M11 13.5v2a1.5 1.5 0 0 0 3 0v-2.5" /> <path d="M14 14.5a1.5 1.5 0 0 0 3 0v-1.5" /> <path d="M17 13.5a1.5 1.5 0 0 0 3 0v-4.5a6 6 0 0 0 -6 -6h-2h.208a6 6 0 0 0 -5.012 2.7l-.196 .3q -.468 .718 -3.286 5.728a1.5 1.5 0 0 0 .536 2.022c.734 .44 1.674 .325 2.28 -.28l1.47 -1.47" />'],
+  "headphones": [0, '<path d="M4 13m0 2a2 2 0 0 1 2 -2h1a2 2 0 0 1 2 2v3a2 2 0 0 1 -2 2h-1a2 2 0 0 1 -2 -2z" /> <path d="M15 13m0 2a2 2 0 0 1 2 -2h1a2 2 0 0 1 2 2v3a2 2 0 0 1 -2 2h-1a2 2 0 0 1 -2 -2z" /> <path d="M4 15v-3a8 8 0 0 1 16 0v3" />'],
+  "help-circle": [0, '<path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /> <path d="M12 16v.01" /> <path d="M12 13a2 2 0 0 0 .914 -3.782a1.98 1.98 0 0 0 -2.414 .483" />'],
+  "history": [0, '<path d="M12 8l0 4l2 2" /> <path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5" />'],
+  "home": [0, '<path d="M5 12l-2 0l9 -9l9 9l-2 0" /> <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" /> <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />'],
+  "info-circle": [0, '<path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /> <path d="M12 9h.01" /> <path d="M11 12h1v4h1" />'],
+  "list-numbers": [0, '<path d="M11 6h9" /> <path d="M11 12h9" /> <path d="M12 18h8" /> <path d="M4 16a2 2 0 1 1 4 0c0 .591 -.5 1 -1 1.5l-3 2.5h4" /> <path d="M6 10v-6l-2 2" />'],
+  "loader": [0, '<path d="M12 6l0 -3" /> <path d="M16.25 7.75l2.15 -2.15" /> <path d="M18 12l3 0" /> <path d="M16.25 16.25l2.15 2.15" /> <path d="M12 18l0 3" /> <path d="M7.75 16.25l-2.15 2.15" /> <path d="M6 12l-3 0" /> <path d="M7.75 7.75l-2.15 -2.15" />'],
+  "lock": [0, '<path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6z" /> <path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0" /> <path d="M8 11v-4a4 4 0 1 1 8 0v4" />'],
+  "logout": [0, '<path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" /> <path d="M9 12h12l-3 -3" /> <path d="M18 15l3 -3" />'],
+  "map-2": [0, '<path d="M12 18.5l-3 -1.5l-6 3v-13l6 -3l6 3l6 -3v7.5" /> <path d="M9 4v13" /> <path d="M15 7v5.5" /> <path d="M21.121 20.121a3 3 0 1 0 -4.242 0c.418 .419 1.125 1.045 2.121 1.879c1.051 -.89 1.759 -1.516 2.121 -1.879z" /> <path d="M19 18v.01" />'],
+  "medal": [0, '<path d="M12 4v3m-4 -3v6m8 -6v6" /> <path d="M12 18.5l-3 1.5l.5 -3.5l-2 -2l3 -.5l1.5 -3l1.5 3l3 .5l-2 2l.5 3.5z" />'],
+  "metronome": [0, '<path d="M14.153 8.188l-.72 -3.236a2.493 2.493 0 0 0 -4.867 0l-3.025 13.614a2 2 0 0 0 1.952 2.434h7.014a2 2 0 0 0 1.952 -2.434l-.524 -2.357m-4.935 1.791l9 -13" /> <path d="M20 5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />'],
+  "microphone": [0, '<path d="M9 2m0 3a3 3 0 0 1 3 -3h0a3 3 0 0 1 3 3v5a3 3 0 0 1 -3 3h0a3 3 0 0 1 -3 -3z" /> <path d="M5 10a7 7 0 0 0 14 0" /> <path d="M8 21l8 0" /> <path d="M12 17l0 4" />'],
+  "minus": [0, '<path d="M5 12l14 0" />'],
+  "moon": [0, '<path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />'],
+  "mountain": [0, '<path d="M3 20h18l-6.921 -14.612a2.3 2.3 0 0 0 -4.158 0l-6.921 14.612z" /> <path d="M7.5 11l2 2.5l2.5 -2.5l2 3l2.5 -2" />'],
+  "music": [0, '<path d="M3 17a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /> <path d="M13 17a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /> <path d="M9 17v-13h10v13" /> <path d="M9 8h10" />'],
+  "music-plus": [0, '<path d="M3 17a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /> <path d="M9 17v-13h10v8" /> <path d="M9 8h10" /> <path d="M16 19h6" /> <path d="M19 16v6" />'],
+  "notebook": [0, '<path d="M6 4h11a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-11a1 1 0 0 1 -1 -1v-14a1 1 0 0 1 1 -1m3 0v18" /> <path d="M13 8l2 0" /> <path d="M13 12l2 0" />'],
+  "player-pause": [0, '<path d="M6 5m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v12a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z" /> <path d="M14 5m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v12a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z" />'],
+  "player-pause-filled": [1, '<path d="M9 4h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h2a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2z" /> <path d="M17 4h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h2a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2z" />'],
+  "player-play": [0, '<path d="M7 4v16l13 -8z" />'],
+  "player-play-filled": [1, '<path d="M6 4v16a1 1 0 0 0 1.524 .852l13 -8a1 1 0 0 0 0 -1.704l-13 -8a1 1 0 0 0 -1.524 .852z" />'],
+  "player-stop": [0, '<path d="M5 5m0 2a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2z" />'],
+  "player-stop-filled": [1, '<path d="M17 4h-10a3 3 0 0 0 -3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3 -3v-10a3 3 0 0 0 -3 -3z" />'],
+  "plus": [0, '<path d="M12 5l0 14" /> <path d="M5 12l14 0" />'],
+  "refresh": [0, '<path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" /> <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />'],
+  "route": [0, '<path d="M3 19a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /> <path d="M19 7a2 2 0 1 0 0 -4a2 2 0 0 0 0 4z" /> <path d="M11 19h5.5a3.5 3.5 0 0 0 0 -7h-8a3.5 3.5 0 0 1 0 -7h4.5" />'],
+  "settings": [0, '<path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" /> <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />'],
+  "sparkles": [0, '<path d="M16 18a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2zm0 -12a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2zm-7 12a6 6 0 0 1 6 -6a6 6 0 0 1 -6 -6a6 6 0 0 1 -6 6a6 6 0 0 1 6 6z" />'],
+  "stack-2": [0, '<path d="M12 4l-8 4l8 4l8 -4l-8 -4" /> <path d="M4 12l8 4l8 -4" /> <path d="M4 16l8 4l8 -4" />'],
+  "stairs": [0, '<path d="M22 5h-5v5h-5v5h-5v5h-5" />'],
+  "star": [0, '<path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z" />'],
+  "star-filled": [1, '<path d="M8.243 7.34l-6.38 .925l-.113 .023a1 1 0 0 0 -.44 1.684l4.622 4.499l-1.09 6.355l-.013 .11a1 1 0 0 0 1.464 .944l5.706 -3l5.693 3l.1 .046a1 1 0 0 0 1.352 -1.1l-1.091 -6.355l4.624 -4.5l.078 -.085a1 1 0 0 0 -.633 -1.62l-6.38 -.926l-2.852 -5.78a1 1 0 0 0 -1.794 0l-2.853 5.78z" />'],
+  "sun": [0, '<path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /> <path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" />'],
+  "sword": [0, '<path d="M20 4v5l-9 7l-4 4l-3 -3l4 -4l7 -9z" /> <path d="M6.5 11.5l6 6" />'],
+  "target": [0, '<path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /> <path d="M12 12m-5 0a5 5 0 1 0 10 0a5 5 0 1 0 -10 0" /> <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />'],
+  "target-arrow": [0, '<path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /> <path d="M12 7a5 5 0 1 0 5 5" /> <path d="M13 3.055a9 9 0 1 0 7.941 7.945" /> <path d="M15 6v3h3l3 -3h-3v-3z" /> <path d="M15 9l-3 3" />'],
+  "trash": [0, '<path d="M4 7l16 0" /> <path d="M10 11l0 6" /> <path d="M14 11l0 6" /> <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /> <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />'],
+  "trending-up": [0, '<path d="M3 17l6 -6l4 4l8 -8" /> <path d="M14 7l7 0l0 7" />'],
+  "trophy": [0, '<path d="M8 21l8 0" /> <path d="M12 17l0 4" /> <path d="M7 4l10 0" /> <path d="M17 4v8a5 5 0 0 1 -10 0v-8" /> <path d="M5 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /> <path d="M19 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />'],
+  "upload": [0, '<path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /> <path d="M7 9l5 -5l5 5" /> <path d="M12 4l0 12" />'],
+  "volume": [0, '<path d="M15 8a5 5 0 0 1 0 8" /> <path d="M17.7 5a9 9 0 0 1 0 14" /> <path d="M6 15h-2a1 1 0 0 1 -1 -1v-4a1 1 0 0 1 1 -1h2l3.5 -4.5a.8 .8 0 0 1 1.5 .5v14a.8 .8 0 0 1 -1.5 .5l-3.5 -4.5" />'],
+  "wand": [0, '<path d="M6 21l15 -15l-3 -3l-15 15l3 3" /> <path d="M15 6l3 3" /> <path d="M9 3a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2" /> <path d="M19 13a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2" />'],
+  "x": [0, '<path d="M18 6l-12 12" /> <path d="M6 6l12 12" />']
+};
+var ICON_COUNT = Object.keys(ICONS).length;
+
 // src/design/Ti.jsx
 import { jsx as jsx2 } from "react/jsx-runtime";
-function Ti({ name, size = 16, color = "currentColor", style, label }) {
+function Ti({ name, size = 16, color = "currentColor", style, label, stroke }) {
+  const cle = String(name || "").replace(/^ti-/, "");
+  const icone = ICONS[cle];
+  const commun = {
+    width: size,
+    height: size,
+    viewBox: "0 0 24 24",
+    // `block` évite l'espace fantôme sous les éléments en ligne, qui
+    // désalignait les icônes dans les boutons.
+    style: { display: "block", flexShrink: 0, ...style },
+    "aria-hidden": label ? void 0 : "true",
+    role: label ? "img" : void 0,
+    "aria-label": label || void 0
+  };
+  if (!icone) {
+    if (typeof import.meta !== "undefined" && false) {
+      console.warn(`[Ti] ic\xF4ne inconnue : "${cle}"`);
+    }
+    return /* @__PURE__ */ jsx2("svg", { ...commun, fill: "none", stroke: color, strokeWidth: 1.5, opacity: 0.45, children: /* @__PURE__ */ jsx2("rect", { x: "4", y: "4", width: "16", height: "16", rx: "3" }) });
+  }
+  const [plein, trac\u00E9s] = icone;
+  const props = plein ? { fill: color, stroke: "none" } : {
+    fill: "none",
+    stroke: color,
+    strokeWidth: stroke ?? (size < 14 ? 1.75 : 2),
+    strokeLinecap: "round",
+    strokeLinejoin: "round"
+  };
   return /* @__PURE__ */ jsx2(
-    "i",
+    "svg",
     {
-      className: `ti ti-${name}`,
-      "aria-hidden": label ? void 0 : "true",
-      role: label ? "img" : void 0,
-      "aria-label": label || void 0,
-      style: { fontSize: size, color, lineHeight: 1, flexShrink: 0, ...style }
+      ...commun,
+      ...props,
+      dangerouslySetInnerHTML: { __html: trac\u00E9s }
     }
   );
 }
@@ -1635,6 +1796,10 @@ var SAMPLE_URLS = {
   "Gb4": "Gb4.mp3"
 };
 var BASE_URL = "/audio/guitar/";
+var RELEASE = 1.6;
+var QUEUE_AUDIBLE_MS = Math.round(RELEASE * 1e3);
+var DUREE_NOTE = { "1n": 2, "2n": 1, "4n": 0.5, "8n": 0.25, "16n": 0.125 };
+var secondes = (v) => typeof v === "number" ? v : DUREE_NOTE[v] ?? 1;
 var listSampleUrls = () => Object.values(SAMPLE_URLS).map((f) => BASE_URL + f);
 var SAMPLE_COUNT = Object.keys(SAMPLE_URLS).length;
 var SHARP_TO_FLAT = {
@@ -1693,6 +1858,41 @@ var DEV = typeof import.meta !== "undefined" && false;
 var warn = (...a) => {
   if (DEV) console.warn("[audioEngine]", ...a);
 };
+var sortieMaitre = null;
+var enAttente = [];
+function differer(fn, ms) {
+  if (ms <= 0) {
+    fn();
+    return;
+  }
+  const id = setTimeout(() => {
+    enAttente = enAttente.filter((x) => x !== id);
+    fn();
+  }, ms);
+  enAttente.push(id);
+  return id;
+}
+function annulerEnAttente() {
+  for (const id of enAttente) clearTimeout(id);
+  enAttente = [];
+}
+var restaurationTimer = null;
+function reveillerSortie() {
+  if (restaurationTimer) {
+    clearTimeout(restaurationTimer);
+    restaurationTimer = null;
+  }
+  if (!sortieMaitre || !Tone) return;
+  try {
+    sortieMaitre.gain.cancelScheduledValues(Tone.now());
+    sortieMaitre.gain.value = 1;
+  } catch {
+  }
+  try {
+    if (sampler) sampler.release = RELEASE;
+  } catch {
+  }
+}
 var sampler = null;
 var loadPromise = null;
 var isLoaded = false;
@@ -1706,8 +1906,9 @@ function loadAudio() {
     await chargerTone();
     return new Promise((resolve, reject) => {
       try {
+        sortieMaitre = new Tone.Gain(1).toDestination();
         const reverb = new Tone.Reverb({ decay: 1.9, wet: 0.19 });
-        reverb.toDestination();
+        reverb.connect(sortieMaitre);
         sampler = new Tone.Sampler({
           urls: SAMPLE_URLS,
           baseUrl: BASE_URL,
@@ -1779,14 +1980,18 @@ if (typeof document !== "undefined") {
 }
 async function playNote(note, duration = "4n") {
   if (!await ensureLoaded()) return;
+  stopAll();
+  reveillerSortie();
   try {
-    sampler.triggerAttackRelease(note, duration);
+    sampler.triggerAttackRelease(note, duration, Tone.now());
   } catch (e) {
     warn("playNote:", e);
   }
 }
 async function playChord(notes, duration = "2n", opts = {}) {
   if (!await ensureLoaded()) return;
+  stopAll();
+  reveillerSortie();
   const { strum = true, direction = "down", spread = 0.026 } = opts;
   try {
     if (!strum) {
@@ -1800,32 +2005,42 @@ async function playChord(notes, duration = "2n", opts = {}) {
 }
 async function playScale(notes, bpm = 80, onStep) {
   if (!await ensureLoaded()) return;
+  stopAll();
+  reveillerSortie();
   const spb = 60 / bpm;
   try {
-    const now2 = Tone.now();
     notes.forEach((note, i) => {
-      const t = now2 + i * spb;
-      sampler.triggerAttackRelease(note, spb * 0.85, t);
-      if (onStep) Tone.Draw.schedule(() => onStep(i, note), t);
+      differer(() => {
+        try {
+          sampler.triggerAttackRelease(note, spb * 0.85, Tone.now());
+        } catch {
+        }
+        onStep?.(i, note);
+      }, i * spb * 1e3);
     });
-    if (onStep) Tone.Draw.schedule(() => onStep(-1, null), now2 + notes.length * spb);
+    differer(() => onStep?.(-1, null), notes.length * spb * 1e3);
   } catch (e) {
     warn("playScale:", e);
   }
 }
+var ECART_INTERVALLE_MS = 650;
 async function playInterval(note1, note2, mode = "ascending") {
   if (!await ensureLoaded()) return;
+  stopAll();
+  reveillerSortie();
   try {
-    const now2 = Tone.now();
     if (mode === "harmonic") {
-      sampler.triggerAttackRelease([note1, note2], "2n", now2);
-    } else if (mode === "descending") {
-      sampler.triggerAttackRelease(note2, "4n", now2);
-      sampler.triggerAttackRelease(note1, "4n", now2 + 0.65);
-    } else {
-      sampler.triggerAttackRelease(note1, "4n", now2);
-      sampler.triggerAttackRelease(note2, "4n", now2 + 0.65);
+      sampler.triggerAttackRelease([note1, note2], "2n", Tone.now());
+      return;
     }
+    const [premiere, seconde] = mode === "descending" ? [note2, note1] : [note1, note2];
+    sampler.triggerAttackRelease(premiere, "4n", Tone.now());
+    differer(() => {
+      try {
+        sampler.triggerAttackRelease(seconde, "4n", Tone.now());
+      } catch {
+      }
+    }, ECART_INTERVALLE_MS);
   } catch (e) {
     warn("playInterval:", e);
   }
@@ -1859,7 +2074,8 @@ var progressionTimers = [];
 var progressionTimer = null;
 async function playProgression(chords, secondsPerChord = 1.5, onStep) {
   if (!await ensureLoaded()) return;
-  stopProgression();
+  stopAll();
+  reveillerSortie();
   const voicedChords = chords.map(
     ({ root, type }) => buildVoicingFromIntervals(normalizeNote(root), CHORD_TYPES[type]?.intervals || [])
   );
@@ -1886,10 +2102,6 @@ function stopProgression() {
     clearTimeout(progressionTimer);
     progressionTimer = null;
   }
-  try {
-    sampler?.releaseAll?.();
-  } catch {
-  }
 }
 function fioriture(notes, { gap = 0.055, duration = "8n", from = 0.62, to = 0.3 } = {}) {
   if (!isLoaded || !sampler || !Tone) return false;
@@ -1910,6 +2122,43 @@ function playLessonComplete() {
 function playChestOpen() {
   return fioriture(["G3", "D4"], { gap: 0.1, duration: "2n", from: 0.55, to: 0.45 });
 }
+function stopAll() {
+  annulerEnAttente();
+  progressionTimers.forEach(clearTimeout);
+  progressionTimers = [];
+  if (progressionTimer) {
+    clearTimeout(progressionTimer);
+    progressionTimer = null;
+  }
+  if (!Tone || !sampler) return;
+  try {
+    const maintenant = Tone.now();
+    if (sortieMaitre) {
+      sortieMaitre.gain.cancelScheduledValues(maintenant);
+      sortieMaitre.gain.setValueAtTime(sortieMaitre.gain.value, maintenant);
+      sortieMaitre.gain.linearRampToValueAtTime(0, maintenant + 8e-3);
+    }
+    sampler.release = 0.02;
+    sampler.releaseAll();
+    if (restaurationTimer) clearTimeout(restaurationTimer);
+    restaurationTimer = setTimeout(() => {
+      restaurationTimer = null;
+      try {
+        sampler.releaseAll();
+        sampler.release = RELEASE;
+        if (sortieMaitre) {
+          const t = Tone.now();
+          sortieMaitre.gain.cancelScheduledValues(t);
+          sortieMaitre.gain.setValueAtTime(0, t);
+          sortieMaitre.gain.linearRampToValueAtTime(1, t + 0.01);
+        }
+      } catch {
+      }
+    }, 380);
+  } catch {
+  }
+}
+var dureeMs = (finDerniereAttaque, dureeNote) => Math.round((finDerniereAttaque + secondes(dureeNote)) * 1e3) + QUEUE_AUDIBLE_MS;
 function generateEarTrainingQuestion(type = "interval") {
   const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
   const INTERVAL_NAMES2 = {
@@ -1939,7 +2188,9 @@ function generateEarTrainingQuestion(type = "interval") {
       note2,
       answer: semitones,
       options,
-      play: () => playInterval(note1, note2, "ascending")
+      play: () => playInterval(note1, note2, "ascending"),
+      // La 2e note attaque à 0,65 s, elle dure "4n" (0,5 s au tempo par défaut).
+      durationMs: dureeMs(0.65, "4n")
     };
   }
   if (type === "chord_quality") {
@@ -1960,7 +2211,9 @@ function generateEarTrainingQuestion(type = "interval") {
       notes,
       answer: quality.key,
       options: qualities.map((q) => ({ key: q.key, label: q.label })),
-      play: () => playChord(notes, "2n", { spread: 0.065 })
+      play: () => playChord(notes, "2n", { spread: 0.065 }),
+      // Grattage étalé : la dernière corde attaque à (n-1) × 0,065 s.
+      durationMs: dureeMs((notes.length - 1) * 0.065, "2n")
     };
   }
   if (type === "chord_full") {
@@ -1999,12 +2252,15 @@ function generateEarTrainingQuestion(type = "interval") {
       options,
       // Action principale : l'accord, directement.
       play: () => playChord(notes, "2n", { spread: 0.065 }),
+      durationMs: dureeMs((notes.length - 1) * 0.065, "2n"),
       // Aide optionnelle, declenchee par un bouton distinct.
       playReference: () => playNote(referenceNote, "2n"),
-      referenceLabel: "Do"
+      referenceDurationMs: dureeMs(0, "2n"),
+      referenceLabel: "C"
     };
   }
   if (type === "progression") {
+    const SEC_PAR_ACCORD = 1.6;
     const progressions = [
       { key: "I-V-vi-IV", label: "I - V - vi - IV", degrees: [[0, "maj"], [7, "maj"], [9, "min"], [5, "maj"]] },
       { key: "ii-V-I", label: "ii - V - I", degrees: [[2, "min7"], [7, "dom7"], [0, "maj7"]] },
@@ -2045,7 +2301,15 @@ function generateEarTrainingQuestion(type = "interval") {
       options,
       // 1,6 s par accord : assez pour entendre chaque couleur sans perdre
       // le fil de la suite. Plus lent, la coherence harmonique se dissout.
-      play: () => playProgression(chords, 1.6)
+      play: (onStep) => playProgression(chords, SEC_PAR_ACCORD, onStep),
+      // Le dernier accord attaque à (n-1) × 1,6 s et sonne 90 % de l'intervalle.
+      // L'ancien calcul de l'écran (n × 1600 + 400) ignorait la queue de
+      // relâchement : le bouton repassait en « play » avec du son encore
+      // audible, et on ne pouvait plus l'arrêter.
+      durationMs: dureeMs(
+        (chords.length - 1) * SEC_PAR_ACCORD + SEC_PAR_ACCORD * 0.9,
+        0
+      )
     };
   }
   return null;
@@ -4268,7 +4532,14 @@ function EarTraining({ onBack, dispatch }) {
   const [score, setScore] = useState8({ correct: 0, total: 0 });
   const [sessionDone, setSessionDone] = useState8(false);
   const [answers, setAnswers] = useState8([]);
+  const finTimerRef = useRef5(null);
   const SESSION_LENGTH = 8;
+  const annulerFinTimer = () => {
+    if (finTimerRef.current) {
+      clearTimeout(finTimerRef.current);
+      finTimerRef.current = null;
+    }
+  };
   useEffect5(() => {
     if (!isAudioLoaded()) {
       loadAudio().then(() => setAudioReady(true)).catch(() => setAudioError(true));
@@ -4277,9 +4548,17 @@ function EarTraining({ onBack, dispatch }) {
   useEffect5(() => {
     if (audioReady && !question) nextQuestion();
   }, [audioReady, mode]);
-  const nextQuestion = () => {
+  useEffect5(() => () => {
+    annulerFinTimer();
     try {
-      stopProgression();
+      stopAll();
+    } catch {
+    }
+  }, []);
+  const nextQuestion = () => {
+    annulerFinTimer();
+    try {
+      stopAll();
     } catch {
     }
     setIsPlaying(false);
@@ -4288,6 +4567,7 @@ function EarTraining({ onBack, dispatch }) {
   };
   const playQuestion = async () => {
     if (!question || isPlaying) return;
+    annulerFinTimer();
     setIsPlaying(true);
     try {
       await unlockAudio();
@@ -4297,18 +4577,26 @@ function EarTraining({ onBack, dispatch }) {
       await question.play();
     } catch {
     }
-    const playMs = question?.chords ? question.chords.length * 1600 + 400 : 2e3;
-    setTimeout(() => setIsPlaying(false), playMs);
+    const duree = question.durationMs ?? 2e3;
+    finTimerRef.current = setTimeout(() => {
+      finTimerRef.current = null;
+      setIsPlaying(false);
+    }, duree);
   };
   const stopPlayback = () => {
+    annulerFinTimer();
     try {
-      stopProgression();
+      stopAll();
     } catch {
     }
     setIsPlaying(false);
   };
   const playRef = async () => {
     if (!question?.playReference) return;
+    try {
+      await unlockAudio();
+    } catch {
+    }
     try {
       await question.playReference();
     } catch {
@@ -4328,8 +4616,9 @@ function EarTraining({ onBack, dispatch }) {
     }
   };
   const changeMode = (m) => {
+    annulerFinTimer();
     try {
-      stopProgression();
+      stopAll();
     } catch {
     }
     setIsPlaying(false);
@@ -8187,7 +8476,7 @@ var ToolboxScreen_exports = {};
 __export(ToolboxScreen_exports, {
   ToolboxScreen: () => ToolboxScreen
 });
-import { useState as useState15, useRef as useRef7, useEffect as useEffect9, useCallback as useCallback3 } from "react";
+import { useState as useState15, useRef as useRef8, useEffect as useEffect10, useCallback as useCallback3 } from "react";
 init_tone_stub();
 
 // src/screens/FretboardExplorer.jsx
@@ -8195,7 +8484,7 @@ var FretboardExplorer_exports = {};
 __export(FretboardExplorer_exports, {
   FretboardExplorer: () => FretboardExplorer
 });
-import { useState as useState14, useMemo as useMemo9 } from "react";
+import { useState as useState14, useMemo as useMemo9, useRef as useRef7, useEffect as useEffect9 } from "react";
 
 // src/diagrams.jsx
 import { useMemo as useMemo8 } from "react";
@@ -8486,26 +8775,62 @@ function FretboardExplorer({ onBack, embedded = false }) {
       CHORD_TYPES[chordKey]?.intervals || null
     );
   }, [tab, root, chordKey]);
+  const finTimerRef = useRef7(null);
+  const annulerFin = () => {
+    if (finTimerRef.current) {
+      clearTimeout(finTimerRef.current);
+      finTimerRef.current = null;
+    }
+  };
+  const handleStop = () => {
+    annulerFin();
+    try {
+      stopAll();
+    } catch {
+    }
+    setIsPlaying(false);
+    setFlashNotes(null);
+  };
   const handlePlay = async () => {
-    if (isPlaying) return;
+    annulerFin();
+    try {
+      stopAll();
+    } catch {
+    }
     setIsPlaying(true);
     setFlashNotes(null);
+    try {
+      await unlockAudio();
+    } catch {
+    }
     const onStep = (i, note) => setFlashNotes(i < 0 ? null : note);
+    let dureeMs2 = 2600;
     try {
       if (tab === "scale") {
-        await playScaleFromRoot(root, scaleKey, 90, onStep);
+        const notes = await playScaleFromRoot(root, scaleKey, 90, onStep);
+        dureeMs2 = (notes?.length ?? 8) * (60 / 90) * 1e3 + 1600;
       } else if (arpeggio) {
-        await playArpeggioFromRoot(root, chordKey, 132, onStep);
+        const notes = await playArpeggioFromRoot(root, chordKey, 132, onStep);
+        dureeMs2 = (notes?.length ?? 4) * (60 / 132) * 1e3 + 1600;
       } else {
         await playChordFromRoot(root, chordKey);
+        dureeMs2 = 2600;
       }
     } catch {
     }
-    setTimeout(() => {
+    finTimerRef.current = setTimeout(() => {
+      finTimerRef.current = null;
       setIsPlaying(false);
       setFlashNotes(null);
-    }, 3e3);
+    }, dureeMs2);
   };
+  useEffect9(() => () => {
+    annulerFin();
+    try {
+      stopAll();
+    } catch {
+    }
+  }, []);
   const activeNotes = useMemo9(() => {
     if (tab === "scale") return getScaleNotes(root, scaleKey);
     return getChordNotes(root, chordKey);
@@ -8529,18 +8854,27 @@ function FretboardExplorer({ onBack, embedded = false }) {
           activeLabel
         ] })
       ] }),
-      /* @__PURE__ */ jsx17("button", { onClick: handlePlay, disabled: isPlaying, style: {
-        width: 36,
-        height: 36,
-        borderRadius: "50%",
-        border: "none",
-        background: isPlaying ? C.primaryL : C.primary,
-        cursor: isPlaying ? "default" : "pointer",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        boxShadow: isPlaying ? "none" : "0 2px 8px rgba(232,93,26,0.3)"
-      }, children: /* @__PURE__ */ jsx17(Ti, { name: isPlaying ? "loader" : "volume", size: 16, color: isPlaying ? C.primary : "#fff" }) })
+      /* @__PURE__ */ jsx17(
+        "button",
+        {
+          onClick: isPlaying ? handleStop : handlePlay,
+          "aria-label": isPlaying ? "Arr\xEAter la lecture" : "\xC9couter",
+          className: "gr-focus",
+          style: {
+            width: 36,
+            height: 36,
+            borderRadius: "50%",
+            border: "none",
+            background: C.primary,
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 2px 8px rgba(232,93,26,0.3)"
+          },
+          children: /* @__PURE__ */ jsx17(Ti, { name: isPlaying ? "player-stop-filled" : "volume", size: 16, color: "#fff" })
+        }
+      )
     ] }),
     /* @__PURE__ */ jsxs15("div", { style: { padding: "14px 16px", display: "flex", flexDirection: "column", gap: 12, overflowY: "auto", paddingBottom: 32 }, children: [
       /* @__PURE__ */ jsx17("div", { style: { display: "flex", background: C.surface2, borderRadius: R.lg, padding: 3, gap: 2 }, children: [{ key: "scale", label: "Gammes", icon: "music" }, { key: "chord", label: "Accords", icon: "guitar-pick" }].map((t) => /* @__PURE__ */ jsxs15("button", { onClick: () => setTab(t.key), style: {
@@ -8635,17 +8969,15 @@ function FretboardExplorer({ onBack, embedded = false }) {
         "button",
         {
           onClick: () => setArpeggio(m.id),
-          disabled: isPlaying,
           style: {
             flex: 1,
             padding: "8px 0",
             borderRadius: R.md,
-            cursor: isPlaying ? "default" : "pointer",
+            cursor: "pointer",
             border: `1.5px solid ${arpeggio === m.id ? C.primary : C.border}`,
             background: arpeggio === m.id ? C.primaryL : C.surface,
             color: arpeggio === m.id ? C.primaryD : C.text2,
-            fontFamily: FONTS.ui,
-            opacity: isPlaying ? 0.6 : 1
+            fontFamily: FONTS.ui
           },
           children: [
             /* @__PURE__ */ jsx17("div", { style: { fontSize: 12.5, fontWeight: 700 }, children: m.label }),
@@ -8726,19 +9058,96 @@ function Metronome() {
   const [playing, setPlaying] = useState15(false);
   const [beats, setBeats] = useState15(4);
   const [current, setCurrent] = useState15(-1);
-  const clickRef = useRef7(null);
-  const loopRef = useRef7(null);
-  const beatRef = useRef7(0);
-  const ensureClick = useCallback3(async () => {
-    if (clickRef.current) return;
-    await start();
-    clickRef.current = new MembraneSynth({
-      pitchDecay: 8e-3,
-      octaves: 2,
-      envelope: { attack: 1e-3, decay: 0.18, sustain: 0 }
-    }).toDestination();
-    clickRef.current.volume.value = -6;
+  const [timbre, setTimbre] = useState15("bois");
+  const TIMBRES = [
+    { id: "bois", label: "Bois" },
+    { id: "mecanique", label: "M\xE9canique" },
+    { id: "batterie", label: "Batterie" }
+  ];
+  const voixRef = useRef8(null);
+  const loopRef = useRef8(null);
+  const beatRef = useRef8(0);
+  const libererVoix = useCallback3(() => {
+    try {
+      voixRef.current?.dispose?.();
+    } catch {
+    }
+    voixRef.current = null;
   }, []);
+  const construireVoix = useCallback3((id) => {
+    if (id === "bois") {
+      const filtre = new Filter({ type: "bandpass", frequency: 1800, Q: 2.2 }).toDestination();
+      const corps = new NoiseSynth({
+        noise: { type: "white" },
+        envelope: { attack: 5e-4, decay: 0.028, sustain: 0 }
+      }).connect(filtre);
+      corps.volume.value = -8;
+      return {
+        fort: (t) => {
+          filtre.frequency.setValueAtTime(2600, t);
+          corps.triggerAttackRelease(0.02, t, 1);
+        },
+        faible: (t) => {
+          filtre.frequency.setValueAtTime(1500, t);
+          corps.triggerAttackRelease(0.02, t, 0.55);
+        },
+        dispose: () => {
+          corps.dispose();
+          filtre.dispose();
+        }
+      };
+    }
+    if (id === "mecanique") {
+      const filtre = new Filter({ type: "bandpass", frequency: 1400, Q: 3 }).toDestination();
+      const tic = new NoiseSynth({
+        noise: { type: "white" },
+        envelope: { attack: 5e-4, decay: 0.022, sustain: 0 }
+      }).connect(filtre);
+      tic.volume.value = -11;
+      const cloche = new MetalSynth({
+        harmonicity: 5.1,
+        modulationIndex: 16,
+        resonance: 3e3,
+        octaves: 1.2,
+        envelope: { attack: 1e-3, decay: 0.42, release: 0.12 }
+      }).toDestination();
+      cloche.volume.value = -22;
+      return {
+        fort: (t) => cloche.triggerAttackRelease("C6", 0.12, t),
+        faible: (t) => tic.triggerAttackRelease(0.02, t, 0.7),
+        dispose: () => {
+          tic.dispose();
+          filtre.dispose();
+          cloche.dispose();
+        }
+      };
+    }
+    const grosse = new MembraneSynth({
+      pitchDecay: 0.035,
+      octaves: 5,
+      envelope: { attack: 1e-3, decay: 0.22, sustain: 0 }
+    }).toDestination();
+    grosse.volume.value = -7;
+    const passeHaut = new Filter({ type: "highpass", frequency: 7500 }).toDestination();
+    const charley = new NoiseSynth({
+      noise: { type: "white" },
+      envelope: { attack: 1e-3, decay: 0.026, sustain: 0 }
+    }).connect(passeHaut);
+    charley.volume.value = -17;
+    return {
+      fort: (t) => grosse.triggerAttackRelease("C1", "8n", t),
+      faible: (t) => charley.triggerAttackRelease(0.02, t, 0.6),
+      dispose: () => {
+        grosse.dispose();
+        charley.dispose();
+        passeHaut.dispose();
+      }
+    };
+  }, []);
+  const ensureClick = useCallback3(async () => {
+    await start();
+    if (!voixRef.current) voixRef.current = construireVoix(timbre);
+  }, [timbre, construireVoix]);
   const stop = useCallback3(() => {
     if (loopRef.current) {
       loopRef.current.stop();
@@ -8758,43 +9167,97 @@ function Metronome() {
     loopRef.current = new Loop((time) => {
       const b = beatRef.current % beats;
       const strong = b === 0;
-      clickRef.current.triggerAttackRelease(strong ? "C5" : "G4", "16n", time);
+      const voix = voixRef.current;
+      if (voix) (strong ? voix.fort : voix.faible)(time);
       getDraw().schedule(() => setCurrent(b), time);
       beatRef.current += 1;
     }, "4n").start(0);
     transport.start();
     setPlaying(true);
   }, [bpm, beats, ensureClick]);
-  useEffect9(() => {
+  useEffect10(() => {
     getTransport().bpm.value = bpm;
   }, [bpm]);
-  useEffect9(() => () => stop(), [stop]);
+  useEffect10(() => {
+    if (!voixRef.current) return;
+    libererVoix();
+    voixRef.current = construireVoix(timbre);
+  }, [timbre, construireVoix, libererVoix]);
+  useEffect10(() => () => {
+    stop();
+    libererVoix();
+  }, [stop, libererVoix]);
   const toggle = () => playing ? stop() : start2();
   const nudge = (d) => setBpm((v) => Math.min(240, Math.max(40, v + d)));
-  const tapsRef = useRef7([]);
+  const ECART_MIN_MS = 200;
+  const ECART_MAX_MS = 2e3;
+  const TAPS_MAX = 8;
+  const tapsRef = useRef8([]);
+  const [tapCount, setTapCount] = useState15(0);
   const tapTempo = () => {
     const now2 = performance.now();
-    tapsRef.current = [...tapsRef.current.filter((t) => now2 - t < 2e3), now2];
-    if (tapsRef.current.length >= 2) {
-      const gaps = [];
-      for (let i = 1; i < tapsRef.current.length; i++) gaps.push(tapsRef.current[i] - tapsRef.current[i - 1]);
-      const avg = gaps.reduce((a, b) => a + b, 0) / gaps.length;
-      setBpm(Math.min(240, Math.max(40, Math.round(6e4 / avg))));
+    const taps = tapsRef.current;
+    const dernier = taps[taps.length - 1];
+    if (dernier !== void 0) {
+      const ecart = now2 - dernier;
+      if (ecart < ECART_MIN_MS) return;
+      if (ecart > ECART_MAX_MS) {
+        tapsRef.current = [now2];
+        setTapCount(1);
+        return;
+      }
     }
+    tapsRef.current = [...taps, now2].slice(-TAPS_MAX);
+    setTapCount(tapsRef.current.length);
+    if (tapsRef.current.length < 2) return;
+    const ecarts = [];
+    for (let i = 1; i < tapsRef.current.length; i++) {
+      ecarts.push(tapsRef.current[i] - tapsRef.current[i - 1]);
+    }
+    ecarts.sort((a, b) => a - b);
+    const milieu = Math.floor(ecarts.length / 2);
+    const median = ecarts.length % 2 ? ecarts[milieu] : (ecarts[milieu - 1] + ecarts[milieu]) / 2;
+    setBpm(Math.min(240, Math.max(40, Math.round(6e4 / median))));
   };
+  const resetTap = () => {
+    tapsRef.current = [];
+    setTapCount(0);
+  };
+  const aideTap = tapCount === 0 ? "Tape le tempo au doigt, au moins deux fois." : tapCount === 1 ? "Continue : il faut un second appui pour mesurer." : `Tempo mesur\xE9 sur ${tapCount - 1} intervalle${tapCount > 2 ? "s" : ""}.`;
   const tempoLabel = bpm < 60 ? "Largo" : bpm < 76 ? "Adagio" : bpm < 108 ? "Andante" : bpm < 120 ? "Moderato" : bpm < 156 ? "Allegro" : bpm < 176 ? "Vivace" : "Presto";
   return /* @__PURE__ */ jsxs16("div", { children: [
-    /* @__PURE__ */ jsx18("div", { style: { display: "flex", justifyContent: "center", gap: 10, margin: "8px 0 22px" }, children: Array.from({ length: beats }).map((_, i) => {
+    /* @__PURE__ */ jsx18("div", { style: {
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      gap: 10,
+      margin: "8px 0 22px",
+      height: 24
+      // hauteur figée : plus de décalage vertical
+    }, children: Array.from({ length: beats }).map((_, i) => {
       const on = current === i;
       const strong = i === 0;
+      const teinte = strong ? C.primary : C.amber;
       return /* @__PURE__ */ jsx18("div", { style: {
-        width: on ? 22 : 16,
-        height: on ? 22 : 16,
+        width: 24,
+        height: 24,
+        // taille de boîte constante
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexShrink: 0
+      }, children: /* @__PURE__ */ jsx18("div", { style: {
+        width: 16,
+        height: 16,
         borderRadius: "50%",
-        background: on ? strong ? C.primary : C.amber : C.border,
-        transition: "all .08s ease",
-        boxShadow: on ? `0 0 0 5px ${strong ? C.primary : C.amber}22` : "none"
-      } }, i);
+        background: on ? teinte : C.border,
+        transform: on ? "scale(1.35)" : "scale(1)",
+        boxShadow: on ? `0 0 0 4px ${teinte}22` : "none",
+        // On ne transitionne QUE transform et les couleurs — jamais
+        // `all`, qui embarquerait aussi les propriétés de mise en page.
+        transition: "transform .08s ease, background-color .08s ease, box-shadow .08s ease",
+        willChange: "transform"
+      } }) }, i);
     }) }),
     /* @__PURE__ */ jsxs16("div", { style: { textAlign: "center", marginBottom: 6 }, children: [
       /* @__PURE__ */ jsx18("div", { style: { fontSize: 64, fontWeight: 800, color: C.text, letterSpacing: "-2px", lineHeight: 1, fontFamily: FONTS.title }, children: bpm }),
@@ -8834,6 +9297,42 @@ function Metronome() {
         d
       ] }, d))
     ] }),
+    /* @__PURE__ */ jsxs16("div", { style: {
+      background: C.surface,
+      border: `1.5px solid ${C.border}`,
+      borderRadius: R.lg,
+      padding: "10px 12px",
+      marginBottom: 10
+    }, children: [
+      /* @__PURE__ */ jsx18("div", { style: { fontSize: 11, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: C.text2, marginBottom: 8 }, children: "Son" }),
+      /* @__PURE__ */ jsx18("div", { role: "radiogroup", "aria-label": "Timbre du m\xE9tronome", style: { display: "flex", gap: 6 }, children: TIMBRES.map((t) => {
+        const actif = timbre === t.id;
+        return /* @__PURE__ */ jsx18(
+          "button",
+          {
+            role: "radio",
+            "aria-checked": actif,
+            onClick: () => setTimbre(t.id),
+            className: "gr-focus",
+            style: {
+              flex: 1,
+              padding: "11px 6px",
+              borderRadius: R.md,
+              minHeight: 44,
+              border: `1.5px solid ${actif ? C.primary : C.border}`,
+              background: actif ? C.primaryL : C.surface,
+              color: actif ? C.primaryD : C.text2,
+              fontWeight: 700,
+              fontSize: 12.5,
+              cursor: "pointer",
+              fontFamily: FONTS.ui
+            },
+            children: t.label
+          },
+          t.id
+        );
+      }) })
+    ] }),
     /* @__PURE__ */ jsxs16("div", { style: { display: "flex", gap: 10 }, children: [
       /* @__PURE__ */ jsxs16("div", { style: { flex: 1, background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: "10px 12px" }, children: [
         /* @__PURE__ */ jsx18("div", { style: { fontSize: 9.5, fontWeight: 700, color: C.text3, textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 7 }, children: "Mesure" }),
@@ -8850,26 +9349,57 @@ function Metronome() {
           fontFamily: FONTS.ui
         }, children: n }, n)) })
       ] }),
-      /* @__PURE__ */ jsxs16("button", { onClick: tapTempo, style: {
-        width: 96,
-        background: C.amberL,
-        border: `1.5px solid ${C.amberBorder}`,
-        borderRadius: R.lg,
-        color: C.amberD,
-        fontWeight: 700,
-        fontSize: 13,
-        fontFamily: FONTS.ui,
-        cursor: "pointer",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 3
-      }, children: [
-        /* @__PURE__ */ jsx18(Ti, { name: "hand-finger-down", size: 18, color: C.amber }),
-        "Tap tempo"
-      ] })
-    ] })
+      /* @__PURE__ */ jsxs16(
+        "button",
+        {
+          onClick: tapTempo,
+          onDoubleClick: resetTap,
+          "aria-label": tapCount > 0 ? `Tap tempo, ${tapCount} appuis compt\xE9s` : "Tap tempo",
+          style: {
+            width: 96,
+            background: C.amberL,
+            border: `1.5px solid ${C.amberBorder}`,
+            borderRadius: R.lg,
+            color: C.amberD,
+            fontWeight: 700,
+            fontSize: 13,
+            fontFamily: FONTS.ui,
+            cursor: "pointer",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 3
+          },
+          children: [
+            /* @__PURE__ */ jsx18(Ti, { name: "hand-finger-down", size: 18, color: C.amber }),
+            /* @__PURE__ */ jsx18("span", { style: { whiteSpace: "nowrap" }, children: "Tap tempo" }),
+            /* @__PURE__ */ jsx18("div", { "aria-hidden": "true", style: {
+              height: 6,
+              display: "flex",
+              gap: 3,
+              alignItems: "center",
+              justifyContent: "center"
+            }, children: Array.from({ length: TAPS_MAX }).map((_, i) => /* @__PURE__ */ jsx18("div", { style: {
+              width: 4,
+              height: 4,
+              borderRadius: "50%",
+              background: i < tapCount ? C.amber : "transparent",
+              transition: "background-color .1s ease"
+            } }, i)) })
+          ]
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsx18("div", { role: "status", "aria-live": "polite", style: {
+      minHeight: 18,
+      marginTop: 8,
+      textAlign: "center",
+      fontSize: 11,
+      color: C.text2,
+      fontFamily: FONTS.ui,
+      lineHeight: 1.5
+    }, children: aideTap })
   ] });
 }
 var NOTE_NAMES = ["Do", "Do#", "R\xE9", "R\xE9#", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "La#", "Si"];
@@ -9075,19 +9605,19 @@ function Tuner() {
   const [tuningId, setTuningId] = useState15("standard");
   const tuning = TUNINGS.find((t) => t.id === tuningId) || TUNINGS[0];
   const targets = buildTargets(tuning);
-  const ctxRef = useRef7(null);
-  const analyser = useRef7(null);
-  const streamRef = useRef7(null);
-  const rafRef = useRef7(null);
-  const bufRef = useRef7(null);
-  const freqHistRef = useRef7([]);
-  const holdTimer = useRef7(null);
-  const lastNoteRef = useRef7(null);
-  const needleRef = useRef7(null);
-  const needleLabelRef = useRef7(null);
-  const centsTargetRef = useRef7(0);
-  const centsShownRef = useRef7(0);
-  const hasSignalRef = useRef7(false);
+  const ctxRef = useRef8(null);
+  const analyser = useRef8(null);
+  const streamRef = useRef8(null);
+  const rafRef = useRef8(null);
+  const bufRef = useRef8(null);
+  const freqHistRef = useRef8([]);
+  const holdTimer = useRef8(null);
+  const lastNoteRef = useRef8(null);
+  const needleRef = useRef8(null);
+  const needleLabelRef = useRef8(null);
+  const centsTargetRef = useRef8(0);
+  const centsShownRef = useRef8(0);
+  const hasSignalRef = useRef8(false);
   const stop = useCallback3(() => {
     if (holdTimer.current) {
       clearTimeout(holdTimer.current);
@@ -9199,7 +9729,7 @@ function Tuner() {
       setActive(false);
     }
   }, []);
-  useEffect9(() => () => stop(), [stop]);
+  useEffect10(() => () => stop(), [stop]);
   const cents = note?.cents ?? 0;
   const inTune = active && note && Math.abs(cents) <= 5;
   const needleColor = inTune ? C.green : Math.abs(cents) < 20 ? C.amber : C.pink;
@@ -9345,11 +9875,11 @@ function ChordPlayer() {
   const [activeIdx, setActiveIdx] = useState15(-1);
   const [speed, setSpeed] = useState15("normal");
   const stop = useCallback3(() => {
-    stopProgression();
+    stopAll();
     setPlaying(false);
     setActiveIdx(-1);
   }, []);
-  useEffect9(() => () => stopProgression(), []);
+  useEffect10(() => () => stopAll(), []);
   const addChord = () => {
     if (sequence.length >= MAX_CHORDS) return;
     const rootFr = CHORD_ROOTS.find((r) => r[0] === root)?.[1] || root;
@@ -9367,7 +9897,10 @@ function ChordPlayer() {
     if (sequence.length === 0) return;
     const secs = SPEED_PRESETS.find((p) => p.id === speed)?.secs || 1.4;
     setPlaying(true);
-    await playProgression(sequence, secs, (idx) => setActiveIdx(idx));
+    await playProgression(sequence, secs, (idx) => {
+      setActiveIdx(idx);
+      if (idx === -1) setPlaying(false);
+    });
   };
   const toggle = () => playing ? stop() : play();
   const chip = {
@@ -9661,7 +10194,7 @@ var PracticeScreen_exports = {};
 __export(PracticeScreen_exports, {
   PracticeScreen: () => PracticeScreen
 });
-import { useState as useState17, useEffect as useEffect10, useRef as useRef8, useCallback as useCallback4, useMemo as useMemo11 } from "react";
+import { useState as useState17, useEffect as useEffect11, useRef as useRef9, useCallback as useCallback4, useMemo as useMemo11 } from "react";
 
 // src/store/challenges.js
 var KEYS = ["A", "B", "C", "D", "E", "F", "G"];
@@ -9701,8 +10234,8 @@ function PracticeScreen({ state, dispatch }) {
   const [tab, setTab] = useState17("impro");
   const [current, setCurrent] = useState17(null);
   const [pop, setPop] = useState17(false);
-  const timerRef = useRef8(null);
-  useEffect10(() => () => {
+  const timerRef = useRef9(null);
+  useEffect11(() => () => {
     if (timerRef.current) clearTimeout(timerRef.current);
   }, []);
   const generateImpro = () => {
@@ -9839,15 +10372,15 @@ var ChallengeScreen_exports = {};
 __export(ChallengeScreen_exports, {
   ChallengeScreen: () => ChallengeScreen
 });
-import { useState as useState18, useEffect as useEffect11, useRef as useRef9, useCallback as useCallback5, useMemo as useMemo12 } from "react";
+import { useState as useState18, useEffect as useEffect12, useRef as useRef10, useCallback as useCallback5, useMemo as useMemo12 } from "react";
 import { jsx as jsx21, jsxs as jsxs19 } from "react/jsx-runtime";
 function ChallengeScreen({ state, dispatch, navigate }) {
   const C = useC();
   const ch = DAILY_CHALLENGES[state.dailyChallengeIdx % DAILY_CHALLENGES.length];
   const done = state.dailyChallengeDone;
   const [pop, setPop] = useState18(false);
-  const timerRef = useRef9(null);
-  useEffect11(() => () => {
+  const timerRef = useRef10(null);
+  useEffect12(() => () => {
     if (timerRef.current) clearTimeout(timerRef.current);
   }, []);
   const finish = () => {
@@ -9910,7 +10443,7 @@ var OnboardingScreen_exports = {};
 __export(OnboardingScreen_exports, {
   OnboardingScreen: () => OnboardingScreen
 });
-import { useState as useState19, useEffect as useEffect12, useMemo as useMemo13 } from "react";
+import { useState as useState19, useEffect as useEffect13, useMemo as useMemo13 } from "react";
 
 // src/store/placementEngine.js
 var TESTABLE_MODULES = ["neck", "scales", "harmony", "rhythm", "impro"];
@@ -10102,7 +10635,7 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
     emit("placement_completed", { skillLevels: finalLevels, overallTier: overall, weakestModule: weak });
     setPhase("results");
   }
-  useEffect12(() => {
+  useEffect13(() => {
     if (phase === "testing" && queue && !currentQ) {
       const nextIdx = qIdx + 1;
       if (nextIdx < queue.length) {

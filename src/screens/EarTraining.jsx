@@ -5,7 +5,7 @@ import { FONTS, R } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { Gropi } from "../design/Gropi.jsx";
-import { loadAudio, isAudioLoaded, generateEarTrainingQuestion, playInterval, playChord, stopProgression, unlockAudio } from "../audioEngine.js";
+import { loadAudio, isAudioLoaded, generateEarTrainingQuestion, playInterval, playChord, stopProgression, stopAll, unlockAudio } from "../audioEngine.js";
 
 const MODES = [
   { key: "interval",      label: "Intervalles",      icon: "arrows-up-down",  desc: "Identifie l'ecart entre deux notes" },
@@ -43,7 +43,16 @@ export function EarTraining({ onBack, dispatch }) {
   const [score, setScore]             = useState({ correct: 0, total: 0 });
   const [sessionDone, setSessionDone] = useState(false);
   const [answers, setAnswers]         = useState([]);
+  // Minuteur qui remet le bouton en « play » à la fin du son. Une ref, parce
+  // qu'un appui sur stop doit pouvoir l'annuler : sans ça, un stop suivi d'une
+  // relance voyait l'ancien minuteur remettre le bouton en « play » au milieu
+  // de la nouvelle lecture.
+  const finTimerRef = useRef(null);
   const SESSION_LENGTH = 8;
+
+  const annulerFinTimer = () => {
+    if (finTimerRef.current) { clearTimeout(finTimerRef.current); finTimerRef.current = null; }
+  };
 
   // Charger l'audio au montage
   useEffect(() => {
@@ -59,11 +68,16 @@ export function EarTraining({ onBack, dispatch }) {
     if (audioReady && !question) nextQuestion();
   }, [audioReady, mode]);
 
+  // Quitter l'écran doit couper le son : sans ça, une suite d'accords lancée
+  // juste avant continuait de jouer par-dessus l'écran suivant.
+  useEffect(() => () => { annulerFinTimer(); try { stopAll(); } catch {} }, []);
+
   const nextQuestion = () => {
     // Couper le son en cours avant de generer la suivante : une suite
     // d'accords lancee juste avant continuerait sinon de jouer par-dessus
     // la nouvelle question.
-    try { stopProgression(); } catch {}
+    annulerFinTimer();
+    try { stopAll(); } catch {}
     setIsPlaying(false);
     setSelected(null);
     setQuestion(generateEarTrainingQuestion(mode));
@@ -71,37 +85,46 @@ export function EarTraining({ onBack, dispatch }) {
 
   const playQuestion = async () => {
     if (!question || isPlaying) return;
+    annulerFinTimer();
     setIsPlaying(true);
+
     // unlockAudio() DOIT être appelé ici, en tête du gestionnaire d'appui :
     // iOS Safari exige que l'AudioContext soit démarré à l'intérieur d'un
     // geste utilisateur direct. Placé après le téléchargement des samples, il
     // arrive trop tard — la chaîne du geste est rompue, et il faut appuyer
     // deux fois pour avoir du son.
     try { await unlockAudio(); } catch {}
-    try { await question.play(); }
-    catch {}
-    // Duree reelle de lecture : une suite de 4 accords a 1,6 s chacun dure
-    // plus de 6 secondes. Le delai fixe de 2 s reactivait le bouton pendant
-    // que la musique jouait encore, ce qui permettait de relancer par-dessus.
-    // chord_full ne joue plus qu'un accord (la reference est devenue un
-    // bouton distinct), donc sa duree redevient celle d'un accord simple.
-    const playMs = question?.chords
-      ? question.chords.length * 1600 + 400
-      : 2000;
-    setTimeout(() => setIsPlaying(false), playMs);
+    try { await question.play(); } catch {}
+
+    // La durée vient du moteur audio (question.durationMs), qui la calcule
+    // depuis le vrai calendrier de lecture, queue de relâchement comprise.
+    // L'écran ne la devine plus : les anciennes valeurs (2000 ms pour un
+    // accord, n × 1600 + 400 pour une suite) étaient trop courtes, le bouton
+    // repassait en « play » alors que le son continuait — et il devenait
+    // impossible d'arrêter la fin d'une suite d'accords.
+    const duree = question.durationMs ?? 2000;
+    finTimerRef.current = setTimeout(() => {
+      finTimerRef.current = null;
+      setIsPlaying(false);
+    }, duree);
   };
 
-  // Arret de la lecture. Indispensable pour les suites d'accords : elles
-  // durent jusqu'a 6,8 secondes et tournent sur le transport Tone.js, donc
-  // sans ce bouton on ne pouvait ni les couper ni relancer avant la fin.
+  // Arrêt de la lecture, NET et pour TOUS les modes.
+  //
+  // stopProgression() seul n'annulait que les accords à venir : un intervalle,
+  // un accord isolé ou l'accord en cours d'une suite continuaient de résonner
+  // 1,6 s (le relâchement du sampler). stopAll() coupe aussi le son en cours,
+  // en raccourcissant temporairement ce relâchement.
   const stopPlayback = () => {
-    try { stopProgression(); } catch {}
+    annulerFinTimer();
+    try { stopAll(); } catch {}
     setIsPlaying(false);
   };
 
   // Note de reference (mode accord complet) : aide optionnelle, sur demande.
   const playRef = async () => {
     if (!question?.playReference) return;
+    try { await unlockAudio(); } catch {}
     try { await question.playReference(); } catch {}
   };
 
@@ -122,7 +145,8 @@ export function EarTraining({ onBack, dispatch }) {
   const changeMode = (m) => {
     // Couper le son en cours : sans ca, une suite d'accords continuait de
     // jouer par-dessus la nouvelle question apres un changement de mode.
-    try { stopProgression(); } catch {}
+    annulerFinTimer();
+    try { stopAll(); } catch {}
     setIsPlaying(false);
     setMode(m);
     setQuestion(null);

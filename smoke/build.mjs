@@ -39,14 +39,17 @@ const stubs = {
           export const Time = () => 0;
           export class Compressor { constructor(){} toDestination(){return this;} connect(){return this;} dispose(){} }
           export class FeedbackDelay { constructor(){} toDestination(){return this;} connect(){return this;} dispose(){} }
-          export class Synth { constructor(){} connect(){return this;} toDestination(){return this;} triggerAttackRelease(){} dispose(){} }
-          export class Filter { constructor(){} connect(){return this;} toDestination(){return this;} dispose(){} }
+          export class Synth { constructor(){ this.volume = { value: 0 }; } connect(){return this;} toDestination(){return this;} triggerAttackRelease(){} dispose(){} }
+          export class Filter { constructor(){ this.frequency = { value: 0, setValueAtTime(){} }; } connect(){return this;} toDestination(){return this;} dispose(){} }
           export class Players { constructor(o){ o?.onload?.(); } connect(){return this;} toDestination(){return this;} player(){return { start(){}, stop(){} };} has(){return false;} dispose(){} }
-          export class MembraneSynth { constructor(){} connect(){return this;} toDestination(){return this;} triggerAttackRelease(){} dispose(){} }
-          export class NoiseSynth { constructor(){} connect(){return this;} toDestination(){return this;} triggerAttackRelease(){} dispose(){} }
+          export class MembraneSynth { constructor(){ this.volume = { value: 0 }; } connect(){return this;} toDestination(){return this;} triggerAttackRelease(){} dispose(){} }
+          export class NoiseSynth { constructor(){ this.volume = { value: 0 }; } connect(){return this;} toDestination(){return this;} triggerAttackRelease(){} dispose(){} }
           export class Sequence { constructor(){} start(){return this;} stop(){return this;} dispose(){} set loop(v){} }
           export class Part { constructor(){} start(){return this;} stop(){return this;} dispose(){} }
           export class Loop { constructor(){} start(){return this;} stop(){return this;} dispose(){} }
+          class FauxParam { constructor(v){this.value=v;} cancelScheduledValues(){return this;} setValueAtTime(v){this.value=v;return this;} linearRampToValueAtTime(v){this.value=v;return this;} }
+          export class Gain { constructor(v){ this.gain = new FauxParam(v ?? 1); } toDestination(){return this;} connect(){return this;} dispose(){} }
+          export class MetalSynth { constructor(){ this.volume = new FauxParam(0); } toDestination(){return this;} connect(){return this;} triggerAttackRelease(){} dispose(){} }
         `, loader: "js" };
       return { contents: `export const supabase = { auth: { getSession: async () => ({ data: {} }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe(){} } } }) }, from: () => ({}) };
         export const getCachedAccessToken = () => null; export const SUPABASE_REST = ""; export const SUPABASE_KEY = "";`, loader: "js" };

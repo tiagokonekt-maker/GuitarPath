@@ -1,6 +1,6 @@
 // GuitarPath -- screens/FretboardExplorer.jsx
 // Page "Explorateur du manche" -- visualisation libre gammes + accords
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { FONTS, R } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
@@ -8,7 +8,7 @@ import { Fretboard } from "../Fretboard.jsx";
 import { SCALES, CHORD_TYPES, getScaleNotes, getChordNotes, noteToFr, normalizeNote } from "../fretboardUtils.js";
 import { getChordShapes } from "../music/chordShapes.js";
 import { ChordDiagram } from "../diagrams.jsx";
-import { playScaleFromRoot, playChordFromRoot, playArpeggioFromRoot, isAudioLoaded } from "../audioEngine.js";
+import { playScaleFromRoot, playChordFromRoot, playArpeggioFromRoot, isAudioLoaded, stopAll, unlockAudio } from "../audioEngine.js";
 
 const ROOTS_FR = [
   { en: "C",  fr: "Do"   }, { en: "C#", fr: "Do#"  }, { en: "D",  fr: "Re"   },
@@ -103,28 +103,72 @@ export function FretboardExplorer({ onBack, embedded = false }) {
     );
   }, [tab, root, chordKey]);
 
+  // Minuteur de fin de lecture, annulable — voir handleStop.
+  const finTimerRef = useRef(null);
+  const annulerFin = () => {
+    if (finTimerRef.current) { clearTimeout(finTimerRef.current); finTimerRef.current = null; }
+  };
+
+  /**
+   * Arrête la lecture. Il n'y avait AUCUN moyen de le faire : le bouton était
+   * simplement désactivé pendant la lecture (`disabled={isPlaying}`), et une
+   * gamme de 8 notes à 90 bpm dure plus de 5 secondes qu'il fallait subir.
+   */
+  const handleStop = () => {
+    annulerFin();
+    try { stopAll(); } catch { /* noop */ }
+    setIsPlaying(false);
+    setFlashNotes(null);
+  };
+
   const handlePlay = async () => {
-    if (isPlaying) return;
+    // Une nouvelle lecture ÉCRASE la précédente au lieu d'être ignorée : le
+    // `if (isPlaying) return` obligeait à attendre la fin avant de pouvoir
+    // écouter autre chose.
+    annulerFin();
+    try { stopAll(); } catch { /* noop */ }
     setIsPlaying(true);
     setFlashNotes(null);
-    // onStep est appelé depuis Tone.Draw, donc synchronisé sur l'horloge
-    // audio : l'illumination tombe exactement sur la note entendue.
+
+    // Dans le geste utilisateur, avant tout await : iOS exige que
+    // l'AudioContext démarre à l'intérieur du geste.
+    try { await unlockAudio(); } catch { /* noop */ }
+
+    // onStep suit le calendrier de lecture : l'illumination tombe exactement
+    // sur la note entendue.
     const onStep = (i, note) => setFlashNotes(i < 0 ? null : note);
+
+    // Durée réelle, au lieu d'un délai fixe de 3 s qui laissait le bouton
+    // désactivé bien après la fin d'un accord, et bien avant la fin d'une
+    // gamme. QUEUE_AUDIBLE_MS couvre la résonance des cordes.
+    let dureeMs = 2600;
     try {
       if (tab === "scale") {
-        await playScaleFromRoot(root, scaleKey, 90, onStep);
+        const notes = await playScaleFromRoot(root, scaleKey, 90, onStep);
+        dureeMs = (notes?.length ?? 8) * (60 / 90) * 1000 + 1600;
       } else if (arpeggio) {
         // Arpégé : chaque note s'entend et s'illumine séparément.
-        await playArpeggioFromRoot(root, chordKey, 132, onStep);
+        const notes = await playArpeggioFromRoot(root, chordKey, 132, onStep);
+        dureeMs = (notes?.length ?? 4) * (60 / 132) * 1000 + 1600;
       } else {
         // Plaqué : on n'illumine rien. Toutes les notes sonnant ensemble,
         // le surlignage n'apporterait aucune information par rapport à
         // l'affichage statique déjà visible.
         await playChordFromRoot(root, chordKey);
+        dureeMs = 2600;
       }
-    } catch {}
-    setTimeout(() => { setIsPlaying(false); setFlashNotes(null); }, 3000);
+    } catch { /* noop */ }
+
+    finTimerRef.current = setTimeout(() => {
+      finTimerRef.current = null;
+      setIsPlaying(false);
+      setFlashNotes(null);
+    }, dureeMs);
   };
+
+  // Quitter l'écran doit couper le son : sans ça une gamme lancée juste avant
+  // continuait de jouer par-dessus l'écran suivant.
+  useEffect(() => () => { annulerFin(); try { stopAll(); } catch {} }, []);
 
   const activeNotes = useMemo(() => {
     if (tab === "scale") return getScaleNotes(root, scaleKey);
@@ -163,14 +207,21 @@ export function FretboardExplorer({ onBack, embedded = false }) {
           <div style={{ fontSize: 11, color: C.text3, fontFamily: FONTS.ui }}>{rootFr} - {activeLabel}</div>
         </div>
         {/* Bouton ecouter */}
-        <button onClick={handlePlay} disabled={isPlaying} style={{
+        <button
+          onClick={isPlaying ? handleStop : handlePlay}
+          aria-label={isPlaying ? "Arrêter la lecture" : "Écouter"}
+          className="gr-focus"
+          style={{
           width: 36, height: 36, borderRadius: "50%", border: "none",
-          background: isPlaying ? C.primaryL : C.primary,
-          cursor: isPlaying ? "default" : "pointer",
+          background: C.primary,
+          cursor: "pointer",
           display: "flex", alignItems: "center", justifyContent: "center",
-          boxShadow: isPlaying ? "none" : "0 2px 8px rgba(232,93,26,0.3)",
+          boxShadow: "0 2px 8px rgba(232,93,26,0.3)",
         }}>
-          <Ti name={isPlaying ? "loader" : "volume"} size={16} color={isPlaying ? C.primary : "#fff"} />
+          {/* Carré d'arrêt pendant la lecture, plutôt qu'une roue d'attente :
+              une roue signifie « patiente », un carré signifie « tu peux
+              arrêter ». C'est le second message qui est vrai maintenant. */}
+          <Ti name={isPlaying ? "player-stop-filled" : "volume"} size={16} color="#fff" />
         </button>
       </div>
 
@@ -286,13 +337,13 @@ export function FretboardExplorer({ onBack, embedded = false }) {
               <button
                 key={String(m.id)}
                 onClick={() => setArpeggio(m.id)}
-                disabled={isPlaying}
+
                 style={{
-                  flex: 1, padding: "8px 0", borderRadius: R.md, cursor: isPlaying ? "default" : "pointer",
+                  flex: 1, padding: "8px 0", borderRadius: R.md, cursor: "pointer",
                   border: `1.5px solid ${arpeggio === m.id ? C.primary : C.border}`,
                   background: arpeggio === m.id ? C.primaryL : C.surface,
                   color: arpeggio === m.id ? C.primaryD : C.text2,
-                  fontFamily: FONTS.ui, opacity: isPlaying ? 0.6 : 1,
+                  fontFamily: FONTS.ui,
                 }}
               >
                 <div style={{ fontSize: 12.5, fontWeight: 700 }}>{m.label}</div>

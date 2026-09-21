@@ -52,6 +52,41 @@ const SAMPLE_URLS = {
 
 const BASE_URL = "/audio/guitar/";
 
+// ── Durées : ce qui permet à l'interface de savoir quand le son finit ─────
+// L'écran d'entraînement devinait les durées (« 2000 ms pour un accord »,
+// « n × 1600 + 400 pour une suite »). Ces valeurs ne tenaient pas compte de
+// la queue de relâchement du sampler, d'où un bouton qui repassait en « play »
+// alors que le son résonnait encore — et donc plus aucun moyen d'arrêter sur
+// la fin. Chaque question porte désormais sa vraie durée, calculée ici.
+
+/** Relâchement du sampler, en secondes. Une corde ne s'arrête pas net. */
+export const RELEASE = 1.6;
+
+/**
+ * Durée pendant laquelle le bouton reste en « stop » après la dernière note,
+ * en millisecondes.
+ *
+ * Elle est calée sur le relâchement COMPLET, et non sur une estimation de ce
+ * qui reste « vraiment audible ». J'avais d'abord mis 700 ms en me disant que
+ * le son passait sous le niveau d'écoute au-delà ; c'était un mauvais arbitrage.
+ * Deux raisons de voir large :
+ *
+ *  • la réverbération (1,9 s de decay à 19 %) prolonge encore le son au-delà
+ *    du relâchement du sampler ;
+ *  • le pire des deux défauts n'est pas symétrique. Un bouton « stop » affiché
+ *    sur une fin de résonance très faible ne coûte rien — au contraire, il
+ *    laisse la possibilité de couper. Un bouton repassé en « play » alors qu'on
+ *    entend encore quelque chose enlève cette possibilité : c'est exactement le
+ *    défaut signalé.
+ *
+ * Dans le doute, on garde donc la main sur le son plus longtemps.
+ */
+export const QUEUE_AUDIBLE_MS = Math.round(RELEASE * 1000);
+
+/** Durée d'une valeur de note Tone.js en secondes, au tempo par défaut (120). */
+const DUREE_NOTE = { "1n": 2, "2n": 1, "4n": 0.5, "8n": 0.25, "16n": 0.125 };
+const secondes = (v) => (typeof v === "number" ? v : DUREE_NOTE[v] ?? 1);
+
 /**
  * URLs complètes des samples — utilisées par les Réglages pour proposer
  * « rendre l'audio disponible hors-ligne » (le service worker les met alors
@@ -167,6 +202,61 @@ export function getToneNoteAtPosition(string, fret) {
 const DEV = typeof import.meta !== "undefined" && import.meta.env?.DEV;
 const warn = (...a) => { if (DEV) console.warn("[audioEngine]", ...a); };
 
+// ── Sortie maître : ce qui permet de couper le son INSTANTANÉMENT ─────────
+// La chaîne est : sampler → réverbération → sortie maître → haut-parleurs.
+// Couper la sortie maître fait taire tout, y compris la queue de
+// réverbération, en quelques millisecondes — sans toucher au réglage de
+// relâchement du sampler, qui doit rester à 1,6 s pour que les accords
+// résonnent naturellement en lecture normale.
+let sortieMaitre = null;
+
+// ── Registre des notes à venir ────────────────────────────────────────────
+// Le vrai problème de « stop ne coupe pas » : une note remise au contexte
+// audio (`triggerAttackRelease(note, duree, instantFutur)`) est IRRÉVOCABLE.
+// `releaseAll()` ne relâche que ce qui sonne DÉJÀ ; la deuxième note d'un
+// intervalle planifiée à +0,65 s, ou les notes suivantes d'une gamme,
+// partaient donc quand même. C'est ce que tu as constaté en arrêtant entre
+// les deux notes d'un intervalle.
+//
+// Tout ce qui est différé passe désormais par des minuteurs JavaScript
+// enregistrés ici, donc annulables. L'imprécision d'un setTimeout est de
+// quelques millisecondes : inaudible sur des écarts de 200 ms et plus.
+let enAttente = [];
+
+/** Programme une lecture différée, annulable par stopAll(). */
+function differer(fn, ms) {
+  if (ms <= 0) { fn(); return; }
+  const id = setTimeout(() => {
+    enAttente = enAttente.filter(x => x !== id);
+    fn();
+  }, ms);
+  enAttente.push(id);
+  return id;
+}
+
+/** Annule toutes les lectures différées non encore parties. */
+function annulerEnAttente() {
+  for (const id of enAttente) clearTimeout(id);
+  enAttente = [];
+}
+
+let restaurationTimer = null;
+
+/**
+ * Rouvre la sortie maître. Appelé au début de CHAQUE lecture : sans ça, une
+ * lecture lancée juste après un stop resterait muette le temps de la
+ * fenêtre de coupure.
+ */
+function reveillerSortie() {
+  if (restaurationTimer) { clearTimeout(restaurationTimer); restaurationTimer = null; }
+  if (!sortieMaitre || !Tone) return;
+  try {
+    sortieMaitre.gain.cancelScheduledValues(Tone.now());
+    sortieMaitre.gain.value = 1;
+  } catch { /* noop */ }
+  try { if (sampler) sampler.release = RELEASE; } catch { /* noop */ }
+}
+
 let sampler      = null;
 let loadPromise  = null;
 let isLoaded     = false;
@@ -193,8 +283,12 @@ export function loadAudio() {
       // sec et frontal sonne artificiel, même avec de vrais samples — un
       // peu plus d'espace et de longueur suffisent à replacer l'instrument
       // dans un lieu plutôt que dans un haut-parleur.
+      // La sortie maître se place APRÈS la réverbération, pour que la coupure
+      // emporte aussi la queue de réverb. Placée avant, on couperait les notes
+      // mais la réverb continuerait de sonner une seconde et demie.
+      sortieMaitre = new Tone.Gain(1).toDestination();
       const reverb = new Tone.Reverb({ decay: 1.9, wet: 0.19 });
-      reverb.toDestination();
+      reverb.connect(sortieMaitre);
 
       sampler = new Tone.Sampler({
         urls: SAMPLE_URLS,
@@ -304,12 +398,19 @@ if (typeof document !== "undefined") {
 
 export async function playNote(note, duration = "4n") {
   if (!await ensureLoaded()) return;
-  try { sampler.triggerAttackRelease(note, duration); }
+  stopAll();
+  reveillerSortie();
+  try { sampler.triggerAttackRelease(note, duration, Tone.now()); }
   catch (e) { warn("playNote:", e); }
 }
 
 export async function playChord(notes, duration = "2n", opts = {}) {
   if (!await ensureLoaded()) return;
+  // Un nouvel accord ÉCRASE le précédent. Avant, il fallait attendre la fin
+  // de la résonance : cliquer sur un deuxième accord dans la boîte à outils ne
+  // faisait rien tant que le premier sonnait.
+  stopAll();
+  reveillerSortie();
   const { strum = true, direction = "down", spread = 0.026 } = opts;
   try {
     if (!strum) { sampler.triggerAttackRelease(notes, duration); return; }
@@ -326,32 +427,43 @@ export async function playChord(notes, duration = "2n", opts = {}) {
  */
 export async function playScale(notes, bpm = 80, onStep) {
   if (!await ensureLoaded()) return;
+  stopAll();            // une nouvelle gamme écrase la précédente
+  reveillerSortie();
   const spb = 60 / bpm;
   try {
-    const now = Tone.now();
     notes.forEach((note, i) => {
-      const t = now + i * spb;
-      sampler.triggerAttackRelease(note, spb * 0.85, t);
-      if (onStep) Tone.Draw.schedule(() => onStep(i, note), t);
+      // Chaque note par minuteur annulable, au lieu d'une planification
+      // audio irrévocable : c'est ce qui rend la gamme interruptible. Le
+      // surlignage part du même minuteur, donc reste synchrone avec le son.
+      differer(() => {
+        try { sampler.triggerAttackRelease(note, spb * 0.85, Tone.now()); } catch { /* noop */ }
+        onStep?.(i, note);
+      }, i * spb * 1000);
     });
     // Signale la fin, pour éteindre le dernier surlignage.
-    if (onStep) Tone.Draw.schedule(() => onStep(-1, null), now + notes.length * spb);
+    differer(() => onStep?.(-1, null), notes.length * spb * 1000);
   } catch (e) { warn("playScale:", e); }
 }
 
+export const ECART_INTERVALLE_MS = 650;
+
 export async function playInterval(note1, note2, mode = "ascending") {
   if (!await ensureLoaded()) return;
+  stopAll();            // écrase une lecture en cours
+  reveillerSortie();
   try {
-    const now = Tone.now();
     if (mode === "harmonic") {
-      sampler.triggerAttackRelease([note1, note2], "2n", now);
-    } else if (mode === "descending") {
-      sampler.triggerAttackRelease(note2, "4n", now);
-      sampler.triggerAttackRelease(note1, "4n", now + 0.65);
-    } else {
-      sampler.triggerAttackRelease(note1, "4n", now);
-      sampler.triggerAttackRelease(note2, "4n", now + 0.65);
+      sampler.triggerAttackRelease([note1, note2], "2n", Tone.now());
+      return;
     }
+    const [premiere, seconde] = mode === "descending" ? [note2, note1] : [note1, note2];
+    sampler.triggerAttackRelease(premiere, "4n", Tone.now());
+    // La seconde note passe par un minuteur ANNULABLE. Avant, elle était
+    // planifiée à `now + 0.65` dans le temps audio : arrêter entre les deux
+    // notes ne l'empêchait pas de sonner.
+    differer(() => {
+      try { sampler.triggerAttackRelease(seconde, "4n", Tone.now()); } catch { /* noop */ }
+    }, ECART_INTERVALLE_MS);
   } catch (e) { warn("playInterval:", e); }
 }
 
@@ -435,7 +547,8 @@ let progressionTimer = null;
  */
 export async function playProgression(chords, secondsPerChord = 1.5, onStep) {
   if (!await ensureLoaded()) return;
-  stopProgression();
+  stopAll();
+  reveillerSortie();
 
   const voicedChords = chords.map(({ root, type }) =>
     buildVoicingFromIntervals(normalizeNote(root), CHORD_TYPES[type]?.intervals || [])
@@ -472,9 +585,11 @@ export function stopProgression() {
   for (const t of progressionTimers) clearTimeout(t);
   progressionTimers = [];
   if (progressionTimer) { clearTimeout(progressionTimer); progressionTimer = null; }
-  // releaseAll() coupe ce qui résonne à l'instant. Sans lui, l'accord en
-  // cours continuerait de sonner sa seconde et demie après l'appui sur stop.
-  try { sampler?.releaseAll?.(); } catch { /* noop */ }
+  // On ne coupe PAS le son ici : c'est le rôle de stopAll(), qui sait le
+  // faire net en raccourcissant le relâchement. Appeler releaseAll() ici
+  // produisait un fondu de 1,6 s — le « stop qui ne stoppe pas ».
+  // stopProgression() reste utilisable seul pour annuler les accords À VENIR
+  // sans toucher à celui qui sonne (changement de question, par exemple).
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -536,13 +651,82 @@ export function playBadgeUnlocked() {
   return fioriture(["D4", "G4"], { gap: 0.085, duration: "4n", from: 0.58, to: 0.48 });
 }
 
+/**
+ * Coupe TOUT, instantanément : notes qui sonnent, notes à venir, queue de
+ * réverbération.
+ *
+ * Trois choses à faire, et il en manquait deux :
+ *
+ *  1. ANNULER LES NOTES À VENIR. Une note remise au contexte audio est
+ *     irrévocable — c'est pour ça que la deuxième note d'un intervalle partait
+ *     malgré le stop. Elles passent maintenant par des minuteurs annulables.
+ *  2. FERMER LA SORTIE MAÎTRE. Une rampe de 8 ms : assez court pour être perçu
+ *     comme instantané, assez long pour éviter le clic d'une coupure à zéro.
+ *     C'est ça qui rend le silence immédiat, réverbération comprise.
+ *  3. RELÂCHER LES VOIX, pour qu'elles ne reprennent pas à la réouverture de
+ *     la sortie.
+ *
+ * Ce qui NE change PAS : le relâchement du sampler reste à 1,6 s en lecture
+ * normale. Les accords résonnent exactement comme avant — c'était bien ainsi,
+ * et rien ici n'y touche. Le raccourcissement est temporaire et n'existe que
+ * pendant la fenêtre de coupure.
+ */
 export function stopAll() {
-  try { sampler?.releaseAll(); } catch {}
+  annulerEnAttente();
+  progressionTimers.forEach(clearTimeout);
+  progressionTimers = [];
+  if (progressionTimer) { clearTimeout(progressionTimer); progressionTimer = null; }
+
+  if (!Tone || !sampler) return;
+  try {
+    const maintenant = Tone.now();
+
+    // 1. Silence immédiat de la sortie.
+    if (sortieMaitre) {
+      sortieMaitre.gain.cancelScheduledValues(maintenant);
+      sortieMaitre.gain.setValueAtTime(sortieMaitre.gain.value, maintenant);
+      sortieMaitre.gain.linearRampToValueAtTime(0, maintenant + 0.008);
+    }
+
+    // 2. Libération des voix, avec un relâchement court le temps de la coupure.
+    sampler.release = 0.02;
+    sampler.releaseAll();
+
+    // 3. Réouverture après la fenêtre de coupure. La fenêtre couvre l'étalement
+    //    maximal d'un grattage (6 cordes × 65 ms = 325 ms) : une corde qui
+    //    aurait été attaquée juste après le stop est ainsi relâchée avant que
+    //    la sortie ne se rouvre, donc jamais entendue.
+    if (restaurationTimer) clearTimeout(restaurationTimer);
+    restaurationTimer = setTimeout(() => {
+      restaurationTimer = null;
+      try {
+        sampler.releaseAll();
+        sampler.release = RELEASE;
+        if (sortieMaitre) {
+          const t = Tone.now();
+          sortieMaitre.gain.cancelScheduledValues(t);
+          sortieMaitre.gain.setValueAtTime(0, t);
+          sortieMaitre.gain.linearRampToValueAtTime(1, t + 0.01);
+        }
+      } catch { /* noop */ }
+    }, 380);
+  } catch { /* noop */ }
 }
+
+/** Alias explicite, pour les appelants qui veulent « tout arrêter ». */
+export const stopEverything = stopAll;
 
 // ─────────────────────────────────────────────────────────────────────────
 // ENTRAÎNEMENT DE L'OREILLE — génération de questions
 // ─────────────────────────────────────────────────────────────────────────
+/**
+ * Durée totale audible d'une lecture, en millisecondes.
+ * @param finDerniereAttaque  instant de la dernière attaque, en secondes
+ * @param dureeNote           valeur de note Tone.js ou secondes
+ */
+const dureeMs = (finDerniereAttaque, dureeNote) =>
+  Math.round((finDerniereAttaque + secondes(dureeNote)) * 1000) + QUEUE_AUDIBLE_MS;
+
 export function generateEarTrainingQuestion(type = "interval") {
   const NOTES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
   const INTERVAL_NAMES = {
@@ -578,6 +762,8 @@ export function generateEarTrainingQuestion(type = "interval") {
       answer: semitones,
       options,
       play: () => playInterval(note1, note2, "ascending"),
+      // La 2e note attaque à 0,65 s, elle dure "4n" (0,5 s au tempo par défaut).
+      durationMs: dureeMs(0.65, "4n"),
     };
   }
 
@@ -601,6 +787,8 @@ export function generateEarTrainingQuestion(type = "interval") {
       answer:  quality.key,
       options: qualities.map(q => ({ key: q.key, label: q.label })),
       play:    () => playChord(notes, "2n", { spread: 0.065 }),
+      // Grattage étalé : la dernière corde attaque à (n-1) × 0,065 s.
+      durationMs: dureeMs((notes.length - 1) * 0.065, "2n"),
     };
   }
 
@@ -665,13 +853,17 @@ export function generateEarTrainingQuestion(type = "interval") {
       options,
       // Action principale : l'accord, directement.
       play:    () => playChord(notes, "2n", { spread: 0.065 }),
+      durationMs: dureeMs((notes.length - 1) * 0.065, "2n"),
       // Aide optionnelle, declenchee par un bouton distinct.
       playReference: () => playNote(referenceNote, "2n"),
-      referenceLabel: "Do",
+      referenceDurationMs: dureeMs(0, "2n"),
+      referenceLabel: "C",
     };
   }
 
   if (type === "progression") {
+    // Une seule source pour la cadence : l'écran ne doit pas la redéclarer.
+    const SEC_PAR_ACCORD = 1.6;
     // Suites d'accords courantes, en degres plutot qu'en notes fixes : la
     // question est transposee dans une tonalite aleatoire a chaque fois,
     // donc on ne peut pas la reussir en memorisant des hauteurs absolues.
@@ -737,7 +929,14 @@ export function generateEarTrainingQuestion(type = "interval") {
       options,
       // 1,6 s par accord : assez pour entendre chaque couleur sans perdre
       // le fil de la suite. Plus lent, la coherence harmonique se dissout.
-      play:    () => playProgression(chords, 1.6),
+      play:    (onStep) => playProgression(chords, SEC_PAR_ACCORD, onStep),
+      // Le dernier accord attaque à (n-1) × 1,6 s et sonne 90 % de l'intervalle.
+      // L'ancien calcul de l'écran (n × 1600 + 400) ignorait la queue de
+      // relâchement : le bouton repassait en « play » avec du son encore
+      // audible, et on ne pouvait plus l'arrêter.
+      durationMs: dureeMs(
+        (chords.length - 1) * SEC_PAR_ACCORD + SEC_PAR_ACCORD * 0.9, 0
+      ),
     };
   }
 
