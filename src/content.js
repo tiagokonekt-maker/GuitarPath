@@ -1468,7 +1468,7 @@ export const COURSES = [
           { type: "ref", text: "L'intro du solo de 'Stairway to Heaven' (Led Zeppelin) est en La pentatonique mineure. Le solo de 'Sweet Child O' Mine' (Guns N' Roses) aussi. Le riff de 'Smoke on the Water' (Deep Purple) utilise la même gamme. Une fois que tu la connais, tu reconnaîtras la pentatonique mineure dans 80% des solos rock que tu écoutes." },
           { type: "tip", text: "Programme intensif : pendant 7 jours, fais 10 minutes par jour de pentatonique mineure de La position 1, à 60 BPM en montant et en descendant. Au bout d'une semaine, c'est sous tes doigts à vie." },
         ],
-        quiz: ["q-scales-20","q-impro-04"],
+        quiz: ["q-scales-20","q-impro-04", "q-impro-16", "q-impro-17", "q-impro-20"],
       },
       {
         id: "scales-c3-02", level: 6,
@@ -1542,7 +1542,7 @@ export const COURSES = [
           { type: "ref", text: "Pour visualiser : David Gilmour (Pink Floyd) utilise les 5 positions dans le solo de 'Comfortably Numb'. Il commence en position 1, monte en position 2, atteint un climax en position 4 (aigu), puis redescend en position 5. C'est une démonstration parfaite de l'utilisation pédagogique des 5 positions." },
           { type: "tip", text: "Plan d'apprentissage 5 semaines : 1 semaine par position. Chaque jour : 10 min de la position du moment. À la fin de la semaine 5, tu connais les 5 positions. À la fin de la semaine 7, tu les connectes fluide. C'est l'investissement le plus rentable pour un guitariste rock/blues." },
         ],
-        quiz: ["q-logic-01","q-scales-02"],
+        quiz: ["q-logic-01","q-scales-02", "q-impro-18"],
       },
       {
         id: "scales-c3-03", level: 6,
@@ -1587,7 +1587,7 @@ export const COURSES = [
           { type: "ref", text: "Reconnaître une pentatonique majeure : 'My Girl' (The Temptations) commence par une mélodie pure pentatonique majeure de Do. 'Stand By Me' (Ben E. King) utilise la pentatonique majeure de La. Le riff principal de 'Sweet Home Alabama' (Lynyrd Skynyrd) est en pentatonique majeure. Country, soul, classic rock — partout." },
           { type: "tip", text: "Astuce d'impro : pour passer de 'son blues' à 'son country' sans changer de position, garde la même forme sur le manche mais commence/termine tes phrases sur une note différente (la fondamentale majeure au lieu de la mineure). Ta tonalité change, mais pas ton effort technique." },
         ],
-        quiz: ["q-scales-06","q-scales-07"],
+        quiz: ["q-scales-06","q-scales-07", "q-impro-21"],
       },
       {
         id: "scales-c3-04", level: 6,
@@ -1632,7 +1632,7 @@ export const COURSES = [
           { type: "ref", text: "Pour entendre la blue note 'pure' : 'The Thrill is Gone' (B.B. King) regorge de blue notes. Le solo final de 'Crossroads' (Cream/Eric Clapton) utilise massivement la gamme blues. 'Texas Flood' (Stevie Ray Vaughan) est un cours magistral sur la gamme blues complète." },
           { type: "tip", text: "Pratique du soir : sur une backing track de blues en La (12 mesures), improvise pendant 10 minutes en utilisant exclusivement la gamme blues. Force-toi à utiliser la b5 au moins 5 fois — toujours en passage, jamais en résolution. Tu vas développer un vrai feel blues en quelques semaines." },
         ],
-        quiz: ["q-scales-09","q-scales-10"],
+        quiz: ["q-scales-09","q-scales-10", "q-impro-19"],
       },
       {
         id: "scales-c4-01", level: 7,
@@ -2454,7 +2454,7 @@ export const COURSES = [
           { type: "ref", text: "Pour entendre chaque type dans un contexte réel : 'Happy Birthday' (majeur), 'Scarborough Fair' (mineur), le passage entre les accords dans 'Hark the Herald Angels Sing' (diminué en transition), 'Oh ! You Pretty Things' de David Bowie commence sur un accord augmenté. Écoute ces passages et identifie la couleur." },
           { type: "tip", text: "Drill des 4 types : depuis Do (c5 case 3), joue successivement : Do majeur (Do-Mi-Sol), Do mineur (Do-Mib-Sol), Do diminué (Do-Mib-Solb), Do augmenté (Do-Mi-Sol#). Écoute la progression de couleur : de brillant à sombre à tendu à flottant. 4 accords, 4 univers." },
         ],
-        quiz: ["q-harm-01","q-harm-05","q-harm-01"],
+        quiz: ["q-harm-01","q-harm-05","q-harm-01", "q-impro-22"],
       },
       {
         id: "harm-c2-02", level: 5,
@@ -3337,7 +3337,7 @@ export const COURSES = [
           { type: "p", text: "Un grand solo a une forme : intro calme (présente le mood), développement (monte en intensité), climax (note tenue, bend, point haut), résolution (descente vers la tonique, calme final). C'est la structure d'une histoire. Penses à 'Comfortably Numb' (Gilmour) — c'est l'archétype." },
           { type: "tip", text: "Drill 'phrasing pur' : 5 minutes de solo Am sur métronome lent (60bpm). Règle : maximum 4 notes par phrase, minimum 2 mesures de silence entre phrases. Cette contrainte t'oblige à phraser." },
         ],
-        quiz: ["q-rhy-11", "q-rhy-12"],
+        quiz: ["q-rhy-11", "q-rhy-12", "q-rhy-35", "q-rhy-36"],
       },
 
     
@@ -3370,7 +3370,7 @@ export const COURSES = [
           { type: "ref", text: "James Brown, le 'Godfather of Soul', avait un sens du rythme si précis qu'il pouvait arrêter et reprendre une chanson n'importe où en claquant des doigts, et l'orchestre entier le suivait sans décalage. Ce n'est pas un don — c'est le résultat de milliers d'heures de pratique rythmique. Son secret : il faisait autant attention au rythme qu'aux notes." },
           { type: "tip", text: "Exercice fondamental : tape le pied sur les temps (1-2-3-4) en gardant un tempo parfaitement régulier pendant 1 minute. Facile ? Maintenant fais-le à 60 BPM en regardant une montre. Sans accélérer, sans ralentir. Si tu dévies, recommence. Ce simple exercice révèle la qualité de ton sens rythmique interne." },
         ],
-        quiz: ["q-rhy-01","q-base-06","q-base-07"],
+        quiz: ["q-rhy-01","q-base-06","q-base-07", "q-rhy-27", "q-rhy-28"],
       },
       {
         id: "rhy-c1-02", level: 2,
@@ -3411,7 +3411,7 @@ export const COURSES = [
           { type: "ref", text: "'Money' (Pink Floyd, 1973) est en 7/4 — 7 temps par mesure. La ligne de basse iconique (7 notes) est la signature de la mesure. En live, les musiciens doivent compter constamment pour ne pas se perdre. C'est le contraste avec le 4/4 habituel qui rend ce morceau si particulier. Écoute-le en comptant 1-2-3-4-5-6-7 : tu sentiras l'asymétrie." },
           { type: "tip", text: "Drill : mets un métronome à 80 BPM et compte les mesures à voix haute pendant 2 minutes. '1-2-3-4, 2-2-3-4, 3-2-3-4...' (numéro de mesure + numéro de temps). Simple mais révélateur : combien de mesures perdent leur numéro ? Développe ce comptage instinctif." },
         ],
-        quiz: ["q-rhy-01","q-base-14"],
+        quiz: ["q-rhy-01","q-base-14", "q-rhy-29", "q-rhy-30"],
       },
       {
         id: "rhy-c1-03", level: 2,
@@ -3444,7 +3444,7 @@ export const COURSES = [
           { type: "ref", text: "Jeff Porcaro (batteur de Toto, l'un des grands batteurs de studio des années 80) s'entraînait au métronome tous les matins pendant 30 minutes avant toute session. Sa précision légendaire ('Rosanna groove') venait directement de cette discipline quotidienne. Les musiciens de studio les plus demandés sont ceux dont le 'time' est impeccable." },
           { type: "tip", text: "Défi du mois : chaque jour de pratique, commence par 5 minutes de métronome pur. Pas de mélodie, pas d'accords — juste frapper sur chaque temps (ou chaque contretemps) avec une seule note. 5 minutes par jour × 30 jours = un sens du temps transformé." },
         ],
-        quiz: [],
+        quiz: ["q-rhy-13", "q-rhy-14", "q-rhy-15"],
       },
       {
         id: "rhy-c2-01", level: 3,
@@ -3496,7 +3496,7 @@ export const COURSES = [
           { type: "ref", text: "'With or Without You' (U2) : la ligne de basse et la guitare d'Adam Clayton/The Edge jouent principalement des rondes et blanches pendant les couplets. Cette lenteur délibérée crée l'espace émotionnel de la chanson. Les notes longues ont autant de puissance expressive que les notes rapides." },
           { type: "tip", text: "Drill des valeurs : à 60 BPM, joue 4 mesures en rondes, 4 en blanches, 4 en noires sur un accord de Am. Puis redescends (noires → blanches → rondes). Entends comment la densité change sans que le tempo ne bouge. C'est le premier exercice de subdivisions." },
         ],
-        quiz: ["q-base-19"],
+        quiz: ["q-base-19", "q-rhy-25", "q-rhy-26"],
       },
       {
         id: "rhy-c2-02", level: 4,
@@ -3537,7 +3537,7 @@ export const COURSES = [
           { type: "ref", text: "'Superstition' (Stevie Wonder, 1972) : le riff de clavicorde joue des doubles-croches syncopées. La batterie aussi. C'est le pattern de doubles-croches qui crée le groove irrésistible. Sur guitare, pour reproduire ce son funk, tu dois penser en doubles-croches : main droite qui bouge en permanence à 16 coups par mesure." },
           { type: "tip", text: "Drill progression : à 70 BPM, joue 2 mesures de noires, 2 de croches, 2 de doubles-croches, puis reviens (doubles-croches → croches → noires). Sans t'arrêter. La transition entre les valeurs doit être fluide. C'est le drill de base de tout professeur de rythme." },
         ],
-        quiz: [],
+        quiz: ["q-rhy-16", "q-rhy-17", "q-rhy-18"],
       },
       {
         id: "rhy-c2-03", level: 6,
@@ -3570,7 +3570,7 @@ export const COURSES = [
           { type: "ref", text: "Pour entendre le triolet pur : 'My Favorite Things' (Coltrane version, 1960) est en 3/4 avec des triolets omniprésents. 'Hit the Road Jack' (Ray Charles) a un riff de piano en triolets de croches. Le générique de 'Star Wars' (John Williams) commence sur un triolet. Une fois que tu l'entends, il est partout." },
           { type: "tip", text: "Drill triolets : à 60 BPM, alterne 2 mesures de croches normales (1-et-2-et-3-et-4-et) et 2 mesures de triolets (1-trip-let-2-trip-let). Sans t'arrêter entre les transitions. L'objectif : que ton corps sente la différence binaire/ternaire sans avoir à calculer." },
         ],
-        quiz: ["q-rhy-11","q-impro-13"],
+        quiz: ["q-rhy-11","q-impro-13", "q-rhy-31", "q-rhy-32"],
       },
       {
         id: "rhy-c2-04", level: 4,
@@ -3693,7 +3693,7 @@ export const COURSES = [
           { type: "ref", text: "Clyde Stubblefield, le batteur de James Brown sur 'Funky Drummer' (1970), joue un break de batterie qui a été samplé des centaines de fois par des rappeurs et des producteurs. Ce beat 'groovy' est construit sur des ghost notes, des syncopes précises, et une régularité métronomique. C'est l'exemple parfait de tout ce qui crée le groove." },
           { type: "tip", text: "Test groove personnel : enregistre 2 minutes de guitare rythmique sur un accord de Am avec métronome à 90 BPM. Joue le pattern le plus simple possible (une croche par temps, alternance bas-haut). Écoute l'enregistrement : est-ce que ça groove ? Si non, identifie les moments où le temps 'coule' : c'est là que tu travailles." },
         ],
-        quiz: ["q-impro-13","q-logic-06"],
+        quiz: ["q-impro-13","q-logic-06", "q-rhy-33", "q-rhy-34"],
       },
       {
         id: "rhy-c4-01", level: 3,
@@ -3721,7 +3721,7 @@ export const COURSES = [
           { type: "ref", text: "Tommy Emmanuel (guitariste australien virtuose de fingerstyle et flatpicking) passe les premières 10 minutes de chaque session à travailler uniquement le mouvement pendulaire de la main droite sur une corde. Il dit que c'est cet exercice quotidien qui lui a permis de développer le groove qu'il a aujourd'hui après 50 ans de guitare." },
           { type: "tip", text: "Drill main droite (5 min) : pas d'accords. Une seule corde (c5 vide). Mouvement pendulaire continu à 80 BPM. Accent légèrement plus fort sur les coups bas. Ne t'arrête pas, ne regarde pas ta main. Si tu dévies du métronome, c'est là où tu travailles." },
         ],
-        quiz: [],
+        quiz: ["q-rhy-19", "q-rhy-20", "q-rhy-21"],
       },
       {
         id: "rhy-c4-02", level: 4,
@@ -3766,7 +3766,7 @@ export const COURSES = [
           { type: "ref", text: "Noel Gallagher (Oasis) utilise principalement 2 patterns : un pattern pop syncopé pour les ballades ('Wonderwall', 'Don't Look Back in Anger') et des downstrokes rock pour les morceaux énergiques. Écoute ces deux chansons en te concentrant uniquement sur sa main droite." },
           { type: "tip", text: "Apprentissage des patterns : prends le pattern pop syncopé. Joue-le d'abord sur UNE SEULE corde à 60 BPM. Quand c'est fluide, joue sur 2 cordes. Puis sur l'accord complet. Cette progression évite de gérer trop de variables en même temps." },
         ],
-        quiz: [],
+        quiz: ["q-rhy-22", "q-rhy-23", "q-rhy-24"],
       },
       {
         id: "rhy-c4-03", level: 6,
@@ -3855,7 +3855,7 @@ export const COURSES = [
           { type: "ref", text: "'No Woman No Cry' (Bob Marley, 1975) : écoute la guitare et le piano dans le fond. Ils skanquent sur les contretemps pendant que la basse de Family Man Barrett tient les temps. 'The Harder They Come' (Jimmy Cliff, 1972) : exemple de ska à la limite du reggae early. 'What I Got' (Sublime, 1996) : ska-punk où la guitare skanque à tempo rapide." },
           { type: "tip", text: "Drill skank (10 min) : backing reggae en Do à 75 BPM (YouTube). Joue UNIQUEMENT sur les 'et' de chaque temps avec des accords courts et étouffés. Commence lentement (60 BPM). Compte à voix haute : 'silence(1) - chord(et) - silence(2) - chord(et)...' Ton oreille va s'inverser — après 5 minutes, le 'et' devient ta référence naturelle." },
         ],
-        quiz: ["q-rhy-04","q-rhy-06"],
+        quiz: ["q-rhy-04","q-rhy-06", "q-rhy-37"],
       },
       {
         id: "rhy-c5-03", level: 8,
@@ -3893,7 +3893,7 @@ export const COURSES = [
           { type: "ref", text: "'Le Freak' (CHIC, 1978) : le riff de guitare de Nile Rodgers = parfait exemple de ghost notes + accents en 16e. 'Get Up (I Feel Like Being a) Sex Machine' (James Brown, 1970) : riff de guitare en 16e avec ghost notes omniprésents. 'Give It Away' (Red Hot Chili Peppers, 1991) : John Frusciante adapte le funk au rock en maintenant les 16e continues." },
           { type: "tip", text: "Drill funk (15 min) : sur Am9 (accord Am avec 9e = La-Do-Mi-Si), joue un flux continu de 16e notes à 85 BPM. Main gauche : alterne pression complète (son) et relâchement (ghost). Main droite : bas-haut permanent. Commence avec un accent sur le 1 et sur le 'et-2', ghost partout ailleurs. Augmente progressivement la complexité rythmique." },
         ],
-        quiz: ["q-rhy-07","q-rhy-09"],
+        quiz: ["q-rhy-07","q-rhy-09", "q-rhy-38"],
       },
       {
         id: "rhy-c5-04", level: 9,
@@ -3921,7 +3921,7 @@ export const COURSES = [
           { type: "ref", text: "'The Girl from Ipanema' (Tom Jobim / Vinicius de Moraes, 1962 créée par João Gilberto) : la version originale fingerstyle de João Gilberto est la référence. 'Corcovado' (Quiet Nights) et 'Desafinado' sont aussi des exemples emblématiques. Pour la guitare seule, cherche les arrangements de Baden Powell ou de João Bosco." },
           { type: "tip", text: "Plan bossa sur 2 semaines : Semaine 1 - joue uniquement les accords sur les contretemps à 65 BPM (pattern simplifié). Semaine 2 - ajoute le pouce sur les temps forts. L'indépendance viendra progressivement. Ne force pas — la bossa demande de la patience mais récompense magnifiquement." },
         ],
-        quiz: ["q-rhy-10","q-rhy-12"],
+        quiz: ["q-rhy-10","q-rhy-12", "q-rhy-39"],
       },
       {
         id: "rhy-c5-05", level: 9,
@@ -3972,7 +3972,7 @@ export const COURSES = [
           { type: "ref", text: "Écoute comparative : 'Freddie King Is a Blues Master' (Freddie King) = laid-back extrême, les notes traînent. 'Bireli Lagrene joue Minor Swing' = on-top, chaque note pousse. 'James Brown - Super Bad' = in-the-pocket parfait, les musiciens 'lockés' comme des machines. Trois feels, trois émotions complètement différentes." },
           { type: "tip", text: "Exercice de micro-timing : joue une gamme de Do avec un métronome à 60 BPM. D'abord in-the-pocket (pile sur le clic). Puis essaie de jouer chaque note 20% plus tard (laid-back). Puis 20% plus tôt (on-top). Tu vas probablement avoir du mal à contrôler ces variations — c'est normal. Ce contrôle se développe sur des années de pratique consciente." },
         ],
-        quiz: ["q-rhy-07","q-rhy-09"],
+        quiz: ["q-rhy-07","q-rhy-09", "q-rhy-40"],
       },
       {
         id: "rhy-c6-02", level: 9,
@@ -3997,7 +3997,7 @@ export const COURSES = [
           { type: "ref", text: "Keith Richards (Rolling Stones) dit qu'il enregistre toutes ses idées de riffs la nuit avec un petit dictaphone. Beaucoup de ses riffs célèbres sont nés à 3h du matin. 'Satisfaction' est venu dans son sommeil — il s'est réveillé, a mis le dictaphone en marche, a joué le riff, puis s'est rendormi. Le lendemain, l'enregistrement était là." },
           { type: "tip", text: "Projet riff : crée 1 riff par semaine. Chaque lundi, tu as un nouveau riff à créer sur la base du style étudié (blues la semaine 1, reggae la semaine 2, funk la semaine 3, etc.). En 10 semaines, tu as 10 riffs personnels. C'est le début de ton vocabulaire musical propre." },
         ],
-        quiz: ["q-rhy-10","q-rhy-12"],
+        quiz: ["q-rhy-10","q-rhy-12", "q-rhy-41"],
       },
 
 ],
@@ -4034,7 +4034,7 @@ export const COURSES = [
             { type: "p", text: "90% des débutants varient les notes mais jouent toujours le même rythme. Les pros font l'inverse : ils varient le rythme sur peu de notes. Prends juste La-Do-Mi (3 notes d'Am) et joue-les en blanches, puis en croches, puis avec des syncopes, puis avec des triolets. Tu viens d'obtenir 10 phrases différentes avec 3 notes." },
             { type: "fretboard_interactive", mode: "scale", root: "A", scale: "pentatonic_minor", caption: "Pentatonique de La — 5 notes suffisent pour des heures d'impro", displayMode: "notes", lang: "fr", compact: true },
           ],
-          quiz: ["q-impro-01"],
+          quiz: ["q-impro-01", "q-impro-23", "q-impro-24"],
         },
   
         {
@@ -4054,7 +4054,7 @@ export const COURSES = [
             { type: "fretboard_interactive", mode: "chord", root: "G", chord: "dom7", caption: "G7 — guide tones : Si (3e) et Fa (7e mineure)", displayMode: "intervals", lang: "fr", compact: true },
             { type: "tip", text: "Exercice quotidien : sur un accord tenu (Am pendant 4 mesures), joue des phrases qui finissent TOUJOURS sur La, Do, Mi ou Sol. Force-toi à atterrir sur ces notes. Au bout de 10 minutes, tu entends la différence." },
           ],
-          quiz: ["q-impro-04", "q-impro-05"],
+          quiz: ["q-impro-04", "q-impro-05", "q-impro-25", "q-impro-26"],
         },
   
         {
@@ -4073,7 +4073,7 @@ export const COURSES = [
             { type: "fretboard_interactive", mode: "scale", root: "C", scale: "major", caption: "Do majeur sur Cmaj7 — Fa (4e, degré 4) est l'avoid note", displayMode: "degrees", lang: "fr", compact: true },
             { type: "tip", text: "Exercice enclosure : cible Mi (3e de Cmaj7). Avant Mi, joue Fa→Mib→Mi. Répète 20 fois. Intègre dans une phrase. Tu viens d'apprendre un lick bebop." },
           ],
-          quiz: ["q-impro-06", "q-impro-10"],
+          quiz: ["q-impro-06", "q-impro-10", "q-impro-27", "q-impro-28"],
         },
   
         {
@@ -4092,7 +4092,7 @@ export const COURSES = [
             { type: "p", text: "Sur Dm7→G7→Cmaj7 : Fa (3 de Dm7) reste sur G7 (devient b7), puis descend vers Mi (3 de Cmaj7). Do (b7 de Dm7) descend vers Si (3 de G7), reste Si (b7 de Cmaj7). Ces mouvements chromatiques sont le moteur de la progression. Les entendre et les cibler = jouer le changement." },
             { type: "tip", text: "Exercice : sur ii-V-I en Do (60 BPM), joue une seule note par accord : Fa sur Dm7, Si sur G7, Mi sur Cmaj7. Tu viens de 'jouer le changement' avec 3 notes. Construis des phrases autour de ces cibles." },
           ],
-          quiz: ["q-impro-02", "q-impro-03", "q-impro-07"],
+          quiz: ["q-impro-02", "q-impro-03", "q-impro-07", "q-impro-31"],
         },
   
         {
@@ -4110,7 +4110,7 @@ export const COURSES = [
             { type: "fretboard_interactive", mode: "scale", root: "A", scale: "pentatonic_minor", caption: "Pentatonique mineure de La — registre complet pour ton voyage", displayMode: "notes", lang: "fr", compact: true },
             { type: "tip", text: "Enregistre-toi sur un backing Am de 32 mesures. Réécoute. Dessine une courbe d'intensité (1 à 10) mesure par mesure. Le climax est-il aux 2/3 ? Si non, recommence en t'imposant cette contrainte." },
           ],
-          quiz: ["q-impro-13"],
+          quiz: ["q-impro-13", "q-impro-29"],
         },
   
         {
@@ -4129,7 +4129,7 @@ export const COURSES = [
             { type: "p", text: "Sur G7 (V dans Do), tu peux substituer Db7. G7 et Db7 partagent les mêmes guide tones (Si/Do et Fa) — l'oreille accepte. Sur Dm7-G7-Cmaj7 : Dm7-Db7-Cmaj7. La basse descend chromatiquement Ré→Réb→Do. Mouvement luxueux du jazz moderne." },
             { type: "tip", text: "Apprends 1 lick par semaine dans toutes les tonalités (12 semaines = 12 licks). Au bout de 3 mois : 12 licks × 12 tonalités = vocabulaire suffisant pour improviser sur n'importe quel standard." },
           ],
-          quiz: ["q-impro-08", "q-impro-09", "q-impro-11", "q-impro-12", "q-impro-14", "q-impro-15"],
+          quiz: ["q-impro-08", "q-impro-09", "q-impro-11", "q-impro-12", "q-impro-14", "q-impro-15", "q-impro-30"],
         },
   
       ],
@@ -4307,6 +4307,56 @@ export const QUIZ = [
   {id:"q-fret-harm-08",type:"fretboard",courseId:"harmony",lessonId:"harmony-06",lvl:3,q:"Sur G7 : trouve toutes les notes Si (3e — guide tone principal)",concept:{type:"find_note",root:"B"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Si est à vide sur la corde 2. C'est ta note cible d'arrivée sur G7.",xp:60,exp:"Si en : corde 6 case 7, corde 5 case 2, corde 4 case 9, corde 3 case 4, corde 2 à vide, corde 1 case 7. Cibles d'arrivée sur G7."},
   {id:"q-fret-harm-09",type:"fretboard",courseId:"harmony",lessonId:"harmony-06",lvl:3,q:"Sur G7 : trouve toutes les notes Fa (7e — tension à résoudre)",concept:{type:"find_note",root:"F"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Fa est case 1 corde 1. La 7e de G7 veut se résoudre vers Mi (Cmaj7).",xp:60,exp:"Fa en : corde 6 case 1, corde 5 case 8, corde 4 case 3, corde 3 case 10, corde 2 case 6, corde 1 case 1. La résolution Fa→Mi est le mouvement fondamental du ii-V-I."},
   {id:"q-fret-harm-10",type:"fretboard",courseId:"harmony",lessonId:"harmony-04",lvl:2,q:"Harmonisation Do majeur : trouve toutes les notes Mi (3e du I)",concept:{type:"find_note",root:"E"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Mi à vide sur cordes 6 et 1. Tierce de Do majeur.",xp:50,exp:"Mi en : corde 6 à vide, corde 5 case 7, corde 4 case 2, corde 3 case 9, corde 2 case 5, corde 1 à vide. La tierce majeure de Cmaj7."},
+
+
+  // ── Rééquilibrage rythme et improvisation ────────────────────────────
+  // Le module rythme comptait 17 questions pour 24 leçons, dont quatre sans
+  // aucune question propre. Le module impro n'avait qu'une question facile.
+  {id:"q-rhy-13",courseId:"rhythm",lessonId:"rhy-c1-03",lvl:1,q:"À quoi sert d'abord un métronome quand on travaille ?",o:["À révéler où on accélère ou on ralentit","À rendre le jeu plus mécanique","À compter les mesures d'un morceau","À jouer plus vite qu'on ne le pourrait"],a:0,exp:"Le métronome ne te fait pas jouer plus vite : il te montre où tu décales. On accélère presque toujours dans les passages faciles et on ralentit dans les difficiles — sans référence extérieure, on ne l'entend pas.",xp:25},
+  {id:"q-rhy-14",courseId:"rhythm",lessonId:"rhy-c1-03",lvl:2,q:"Un passage ne passe pas à 100 bpm. Que fais-tu ?",o:["Tu sautes le passage pour y revenir plus tard","Tu descends au tempo où c'est propre, puis tu montes par paliers","Tu répètes à 100 jusqu'à ce que ça finisse par passer","Tu joues plus fort pour te donner de l'élan"],a:1,exp:"Répéter à un tempo où c'est raté, c'est mémoriser l'erreur. On descend jusqu'au tempo où les notes sont justes et régulières, puis on monte de 5 en 5. Plus lent sur une séance, bien plus rapide sur un mois.",xp:30},
+  {id:"q-rhy-15",courseId:"rhythm",lessonId:"rhy-c1-03",lvl:3,q:"Mettre le métronome sur les temps 2 et 4 seulement, ça sert à…",o:["Réduire le bruit pendant le travail","Simplifier le comptage des mesures","Se reposer sur une pulsation intérieure plus solide","Pouvoir jouer deux fois plus vite"],a:2,exp:"Avec un clic seulement sur 2 et 4, c'est toi qui portes les temps 1 et 3. C'est l'exercice de tempo le plus révélateur qui soit — et c'est aussi la place du clic dans le jazz et la soul.",xp:40},
+  {id:"q-rhy-16",courseId:"rhythm",lessonId:"rhy-c2-02",lvl:1,q:"Une croche dure combien par rapport à une noire ?",o:["Le double","Le quart","La même chose","La moitié"],a:3,exp:"Chaque valeur vaut la moitié de la précédente : ronde, blanche, noire, croche, double-croche. Deux croches remplissent exactement un temps en 4/4.",xp:25},
+  {id:"q-rhy-17",courseId:"rhythm",lessonId:"rhy-c2-02",lvl:2,q:"Comment compte-t-on à voix haute une mesure de doubles-croches ?",o:["1-e-et-a, 2-e-et-a, 3-e-et-a, 4-e-et-a","1-et-2-et-3-et-4-et","1-2-3-4 en accélérant","1-2-3, 1-2-3, 1-2-3"],a:0,exp:"Quatre syllabes par temps, une par double-croche. Ce comptage n'est pas décoratif : il donne un nom à chaque emplacement, et c'est ce qui permet de placer une note exactement où tu veux.",xp:30},
+  {id:"q-rhy-18",courseId:"rhythm",lessonId:"rhy-c2-02",lvl:3,q:"Une croche pointée suivie d'une double-croche occupe…",o:["Deux temps, soit la moitié d'une mesure","Un temps, découpé en trois quarts puis un quart","Un temps et demi, comme la blanche pointée","Un demi-temps, comme deux doubles-croches"],a:1,exp:"Le point ajoute la moitié de la valeur : la croche pointée vaut trois doubles-croches, la double qui suit en vaut une. Total : un temps. C'est le rythme de base du rock des années 50 et de quantité de riffs.",xp:40},
+  {id:"q-rhy-19",courseId:"rhythm",lessonId:"rhy-c4-01",lvl:1,q:"En strumming, pourquoi garder la main droite en mouvement continu ?",o:["Pour user moins vite le médiator et les cordes","Pour jouer plus fort et mieux projeter le son","Pour que le bras garde la pulsation, même sans toucher les cordes","Pour économiser son énergie sur les longs morceaux"],a:2,exp:"Le bras devient le métronome. Si le mouvement s'arrête entre deux accords, le tempo s'arrête avec lui. On continue le balancier et on ne touche les cordes qu'aux moments voulus.",xp:25},
+  {id:"q-rhy-20",courseId:"rhythm",lessonId:"rhy-c4-01",lvl:2,q:"Dans un mouvement pendulaire en croches, le coup vers le haut tombe sur…",o:["Les fins de mesure uniquement","Les temps eux-mêmes","Le premier temps seulement","Les « et », entre les temps"],a:3,exp:"Descente sur les temps, remontée sur les « et ». Cette correspondance est constante : elle te dit instantanément quel coup employer pour n'importe quelle figure écrite en croches.",xp:30},
+  {id:"q-rhy-21",courseId:"rhythm",lessonId:"rhy-c4-01",lvl:3,q:"Pour jouer un rythme en doubles-croches à tempo rapide, la main droite doit…",o:["Accélérer progressivement ses allers-retours en croches","Doubler la vitesse du balancier, en gardant la même amplitude par temps","Ne faire que des coups vers le bas, plus rapprochés","Réduire son amplitude de moitié à chaque note"],a:1,exp:"On ne joue pas des doubles-croches en accélérant un mouvement de croches : on installe un balancier deux fois plus rapide dès le départ. Le repère reste le temps, jamais la note.",xp:40},
+  {id:"q-rhy-22",courseId:"rhythm",lessonId:"rhy-c4-02",lvl:1,q:"Le pattern de strumming le plus répandu en pop tient en combien de temps ?",o:["Un seul temps, répété","Deux temps, répétés deux fois","Une mesure de quatre temps","Quatre mesures complètes"],a:2,exp:"La quasi-totalité des patterns pop se bouclent sur une mesure de 4/4 et se répètent. En apprendre un solide t'ouvre des centaines de morceaux — c'est le meilleur rapport effort/répertoire de la guitare.",xp:25},
+  {id:"q-rhy-23",courseId:"rhythm",lessonId:"rhy-c4-02",lvl:2,q:"Dans un pattern, sauter un coup vers le bas signifie…",o:["Qu'on immobilise le bras un instant","Que le bras descend sans toucher les cordes","Qu'on étouffe les cordes de la main gauche","Qu'on profite du vide pour changer d'accord"],a:1,exp:"Le mouvement ne s'interrompt jamais, on lève simplement le médiator au-dessus des cordes. C'est ce qui fait qu'un pattern à trous garde son assise, au lieu de sonner haché.",xp:30},
+  {id:"q-rhy-24",courseId:"rhythm",lessonId:"rhy-c4-02",lvl:3,q:"Pourquoi un même pattern sonne folk sur une guitare et rock sur une autre ?",o:["Parce que le tempo employé n'est pas le même","Parce que les accords choisis sont différents","À cause des accents, de l'étouffement et des cordes touchées","À cause du nombre de cordes de l'instrument"],a:2,exp:"Le squelette rythmique est identique ; ce qui change est l'interprétation — accents plus marqués, palm mute, attaque limitée aux cordes graves. Un pattern n'est pas un genre, c'est une grille qu'on habille.",xp:40},
+  {id:"q-rhy-25",courseId:"rhythm",lessonId:"rhy-c2-01",lvl:1,q:"Combien de noires dans une ronde ?",o:["2","3","4","8"],a:2,exp:"Ronde = 2 blanches = 4 noires = 8 croches. Cette pyramide est la base de toute lecture rythmique : chaque étage vaut le double du suivant.",xp:25},
+  {id:"q-rhy-26",courseId:"rhythm",lessonId:"rhy-c2-01",lvl:2,q:"En 3/4, une blanche pointée occupe…",o:["La mesure entière","La moitié de la mesure","Deux mesures complètes","Un temps et demi seulement"],a:0,exp:"La blanche vaut 2 temps, le point en ajoute 1 : 3 temps, soit toute la mesure en 3/4. C'est l'accord tenu typique de la valse.",xp:30},
+  {id:"q-rhy-27",courseId:"rhythm",lessonId:"rhy-c1-01",lvl:1,q:"Entre un guitariste qui joue des notes savantes mal placées et un autre qui joue des notes simples bien placées…",o:["Les deux sonnent équivalents","Le premier sonne nettement mieux","Le second sonne nettement mieux","Tout dépend de l'accordage employé"],a:2,exp:"Une note juste au mauvais moment s'entend comme une erreur ; une note simple bien placée s'entend comme de la musique. C'est le rythme, pas le vocabulaire, qui sépare le plus nettement l'amateur du professionnel.",xp:25},
+  {id:"q-rhy-28",courseId:"rhythm",lessonId:"rhy-c1-01",lvl:2,q:"La pulsation d'un morceau, c'est…",o:["Le dessin rythmique de la mélodie","La vitesse des notes les plus rapides","L'accentuation des temps forts","La régularité sous-jacente sur laquelle on taperait du pied"],a:3,exp:"La pulsation est la grille régulière ; le rythme est ce qu'on pose dessus. On peut jouer beaucoup de notes sur une pulsation lente, et peu sur une rapide — ce sont deux choses distinctes.",xp:30},
+  {id:"q-rhy-29",courseId:"rhythm",lessonId:"rhy-c1-02",lvl:2,q:"Dans une signature 4/4, que signifie le chiffre du bas ?",o:["L'unité de temps : la noire","Le nombre de mesures du morceau","Le tempo auquel jouer","Le nombre de cordes à gratter"],a:0,exp:"Le haut dit combien de temps par mesure, le bas dit quelle valeur vaut un temps — 4 désigne la noire. En 6/8, le 8 désigne la croche, et tout le comptage change.",xp:30},
+  {id:"q-rhy-30",courseId:"rhythm",lessonId:"rhy-c1-02",lvl:3,q:"Pourquoi le 4/4 est-il parfois noté d'un simple C ?",o:["Pour « croche », qui serait l'unité de temps","Pour « commun » : c'est la mesure la plus répandue","Pour l'accord de Do, tonalité de référence","Pour « continu », car le tempo ne varie pas"],a:1,exp:"C signifie tempus commune, la mesure commune. Le C barré désigne le 2/2 (alla breve), où l'on compte deux temps à la blanche — utile à reconnaître sur les partitions de jazz rapides.",xp:40},
+  {id:"q-rhy-31",courseId:"rhythm",lessonId:"rhy-c2-03",lvl:2,q:"Comment compte-t-on un triolet de croches à voix haute ?",o:["1-et-2-et","1-e-et-a","1-o-let, 2-o-let","1-2-3-4"],a:2,exp:"« Tri-o-let » ou « 1-o-let » : trois syllabes régulières par temps. Prononcer le découpage est le moyen le plus fiable de sentir un ternaire quand on vient d'un binaire.",xp:30},
+  {id:"q-rhy-32",courseId:"rhythm",lessonId:"rhy-c2-03",lvl:3,q:"Quelle est la différence entre jouer en 12/8 et jouer des triolets en 4/4 ?",o:["Le 12/8 se joue nécessairement plus vite","Le 12/8 compte quatre temps de moins","Le 12/8 se joue aux doigts, sans médiator","Aucune à l'oreille : seule l'écriture change"],a:3,exp:"Les deux donnent quatre temps subdivisés en trois. La différence est d'écriture et d'intention : on note en 12/8 quand le ternaire est la norme du morceau, et en triolets quand c'est un écart ponctuel dans un contexte binaire.",xp:40},
+  {id:"q-rhy-33",courseId:"rhythm",lessonId:"rhy-c3-03",lvl:2,q:"Deux guitaristes jouent les mêmes notes au même tempo, et un seul « groove ». Qu'est-ce qui change ?",o:["Le placement précis et le dosage des accents","Le choix des positions d'accords","Le volume général de l'instrument","Le type de cordes installées"],a:0,exp:"Le groove tient à des écarts de quelques millisecondes et à la hiérarchie des accents. C'est mesurable, et c'est travaillable — contrairement à ce que laisse croire le mot « feeling ».",xp:30},
+  {id:"q-rhy-34",courseId:"rhythm",lessonId:"rhy-c3-03",lvl:3,q:"Les ghost notes servent à…",o:["Remplir les silences avec des notes bien audibles","Marquer plus nettement les temps forts","Maintenir le mouvement par des attaques étouffées, presque inaudibles","Atteindre des tempos plus rapides"],a:2,exp:"Ce sont des attaques étouffées par la main gauche : on entend la percussion, pas la hauteur. Elles remplissent la grille rythmique sans encombrer l'harmonie, et c'est le cœur du jeu funk.",xp:40},
+  {id:"q-rhy-35",courseId:"rhythm",lessonId:"rhythm-04",lvl:3,q:"Jouer « laid-back » signifie placer les notes…",o:["Juste avant le temps","Très légèrement après le temps","Exactement sur le temps","En dehors de la mesure"],a:1,exp:"Un placement très légèrement en retard, sans perdre le tempo — d'où l'impression de détente du jazz et de la soul. Jouer « on top » (juste devant) produit l'effet inverse : urgence, poussée, et c'est le placement du rock.",xp:40},
+  {id:"q-rhy-36",courseId:"rhythm",lessonId:"rhythm-04",lvl:2,q:"À quoi sert un silence après quelques notes de solo ?",o:["À masquer une hésitation sur la suite","À marquer la fin d'un morceau lent","À rien : cela casse l'élan et fait retomber l'énergie","À donner le temps d'entendre ce qui vient d'être joué"],a:3,exp:"Sans silence, les phrases se fondent en un flux continu que l'oreille ne peut plus découper. Le silence est ce qui transforme une suite de notes en phrase — c'est la ponctuation.",xp:30},
+  {id:"q-rhy-37",courseId:"rhythm",lessonId:"rhy-c5-02",lvl:2,q:"Pourquoi la guitare reggae sonne-t-elle « en l'air » ?",o:["Elle joue sur les contretemps, laissant les temps aux autres","Elle joue dans un registre très aigu, au-dessus du chant","Elle utilise un accordage volontairement plus haut","Elle se place systématiquement en retard sur le tempo"],a:0,exp:"La guitare occupe les espaces que les autres laissent vides. Ce partage est la définition même d'un arrangement : chacun sa place dans la mesure, personne ne double le voisin.",xp:30},
+  {id:"q-rhy-38",courseId:"rhythm",lessonId:"rhy-c5-03",lvl:3,q:"En funk, le temps 1 est le plus souvent…",o:["Purement et simplement ignoré","Le point d'ancrage le plus marqué de la mesure","Systématiquement joué en ghost note","Joué deux fois de suite pour l'appuyer"],a:1,exp:"Le funk repose sur un temps 1 très affirmé — « the One » — autour duquel tout le reste peut se syncoper. Sans ce point fixe, la syncope n'a plus de référence et le groove se dissout.",xp:40},
+  {id:"q-rhy-39",courseId:"rhythm",lessonId:"rhy-c5-04",lvl:3,q:"Dans la bossa nova, que fait le pouce pendant que les doigts jouent le motif syncopé ?",o:["Il double exactement le motif joué par les doigts","Il reste immobile pendant toute la mesure","Il tient une pulsation régulière sur les cordes graves","Il étouffe les cordes entre chaque accord"],a:2,exp:"Le pouce maintient une base régulière, les doigts syncopent au-dessus : deux couches indépendantes jouées par une seule main. C'est ce qui rend la bossa difficile — et c'est l'exercice d'indépendance le plus payant qui soit.",xp:40},
+  {id:"q-rhy-40",courseId:"rhythm",lessonId:"rhy-c6-01",lvl:3,q:"Jouer « in the pocket », c'est…",o:["Jouer le plus vite possible sans perdre la justesse","Jouer systématiquement en avance sur le temps","Jouer très fort pour dominer le reste du groupe","S'aligner précisément sur le placement de la section rythmique"],a:3,exp:"Le « pocket » est le placement collectif du groupe. Être dedans, ce n'est pas être mathématiquement sur le clic : c'est être au même endroit que la basse et la batterie, quel que soit cet endroit.",xp:40},
+  {id:"q-rhy-41",courseId:"rhythm",lessonId:"rhy-c6-02",lvl:3,q:"Qu'est-ce qui rend un riff rythmique mémorable ?",o:["Une cellule courte, répétée, avec une variation à la fin","Le nombre de notes qu'il contient","La vitesse à laquelle il est exécuté","L'usage de nombreux accords différents"],a:0,exp:"Répétition pour ancrer, variation pour relancer. Cette structure — trois fois pareil, la quatrième différente — porte l'immense majorité des riffs célèbres, et elle est directement applicable à l'improvisation.",xp:40},
+  {id:"q-impro-16",courseId:"impro",lessonId:"scales-c3-01",lvl:1,q:"Improviser, c'est d'abord…",o:["Jouer le plus de notes possible","Faire des choix dans un cadre connu","Jouer sans réfléchir du tout","Reproduire un solo appris par cœur"],a:1,exp:"On n'improvise jamais à partir de rien : on choisit, en temps réel, parmi des possibilités qu'on connaît. Plus le cadre est maîtrisé, plus les choix sont libres — c'est exactement l'inverse de l'intuition courante.",xp:25},
+  {id:"q-impro-17",courseId:"impro",lessonId:"scales-c3-01",lvl:1,q:"Sur un morceau en La mineur, par quelle gamme commencer pour improviser ?",o:["La gamme chromatique complète","Mi phrygien","La pentatonique mineure de La","Do majeur"],a:2,exp:"La pentatonique mineure de La ne contient aucune note qui puisse sonner franchement fausse sur cette tonalité. C'est ce qui en fait le point de départ universel : on peut se concentrer sur le rythme et le phrasé avant de penser aux notes.",xp:25},
+  {id:"q-impro-18",courseId:"impro",lessonId:"scales-c3-02",lvl:1,q:"Pourquoi la pentatonique est-elle plus facile à improviser que la gamme majeure ?",o:["Elle retire les deux notes les plus instables","Elle se joue à une vitesse plus élevée","Elle ne possède qu'une seule position","Elle n'a pas de tonique définie"],a:0,exp:"Cinq notes au lieu de sept : on a retiré la quarte et la septième, celles qui demandent une résolution. Moins de notes à surveiller, donc plus d'attention disponible pour le placement rythmique.",xp:25},
+  {id:"q-impro-19",courseId:"impro",lessonId:"scales-c3-04",lvl:1,q:"La « blue note » ajoutée à la pentatonique mineure est…",o:["La seconde majeure","La sixte majeure","La septième majeure","La quinte diminuée"],a:3,exp:"La quinte diminuée, entre la quarte et la quinte. Elle ne se tient pas : c'est une note de passage, à traverser plutôt qu'à poser, et c'est cette tension fugace qui donne sa couleur au blues.",xp:30},
+  {id:"q-impro-20",courseId:"impro",lessonId:"scales-c3-01",lvl:2,q:"Un débutant en impro joue sans jamais s'arrêter. Quel est le premier conseil ?",o:["Laisser des silences et jouer des phrases courtes","Apprendre davantage de gammes","Monter progressivement en vitesse","Changer de position sur le manche"],a:0,exp:"Un flux ininterrompu ne s'entend pas comme de la musique mais comme un exercice. Jouer quatre notes puis se taire deux temps transforme immédiatement le résultat, sans rien apprendre de nouveau.",xp:30},
+  {id:"q-impro-21",courseId:"impro",lessonId:"scales-c3-03",lvl:2,q:"La pentatonique majeure de Do contient les mêmes notes que…",o:["La pentatonique mineure de Mi","La pentatonique majeure de Sol","La gamme blues de Do","La pentatonique mineure de La"],a:3,exp:"Même réservoir de notes, tonique différente — La est la relative mineure de Do. En pratique : tu connais déjà deux gammes pour le prix d'une, et seule change la note sur laquelle tu te reposes.",xp:30},
+  {id:"q-impro-22",courseId:"impro",lessonId:"harm-c2-01",lvl:2,q:"Pendant un solo, poser une note de l'accord en cours produit…",o:["Une sensation de stabilité","Une tension à résoudre","Une dissonance marquée","Un effet de surprise"],a:0,exp:"Les notes de l'accord sont les points de repos. Celles qui n'en font pas partie créent du mouvement. Savoir alterner les deux est la mécanique de base du phrasé, bien avant tout vocabulaire.",xp:30},
+  {id:"q-impro-23",courseId:"impro",lessonId:"impro-01",lvl:2,q:"Une phrase de solo qui se termine sur la tonique donne une impression de…",o:["Question laissée ouverte","Tension portée à son maximum","Conclusion","Fausse note"],a:2,exp:"La tonique est le point d'arrivée de la tonalité : y finir ferme la phrase. Finir sur la seconde ou la septième laisse l'oreille en attente — c'est comme cela qu'on construit un dialogue question-réponse.",xp:30},
+  {id:"q-impro-24",courseId:"impro",lessonId:"impro-01",lvl:2,q:"Tu viens de jouer une phrase de quatre notes. Quelle suite construit le mieux un solo ?",o:["Une phrase entièrement différente","Un trait rapide d'une dizaine de notes","La même phrase à l'identique, dix fois","La même phrase déplacée ou légèrement modifiée"],a:3,exp:"Répéter en transformant : l'oreille reconnaît le motif et suit son évolution. Tout changer à chaque phrase donne du décousu, ne rien changer donne de la monotonie. C'est la même logique que pour un riff.",xp:30},
+  {id:"q-impro-25",courseId:"impro",lessonId:"impro-02",lvl:2,q:"Sur un blues en La, on peut jouer La pentatonique mineure sur les trois accords. Pourquoi ?",o:["Parce que le blues ne suit aucune règle","Parce que la tonalité prime et que la gamme fonctionne sur l'ensemble","Parce que les trois accords sont mineurs","Parce que le tempo reste lent"],a:1,exp:"On improvise sur la tonalité, pas sur chaque accord. C'est ce qui rend le blues abordable — et suivre les accords un par un, en ciblant leurs notes, est justement l'étape suivante.",xp:30},
+  {id:"q-impro-26",courseId:"impro",lessonId:"impro-02",lvl:3,q:"Que sont les « guide tones » d'un accord ?",o:["Les notes jouées à vide","La fondamentale et la quinte","La tierce et la septième","Les notes les plus aiguës du voicing"],a:2,exp:"Tierce et septième portent l'identité de l'accord : la tierce dit majeur ou mineur, la septième dit la fonction. Fondamentale et quinte, elles, ne distinguent presque rien — d'où l'intérêt de viser les premières quand la grille bouge.",xp:40},
+  {id:"q-impro-27",courseId:"impro",lessonId:"impro-03",lvl:2,q:"Une note qui n'appartient pas à l'accord en cours est…",o:["Toujours une faute à éviter","Réservée au répertoire jazz","À placer uniquement en fin de phrase","Utilisable si elle se résout sur une note de l'accord"],a:3,exp:"Ce qui rend une note « fausse » n'est pas son choix mais son traitement. Posée et tenue, elle heurte ; traversée vers une note stable, elle crée le mouvement dont la phrase a besoin.",xp:30},
+  {id:"q-impro-28",courseId:"impro",lessonId:"impro-03",lvl:3,q:"Sur un accord de Sol7 qui résout vers Do, quelle note crée le plus d'attente ?",o:["Sol, la fondamentale","Fa, la septième","Ré, la quinte de l'accord","Do, la tonique d'arrivée"],a:1,exp:"Le Fa est à un demi-ton du Mi de l'accord de Do : il « tire » vers la résolution. C'est ce frottement, avec le Si qui monte vers Do, qui donne à l'accord de dominante sa fonction d'appel.",xp:40},
+  {id:"q-impro-29",courseId:"impro",lessonId:"impro-05",lvl:3,q:"Comment construire l'intensité d'un solo dans la durée ?",o:["En répétant la même phrase du début à la fin","En jouant fort et vite dès la première note","En montant progressivement en registre, en densité et en tension","En alternant au hasard les nuances"],a:2,exp:"Un solo est une courbe, pas un plateau. Commencer bas et clairsemé laisse de la place pour monter — commencer au maximum ne laisse nulle part où aller, et l'oreille s'habitue en quelques secondes.",xp:40},
+  {id:"q-impro-30",courseId:"impro",lessonId:"impro-06",lvl:2,q:"Apprendre des licks par cœur, c'est…",o:["Inutile : l'improvisation doit rester spontanée","Se constituer un vocabulaire à réutiliser et transformer","Suffisant pour savoir improviser","Une étape réservée aux tout débutants"],a:1,exp:"Personne n'improvise sans vocabulaire, pas plus qu'on ne parle une langue sans mots. Le lick n'est pas là pour être replacé tel quel : il est là pour être découpé, transposé et recombiné.",xp:30},
+  {id:"q-impro-31",courseId:"impro",lessonId:"impro-04",lvl:3,q:"Sur une grille où les accords changent toutes les deux mesures, quelle approche donne le plus de relief ?",o:["Rester sur la même gamme sans rien ajuster","Accélérer le débit à chaque changement","S'arrêter de jouer à chaque changement","Viser une note de chaque accord au moment du changement"],a:3,exp:"Ce qui rend un solo « dedans », c'est de tomber sur une note de l'accord au moment précis où il arrive. Une seule note bien placée au changement s'entend davantage que quinze notes entre deux changements.",xp:40},
 ];
 
 
