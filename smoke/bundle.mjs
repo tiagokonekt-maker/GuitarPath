@@ -7252,9 +7252,6 @@ function levelProgress(xp) {
   };
 }
 
-// src/store/state.js
-var CONTENT_KEY = "groply_content";
-
 // src/screens/HomeScreen.jsx
 import { Fragment as Fragment9, jsx as jsx13, jsxs as jsxs11 } from "react/jsx-runtime";
 var GROPI_TIPS = [
@@ -8331,60 +8328,6 @@ function SettingsScreen({ state, dispatch, content, onClose, onImported, user, o
     setConfirmation(null);
     setSaisie("");
   };
-  const sanitizeItems = (arr) => {
-    if (!Array.isArray(arr)) return { valid: [], rejected: Array.isArray(arr) ? 0 : 1 };
-    const valid = arr.filter((it) => it && typeof it === "object" && typeof it.id === "string" && it.id.trim() !== "");
-    return { valid, rejected: arr.length - valid.length };
-  };
-  const handleFile = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      try {
-        const data = JSON.parse(ev.target.result);
-        if (!data.courses && !data.quiz && !data.exercises) {
-          setImportStatus({ ok: false, msg: "Fichier JSON invalide. Le fichier doit contenir au moins une cl\xE9 'courses', 'quiz' ou 'exercises'." });
-          return;
-        }
-        const courses = sanitizeItems(data.courses);
-        const quiz = sanitizeItems(data.quiz);
-        const exercises = sanitizeItems(data.exercises);
-        const totalRejected = courses.rejected + quiz.rejected + exercises.rejected;
-        let existing = { courses: [], quiz: [], exercises: [] };
-        try {
-          const raw = localStorage.getItem(CONTENT_KEY);
-          if (raw) existing = JSON.parse(raw);
-        } catch {
-        }
-        const merged = {
-          courses: mergeCourses(existing.courses || [], courses.valid),
-          quiz: mergeById(existing.quiz || [], quiz.valid),
-          exercises: mergeById(existing.exercises || [], exercises.valid)
-        };
-        localStorage.setItem(CONTENT_KEY, JSON.stringify(merged));
-        const counts = { c: courses.valid.length, q: quiz.valid.length, e: exercises.valid.length };
-        const base = `Import r\xE9ussi : +${counts.c} module(s), +${counts.q} quiz, +${counts.e} exercice(s).`;
-        setImportStatus({
-          ok: true,
-          msg: totalRejected > 0 ? `${base} ${totalRejected} item(s) ignor\xE9(s) car sans identifiant valide.` : base
-        });
-        if (onImported) onImported();
-      } catch {
-        setImportStatus({ ok: false, msg: "Erreur de lecture : le fichier n'est pas un JSON valide." });
-      }
-    };
-    reader.readAsText(file);
-  };
-  const faireResetContent = () => {
-    try {
-      localStorage.removeItem(CONTENT_KEY);
-    } catch {
-    }
-    if (onImported) onImported();
-    setImportStatus({ ok: true, msg: "Contenu remis \xE0 l'\xE9tat initial." });
-    fermerConfirmation();
-  };
   const faireResetProgress = () => {
     dispatch({ type: "RESET" });
     setImportStatus({ ok: true, msg: "Progression r\xE9initialis\xE9e. Cette remise \xE0 z\xE9ro sera propag\xE9e \xE0 tes autres appareils." });
@@ -8515,15 +8458,6 @@ function SettingsScreen({ state, dispatch, content, onClose, onImported, user, o
         /* @__PURE__ */ jsx15(SettingsRow, { label: "Quiz", value: `${content.quiz.length} questions` }),
         /* @__PURE__ */ jsx15(SettingsRow, { label: "Exercices", value: content.exercises.length, last: true })
       ] }),
-      /* @__PURE__ */ jsxs13("label", { style: { ...btn(C.primary), cursor: "pointer" }, children: [
-        /* @__PURE__ */ jsx15(Ti, { name: "upload", size: 14, color: C.primary }),
-        " Importer un fichier JSON",
-        /* @__PURE__ */ jsx15("input", { type: "file", accept: ".json,application/json", onChange: handleFile, style: { display: "none" } })
-      ] }),
-      /* @__PURE__ */ jsxs13("button", { onClick: () => setConfirmation("resetContent"), className: "gr-focus", style: btn(C.text2, C.borderStrong), children: [
-        /* @__PURE__ */ jsx15(Ti, { name: "trash", size: 14, color: C.text2 }),
-        " Supprimer le contenu import\xE9"
-      ] }),
       /* @__PURE__ */ jsxs13(SettingsSection, { title: "Ma progression", children: [
         /* @__PURE__ */ jsx15(SettingsRow, { label: "XP total", value: `${state.xp ?? 0} XP` }),
         /* @__PURE__ */ jsx15(SettingsRow, { label: "Grade", value: gradeForLevel(state.level).label }),
@@ -8593,16 +8527,6 @@ function SettingsScreen({ state, dispatch, content, onClose, onImported, user, o
       ] }),
       /* @__PURE__ */ jsx15("div", { style: { height: 28 } })
     ] }),
-    confirmation === "resetContent" && /* @__PURE__ */ jsx15(
-      ConfirmDialog,
-      {
-        titre: "Supprimer le contenu import\xE9 ?",
-        message: "Tu reviendras au contenu p\xE9dagogique de base. Ta progression n'est pas touch\xE9e.",
-        confirmLabel: "Supprimer le contenu",
-        onConfirm: faireResetContent,
-        onCancel: fermerConfirmation
-      }
-    ),
     confirmation === "resetProgress" && /* @__PURE__ */ jsx15(
       ConfirmDialog,
       {
@@ -8632,30 +8556,6 @@ function SettingsScreen({ state, dispatch, content, onClose, onImported, user, o
       }
     )
   ] });
-}
-function mergeCourses(existing, incoming) {
-  const map = Object.fromEntries((existing || []).filter((c) => c?.id).map((c) => [c.id, c]));
-  (incoming || []).filter((c) => c?.id).forEach((c) => {
-    if (!map[c.id]) {
-      map[c.id] = c;
-      return;
-    }
-    const merged = { ...map[c.id], ...c };
-    const lessonMap = Object.fromEntries((map[c.id].lessons || []).filter((l) => l?.id).map((l) => [l.id, l]));
-    (c.lessons || []).filter((l) => l?.id).forEach((l) => {
-      lessonMap[l.id] = l;
-    });
-    merged.lessons = Object.values(lessonMap);
-    map[c.id] = merged;
-  });
-  return Object.values(map);
-}
-function mergeById(existing, incoming) {
-  const map = Object.fromEntries((existing || []).filter((x) => x?.id).map((x) => [x.id, x]));
-  (incoming || []).filter((x) => x?.id).forEach((x) => {
-    map[x.id] = x;
-  });
-  return Object.values(map);
 }
 
 // src/screens/ToolboxScreen.jsx

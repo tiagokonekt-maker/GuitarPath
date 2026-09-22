@@ -283,29 +283,34 @@ function reducer(state, action) {
       break;
 
     case "RESET":
-      // On repart de zéro sur la progression, mais on garde :
-      //   • la préférence de thème ;
-      //   • les RÉPONSES d'onboarding (objectif, temps disponible) sans
-      //     l'XP de départ — réimposer 12 questions de placement à
-      //     quelqu'un qui vient de tout effacer serait de la friction
-      //     gratuite, et re-créditer startXp contredirait « je repars de
-      //     zéro ».
-      // Et on HORODATE le reset : c'est ce qui permet à mergeStates de ne
-      // pas le laisser annuler par un autre appareil (state.js/resetWins).
+      // On repart complètement de zéro, y compris sur l'onboarding : la
+      // prochaine ouverture de l'app redemande le test de placement.
+      //
+      // C'est un choix qui a changé. La version précédente gardait
+      // `onboarding.done = true` avec l'objectif et le temps disponible
+      // conservés — l'idée était qu'un utilisateur qui reset sa
+      // progression après des mois d'usage connaît déjà l'app, et que
+      // réimposer 12 questions serait de la friction gratuite.
+      //
+      // Ce raisonnement suppose un reset "je veux repartir proprement dans
+      // ma pratique" — mais il en existe un autre, tout aussi légitime :
+      // "je veux un compte neuf pour tout retester depuis le départ",
+      // notamment pendant le développement. Dans ce second cas, sauter le
+      // placement est franchement gênant : ça laisse le parcours au
+      // niveau 1 sans jamais pouvoir vérifier que le test fonctionne, et
+      // ça ne correspond pas à ce que "repartir de zéro" veut dire.
+      //
+      // On garde uniquement la préférence de thème, qui n'a rien à voir
+      // avec la progression pédagogique. Tout le reste — y compris
+      // l'onboarding — repart de `defaultState()`.
+      //
+      // On continue d'HORODATER le reset : c'est ce qui permet à
+      // mergeStates de ne pas le laisser annuler par un autre appareil
+      // (state.js/resetWins).
       return {
         ...defaultState(),
         theme: s.theme,
         resetAt: new Date().toISOString(),
-        onboarding: {
-          ...defaultState().onboarding,
-          done: true,
-          goal: s.onboarding?.goal || null,
-          preferredModule: s.onboarding?.preferredModule || null,
-          timePerWeek: s.onboarding?.timePerWeek || null,
-          completedAt: s.onboarding?.completedAt || today,
-          startXp: 0,
-          startLevel: 1,
-        },
       };
 
     default:

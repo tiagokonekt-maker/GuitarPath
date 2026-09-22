@@ -16,7 +16,6 @@ test("une leçon ne rapporte de l'XP qu'une seule fois", () => {
 });
 
 test("un exercice répété rapporte une XP d'entretien réduite et plafonnée", () => {
-  // Bug §7.1 : avant, chaque répétition créditait l'XP nominale entière.
   const a = { type: "COMPLETE_EXERCISE", id: "ex-1", title: "E", xp: 60 };
   let s = reducer(S(), a);
   assert.equal(s.xp, 60, "1re fois : XP pleine");
@@ -111,18 +110,49 @@ test("UPDATE_WEEKLY réinitialise au changement de semaine et ignore un champ in
   assert.equal(t.weeklyGoals.sessions, 1);
 });
 
-test("RESET horodate, garde le thème et l'objectif, mais pas l'XP de départ", () => {
+// ─────────────────────────────────────────────────────────────────────────
+// RESET
+//
+// Comportement changé : avant, RESET gardait `onboarding.done = true` avec
+// l'objectif et le temps disponible conservés — l'idée étant qu'un
+// utilisateur qui réinitialise sa progression après des mois d'usage
+// connaît déjà l'app, et que réimposer 12 questions serait de la friction
+// gratuite.
+//
+// Ce raisonnement suppose un reset « je veux repartir proprement dans ma
+// pratique ». Il en existe un autre, tout aussi légitime : « je veux un
+// compte neuf pour tout retester depuis le départ ». Dans ce second cas,
+// sauter le placement est gênant — ça laisse le parcours au niveau 1 sans
+// jamais pouvoir vérifier que le test fonctionne, et ça ne correspond pas
+// à ce que « repartir de zéro » veut dire.
+//
+// RESET repart donc entièrement de `defaultState()`, seul le thème est
+// conservé — l'onboarding y compris, ce qui redéclenche le test de
+// placement au prochain chargement de l'app.
+// ─────────────────────────────────────────────────────────────────────────
+
+test("RESET horodate, garde le thème, réinitialise aussi l'onboarding", () => {
   const s = reducer(S({
     xp: 5000, theme: "dark",
     onboarding: { ...defaultState().onboarding, done: true, goal: "impro", timePerWeek: "long", startXp: 1680 },
   }), { type: "RESET" });
   assert.equal(s.xp, 0);
   assert.equal(s.theme, "dark");
-  assert.equal(s.onboarding.goal, "impro");
-  assert.equal(s.onboarding.timePerWeek, "long");
+  assert.equal(s.onboarding.done, false, "l'onboarding redémarre : le placement sera redemandé");
+  assert.equal(s.onboarding.goal, null, "les réponses précédentes ne sont plus présupposées");
+  assert.equal(s.onboarding.timePerWeek, null);
   assert.equal(s.onboarding.startXp, 0);
-  assert.equal(s.onboarding.done, true, "on ne réimpose pas 12 questions après un reset");
   assert.ok(s.resetAt, "resetAt est renseigné : c'est ce qui protège du merge");
+});
+
+test("après un RESET, l'onboarding peut être refait normalement", () => {
+  const resetState = reducer(S({ onboarding: { ...defaultState().onboarding, done: true } }), { type: "RESET" });
+  const replaye = reducer(resetState, {
+    type: "COMPLETE_ONBOARDING", goal: "harmonie", startXp: 500, overallTier: "A2",
+  });
+  assert.equal(replaye.onboarding.done, true);
+  assert.equal(replaye.onboarding.goal, "harmonie");
+  assert.equal(replaye.xp, 500, "l'XP de départ du nouveau placement est bien créditée");
 });
 
 test("COMPLETE_ONBOARDING ne crédite l'XP de départ qu'une fois", () => {

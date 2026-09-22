@@ -1,10 +1,9 @@
 // Groply — screens/SettingsScreen.jsx
 //
 // ── Ce qui change ─────────────────────────────────────────────────────────
-// §5.6 Les deux `window.confirm` (réinitialiser la progression, supprimer le
-//      contenu importé) sont remplacés par ConfirmDialog : dialogue système
-//      hors design system, parfois en anglais selon l'appareil, pour les
-//      actions les plus irréversibles de l'app.
+// §5.6 Les `window.confirm` sont remplacés par ConfirmDialog : dialogue
+//      système hors design system, parfois en anglais selon l'appareil,
+//      pour les actions les plus irréversibles de l'app.
 // §8.1 SUPPRESSION DE COMPTE (RGPD art. 17). `RESET` réinitialisait l'état
 //      applicatif mais ne supprimait ni la ligne `progress` ni le compte
 //      `auth.users` : le droit à l'effacement n'était pas exerçable.
@@ -13,10 +12,19 @@
 //      produit — ne marchait pas hors-ligne. On le propose au lieu de
 //      télécharger plusieurs mégaoctets sans rien demander.
 // §2.1 `todayStr` local, importé au lieu d'être redéfini en UTC ici.
+//
+// ── Retiré ────────────────────────────────────────────────────────────────
+// L'import de contenu JSON par l'utilisateur et la suppression du contenu
+// importé. Ce mécanisme avait du sens dans l'hypothèse où d'autres
+// créateurs de cours pourraient un jour apporter leurs propres packs ; ce
+// n'est plus le modèle retenu — le contenu ne passe que par le dépôt. La
+// clé `CONTENT_KEY` en localStorage et la logique de fusion dans state.js
+// (mergeCourses/mergeById) restent en place, inertes, au cas où ce choix
+// serait reconsidéré ; rien à y toucher pour ce retrait.
 import { useState } from "react";
 import { FONTS, R, T } from "../design/tokens.js";
 import { Ti } from "../design/Ti.jsx";
-import { CONTENT_KEY, todayStr } from "../store/state.js";
+import { todayStr } from "../store/state.js";
 import { BADGES } from "../store/badges.js";
 import { gradeForLevel } from "../store/grades.js";
 import { ConfirmDialog } from "../design/ui.jsx";
@@ -49,66 +57,12 @@ function SettingsRow({ label, value, last }) {
 function SettingsScreen({ state, dispatch, content, onClose, onImported, user, onSignOut, onDeleteAccount }) {
   const C = useC();
   const [importStatus, setImportStatus] = useState(null);
-  // `null` | "resetContent" | "resetProgress" | "deleteAccount"
+  // `null` | "resetProgress" | "deleteAccount"
   const [confirmation, setConfirmation] = useState(null);
   const [saisie, setSaisie] = useState("");
   const [audioOffline, setAudioOffline] = useState(null);
 
   const fermerConfirmation = () => { setConfirmation(null); setSaisie(""); };
-
-  // Ne garde que les items qui ont un id exploitable — un import dont les
-  // items n'ont pas d'id valide écraserait sinon tout dans une seule clé
-  // `undefined` en silence (succès affiché, contenu réellement perdu).
-  const sanitizeItems = (arr) => {
-    if (!Array.isArray(arr)) return { valid: [], rejected: Array.isArray(arr) ? 0 : 1 };
-    const valid = arr.filter(it => it && typeof it === "object" && typeof it.id === "string" && it.id.trim() !== "");
-    return { valid, rejected: arr.length - valid.length };
-  };
-
-  const handleFile = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      try {
-        const data = JSON.parse(ev.target.result);
-        if (!data.courses && !data.quiz && !data.exercises) {
-          setImportStatus({ ok:false, msg:"Fichier JSON invalide. Le fichier doit contenir au moins une clé 'courses', 'quiz' ou 'exercises'." });
-          return;
-        }
-        const courses   = sanitizeItems(data.courses);
-        const quiz      = sanitizeItems(data.quiz);
-        const exercises = sanitizeItems(data.exercises);
-        const totalRejected = courses.rejected + quiz.rejected + exercises.rejected;
-
-        let existing = { courses:[], quiz:[], exercises:[] };
-        try { const raw = localStorage.getItem(CONTENT_KEY); if (raw) existing = JSON.parse(raw); } catch {}
-        const merged = {
-          courses:   mergeCourses(existing.courses||[], courses.valid),
-          quiz:      mergeById(existing.quiz||[], quiz.valid),
-          exercises: mergeById(existing.exercises||[], exercises.valid),
-        };
-        localStorage.setItem(CONTENT_KEY, JSON.stringify(merged));
-        const counts = { c:courses.valid.length, q:quiz.valid.length, e:exercises.valid.length };
-        const base = `Import réussi : +${counts.c} module(s), +${counts.q} quiz, +${counts.e} exercice(s).`;
-        setImportStatus({
-          ok: true,
-          msg: totalRejected > 0
-            ? `${base} ${totalRejected} item(s) ignoré(s) car sans identifiant valide.`
-            : base,
-        });
-        if (onImported) onImported();
-      } catch { setImportStatus({ ok:false, msg:"Erreur de lecture : le fichier n'est pas un JSON valide." }); }
-    };
-    reader.readAsText(file);
-  };
-
-  const faireResetContent = () => {
-    try { localStorage.removeItem(CONTENT_KEY); } catch { /* noop */ }
-    if (onImported) onImported();
-    setImportStatus({ ok:true, msg:"Contenu remis à l'état initial." });
-    fermerConfirmation();
-  };
 
   const faireResetProgress = () => {
     dispatch({ type:"RESET" });
@@ -237,13 +191,6 @@ function SettingsScreen({ state, dispatch, content, onClose, onImported, user, o
           <SettingsRow label="Quiz"      value={`${content.quiz.length} questions`} />
           <SettingsRow label="Exercices" value={content.exercises.length} last />
         </SettingsSection>
-        <label style={{ ...btn(C.primary), cursor:"pointer" }}>
-          <Ti name="upload" size={14} color={C.primary} /> Importer un fichier JSON
-          <input type="file" accept=".json,application/json" onChange={handleFile} style={{ display:"none" }} />
-        </label>
-        <button onClick={() => setConfirmation("resetContent")} className="gr-focus" style={btn(C.text2, C.borderStrong)}>
-          <Ti name="trash" size={14} color={C.text2} /> Supprimer le contenu importé
-        </button>
 
         {/* Progression */}
         <SettingsSection title="Ma progression">
@@ -321,15 +268,6 @@ function SettingsScreen({ state, dispatch, content, onClose, onImported, user, o
 
         <div style={{ height:28 }} />
       </div>
-
-      {confirmation === "resetContent" && (
-        <ConfirmDialog
-          titre="Supprimer le contenu importé ?"
-          message="Tu reviendras au contenu pédagogique de base. Ta progression n'est pas touchée."
-          confirmLabel="Supprimer le contenu"
-          onConfirm={faireResetContent} onCancel={fermerConfirmation}
-        />
-      )}
 
       {confirmation === "resetProgress" && (
         <ConfirmDialog
