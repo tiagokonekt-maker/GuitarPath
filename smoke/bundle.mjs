@@ -281,7 +281,7 @@ __export(CoursesScreen_exports, {
   CoursesScreen: () => CoursesScreen,
   LessonView: () => LessonView
 });
-import { useState as useState4, useMemo, useEffect as useEffect3, useRef as useRef3 } from "react";
+import { useState as useState4, useMemo, useEffect as useEffect4, useRef as useRef4 } from "react";
 
 // src/design/tokens.js
 var shape = {};
@@ -2349,6 +2349,46 @@ function makeEarQuizQuestion(mode = "interval") {
   };
 }
 
+// src/hooks/useWakeLock.js
+import { useEffect as useEffect3, useRef as useRef3 } from "react";
+function useWakeLock(actif) {
+  const sentinelRef = useRef3(null);
+  useEffect3(() => {
+    if (!actif) return;
+    if (typeof navigator === "undefined" || !("wakeLock" in navigator)) return;
+    let annule = false;
+    const demander = async () => {
+      try {
+        const sentinel = await navigator.wakeLock.request("screen");
+        if (annule) {
+          sentinel.release().catch(() => {
+          });
+          return;
+        }
+        sentinelRef.current = sentinel;
+        sentinel.addEventListener("release", () => {
+          if (sentinelRef.current === sentinel) sentinelRef.current = null;
+        });
+      } catch {
+      }
+    };
+    demander();
+    const surVisibilite = () => {
+      if (document.visibilityState === "visible" && !sentinelRef.current) demander();
+    };
+    document.addEventListener("visibilitychange", surVisibilite);
+    return () => {
+      annule = true;
+      document.removeEventListener("visibilitychange", surVisibilite);
+      if (sentinelRef.current) {
+        sentinelRef.current.release().catch(() => {
+        });
+        sentinelRef.current = null;
+      }
+    };
+  }, [actif]);
+}
+
 // src/screens/CoursesScreen.jsx
 import { jsx as jsx6, jsxs as jsxs4 } from "react/jsx-runtime";
 var PULSE_CSS = `
@@ -2707,8 +2747,8 @@ function CoursesScreen({ state, dispatch, content }) {
   const [activeLesson, setActiveLesson] = useState4(null);
   const [checkingUnit, setCheckingUnit] = useState4(null);
   const [chestPop, setChestPop] = useState4(false);
-  const currentRef = useRef3(null);
-  const scrolledTo = useRef3(null);
+  const currentRef = useRef4(null);
+  const scrolledTo = useRef4(null);
   const path = useMemo(
     () => buildPath(content, state),
     [content, state.completedLessons, state.claimedUnits, state.unitChecks]
@@ -2733,7 +2773,7 @@ function CoursesScreen({ state, dispatch, content }) {
     const lid = u ? u.lessons.find((l) => !state.completedLessons[l.id])?.id ?? null : null;
     return lid ? { type: "lesson", id: lid, key: `lesson:${lid}` } : null;
   }, [path, state.completedLessons]);
-  useEffect3(() => {
+  useEffect4(() => {
     if (activeLesson || checkingUnit) return;
     if (!focus) return;
     if (scrolledTo.current === focus.key) return;
@@ -2895,11 +2935,12 @@ function LessonView({ lesson, state, dispatch, onBack }) {
   const C = useC();
   const [done, setDone] = useState4(!!state.completedLessons[lesson.id]);
   const [pop, setPop] = useState4(false);
-  const popTimerRef = useRef3(null);
-  useEffect3(() => {
+  const popTimerRef = useRef4(null);
+  useWakeLock(true);
+  useEffect4(() => {
     window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
   }, [lesson.id]);
-  useEffect3(() => () => {
+  useEffect4(() => () => {
     if (popTimerRef.current) clearTimeout(popTimerRef.current);
   }, []);
   const finish = () => {
@@ -4079,7 +4120,7 @@ __export(ExercisesScreen_exports, {
   ExerciseDetail: () => ExerciseDetail,
   ExercisesScreen: () => ExercisesScreen
 });
-import { useState as useState7, useEffect as useEffect4, useRef as useRef4, useMemo as useMemo3 } from "react";
+import { useState as useState7, useEffect as useEffect5, useRef as useRef5, useMemo as useMemo3 } from "react";
 import { Fragment as Fragment5, jsx as jsx9, jsxs as jsxs7 } from "react/jsx-runtime";
 var LEVEL_LABELS = { 1: "Fondamentaux", 2: "Interm\xE9diaire", 3: "Avanc\xE9" };
 var makeLevelColors = (C) => ({ 1: { bg: C.greenL, border: C.greenBorder, text: C.greenD, dot: C.green }, 2: { bg: C.amberL, border: C.amberBorder, text: C.amberD, dot: C.amber }, 3: { bg: C.pinkL, border: C.pinkBorder, text: C.pinkD, dot: C.pink } });
@@ -4332,8 +4373,8 @@ function ExerciseDetail({ ex, state, dispatch, onBack, content }) {
   const [checked, setChecked] = useState7(saved);
   const [done, setDone] = useState7(false);
   const [pop, setPop] = useState7(false);
-  const popTimerRef = useRef4(null);
-  useEffect4(() => () => {
+  const popTimerRef = useRef5(null);
+  useEffect5(() => () => {
     if (popTimerRef.current) clearTimeout(popTimerRef.current);
   }, []);
   const theme = MODULE_THEME2[ex.mod] || MODULE_THEME2.neck;
@@ -4369,7 +4410,7 @@ function ExerciseDetail({ ex, state, dispatch, onBack, content }) {
     ] });
   }
   const allDone = checked.length === (ex.steps || []).length;
-  useEffect4(() => {
+  useEffect5(() => {
     if (checked.length > 0 && !done) dispatch({ type: "SAVE_EXERCISE_PROGRESS", id: ex.id, checkedSteps: checked });
   }, [checked]);
   const toggle = (i) => setChecked((prev) => prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i]);
@@ -4504,7 +4545,7 @@ var EarTraining_exports = {};
 __export(EarTraining_exports, {
   EarTraining: () => EarTraining
 });
-import { useState as useState8, useEffect as useEffect5, useRef as useRef5 } from "react";
+import { useState as useState8, useEffect as useEffect6, useRef as useRef6 } from "react";
 import { Fragment as Fragment6, jsx as jsx10, jsxs as jsxs8 } from "react/jsx-runtime";
 var MODES = [
   { key: "interval", label: "Intervalles", icon: "arrows-up-down", desc: "Identifie l'ecart entre deux notes" },
@@ -4532,7 +4573,7 @@ function EarTraining({ onBack, dispatch }) {
   const [score, setScore] = useState8({ correct: 0, total: 0 });
   const [sessionDone, setSessionDone] = useState8(false);
   const [answers, setAnswers] = useState8([]);
-  const finTimerRef = useRef5(null);
+  const finTimerRef = useRef6(null);
   const SESSION_LENGTH = 8;
   const annulerFinTimer = () => {
     if (finTimerRef.current) {
@@ -4540,15 +4581,15 @@ function EarTraining({ onBack, dispatch }) {
       finTimerRef.current = null;
     }
   };
-  useEffect5(() => {
+  useEffect6(() => {
     if (!isAudioLoaded()) {
       loadAudio().then(() => setAudioReady(true)).catch(() => setAudioError(true));
     }
   }, []);
-  useEffect5(() => {
+  useEffect6(() => {
     if (audioReady && !question) nextQuestion();
   }, [audioReady, mode]);
-  useEffect5(() => () => {
+  useEffect6(() => () => {
     annulerFinTimer();
     try {
       stopAll();
@@ -4769,7 +4810,7 @@ var JamSession_exports = {};
 __export(JamSession_exports, {
   JamSession: () => JamSession
 });
-import { useState as useState10, useMemo as useMemo5, useEffect as useEffect7, useRef as useRef6 } from "react";
+import { useState as useState10, useMemo as useMemo5, useEffect as useEffect8, useRef as useRef7 } from "react";
 
 // src/Fretboard.jsx
 var Fretboard_exports = {};
@@ -4779,7 +4820,7 @@ __export(Fretboard_exports, {
   FretboardLesson: () => FretboardLesson,
   FretboardQuizQuestion: () => FretboardQuizQuestion
 });
-import { useState as useState9, useMemo as useMemo4, useCallback as useCallback2, useEffect as useEffect6 } from "react";
+import { useState as useState9, useMemo as useMemo4, useCallback as useCallback2, useEffect as useEffect7 } from "react";
 
 // src/fretboardValidator.js
 var RESOLVERS = {
@@ -5586,7 +5627,7 @@ function FretboardQuizQuestion({ question, onComplete, answered, forceReveal }) 
     const result2 = checkQuizCompletion(stripNeutral(quizSelected), targetPositions);
     onComplete(result2);
   };
-  useEffect6(() => {
+  useEffect7(() => {
     if (forceReveal && !revealed) verify();
   }, [forceReveal]);
   const result = revealed ? checkQuizCompletion(stripNeutral(quizSelected), targetPositions) : null;
@@ -6552,28 +6593,28 @@ function BackingTrackPlayer({ context: context2, root, bpm }) {
   const [currentChord, setCurrentChord] = useState10(0);
   const [loading, setLoading] = useState10(false);
   const [playError, setPlayError] = useState10(null);
-  const samplerRef = useRef6(null);
-  const bassRef = useRef6(null);
-  const kickRef = useRef6(null);
-  const snareRef = useRef6(null);
-  const hihatRef = useRef6(null);
-  const seqRef = useRef6(null);
-  const beatSeqRef = useRef6(null);
-  const bassFilterRef = useRef6(null);
-  const bassCompRef = useRef6(null);
-  const kickCompRef = useRef6(null);
-  const snareFilterRef = useRef6(null);
-  const comperRef = useRef6(null);
-  const drumsRef = useRef6(null);
-  const drumsLoadedRef = useRef6(false);
-  const drumRRRef = useRef6({});
-  const reverbRef = useRef6(null);
-  const delayRef = useRef6(null);
-  const compRef = useRef6(null);
-  useEffect7(() => {
+  const samplerRef = useRef7(null);
+  const bassRef = useRef7(null);
+  const kickRef = useRef7(null);
+  const snareRef = useRef7(null);
+  const hihatRef = useRef7(null);
+  const seqRef = useRef7(null);
+  const beatSeqRef = useRef7(null);
+  const bassFilterRef = useRef7(null);
+  const bassCompRef = useRef7(null);
+  const kickCompRef = useRef7(null);
+  const snareFilterRef = useRef7(null);
+  const comperRef = useRef7(null);
+  const drumsRef = useRef7(null);
+  const drumsLoadedRef = useRef7(false);
+  const drumRRRef = useRef7({});
+  const reverbRef = useRef7(null);
+  const delayRef = useRef7(null);
+  const compRef = useRef7(null);
+  useEffect8(() => {
     if (playing) stopBacking();
   }, [context2.id, root]);
-  useEffect7(() => () => stopBacking(), []);
+  useEffect8(() => () => stopBacking(), []);
   const VOICINGS = {
     // Voicing jazz : root basse, 3e, 5e, 7e en ordre montant
     min7: { intervals: [0, 10, 15, 19], desc: "x-R-b7-3-5" },
@@ -7200,7 +7241,7 @@ var HomeScreen_exports = {};
 __export(HomeScreen_exports, {
   HomeScreen: () => HomeScreen
 });
-import { useState as useState11, useMemo as useMemo6, useEffect as useEffect8 } from "react";
+import { useState as useState11, useMemo as useMemo6, useEffect as useEffect9 } from "react";
 
 // src/store/leveling.js
 var BASE = 120;
@@ -8563,7 +8604,7 @@ var ToolboxScreen_exports = {};
 __export(ToolboxScreen_exports, {
   ToolboxScreen: () => ToolboxScreen
 });
-import { useState as useState15, useRef as useRef8, useEffect as useEffect10, useCallback as useCallback3 } from "react";
+import { useState as useState15, useRef as useRef9, useEffect as useEffect11, useCallback as useCallback3 } from "react";
 init_tone_stub();
 
 // src/screens/FretboardExplorer.jsx
@@ -8571,7 +8612,7 @@ var FretboardExplorer_exports = {};
 __export(FretboardExplorer_exports, {
   FretboardExplorer: () => FretboardExplorer
 });
-import { useState as useState14, useMemo as useMemo9, useRef as useRef7, useEffect as useEffect9 } from "react";
+import { useState as useState14, useMemo as useMemo9, useRef as useRef8, useEffect as useEffect10 } from "react";
 
 // src/diagrams.jsx
 import { useMemo as useMemo8 } from "react";
@@ -8862,7 +8903,7 @@ function FretboardExplorer({ onBack, embedded = false }) {
       CHORD_TYPES[chordKey]?.intervals || null
     );
   }, [tab, root, chordKey]);
-  const finTimerRef = useRef7(null);
+  const finTimerRef = useRef8(null);
   const annulerFin = () => {
     if (finTimerRef.current) {
       clearTimeout(finTimerRef.current);
@@ -8911,7 +8952,7 @@ function FretboardExplorer({ onBack, embedded = false }) {
       setFlashNotes(null);
     }, dureeMs2);
   };
-  useEffect9(() => () => {
+  useEffect10(() => () => {
     annulerFin();
     try {
       stopAll();
@@ -9151,10 +9192,10 @@ function Metronome() {
     { id: "mecanique", label: "M\xE9canique" },
     { id: "batterie", label: "Batterie" }
   ];
-  const voixRef = useRef8(null);
-  const loopRef = useRef8(null);
-  const beatRef = useRef8(0);
-  const beatsRef = useRef8(beats);
+  const voixRef = useRef9(null);
+  const loopRef = useRef9(null);
+  const beatRef = useRef9(0);
+  const beatsRef = useRef9(beats);
   const libererVoix = useCallback3(() => {
     try {
       voixRef.current?.dispose?.();
@@ -9263,18 +9304,18 @@ function Metronome() {
     transport.start();
     setPlaying(true);
   }, [bpm, beats, ensureClick]);
-  useEffect10(() => {
+  useEffect11(() => {
     getTransport().bpm.value = bpm;
   }, [bpm]);
-  useEffect10(() => {
+  useEffect11(() => {
     if (!voixRef.current) return;
     libererVoix();
     voixRef.current = construireVoix(timbre);
   }, [timbre, construireVoix, libererVoix]);
-  useEffect10(() => {
+  useEffect11(() => {
     beatsRef.current = beats;
   }, [beats]);
-  useEffect10(() => () => {
+  useEffect11(() => () => {
     stop();
     libererVoix();
   }, [stop, libererVoix]);
@@ -9283,7 +9324,7 @@ function Metronome() {
   const ECART_MIN_MS = 200;
   const ECART_MAX_MS = 2e3;
   const TAPS_MAX = 8;
-  const tapsRef = useRef8([]);
+  const tapsRef = useRef9([]);
   const [tapCount, setTapCount] = useState15(0);
   const tapTempo = () => {
     const now2 = performance.now();
@@ -9696,19 +9737,19 @@ function Tuner() {
   const [tuningId, setTuningId] = useState15("standard");
   const tuning = TUNINGS.find((t) => t.id === tuningId) || TUNINGS[0];
   const targets = buildTargets(tuning);
-  const ctxRef = useRef8(null);
-  const analyser = useRef8(null);
-  const streamRef = useRef8(null);
-  const rafRef = useRef8(null);
-  const bufRef = useRef8(null);
-  const freqHistRef = useRef8([]);
-  const holdTimer = useRef8(null);
-  const lastNoteRef = useRef8(null);
-  const needleRef = useRef8(null);
-  const needleLabelRef = useRef8(null);
-  const centsTargetRef = useRef8(0);
-  const centsShownRef = useRef8(0);
-  const hasSignalRef = useRef8(false);
+  const ctxRef = useRef9(null);
+  const analyser = useRef9(null);
+  const streamRef = useRef9(null);
+  const rafRef = useRef9(null);
+  const bufRef = useRef9(null);
+  const freqHistRef = useRef9([]);
+  const holdTimer = useRef9(null);
+  const lastNoteRef = useRef9(null);
+  const needleRef = useRef9(null);
+  const needleLabelRef = useRef9(null);
+  const centsTargetRef = useRef9(0);
+  const centsShownRef = useRef9(0);
+  const hasSignalRef = useRef9(false);
   const stop = useCallback3(() => {
     if (holdTimer.current) {
       clearTimeout(holdTimer.current);
@@ -9820,7 +9861,7 @@ function Tuner() {
       setActive(false);
     }
   }, []);
-  useEffect10(() => () => stop(), [stop]);
+  useEffect11(() => () => stop(), [stop]);
   const cents = note?.cents ?? 0;
   const inTune = active && note && Math.abs(cents) <= 5;
   const needleColor = inTune ? C.green : Math.abs(cents) < 20 ? C.amber : C.pink;
@@ -9970,7 +10011,7 @@ function ChordPlayer() {
     setPlaying(false);
     setActiveIdx(-1);
   }, []);
-  useEffect10(() => () => stopAll(), []);
+  useEffect11(() => () => stopAll(), []);
   const addChord = () => {
     if (sequence.length >= MAX_CHORDS) return;
     const rootFr = CHORD_ROOTS.find((r) => r[0] === root)?.[1] || root;
@@ -10285,7 +10326,7 @@ var PracticeScreen_exports = {};
 __export(PracticeScreen_exports, {
   PracticeScreen: () => PracticeScreen
 });
-import { useState as useState17, useEffect as useEffect11, useRef as useRef9, useCallback as useCallback4, useMemo as useMemo11 } from "react";
+import { useState as useState17, useEffect as useEffect12, useRef as useRef10, useCallback as useCallback4, useMemo as useMemo11 } from "react";
 
 // src/store/challenges.js
 var KEYS = ["A", "B", "C", "D", "E", "F", "G"];
@@ -10325,8 +10366,8 @@ function PracticeScreen({ state, dispatch }) {
   const [tab, setTab] = useState17("impro");
   const [current, setCurrent] = useState17(null);
   const [pop, setPop] = useState17(false);
-  const timerRef = useRef9(null);
-  useEffect11(() => () => {
+  const timerRef = useRef10(null);
+  useEffect12(() => () => {
     if (timerRef.current) clearTimeout(timerRef.current);
   }, []);
   const generateImpro = () => {
@@ -10463,15 +10504,15 @@ var ChallengeScreen_exports = {};
 __export(ChallengeScreen_exports, {
   ChallengeScreen: () => ChallengeScreen
 });
-import { useState as useState18, useEffect as useEffect12, useRef as useRef10, useCallback as useCallback5, useMemo as useMemo12 } from "react";
+import { useState as useState18, useEffect as useEffect13, useRef as useRef11, useCallback as useCallback5, useMemo as useMemo12 } from "react";
 import { jsx as jsx21, jsxs as jsxs19 } from "react/jsx-runtime";
 function ChallengeScreen({ state, dispatch, navigate }) {
   const C = useC();
   const ch = DAILY_CHALLENGES[state.dailyChallengeIdx % DAILY_CHALLENGES.length];
   const done = state.dailyChallengeDone;
   const [pop, setPop] = useState18(false);
-  const timerRef = useRef10(null);
-  useEffect12(() => () => {
+  const timerRef = useRef11(null);
+  useEffect13(() => () => {
     if (timerRef.current) clearTimeout(timerRef.current);
   }, []);
   const finish = () => {
@@ -10534,7 +10575,7 @@ var OnboardingScreen_exports = {};
 __export(OnboardingScreen_exports, {
   OnboardingScreen: () => OnboardingScreen
 });
-import { useState as useState19, useEffect as useEffect13, useMemo as useMemo13 } from "react";
+import { useState as useState19, useEffect as useEffect14, useMemo as useMemo13 } from "react";
 
 // src/store/placementEngine.js
 var TESTABLE_MODULES = ["neck", "scales", "harmony", "rhythm", "impro"];
@@ -10726,7 +10767,7 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
     emit("placement_completed", { skillLevels: finalLevels, overallTier: overall, weakestModule: weak });
     setPhase("results");
   }
-  useEffect13(() => {
+  useEffect14(() => {
     if (phase === "testing" && queue && !currentQ) {
       const nextIdx = qIdx + 1;
       if (nextIdx < queue.length) {

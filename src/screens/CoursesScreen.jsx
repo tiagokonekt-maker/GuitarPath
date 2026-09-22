@@ -21,6 +21,7 @@ import { Gropi, GropiCoach, GropiBubble } from "../design/Gropi.jsx";
 // null. Un contexte React rend l'ordre de rendu sans importance.
 import { useRenderers } from "../renderers.jsx";
 import { playLessonComplete, playChestOpen } from "../audioEngine.js";
+import { useWakeLock } from "../hooks/useWakeLock.js";
 
 // ── Animation CSS partagée ────────────────────────────────────────────────────
 const PULSE_CSS = `
@@ -635,6 +636,14 @@ function LessonView({ lesson, state, dispatch, onBack }) {
   const [done,setDone] = useState(!!state.completedLessons[lesson.id]);
   const [pop, setPop]  = useState(false);
   const popTimerRef = useRef(null);
+
+  // Empêche l'écran de s'éteindre pendant toute la durée où une leçon est
+  // ouverte — avant et après l'avoir marquée terminée, pour ne pas couper
+  // quelqu'un qui relit le contenu. Sans ça, l'écran s'éteint après le délai
+  // d'inactivité tactile habituel : faire défiler la remet à zéro, mais
+  // lire sans toucher l'écran — la guitare dans les mains — non. Se relâche
+  // tout seul à la sortie de l'écran (démontage du composant).
+  useWakeLock(true);
 
   // Toujours remonter en haut à l'ouverture d'une leçon. LessonView n'a pas
   // de key unique par leçon (App passe juste activeLesson en prop) : React
