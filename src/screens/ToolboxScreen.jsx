@@ -51,6 +51,9 @@ function Metronome() {
   const voixRef  = useRef(null);   // { fort(), faible(), dispose() }
   const loopRef  = useRef(null);
   const beatRef  = useRef(0);
+  // Miroir mutable de `beats`, sur le même principe que `voixRef` pour le
+  // timbre. Voir plus bas pourquoi c'est nécessaire.
+  const beatsRef = useRef(beats);
 
   /** Libère les nœuds audio du timbre courant. */
   const libererVoix = useCallback(() => {
@@ -140,7 +143,8 @@ function Metronome() {
     const transport = Tone.getTransport();
     transport.bpm.value = bpm;
     loopRef.current = new Tone.Loop((time) => {
-      const b = beatRef.current % beats;
+      // beatsRef.current et non `beats` : voir le commentaire sur beatsRef.
+      const b = beatRef.current % beatsRef.current;
       const strong = b === 0;
       const voix = voixRef.current;
       if (voix) (strong ? voix.fort : voix.faible)(time);
@@ -163,6 +167,24 @@ function Metronome() {
     libererVoix();
     voixRef.current = construireVoix(timbre);
   }, [timbre, construireVoix, libererVoix]);
+
+  // Changement de signature (nombre de temps par mesure) EN COURS DE LECTURE.
+  //
+  // Le bug corrigé : `start()` créait la Tone.Loop avec `beats` capturé dans
+  // sa fermeture au moment de l'appui sur play. Changer la signature ensuite
+  // déclenchait bien un nouveau rendu (les pastilles à l'écran suivaient),
+  // mais la boucle audio DÉJÀ EN COURS gardait l'ancienne valeur pour de bon
+  // — elle ne relit jamais son environnement, seulement ce qu'elle a capturé
+  // à sa création. Le son n'avait donc plus aucun rapport avec ce qui était
+  // affiché.
+  //
+  // Le timbre n'avait pas ce problème parce qu'il passe déjà par une
+  // référence mutable (`voixRef`), relue à chaque battement plutôt que
+  // capturée une fois. `beatsRef` applique exactement le même principe :
+  // dès qu'on change la mesure, cet effet met à jour la référence, et le
+  // battement suivant — quel qu'il soit, immédiatement après le changement —
+  // en tient compte.
+  useEffect(() => { beatsRef.current = beats; }, [beats]);
 
   // Nettoyage : arrêter la boucle ET libérer les nœuds audio. L'ancienne
   // version ne libérait jamais le synthé, qui restait connecté à la sortie.
