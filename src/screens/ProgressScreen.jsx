@@ -7,6 +7,7 @@ import { ProgressBar } from "../design/ui.jsx";
 import { buildModuleTheme } from "../store/moduleTheme.js";
 import { BADGES, buildBadgeTints, buildBadgeRarities, skillMastery } from "../store/badges.js";
 import { levelProgress } from "../store/leveling.js";
+import { masteryStats, prochainesAAncrer, MASTERY_LABELS } from "../store/mastery.js";
 import { gradeForLevel } from "../store/grades.js";
 import { Gropi, GropiTip } from "../design/Gropi.jsx";
 
@@ -17,6 +18,17 @@ function ProgressScreen({ state, content, onOpenSettings }) {
   const BADGE_RARITIES = buildBadgeRarities(C);
   const { xpInLevel, xpNeeded, xpToNext, pct: lvlPct, totalForNext } = levelProgress(state.xp);
   const grade = gradeForLevel(state.level);
+
+  // Recalculés seulement quand la progression bouge : masteryStats parcourt
+  // les 108 leçons et toutes leurs questions.
+  const maitrise = useMemo(
+    () => masteryStats(content, state),
+    [content, state.completedLessons, state.quizResults, state.reviewHistory]
+  );
+  const aAncrer = useMemo(
+    () => prochainesAAncrer(content, state, 3),
+    [content, state.completedLessons, state.quizResults, state.reviewHistory]
+  );
 
   const skills = useMemo(() => [
     { label:"Manche",   id:"neck",    color:C.amber,   colorD:C.amberD },
@@ -138,6 +150,76 @@ function ProgressScreen({ state, content, onOpenSettings }) {
               ? "Ta série est retombée à zéro. Une seule session suffit pour en relancer une."
               : "Chaque session compte. Reviens demain pour continuer ta progression."}
           </GropiTip>
+        </div>
+
+        {/* ── MAÎTRISE ─────────────────────────────────────────────────────
+            Ce bloc rend visible le travail de mémorisation, qui tournait
+            jusqu'ici en arrière-plan sans que rien ne le montre. Une leçon
+            n'est plus « faite ou pas faite » : elle est vue, comprise, puis
+            ancrée — ce dernier palier ne s'obtenant qu'en revenant dessus
+            plusieurs fois sur plusieurs semaines. */}
+        <div style={{ fontSize:16, fontWeight:800, color:C.text, marginBottom:12, letterSpacing:"-.2px" }}>Maîtrise</div>
+        <div style={{
+          background:C.surface, border:`1.5px solid ${C.border}`,
+          borderRadius:R.lg, padding:"14px 16px", marginBottom:20,
+        }}>
+          <div style={{ display:"flex", alignItems:"baseline", gap:8, marginBottom:4 }}>
+            <span style={{ fontSize:26, fontWeight:800, color:C.text, letterSpacing:"-.5px", lineHeight:1 }}>
+              {maitrise.atteints}
+            </span>
+            <span style={{ fontSize:13, color:C.text2, fontWeight:600 }}>
+              / {maitrise.objectifs} objectifs
+            </span>
+          </div>
+          <div style={{ fontSize:11.5, color:C.text2, marginBottom:12, lineHeight:1.5 }}>
+            Chaque leçon vaut trois paliers : la voir, la comprendre, l'ancrer.
+          </div>
+
+          <ProgressBar
+            pct={maitrise.objectifs ? Math.round(maitrise.atteints / maitrise.objectifs * 100) : 0}
+            color={C.primary} h={7} label="Maîtrise globale"
+          />
+
+          <div style={{ display:"flex", gap:8, marginTop:14 }}>
+            {[
+              { n: maitrise.vues,      l: MASTERY_LABELS[1], c: C.text2 },
+              { n: maitrise.comprises, l: MASTERY_LABELS[2], c: C.blueInk ?? C.blue },
+              { n: maitrise.ancrees,   l: MASTERY_LABELS[3], c: C.greenInk ?? C.green },
+            ].map(x => (
+              <div key={x.l} style={{
+                flex:1, textAlign:"center", padding:"9px 4px",
+                background:C.surface2, borderRadius:R.md,
+              }}>
+                <div style={{ fontSize:19, fontWeight:800, color:x.c, lineHeight:1 }}>{x.n}</div>
+                <div style={{ fontSize:10.5, color:C.text2, fontWeight:600, marginTop:3 }}>{x.l}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Objectif concret plutôt qu'une invitation vague à « réviser ».
+              « Il te manque une question sur celle-ci » se traite ; « révise »
+              ne se traite pas. */}
+          {aAncrer.length > 0 && (
+            <div style={{ marginTop:14, paddingTop:12, borderTop:`1px solid ${C.border}` }}>
+              <div style={{
+                fontSize:10.5, fontWeight:700, letterSpacing:".07em",
+                textTransform:"uppercase", color:C.text2, marginBottom:8,
+              }}>
+                Bientôt ancrées
+              </div>
+              {aAncrer.map(({ lesson, reste }) => (
+                <div key={lesson.id} style={{
+                  display:"flex", justifyContent:"space-between", alignItems:"center",
+                  gap:10, padding:"6px 0",
+                }}>
+                  <span style={{ fontSize:12.5, color:C.text, flex:1, lineHeight:1.4 }}>{lesson.title}</span>
+                  <span style={{ fontSize:11, color:C.text2, whiteSpace:"nowrap", fontWeight:600 }}>
+                    {reste} question{reste > 1 ? "s" : ""}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* ── COMPÉTENCES PAR MODULE ───────────────────────────────────────── */}

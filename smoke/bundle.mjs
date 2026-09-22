@@ -7744,6 +7744,105 @@ __export(ProgressScreen_exports, {
 });
 import { useState as useState12, useMemo as useMemo7 } from "react";
 
+// src/store/mastery.js
+var MASTERY = {
+  LOCKED: 0,
+  // pas encore ouverte
+  SEEN: 1,
+  // lue
+  UNDERSTOOD: 2,
+  // questions réussies
+  ANCHORED: 3
+  // questions retenues dans la durée
+};
+var MASTERY_LABELS = {
+  0: "\xC0 d\xE9couvrir",
+  1: "Vu",
+  2: "Compris",
+  3: "Ancr\xE9"
+};
+var MASTERY_HINTS = {
+  0: "Ouvre la le\xE7on pour commencer",
+  1: "R\xE9ussis ses questions pour passer \xE0 \xAB compris \xBB",
+  2: "Reviens la r\xE9viser dans les semaines qui viennent pour l'ancrer",
+  3: "Retenu dans la dur\xE9e"
+};
+var ANCHOR_DAYS = 21;
+var ANCHOR_RATIO = 0.8;
+var quizRequisPourAncrer = (n) => Math.max(1, Math.ceil(n * ANCHOR_RATIO));
+var questionReussie = (state, quizId) => !!state?.quizResults?.[quizId]?.correct;
+function questionAncree(state, quizId) {
+  const h = state?.reviewHistory?.[quizId];
+  if (!h) return false;
+  if ((h.interval || 0) < ANCHOR_DAYS) return false;
+  return (h.successes || 0) > 0;
+}
+function lessonMastery(lesson, state, quizIndex = null) {
+  const completee = !!state?.completedLessons?.[lesson?.id];
+  const ids = (lesson?.quiz || []).filter((id) => !quizIndex || quizIndex.has(id));
+  const total = ids.length;
+  const reussies = ids.filter((id) => questionReussie(state, id)).length;
+  const ancrees = ids.filter((id) => questionAncree(state, id)).length;
+  const requis = quizRequisPourAncrer(total);
+  const masterable = total > 0;
+  let level = MASTERY.LOCKED;
+  if (completee) level = MASTERY.SEEN;
+  if (completee && masterable && reussies === total) level = MASTERY.UNDERSTOOD;
+  if (completee && masterable && reussies === total && ancrees >= requis) level = MASTERY.ANCHORED;
+  let pct = 0;
+  if (completee) {
+    pct = 33;
+    if (masterable) {
+      pct += Math.round(33 * (total ? reussies / total : 0));
+      pct += Math.round(34 * (requis ? Math.min(1, ancrees / requis) : 0));
+    } else {
+      pct = 33;
+    }
+  }
+  return {
+    level,
+    label: MASTERY_LABELS[level],
+    hint: MASTERY_HINTS[level],
+    masterable,
+    total,
+    reussies,
+    ancrees,
+    requisPourAncrer: requis,
+    pct: Math.min(100, pct)
+  };
+}
+function masteryStats(content, state, moduleId = null) {
+  const quizIndex = new Map((content?.quiz || []).map((q) => [q.id, q]));
+  const lecons = (content?.courses || []).filter((c) => !moduleId || c.id === moduleId).flatMap((c) => (c.lessons || []).map((l) => ({ ...l, courseId: c.id })));
+  const paliers = [0, 0, 0, 0];
+  let masterables = 0, sansQuiz = 0, sommePct = 0;
+  for (const l of lecons) {
+    const m = lessonMastery(l, state, quizIndex);
+    paliers[m.level]++;
+    if (m.masterable) masterables++;
+    else sansQuiz++;
+    sommePct += m.pct;
+  }
+  const total = lecons.length;
+  return {
+    total,
+    sansQuiz,
+    // Une leçon sans question ne compte que pour un palier (vu).
+    objectifs: masterables * 3 + sansQuiz,
+    atteints: paliers[1] + paliers[2] * 2 + paliers[3] * 3,
+    aDecouvrir: paliers[0],
+    vues: paliers[1],
+    comprises: paliers[2],
+    ancrees: paliers[3],
+    pctMoyen: total ? Math.round(sommePct / total) : 0
+  };
+}
+function prochainesAAncrer(content, state, limite = 5) {
+  const quizIndex = new Map((content?.quiz || []).map((q) => [q.id, q]));
+  const lecons = (content?.courses || []).flatMap((c) => (c.lessons || []).map((l) => ({ ...l, courseId: c.id })));
+  return lecons.map((l) => ({ lesson: l, m: lessonMastery(l, state, quizIndex) })).filter((x) => x.m.level === MASTERY.UNDERSTOOD && x.m.masterable).map((x) => ({ ...x, reste: x.m.requisPourAncrer - x.m.ancrees })).sort((a, b) => a.reste - b.reste || b.m.ancrees - a.m.ancrees).slice(0, limite);
+}
+
 // src/store/grades.js
 var GRADES = [
   {
@@ -7815,16 +7914,14 @@ var buildBadgeTints = (C) => ({
   green: { bg: C.greenL, border: C.greenBorder, icon: C.green, text: C.greenD },
   amber: { bg: C.amberL, border: C.amberBorder, icon: C.amber, text: C.amberD },
   coral: { bg: C.coralL, border: C.coralBorder, icon: C.coral, text: C.coralD },
-  pink: { bg: C.pinkL, border: C.pinkBorder, icon: C.pink, text: C.pinkD },
-  purple: { bg: C.purpleL, border: C.purpleBorder, icon: C.purple, text: C.purpleD },
-  blue: { bg: C.blueL, border: C.blueBorder, icon: C.blue, text: C.blueD },
-  teal: { bg: C.tealL, border: C.tealBorder, icon: C.teal, text: C.tealD }
+  pink: { bg: C.pinkL, border: "#EFC4D5", icon: C.pink, text: "#85304E" },
+  blue: { bg: C.blueL, border: C.blueBorder, icon: C.blue, text: C.blueD }
 });
 var buildBadgeRarities = (C) => ({
-  commun: { label: "commun", bg: C.surface2, fg: C.text2 },
-  rare: { label: "rare", bg: C.blueL, fg: C.blueD },
-  epique: { label: "\xE9pique", bg: C.coralL, fg: C.coralD },
-  legend: { label: "l\xE9gend.", bg: C.primaryBtn, fg: "#FFFFFF" }
+  commun: { label: "commun", bg: "#E5E3DC", fg: "#5F5E5A" },
+  rare: { label: "rare", bg: "#D8D3F6", fg: C.primaryD },
+  epique: { label: "\xE9pique", bg: C.coralBorder, fg: C.coralD },
+  legend: { label: "l\xE9gend.", bg: C.primary, fg: "#FFFFFF" }
 });
 var BADGE_TINTS = buildBadgeTints(LIGHT);
 var BADGE_RARITIES = buildBadgeRarities(LIGHT);
@@ -7888,9 +7985,26 @@ var BADGES = [
   { id: "all_modules", cat: "Pratique", tint: "green", rarity: "legend", icon: "ti-mountain", label: "5 modules finis", cond: (s, ctx) => allModulesMastered(s, ctx) },
   // ── Régularité
   { id: "full_week", cat: "R\xE9gularit\xE9", tint: "pink", rarity: "rare", icon: "ti-calendar-check", label: "Semaine pleine", cond: (s) => s.streak >= 7 && (s.weeklyGoals?.sessions || 0) >= 7 },
+  // ── Maîtrise (paliers) ──────────────────────────────────────────────────
+  // Le palier « ancré » ne s'obtient qu'en revenant sur une leçon plusieurs
+  // fois sur plusieurs semaines : c'est le seul indicateur de l'app qu'on ne
+  // peut pas obtenir en une soirée. Sans badge dédié, cet effort resterait
+  // invisible — noyé dans le total d'XP, indiscernable d'une leçon lue une
+  // seule fois.
+  { id: "anchor_1", cat: "Ma\xEEtrise", tint: "green", rarity: "commun", icon: "ti-anchor", label: "Premier ancrage", cond: (s, ctx) => anchoredCount(s, ctx) >= 1 },
+  { id: "anchor_10", cat: "Ma\xEEtrise", tint: "green", rarity: "rare", icon: "ti-anchor", label: "10 le\xE7ons ancr\xE9es", cond: (s, ctx) => anchoredCount(s, ctx) >= 10 },
+  { id: "anchor_30", cat: "Ma\xEEtrise", tint: "green", rarity: "epique", icon: "ti-anchor", label: "30 le\xE7ons ancr\xE9es", cond: (s, ctx) => anchoredCount(s, ctx) >= 30 },
   // ── Grade (généré depuis grades.js)
   ...GRADE_BADGES
 ];
+var _cacheEtat = null;
+var _cacheValeur = 0;
+function anchoredCount(state, content) {
+  if (state === _cacheEtat) return _cacheValeur;
+  _cacheEtat = state;
+  _cacheValeur = masteryStats(content, state).ancrees;
+  return _cacheValeur;
+}
 
 // src/screens/ProgressScreen.jsx
 import { jsx as jsx14, jsxs as jsxs12 } from "react/jsx-runtime";
@@ -7901,6 +8015,14 @@ function ProgressScreen({ state, content, onOpenSettings }) {
   const BADGE_RARITIES2 = buildBadgeRarities(C);
   const { xpInLevel, xpNeeded, xpToNext, pct: lvlPct, totalForNext } = levelProgress(state.xp);
   const grade = gradeForLevel(state.level);
+  const maitrise = useMemo7(
+    () => masteryStats(content, state),
+    [content, state.completedLessons, state.quizResults, state.reviewHistory]
+  );
+  const aAncrer = useMemo7(
+    () => prochainesAAncrer(content, state, 3),
+    [content, state.completedLessons, state.quizResults, state.reviewHistory]
+  );
   const skills = useMemo7(() => [
     { label: "Manche", id: "neck", color: C.amber, colorD: C.amberD },
     { label: "Gammes", id: "scales", color: C.green, colorD: C.greenD },
@@ -8037,6 +8159,71 @@ function ProgressScreen({ state, content, onOpenSettings }) {
           children: state.streak >= 7 ? `${state.streak} jours d'affil\xE9e. Tu tiens une vraie habitude, continue.` : state.streak >= 3 ? `S\xE9rie de ${state.streak} jours. La r\xE9gularit\xE9, c'est 80 % du chemin.` : state.streak === 0 ? "Ta s\xE9rie est retomb\xE9e \xE0 z\xE9ro. Une seule session suffit pour en relancer une." : "Chaque session compte. Reviens demain pour continuer ta progression."
         }
       ) }),
+      /* @__PURE__ */ jsx14("div", { style: { fontSize: 16, fontWeight: 800, color: C.text, marginBottom: 12, letterSpacing: "-.2px" }, children: "Ma\xEEtrise" }),
+      /* @__PURE__ */ jsxs12("div", { style: {
+        background: C.surface,
+        border: `1.5px solid ${C.border}`,
+        borderRadius: R.lg,
+        padding: "14px 16px",
+        marginBottom: 20
+      }, children: [
+        /* @__PURE__ */ jsxs12("div", { style: { display: "flex", alignItems: "baseline", gap: 8, marginBottom: 4 }, children: [
+          /* @__PURE__ */ jsx14("span", { style: { fontSize: 26, fontWeight: 800, color: C.text, letterSpacing: "-.5px", lineHeight: 1 }, children: maitrise.atteints }),
+          /* @__PURE__ */ jsxs12("span", { style: { fontSize: 13, color: C.text2, fontWeight: 600 }, children: [
+            "/ ",
+            maitrise.objectifs,
+            " objectifs"
+          ] })
+        ] }),
+        /* @__PURE__ */ jsx14("div", { style: { fontSize: 11.5, color: C.text2, marginBottom: 12, lineHeight: 1.5 }, children: "Chaque le\xE7on vaut trois paliers : la voir, la comprendre, l'ancrer." }),
+        /* @__PURE__ */ jsx14(
+          ProgressBar,
+          {
+            pct: maitrise.objectifs ? Math.round(maitrise.atteints / maitrise.objectifs * 100) : 0,
+            color: C.primary,
+            h: 7,
+            label: "Ma\xEEtrise globale"
+          }
+        ),
+        /* @__PURE__ */ jsx14("div", { style: { display: "flex", gap: 8, marginTop: 14 }, children: [
+          { n: maitrise.vues, l: MASTERY_LABELS[1], c: C.text2 },
+          { n: maitrise.comprises, l: MASTERY_LABELS[2], c: C.blueInk ?? C.blue },
+          { n: maitrise.ancrees, l: MASTERY_LABELS[3], c: C.greenInk ?? C.green }
+        ].map((x) => /* @__PURE__ */ jsxs12("div", { style: {
+          flex: 1,
+          textAlign: "center",
+          padding: "9px 4px",
+          background: C.surface2,
+          borderRadius: R.md
+        }, children: [
+          /* @__PURE__ */ jsx14("div", { style: { fontSize: 19, fontWeight: 800, color: x.c, lineHeight: 1 }, children: x.n }),
+          /* @__PURE__ */ jsx14("div", { style: { fontSize: 10.5, color: C.text2, fontWeight: 600, marginTop: 3 }, children: x.l })
+        ] }, x.l)) }),
+        aAncrer.length > 0 && /* @__PURE__ */ jsxs12("div", { style: { marginTop: 14, paddingTop: 12, borderTop: `1px solid ${C.border}` }, children: [
+          /* @__PURE__ */ jsx14("div", { style: {
+            fontSize: 10.5,
+            fontWeight: 700,
+            letterSpacing: ".07em",
+            textTransform: "uppercase",
+            color: C.text2,
+            marginBottom: 8
+          }, children: "Bient\xF4t ancr\xE9es" }),
+          aAncrer.map(({ lesson, reste }) => /* @__PURE__ */ jsxs12("div", { style: {
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: 10,
+            padding: "6px 0"
+          }, children: [
+            /* @__PURE__ */ jsx14("span", { style: { fontSize: 12.5, color: C.text, flex: 1, lineHeight: 1.4 }, children: lesson.title }),
+            /* @__PURE__ */ jsxs12("span", { style: { fontSize: 11, color: C.text2, whiteSpace: "nowrap", fontWeight: 600 }, children: [
+              reste,
+              " question",
+              reste > 1 ? "s" : ""
+            ] })
+          ] }, lesson.id))
+        ] })
+      ] }),
       /* @__PURE__ */ jsx14("div", { style: { fontSize: 16, fontWeight: 800, color: C.text, marginBottom: 12, letterSpacing: "-.2px" }, children: "Comp\xE9tences" }),
       skills.map((sk) => {
         const th = MODULE_THEME2[sk.id] || {};

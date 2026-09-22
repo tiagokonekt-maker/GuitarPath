@@ -1,38 +1,26 @@
-// Groply — store/badges.js
-// Système de badges, conditions de déverrouillage.
-//
-// ── Ce qui change (audit §4.5) ────────────────────────────────────────────
-// `BADGE_TINTS` et `BADGE_RARITIES` étaient construits depuis LIGHT
-// uniquement : en thème sombre, les badges affichaient des couleurs pensées
-// pour un fond clair. Les builders `buildBadgeTints(C)` existaient déjà — il
-// suffisait que les écrans les utilisent avec le thème courant. Un hook
-// `useBadgeTints()` est exposé pour ça, et les alias figés sont conservés
-// pour les appelants non encore migrés.
+// GuitarPath — store/badges.js
+// Système de badges, conditions de déverrouillage
 
 import { LIGHT } from "../design/tokens.js";
+import { masteryStats } from "./mastery.js";
 import { GRADES } from "./grades.js";
 
-// Toutes les valeurs viennent du thème : plus aucune couleur codée en dur,
-// qui restait figée au thème clair (le rose et le violet l'étaient).
 const buildBadgeTints = (C) => ({
   primary: { bg: C.primaryL, border: C.primaryBorder, icon: C.primary, text: C.primaryD },
   green:   { bg: C.greenL,   border: C.greenBorder,   icon: C.green,   text: C.greenD },
   amber:   { bg: C.amberL,   border: C.amberBorder,   icon: C.amber,   text: C.amberD },
   coral:   { bg: C.coralL,   border: C.coralBorder,   icon: C.coral,   text: C.coralD },
-  pink:    { bg: C.pinkL,    border: C.pinkBorder,    icon: C.pink,    text: C.pinkD },
-  purple:  { bg: C.purpleL,  border: C.purpleBorder,  icon: C.purple,  text: C.purpleD },
-  blue:    { bg: C.blueL,    border: C.blueBorder,    icon: C.blue,    text: C.blueD },
-  teal:    { bg: C.tealL,    border: C.tealBorder,    icon: C.teal,    text: C.tealD },
+  pink:    { bg: C.pinkL,    border: "#EFC4D5",        icon: C.pink,    text: "#85304E" },
+  blue:    { bg: C.blueL,    border: C.blueBorder,     icon: C.blue,    text: C.blueD },
 });
 const buildBadgeRarities = (C) => ({
-  commun: { label: "commun",  bg: C.surface2,    fg: C.text2 },
-  rare:   { label: "rare",    bg: C.blueL,       fg: C.blueD },
-  epique: { label: "épique",  bg: C.coralL,      fg: C.coralD },
-  legend: { label: "légend.", bg: C.primaryBtn,  fg: "#FFFFFF" },
+  commun:    { label: "commun",   bg: "#E5E3DC", fg: "#5F5E5A" },
+  rare:      { label: "rare",     bg: "#D8D3F6", fg: C.primaryD },
+  epique:    { label: "épique",   bg: C.coralBorder, fg: C.coralD },
+  legend:    { label: "légend.",  bg: C.primary, fg: "#FFFFFF" },
 });
 
-// Alias figés sur le thème clair — conservés pour les appelants non migrés.
-// À remplacer par useBadgeTints() partout où le thème compte.
+// Alias legacy (light) — pour compatibilité
 const BADGE_TINTS = buildBadgeTints(LIGHT);
 const BADGE_RARITIES = buildBadgeRarities(LIGHT);
 
@@ -114,9 +102,32 @@ const BADGES = [
   // ── Régularité
   { id: "full_week", cat: "Régularité", tint: "pink", rarity: "rare", icon: "ti-calendar-check", label: "Semaine pleine", cond: s => s.streak >= 7 && (s.weeklyGoals?.sessions || 0) >= 7 },
 
+  // ── Maîtrise (paliers) ──────────────────────────────────────────────────
+  // Le palier « ancré » ne s'obtient qu'en revenant sur une leçon plusieurs
+  // fois sur plusieurs semaines : c'est le seul indicateur de l'app qu'on ne
+  // peut pas obtenir en une soirée. Sans badge dédié, cet effort resterait
+  // invisible — noyé dans le total d'XP, indiscernable d'une leçon lue une
+  // seule fois.
+  { id: "anchor_1",   cat: "Maîtrise", tint: "green", rarity: "commun", icon: "ti-anchor",  label: "Premier ancrage",  cond: (s, ctx) => anchoredCount(s, ctx) >= 1 },
+  { id: "anchor_10",  cat: "Maîtrise", tint: "green", rarity: "rare",   icon: "ti-anchor",  label: "10 leçons ancrées", cond: (s, ctx) => anchoredCount(s, ctx) >= 10 },
+  { id: "anchor_30",  cat: "Maîtrise", tint: "green", rarity: "epique", icon: "ti-anchor",  label: "30 leçons ancrées", cond: (s, ctx) => anchoredCount(s, ctx) >= 30 },
+
   // ── Grade (généré depuis grades.js)
   ...GRADE_BADGES,
 ];
+
+// Mise en cache légère : `anchoredCount` peut être appelée plusieurs fois par
+// cycle de calcul de badges (trois seuils la consultent) ; on ne recalcule
+// qu'une fois par état de progression distinct, `masteryStats` parcourant les
+// 108 leçons et toutes leurs questions.
+let _cacheEtat = null, _cacheValeur = 0;
+
+function anchoredCount(state, content) {
+  if (state === _cacheEtat) return _cacheValeur;
+  _cacheEtat = state;
+  _cacheValeur = masteryStats(content, state).ancrees;
+  return _cacheValeur;
+}
 
 const computeNewBadges = (state, content) => {
   return BADGES
@@ -126,5 +137,9 @@ const computeNewBadges = (state, content) => {
     })
     .map(b => b.id);
 };
+
+// ═══════════════════════════════════════════════════════════════════════════
+// REDUCER
+// ═══════════════════════════════════════════════════════════════════════════
 
 export { buildBadgeTints, buildBadgeRarities, BADGE_TINTS, BADGE_RARITIES, BADGES, computeNewBadges, skillMastery };
