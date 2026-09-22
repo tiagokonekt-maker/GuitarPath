@@ -9154,6 +9154,7 @@ function Metronome() {
   const voixRef = useRef8(null);
   const loopRef = useRef8(null);
   const beatRef = useRef8(0);
+  const beatsRef = useRef8(beats);
   const libererVoix = useCallback3(() => {
     try {
       voixRef.current?.dispose?.();
@@ -9252,7 +9253,7 @@ function Metronome() {
     const transport = getTransport();
     transport.bpm.value = bpm;
     loopRef.current = new Loop((time) => {
-      const b = beatRef.current % beats;
+      const b = beatRef.current % beatsRef.current;
       const strong = b === 0;
       const voix = voixRef.current;
       if (voix) (strong ? voix.fort : voix.faible)(time);
@@ -9270,6 +9271,9 @@ function Metronome() {
     libererVoix();
     voixRef.current = construireVoix(timbre);
   }, [timbre, construireVoix, libererVoix]);
+  useEffect10(() => {
+    beatsRef.current = beats;
+  }, [beats]);
   useEffect10(() => () => {
     stop();
     libererVoix();

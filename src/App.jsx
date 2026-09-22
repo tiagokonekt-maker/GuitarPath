@@ -133,7 +133,6 @@ function AppInner({ onThemeChange }) {
   const [toast, setToast] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
   const [progressLoaded, setProgressLoaded] = useState(false);
-  const [swReady, setSwReady] = useState(false);
 
   const stateRef = useRef(state);
   stateRef.current = state;
@@ -262,36 +261,75 @@ function AppInner({ onThemeChange }) {
     if (progressLoaded) dispatch({ type: "ROTATE_DAILY" });
   }, [progressLoaded, dispatch]);
 
-  // ── Service worker : proposer la mise à jour, ne pas l'imposer ──────────
+  // ── Service worker : mise à jour AUTOMATIQUE, sans clic ─────────────────
+  //
+  // Avant, une nouvelle version restait en attente jusqu'à ce que
+  // l'utilisateur clique sur un bandeau "Mettre à jour". En pratique, ce
+  // bandeau pouvait passer inaperçu — et quelqu'un qui ne clique jamais
+  // dessus ne recevait jamais la mise à jour, aussi longtemps qu'il garde
+  // l'onglet ou l'app ouverts. Pire encore : un bug dans le service worker
+  // installé pouvait le faire servir indéfiniment une ancienne page HTML
+  // depuis son cache, quel que soit le nombre de fois où on rafraîchit —
+  // un rechargement classique ne contourne PAS un service worker déjà actif.
+  //
+  // Maintenant, sw.js appelle lui-même `skipWaiting()` dès son installation
+  // (plus besoin d'attendre un message de cette page), et prend le contrôle
+  // de tous les onglets ouverts via `clients.claim()`. Le seul rôle qui
+  // reste ici est de RECHARGER la page une fois que ce changement de
+  // contrôle a eu lieu — et de le faire au bon moment.
   useEffect(() => {
     if (!import.meta.env.PROD || !("serviceWorker" in navigator)) return;
-    let reg;
+
+    let dejaRecharge = false;
+    const recharger = () => {
+      if (dejaRecharge) return;
+      dejaRecharge = true;
+      window.location.reload();
+    };
+
+    const surChangementControleur = () => {
+      // On ne recharge pas sous les doigts de quelqu'un en pleine leçon.
+      // Si l'onglet est déjà en arrière-plan, aucune raison d'attendre.
+      if (document.visibilityState === "hidden") { recharger(); return; }
+
+      // Sinon, on attend le prochain passage en arrière-plan — changement
+      // d'onglet, mise en veille de l'écran, retour à l'accueil du
+      // téléphone. C'est un moment sans coût pour recharger.
+      const surVisibilite = () => {
+        if (document.visibilityState === "hidden") recharger();
+      };
+      document.addEventListener("visibilitychange", surVisibilite);
+
+      // Filet de sécurité : si l'onglet reste actif sans interruption
+      // (session de travail longue et continue), on recharge quand même
+      // après 10 minutes plutôt que de laisser tourner indéfiniment une
+      // version obsolète. La progression est sauvegardée en continu
+      // (localStorage à chaque action), donc le coût réel est minime.
+      const filet = setTimeout(recharger, 10 * 60 * 1000);
+
+      return () => {
+        document.removeEventListener("visibilitychange", surVisibilite);
+        clearTimeout(filet);
+      };
+    };
+
+    navigator.serviceWorker.addEventListener("controllerchange", surChangementControleur);
+
     const enregistrer = async () => {
       try {
-        reg = await navigator.serviceWorker.register("/sw.js");
-        reg.addEventListener("updatefound", () => {
-          const sw = reg.installing;
-          if (!sw) return;
-          sw.addEventListener("statechange", () => {
-            // Un SW en attente + un SW actif = une nouvelle version est prête.
-            if (sw.state === "installed" && navigator.serviceWorker.controller) setSwReady(true);
-          });
-        });
+        const reg = await navigator.serviceWorker.register("/sw.js");
+        // Vérifie explicitement au chargement : un onglet resté ouvert très
+        // longtemps peut ne jamais revérifier de lui-même sinon.
+        reg.update().catch(() => {});
       } catch { /* la PWA reste utilisable sans SW */ }
     };
     window.addEventListener("load", enregistrer);
-    return () => window.removeEventListener("load", enregistrer);
-  }, []);
 
-  const appliquerMaj = () => {
-    navigator.serviceWorker.getRegistration().then(reg => {
-      const sw = reg?.waiting || reg?.installing;
-      if (!sw) return window.location.reload();
-      navigator.serviceWorker.addEventListener("controllerchange",
-        () => window.location.reload(), { once: true });
-      sw.postMessage({ type: "SKIP_WAITING" });
-    });
-  };
+    return () => {
+      window.removeEventListener("load", enregistrer);
+      navigator.serviceWorker.removeEventListener("controllerchange", surChangementControleur);
+    };
+  }, []);
 
   // ── Navigation ─────────────────────────────────────────────────────────
   const cibleSession = dailyTargetFromTime(state.onboarding?.timePerWeek);
@@ -413,24 +451,6 @@ function AppInner({ onThemeChange }) {
   return (
     <>
       {toast && <Toast msg={toast} onClose={() => setToast(null)} />}
-
-      {swReady && (
-        <div role="status" style={{
-          position: "fixed", top: "calc(env(safe-area-inset-top, 0px) + 10px)",
-          left: 12, right: 12, maxWidth: 416, margin: "0 auto", zIndex: 400,
-          background: C.surface, border: `1.5px solid ${C.primaryBorder}`,
-          borderRadius: 14, padding: "10px 12px", boxShadow: "var(--gr-shadow)",
-          display: "flex", alignItems: "center", gap: 10,
-          fontSize: T.small, fontFamily: FONTS.ui, color: C.text,
-        }}>
-          <Ti name="refresh" size={16} color={C.primary} />
-          <span style={{ flex: 1 }}>Une nouvelle version est prête.</span>
-          <button onClick={appliquerMaj} className="gr-focus" style={{
-            background: C.primaryBtn, color: "#fff", border: "none", borderRadius: 10,
-            padding: "9px 14px", fontWeight: 700, fontSize: 12.5, cursor: "pointer", minHeight: TAP.min - 8,
-          }}>Mettre à jour</button>
-        </div>
-      )}
 
       <main
         className="gr-vscroll"

@@ -1,6 +1,32 @@
-// Groply — Service Worker v9
+// Groply — Service Worker v10
 //
-// ── Ce qui a changé depuis la v8 ──────────────────────────────────────────
+// ── Ce qui change depuis la v9 : mise à jour AUTOMATIQUE ──────────────────
+// Jusqu'ici, une nouvelle version restait en attente ("waiting") tant que
+// l'utilisateur n'avait pas cliqué sur le bandeau "Mettre à jour" affiché
+// par l'app. En pratique, ce clic n'arrivait pas toujours : un bandeau
+// discret qu'on ne remarque pas, ou qu'on remet à plus tard, et la nouvelle
+// version n'était jamais appliquée — recharger la page ne suffit PAS à
+// contourner un service worker déjà actif, contrairement à l'intuition.
+//
+// Pire : si la version installée a un bug dans son propre gestionnaire de
+// navigation (ce qui est arrivé avec le bug `.clone()` de la v8 ci-dessous),
+// elle peut se mettre à servir indéfiniment une page HTML mise en cache au
+// moment de son installation — laquelle référence d'anciens fichiers JS.
+// Dans ce cas, la personne reste bloquée sur une ancienne version, sans
+// aucun moyen d'en sortir elle-même.
+//
+// Cette version appelle `self.skipWaiting()` automatiquement dès la fin de
+// l'installation, au lieu d'attendre un message de la page. Combiné à
+// `self.clients.claim()` dans `activate` (déjà présent), une nouvelle
+// version prend le contrôle de tous les onglets ouverts SANS action de
+// l'utilisateur. Le rechargement de page qui suit est géré côté App.jsx,
+// avec un garde-fou : il attend que l'onglet passe en arrière-plan avant de
+// recharger, pour ne jamais couper quelqu'un en pleine leçon — sauf si
+// l'onglet reste actif sans interruption pendant plus de 10 minutes, auquel
+// cas on recharge quand même plutôt que de laisser tourner indéfiniment une
+// version obsolète.
+//
+// ── Ce qui avait changé depuis la v8 (toujours valable) ───────────────────
 // Trois bugs réels, tous apparus après le retrait de la webfont Tabler
 // (remplacée par des SVG inline) :
 //
@@ -10,29 +36,24 @@
 //    un service worker est jugé par la directive CSP `connect-src`, et non
 //    par `style-src`/`font-src` comme le serait le <link> d'origine — c'est
 //    une nuance du navigateur, pas une erreur de configuration du CSP.
-//    Résultat observé : "violates connect-src… action has been blocked."
 //    cdn.jsdelivr.net n'a plus aucune raison d'être intercepté : les icônes
 //    sont désormais des SVG intégrés à l'application, plus une webfont.
-//    Google Fonts n'a plus besoin d'être mis en cache par le SW non plus —
-//    un <link> direct suffit, profite du cache HTTP normal du navigateur
-//    (très long, ces polices ne changent jamais), et n'est plus intercepté
-//    du tout ici. C'est plus simple ET ça règle le blocage CSP à la racine.
 //
 // 2. `TypeError: Failed to execute 'clone' on 'Response'` dans le
 //    gestionnaire de navigation. La combinaison `event.preloadResponse` +
 //    `.clone()` + `cache.put()` est documentée comme fragile selon les
-//    navigateurs : le corps de la réponse préchargée peut déjà être engagé
-//    dans un autre flux de lecture au moment du clone. Plutôt que de
-//    chasser ce comportement spécifique au moteur, on simplifie : on
-//    renvoie la page directement, sans tenter de la mettre en cache au vol.
-//    Le repli hors-ligne continue de fonctionner via /index.html et
-//    /offline.html, déjà précachés à l'installation.
+//    navigateurs. On renvoie désormais la page directement, sans tenter de
+//    la mettre en cache au vol. Le repli hors-ligne continue de fonctionner
+//    via /index.html et /offline.html, déjà précachés à l'installation.
+//    C'est CE bug qui a laissé des utilisateurs bloqués sur la v8 — la
+//    mise à jour automatique de cette version est justement ce qui permet
+//    de les en sortir sans intervention manuelle.
 //
-// 3. La version est incrémentée pour forcer le remplacement de tout cache
-//    existant contenant ces comportements fautifs chez les utilisateurs qui
-//    ont déjà la v8 installée.
+// 3. La version est incrémentée à chaque changement, pour forcer le
+//    remplacement de tout cache existant chez les utilisateurs qui ont
+//    encore une version antérieure installée.
 
-const VERSION     = 'v9';
+const VERSION     = 'v10';
 const APP_CACHE   = `groply-app-${VERSION}`;
 const MEDIA_CACHE = 'groply-media-v2';
 const AUDIO_CACHE = 'groply-audio-v1';
@@ -56,9 +77,14 @@ const isHashedAsset  = (url) => url.pathname.startsWith('/assets/');
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
-    caches.open(APP_CACHE).then(c =>
-      Promise.allSettled(PRECACHE.map(u => c.add(new Request(u, { cache: 'reload' })).catch(() => {})))
-    )
+    caches.open(APP_CACHE)
+      .then(c =>
+        Promise.allSettled(PRECACHE.map(u => c.add(new Request(u, { cache: 'reload' })).catch(() => {})))
+      )
+      // Auto-activation : on ne reste plus en "waiting" à espérer un clic.
+      // Combiné à clients.claim() dans activate, ce service worker prend le
+      // contrôle de tous les onglets ouverts dès qu'il est installé.
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -152,6 +178,9 @@ self.addEventListener('fetch', (e) => {
 
 self.addEventListener('message', (e) => {
   const data = e.data;
+  // Conservé pour compatibilité : ne fait plus rien de nécessaire depuis
+  // que l'installation appelle skipWaiting() elle-même, mais un appel
+  // supplémentaire est sans risque (skipWaiting est idempotent).
   if (data === 'SKIP_WAITING' || data?.type === 'SKIP_WAITING') self.skipWaiting();
 
   if (data?.type === 'PRECACHE_AUDIO' && Array.isArray(data.urls)) {
