@@ -990,26 +990,6 @@ function getUnitQuizPool(unit, allQuiz = null, completedLessons = null) {
   }
   return Object.assign([...core, ...extra], { core, extra });
 }
-function getNextLesson(content, state) {
-  const completed = state?.completedLessons || {};
-  const path = buildPath(content, state);
-  let pendingCheckUnit = null;
-  const ordered = [...path.filter((u) => u.isCurrent), ...path];
-  const seen = /* @__PURE__ */ new Set();
-  for (const u of ordered) {
-    if (!u.unlocked || seen.has(u.id)) continue;
-    seen.add(u.id);
-    if (u.needsCheck && !pendingCheckUnit) pendingCheckUnit = u;
-    for (const lesson of u.lessons) {
-      if (!completed[lesson.id]) {
-        const course = (content?.courses || []).find((c) => c.id === lesson.courseId);
-        return { course, lesson, unit: u };
-      }
-    }
-  }
-  if (pendingCheckUnit) return { course: null, lesson: null, unit: pendingCheckUnit, needsCheck: true };
-  return null;
-}
 function getPathStats(content, state) {
   const path = buildPath(content, state);
   const totalLessons = path.reduce((a, u) => a + u.total, 0);
@@ -1024,6 +1004,75 @@ function getPathStats(content, state) {
     currentUnit
   };
 }
+
+// src/store/leveling.js
+var BASE = 120;
+var STEP = 40;
+var CAP = 500;
+var MAX_LEVEL2 = 60;
+function xpNeededForLevel(n) {
+  const lvl = Math.max(1, Math.min(MAX_LEVEL2, Math.floor(Number(n) || 1)));
+  return Math.min(BASE + (lvl - 1) * STEP, CAP);
+}
+function totalXpForLevel(n) {
+  const target = Math.max(1, Math.min(MAX_LEVEL2, Math.floor(Number(n) || 1)));
+  let total = 0;
+  for (let i = 1; i < target; i++) total += xpNeededForLevel(i);
+  return total;
+}
+function levelFromXp(xp) {
+  const raw = Number(xp);
+  if (!Number.isFinite(raw) || raw <= 0) return 1;
+  const safe = Math.min(raw, totalXpForLevel(MAX_LEVEL2));
+  let level = 1;
+  let remaining = safe;
+  while (level < MAX_LEVEL2 && remaining >= xpNeededForLevel(level)) {
+    remaining -= xpNeededForLevel(level);
+    level += 1;
+  }
+  return level;
+}
+function sanitizeXp(xp) {
+  const raw = Number(xp);
+  if (!Number.isFinite(raw) || raw < 0) return 0;
+  return Math.min(Math.round(raw), totalXpForLevel(MAX_LEVEL2));
+}
+function levelProgress(xp) {
+  const safe = sanitizeXp(xp);
+  const level = levelFromXp(safe);
+  const floor = totalXpForLevel(level);
+  const xpNeeded = xpNeededForLevel(level);
+  const xpInLevel = safe - floor;
+  const isMax = level >= MAX_LEVEL2;
+  return {
+    level,
+    xpInLevel,
+    xpNeeded,
+    xpToNext: isMax ? 0 : xpNeeded - xpInLevel,
+    pct: isMax ? 100 : Math.max(0, Math.min(100, Math.round(xpInLevel / xpNeeded * 100))),
+    totalForNext: floor + xpNeeded,
+    isMax
+  };
+}
+
+// src/store/dates.js
+var dayStr = (date = /* @__PURE__ */ new Date()) => {
+  const d = date instanceof Date ? date : new Date(date);
+  if (Number.isNaN(d.getTime())) return "";
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const j = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${j}`;
+};
+var todayStr = () => dayStr();
+var daysBetween = (a, b) => {
+  if (!a || !b) return null;
+  const pa = a.split("-").map(Number), pb = b.split("-").map(Number);
+  if (pa.length !== 3 || pb.length !== 3) return null;
+  const ta = Date.UTC(pa[0], pa[1] - 1, pa[2]);
+  const tb = Date.UTC(pb[0], pb[1] - 1, pb[2]);
+  return Math.round((tb - ta) / 864e5);
+};
 
 // src/screens/UnitCheckScreen.jsx
 var UnitCheckScreen_exports = {};
@@ -2389,6 +2438,56 @@ function useWakeLock(actif) {
   }, [actif]);
 }
 
+// src/store/gropiTips.js
+var GROPI_TIPS = [
+  // ── Contextuel (prioritaire, condition spécifique à l'état du joueur) ──────
+  { type: "progress", cond: (s, rs) => rs.toReview >= 10, text: (_, rs) => `Tu as ${rs.toReview} questions qui attendent d'\xEAtre revues. La m\xE9moire s'efface vite, c'est le bon moment pour les reprendre.` },
+  { type: "progress", cond: (s) => s.streak === 0 && Object.keys(s.completedLessons || {}).length > 0, text: () => "Ta s\xE9rie est retomb\xE9e \xE0 z\xE9ro. Tu es l\xE0, c'est d\xE9j\xE0 l'essentiel : rallume-la aujourd'hui." },
+  { type: "progress", cond: (s) => s.streak >= 7, text: (s) => `${s.streak} jours d'affil\xE9e. La r\xE9gularit\xE9, c'est 80 % du chemin, continue comme \xE7a.` },
+  { type: "progress", cond: (s) => s.streak >= 3, text: (s) => `S\xE9rie de ${s.streak} jours. Tu construis une vraie habitude, ne la casse pas maintenant.` },
+  { type: "progress", cond: (s) => s.level >= 3 && (s.xp || 0) > 0, text: () => "Tu progresses bien. C'est le bon moment pour tenter quelque chose de nouveau." },
+  { type: "progress", cond: (s) => Object.keys(s.completedLessons || {}).length === 0, text: () => "Commence par une le\xE7on : 10 minutes aujourd'hui valent mieux qu'une heure dimanche." },
+  { type: "tip", cond: () => (/* @__PURE__ */ new Date()).getDay() === 1, text: () => "Lundi est un bon jour pour revoir la semaine pass\xE9e avant d'avancer." },
+  { type: "tip", cond: () => (/* @__PURE__ */ new Date()).getDay() === 5, text: () => "Vendredi soir et guitare, \xE7a marche bien ensemble. 15 minutes de Jam pour finir la semaine sur une bonne note." },
+  // ── Rappels de progression (toujours éligibles, piochent dans les vraies stats) ──
+  { type: "progress", cond: (s) => Object.keys(s.completedLessons || {}).length >= 1, text: (s) => `${Object.keys(s.completedLessons).length} le\xE7on${Object.keys(s.completedLessons).length > 1 ? "s" : ""} d\xE9j\xE0 compl\xE9t\xE9e${Object.keys(s.completedLessons).length > 1 ? "s" : ""}. Chaque le\xE7on ajoute une pierre \xE0 l'\xE9difice, m\xEAme les plus courtes.` },
+  { type: "progress", cond: (s) => (s.unlockedBadges || []).length >= 1, text: (s) => `${s.unlockedBadges.length} badge${s.unlockedBadges.length > 1 ? "s" : ""} d\xE9bloqu\xE9${s.unlockedBadges.length > 1 ? "s" : ""}. Va voir ta collection dans l'onglet Progr\xE8s, \xE7a fait toujours plaisir.` },
+  { type: "progress", cond: (s) => (s.dailyChallengeCount || 0) >= 3, text: (s) => `${s.dailyChallengeCount} d\xE9fis du jour relev\xE9s. C'est ce genre de petite r\xE9gularit\xE9 qui construit une vraie oreille.` },
+  // ── Conseils pratiques (toujours éligibles) ──────────────────────────────
+  { type: "tip", cond: () => true, text: () => "Accorde-toi avant de jouer. 30 secondes qui \xE9vitent de fausser toute la session." },
+  { type: "tip", cond: () => true, text: () => "Entre cordes 3 et 2, le d\xE9calage est de 4 cases, pas 5. C'est la cassure du manche, un rep\xE8re \xE0 retenir par c\u0153ur." },
+  { type: "tip", cond: () => true, text: () => "Vise la tierce de chaque accord quand tu improvises : c'est elle qui raconte l'histoire." },
+  { type: "tip", cond: () => true, text: () => "Le silence fait partie de la musique. Laisser respirer une phrase la rend souvent plus puissante." },
+  { type: "tip", cond: () => true, text: () => "Joue lentement, puis acc\xE9l\xE8re. Un tempo lent parfait vaut mieux qu'un tempo rapide rat\xE9." },
+  { type: "tip", cond: () => true, text: () => "La pentatonique mineure position 1 fonctionne sur 90 % des jams en mineur. Ma\xEEtrise-la d'abord." },
+  { type: "tip", cond: () => true, text: () => "Le mode dorien est un mineur naturel avec une 6te majeure. C'est la gamme de Santana ou de Daft Punk, \xE9coute-les diff\xE9remment." },
+  // ── Anecdotes musicales (faits historiques vérifiables, jamais de paroles) ──
+  { type: "anecdote", cond: () => true, text: () => "Le riff de 'Smoke on the Water' (Deep Purple) est n\xE9 d'un incendie bien r\xE9el : un concert de Frank Zappa \xE0 Montreux qui a pris feu en 1971, sous les yeux du groupe." },
+  { type: "anecdote", cond: () => true, text: () => "Jimi Hendrix \xE9tait gaucher, mais jouait souvent sur une Stratocaster de droitier simplement retourn\xE9e, cordes replac\xE9es \xE0 l'envers." },
+  { type: "anecdote", cond: () => true, text: () => "Le riff d'intro de 'Stairway to Heaven' est tellement rejou\xE9 en magasin de musique qu'il a inspir\xE9 une sc\xE8ne culte de 'Wayne's World' o\xF9 un panneau l'interdit carr\xE9ment." },
+  { type: "anecdote", cond: () => true, text: () => "B.B. King a appel\xE9 toutes ses guitares 'Lucille', en souvenir d'un incendie qu'il a fui de justesse pendant un concert." },
+  { type: "anecdote", cond: () => true, text: () => "Eddie Van Halen a popularis\xE9 le tapping \xE0 deux mains sur 'Eruption' \u2014 une technique que tr\xE8s peu de guitaristes utilisaient avant lui \xE0 ce niveau." },
+  { type: "anecdote", cond: () => true, text: () => "La gamme pentatonique n'est pas n\xE9e en Occident : on la retrouve, invent\xE9e ind\xE9pendamment, dans les musiques traditionnelles chinoise, africaine et am\xE9rindienne." },
+  { type: "anecdote", cond: () => true, text: () => "Keith Richards joue une bonne partie des riffs des Rolling Stones en accordage ouvert de Sol, sur une guitare \xE0 seulement 5 cordes (sans le Mi grave)." },
+  { type: "anecdote", cond: () => true, text: () => "Brian May (Queen) a construit sa guitare l\xE9gendaire, la 'Red Special', avec son p\xE8re \u2014 en partie \xE0 partir de bois de chemin\xE9e r\xE9cup\xE9r\xE9." },
+  { type: "anecdote", cond: () => true, text: () => "Le blues \xE0 12 mesures est la structure la plus reprise de l'histoire du rock : des milliers de morceaux, du blues au rock'n'roll, s'appuient sur elle." },
+  { type: "anecdote", cond: () => true, text: () => "Slash a enregistr\xE9 le riff de 'Sweet Child O' Mine' sur une copie de Gibson Les Paul, avant m\xEAme de pouvoir s'offrir une vraie." }
+];
+var TIP_LABELS = { tip: "Conseil de Gropi", anecdote: "Anecdote musicale", progress: "Ta progression" };
+function pickTip(state, rs = {}) {
+  const dayIdx = (/* @__PURE__ */ new Date()).getDate();
+  const contextual = GROPI_TIPS.filter((t) => {
+    try {
+      return t.cond(state, rs);
+    } catch {
+      return false;
+    }
+  });
+  if (contextual.length === 0) return { type: "tip", text: "Gropi est l\xE0 pour toi." };
+  const picked = contextual[dayIdx % contextual.length];
+  return { type: picked.type, text: picked.text(state, rs) };
+}
+
 // src/screens/CoursesScreen.jsx
 import { jsx as jsx6, jsxs as jsxs4 } from "react/jsx-runtime";
 var PULSE_CSS = `
@@ -2741,13 +2840,118 @@ function UnitHeader({ unit, th }) {
     /* @__PURE__ */ jsx6("div", { style: { flex: 1, height: 1.5, background: unit.unlocked ? `${th.color}44` : C.border } })
   ] });
 }
-function CoursesScreen({ state, dispatch, content }) {
+function HomeHeader({ state, dispatch, navigate, today, tip, tipDismissed, stats, MODULE_THEME: MODULE_THEME2 }) {
+  const C = useC();
+  const dateStr = (/* @__PURE__ */ new Date()).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+  const defiFait = state.dailyChallengeDone && state.dailyChallengeDate === today;
+  return /* @__PURE__ */ jsxs4("div", { style: { padding: "18px 20px 4px" }, children: [
+    /* @__PURE__ */ jsxs4("div", { style: {
+      position: "relative",
+      overflow: "hidden",
+      borderRadius: R.xl,
+      border: `1.5px solid ${C.primaryBorder}`,
+      marginBottom: 14,
+      backgroundImage: "url('/alhambra.jpg')",
+      backgroundSize: "cover",
+      backgroundPosition: "center 35%"
+    }, children: [
+      /* @__PURE__ */ jsx6("div", { style: { position: "absolute", inset: 0, background: C.surface, opacity: 0.68 } }),
+      /* @__PURE__ */ jsxs4("div", { style: { position: "relative", padding: "14px 15px" }, children: [
+        /* @__PURE__ */ jsxs4("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: tipDismissed ? 0 : 12 }, children: [
+          /* @__PURE__ */ jsxs4("div", { children: [
+            /* @__PURE__ */ jsx6("div", { style: { fontSize: 12, fontWeight: 500, color: C.text2, textTransform: "capitalize" }, children: dateStr }),
+            /* @__PURE__ */ jsx6("div", { style: { fontSize: 21, fontWeight: 800, color: C.text, letterSpacing: "-.3px", marginTop: 1 }, children: "Bonjour" })
+          ] }),
+          /* @__PURE__ */ jsxs4("div", { style: {
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            background: C.surface,
+            border: `1.5px solid ${C.border}`,
+            borderRadius: 999,
+            padding: "7px 12px"
+          }, children: [
+            /* @__PURE__ */ jsx6(Ti, { name: "flame", size: 15, color: state.streak > 0 ? C.primary : C.text3 }),
+            /* @__PURE__ */ jsx6("span", { style: { fontSize: 13, fontWeight: 800, color: C.text }, children: state.streak }),
+            /* @__PURE__ */ jsx6("span", { style: { width: 1, height: 12, background: C.border, margin: "0 2px" } }),
+            /* @__PURE__ */ jsxs4("span", { style: { fontSize: 11.5, fontWeight: 700, color: C.text2 }, children: [
+              "Niv. ",
+              state.level
+            ] })
+          ] })
+        ] }),
+        !tipDismissed && /* @__PURE__ */ jsxs4("div", { style: { display: "flex", gap: 11, alignItems: "flex-start", paddingTop: 12, borderTop: `1px dashed ${C.primaryBorder}` }, children: [
+          /* @__PURE__ */ jsx6(Gropi, { pose: "wave", size: 44, anim: "wiggle" }),
+          /* @__PURE__ */ jsxs4("div", { style: { flex: 1, minWidth: 0 }, children: [
+            /* @__PURE__ */ jsx6("div", { style: {
+              fontSize: 9,
+              fontWeight: 700,
+              letterSpacing: ".1em",
+              textTransform: "uppercase",
+              color: C.primaryD,
+              fontFamily: FONTS.ui,
+              marginBottom: 4
+            }, children: TIP_LABELS[tip.type] || "Conseil de Gropi" }),
+            /* @__PURE__ */ jsx6("p", { style: { margin: 0, fontSize: 12.5, lineHeight: 1.5, fontWeight: 500, color: C.text }, children: tip.text })
+          ] }),
+          /* @__PURE__ */ jsx6(
+            "button",
+            {
+              onClick: () => dispatch({ type: "DISMISS_GROPI_TIP" }),
+              "aria-label": "Fermer le conseil du jour",
+              className: "gr-focus",
+              style: { background: "none", border: "none", cursor: "pointer", color: C.text3, fontSize: 15, fontWeight: 600, padding: 2, flexShrink: 0, lineHeight: 1 },
+              children: "\u2715"
+            }
+          )
+        ] })
+      ] })
+    ] }),
+    /* @__PURE__ */ jsxs4(
+      "button",
+      {
+        onClick: () => navigate("challenge"),
+        className: "gr-focus",
+        style: {
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          gap: 9,
+          background: defiFait ? C.greenL : C.amberL,
+          border: `1.5px solid ${defiFait ? C.greenBorder : C.amberBorder}`,
+          borderRadius: R.lg,
+          padding: "10px 12px",
+          marginBottom: 14,
+          cursor: "pointer",
+          textAlign: "left"
+        },
+        children: [
+          /* @__PURE__ */ jsx6(Ti, { name: defiFait ? "check" : "bolt", size: 16, color: defiFait ? C.greenD : C.amberInk ?? C.amber }),
+          /* @__PURE__ */ jsx6("span", { style: { fontSize: 12, fontWeight: 700, color: defiFait ? C.greenD : C.text }, children: defiFait ? "D\xE9fi relev\xE9" : "D\xE9fi du jour" })
+        ]
+      }
+    ),
+    /* @__PURE__ */ jsx6(CurrentUnitBanner, { stats, MODULE_THEME: MODULE_THEME2 }),
+    /* @__PURE__ */ jsx6("div", { style: { height: 10 } })
+  ] });
+}
+function CoursesScreen({ state, dispatch, content, navigate, variant = "courses" }) {
   const C = useC();
   const MODULE_THEME2 = buildModuleTheme(C);
   const [activeLesson, setActiveLesson] = useState4(null);
   const [checkingUnit, setCheckingUnit] = useState4(null);
   const [chestPop, setChestPop] = useState4(false);
   const currentRef = useRef4(null);
+  const today = todayStr();
+  const tipDismissed = state.gropiTipDate === today;
+  const tip = useMemo(() => pickTip(state), [
+    state.xp,
+    state.streak,
+    state.level,
+    Object.keys(state.completedLessons || {}).length,
+    (state.unlockedBadges || []).length,
+    state.dailyChallengeCount
+  ]);
   const scrolledTo = useRef4(null);
   const path = useMemo(
     () => buildPath(content, state),
@@ -2827,7 +3031,19 @@ function CoursesScreen({ state, dispatch, content }) {
     /* @__PURE__ */ jsx6("style", { children: PULSE_CSS }),
     chestPop && /* @__PURE__ */ jsx6(XPPop, { amount: UNIT_BONUS_XP, onDone: () => {
     } }),
-    /* @__PURE__ */ jsxs4("div", { style: {
+    variant === "home" ? /* @__PURE__ */ jsx6(
+      HomeHeader,
+      {
+        state,
+        dispatch,
+        navigate,
+        today,
+        tip,
+        tipDismissed,
+        stats,
+        MODULE_THEME: MODULE_THEME2
+      }
+    ) : /* @__PURE__ */ jsxs4("div", { style: {
       backgroundColor: "#613878",
       backgroundImage: "url('/lavender.jpg')",
       backgroundSize: "cover",
@@ -3246,33 +3462,6 @@ function makeShapeQuestion(level = 1, rng = Math.random) {
   return null;
 }
 
-// src/store/dates.js
-var dayStr = (date = /* @__PURE__ */ new Date()) => {
-  const d = date instanceof Date ? date : new Date(date);
-  if (Number.isNaN(d.getTime())) return "";
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const j = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${j}`;
-};
-var todayStr = () => dayStr();
-var daysBetween = (a, b) => {
-  if (!a || !b) return null;
-  const pa = a.split("-").map(Number), pb = b.split("-").map(Number);
-  if (pa.length !== 3 || pb.length !== 3) return null;
-  const ta = Date.UTC(pa[0], pa[1] - 1, pa[2]);
-  const tb = Date.UTC(pb[0], pb[1] - 1, pb[2]);
-  return Math.round((tb - ta) / 864e5);
-};
-var weekStr = (date = /* @__PURE__ */ new Date()) => {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const dayNum = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  const week = Math.ceil(((d - yearStart) / 864e5 + 1) / 7);
-  return `${d.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
-};
-
 // src/store/reviewEngine.js
 var EASE_MIN = 1.3;
 var EASE_MAX = 2.7;
@@ -3421,25 +3610,6 @@ function updateReviewHistory(history, itemId, correct, today = todayStr()) {
       due: interval > 0 ? dayStr(new Date((/* @__PURE__ */ new Date(`${today}T12:00:00`)).getTime() + interval * 864e5)) : today,
       quality
     }
-  };
-}
-function getReviewStats(allQuestions, reviewHistory, completedLessons) {
-  const today = todayStr();
-  const eligible = (allQuestions || []).filter((q) => isEligible(q, completedLessons));
-  let toReview = 0, neverSeen = 0, mastered = 0;
-  for (const q of eligible) {
-    const score = getPriorityScore(q.id, reviewHistory, completedLessons, today);
-    if (score === NEW_SCORE) neverSeen++;
-    else if (score > 0) toReview++;
-    if ((reviewHistory?.[q.id]?.interval || 0) >= 30) mastered++;
-  }
-  return {
-    eligible: eligible.length,
-    toReview,
-    // plus de plafond artificiel à 99
-    neverSeen,
-    mastered,
-    pctMastered: eligible.length > 0 ? Math.round(mastered / eligible.length * 100) : 0
   };
 }
 
@@ -7239,548 +7409,21 @@ function JamSession({ onBack }) {
 // src/screens/HomeScreen.jsx
 var HomeScreen_exports = {};
 __export(HomeScreen_exports, {
-  HomeScreen: () => HomeScreen
+  HomeScreen: () => HomeScreen,
+  default: () => HomeScreen_default
 });
-import { useState as useState11, useMemo as useMemo6, useEffect as useEffect9 } from "react";
-
-// src/store/leveling.js
-var BASE = 120;
-var STEP = 40;
-var CAP = 500;
-var MAX_LEVEL2 = 60;
-function xpNeededForLevel(n) {
-  const lvl = Math.max(1, Math.min(MAX_LEVEL2, Math.floor(Number(n) || 1)));
-  return Math.min(BASE + (lvl - 1) * STEP, CAP);
+import { jsx as jsx13 } from "react/jsx-runtime";
+function HomeScreen(props) {
+  return /* @__PURE__ */ jsx13(CoursesScreen, { ...props, variant: "home" });
 }
-function totalXpForLevel(n) {
-  const target = Math.max(1, Math.min(MAX_LEVEL2, Math.floor(Number(n) || 1)));
-  let total = 0;
-  for (let i = 1; i < target; i++) total += xpNeededForLevel(i);
-  return total;
-}
-function levelFromXp(xp) {
-  const raw = Number(xp);
-  if (!Number.isFinite(raw) || raw <= 0) return 1;
-  const safe = Math.min(raw, totalXpForLevel(MAX_LEVEL2));
-  let level = 1;
-  let remaining = safe;
-  while (level < MAX_LEVEL2 && remaining >= xpNeededForLevel(level)) {
-    remaining -= xpNeededForLevel(level);
-    level += 1;
-  }
-  return level;
-}
-function sanitizeXp(xp) {
-  const raw = Number(xp);
-  if (!Number.isFinite(raw) || raw < 0) return 0;
-  return Math.min(Math.round(raw), totalXpForLevel(MAX_LEVEL2));
-}
-function levelProgress(xp) {
-  const safe = sanitizeXp(xp);
-  const level = levelFromXp(safe);
-  const floor = totalXpForLevel(level);
-  const xpNeeded = xpNeededForLevel(level);
-  const xpInLevel = safe - floor;
-  const isMax = level >= MAX_LEVEL2;
-  return {
-    level,
-    xpInLevel,
-    xpNeeded,
-    xpToNext: isMax ? 0 : xpNeeded - xpInLevel,
-    pct: isMax ? 100 : Math.max(0, Math.min(100, Math.round(xpInLevel / xpNeeded * 100))),
-    totalForNext: floor + xpNeeded,
-    isMax
-  };
-}
-
-// src/screens/HomeScreen.jsx
-import { Fragment as Fragment9, jsx as jsx13, jsxs as jsxs11 } from "react/jsx-runtime";
-var GROPI_TIPS = [
-  // ── Contextuel (prioritaire, condition spécifique à l'état du joueur) ──────
-  { type: "progress", cond: (s, rs) => rs.toReview >= 10, text: (_, rs) => `Tu as ${rs.toReview} questions qui attendent d'\xEAtre revues. La m\xE9moire s'efface vite, c'est le bon moment pour les reprendre.` },
-  { type: "progress", cond: (s) => s.streak === 0 && Object.keys(s.completedLessons || {}).length > 0, text: () => "Ta s\xE9rie est retomb\xE9e \xE0 z\xE9ro. Tu es l\xE0, c'est d\xE9j\xE0 l'essentiel : rallume-la aujourd'hui." },
-  { type: "progress", cond: (s) => s.streak >= 7, text: (s) => `${s.streak} jours d'affil\xE9e. La r\xE9gularit\xE9, c'est 80 % du chemin, continue comme \xE7a.` },
-  { type: "progress", cond: (s) => s.streak >= 3, text: (s) => `S\xE9rie de ${s.streak} jours. Tu construis une vraie habitude, ne la casse pas maintenant.` },
-  { type: "progress", cond: (s) => s.level >= 3 && levelProgress(s.xp).xpInLevel < 30, text: () => "Tu viens de passer un niveau. C'est le bon moment pour tenter quelque chose de nouveau." },
-  { type: "progress", cond: (s) => Object.keys(s.completedLessons || {}).length === 0, text: () => "Commence par une le\xE7on : 10 minutes aujourd'hui valent mieux qu'une heure dimanche." },
-  { type: "tip", cond: () => (/* @__PURE__ */ new Date()).getDay() === 1, text: () => "Lundi est un bon jour pour revoir la semaine pass\xE9e avant d'avancer." },
-  { type: "tip", cond: () => (/* @__PURE__ */ new Date()).getDay() === 5, text: () => "Vendredi soir et guitare, \xE7a marche bien ensemble. 15 minutes de Jam pour finir la semaine sur une bonne note." },
-  // ── Rappels de progression (toujours éligibles, piochent dans les vraies stats) ──
-  { type: "progress", cond: (s) => Object.keys(s.completedLessons || {}).length >= 1, text: (s) => `${Object.keys(s.completedLessons).length} le\xE7on${Object.keys(s.completedLessons).length > 1 ? "s" : ""} d\xE9j\xE0 compl\xE9t\xE9e${Object.keys(s.completedLessons).length > 1 ? "s" : ""}. Chaque le\xE7on ajoute une pierre \xE0 l'\xE9difice, m\xEAme les plus courtes.` },
-  { type: "progress", cond: (s) => (s.unlockedBadges || []).length >= 1, text: (s) => `${s.unlockedBadges.length} badge${s.unlockedBadges.length > 1 ? "s" : ""} d\xE9bloqu\xE9${s.unlockedBadges.length > 1 ? "s" : ""}. Va voir ta collection dans l'onglet Progr\xE8s, \xE7a fait toujours plaisir.` },
-  { type: "progress", cond: (s) => (s.dailyChallengeCount || 0) >= 3, text: (s) => `${s.dailyChallengeCount} d\xE9fis du jour relev\xE9s. C'est ce genre de petite r\xE9gularit\xE9 qui construit une vraie oreille.` },
-  // ── Conseils pratiques (toujours éligibles) ──────────────────────────────
-  { type: "tip", cond: () => true, text: () => "Accorde-toi avant de jouer. 30 secondes qui \xE9vitent de fausser toute la session." },
-  { type: "tip", cond: () => true, text: () => "Entre cordes 3 et 2, le d\xE9calage est de 4 cases, pas 5. C'est la cassure du manche, un rep\xE8re \xE0 retenir par c\u0153ur." },
-  { type: "tip", cond: () => true, text: () => "Vise la tierce de chaque accord quand tu improvises : c'est elle qui raconte l'histoire." },
-  { type: "tip", cond: () => true, text: () => "Le silence fait partie de la musique. Laisser respirer une phrase la rend souvent plus puissante." },
-  { type: "tip", cond: () => true, text: () => "Joue lentement, puis acc\xE9l\xE8re. Un tempo lent parfait vaut mieux qu'un tempo rapide rat\xE9." },
-  { type: "tip", cond: () => true, text: () => "La pentatonique mineure position 1 fonctionne sur 90 % des jams en mineur. Ma\xEEtrise-la d'abord." },
-  { type: "tip", cond: () => true, text: () => "Le mode dorien est un mineur naturel avec une 6te majeure. C'est la gamme de Santana ou de Daft Punk, \xE9coute-les diff\xE9remment." },
-  // ── Anecdotes musicales (faits historiques vérifiables, jamais de paroles) ──
-  { type: "anecdote", cond: () => true, text: () => "Le riff de 'Smoke on the Water' (Deep Purple) est n\xE9 d'un incendie bien r\xE9el : un concert de Frank Zappa \xE0 Montreux qui a pris feu en 1971, sous les yeux du groupe." },
-  { type: "anecdote", cond: () => true, text: () => "Jimi Hendrix \xE9tait gaucher, mais jouait souvent sur une Stratocaster de droitier simplement retourn\xE9e, cordes replac\xE9es \xE0 l'envers." },
-  { type: "anecdote", cond: () => true, text: () => "Le riff d'intro de 'Stairway to Heaven' est tellement rejou\xE9 en magasin de musique qu'il a inspir\xE9 une sc\xE8ne culte de 'Wayne's World' o\xF9 un panneau l'interdit carr\xE9ment." },
-  { type: "anecdote", cond: () => true, text: () => "B.B. King a appel\xE9 toutes ses guitares 'Lucille', en souvenir d'un incendie qu'il a fui de justesse pendant un concert." },
-  { type: "anecdote", cond: () => true, text: () => "Eddie Van Halen a popularis\xE9 le tapping \xE0 deux mains sur 'Eruption' \u2014 une technique que tr\xE8s peu de guitaristes utilisaient avant lui \xE0 ce niveau." },
-  { type: "anecdote", cond: () => true, text: () => "La gamme pentatonique n'est pas n\xE9e en Occident : on la retrouve, invent\xE9e ind\xE9pendamment, dans les musiques traditionnelles chinoise, africaine et am\xE9rindienne." },
-  { type: "anecdote", cond: () => true, text: () => "Keith Richards joue une bonne partie des riffs des Rolling Stones en accordage ouvert de Sol, sur une guitare \xE0 seulement 5 cordes (sans le Mi grave)." },
-  { type: "anecdote", cond: () => true, text: () => "Brian May (Queen) a construit sa guitare l\xE9gendaire, la 'Red Special', avec son p\xE8re \u2014 en partie \xE0 partir de bois de chemin\xE9e r\xE9cup\xE9r\xE9." },
-  { type: "anecdote", cond: () => true, text: () => "Le blues \xE0 12 mesures est la structure la plus reprise de l'histoire du rock : des milliers de morceaux, du blues au rock'n'roll, s'appuient sur elle." },
-  { type: "anecdote", cond: () => true, text: () => "Slash a enregistr\xE9 le riff de 'Sweet Child O' Mine' sur une copie de Gibson Les Paul, avant m\xEAme de pouvoir s'offrir une vraie." }
-];
-var TIP_LABELS = { tip: "Conseil de Gropi", anecdote: "Anecdote musicale", progress: "Ta progression" };
-function pickTip(state, rs) {
-  const dayIdx = (/* @__PURE__ */ new Date()).getDate();
-  const contextual = GROPI_TIPS.filter((t) => t.cond(state, rs));
-  if (contextual.length === 0) return { type: "tip", text: "Gropi est l\xE0 pour toi." };
-  const picked = contextual[dayIdx % contextual.length];
-  return { type: picked.type, text: picked.text(state, rs) };
-}
-function GropiWave({ size = 80 }) {
-  const C = useC();
-  return /* @__PURE__ */ jsx13(Gropi, { pose: "wave", size, anim: "wiggle" });
-}
-function GropiBlock({ state, dispatch, navigate, reviewStats, nextLesson }) {
-  const C = useC();
-  const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
-  const dismissed = state.gropiTipDate === today;
-  const tip = useMemo6(
-    () => pickTip(state, reviewStats),
-    [
-      state.xp,
-      state.streak,
-      state.level,
-      reviewStats.toReview,
-      Object.keys(state.completedLessons || {}).length,
-      (state.unlockedBadges || []).length,
-      state.dailyChallengeCount
-    ]
-  );
-  const steps = useMemo6(() => {
-    const s = [];
-    if (reviewStats.toReview > 0) s.push({
-      icon: "refresh",
-      color: C.pink,
-      label: "R\xE9vision intelligente",
-      sub: `${reviewStats.toReview} question${reviewStats.toReview > 1 ? "s" : ""} \xE0 revoir`,
-      dur: "5 min",
-      action: "review"
-    });
-    if (nextLesson?.lesson) s.push({
-      icon: "book-2",
-      color: C.green,
-      label: nextLesson.lesson.title,
-      sub: nextLesson.course.title,
-      dur: `${nextLesson.lesson.duration} min`,
-      action: "courses"
-    });
-    else if (nextLesson?.needsCheck) s.push({
-      icon: "clipboard-check",
-      color: C.primary,
-      label: "V\xE9rifier ton unit\xE9",
-      sub: "Toutes les le\xE7ons sont vues, il ne reste que le contr\xF4le",
-      dur: "5 min",
-      action: "courses"
-    });
-    s.push(state.dailyChallengeDone ? {
-      icon: "trophy",
-      color: C.green,
-      label: "D\xE9fi du jour termin\xE9",
-      sub: "Reviens demain pour le suivant",
-      dur: "\u2713",
-      action: "challenge",
-      done: true
-    } : {
-      icon: "bolt",
-      color: C.amber,
-      label: "D\xE9fi du jour",
-      sub: "Un exercice court, tir\xE9 au hasard",
-      dur: "3 min",
-      action: "challenge"
-    });
-    if (s.length === 0) s.push({
-      icon: "music",
-      color: C.pink,
-      label: "Jam Session libre",
-      sub: "Improvise, explore, d\xE9tends-toi",
-      dur: "\u221E",
-      action: "jam"
-    });
-    return s;
-  }, [reviewStats.toReview, nextLesson, state.dailyChallengeDone]);
-  const totalMin = steps.filter((s) => !s.done).reduce((a, s) => a + (parseInt(s.dur) || 5), 0);
-  const mainAction = (steps.find((s) => !s.done) || steps[0])?.action || "jam";
-  return /* @__PURE__ */ jsxs11("div", { style: {
-    margin: "14px 16px 0",
-    background: C.surface,
-    border: `1.5px solid ${C.primaryBorder}`,
-    borderRadius: 22,
-    overflow: "hidden",
-    boxShadow: `0 4px 20px ${C.primary}18`
-  }, children: [
-    !dismissed && /* @__PURE__ */ jsxs11(Fragment9, { children: [
-      /* @__PURE__ */ jsxs11("div", { style: { display: "flex", gap: 12, alignItems: "flex-start", padding: "14px 14px 12px" }, children: [
-        /* @__PURE__ */ jsx13(GropiWave, { size: 76 }),
-        /* @__PURE__ */ jsxs11("div", { style: { flex: 1, minWidth: 0 }, children: [
-          /* @__PURE__ */ jsxs11("div", { style: {
-            fontSize: 9,
-            fontWeight: 700,
-            letterSpacing: ".1em",
-            textTransform: "uppercase",
-            color: C.primaryD,
-            fontFamily: FONTS.ui,
-            marginBottom: 5
-          }, children: [
-            TIP_LABELS[tip.type] || "Conseil de Gropi",
-            " \xB7 aujourd'hui"
-          ] }),
-          /* @__PURE__ */ jsx13("p", { style: {
-            margin: 0,
-            fontSize: 13.5,
-            lineHeight: 1.55,
-            fontWeight: 500,
-            color: C.text,
-            fontFamily: FONTS.body
-          }, children: tip.text })
-        ] }),
-        /* @__PURE__ */ jsx13(
-          "button",
-          {
-            onClick: () => dispatch({ type: "DISMISS_GROPI_TIP" }),
-            "aria-label": "Fermer le conseil du jour",
-            style: {
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              color: C.text3,
-              fontSize: 16,
-              fontWeight: 600,
-              fontFamily: FONTS.ui,
-              padding: "0 2px",
-              flexShrink: 0,
-              lineHeight: 1
-            },
-            children: "\u2715"
-          }
-        )
-      ] }),
-      /* @__PURE__ */ jsx13("div", { style: { borderTop: `1px dashed ${C.primaryBorder}`, margin: "0 14px" } })
-    ] }),
-    /* @__PURE__ */ jsxs11("div", { style: { padding: "11px 14px 14px" }, children: [
-      /* @__PURE__ */ jsxs11("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 9 }, children: [
-        /* @__PURE__ */ jsx13("span", { style: { fontSize: 9, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: C.primaryD, fontFamily: FONTS.ui }, children: "Ta session du jour" }),
-        /* @__PURE__ */ jsxs11("span", { style: {
-          fontSize: 9.5,
-          fontWeight: 700,
-          background: C.primaryL,
-          border: `1px solid ${C.primaryBorder}`,
-          color: C.primary,
-          borderRadius: 999,
-          padding: "3px 9px",
-          fontFamily: FONTS.ui,
-          letterSpacing: ".05em",
-          textTransform: "uppercase"
-        }, children: [
-          "\u2248 ",
-          totalMin,
-          " min"
-        ] })
-      ] }),
-      steps.map((step, i) => /* @__PURE__ */ jsxs11("div", { style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        padding: "8px 0",
-        borderTop: i > 0 ? `1px dashed ${C.borderSoft}` : "none"
-      }, children: [
-        /* @__PURE__ */ jsx13("div", { style: {
-          width: 32,
-          height: 32,
-          borderRadius: 10,
-          background: step.done ? C.greenL : C.surface2,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0
-        }, children: /* @__PURE__ */ jsx13(Ti, { name: step.icon, size: 15, color: step.color }) }),
-        /* @__PURE__ */ jsxs11("div", { style: { flex: 1, minWidth: 0 }, children: [
-          /* @__PURE__ */ jsx13("div", { style: {
-            fontSize: 13,
-            fontWeight: 700,
-            letterSpacing: "-.1px",
-            color: step.done ? C.text3 : C.text
-          }, children: step.label }),
-          /* @__PURE__ */ jsx13("div", { style: { fontSize: 10.5, color: C.text3, marginTop: 1 }, children: step.sub })
-        ] }),
-        /* @__PURE__ */ jsx13("span", { style: { fontSize: 11, fontWeight: 700, color: C.text2, flexShrink: 0 }, children: step.dur })
-      ] }, i)),
-      /* @__PURE__ */ jsxs11(
-        "button",
-        {
-          onClick: () => navigate(mainAction),
-          style: {
-            width: "100%",
-            marginTop: 11,
-            background: `linear-gradient(135deg,#FF9155 0%,${C.primary} 100%)`,
-            color: "#fff",
-            border: "none",
-            borderRadius: R.lg,
-            padding: "13px 16px",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 8,
-            fontSize: 13.5,
-            fontWeight: 700,
-            fontFamily: FONTS.ui,
-            letterSpacing: ".02em",
-            boxShadow: `0 4px 16px ${C.primary}44`
-          },
-          children: [
-            /* @__PURE__ */ jsx13(Ti, { name: "player-play", size: 14, color: "#fff" }),
-            "Commencer la session"
-          ]
-        }
-      )
-    ] })
-  ] });
-}
-function QuickCard({ icon, iconBg, iconColor, label, onClick, done = false }) {
-  const C = useC();
-  return /* @__PURE__ */ jsxs11("button", { onClick, style: {
-    background: C.surface,
-    border: `1.5px solid ${done ? C.greenBorder : C.border}`,
-    borderRadius: R.lg,
-    padding: 14,
-    cursor: "pointer",
-    textAlign: "left",
-    fontFamily: FONTS.title,
-    display: "flex",
-    flexDirection: "column",
-    gap: 8,
-    transition: "transform .1s"
-  }, children: [
-    /* @__PURE__ */ jsx13("div", { style: {
-      width: 40,
-      height: 40,
-      borderRadius: R.md,
-      background: iconBg,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center"
-    }, children: /* @__PURE__ */ jsx13(Ti, { name: icon, size: 18, color: iconColor }) }),
-    /* @__PURE__ */ jsx13("div", { style: { fontSize: 12.5, fontWeight: 700, color: C.text, lineHeight: 1.3 }, children: label })
-  ] });
-}
-var WEEKLY_TARGETS = { sessions: 5, exercises: 8, quizzes: 12 };
-function WeeklyGoals({ state }) {
-  const C = useC();
-  const currentWeek = weekStr();
-  const g = state.weeklyGoals?.week === currentWeek ? state.weeklyGoals : { sessions: 0, exercises: 0, quizzes: 0 };
-  const rows = [
-    { key: "sessions", label: "Sessions de pratique", icon: "player-play", color: C.primary },
-    { key: "exercises", label: "Exercices", icon: "guitar-pick", color: C.green },
-    { key: "quizzes", label: "Quiz", icon: "help-circle", color: C.amber }
-  ];
-  const allDone = rows.every((r) => (g[r.key] || 0) >= WEEKLY_TARGETS[r.key]);
-  return /* @__PURE__ */ jsxs11("div", { style: { margin: "16px 16px 0" }, children: [
-    /* @__PURE__ */ jsxs11("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 9 }, children: [
-      /* @__PURE__ */ jsx13("span", { style: { fontSize: 11, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: C.text3, fontFamily: FONTS.ui }, children: "Objectifs de la semaine" }),
-      allDone && /* @__PURE__ */ jsx13("span", { style: { fontSize: 10, fontWeight: 700, color: C.green, fontFamily: FONTS.ui }, children: "Semaine r\xE9ussie" })
-    ] }),
-    /* @__PURE__ */ jsx13("div", { style: {
-      background: C.surface,
-      border: `1.5px solid ${allDone ? C.greenBorder : C.border}`,
-      borderRadius: R.lg,
-      padding: "12px 14px"
-    }, children: rows.map((r, i) => {
-      const done = g[r.key] || 0;
-      const target = WEEKLY_TARGETS[r.key];
-      const hit = done >= target;
-      return /* @__PURE__ */ jsxs11("div", { style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        padding: i > 0 ? "9px 0 0" : "0",
-        marginTop: i > 0 ? 9 : 0,
-        borderTop: i > 0 ? `1px dashed ${C.border}` : "none"
-      }, children: [
-        /* @__PURE__ */ jsx13(Ti, { name: hit ? "circle-check" : r.icon, size: 15, color: hit ? C.green : r.color }),
-        /* @__PURE__ */ jsx13("span", { style: { flex: 1, fontSize: 12.5, fontWeight: 600, color: C.text }, children: r.label }),
-        /* @__PURE__ */ jsx13("div", { style: { width: 72 }, children: /* @__PURE__ */ jsx13(ProgressBar, { pct: Math.min(100, done / target * 100), color: hit ? C.green : r.color, h: 5 }) }),
-        /* @__PURE__ */ jsxs11("span", { style: { fontSize: 11.5, fontWeight: 700, color: hit ? C.green : C.text2, minWidth: 36, textAlign: "right" }, children: [
-          Math.min(done, target),
-          "/",
-          target
-        ] })
-      ] }, r.key);
-    }) })
-  ] });
-}
-function HomeScreen({ state, dispatch, navigate, content }) {
-  const C = useC();
-  const { xpInLevel, xpNeeded, pct: lvlPct, xpToNext } = levelProgress(state.xp);
-  const reviewStats = useMemo6(() => {
-    if (!content.quiz) return { toReview: 0, eligible: 0, pctMastered: 0, mastered: 0 };
-    return getReviewStats(content.quiz, state.reviewHistory || {}, state.completedLessons);
-  }, [content.quiz, state.reviewHistory, state.completedLessons]);
-  const nextLesson = useMemo6(
-    () => (
-      // Suit l'ordre du Parcours (unités débloquées) — cohérent avec l'onglet Parcours
-      getNextLesson(content, state)
-    ),
-    [content, state.completedLessons, state.claimedUnits]
-  );
-  const dateStr = (/* @__PURE__ */ new Date()).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
-  return /* @__PURE__ */ jsxs11("div", { children: [
-    /* @__PURE__ */ jsxs11("div", { style: {
-      backgroundColor: "#995a36",
-      backgroundImage: "url('/alhambra.jpg')",
-      backgroundSize: "cover",
-      backgroundPosition: "center 30%",
-      padding: "56px 20px 22px",
-      position: "relative",
-      overflow: "hidden"
-    }, children: [
-      /* @__PURE__ */ jsx13("div", { style: { position: "absolute", inset: 0, background: "rgba(160,55,0,.5)", pointerEvents: "none", zIndex: 0 } }),
-      /* @__PURE__ */ jsx13("div", { style: { position: "absolute", top: -30, right: -35, width: 130, height: 130, background: "rgba(255,255,255,.08)", borderRadius: "50%", pointerEvents: "none" } }),
-      /* @__PURE__ */ jsxs11("div", { style: { position: "absolute", top: 18, left: "50%", transform: "translateX(-50%)", zIndex: 4, display: "flex", alignItems: "center", gap: 9 }, children: [
-        /* @__PURE__ */ jsx13("img", { src: "/logo.svg", alt: "Groply", style: { height: 40, width: "auto", filter: "brightness(0) invert(1)", opacity: 0.95 } }),
-        /* @__PURE__ */ jsx13("span", { style: { fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: "-.3px", opacity: 0.95, fontFamily: "'Nunito',sans-serif" }, children: "Groply" })
-      ] }),
-      /* @__PURE__ */ jsx13(Gropi, { pose: "celebrate", size: 196, anim: "bob", style: {
-        position: "absolute",
-        right: -4,
-        bottom: 0,
-        zIndex: 1,
-        filter: "drop-shadow(0 10px 18px rgba(120,40,0,.38))",
-        pointerEvents: "none"
-      } }),
-      /* @__PURE__ */ jsx13("div", { style: { display: "flex", alignItems: "flex-end", position: "relative", zIndex: 2 }, children: /* @__PURE__ */ jsxs11("div", { style: { flex: "0 0 58%", maxWidth: "58%" }, children: [
-        /* @__PURE__ */ jsx13("div", { style: { fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,.75)", marginBottom: 2 }, children: dateStr }),
-        /* @__PURE__ */ jsx13("div", { style: { fontSize: 22, fontWeight: 800, color: "#fff", marginBottom: 18, letterSpacing: "-.3px" }, children: "Bonjour" }),
-        nextLesson?.lesson ? /* @__PURE__ */ jsxs11("button", { onClick: () => navigate("courses"), style: {
-          width: "100%",
-          background: "rgba(255,255,255,.18)",
-          border: "1.5px solid rgba(255,255,255,.28)",
-          borderRadius: R.lg,
-          padding: "14px 16px",
-          backdropFilter: "blur(6px)",
-          cursor: "pointer",
-          textAlign: "left",
-          fontFamily: FONTS.title
-        }, children: [
-          /* @__PURE__ */ jsx13("div", { style: { fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,.7)", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 3 }, children: "Prochain objectif" }),
-          /* @__PURE__ */ jsx13("div", { style: { fontSize: 15, fontWeight: 800, color: "#fff", letterSpacing: "-.2px", marginBottom: 4 }, children: nextLesson.lesson.title }),
-          /* @__PURE__ */ jsxs11("div", { style: { fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,.7)", marginBottom: 12 }, children: [
-            nextLesson.course.title,
-            " \xB7 ",
-            nextLesson.lesson.duration,
-            " min"
-          ] }),
-          /* @__PURE__ */ jsxs11("span", { style: { display: "inline-flex", alignItems: "center", gap: 7, background: "#fff", color: C.primary, borderRadius: 99, padding: "8px 16px", fontSize: 13, fontWeight: 700 }, children: [
-            /* @__PURE__ */ jsx13(Ti, { name: "player-play", size: 13, color: C.primary }),
-            "Continuer"
-          ] })
-        ] }) : nextLesson?.needsCheck ? /* @__PURE__ */ jsxs11("button", { onClick: () => navigate("courses"), style: {
-          width: "100%",
-          background: "rgba(255,255,255,.18)",
-          border: "1.5px solid rgba(255,255,255,.28)",
-          borderRadius: R.lg,
-          padding: "14px 16px",
-          backdropFilter: "blur(6px)",
-          cursor: "pointer",
-          textAlign: "left",
-          fontFamily: FONTS.title
-        }, children: [
-          /* @__PURE__ */ jsx13("div", { style: { fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,.7)", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 3 }, children: "Prochain objectif" }),
-          /* @__PURE__ */ jsx13("div", { style: { fontSize: 15, fontWeight: 800, color: "#fff", letterSpacing: "-.2px", marginBottom: 4 }, children: "V\xE9rifier ton unit\xE9" }),
-          /* @__PURE__ */ jsx13("div", { style: { fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,.7)", marginBottom: 12 }, children: "Toutes les le\xE7ons sont vues, il ne reste que le contr\xF4le" }),
-          /* @__PURE__ */ jsxs11("span", { style: { display: "inline-flex", alignItems: "center", gap: 7, background: "#fff", color: C.primary, borderRadius: 99, padding: "8px 16px", fontSize: 13, fontWeight: 700 }, children: [
-            /* @__PURE__ */ jsx13(Ti, { name: "clipboard-check", size: 13, color: C.primary }),
-            "Continuer"
-          ] })
-        ] }) : /* @__PURE__ */ jsxs11("div", { style: { background: "rgba(255,255,255,.18)", border: "1.5px solid rgba(255,255,255,.28)", borderRadius: R.lg, padding: "16px 18px", backdropFilter: "blur(6px)" }, children: [
-          /* @__PURE__ */ jsx13("div", { style: { fontSize: 16, fontWeight: 800, color: "#fff" }, children: "Tout est compl\xE9t\xE9" }),
-          /* @__PURE__ */ jsx13("div", { style: { fontSize: 12, color: "rgba(255,255,255,.7)", marginTop: 3 }, children: "Reviens demain pour de nouveaux d\xE9fis." })
-        ] })
-      ] }) })
-    ] }),
-    /* @__PURE__ */ jsx13("div", { style: { display: "flex", gap: 8, overflowX: "auto", padding: "14px 16px 0", scrollbarWidth: "none" }, children: [
-      { v: `Niv. ${state.level}`, l: "Niveau", color: C.primaryD },
-      { v: Object.keys(state.completedLessons).length, l: "Le\xE7ons" },
-      { v: Object.keys(state.quizResults || {}).length, l: "Quiz" },
-      { v: Object.keys(state.completedExercises).length, l: "Exercices" },
-      { v: `${state.streak}\u{1F525}`, l: (state.streakFreezes || 0) > 0 ? `S\xE9rie \xB7 ${state.streakFreezes}\u2744\uFE0F` : "S\xE9rie", color: C.primaryD }
-    ].map((s, i) => /* @__PURE__ */ jsxs11("div", { style: { flexShrink: 0, background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.md, padding: "10px 14px", minWidth: 68, textAlign: "center" }, children: [
-      /* @__PURE__ */ jsx13("div", { style: { fontSize: 17, fontWeight: 800, color: s.color || C.text, letterSpacing: "-.3px" }, children: s.v }),
-      /* @__PURE__ */ jsx13("div", { style: { fontSize: 9.5, fontWeight: 600, color: C.text3, textTransform: "uppercase", letterSpacing: ".05em", marginTop: 1 }, children: s.l })
-    ] }, i)) }),
-    /* @__PURE__ */ jsxs11("div", { style: { margin: "14px 16px 0" }, children: [
-      /* @__PURE__ */ jsxs11("div", { style: { display: "flex", justifyContent: "space-between", marginBottom: 5 }, children: [
-        /* @__PURE__ */ jsxs11("span", { style: { fontSize: 13, fontWeight: 700, color: C.text }, children: [
-          "Niveau ",
-          state.level
-        ] }),
-        /* @__PURE__ */ jsxs11("span", { style: { fontSize: 12, fontWeight: 600, color: C.primary }, children: [
-          xpInLevel,
-          " / ",
-          xpNeeded,
-          " XP"
-        ] })
-      ] }),
-      /* @__PURE__ */ jsx13("div", { style: { height: 8, background: C.border, borderRadius: 99, overflow: "hidden" }, children: /* @__PURE__ */ jsx13("div", { style: { width: `${lvlPct}%`, height: "100%", background: `linear-gradient(90deg,#FF9155,${C.primary})`, borderRadius: 99, transition: "width .4s ease" } }) }),
-      /* @__PURE__ */ jsxs11("div", { style: { fontSize: 11, color: C.text3, marginTop: 4 }, children: [
-        xpToNext,
-        " XP pour le niveau ",
-        state.level + 1
-      ] })
-    ] }),
-    /* @__PURE__ */ jsx13(WeeklyGoals, { state }),
-    /* @__PURE__ */ jsx13(
-      GropiBlock,
-      {
-        state,
-        dispatch,
-        navigate,
-        reviewStats,
-        nextLesson
-      }
-    ),
-    /* @__PURE__ */ jsxs11("div", { style: { padding: "20px 16px 0" }, children: [
-      /* @__PURE__ */ jsx13("div", { style: { fontSize: 11, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: C.text3, fontFamily: FONTS.ui, marginBottom: 10 }, children: "Acc\xE8s rapide" }),
-      /* @__PURE__ */ jsxs11("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }, children: [
-        /* @__PURE__ */ jsx13(QuickCard, { icon: "music", iconBg: C.pinkL, iconColor: C.pink, label: "Jam Session", onClick: () => navigate("jam") }),
-        /* @__PURE__ */ jsx13(QuickCard, { icon: "ear", iconBg: C.greenL, iconColor: C.green, label: "Ear Training", onClick: () => navigate("ear") })
-      ] })
-    ] }),
-    state.sessionHistory?.length > 0 && /* @__PURE__ */ jsxs11("div", { style: { padding: "0 16px" }, children: [
-      /* @__PURE__ */ jsx13("div", { style: { fontSize: 11, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: C.text3, fontFamily: FONTS.ui, marginBottom: 10 }, children: "Derni\xE8res sessions" }),
-      state.sessionHistory.slice(0, 3).map((sess, i) => /* @__PURE__ */ jsxs11("div", { style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: "12px 16px", display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }, children: [
-        /* @__PURE__ */ jsx13("div", { style: { width: 38, height: 38, borderRadius: R.md, background: C.greenL, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }, children: /* @__PURE__ */ jsx13(Ti, { name: "check", size: 16, color: C.green }) }),
-        /* @__PURE__ */ jsxs11("div", { style: { flex: 1 }, children: [
-          /* @__PURE__ */ jsx13("div", { style: { fontSize: 13, fontWeight: 700, color: C.text }, children: sess.title }),
-          /* @__PURE__ */ jsxs11("div", { style: { fontSize: 11, color: C.text3, marginTop: 1 }, children: [
-            sess.score ? `${sess.score} \xB7 ` : "",
-            " +",
-            sess.xp,
-            " XP"
-          ] })
-        ] })
-      ] }, i))
-    ] }),
-    /* @__PURE__ */ jsx13("div", { style: { height: 28 } })
-  ] });
-}
+var HomeScreen_default = HomeScreen;
 
 // src/screens/ProgressScreen.jsx
 var ProgressScreen_exports = {};
 __export(ProgressScreen_exports, {
   ProgressScreen: () => ProgressScreen
 });
-import { useState as useState12, useMemo as useMemo7 } from "react";
+import { useState as useState11, useMemo as useMemo6 } from "react";
 
 // src/store/mastery.js
 var MASTERY = {
@@ -8045,7 +7688,7 @@ function anchoredCount(state, content) {
 }
 
 // src/screens/ProgressScreen.jsx
-import { jsx as jsx14, jsxs as jsxs12 } from "react/jsx-runtime";
+import { jsx as jsx14, jsxs as jsxs11 } from "react/jsx-runtime";
 function ProgressScreen({ state, content, onOpenSettings }) {
   const C = useC();
   const MODULE_THEME2 = buildModuleTheme(C);
@@ -8053,22 +7696,22 @@ function ProgressScreen({ state, content, onOpenSettings }) {
   const BADGE_RARITIES2 = buildBadgeRarities(C);
   const { xpInLevel, xpNeeded, xpToNext, pct: lvlPct, totalForNext } = levelProgress(state.xp);
   const grade = gradeForLevel(state.level);
-  const maitrise = useMemo7(
+  const maitrise = useMemo6(
     () => masteryStats(content, state),
     [content, state.completedLessons, state.quizResults, state.reviewHistory]
   );
-  const aAncrer = useMemo7(
+  const aAncrer = useMemo6(
     () => prochainesAAncrer(content, state, 3),
     [content, state.completedLessons, state.quizResults, state.reviewHistory]
   );
-  const skills = useMemo7(() => [
+  const skills = useMemo6(() => [
     { label: "Manche", id: "neck", color: C.amber, colorD: C.amberD },
     { label: "Gammes", id: "scales", color: C.green, colorD: C.greenD },
     { label: "Harmonie", id: "harmony", color: C.purple, colorD: C.purpleD },
     { label: "Rythme", id: "rhythm", color: C.blue, colorD: C.blueD },
     { label: "Impro", id: "impro", color: C.pink, colorD: C.pinkD }
   ].map((s) => ({ ...s, pct: skillMastery(state, content, s.id) })), [state, content]);
-  const badgesByCategory = useMemo7(() => {
+  const badgesByCategory = useMemo6(() => {
     const map = {};
     BADGES.forEach((b) => {
       if (!map[b.cat]) map[b.cat] = [];
@@ -8076,8 +7719,8 @@ function ProgressScreen({ state, content, onOpenSettings }) {
     });
     return map;
   }, []);
-  return /* @__PURE__ */ jsxs12("div", { children: [
-    /* @__PURE__ */ jsxs12("div", { style: {
+  return /* @__PURE__ */ jsxs11("div", { children: [
+    /* @__PURE__ */ jsxs11("div", { style: {
       backgroundColor: "#b7a0c8",
       backgroundImage: "url('/sunrise.jpg')",
       backgroundSize: "cover",
@@ -8087,10 +7730,10 @@ function ProgressScreen({ state, content, onOpenSettings }) {
       overflow: "hidden"
     }, children: [
       /* @__PURE__ */ jsx14("div", { style: { position: "absolute", inset: 0, background: "rgba(120,50,10,.48)", pointerEvents: "none" } }),
-      /* @__PURE__ */ jsxs12("div", { style: { position: "relative", zIndex: 1 }, children: [
-        /* @__PURE__ */ jsxs12("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }, children: [
+      /* @__PURE__ */ jsxs11("div", { style: { position: "relative", zIndex: 1 }, children: [
+        /* @__PURE__ */ jsxs11("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }, children: [
           /* @__PURE__ */ jsx14("div", { style: { fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: "-.4px" }, children: "Progression" }),
-          /* @__PURE__ */ jsxs12("button", { onClick: onOpenSettings, style: {
+          /* @__PURE__ */ jsxs11("button", { onClick: onOpenSettings, style: {
             background: "rgba(255,255,255,.18)",
             border: "1.5px solid rgba(255,255,255,.3)",
             borderRadius: R.sm,
@@ -8109,12 +7752,12 @@ function ProgressScreen({ state, content, onOpenSettings }) {
             " R\xE9glages"
           ] })
         ] }),
-        /* @__PURE__ */ jsxs12("div", { style: { display: "flex", alignItems: "center", gap: 7, marginBottom: 10 }, children: [
+        /* @__PURE__ */ jsxs11("div", { style: { display: "flex", alignItems: "center", gap: 7, marginBottom: 10 }, children: [
           /* @__PURE__ */ jsx14(Ti, { name: grade.icon.replace("ti-", ""), size: 19, color: "#fff" }),
           /* @__PURE__ */ jsx14("span", { style: { fontSize: 17, fontWeight: 800, color: "#fff", letterSpacing: "-.2px" }, children: grade.label })
         ] }),
-        /* @__PURE__ */ jsxs12("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 14, flexWrap: "wrap" }, children: [
-          /* @__PURE__ */ jsxs12("div", { style: {
+        /* @__PURE__ */ jsxs11("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 14, flexWrap: "wrap" }, children: [
+          /* @__PURE__ */ jsxs11("div", { style: {
             display: "inline-flex",
             alignItems: "center",
             gap: 8,
@@ -8127,7 +7770,7 @@ function ProgressScreen({ state, content, onOpenSettings }) {
             /* @__PURE__ */ jsx14("span", { style: { fontSize: 22, fontWeight: 800, color: "#fff", letterSpacing: "-.5px" }, children: state.level }),
             /* @__PURE__ */ jsx14("span", { style: { fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,.8)" }, children: "Niveau" })
           ] }),
-          /* @__PURE__ */ jsxs12("div", { style: {
+          /* @__PURE__ */ jsxs11("div", { style: {
             display: "inline-flex",
             alignItems: "center",
             gap: 5,
@@ -8143,7 +7786,7 @@ function ProgressScreen({ state, content, onOpenSettings }) {
             /* @__PURE__ */ jsx14(Ti, { name: "flame", size: 14, color: "#fff" }),
             state.streak,
             " jours",
-            (state.streakFreezes || 0) > 0 && /* @__PURE__ */ jsxs12("span", { style: { fontSize: 11, fontWeight: 700, opacity: 0.85 }, children: [
+            (state.streakFreezes || 0) > 0 && /* @__PURE__ */ jsxs11("span", { style: { fontSize: 11, fontWeight: 700, opacity: 0.85 }, children: [
               "\xB7 ",
               state.streakFreezes,
               " gel",
@@ -8151,12 +7794,12 @@ function ProgressScreen({ state, content, onOpenSettings }) {
             ] })
           ] })
         ] }),
-        /* @__PURE__ */ jsxs12("div", { style: { display: "flex", justifyContent: "space-between", marginBottom: 5 }, children: [
-          /* @__PURE__ */ jsxs12("span", { style: { fontSize: 13, fontWeight: 700, color: "#fff" }, children: [
+        /* @__PURE__ */ jsxs11("div", { style: { display: "flex", justifyContent: "space-between", marginBottom: 5 }, children: [
+          /* @__PURE__ */ jsxs11("span", { style: { fontSize: 13, fontWeight: 700, color: "#fff" }, children: [
             state.xp,
             " XP total"
           ] }),
-          /* @__PURE__ */ jsxs12("span", { style: { fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,.8)" }, children: [
+          /* @__PURE__ */ jsxs11("span", { style: { fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,.8)" }, children: [
             "Niv. ",
             state.level + 1,
             " \u2192 ",
@@ -8165,19 +7808,19 @@ function ProgressScreen({ state, content, onOpenSettings }) {
           ] })
         ] }),
         /* @__PURE__ */ jsx14("div", { style: { height: 8, background: "rgba(255,255,255,.25)", borderRadius: 99, overflow: "hidden" }, children: /* @__PURE__ */ jsx14("div", { style: { width: `${lvlPct}%`, height: "100%", background: `linear-gradient(90deg,#FF9155,${C.primary})`, borderRadius: 99, transition: "width .4s ease" } }) }),
-        /* @__PURE__ */ jsxs12("div", { style: { fontSize: 11, color: "rgba(255,255,255,.65)", marginTop: 4 }, children: [
+        /* @__PURE__ */ jsxs11("div", { style: { fontSize: 11, color: "rgba(255,255,255,.65)", marginTop: 4 }, children: [
           xpToNext,
           " XP pour le niveau ",
           state.level + 1
         ] })
       ] })
     ] }),
-    /* @__PURE__ */ jsxs12("div", { style: { padding: "16px 20px 0" }, children: [
+    /* @__PURE__ */ jsxs11("div", { style: { padding: "16px 20px 0" }, children: [
       /* @__PURE__ */ jsx14("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 16 }, children: [
         { ic: "flame", v: `${state.streak}j`, l: "S\xE9rie", bg: C.amberL, ic_c: C.amber, v_c: C.amberD },
         { ic: "circle-check", v: Object.keys(state.completedExercises).length, l: "Exercices", bg: C.greenL, ic_c: C.green, v_c: C.greenD },
         { ic: "book-2", v: Object.keys(state.completedLessons).length, l: "Le\xE7ons", bg: C.primaryL, ic_c: C.primary, v_c: C.primaryD }
-      ].map((s) => /* @__PURE__ */ jsxs12("div", { style: {
+      ].map((s) => /* @__PURE__ */ jsxs11("div", { style: {
         background: s.bg,
         borderRadius: R.lg,
         padding: "12px 8px",
@@ -8198,16 +7841,16 @@ function ProgressScreen({ state, content, onOpenSettings }) {
         }
       ) }),
       /* @__PURE__ */ jsx14("div", { style: { fontSize: 16, fontWeight: 800, color: C.text, marginBottom: 12, letterSpacing: "-.2px" }, children: "Ma\xEEtrise" }),
-      /* @__PURE__ */ jsxs12("div", { style: {
+      /* @__PURE__ */ jsxs11("div", { style: {
         background: C.surface,
         border: `1.5px solid ${C.border}`,
         borderRadius: R.lg,
         padding: "14px 16px",
         marginBottom: 20
       }, children: [
-        /* @__PURE__ */ jsxs12("div", { style: { display: "flex", alignItems: "baseline", gap: 8, marginBottom: 4 }, children: [
+        /* @__PURE__ */ jsxs11("div", { style: { display: "flex", alignItems: "baseline", gap: 8, marginBottom: 4 }, children: [
           /* @__PURE__ */ jsx14("span", { style: { fontSize: 26, fontWeight: 800, color: C.text, letterSpacing: "-.5px", lineHeight: 1 }, children: maitrise.atteints }),
-          /* @__PURE__ */ jsxs12("span", { style: { fontSize: 13, color: C.text2, fontWeight: 600 }, children: [
+          /* @__PURE__ */ jsxs11("span", { style: { fontSize: 13, color: C.text2, fontWeight: 600 }, children: [
             "/ ",
             maitrise.objectifs,
             " objectifs"
@@ -8227,7 +7870,7 @@ function ProgressScreen({ state, content, onOpenSettings }) {
           { n: maitrise.vues, l: MASTERY_LABELS[1], c: C.text2 },
           { n: maitrise.comprises, l: MASTERY_LABELS[2], c: C.blueInk ?? C.blue },
           { n: maitrise.ancrees, l: MASTERY_LABELS[3], c: C.greenInk ?? C.green }
-        ].map((x) => /* @__PURE__ */ jsxs12("div", { style: {
+        ].map((x) => /* @__PURE__ */ jsxs11("div", { style: {
           flex: 1,
           textAlign: "center",
           padding: "9px 4px",
@@ -8237,7 +7880,7 @@ function ProgressScreen({ state, content, onOpenSettings }) {
           /* @__PURE__ */ jsx14("div", { style: { fontSize: 19, fontWeight: 800, color: x.c, lineHeight: 1 }, children: x.n }),
           /* @__PURE__ */ jsx14("div", { style: { fontSize: 10.5, color: C.text2, fontWeight: 600, marginTop: 3 }, children: x.l })
         ] }, x.l)) }),
-        aAncrer.length > 0 && /* @__PURE__ */ jsxs12("div", { style: { marginTop: 14, paddingTop: 12, borderTop: `1px solid ${C.border}` }, children: [
+        aAncrer.length > 0 && /* @__PURE__ */ jsxs11("div", { style: { marginTop: 14, paddingTop: 12, borderTop: `1px solid ${C.border}` }, children: [
           /* @__PURE__ */ jsx14("div", { style: {
             fontSize: 10.5,
             fontWeight: 700,
@@ -8246,7 +7889,7 @@ function ProgressScreen({ state, content, onOpenSettings }) {
             color: C.text2,
             marginBottom: 8
           }, children: "Bient\xF4t ancr\xE9es" }),
-          aAncrer.map(({ lesson, reste }) => /* @__PURE__ */ jsxs12("div", { style: {
+          aAncrer.map(({ lesson, reste }) => /* @__PURE__ */ jsxs11("div", { style: {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
@@ -8254,7 +7897,7 @@ function ProgressScreen({ state, content, onOpenSettings }) {
             padding: "6px 0"
           }, children: [
             /* @__PURE__ */ jsx14("span", { style: { fontSize: 12.5, color: C.text, flex: 1, lineHeight: 1.4 }, children: lesson.title }),
-            /* @__PURE__ */ jsxs12("span", { style: { fontSize: 11, color: C.text2, whiteSpace: "nowrap", fontWeight: 600 }, children: [
+            /* @__PURE__ */ jsxs11("span", { style: { fontSize: 11, color: C.text2, whiteSpace: "nowrap", fontWeight: 600 }, children: [
               reste,
               " question",
               reste > 1 ? "s" : ""
@@ -8265,14 +7908,14 @@ function ProgressScreen({ state, content, onOpenSettings }) {
       /* @__PURE__ */ jsx14("div", { style: { fontSize: 16, fontWeight: 800, color: C.text, marginBottom: 12, letterSpacing: "-.2px" }, children: "Comp\xE9tences" }),
       skills.map((sk) => {
         const th = MODULE_THEME2[sk.id] || {};
-        return /* @__PURE__ */ jsxs12("div", { style: {
+        return /* @__PURE__ */ jsxs11("div", { style: {
           background: C.surface,
           border: `1.5px solid ${C.border}`,
           borderRadius: R.lg,
           padding: "13px 16px",
           marginBottom: 8
         }, children: [
-          /* @__PURE__ */ jsxs12("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 9 }, children: [
+          /* @__PURE__ */ jsxs11("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 9 }, children: [
             /* @__PURE__ */ jsx14("div", { style: {
               width: 34,
               height: 34,
@@ -8283,7 +7926,7 @@ function ProgressScreen({ state, content, onOpenSettings }) {
               justifyContent: "center"
             }, children: /* @__PURE__ */ jsx14(Ti, { name: (th.icon || "music").replace("ti-", ""), size: 15, color: sk.color }) }),
             /* @__PURE__ */ jsx14("span", { style: { fontSize: 13.5, fontWeight: 700, color: C.text, flex: 1 }, children: sk.label }),
-            /* @__PURE__ */ jsxs12("span", { style: { fontSize: 13, fontWeight: 800, color: sk.pct > 0 ? sk.color : C.text3 }, children: [
+            /* @__PURE__ */ jsxs11("span", { style: { fontSize: 13, fontWeight: 800, color: sk.pct > 0 ? sk.color : C.text3 }, children: [
               sk.pct,
               "%"
             ] })
@@ -8291,21 +7934,21 @@ function ProgressScreen({ state, content, onOpenSettings }) {
           /* @__PURE__ */ jsx14(ProgressBar, { pct: sk.pct, color: sk.color, h: 5 })
         ] }, sk.label);
       }),
-      /* @__PURE__ */ jsxs12("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", margin: "20px 0 10px" }, children: [
+      /* @__PURE__ */ jsxs11("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", margin: "20px 0 10px" }, children: [
         /* @__PURE__ */ jsx14("div", { style: { fontSize: 16, fontWeight: 800, color: C.text, letterSpacing: "-.2px" }, children: "Badges" }),
-        /* @__PURE__ */ jsxs12("div", { style: { fontSize: 12, fontWeight: 600, color: C.text3 }, children: [
+        /* @__PURE__ */ jsxs11("div", { style: { fontSize: 12, fontWeight: 600, color: C.text3 }, children: [
           state.unlockedBadges.length,
           " / ",
           BADGES.length
         ] })
       ] }),
-      Object.entries(badgesByCategory).map(([cat, badges]) => /* @__PURE__ */ jsxs12("div", { children: [
+      Object.entries(badgesByCategory).map(([cat, badges]) => /* @__PURE__ */ jsxs11("div", { children: [
         /* @__PURE__ */ jsx14("div", { style: { fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".07em", color: C.text3, margin: "8px 0 8px" }, children: cat }),
         /* @__PURE__ */ jsx14("div", { style: { display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 8 }, children: badges.map((b) => {
           const ok = state.unlockedBadges.includes(b.id);
           const tint = BADGE_TINTS2[b.tint];
           const rarity = BADGE_RARITIES2[b.rarity];
-          return /* @__PURE__ */ jsxs12("div", { style: {
+          return /* @__PURE__ */ jsxs11("div", { style: {
             borderRadius: R.md,
             padding: "10px 6px",
             textAlign: "center",
@@ -8343,28 +7986,28 @@ var SettingsScreen_exports = {};
 __export(SettingsScreen_exports, {
   SettingsScreen: () => SettingsScreen
 });
-import { useState as useState13 } from "react";
-import { jsx as jsx15, jsxs as jsxs13 } from "react/jsx-runtime";
+import { useState as useState12 } from "react";
+import { jsx as jsx15, jsxs as jsxs12 } from "react/jsx-runtime";
 function SettingsSection({ title, children }) {
   const C = useC();
-  return /* @__PURE__ */ jsxs13("div", { style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, marginBottom: 10, overflow: "hidden" }, children: [
+  return /* @__PURE__ */ jsxs12("div", { style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, marginBottom: 10, overflow: "hidden" }, children: [
     /* @__PURE__ */ jsx15("div", { style: { padding: "12px 16px 0", fontSize: 11, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: C.text2 }, children: title }),
     /* @__PURE__ */ jsx15("div", { style: { marginTop: 8 }, children })
   ] });
 }
 function SettingsRow({ label, value, last }) {
   const C = useC();
-  return /* @__PURE__ */ jsxs13("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 16px", borderBottom: last ? "none" : `1px solid ${C.borderSoft}` }, children: [
+  return /* @__PURE__ */ jsxs12("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 16px", borderBottom: last ? "none" : `1px solid ${C.borderSoft}` }, children: [
     /* @__PURE__ */ jsx15("span", { style: { fontSize: T.small, fontWeight: 600, color: C.text }, children: label }),
     /* @__PURE__ */ jsx15("span", { style: { fontSize: T.small, fontWeight: 600, color: C.text2 }, children: value })
   ] });
 }
 function SettingsScreen({ state, dispatch, content, onClose, onImported, user, onSignOut, onDeleteAccount }) {
   const C = useC();
-  const [importStatus, setImportStatus] = useState13(null);
-  const [confirmation, setConfirmation] = useState13(null);
-  const [saisie, setSaisie] = useState13("");
-  const [audioOffline, setAudioOffline] = useState13(null);
+  const [importStatus, setImportStatus] = useState12(null);
+  const [confirmation, setConfirmation] = useState12(null);
+  const [saisie, setSaisie] = useState12("");
+  const [audioOffline, setAudioOffline] = useState12(null);
   const fermerConfirmation = () => {
     setConfirmation(null);
     setSaisie("");
@@ -8433,8 +8076,8 @@ function SettingsScreen({ state, dispatch, content, onClose, onImported, user, o
     color,
     border: `1.5px solid ${border || color}`
   });
-  return /* @__PURE__ */ jsxs13("div", { children: [
-    /* @__PURE__ */ jsxs13("div", { style: {
+  return /* @__PURE__ */ jsxs12("div", { children: [
+    /* @__PURE__ */ jsxs12("div", { style: {
       backgroundColor: "#4a4a4a",
       backgroundImage: "url('/atelier.jpg')",
       backgroundSize: "cover",
@@ -8447,8 +8090,8 @@ function SettingsScreen({ state, dispatch, content, onClose, onImported, user, o
       /* @__PURE__ */ jsx15("button", { onClick: onClose, style: { position: "relative", zIndex: 1, background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.sm, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", marginBottom: 14 }, children: /* @__PURE__ */ jsx15(Ti, { name: "arrow-left", size: 17, color: C.text }) }),
       /* @__PURE__ */ jsx15("div", { style: { position: "relative", zIndex: 1, fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: "-.4px" }, children: "R\xE9glages" })
     ] }),
-    /* @__PURE__ */ jsxs13("div", { style: { padding: "14px 20px 0" }, children: [
-      /* @__PURE__ */ jsx15(SettingsSection, { title: "Apparence", children: /* @__PURE__ */ jsxs13("div", { style: { padding: "12px 16px 14px" }, children: [
+    /* @__PURE__ */ jsxs12("div", { style: { padding: "14px 20px 0" }, children: [
+      /* @__PURE__ */ jsx15(SettingsSection, { title: "Apparence", children: /* @__PURE__ */ jsxs12("div", { style: { padding: "12px 16px 14px" }, children: [
         /* @__PURE__ */ jsx15("div", { style: { fontSize: 12, color: C.text2, marginBottom: 10 }, children: "Th\xE8me de l'application" }),
         /* @__PURE__ */ jsx15("div", { style: { display: "flex", flexDirection: "column", gap: 8 }, children: [
           { val: "auto", label: "Auto", icon: "device-desktop", desc: "Suit le syst\xE8me" },
@@ -8456,7 +8099,7 @@ function SettingsScreen({ state, dispatch, content, onClose, onImported, user, o
           { val: "dark", label: "Sombre", icon: "moon", desc: "Toujours sombre" }
         ].map((opt) => {
           const active = (state.theme || "auto") === opt.val;
-          return /* @__PURE__ */ jsxs13(
+          return /* @__PURE__ */ jsxs12(
             "button",
             {
               onClick: () => dispatch({ type: "SET_THEME", theme: opt.val }),
@@ -8478,7 +8121,7 @@ function SettingsScreen({ state, dispatch, content, onClose, onImported, user, o
               },
               children: [
                 /* @__PURE__ */ jsx15(Ti, { name: opt.icon, size: 20, color: active ? C.primaryInk : C.text2 }),
-                /* @__PURE__ */ jsxs13("span", { style: { flex: 1 }, children: [
+                /* @__PURE__ */ jsxs12("span", { style: { flex: 1 }, children: [
                   /* @__PURE__ */ jsx15("span", { style: { display: "block", fontSize: T.small, fontWeight: 700, color: active ? C.primaryD : C.text }, children: opt.label }),
                   /* @__PURE__ */ jsx15("span", { style: { display: "block", fontSize: T.micro, color: C.text2, lineHeight: 1.4 }, children: opt.desc })
                 ] }),
@@ -8490,32 +8133,32 @@ function SettingsScreen({ state, dispatch, content, onClose, onImported, user, o
         }) })
       ] }) }),
       /* @__PURE__ */ jsx15(SettingsSection, { title: "Compte", children: /* @__PURE__ */ jsx15(SettingsRow, { label: "Email", value: user?.email || "\u2014", last: true }) }),
-      /* @__PURE__ */ jsxs13("button", { onClick: onSignOut, className: "gr-focus", style: btn(C.text2, C.borderStrong), children: [
+      /* @__PURE__ */ jsxs12("button", { onClick: onSignOut, className: "gr-focus", style: btn(C.text2, C.borderStrong), children: [
         /* @__PURE__ */ jsx15(Ti, { name: "logout", size: 16, color: C.text2 }),
         " Se d\xE9connecter"
       ] }),
-      /* @__PURE__ */ jsxs13(SettingsSection, { title: "Contenu p\xE9dagogique", children: [
+      /* @__PURE__ */ jsxs12(SettingsSection, { title: "Contenu p\xE9dagogique", children: [
         /* @__PURE__ */ jsx15(SettingsRow, { label: "Modules", value: content.courses.length }),
         /* @__PURE__ */ jsx15(SettingsRow, { label: "Quiz", value: `${content.quiz.length} questions` }),
         /* @__PURE__ */ jsx15(SettingsRow, { label: "Exercices", value: content.exercises.length, last: true })
       ] }),
-      /* @__PURE__ */ jsxs13(SettingsSection, { title: "Ma progression", children: [
+      /* @__PURE__ */ jsxs12(SettingsSection, { title: "Ma progression", children: [
         /* @__PURE__ */ jsx15(SettingsRow, { label: "XP total", value: `${state.xp ?? 0} XP` }),
         /* @__PURE__ */ jsx15(SettingsRow, { label: "Grade", value: gradeForLevel(state.level).label }),
         /* @__PURE__ */ jsx15(SettingsRow, { label: "Niveau actuel", value: state.level }),
         /* @__PURE__ */ jsx15(SettingsRow, { label: "Badges d\xE9bloqu\xE9s", value: `${state.unlockedBadges.length} / ${BADGES.length}`, last: true })
       ] }),
-      /* @__PURE__ */ jsxs13("button", { onClick: exportProgress, className: "gr-focus", style: btn(C.text2, C.borderStrong), children: [
+      /* @__PURE__ */ jsxs12("button", { onClick: exportProgress, className: "gr-focus", style: btn(C.text2, C.borderStrong), children: [
         /* @__PURE__ */ jsx15(Ti, { name: "download", size: 14, color: C.text2 }),
         " Exporter ma progression (JSON)"
       ] }),
-      /* @__PURE__ */ jsxs13("button", { onClick: () => setConfirmation("resetProgress"), className: "gr-focus", style: btn(C.danger), children: [
+      /* @__PURE__ */ jsxs12("button", { onClick: () => setConfirmation("resetProgress"), className: "gr-focus", style: btn(C.danger), children: [
         /* @__PURE__ */ jsx15(Ti, { name: "refresh", size: 14, color: C.danger }),
         " R\xE9initialiser ma progression"
       ] }),
-      /* @__PURE__ */ jsx15(SettingsSection, { title: "Audio", children: /* @__PURE__ */ jsxs13("div", { style: { padding: "4px 16px 14px" }, children: [
+      /* @__PURE__ */ jsx15(SettingsSection, { title: "Audio", children: /* @__PURE__ */ jsxs12("div", { style: { padding: "4px 16px 14px" }, children: [
         /* @__PURE__ */ jsx15("p", { style: { margin: "0 0 12px", fontSize: T.small, color: C.text2, lineHeight: 1.6 }, children: "Les sons de guitare sont t\xE9l\xE9charg\xE9s \xE0 la premi\xE8re \xE9coute. Tu peux les enregistrer maintenant pour qu'ils fonctionnent sans connexion \u2014 compte quelques m\xE9gaoctets, \xE0 faire de pr\xE9f\xE9rence en Wi-Fi." }),
-        /* @__PURE__ */ jsxs13("button", { onClick: activerAudioOffline, className: "gr-focus", style: { ...btn(C.text2, C.borderStrong), marginBottom: 0 }, children: [
+        /* @__PURE__ */ jsxs12("button", { onClick: activerAudioOffline, className: "gr-focus", style: { ...btn(C.text2, C.borderStrong), marginBottom: 0 }, children: [
           /* @__PURE__ */ jsx15(Ti, { name: "download", size: 16, color: C.text2 }),
           " Rendre l'audio disponible hors-ligne"
         ] }),
@@ -8526,7 +8169,7 @@ function SettingsScreen({ state, dispatch, content, onClose, onImported, user, o
           color: audioOffline.ok ? C.greenD : C.dangerInk
         }, children: audioOffline.msg })
       ] }) }),
-      /* @__PURE__ */ jsxs13("div", { style: {
+      /* @__PURE__ */ jsxs12("div", { style: {
         border: `1.5px solid ${C.danger}`,
         borderRadius: R.lg,
         padding: "14px 16px",
@@ -8536,7 +8179,7 @@ function SettingsScreen({ state, dispatch, content, onClose, onImported, user, o
       }, children: [
         /* @__PURE__ */ jsx15("div", { style: { fontSize: T.micro, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: C.dangerInk, marginBottom: 10 }, children: "Zone irr\xE9versible" }),
         /* @__PURE__ */ jsx15("p", { style: { margin: "0 0 12px", fontSize: T.small, color: C.text2, lineHeight: 1.6 }, children: "La suppression de compte efface d\xE9finitivement ton email, ta progression et ton historique de nos serveurs. Aucune sauvegarde n'est conserv\xE9e. Pense \xE0 exporter ta progression avant, si tu veux en garder une copie." }),
-        /* @__PURE__ */ jsxs13(
+        /* @__PURE__ */ jsxs12(
           "button",
           {
             onClick: () => setConfirmation("deleteAccount"),
@@ -8549,11 +8192,11 @@ function SettingsScreen({ state, dispatch, content, onClose, onImported, user, o
           }
         )
       ] }),
-      /* @__PURE__ */ jsxs13("div", { style: { display: "flex", gap: 14, justifyContent: "center", marginTop: 6, flexWrap: "wrap" }, children: [
+      /* @__PURE__ */ jsxs12("div", { style: { display: "flex", gap: 14, justifyContent: "center", marginTop: 6, flexWrap: "wrap" }, children: [
         /* @__PURE__ */ jsx15("a", { href: "/cgu.html", style: { fontSize: T.micro, color: C.text2 }, children: "Conditions d'utilisation" }),
         /* @__PURE__ */ jsx15("a", { href: "/confidentialite.html", style: { fontSize: T.micro, color: C.text2 }, children: "Confidentialit\xE9" })
       ] }),
-      importStatus && /* @__PURE__ */ jsxs13("div", { style: {
+      importStatus && /* @__PURE__ */ jsxs12("div", { style: {
         background: importStatus.ok ? C.greenL : C.dangerL,
         border: `1.5px solid ${importStatus.ok ? C.greenBorder : C.dangerBorder}`,
         borderRadius: R.md,
@@ -8604,7 +8247,7 @@ var ToolboxScreen_exports = {};
 __export(ToolboxScreen_exports, {
   ToolboxScreen: () => ToolboxScreen
 });
-import { useState as useState15, useRef as useRef9, useEffect as useEffect11, useCallback as useCallback3 } from "react";
+import { useState as useState14, useRef as useRef9, useEffect as useEffect10, useCallback as useCallback3 } from "react";
 init_tone_stub();
 
 // src/screens/FretboardExplorer.jsx
@@ -8612,16 +8255,16 @@ var FretboardExplorer_exports = {};
 __export(FretboardExplorer_exports, {
   FretboardExplorer: () => FretboardExplorer
 });
-import { useState as useState14, useMemo as useMemo9, useRef as useRef8, useEffect as useEffect10 } from "react";
+import { useState as useState13, useMemo as useMemo8, useRef as useRef8, useEffect as useEffect9 } from "react";
 
 // src/diagrams.jsx
-import { useMemo as useMemo8 } from "react";
-import { jsx as jsx16, jsxs as jsxs14 } from "react/jsx-runtime";
+import { useMemo as useMemo7 } from "react";
+import { jsx as jsx16, jsxs as jsxs13 } from "react/jsx-runtime";
 var FONT = '"Josefin Sans", "Roboto", sans-serif';
 function DiagramCard({ caption, children, accent }) {
   const DC = useC();
   const dotColor = accent || DC.primary;
-  return /* @__PURE__ */ jsxs14("div", { style: {
+  return /* @__PURE__ */ jsxs13("div", { style: {
     background: DC.surface,
     borderRadius: 14,
     border: `1px solid ${DC.border}`,
@@ -8629,7 +8272,7 @@ function DiagramCard({ caption, children, accent }) {
     marginBottom: 0
   }, children: [
     /* @__PURE__ */ jsx16("div", { style: { overflowX: "auto", WebkitOverflowScrolling: "touch" }, children }),
-    caption && /* @__PURE__ */ jsxs14("div", { style: {
+    caption && /* @__PURE__ */ jsxs13("div", { style: {
       padding: "8px 14px 10px",
       fontSize: 11,
       color: DC.text2,
@@ -8662,7 +8305,7 @@ function ChordDiagram({ data, caption }) {
   const svgH = TOP_PAD + FRET_ROWS * ROW_H + BOT_PAD;
   const sx = (i) => LEFT_PAD + i * COL_W;
   const fy = (f) => TOP_PAD + (f - startFret + 0.5) * ROW_H;
-  return /* @__PURE__ */ jsx16(DiagramCard, { caption: caption || name, accent: DC.primary, children: /* @__PURE__ */ jsxs14(
+  return /* @__PURE__ */ jsx16(DiagramCard, { caption: caption || name, accent: DC.primary, children: /* @__PURE__ */ jsxs13(
     "svg",
     {
       width: "100%",
@@ -8693,7 +8336,7 @@ function ChordDiagram({ data, caption }) {
             fill: DC.text,
             rx: 2
           }
-        ) : /* @__PURE__ */ jsxs14(
+        ) : /* @__PURE__ */ jsxs13(
           "text",
           {
             x: LEFT_PAD - 6,
@@ -8795,7 +8438,7 @@ function ChordDiagram({ data, caption }) {
           }
           const y = fy(f);
           const finger = fingers[i] || 0;
-          return /* @__PURE__ */ jsxs14("g", { children: [
+          return /* @__PURE__ */ jsxs13("g", { children: [
             /* @__PURE__ */ jsx16("circle", { cx: x, cy: y, r: NOTE_R, fill: DC.primary }),
             finger > 0 && /* @__PURE__ */ jsx16(
               "text",
@@ -8818,7 +8461,7 @@ function ChordDiagram({ data, caption }) {
 }
 
 // src/screens/FretboardExplorer.jsx
-import { jsx as jsx17, jsxs as jsxs15 } from "react/jsx-runtime";
+import { jsx as jsx17, jsxs as jsxs14 } from "react/jsx-runtime";
 var ROOTS_FR2 = [
   { en: "C", fr: "Do" },
   { en: "C#", fr: "Do#" },
@@ -8885,16 +8528,16 @@ var CHORD_INFO = {
 };
 function FretboardExplorer({ onBack, embedded = false }) {
   const C = useC();
-  const [tab, setTab] = useState14("scale");
-  const [root, setRoot] = useState14("A");
-  const [scaleKey, setScaleKey] = useState14("pentatonic_minor");
-  const [chordKey, setChordKey] = useState14("min7");
-  const [displayMode, setDisplayMode] = useState14("notes");
-  const [showRootPicker, setShowRootPicker] = useState14(false);
-  const [isPlaying, setIsPlaying] = useState14(false);
-  const [flashNotes, setFlashNotes] = useState14(null);
-  const [arpeggio, setArpeggio] = useState14(true);
-  const shapes = useMemo9(() => {
+  const [tab, setTab] = useState13("scale");
+  const [root, setRoot] = useState13("A");
+  const [scaleKey, setScaleKey] = useState13("pentatonic_minor");
+  const [chordKey, setChordKey] = useState13("min7");
+  const [displayMode, setDisplayMode] = useState13("notes");
+  const [showRootPicker, setShowRootPicker] = useState13(false);
+  const [isPlaying, setIsPlaying] = useState13(false);
+  const [flashNotes, setFlashNotes] = useState13(null);
+  const [arpeggio, setArpeggio] = useState13(true);
+  const shapes = useMemo8(() => {
     if (tab !== "chord") return [];
     return getChordShapes(
       normalizeNote(root),
@@ -8952,14 +8595,14 @@ function FretboardExplorer({ onBack, embedded = false }) {
       setFlashNotes(null);
     }, dureeMs2);
   };
-  useEffect10(() => () => {
+  useEffect9(() => () => {
     annulerFin();
     try {
       stopAll();
     } catch {
     }
   }, []);
-  const activeNotes = useMemo9(() => {
+  const activeNotes = useMemo8(() => {
     if (tab === "scale") return getScaleNotes(root, scaleKey);
     return getChordNotes(root, chordKey);
   }, [tab, root, scaleKey, chordKey]);
@@ -8971,12 +8614,12 @@ function FretboardExplorer({ onBack, embedded = false }) {
     const next = (idx + dir + 12) % 12;
     setRoot(ROOTS_FR2[next].en);
   };
-  return /* @__PURE__ */ jsxs15("div", { style: embedded ? { display: "flex", flexDirection: "column", background: "transparent" } : { display: "flex", flexDirection: "column", minHeight: "100dvh", background: C.bg }, children: [
-    /* @__PURE__ */ jsxs15("div", { style: embedded ? { padding: "0 0 12px", display: "flex", alignItems: "center", gap: 10 } : { padding: "14px 16px 12px", display: "flex", alignItems: "center", gap: 10, borderBottom: `1px solid ${C.border}`, background: C.surface, position: "sticky", top: 0, zIndex: 10 }, children: [
+  return /* @__PURE__ */ jsxs14("div", { style: embedded ? { display: "flex", flexDirection: "column", background: "transparent" } : { display: "flex", flexDirection: "column", minHeight: "100dvh", background: C.bg }, children: [
+    /* @__PURE__ */ jsxs14("div", { style: embedded ? { padding: "0 0 12px", display: "flex", alignItems: "center", gap: 10 } : { padding: "14px 16px 12px", display: "flex", alignItems: "center", gap: 10, borderBottom: `1px solid ${C.border}`, background: C.surface, position: "sticky", top: 0, zIndex: 10 }, children: [
       !embedded && /* @__PURE__ */ jsx17("button", { onClick: onBack, style: { background: "none", border: "none", cursor: "pointer", color: C.text2, padding: 0, display: "flex", alignItems: "center" }, children: /* @__PURE__ */ jsx17(Ti, { name: "chevron-left", size: 22 }) }),
-      /* @__PURE__ */ jsxs15("div", { style: { flex: 1 }, children: [
+      /* @__PURE__ */ jsxs14("div", { style: { flex: 1 }, children: [
         !embedded && /* @__PURE__ */ jsx17("div", { style: { fontSize: 16, fontWeight: 700, color: C.text, fontFamily: FONTS.title }, children: "Explorateur du manche" }),
-        /* @__PURE__ */ jsxs15("div", { style: { fontSize: 11, color: C.text3, fontFamily: FONTS.ui }, children: [
+        /* @__PURE__ */ jsxs14("div", { style: { fontSize: 11, color: C.text3, fontFamily: FONTS.ui }, children: [
           rootFr,
           " - ",
           activeLabel
@@ -9004,8 +8647,8 @@ function FretboardExplorer({ onBack, embedded = false }) {
         }
       )
     ] }),
-    /* @__PURE__ */ jsxs15("div", { style: { padding: "14px 16px", display: "flex", flexDirection: "column", gap: 12, overflowY: "auto", paddingBottom: 32 }, children: [
-      /* @__PURE__ */ jsx17("div", { style: { display: "flex", background: C.surface2, borderRadius: R.lg, padding: 3, gap: 2 }, children: [{ key: "scale", label: "Gammes", icon: "music" }, { key: "chord", label: "Accords", icon: "guitar-pick" }].map((t) => /* @__PURE__ */ jsxs15("button", { onClick: () => setTab(t.key), style: {
+    /* @__PURE__ */ jsxs14("div", { style: { padding: "14px 16px", display: "flex", flexDirection: "column", gap: 12, overflowY: "auto", paddingBottom: 32 }, children: [
+      /* @__PURE__ */ jsx17("div", { style: { display: "flex", background: C.surface2, borderRadius: R.lg, padding: 3, gap: 2 }, children: [{ key: "scale", label: "Gammes", icon: "music" }, { key: "chord", label: "Accords", icon: "guitar-pick" }].map((t) => /* @__PURE__ */ jsxs14("button", { onClick: () => setTab(t.key), style: {
         flex: 1,
         padding: "9px 12px",
         borderRadius: R.md,
@@ -9026,7 +8669,7 @@ function FretboardExplorer({ onBack, embedded = false }) {
         /* @__PURE__ */ jsx17(Ti, { name: t.icon, size: 14 }),
         t.label
       ] }, t.key)) }),
-      /* @__PURE__ */ jsxs15("div", { style: { display: "flex", alignItems: "center", gap: 8 }, children: [
+      /* @__PURE__ */ jsxs14("div", { style: { display: "flex", alignItems: "center", gap: 8 }, children: [
         /* @__PURE__ */ jsx17("div", { style: { fontSize: 11, fontWeight: 600, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", width: 60 }, children: "Tonique" }),
         /* @__PURE__ */ jsx17("button", { onClick: () => transposeSemitone(-1), style: { width: 34, height: 34, borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }, children: /* @__PURE__ */ jsx17(Ti, { name: "chevron-left", size: 16, color: C.text2 }) }),
         /* @__PURE__ */ jsx17("button", { onClick: () => setShowRootPicker(!showRootPicker), style: { flex: 1, height: 34, borderRadius: 10, border: `1.5px solid ${C.primary}`, background: C.primaryL, cursor: "pointer", fontSize: 16, fontWeight: 700, color: C.primaryD, fontFamily: FONTS.ui }, children: rootFr }),
@@ -9046,7 +8689,7 @@ function FretboardExplorer({ onBack, embedded = false }) {
         cursor: "pointer",
         fontFamily: FONTS.ui
       }, children: r.fr }, r.en)) }),
-      /* @__PURE__ */ jsxs15("div", { style: { display: "flex", alignItems: "center", gap: 8 }, children: [
+      /* @__PURE__ */ jsxs14("div", { style: { display: "flex", alignItems: "center", gap: 8 }, children: [
         /* @__PURE__ */ jsx17("div", { style: { fontSize: 11, fontWeight: 600, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", width: 60 }, children: tab === "scale" ? "Gamme" : "Accord" }),
         /* @__PURE__ */ jsx17("div", { style: { flex: 1, overflowX: "auto", WebkitOverflowScrolling: "touch" }, children: /* @__PURE__ */ jsx17("div", { style: { display: "flex", gap: 6, paddingBottom: 4 }, children: (tab === "scale" ? SCALE_OPTIONS : CHORD_OPTIONS).map((opt) => {
           const active = tab === "scale" ? scaleKey === opt.key : chordKey === opt.key;
@@ -9093,7 +8736,7 @@ function FretboardExplorer({ onBack, embedded = false }) {
       tab === "chord" && /* @__PURE__ */ jsx17("div", { style: { display: "flex", gap: 6, marginBottom: 12 }, children: [
         { id: true, label: "Arp\xE9g\xE9", hint: "note \xE0 note" },
         { id: false, label: "Plaqu\xE9", hint: "d'un bloc" }
-      ].map((m) => /* @__PURE__ */ jsxs15(
+      ].map((m) => /* @__PURE__ */ jsxs14(
         "button",
         {
           onClick: () => setArpeggio(m.id),
@@ -9114,8 +8757,8 @@ function FretboardExplorer({ onBack, embedded = false }) {
         },
         String(m.id)
       )) }),
-      tab === "chord" && shapes.length > 0 && /* @__PURE__ */ jsxs15("div", { style: { marginBottom: 12 }, children: [
-        /* @__PURE__ */ jsxs15("div", { style: { fontSize: 10, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }, children: [
+      tab === "chord" && shapes.length > 0 && /* @__PURE__ */ jsxs14("div", { style: { marginBottom: 12 }, children: [
+        /* @__PURE__ */ jsxs14("div", { style: { fontSize: 10, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }, children: [
           shapes.length,
           " fa\xE7on",
           shapes.length > 1 ? "s" : "",
@@ -9129,14 +8772,14 @@ function FretboardExplorer({ onBack, embedded = false }) {
           }
         ) }, i)) })
       ] }),
-      /* @__PURE__ */ jsxs15("div", { style: { background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: "12px 14px" }, children: [
-        /* @__PURE__ */ jsxs15("div", { style: { fontSize: 10, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }, children: [
+      /* @__PURE__ */ jsxs14("div", { style: { background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: "12px 14px" }, children: [
+        /* @__PURE__ */ jsxs14("div", { style: { fontSize: 10, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }, children: [
           "Notes - ",
           rootFr,
           " ",
           activeLabel
         ] }),
-        /* @__PURE__ */ jsx17("div", { style: { display: "flex", flexWrap: "wrap", gap: 6 }, children: activeNotes.map((note, i) => /* @__PURE__ */ jsxs15("div", { style: {
+        /* @__PURE__ */ jsx17("div", { style: { display: "flex", flexWrap: "wrap", gap: 6 }, children: activeNotes.map((note, i) => /* @__PURE__ */ jsxs14("div", { style: {
           padding: "5px 10px",
           borderRadius: R.pill,
           background: i === 0 ? C.amberL : C.primaryL,
@@ -9149,15 +8792,15 @@ function FretboardExplorer({ onBack, embedded = false }) {
           noteToFr(note),
           i === 0 ? " R" : ""
         ] }, note)) }),
-        tab === "chord" && CHORD_INFO[chordKey] && /* @__PURE__ */ jsxs15("div", { style: { marginTop: 8, fontSize: 12, color: C.text3, fontFamily: FONTS.ui }, children: [
+        tab === "chord" && CHORD_INFO[chordKey] && /* @__PURE__ */ jsxs14("div", { style: { marginTop: 8, fontSize: 12, color: C.text3, fontFamily: FONTS.ui }, children: [
           "Formule : ",
           /* @__PURE__ */ jsx17("strong", { style: { color: C.text2 }, children: CHORD_INFO[chordKey].formula })
         ] })
       ] }),
-      info && /* @__PURE__ */ jsxs15("div", { style: { background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: "12px 14px" }, children: [
+      info && /* @__PURE__ */ jsxs14("div", { style: { background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: "12px 14px" }, children: [
         /* @__PURE__ */ jsx17("div", { style: { fontSize: 10, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }, children: "Contexte" }),
         /* @__PURE__ */ jsx17("p", { style: { margin: "0 0 6px", fontSize: 13, color: C.text, fontFamily: FONTS.title, lineHeight: 1.55 }, children: info.desc }),
-        "usage" in info && /* @__PURE__ */ jsxs15("div", { style: { display: "flex", alignItems: "center", gap: 6 }, children: [
+        "usage" in info && /* @__PURE__ */ jsxs14("div", { style: { display: "flex", alignItems: "center", gap: 6 }, children: [
           /* @__PURE__ */ jsx17(Ti, { name: "music", size: 12, color: C.text3 }),
           /* @__PURE__ */ jsx17("span", { style: { fontSize: 11, color: C.text3, fontFamily: FONTS.ui }, children: info.usage })
         ] })
@@ -9167,7 +8810,7 @@ function FretboardExplorer({ onBack, embedded = false }) {
 }
 
 // src/screens/ToolboxScreen.jsx
-import { jsx as jsx18, jsxs as jsxs16 } from "react/jsx-runtime";
+import { jsx as jsx18, jsxs as jsxs15 } from "react/jsx-runtime";
 function Metronome() {
   const C = useC();
   const pillBtn = {
@@ -9182,11 +8825,11 @@ function Metronome() {
     cursor: "pointer",
     fontFamily: FONTS.ui
   };
-  const [bpm, setBpm] = useState15(90);
-  const [playing, setPlaying] = useState15(false);
-  const [beats, setBeats] = useState15(4);
-  const [current, setCurrent] = useState15(-1);
-  const [timbre, setTimbre] = useState15("bois");
+  const [bpm, setBpm] = useState14(90);
+  const [playing, setPlaying] = useState14(false);
+  const [beats, setBeats] = useState14(4);
+  const [current, setCurrent] = useState14(-1);
+  const [timbre, setTimbre] = useState14("bois");
   const TIMBRES = [
     { id: "bois", label: "Bois" },
     { id: "mecanique", label: "M\xE9canique" },
@@ -9304,18 +8947,18 @@ function Metronome() {
     transport.start();
     setPlaying(true);
   }, [bpm, beats, ensureClick]);
-  useEffect11(() => {
+  useEffect10(() => {
     getTransport().bpm.value = bpm;
   }, [bpm]);
-  useEffect11(() => {
+  useEffect10(() => {
     if (!voixRef.current) return;
     libererVoix();
     voixRef.current = construireVoix(timbre);
   }, [timbre, construireVoix, libererVoix]);
-  useEffect11(() => {
+  useEffect10(() => {
     beatsRef.current = beats;
   }, [beats]);
-  useEffect11(() => () => {
+  useEffect10(() => () => {
     stop();
     libererVoix();
   }, [stop, libererVoix]);
@@ -9325,7 +8968,7 @@ function Metronome() {
   const ECART_MAX_MS = 2e3;
   const TAPS_MAX = 8;
   const tapsRef = useRef9([]);
-  const [tapCount, setTapCount] = useState15(0);
+  const [tapCount, setTapCount] = useState14(0);
   const tapTempo = () => {
     const now2 = performance.now();
     const taps = tapsRef.current;
@@ -9357,7 +9000,7 @@ function Metronome() {
   };
   const aideTap = tapCount === 0 ? "Tape le tempo au doigt, au moins deux fois." : tapCount === 1 ? "Continue : il faut un second appui pour mesurer." : `Tempo mesur\xE9 sur ${tapCount - 1} intervalle${tapCount > 2 ? "s" : ""}.`;
   const tempoLabel = bpm < 60 ? "Largo" : bpm < 76 ? "Adagio" : bpm < 108 ? "Andante" : bpm < 120 ? "Moderato" : bpm < 156 ? "Allegro" : bpm < 176 ? "Vivace" : "Presto";
-  return /* @__PURE__ */ jsxs16("div", { children: [
+  return /* @__PURE__ */ jsxs15("div", { children: [
     /* @__PURE__ */ jsx18("div", { style: {
       display: "flex",
       justifyContent: "center",
@@ -9391,9 +9034,9 @@ function Metronome() {
         willChange: "transform"
       } }) }, i);
     }) }),
-    /* @__PURE__ */ jsxs16("div", { style: { textAlign: "center", marginBottom: 6 }, children: [
+    /* @__PURE__ */ jsxs15("div", { style: { textAlign: "center", marginBottom: 6 }, children: [
       /* @__PURE__ */ jsx18("div", { style: { fontSize: 64, fontWeight: 800, color: C.text, letterSpacing: "-2px", lineHeight: 1, fontFamily: FONTS.title }, children: bpm }),
-      /* @__PURE__ */ jsxs16("div", { style: { fontSize: 12, fontWeight: 700, color: C.primary, textTransform: "uppercase", letterSpacing: ".1em", marginTop: 2 }, children: [
+      /* @__PURE__ */ jsxs15("div", { style: { fontSize: 12, fontWeight: 700, color: C.primary, textTransform: "uppercase", letterSpacing: ".1em", marginTop: 2 }, children: [
         "BPM \xB7 ",
         tempoLabel
       ] })
@@ -9409,7 +9052,7 @@ function Metronome() {
         style: { width: "100%", margin: "16px 0 6px", accentColor: C.primary }
       }
     ),
-    /* @__PURE__ */ jsxs16("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", gap: 14, marginBottom: 20 }, children: [
+    /* @__PURE__ */ jsxs15("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", gap: 14, marginBottom: 20 }, children: [
       [-5, -1].map((d) => /* @__PURE__ */ jsx18("button", { onClick: () => nudge(d), style: pillBtn, children: d }, d)),
       /* @__PURE__ */ jsx18("button", { onClick: toggle, style: {
         width: 72,
@@ -9424,12 +9067,12 @@ function Metronome() {
         justifyContent: "center",
         boxShadow: `0 6px 20px ${C.primary}55`
       }, children: /* @__PURE__ */ jsx18(Ti, { name: playing ? "player-pause" : "player-play", size: 30, color: "#fff" }) }),
-      [1, 5].map((d) => /* @__PURE__ */ jsxs16("button", { onClick: () => nudge(d), style: pillBtn, children: [
+      [1, 5].map((d) => /* @__PURE__ */ jsxs15("button", { onClick: () => nudge(d), style: pillBtn, children: [
         "+",
         d
       ] }, d))
     ] }),
-    /* @__PURE__ */ jsxs16("div", { style: {
+    /* @__PURE__ */ jsxs15("div", { style: {
       background: C.surface,
       border: `1.5px solid ${C.border}`,
       borderRadius: R.lg,
@@ -9465,8 +9108,8 @@ function Metronome() {
         );
       }) })
     ] }),
-    /* @__PURE__ */ jsxs16("div", { style: { display: "flex", gap: 10 }, children: [
-      /* @__PURE__ */ jsxs16("div", { style: { flex: 1, background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: "10px 12px" }, children: [
+    /* @__PURE__ */ jsxs15("div", { style: { display: "flex", gap: 10 }, children: [
+      /* @__PURE__ */ jsxs15("div", { style: { flex: 1, background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: "10px 12px" }, children: [
         /* @__PURE__ */ jsx18("div", { style: { fontSize: 9.5, fontWeight: 700, color: C.text3, textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 7 }, children: "Mesure" }),
         /* @__PURE__ */ jsx18("div", { style: { display: "flex", gap: 6 }, children: [2, 3, 4, 6].map((n) => /* @__PURE__ */ jsx18("button", { onClick: () => setBeats(n), style: {
           flex: 1,
@@ -9481,7 +9124,7 @@ function Metronome() {
           fontFamily: FONTS.ui
         }, children: n }, n)) })
       ] }),
-      /* @__PURE__ */ jsxs16(
+      /* @__PURE__ */ jsxs15(
         "button",
         {
           onClick: tapTempo,
@@ -9730,11 +9373,11 @@ function TuningPicker({ tuningId, setTuningId, compact = false }) {
 }
 function Tuner() {
   const C = useC();
-  const [active, setActive] = useState15(false);
-  const [freq, setFreq] = useState15(0);
-  const [note, setNote] = useState15(null);
-  const [error, setError] = useState15(null);
-  const [tuningId, setTuningId] = useState15("standard");
+  const [active, setActive] = useState14(false);
+  const [freq, setFreq] = useState14(0);
+  const [note, setNote] = useState14(null);
+  const [error, setError] = useState14(null);
+  const [tuningId, setTuningId] = useState14("standard");
   const tuning = TUNINGS.find((t) => t.id === tuningId) || TUNINGS[0];
   const targets = buildTargets(tuning);
   const ctxRef = useRef9(null);
@@ -9861,7 +9504,7 @@ function Tuner() {
       setActive(false);
     }
   }, []);
-  useEffect11(() => () => stop(), [stop]);
+  useEffect10(() => () => stop(), [stop]);
   const cents = note?.cents ?? 0;
   const inTune = active && note && Math.abs(cents) <= 5;
   const needleColor = inTune ? C.green : Math.abs(cents) < 20 ? C.amber : C.pink;
@@ -9869,11 +9512,11 @@ function Tuner() {
     const d = Math.abs(1200 * Math.log2(freq / t.hz));
     return d < best.d ? { course: t.course, d } : best;
   }, { course: -1, d: Infinity }).course : -1;
-  return /* @__PURE__ */ jsx18("div", { children: !active ? /* @__PURE__ */ jsxs16("div", { style: { textAlign: "center", padding: "10px 0 4px" }, children: [
+  return /* @__PURE__ */ jsx18("div", { children: !active ? /* @__PURE__ */ jsxs15("div", { style: { textAlign: "center", padding: "10px 0 4px" }, children: [
     /* @__PURE__ */ jsx18(Gropi, { pose: "listen", size: 120, anim: "bob", style: { margin: "0 auto 6px" } }),
     /* @__PURE__ */ jsx18("p", { style: { fontSize: 13, color: C.text2, lineHeight: 1.55, maxWidth: 260, margin: "0 auto 16px" }, children: "Joue une corde \xE0 vide, Gropi \xE9coute et te dit si tu es juste." }),
     /* @__PURE__ */ jsx18(TuningPicker, { tuningId, setTuningId }),
-    /* @__PURE__ */ jsxs16("button", { onClick: start2, style: {
+    /* @__PURE__ */ jsxs15("button", { onClick: start2, style: {
       background: `linear-gradient(135deg,#FF9155,${C.primary})`,
       color: "#fff",
       border: "none",
@@ -9893,9 +9536,9 @@ function Tuner() {
       " Activer l'accordeur"
     ] }),
     error && /* @__PURE__ */ jsx18("p", { style: { fontSize: 12, color: C.pink, marginTop: 14, lineHeight: 1.5 }, children: error })
-  ] }) : /* @__PURE__ */ jsxs16("div", { children: [
-    /* @__PURE__ */ jsxs16("div", { style: { textAlign: "center", marginBottom: 6 }, children: [
-      /* @__PURE__ */ jsxs16("div", { style: {
+  ] }) : /* @__PURE__ */ jsxs15("div", { children: [
+    /* @__PURE__ */ jsxs15("div", { style: { textAlign: "center", marginBottom: 6 }, children: [
+      /* @__PURE__ */ jsxs15("div", { style: {
         fontSize: 72,
         fontWeight: 800,
         lineHeight: 1,
@@ -9909,11 +9552,11 @@ function Tuner() {
       ] }),
       /* @__PURE__ */ jsx18("div", { style: { fontSize: 13, fontWeight: 600, color: C.text3, marginTop: 2 }, children: freq > 0 ? `${freq.toFixed(1)} Hz` : "Joue une corde\u2026" })
     ] }),
-    /* @__PURE__ */ jsxs16("div", { style: { position: "relative", height: 64, margin: "14px 0 8px", overflow: "hidden" }, children: [
+    /* @__PURE__ */ jsxs15("div", { style: { position: "relative", height: 64, margin: "14px 0 8px", overflow: "hidden" }, children: [
       /* @__PURE__ */ jsx18("div", { style: { position: "absolute", left: 0, right: 0, top: 30, height: 3, background: C.border, borderRadius: 2 } }),
       /* @__PURE__ */ jsx18("div", { style: { position: "absolute", left: "calc(50% - 18px)", width: 36, top: 26, height: 11, background: `${C.green}33`, borderRadius: 6 } }),
       /* @__PURE__ */ jsx18("div", { style: { position: "absolute", left: "50%", top: 18, width: 2, height: 27, background: C.green, transform: "translateX(-50%)" } }),
-      /* @__PURE__ */ jsx18("div", { style: { position: "absolute", left: 0, right: 0, top: 8, pointerEvents: "none" }, children: /* @__PURE__ */ jsxs16("div", { ref: needleRef, style: { width: "100%", transform: "translateX(0%)", willChange: "transform" }, children: [
+      /* @__PURE__ */ jsx18("div", { style: { position: "absolute", left: 0, right: 0, top: 8, pointerEvents: "none" }, children: /* @__PURE__ */ jsxs15("div", { ref: needleRef, style: { width: "100%", transform: "translateX(0%)", willChange: "transform" }, children: [
         /* @__PURE__ */ jsx18("div", { style: {
           width: 0,
           height: 0,
@@ -9935,7 +9578,7 @@ function Tuner() {
       /* @__PURE__ */ jsx18("div", { style: { position: "absolute", left: 0, top: 46, fontSize: 9.5, color: C.text3, fontWeight: 600 }, children: "\u266D trop bas" }),
       /* @__PURE__ */ jsx18("div", { style: { position: "absolute", right: 0, top: 46, fontSize: 9.5, color: C.text3, fontWeight: 600 }, children: "trop haut \u266F" })
     ] }),
-    inTune && /* @__PURE__ */ jsxs16("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontSize: 13, fontWeight: 700, color: C.green, marginBottom: 8 }, children: [
+    inTune && /* @__PURE__ */ jsxs15("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontSize: 13, fontWeight: 700, color: C.green, marginBottom: 8 }, children: [
       /* @__PURE__ */ jsx18(Ti, { name: "check", size: 15, color: C.green }),
       " Juste !"
     ] }),
@@ -9950,7 +9593,7 @@ function Tuner() {
         border: `1.5px solid ${on ? C.primary : C.border}`,
         background: on ? C.primaryL : C.surface,
         transition: "all .12s"
-      }, children: course.map(([name, oct], k) => /* @__PURE__ */ jsxs16("div", { style: { lineHeight: 1.15 }, children: [
+      }, children: course.map(([name, oct], k) => /* @__PURE__ */ jsxs15("div", { style: { lineHeight: 1.15 }, children: [
         /* @__PURE__ */ jsx18("span", { style: { fontSize: 13, fontWeight: 800, color: on ? C.primaryD : C.text }, children: name }),
         /* @__PURE__ */ jsx18("span", { style: { fontSize: 9, color: C.text3, fontWeight: 600 }, children: oct })
       ] }, k)) }, ci);
@@ -9999,19 +9642,19 @@ var SPEED_PRESETS = [
 var MAX_CHORDS = 12;
 function ChordPlayer() {
   const C = useC();
-  const [root, setRoot] = useState15("C");
-  const [family, setFamily] = useState15("base");
-  const [quality, setQuality] = useState15("maj");
-  const [sequence, setSequence] = useState15([]);
-  const [playing, setPlaying] = useState15(false);
-  const [activeIdx, setActiveIdx] = useState15(-1);
-  const [speed, setSpeed] = useState15("normal");
+  const [root, setRoot] = useState14("C");
+  const [family, setFamily] = useState14("base");
+  const [quality, setQuality] = useState14("maj");
+  const [sequence, setSequence] = useState14([]);
+  const [playing, setPlaying] = useState14(false);
+  const [activeIdx, setActiveIdx] = useState14(-1);
+  const [speed, setSpeed] = useState14("normal");
   const stop = useCallback3(() => {
     stopAll();
     setPlaying(false);
     setActiveIdx(-1);
   }, []);
-  useEffect11(() => () => stopAll(), []);
+  useEffect10(() => () => stopAll(), []);
   const addChord = () => {
     if (sequence.length >= MAX_CHORDS) return;
     const rootFr = CHORD_ROOTS.find((r) => r[0] === root)?.[1] || root;
@@ -10046,8 +9689,8 @@ function ChordPlayer() {
     cursor: "pointer",
     fontFamily: FONTS.ui
   };
-  return /* @__PURE__ */ jsxs16("div", { children: [
-    /* @__PURE__ */ jsxs16("div", { style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: 16 }, children: [
+  return /* @__PURE__ */ jsxs15("div", { children: [
+    /* @__PURE__ */ jsxs15("div", { style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: 16 }, children: [
       /* @__PURE__ */ jsx18("div", { style: { fontSize: 12, fontWeight: 700, color: C.text3, marginBottom: 9, fontFamily: FONTS.ui }, children: "Fondamentale" }),
       /* @__PURE__ */ jsx18("div", { style: { display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6, marginBottom: 14 }, children: CHORD_ROOTS.map(([code, fr]) => /* @__PURE__ */ jsx18("button", { onClick: () => setRoot(code), style: {
         ...chip,
@@ -10076,7 +9719,7 @@ function ChordPlayer() {
         color: quality === key ? C.primaryD : C.text2
       }, children: CHORD_TYPES[key]?.sym || CHORD_TYPES[key]?.name || key }, key)) }),
       /* @__PURE__ */ jsx18("div", { style: { fontSize: 11.5, color: C.text3, marginBottom: 12, fontFamily: FONTS.ui, minHeight: 16 }, children: CHORD_TYPES[quality]?.name }),
-      /* @__PURE__ */ jsxs16("button", { onClick: addChord, disabled: sequence.length >= MAX_CHORDS, style: {
+      /* @__PURE__ */ jsxs15("button", { onClick: addChord, disabled: sequence.length >= MAX_CHORDS, style: {
         width: "100%",
         padding: "11px 0",
         borderRadius: R.md,
@@ -10096,9 +9739,9 @@ function ChordPlayer() {
         "Ajouter \xE0 la suite"
       ] })
     ] }),
-    /* @__PURE__ */ jsxs16("div", { style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: 16, marginTop: 12 }, children: [
-      /* @__PURE__ */ jsxs16("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }, children: [
-        /* @__PURE__ */ jsxs16("div", { style: { fontSize: 12, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui }, children: [
+    /* @__PURE__ */ jsxs15("div", { style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: 16, marginTop: 12 }, children: [
+      /* @__PURE__ */ jsxs15("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }, children: [
+        /* @__PURE__ */ jsxs15("div", { style: { fontSize: 12, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui }, children: [
           "Ta suite (",
           sequence.length,
           "/",
@@ -10116,7 +9759,7 @@ function ChordPlayer() {
           padding: 0
         }, children: "Vider" })
       ] }),
-      sequence.length === 0 ? /* @__PURE__ */ jsx18("div", { style: { textAlign: "center", padding: "18px 0", color: C.text3, fontSize: 13, fontFamily: FONTS.ui }, children: "Ajoute des accords ci-dessus pour construire ta suite." }) : /* @__PURE__ */ jsx18("div", { style: { display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }, children: sequence.map((c, i) => /* @__PURE__ */ jsxs16("div", { style: {
+      sequence.length === 0 ? /* @__PURE__ */ jsx18("div", { style: { textAlign: "center", padding: "18px 0", color: C.text3, fontSize: 13, fontFamily: FONTS.ui }, children: "Ajoute des accords ci-dessus pour construire ta suite." }) : /* @__PURE__ */ jsx18("div", { style: { display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }, children: sequence.map((c, i) => /* @__PURE__ */ jsxs15("div", { style: {
         display: "flex",
         alignItems: "center",
         gap: 6,
@@ -10153,7 +9796,7 @@ function ChordPlayer() {
         cursor: playing ? "default" : "pointer",
         opacity: playing ? 0.6 : 1
       }, children: p.label }, p.id)) }),
-      /* @__PURE__ */ jsxs16("button", { onClick: toggle, disabled: sequence.length === 0, style: {
+      /* @__PURE__ */ jsxs15("button", { onClick: toggle, disabled: sequence.length === 0, style: {
         width: "100%",
         padding: "13px 0",
         borderRadius: R.md,
@@ -10177,9 +9820,9 @@ function ChordPlayer() {
 }
 function ToolboxScreen({ onBack }) {
   const C = useC();
-  const [tab, setTab] = useState15("metronome");
-  return /* @__PURE__ */ jsxs16("div", { style: { paddingBottom: 30 }, children: [
-    /* @__PURE__ */ jsxs16("div", { style: {
+  const [tab, setTab] = useState14("metronome");
+  return /* @__PURE__ */ jsxs15("div", { style: { paddingBottom: 30 }, children: [
+    /* @__PURE__ */ jsxs15("div", { style: {
       backgroundColor: "#b7a0c8",
       backgroundImage: "url('/sunrise.jpg')",
       backgroundSize: "cover",
@@ -10189,7 +9832,7 @@ function ToolboxScreen({ onBack }) {
       overflow: "hidden"
     }, children: [
       /* @__PURE__ */ jsx18("div", { style: { position: "absolute", inset: 0, background: "rgba(160,55,0,.5)" } }),
-      /* @__PURE__ */ jsxs16("div", { style: { position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 12 }, children: [
+      /* @__PURE__ */ jsxs15("div", { style: { position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 12 }, children: [
         onBack && /* @__PURE__ */ jsx18("button", { onClick: onBack, style: {
           background: "rgba(255,255,255,.85)",
           border: "none",
@@ -10201,7 +9844,7 @@ function ToolboxScreen({ onBack }) {
           justifyContent: "center",
           cursor: "pointer"
         }, children: /* @__PURE__ */ jsx18(Ti, { name: "arrow-left", size: 17, color: C.primaryD }) }),
-        /* @__PURE__ */ jsxs16("div", { style: { flex: 1 }, children: [
+        /* @__PURE__ */ jsxs15("div", { style: { flex: 1 }, children: [
           /* @__PURE__ */ jsx18("div", { style: { fontSize: 24, fontWeight: 800, color: "#fff", letterSpacing: "-.4px" }, children: "Bo\xEEte \xE0 outils" }),
           /* @__PURE__ */ jsx18("div", { style: { fontSize: 12, color: "rgba(255,255,255,.8)", marginTop: 1 }, children: "M\xE9tronome & accordeur" })
         ] })
@@ -10212,7 +9855,7 @@ function ToolboxScreen({ onBack }) {
       { id: "tuner", label: "Accordeur", icon: "microphone" },
       { id: "chords", label: "Accords", icon: "music" },
       { id: "neck", label: "Manche", icon: "guitar-pick" }
-    ].map((t) => /* @__PURE__ */ jsxs16("button", { onClick: () => setTab(t.id), style: {
+    ].map((t) => /* @__PURE__ */ jsxs15("button", { onClick: () => setTab(t.id), style: {
       flex: 1,
       padding: "10px 0",
       borderRadius: R.lg,
@@ -10241,16 +9884,16 @@ var TrainingScreen_exports = {};
 __export(TrainingScreen_exports, {
   TrainingScreen: () => TrainingScreen
 });
-import { useState as useState16, useMemo as useMemo10 } from "react";
-import { jsx as jsx19, jsxs as jsxs17 } from "react/jsx-runtime";
+import { useState as useState15, useMemo as useMemo9 } from "react";
+import { jsx as jsx19, jsxs as jsxs16 } from "react/jsx-runtime";
 var SUBTABS = [
   { id: "theory", label: "Th\xE9orie", icon: "help-circle" },
   { id: "playing", label: "Guitare en main", icon: "guitar-pick" }
 ];
 function TrainingScreen({ state, dispatch, content }) {
   const C = useC();
-  const [tab, setTab] = useState16("theory");
-  const stat = useMemo10(() => {
+  const [tab, setTab] = useState15("theory");
+  const stat = useMemo9(() => {
     if (tab === "theory") {
       const all2 = content.quiz || [];
       const answered = all2.filter((q) => state.quizResults?.[q.id]).length;
@@ -10262,8 +9905,8 @@ function TrainingScreen({ state, dispatch, content }) {
     const pct = all.length ? Math.round(done / all.length * 100) : 0;
     return { pct, line: `${done} / ${all.length} exercices compl\xE9t\xE9s` };
   }, [tab, content.quiz, content.exercises, state.quizResults, state.completedExercises]);
-  return /* @__PURE__ */ jsxs17("div", { children: [
-    /* @__PURE__ */ jsxs17("div", { style: {
+  return /* @__PURE__ */ jsxs16("div", { children: [
+    /* @__PURE__ */ jsxs16("div", { style: {
       backgroundColor: "#36b3d7",
       backgroundImage: "url('/ocean.jpg')",
       backgroundSize: "cover",
@@ -10273,7 +9916,7 @@ function TrainingScreen({ state, dispatch, content }) {
       overflow: "hidden"
     }, children: [
       /* @__PURE__ */ jsx19("div", { style: { position: "absolute", inset: 0, background: "rgba(0,60,80,.52)", pointerEvents: "none" } }),
-      /* @__PURE__ */ jsxs17("div", { style: { position: "relative", zIndex: 1 }, children: [
+      /* @__PURE__ */ jsxs16("div", { style: { position: "relative", zIndex: 1 }, children: [
         /* @__PURE__ */ jsx19("div", { style: { fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: "-.4px" }, children: "Pratique" }),
         /* @__PURE__ */ jsx19("div", { style: {
           fontSize: 13,
@@ -10285,7 +9928,7 @@ function TrainingScreen({ state, dispatch, content }) {
         /* @__PURE__ */ jsx19(ProgressBar, { pct: stat.pct, color: C.teal, h: 6 }),
         /* @__PURE__ */ jsx19("div", { style: { display: "flex", gap: 6, marginTop: 16 }, children: SUBTABS.map((t) => {
           const active = tab === t.id;
-          return /* @__PURE__ */ jsxs17(
+          return /* @__PURE__ */ jsxs16(
             "button",
             {
               onClick: () => setTab(t.id),
@@ -10326,7 +9969,7 @@ var PracticeScreen_exports = {};
 __export(PracticeScreen_exports, {
   PracticeScreen: () => PracticeScreen
 });
-import { useState as useState17, useEffect as useEffect12, useRef as useRef10, useCallback as useCallback4, useMemo as useMemo11 } from "react";
+import { useState as useState16, useEffect as useEffect11, useRef as useRef10, useCallback as useCallback4, useMemo as useMemo10 } from "react";
 
 // src/store/challenges.js
 var KEYS = ["A", "B", "C", "D", "E", "F", "G"];
@@ -10360,14 +10003,14 @@ var DAILY_CHALLENGES = [
 ];
 
 // src/screens/PracticeScreen.jsx
-import { jsx as jsx20, jsxs as jsxs18 } from "react/jsx-runtime";
+import { jsx as jsx20, jsxs as jsxs17 } from "react/jsx-runtime";
 function PracticeScreen({ state, dispatch }) {
   const C = useC();
-  const [tab, setTab] = useState17("impro");
-  const [current, setCurrent] = useState17(null);
-  const [pop, setPop] = useState17(false);
+  const [tab, setTab] = useState16("impro");
+  const [current, setCurrent] = useState16(null);
+  const [pop, setPop] = useState16(false);
   const timerRef = useRef10(null);
-  useEffect12(() => () => {
+  useEffect11(() => () => {
     if (timerRef.current) clearTimeout(timerRef.current);
   }, []);
   const generateImpro = () => {
@@ -10401,7 +10044,7 @@ function PracticeScreen({ state, dispatch }) {
       setCurrent(null);
     }, 1e3);
   };
-  return /* @__PURE__ */ jsxs18("div", { style: { padding: "18px 16px 0" }, children: [
+  return /* @__PURE__ */ jsxs17("div", { style: { padding: "18px 16px 0" }, children: [
     pop && /* @__PURE__ */ jsx20(XPPop, { amount: 50, onDone: () => {
     } }),
     /* @__PURE__ */ jsx20("h1", { style: { margin: 0, fontSize: 24, fontWeight: 700, fontFamily: FONTS.title, letterSpacing: "-0.01em", color: C.text }, children: "Practice libre" }),
@@ -10421,15 +10064,15 @@ function PracticeScreen({ state, dispatch }) {
       cursor: "pointer",
       fontFamily: FONTS.ui
     }, children: t.label }, t.id)) }),
-    !current ? /* @__PURE__ */ jsxs18("div", { style: { background: C.coralL, border: `1px solid ${C.coralBorder}`, borderRadius: R.lg, padding: 20, textAlign: "center" }, children: [
+    !current ? /* @__PURE__ */ jsxs17("div", { style: { background: C.coralL, border: `1px solid ${C.coralBorder}`, borderRadius: R.lg, padding: 20, textAlign: "center" }, children: [
       /* @__PURE__ */ jsx20(Ti, { name: "dice-5", size: 36, color: C.coral }),
       /* @__PURE__ */ jsx20("div", { style: { fontSize: 17, fontWeight: 700, color: C.coralD, marginTop: 10, marginBottom: 6, fontFamily: FONTS.title }, children: "G\xE9n\xE8re ton d\xE9fi" }),
-      /* @__PURE__ */ jsxs18("div", { style: { fontSize: 13, color: C.coralD, marginBottom: 14, lineHeight: 1.55, fontFamily: FONTS.ui }, children: [
+      /* @__PURE__ */ jsxs17("div", { style: { fontSize: 13, color: C.coralD, marginBottom: 14, lineHeight: 1.55, fontFamily: FONTS.ui }, children: [
         tab === "impro" && "Tonalit\xE9, mode, tempo et contrainte tir\xE9s au sort.",
         tab === "neck" && "Un d\xE9fi de visualisation du manche.",
         tab === "rhythm" && "Un d\xE9fi de m\xE9tronome \xE0 un tempo donn\xE9."
       ] }),
-      /* @__PURE__ */ jsxs18("button", { onClick: tab === "impro" ? generateImpro : tab === "neck" ? generateNeck : generateRhythm, style: {
+      /* @__PURE__ */ jsxs17("button", { onClick: tab === "impro" ? generateImpro : tab === "neck" ? generateNeck : generateRhythm, style: {
         width: "100%",
         padding: "14px",
         borderRadius: R.md,
@@ -10448,19 +10091,19 @@ function PracticeScreen({ state, dispatch }) {
         "G\xE9n\xE9rer un d\xE9fi ",
         /* @__PURE__ */ jsx20(Ti, { name: "dice-5", size: 16 })
       ] })
-    ] }) : /* @__PURE__ */ jsxs18("div", { children: [
-      /* @__PURE__ */ jsxs18("div", { style: { background: C.primaryL, border: `1px solid ${C.primaryBorder}`, borderRadius: R.lg, padding: 20, marginBottom: 12 }, children: [
+    ] }) : /* @__PURE__ */ jsxs17("div", { children: [
+      /* @__PURE__ */ jsxs17("div", { style: { background: C.primaryL, border: `1px solid ${C.primaryBorder}`, borderRadius: R.lg, padding: 20, marginBottom: 12 }, children: [
         /* @__PURE__ */ jsx20("div", { style: { fontSize: 10, fontWeight: 500, color: C.primaryD, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8, fontFamily: FONTS.ui }, children: "D\xE9fi en cours" }),
         /* @__PURE__ */ jsx20("div", { style: { fontSize: 22, fontWeight: 700, color: C.primaryD, marginBottom: 8, fontFamily: FONTS.title }, children: current.title }),
         /* @__PURE__ */ jsx20("div", { style: { fontSize: 14, color: C.primaryD, lineHeight: 1.55, fontFamily: FONTS.title }, children: current.sub }),
-        /* @__PURE__ */ jsxs18("div", { style: { fontSize: 11, color: C.primaryD, marginTop: 12, opacity: 0.7, fontFamily: FONTS.ui }, children: [
+        /* @__PURE__ */ jsxs17("div", { style: { fontSize: 11, color: C.primaryD, marginTop: 12, opacity: 0.7, fontFamily: FONTS.ui }, children: [
           "Dur\xE9e : ",
           current.time,
           " min"
         ] })
       ] }),
-      /* @__PURE__ */ jsxs18("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }, children: [
-        /* @__PURE__ */ jsxs18("button", { onClick: () => setCurrent(null), style: {
+      /* @__PURE__ */ jsxs17("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }, children: [
+        /* @__PURE__ */ jsxs17("button", { onClick: () => setCurrent(null), style: {
           padding: "12px",
           borderRadius: R.md,
           border: `1px solid ${C.border}`,
@@ -10504,15 +10147,15 @@ var ChallengeScreen_exports = {};
 __export(ChallengeScreen_exports, {
   ChallengeScreen: () => ChallengeScreen
 });
-import { useState as useState18, useEffect as useEffect13, useRef as useRef11, useCallback as useCallback5, useMemo as useMemo12 } from "react";
-import { jsx as jsx21, jsxs as jsxs19 } from "react/jsx-runtime";
+import { useState as useState17, useEffect as useEffect12, useRef as useRef11, useCallback as useCallback5, useMemo as useMemo11 } from "react";
+import { jsx as jsx21, jsxs as jsxs18 } from "react/jsx-runtime";
 function ChallengeScreen({ state, dispatch, navigate }) {
   const C = useC();
   const ch = DAILY_CHALLENGES[state.dailyChallengeIdx % DAILY_CHALLENGES.length];
   const done = state.dailyChallengeDone;
-  const [pop, setPop] = useState18(false);
+  const [pop, setPop] = useState17(false);
   const timerRef = useRef11(null);
-  useEffect13(() => () => {
+  useEffect12(() => () => {
     if (timerRef.current) clearTimeout(timerRef.current);
   }, []);
   const finish = () => {
@@ -10521,29 +10164,29 @@ function ChallengeScreen({ state, dispatch, navigate }) {
     dispatch({ type: "MARK_STREAK" });
     timerRef.current = setTimeout(() => setPop(false), 1e3);
   };
-  return /* @__PURE__ */ jsxs19("div", { style: { padding: "14px 16px 0" }, children: [
+  return /* @__PURE__ */ jsxs18("div", { style: { padding: "14px 16px 0" }, children: [
     pop && /* @__PURE__ */ jsx21(XPPop, { amount: 80, onDone: () => {
     } }),
-    /* @__PURE__ */ jsxs19("button", { onClick: () => navigate("home"), style: { background: "none", border: "none", cursor: "pointer", color: C.text2, fontSize: 13, padding: "0 0 12px", fontFamily: FONTS.ui, display: "flex", alignItems: "center", gap: 4 }, children: [
+    /* @__PURE__ */ jsxs18("button", { onClick: () => navigate("home"), style: { background: "none", border: "none", cursor: "pointer", color: C.text2, fontSize: 13, padding: "0 0 12px", fontFamily: FONTS.ui, display: "flex", alignItems: "center", gap: 4 }, children: [
       /* @__PURE__ */ jsx21(Ti, { name: "chevron-left", size: 16 }),
       " RETOUR"
     ] }),
     /* @__PURE__ */ jsx21("h1", { style: { margin: "0 0 16px", fontSize: 24, fontWeight: 700, fontFamily: FONTS.title, letterSpacing: "-0.01em", color: C.text }, children: "D\xE9fi du jour" }),
-    /* @__PURE__ */ jsxs19("div", { style: {
+    /* @__PURE__ */ jsxs18("div", { style: {
       background: done ? C.greenL : C.amberL,
       borderRadius: R.lg,
       padding: 20,
       marginBottom: 14,
       border: `1px solid ${done ? C.greenBorder : C.amberBorder}`
     }, children: [
-      /* @__PURE__ */ jsxs19("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }, children: [
+      /* @__PURE__ */ jsxs18("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }, children: [
         /* @__PURE__ */ jsx21(Ti, { name: done ? "trophy" : "bolt", size: 16, color: done ? C.green : C.amber }),
         /* @__PURE__ */ jsx21("div", { style: { fontSize: 10, fontWeight: 500, color: done ? C.greenD : C.amberD, letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: FONTS.ui }, children: done ? "D\xE9fi compl\xE9t\xE9" : "Aujourd'hui" })
       ] }),
       /* @__PURE__ */ jsx21("p", { style: { margin: "0 0 12px", fontSize: 16, fontWeight: 500, color: done ? C.greenD : C.amberD, lineHeight: 1.55, fontFamily: FONTS.title }, children: ch }),
       /* @__PURE__ */ jsx21("div", { style: { fontSize: 12, color: done ? C.greenD : C.amberD, opacity: 0.7, fontFamily: FONTS.ui }, children: "R\xE9compense : +80 XP" })
     ] }),
-    !done ? /* @__PURE__ */ jsxs19("button", { onClick: finish, style: {
+    !done ? /* @__PURE__ */ jsxs18("button", { onClick: finish, style: {
       width: "100%",
       padding: "14px",
       borderRadius: R.md,
@@ -10561,7 +10204,7 @@ function ChallengeScreen({ state, dispatch, navigate }) {
     }, children: [
       "D\xE9fi relev\xE9 ",
       /* @__PURE__ */ jsx21(Ti, { name: "check", size: 16 })
-    ] }) : /* @__PURE__ */ jsxs19("div", { style: { background: C.greenL, borderRadius: R.md, padding: 18, textAlign: "center", border: `1px solid ${C.greenBorder}` }, children: [
+    ] }) : /* @__PURE__ */ jsxs18("div", { style: { background: C.greenL, borderRadius: R.md, padding: 18, textAlign: "center", border: `1px solid ${C.greenBorder}` }, children: [
       /* @__PURE__ */ jsx21(Ti, { name: "trophy", size: 32, color: C.green }),
       /* @__PURE__ */ jsx21("div", { style: { fontWeight: 700, color: C.greenD, fontSize: 16, fontFamily: FONTS.title, marginTop: 8 }, children: "D\xE9fi compl\xE9t\xE9 !" }),
       /* @__PURE__ */ jsx21("div", { style: { fontSize: 12, color: C.green, marginTop: 4, fontFamily: FONTS.ui }, children: "Reviens demain." })
@@ -10575,7 +10218,7 @@ var OnboardingScreen_exports = {};
 __export(OnboardingScreen_exports, {
   OnboardingScreen: () => OnboardingScreen
 });
-import { useState as useState19, useEffect as useEffect14, useMemo as useMemo13 } from "react";
+import { useState as useState18, useEffect as useEffect13, useMemo as useMemo12 } from "react";
 
 // src/store/placementEngine.js
 var TESTABLE_MODULES = ["neck", "scales", "harmony", "rhythm", "impro"];
@@ -10660,7 +10303,7 @@ function weakestModule(skillLevels, testedModules = TESTABLE_MODULES) {
 }
 
 // src/onboarding/OnboardingScreen.jsx
-import { Fragment as Fragment10, jsx as jsx22, jsxs as jsxs20 } from "react/jsx-runtime";
+import { Fragment as Fragment9, jsx as jsx22, jsxs as jsxs19 } from "react/jsx-runtime";
 var GOAL_OPTIONS = [
   { id: "impro", module: "impro", label: "Improviser librement", icon: "wand" },
   { id: "theorie", module: "harmony", label: "Comprendre la th\xE9orie en profondeur", icon: "stack-2" },
@@ -10675,22 +10318,22 @@ var TIME_OPTIONS = [
 var ALL_PROFILE_MODULES = [.../* @__PURE__ */ new Set([...TESTABLE_MODULES, "impro"])];
 function OnboardingScreen({ content, onComplete, onEvent }) {
   const C = useC();
-  const [phase, setPhase] = useState19("welcome");
-  const [queue, setQueue] = useState19(null);
-  const [qIdx, setQIdx] = useState19(0);
-  const [currentQ, setCurrentQ] = useState19(null);
-  const [selected, setSelected] = useState19(null);
-  const [answered, setAnswered] = useState19(false);
-  const [forceReveal, setForceReveal] = useState19(false);
-  const [usedIds] = useState19(() => /* @__PURE__ */ new Set());
-  const modulesTestes = useMemo13(() => availableModules(content?.quiz || []), [content]);
-  const nbQuestions = useMemo13(() => placementQuestionCount(content?.quiz || []), [content]);
-  const [results, setResults] = useState19(() => Object.fromEntries(TESTABLE_MODULES.map((m) => [m, 0])));
-  const [skillLevels, setSkillLevels] = useState19({ neck: null, scales: null, harmony: null, rhythm: null, impro: null });
-  const [overallTier, setOverallTier] = useState19(null);
-  const [weakest, setWeakest] = useState19(null);
-  const [goal, setGoal] = useState19(null);
-  const [timePerWeek, setTimePerWeek] = useState19(null);
+  const [phase, setPhase] = useState18("welcome");
+  const [queue, setQueue] = useState18(null);
+  const [qIdx, setQIdx] = useState18(0);
+  const [currentQ, setCurrentQ] = useState18(null);
+  const [selected, setSelected] = useState18(null);
+  const [answered, setAnswered] = useState18(false);
+  const [forceReveal, setForceReveal] = useState18(false);
+  const [usedIds] = useState18(() => /* @__PURE__ */ new Set());
+  const modulesTestes = useMemo12(() => availableModules(content?.quiz || []), [content]);
+  const nbQuestions = useMemo12(() => placementQuestionCount(content?.quiz || []), [content]);
+  const [results, setResults] = useState18(() => Object.fromEntries(TESTABLE_MODULES.map((m) => [m, 0])));
+  const [skillLevels, setSkillLevels] = useState18({ neck: null, scales: null, harmony: null, rhythm: null, impro: null });
+  const [overallTier, setOverallTier] = useState18(null);
+  const [weakest, setWeakest] = useState18(null);
+  const [goal, setGoal] = useState18(null);
+  const [timePerWeek, setTimePerWeek] = useState18(null);
   const emit = (name, props) => {
     try {
       onEvent?.(name, props);
@@ -10767,7 +10410,7 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
     emit("placement_completed", { skillLevels: finalLevels, overallTier: overall, weakestModule: weak });
     setPhase("results");
   }
-  useEffect14(() => {
+  useEffect13(() => {
     if (phase === "testing" && queue && !currentQ) {
       const nextIdx = qIdx + 1;
       if (nextIdx < queue.length) {
@@ -10796,7 +10439,7 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
   }
   const questionNumber = qIdx + 1;
   const progressPct = phase === "welcome" ? 0 : phase === "testIntro" ? 5 : phase === "testing" ? Math.round(5 + (questionNumber - (answered ? 0 : 1)) / Math.max(1, nbQuestions) * 65) : phase === "results" ? 75 : phase === "goal" ? 85 : phase === "time" ? 95 : 100;
-  return /* @__PURE__ */ jsxs20("div", { style: {
+  return /* @__PURE__ */ jsxs19("div", { style: {
     minHeight: "100dvh",
     display: "flex",
     flexDirection: "column",
@@ -10805,8 +10448,8 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
     padding: "calc(env(safe-area-inset-top, 0px) + 12px) 0 24px"
   }, children: [
     phase !== "welcome" && /* @__PURE__ */ jsx22("div", { style: { padding: "0 20px 4px" }, children: /* @__PURE__ */ jsx22(ProgressBar, { pct: progressPct }) }),
-    /* @__PURE__ */ jsxs20("div", { style: { flex: 1, display: "flex", flexDirection: "column", padding: "0 20px", maxWidth: 440, width: "100%", margin: "0 auto" }, children: [
-      phase === "welcome" && /* @__PURE__ */ jsxs20("div", { style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 18, minHeight: 0 }, children: [
+    /* @__PURE__ */ jsxs19("div", { style: { flex: 1, display: "flex", flexDirection: "column", padding: "0 20px", maxWidth: 440, width: "100%", margin: "0 auto" }, children: [
+      phase === "welcome" && /* @__PURE__ */ jsxs19("div", { style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 18, minHeight: 0 }, children: [
         /* @__PURE__ */ jsx22(Gropi, { pose: "wave", size: 110, anim: "bob" }),
         /* @__PURE__ */ jsx22("h1", { style: { margin: 0, fontSize: 24, fontWeight: 800, color: C.text, letterSpacing: "-.3px" }, children: "Bienvenue sur Groply" }),
         /* @__PURE__ */ jsx22("p", { style: { margin: 0, fontSize: 14.5, lineHeight: 1.6, color: C.text2, maxWidth: 300 }, children: "Avant de commencer, on va mesurer ton vrai niveau : pas celui que tu crois avoir, celui que tu as vraiment. 2 minutes, promis." }),
@@ -10815,17 +10458,17 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
           setPhase("testIntro");
         }, children: "Commencer" })
       ] }),
-      phase === "testIntro" && /* @__PURE__ */ jsxs20("div", { style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 16 }, children: [
+      phase === "testIntro" && /* @__PURE__ */ jsxs19("div", { style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 16 }, children: [
         /* @__PURE__ */ jsx22(Gropi, { pose: "think", size: 90, anim: "bob" }),
         /* @__PURE__ */ jsx22("h2", { style: { margin: 0, fontSize: 20, fontWeight: 800, color: C.text }, children: "Le test de placement" }),
         /* @__PURE__ */ jsx22("p", { style: { margin: 0, fontSize: 13.5, lineHeight: 1.6, color: C.text2, maxWidth: 300 }, children: "12 questions, 4 domaines (manche, gammes, harmonie, rythme). \xC7a commence simple, puis \xE7a monte en difficult\xE9. C'est normal de s\xE9cher sur les derni\xE8res." }),
         /* @__PURE__ */ jsx22("p", { style: { margin: 0, fontSize: 12, color: C.text3, maxWidth: 280 }, children: "Pas de retour en arri\xE8re possible une fois lanc\xE9. R\xE9ponds au mieux : c'est fait pour r\xE9v\xE9ler o\xF9 tu es, pas pour te juger. Si tu ne sais pas, dis-le, \xE7a compte aussi." }),
         /* @__PURE__ */ jsx22(PrimaryButton, { C, onClick: startTest, children: "Lancer le test" })
       ] }),
-      phase === "testing" && currentQ && /* @__PURE__ */ jsxs20("div", { style: { flex: 1, display: "flex", flexDirection: "column", paddingTop: 24, gap: 14 }, children: [
-        /* @__PURE__ */ jsxs20("div", { style: { display: "flex", alignItems: "center", gap: 8 }, children: [
+      phase === "testing" && currentQ && /* @__PURE__ */ jsxs19("div", { style: { flex: 1, display: "flex", flexDirection: "column", paddingTop: 24, gap: 14 }, children: [
+        /* @__PURE__ */ jsxs19("div", { style: { display: "flex", alignItems: "center", gap: 8 }, children: [
           /* @__PURE__ */ jsx22(Ti, { name: MODULE[currentQ.moduleId]?.icon || "music", size: 16, color: C.primary }),
-          /* @__PURE__ */ jsxs20("span", { style: { fontSize: 11.5, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: C.primary, fontFamily: FONTS.ui }, children: [
+          /* @__PURE__ */ jsxs19("span", { style: { fontSize: 11.5, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: C.primary, fontFamily: FONTS.ui }, children: [
             MODULE[currentQ.moduleId]?.label || currentQ.moduleId,
             " \xB7 Question ",
             questionNumber,
@@ -10833,7 +10476,7 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
             PLACEMENT_QUESTION_COUNT
           ] })
         ] }),
-        currentQ.type === "fretboard" ? /* @__PURE__ */ jsxs20(Fragment10, { children: [
+        currentQ.type === "fretboard" ? /* @__PURE__ */ jsxs19(Fragment9, { children: [
           /* @__PURE__ */ jsx22("div", { style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: 16 }, children: /* @__PURE__ */ jsx22("p", { style: { margin: 0, fontSize: 15, fontWeight: 600, lineHeight: 1.5, color: C.text }, children: currentQ.q }) }),
           /* @__PURE__ */ jsx22(
             FretboardQuizQuestion,
@@ -10844,7 +10487,7 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
               forceReveal
             }
           )
-        ] }) : /* @__PURE__ */ jsxs20(Fragment10, { children: [
+        ] }) : /* @__PURE__ */ jsxs19(Fragment9, { children: [
           /* @__PURE__ */ jsx22("div", { style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: 16 }, children: /* @__PURE__ */ jsx22("p", { style: { margin: 0, fontSize: 15, fontWeight: 600, lineHeight: 1.5, color: C.text }, children: currentQ.q }) }),
           /* @__PURE__ */ jsx22("div", { style: { display: "flex", flexDirection: "column", gap: 8 }, children: currentQ.o.map((opt, i) => {
             let bg = C.surface, border = `1.5px solid ${C.border}`, col = C.text;
@@ -10895,8 +10538,8 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
             children: "Je ne sais pas"
           }
         ),
-        answered && /* @__PURE__ */ jsxs20(Fragment10, { children: [
-          currentQ.type !== "fretboard" && /* @__PURE__ */ jsxs20("p", { style: {
+        answered && /* @__PURE__ */ jsxs19(Fragment9, { children: [
+          currentQ.type !== "fretboard" && /* @__PURE__ */ jsxs19("p", { style: {
             margin: 0,
             fontSize: 12.5,
             color: C.text2,
@@ -10916,11 +10559,11 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
       phase === "results" && overallTier && (() => {
         const totalCorrect = TESTABLE_MODULES.reduce((sum, m) => sum + (results[m] || 0), 0);
         const { grade, level } = startFromScore(totalCorrect, PLACEMENT_QUESTION_COUNT);
-        return /* @__PURE__ */ jsxs20("div", { style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 14, paddingTop: 12 }, children: [
+        return /* @__PURE__ */ jsxs19("div", { style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 14, paddingTop: 12 }, children: [
           /* @__PURE__ */ jsx22(Gropi, { pose: "celebrate", size: 100, anim: "cheer" }),
           /* @__PURE__ */ jsx22("div", { style: { fontSize: 12, fontWeight: 700, color: C.text2, textTransform: "uppercase", letterSpacing: ".08em" }, children: "Ton profil Groply" }),
           /* @__PURE__ */ jsx22("h1", { style: { margin: 0, fontSize: 22, fontWeight: 800, color: C.text, letterSpacing: "-.2px" }, children: grade.label }),
-          /* @__PURE__ */ jsxs20("div", { style: {
+          /* @__PURE__ */ jsxs19("div", { style: {
             fontSize: 11,
             fontWeight: 700,
             color: C.primary,
@@ -10939,7 +10582,7 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
             const value = TIER_VALUE[tier] || 0;
             const th = MODULE[m] || {};
             const isWeak = m === weakest;
-            return /* @__PURE__ */ jsxs20("div", { style: {
+            return /* @__PURE__ */ jsxs19("div", { style: {
               display: "flex",
               alignItems: "center",
               gap: 10,
@@ -10958,7 +10601,7 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
               } }, seg)) })
             ] }, m);
           }) }),
-          weakest && /* @__PURE__ */ jsxs20("p", { style: { margin: "2px 0 0", fontSize: 12.5, color: C.text2, lineHeight: 1.5, maxWidth: 300 }, children: [
+          weakest && /* @__PURE__ */ jsxs19("p", { style: { margin: "2px 0 0", fontSize: 12.5, color: C.text2, lineHeight: 1.5, maxWidth: 300 }, children: [
             "Gropi a rep\xE9r\xE9 que ",
             /* @__PURE__ */ jsx22("b", { style: { color: C.text }, children: MODULE[weakest]?.label }),
             " m\xE9rite un coup de boost, on le met en priorit\xE9 dans ton Parcours."
@@ -10969,7 +10612,7 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
           }, children: "Continuer" })
         ] });
       })(),
-      phase === "goal" && /* @__PURE__ */ jsxs20(
+      phase === "goal" && /* @__PURE__ */ jsxs19(
         StepLayout,
         {
           C,
@@ -10977,7 +10620,7 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
           title: "Quel est ton objectif principal ?",
           subtitle: "Le Parcours en tiendra compte, en plus de ton profil, sans jamais sauter les autres domaines.",
           children: [
-            GOAL_OPTIONS.map((opt) => /* @__PURE__ */ jsx22(OptionCard, { C, selected: goal === opt.id, onClick: () => setGoal(opt.id), children: /* @__PURE__ */ jsxs20("div", { style: { display: "flex", alignItems: "center", gap: 10 }, children: [
+            GOAL_OPTIONS.map((opt) => /* @__PURE__ */ jsx22(OptionCard, { C, selected: goal === opt.id, onClick: () => setGoal(opt.id), children: /* @__PURE__ */ jsxs19("div", { style: { display: "flex", alignItems: "center", gap: 10 }, children: [
               /* @__PURE__ */ jsx22(Ti, { name: opt.icon, size: 19, color: goal === opt.id ? C.primary : C.text2 }),
               /* @__PURE__ */ jsx22("div", { style: { fontWeight: 700, fontSize: 14.5 }, children: opt.label })
             ] }) }, opt.id)),
@@ -10988,7 +10631,7 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
           ]
         }
       ),
-      phase === "time" && /* @__PURE__ */ jsxs20(
+      phase === "time" && /* @__PURE__ */ jsxs19(
         StepLayout,
         {
           C,
@@ -11005,7 +10648,7 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
   ] });
 }
 function StepLayout({ C, eyebrow, title, subtitle, children }) {
-  return /* @__PURE__ */ jsxs20("div", { style: { flex: 1, display: "flex", flexDirection: "column", paddingTop: 28, gap: 14 }, children: [
+  return /* @__PURE__ */ jsxs19("div", { style: { flex: 1, display: "flex", flexDirection: "column", paddingTop: 28, gap: 14 }, children: [
     /* @__PURE__ */ jsx22("div", { style: { fontSize: 11.5, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: C.primary, fontFamily: FONTS.ui }, children: eyebrow }),
     /* @__PURE__ */ jsx22("h2", { style: { margin: 0, fontSize: 21, fontWeight: 800, color: C.text, letterSpacing: "-.2px", lineHeight: 1.3 }, children: title }),
     subtitle && /* @__PURE__ */ jsx22("p", { style: { margin: 0, fontSize: 13, color: C.text2, lineHeight: 1.5 }, children: subtitle }),

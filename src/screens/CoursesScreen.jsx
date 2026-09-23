@@ -11,6 +11,11 @@ import { Ti } from "../design/Ti.jsx";
 import { ProgressBar, XPPop } from "../design/ui.jsx";
 import { buildModuleTheme } from "../store/moduleTheme.js";
 import { buildPath, getPathStats, UNIT_BONUS_XP } from "../store/pathEngine.js";
+// todayStr en heure LOCALE (voir store/dates.js) — surtout ne pas
+// réimplémenter avec `new Date().toISOString()`, qui reproduirait le bug
+// UTC corrigé plus tôt cette année : une session jouée après 22h ferait
+// apparaître le conseil du jour déjà fermé.
+import { todayStr } from "../store/state.js";
 import { UnitCheckScreen } from "./UnitCheckScreen.jsx";
 import { Gropi, GropiCoach, GropiBubble } from "../design/Gropi.jsx";
 
@@ -22,6 +27,8 @@ import { Gropi, GropiCoach, GropiBubble } from "../design/Gropi.jsx";
 import { useRenderers } from "../renderers.jsx";
 import { playLessonComplete, playChestOpen } from "../audioEngine.js";
 import { useWakeLock } from "../hooks/useWakeLock.js";
+import { pickTip, TIP_LABELS } from "../store/gropiTips.js";
+import { gradeForLevel } from "../store/grades.js";
 
 // ── Animation CSS partagée ────────────────────────────────────────────────────
 const PULSE_CSS = `
@@ -392,14 +399,187 @@ function UnitHeader({ unit, th }) {
   );
 }
 
+// ── En-tête « accueil » ────────────────────────────────────────────────────
+// Volontairement SANS grande bannière photo : c'est précisément ce qui
+// rendait l'ancien Accueil + l'ancien Parcours lourds une fois empilés.
+// Ici : une ligne de salutation compacte, le conseil du jour de Gropi, le
+// défi du jour, un accès rapide aux outils, puis la bannière d'unité déjà
+// existante — qui répond déjà à « où en suis-je ? » sans rien ajouter.
+//
+// Jam Session et Ear Training ne sont volontairement PAS ici : ce sont des
+// outils, pas des étapes du parcours. Leur place est la refonte de Pratique,
+// juste après celle-ci — pas de halte intermédiaire.
+// ── Popup de bienvenue ──────────────────────────────────────────────────
+// Troisième tentative sur ce même besoin, et la plus simple des trois.
+//
+// v1 : bandeau fixe en haut de la page — mangeait de la place en continu.
+// v2 : panneau inséré dans la boucle, au niveau de l'unité en cours —
+//      fonctionnait, mais ajoutait de la complexité (calcul de position,
+//      cas de repli si aucune unité n'est "en cours") pour un bénéfice
+//      finalement incertain.
+// v3 (celle-ci) : un simple "coucou" à l'ouverture de l'app. Fermé une
+//      fois, on se retrouve directement sur le chemin, à l'endroit où on
+//      en est — le cadrage automatique (plus bas dans ce fichier) s'en
+//      charge de toute façon, indépendamment de ce popup. Aucune position
+//      dans le document à gérer, aucun cas de repli à prévoir.
+//
+// Une fois par jour (state.gropiTipDate), comme l'était déjà le conseil de
+// Gropi avant toutes ces itérations.
+function WelcomeModal({ state, tip, navigate, onClose }) {
+  const C = useC();
+  const dateStr = new Date().toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long" });
+  const grade = gradeForLevel(state.level);
+  const defiFait = state.dailyChallengeDone && state.dailyChallengeDate === todayStr();
+  const allerAuDefi = () => { onClose(); navigate("challenge"); };
+
+  return (
+    <div
+      role="dialog" aria-modal="true" aria-label="Bienvenue"
+      onClick={onClose}
+      style={{
+        position:"fixed", inset:0, zIndex:300,
+        background:"rgba(20,10,5,.55)",
+        display:"flex", alignItems:"center", justifyContent:"center", padding:20,
+        animation:"gr-fade .18s ease",
+      }}
+    >
+      <style>{`@keyframes gr-fade{from{opacity:0}to{opacity:1}}
+        @keyframes gr-pop{from{opacity:0;transform:scale(.94) translateY(6px)}to{opacity:1;transform:scale(1) translateY(0)}}`}</style>
+
+      <div
+        onClick={e=>e.stopPropagation()}
+        style={{
+          width:"100%", maxWidth:360, background:C.surface,
+          borderRadius:R.xl, overflow:"hidden",
+          boxShadow:"0 16px 48px rgba(0,0,0,.35)",
+          animation:"gr-pop .22s cubic-bezier(.2,.9,.3,1.2)",
+        }}
+      >
+        {/* Même traitement photo que Progrès/Pratique : voile sombre fixe,
+            texte blanc, indépendant du thème de l'app. */}
+        <div style={{
+          position:"relative", padding:"20px 20px 18px",
+          backgroundImage:"url('/alhambra.jpg')",
+          backgroundSize:"cover", backgroundPosition:"center 35%",
+        }}>
+          <div style={{ position:"absolute", inset:0, background:"rgba(20,10,5,.65)" }}/>
+          <div style={{ position:"relative" }}>
+            <div style={{ fontSize:12, fontWeight:500, color:"rgba(255,255,255,.75)", textTransform:"capitalize" }}>{dateStr}</div>
+            <div style={{ fontSize:24, fontWeight:800, color:"#fff", letterSpacing:"-.3px", marginTop:1 }}>Bonjour !</div>
+          </div>
+        </div>
+
+        <div style={{ padding:"16px 18px 18px" }}>
+          {/* Série, grade — les deux chiffres qui font plaisir à voir en
+              ouvrant l'app, sans pour autant dupliquer tout Progrès. */}
+          <div style={{ display:"flex", gap:8, marginBottom:10 }}>
+            <div style={{
+              flex:1, display:"flex", alignItems:"center", gap:7,
+              background:C.surface2, border:`1.5px solid ${C.border}`,
+              borderRadius:R.md, padding:"9px 11px",
+            }}>
+              <Ti name="flame" size={16} color={state.streak>0?C.primary:C.text3}/>
+              <div>
+                <div style={{ fontSize:15, fontWeight:800, color:C.text, lineHeight:1.1 }}>{state.streak}</div>
+                <div style={{ fontSize:9.5, fontWeight:700, color:C.text3, textTransform:"uppercase", letterSpacing:".05em" }}>
+                  {state.streak > 1 ? "jours de série" : "jour de série"}
+                </div>
+              </div>
+            </div>
+            <div style={{
+              flex:1, display:"flex", alignItems:"center", gap:7,
+              background:C.surface2, border:`1.5px solid ${C.border}`,
+              borderRadius:R.md, padding:"9px 11px",
+            }}>
+              <Ti name="medal" size={16} color={C.primary}/>
+              <div style={{ minWidth:0 }}>
+                <div style={{ fontSize:12.5, fontWeight:800, color:C.text, lineHeight:1.25, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{grade.label}</div>
+                <div style={{ fontSize:9.5, fontWeight:700, color:C.text3, textTransform:"uppercase", letterSpacing:".05em" }}>Niveau {state.level}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Défi du jour : une action, pas juste une info — sa propre
+              ligne pleine largeur plutôt que compressée dans les puces
+              ci-dessus. Cliquer dessus ferme le popup ET navigue direct. */}
+          <button
+            onClick={allerAuDefi}
+            className="gr-focus"
+            style={{
+              width:"100%", display:"flex", alignItems:"center", gap:9,
+              background: defiFait ? C.greenL : C.amberL,
+              border:`1.5px solid ${defiFait ? C.greenBorder : C.amberBorder}`,
+              borderRadius:R.md, padding:"9px 11px", marginBottom:14,
+              cursor:"pointer", textAlign:"left",
+            }}
+          >
+            <Ti name={defiFait?"check":"bolt"} size={15} color={defiFait?C.greenD:C.amberInk ?? C.amber}/>
+            <span style={{ fontSize:12, fontWeight:700, color:defiFait?C.greenD:C.text }}>
+              {defiFait ? "Défi du jour relevé" : "Défi du jour"}
+            </span>
+          </button>
+
+          {/* Conseil du jour */}
+          <div style={{ display:"flex", gap:10, alignItems:"flex-start", marginBottom:14 }}>
+            <Gropi pose="wave" size={38} anim="wiggle"/>
+            <div style={{ flex:1, minWidth:0 }}>
+              <div style={{
+                fontSize:9, fontWeight:700, letterSpacing:".1em", textTransform:"uppercase",
+                color:C.primaryD, fontFamily:FONTS.ui, marginBottom:3,
+              }}>{TIP_LABELS[tip.type] || "Conseil de Gropi"}</div>
+              <p style={{ margin:0, fontSize:12.5, lineHeight:1.45, fontWeight:500, color:C.text }}>{tip.text}</p>
+            </div>
+          </div>
+
+          <button
+            onClick={onClose}
+            className="gr-focus"
+            style={{
+              width:"100%", background:C.primaryBtn, color:"#fff",
+              border:"none", borderRadius:R.lg, padding:"12px",
+              fontSize:14, fontWeight:800, cursor:"pointer",
+            }}
+          >
+            Commencer
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── LE PARCOURS ───────────────────────────────────────────────────────────────
-function CoursesScreen({ state, dispatch, content }) {
+//
+// `variant` distingue deux présentations d'un seul et même parcours :
+//   "courses" (par défaut)  l'en-tête photo existant, inchangé.
+//   "home"                  en-tête compact : conseil de Gropi, défi du
+//                            jour, accès rapide, bannière d'unité — pensé
+//                            pour servir d'écran d'accueil, sans empiler une
+//                            seconde bannière photo par-dessus la première.
+//
+// Le corps du chemin (nœuds, connecteurs, coffres, LessonView, tout ce qui
+// est déjà testé) est rigoureusement identique dans les deux cas — seul
+// l'en-tête change. Voir HomeScreen.jsx, qui n'est plus qu'un fin
+// enrobage : `<CoursesScreen {...props} variant="home" />`.
+function CoursesScreen({ state, dispatch, content, navigate, variant = "courses" }) {
   const C = useC();
   const MODULE_THEME = buildModuleTheme(C);
   const [activeLesson, setActiveLesson] = useState(null);
   const [checkingUnit, setCheckingUnit] = useState(null);
   const [chestPop, setChestPop] = useState(false);
   const currentRef = useRef(null);
+
+  // ── En-tête « accueil » uniquement : conseil du jour ────────────────────
+  // Même mécanisme que l'ancien HomeScreen (state.gropiTipDate), pour que
+  // la fermeture du conseil se comporte exactement pareil qu'avant.
+  const today = todayStr();
+  const tipDismissed = state.gropiTipDate === today;
+  const tip = useMemo(() => pickTip(state), [
+    state.xp, state.streak, state.level,
+    Object.keys(state.completedLessons || {}).length,
+    (state.unlockedBadges || []).length,
+    state.dailyChallengeCount,
+  ]);
   // Identifiant de la leçon sur laquelle on a scrollé la dernière fois. Sert à
   // ne pas re-scroller à chaque rendu, tout en re-scrollant bien quand la
   // cible change — c'est-à-dire au retour d'une leçon terminée.
@@ -475,9 +655,16 @@ function CoursesScreen({ state, dispatch, content }) {
     // Court délai : le nœud doit être monté et mesuré avant qu'on cadre
     // dessus, sinon scrollIntoView vise une position qui va encore changer.
     const t = setTimeout(()=>{
+      // "start" et non "center" : sur les premiers paliers, la cible est
+      // encore proche du haut de la page, et centrer quelque chose de déjà
+      // proche du haut ne déplace presque rien — le navigateur ne peut pas
+      // scroller au-delà du sommet. "start" pousse franchement la cible en
+      // haut de l'écran, quelle que soit sa distance au sommet : c'est ce
+      // qui donne la sensation "j'arrive directement là où j'en suis"
+      // plutôt que d'avoir à vérifier si un minuscule scroll a eu lieu.
       currentRef.current?.scrollIntoView({
         behavior: scrolledTo.current === null ? "auto" : "smooth",
-        block: "center",
+        block: "start",
       });
       scrolledTo.current = focus.key;
     }, 140);
@@ -510,38 +697,53 @@ function CoursesScreen({ state, dispatch, content }) {
     <div>
       <style>{PULSE_CSS}</style>
       {chestPop && <XPPop amount={UNIT_BONUS_XP} onDone={()=>{}}/>}
+      {/* Popup de bienvenue, une fois par jour — voir WelcomeModal plus
+          bas. Contrairement aux deux tentatives précédentes (bandeau fixe
+          en haut, puis panneau inséré dans la boucle au niveau de l'unité
+          en cours), ceci n'a AUCUNE position dans le document : c'est une
+          fenêtre par-dessus tout, qui se ferme sur le chemin déjà cadré à
+          l'endroit où on en est — le mécanisme de cadrage automatique
+          (plus bas, `focus` + scrollIntoView) fait ce travail-là tout
+          seul, indépendamment de ce popup. */}
+      {variant === "home" && !tipDismissed && (
+        <WelcomeModal
+          state={state} tip={tip} navigate={navigate}
+          onClose={()=>dispatch({type:"DISMISS_GROPI_TIP"})}
+        />
+      )}
 
-      {/* ── En-tête ── */}
-      <div style={{
-        backgroundColor:"#613878", backgroundImage:"url('/lavender.jpg')",
-        backgroundSize:"cover",backgroundPosition:"center 60%",
-        padding:"26px 20px 18px",position:"relative",overflow:"hidden",
-      }}>
-        <div style={{position:"absolute",inset:0,background:"rgba(60,20,100,.52)",pointerEvents:"none"}}/>
-        <div style={{position:"relative",zIndex:1}}>
-          <div style={{fontSize:28,fontWeight:800,color:"#fff",letterSpacing:"-.4px"}}>Parcours</div>
-          <div style={{fontSize:13,fontWeight:500,color:"rgba(255,255,255,.78)",marginTop:2,marginBottom:14}}>
-            {stats.units} unités · {stats.totalLessons} leçons · {stats.pct}%
+      {/* ── En-tête ──────────────────────────────────────────────────────
+          Variante "courses" : bannière photo fixe en haut, inchangée.
+          Variante "home" : PLUS de bandeau fixe en haut de la page — le
+          panneau (salutation, série, conseil de Gropi) est inséré plus bas,
+          À L'INTÉRIEUR de la boucle du chemin, juste avant l'unité en
+          cours. Voir le `path.map` ci-dessous.
+
+          Le raisonnement : "arriver au niveau de ta progression actuelle"
+          ne devait pas dépendre d'un bandeau fixe qui reste collé en haut
+          (ça mange de la place en continu sur le chemin, à l'encontre de
+          l'idée même de cette refonte) ni d'un bouton flottant permanent.
+          En plaçant le panneau EXACTEMENT là où se trouve l'unité en
+          cours dans le document, il apparaît naturellement quand on y
+          défile, et disparaît naturellement quand on s'en éloigne — sans
+          une ligne de JavaScript pour gérer l'affichage : c'est le
+          positionnement dans le document qui fait tout le travail. */}
+      {variant !== "home" && (
+        <div style={{
+          backgroundColor:"#613878", backgroundImage:"url('/lavender.jpg')",
+          backgroundSize:"cover",backgroundPosition:"center 60%",
+          padding:"26px 20px 18px",position:"relative",overflow:"hidden",
+        }}>
+          <div style={{position:"absolute",inset:0,background:"rgba(60,20,100,.52)",pointerEvents:"none"}}/>
+          <div style={{position:"relative",zIndex:1}}>
+            <div style={{fontSize:28,fontWeight:800,color:"#fff",letterSpacing:"-.4px"}}>Parcours</div>
+            <div style={{fontSize:13,fontWeight:500,color:"rgba(255,255,255,.78)",marginTop:2,marginBottom:14}}>
+              {stats.units} unités · {stats.totalLessons} leçons · {stats.pct}%
+            </div>
+            <CurrentUnitBanner stats={stats} MODULE_THEME={MODULE_THEME}/>
           </div>
-          <CurrentUnitBanner stats={stats} MODULE_THEME={MODULE_THEME}/>
         </div>
-      </div>
-
-      {/* ── Légende ── */}
-      <div style={{display:"flex",gap:14,padding:"12px 20px 4px",flexWrap:"wrap"}}>
-        {[
-          {color:C.primary,          label:"En cours"},
-          {color:C.primary,          label:"À vérifier"},
-          {color:C.green,            label:"Complétée"},
-          {color:C.amber,            label:"Coffre"},
-          {color:C.text3,            label:"Verrouillée"},
-        ].map(({color,label})=>(
-          <span key={label} style={{display:"flex",alignItems:"center",gap:5,fontSize:9,fontWeight:700,letterSpacing:".06em",textTransform:"uppercase",color:C.text3}}>
-            <span style={{width:9,height:9,borderRadius:"50%",background:color,display:"inline-block"}}/>
-            {label}
-          </span>
-        ))}
-      </div>
+      )}
 
       {/* ── Le parcours ── */}
       <div style={{padding:"8px 20px 40px"}}>
@@ -578,7 +780,8 @@ function CoursesScreen({ state, dispatch, content }) {
 
                 return (
                   <div key={lesson.id}
-                       ref={focus?.type==="lesson" && focus.id===lesson.id ? currentRef : null}>
+                       ref={focus?.type==="lesson" && focus.id===lesson.id ? currentRef : null}
+                       style={focus?.type==="lesson" && focus.id===lesson.id ? { scrollMarginTop: 16 } : undefined}>
                     {li>0&&(
                       <PathConnector
                         from={prevLay} to={lay}
@@ -605,7 +808,8 @@ function CoursesScreen({ state, dispatch, content }) {
                 to={{ side:"center", inset:0 }}
                 done={unit.complete}
               />
-              <div ref={focus?.type==="chest" && focus.id===unit.id ? currentRef : null}>
+              <div ref={focus?.type==="chest" && focus.id===unit.id ? currentRef : null}
+                   style={focus?.type==="chest" && focus.id===unit.id ? { scrollMarginTop: 16 } : undefined}>
                 <UnitChest unit={unit} th={th} onClaim={claimChest} onCheck={setCheckingUnit}/>
               </div>
             </div>

@@ -53,8 +53,11 @@ import { FretboardLesson, FretboardQuizQuestion, FretboardExercise } from "./Fre
 const RENDERERS = { renderDiagramBlock, FretboardLesson, FretboardQuizQuestion, FretboardExercise };
 
 // ── Écrans : un chunk par écran, chargé au moment où on y va ──────────────
+// CoursesScreen.jsx n'est plus importé séparément ici : « Parcours » et
+// « Accueil » sont désormais le même écran (voir HomeScreen.jsx, qui
+// l'importe lui-même en variante « home »). Le regrouper évite d'avoir
+// deux onglets qui montrent, au fond, la même chose habillée différemment.
 const HomeScreen        = lazy(() => import("./screens/HomeScreen.jsx").then(m => ({ default: m.HomeScreen })));
-const CoursesScreen     = lazy(() => import("./screens/CoursesScreen.jsx").then(m => ({ default: m.CoursesScreen })));
 const TrainingScreen    = lazy(() => import("./screens/TrainingScreen.jsx").then(m => ({ default: m.TrainingScreen })));
 const ProgressScreen    = lazy(() => import("./screens/ProgressScreen.jsx").then(m => ({ default: m.ProgressScreen })));
 const SettingsScreen    = lazy(() => import("./screens/SettingsScreen.jsx").then(m => ({ default: m.SettingsScreen })));
@@ -70,7 +73,6 @@ const OnboardingScreen  = lazy(() => import("./onboarding/OnboardingScreen.jsx")
 /** Précharge un écran sans l'afficher — appelé au survol/appui de l'onglet. */
 const PRELOAD = {
   home:     () => import("./screens/HomeScreen.jsx"),
-  courses:  () => import("./screens/CoursesScreen.jsx"),
   training: () => import("./screens/TrainingScreen.jsx"),
   progress: () => import("./screens/ProgressScreen.jsx"),
   toolbox:  () => import("./screens/ToolboxScreen.jsx"),
@@ -81,23 +83,26 @@ const PRELOAD = {
 const chargerContenu = () => import("./content.js");
 
 // ── Navigation ────────────────────────────────────────────────────────────
+// « Parcours » disparaît en tant qu'onglet séparé : l'Accueil EST le
+// parcours désormais (voir HomeScreen.jsx). La Boîte à outils prend sa
+// place — elle n'était accessible que par un bouton flottant, qui
+// recouvrait le contenu sur certains écrans (voir plus bas, ce même
+// problème disparaît avec le bouton).
 const TABS = [
   { id: "home",      label: "Accueil",  icon: "home" },
-  { id: "courses",   label: "Parcours", icon: "route" },
+  { id: "toolbox",   label: "Outils",   icon: "guitar-pick" },
   { id: "training",  label: "Pratique", icon: "target-arrow" },
   { id: "progress",  label: "Progrès",  icon: "chart-bar" },
 ];
 
 const ECRANS_VALIDES = new Set([
   ...TABS.map(t => t.id),
-  "challenge", "practice", "explorer", "jam", "review", "ear", "toolbox",
-  "exercises", "quiz",   // anciennes routes, redirigées
+  "challenge", "practice", "explorer", "jam", "review", "ear",
+  "courses", "exercises", "quiz",   // anciennes routes, redirigées
 ]);
 
 // Écrans où le bouton flottant est masqué : au milieu d'un exercice, on ne
 // propose pas une porte de sortie, et il recouvrait le bouton « Valider ».
-const SANS_FAB = new Set(["toolbox", "review", "practice", "challenge", "ear", "jam", "explorer"]);
-
 const NAV_HEIGHT = 64;
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -429,8 +434,12 @@ function AppInner({ onThemeChange }) {
         user={user} onSignOut={signOut} onDeleteAccount={deleteAccount} />
     );
     switch (screen) {
-      case "home":      return <HomeScreen {...props} />;
-      case "courses":   return <CoursesScreen {...props} />;
+      case "home":
+      // "courses" reste une route valide : d'autres écrans peuvent encore
+      // y naviguer (retour depuis une révision, un exercice...). Elle mène
+      // exactement au même endroit que l'Accueil — ce n'est plus qu'un
+      // synonyme, pas un écran différent.
+      case "courses":   return <HomeScreen {...props} />;
       // Anciennes routes conservées : « Exercices » et « Quiz » ont fusionné
       // en « Pratique », mais l'app mémorise le dernier écran visité.
       case "training":
@@ -440,7 +449,12 @@ function AppInner({ onThemeChange }) {
       case "ear":       return <EarTraining onBack={() => navigate("home")} dispatch={dispatch} />;
       case "explorer":  return <FretboardExplorer onBack={() => navigate("home")} />;
       case "jam":       return <JamSession onBack={() => navigate("home")} />;
-      case "toolbox":   return <ToolboxScreen onBack={() => navigate("home")} />;
+      // Toolbox est un onglet à part entière désormais : on n'a plus besoin
+      // de la flèche retour qu'elle affichait quand elle n'était accessible
+      // que par un bouton flottant. Le bouton est protégé par
+      // `{onBack && (...)}` dans ToolboxScreen.jsx — ne pas lui passer ce
+      // prop suffit à le faire disparaître, sans toucher au fichier.
+      case "toolbox":   return <ToolboxScreen />;
       case "review":    return <ReviewSession questions={reviewQuestions} state={state} dispatch={dispatch} onDone={() => navigate("home")} />;
       case "practice":  return <PracticeScreen state={state} dispatch={dispatch} />;
       case "challenge": return <ChallengeScreen state={state} dispatch={dispatch} navigate={navigate} />;
@@ -511,35 +525,11 @@ function AppInner({ onThemeChange }) {
         </nav>
       )}
 
-      {/* ── Bouton flottant : boîte à outils ─────────────────────────── */}
-      {!showSettings && !SANS_FAB.has(screen) && (
-        <div style={{
-          position: "fixed", left: 0, right: 0,
-          bottom: `calc(${NAV_HEIGHT}px + env(safe-area-inset-bottom, 0px) + 14px)`,
-          maxWidth: 440, margin: "0 auto",
-          pointerEvents: "none", zIndex: 101,
-        }}>
-          <button
-            onClick={() => navigate("toolbox")}
-            onPointerEnter={() => PRELOAD.toolbox()}
-            aria-label="Boîte à outils"
-            className="gr-focus"
-            style={{
-              pointerEvents: "auto",
-              position: "absolute", right: 16, bottom: 0,
-              width: 58, height: 58, borderRadius: "50%", border: "none", cursor: "pointer",
-              background: `linear-gradient(135deg,#FF9155,${C.primaryBtn})`,
-              boxShadow: `0 6px 20px ${C.primary}55`,
-              overflow: "visible",
-            }}
-          >
-            <Gropi pose="rocker" size={72} anim="bob" style={{
-              position: "absolute", bottom: -8, left: "calc(50% - 8px)", transform: "translateX(-50%)",
-              filter: "drop-shadow(0 4px 8px rgba(120,40,0,.35))",
-            }}/>
-          </button>
-        </div>
-      )}
+      {/* Le bouton flottant a disparu : la Boîte à outils a désormais son
+          propre onglet (voir TABS). Ça règle au passage un problème
+          identifié dans l'audit — ce bouton recouvrait le bas du contenu
+          sur plusieurs écrans, sans que rien ne réserve la place qu'il
+          prenait. */}
     </>
   );
 }
