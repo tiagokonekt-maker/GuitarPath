@@ -3766,6 +3766,25 @@ function updateReviewHistory(history, itemId, correct, today = todayStr()) {
     }
   };
 }
+function getReviewStats(allQuestions, reviewHistory, completedLessons) {
+  const today = todayStr();
+  const eligible = (allQuestions || []).filter((q) => isEligible(q, completedLessons));
+  let toReview = 0, neverSeen = 0, mastered = 0;
+  for (const q of eligible) {
+    const score = getPriorityScore(q.id, reviewHistory, completedLessons, today);
+    if (score === NEW_SCORE) neverSeen++;
+    else if (score > 0) toReview++;
+    if ((reviewHistory?.[q.id]?.interval || 0) >= 30) mastered++;
+  }
+  return {
+    eligible: eligible.length,
+    toReview,
+    // plus de plafond artificiel à 99
+    neverSeen,
+    mastered,
+    pctMastered: eligible.length > 0 ? Math.round(mastered / eligible.length * 100) : 0
+  };
+}
 
 // src/screens/QuizScreen.jsx
 import { Fragment as Fragment3, jsx as jsx7, jsxs as jsxs5 } from "react/jsx-runtime";
@@ -9974,82 +9993,311 @@ __export(TrainingScreen_exports, {
   TrainingScreen: () => TrainingScreen
 });
 import { useState as useState15, useMemo as useMemo9 } from "react";
-import { jsx as jsx19, jsxs as jsxs16 } from "react/jsx-runtime";
-var SUBTABS = [
-  { id: "theory", label: "Th\xE9orie", icon: "help-circle" },
-  { id: "playing", label: "Guitare en main", icon: "guitar-pick" }
-];
-function TrainingScreen({ state, dispatch, content }) {
-  const C = useC();
-  const [tab, setTab] = useState15("theory");
-  const stat = useMemo9(() => {
-    if (tab === "theory") {
-      const all2 = content.quiz || [];
-      const answered = all2.filter((q) => state.quizResults?.[q.id]).length;
-      const pct2 = all2.length ? Math.round(answered / all2.length * 100) : 0;
-      return { pct: pct2, line: `${answered} / ${all2.length} questions r\xE9pondues` };
+
+// src/store/placementEngine.js
+var TESTABLE_MODULES = ["neck", "scales", "harmony", "rhythm", "impro"];
+var TIER_ORDER = ["A1", "A2", "B1", "B2"];
+var TIER_VALUE = { A1: 1, A2: 2, B1: 3, B2: 4 };
+var MAX_STARTING_LEVEL = 8;
+var PLACEMENT_LEVELS = [1, 2, 3];
+var FALLBACK_TIER = "A2";
+function pickRandom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+var usableQuestions = (quizBank, moduleId, lvl) => (quizBank || []).filter(
+  (q) => q.courseId === moduleId && q.lvl === lvl && Array.isArray(q.o) && q.o.length >= 2
+);
+function availableModules(quizBank) {
+  if (!quizBank || quizBank.length === 0) return [...TESTABLE_MODULES];
+  return TESTABLE_MODULES.filter(
+    (m) => PLACEMENT_LEVELS.every((lvl) => usableQuestions(quizBank, m, lvl).length > 0)
+  );
+}
+function buildPlacementQueue(quizBank = null) {
+  const modules = quizBank ? availableModules(quizBank) : [...TESTABLE_MODULES];
+  const queue = [];
+  for (const lvl of PLACEMENT_LEVELS) {
+    for (const moduleId of modules) queue.push({ moduleId, lvl });
+  }
+  return queue;
+}
+function placementQuestionCount(quizBank = null) {
+  return buildPlacementQueue(quizBank).length;
+}
+var PLACEMENT_QUESTION_COUNT = TESTABLE_MODULES.length * PLACEMENT_LEVELS.length;
+function pickQuestion(quizBank, moduleId, lvl, excludeIds) {
+  const pool = usableQuestions(quizBank, moduleId, lvl).filter((q) => q.type !== "fretboard" && !excludeIds.has(q.id));
+  return pool.length === 0 ? null : pickRandom(pool);
+}
+function pickPlacementQuestion(quizBank, moduleId, lvl, excludeIds, preferFretboard = false) {
+  if (preferFretboard) {
+    const fretPool = (quizBank || []).filter(
+      (q2) => q2.courseId === moduleId && q2.lvl === lvl && q2.type === "fretboard" && !excludeIds.has(q2.id)
+    );
+    if (fretPool.length > 0) return { ...pickRandom(fretPool), moduleId };
+  }
+  const q = pickQuestion(quizBank, moduleId, lvl, excludeIds);
+  return q ? { ...q, moduleId } : null;
+}
+function startFromScore(totalCorrect, totalQuestions) {
+  const answered = Math.max(1, Number(totalQuestions) || 1);
+  const ratio = Math.max(0, Math.min(1, (Number(totalCorrect) || 0) / answered));
+  const level = Math.max(1, Math.min(
+    MAX_STARTING_LEVEL,
+    Math.round(1 + ratio * (MAX_STARTING_LEVEL - 1))
+  ));
+  return { grade: gradeForLevel(level), startXp: totalXpForLevel(level), level, startLevel: level };
+}
+function computeModuleTier(correctCount) {
+  const idx = Math.max(0, Math.min(TIER_ORDER.length - 1, Number(correctCount) || 0));
+  return TIER_ORDER[idx];
+}
+var averageTier = (skillLevels, modules) => {
+  const values = modules.map((m) => TIER_VALUE[skillLevels?.[m]]).filter(Boolean);
+  if (values.length === 0) return FALLBACK_TIER;
+  const avg = values.reduce((a, b) => a + b, 0) / values.length;
+  return TIER_ORDER[Math.max(0, Math.min(3, Math.round(avg) - 1))];
+};
+function inferMissingTier(skillLevels, testedModules = TESTABLE_MODULES) {
+  return averageTier(skillLevels, testedModules);
+}
+function computeOverallTier(skillLevels, testedModules = TESTABLE_MODULES) {
+  return averageTier(skillLevels, testedModules);
+}
+function weakestModule(skillLevels, testedModules = TESTABLE_MODULES) {
+  let weakest = null, weakestVal = 5;
+  for (const m of testedModules) {
+    const v = TIER_VALUE[skillLevels?.[m]];
+    if (v && v < weakestVal) {
+      weakestVal = v;
+      weakest = m;
     }
+  }
+  return weakest;
+}
+
+// src/screens/TrainingScreen.jsx
+import { jsx as jsx19, jsxs as jsxs16 } from "react/jsx-runtime";
+var NOM_MODULE = {
+  neck: "Manche",
+  scales: "Gammes",
+  harmony: "Harmonie",
+  rhythm: "Rythme",
+  impro: "Improvisation"
+};
+var SEUIL_MODULE_FAIBLE = 90;
+function useRecommandation(state, content) {
+  return useMemo9(() => {
+    const reviewStats = getReviewStats(content.quiz, state.reviewHistory, state.completedLessons);
+    if (reviewStats.toReview > 0) {
+      return {
+        type: "review",
+        titre: "R\xE9vision du jour",
+        texte: `${reviewStats.toReview} question${reviewStats.toReview > 1 ? "s" : ""} ${reviewStats.toReview > 1 ? "attendent" : "attend"} d'\xEAtre revue${reviewStats.toReview > 1 ? "s" : ""} \u2014 la m\xE9moire s'efface vite, c'est le bon moment.`,
+        icon: "history",
+        cta: "R\xE9viser maintenant"
+      };
+    }
+    const parModule = TESTABLE_MODULES.map((m) => ({ id: m, stats: masteryStats(content, state, m) })).filter((x) => x.stats.total > 0 && x.stats.atteints > 0 && x.stats.pctMoyen < SEUIL_MODULE_FAIBLE);
+    if (parModule.length > 0) {
+      parModule.sort((a, b) => a.stats.pctMoyen - b.stats.pctMoyen);
+      const { id, stats } = parModule[0];
+      return {
+        type: "module",
+        moduleId: id,
+        titre: `Concentre-toi sur : ${NOM_MODULE[id] || id}`,
+        texte: `${stats.pctMoyen}% de ma\xEEtrise sur ce module \u2014 ${stats.comprises} le\xE7on${stats.comprises > 1 ? "s" : ""} comprise${stats.comprises > 1 ? "s" : ""}, ${stats.ancrees} ancr\xE9e${stats.ancrees > 1 ? "s" : ""}. Encore de la marge.`,
+        icon: "target",
+        cta: "Travailler ce module"
+      };
+    }
+    if (!(state.dailyChallengeDone && state.dailyChallengeDate === todayStr())) {
+      return {
+        type: "challenge",
+        titre: "D\xE9fi du jour",
+        texte: "Rien de plus urgent \xE0 revoir pour l'instant \u2014 un d\xE9fi rapide pour garder le rythme ?",
+        icon: "bolt",
+        cta: "Relever le d\xE9fi"
+      };
+    }
+    return {
+      type: "none",
+      titre: "Tout est \xE0 jour",
+      texte: "Rien \xE0 revoir, rien de faible en ce moment. Explore librement ci-dessous, ou reviens plus tard.",
+      icon: "check",
+      cta: null
+    };
+  }, [content, state.reviewHistory, state.completedLessons, state.quizResults, state.dailyChallengeDone, state.dailyChallengeDate]);
+}
+function CarteRecommandation({ rec, navigate, onOuvrirTheorie }) {
+  const C = useC();
+  const agir = () => {
+    if (rec.type === "review") navigate("review");
+    else if (rec.type === "challenge") navigate("challenge");
+    else if (rec.type === "module") onOuvrirTheorie();
+  };
+  return /* @__PURE__ */ jsxs16("div", { style: {
+    background: C.surface,
+    border: `1.5px solid ${C.primaryBorder}`,
+    borderRadius: R.xl,
+    padding: "16px 16px 14px",
+    marginBottom: 16
+  }, children: [
+    /* @__PURE__ */ jsxs16("div", { style: { display: "flex", alignItems: "flex-start", gap: 11 }, children: [
+      /* @__PURE__ */ jsx19("div", { style: {
+        width: 38,
+        height: 38,
+        borderRadius: R.md,
+        flexShrink: 0,
+        background: C.primaryL,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center"
+      }, children: /* @__PURE__ */ jsx19(Ti, { name: rec.icon, size: 18, color: C.primary }) }),
+      /* @__PURE__ */ jsxs16("div", { style: { flex: 1, minWidth: 0 }, children: [
+        /* @__PURE__ */ jsx19("div", { style: { fontSize: 15, fontWeight: 800, color: C.text, letterSpacing: "-.2px" }, children: rec.titre }),
+        /* @__PURE__ */ jsx19("p", { style: { margin: "3px 0 0", fontSize: 12.5, lineHeight: 1.5, color: C.text2 }, children: rec.texte })
+      ] })
+    ] }),
+    rec.cta && /* @__PURE__ */ jsx19("button", { onClick: agir, className: "gr-focus", style: {
+      width: "100%",
+      marginTop: 13,
+      padding: "11px",
+      borderRadius: R.md,
+      border: "none",
+      background: C.primaryBtn,
+      color: "#fff",
+      fontSize: 13.5,
+      fontWeight: 800,
+      cursor: "pointer"
+    }, children: rec.cta })
+  ] });
+}
+function CarteMode({ icon, titre, role, stat, actif, onClick }) {
+  const C = useC();
+  return /* @__PURE__ */ jsxs16("button", { onClick, className: "gr-focus", style: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    width: "100%",
+    textAlign: "left",
+    background: actif ? C.primaryL : C.surface,
+    border: `1.5px solid ${actif ? C.primaryBorder : C.border}`,
+    borderRadius: R.lg,
+    padding: "12px 14px",
+    marginBottom: 8,
+    cursor: "pointer"
+  }, children: [
+    /* @__PURE__ */ jsx19("div", { style: {
+      width: 34,
+      height: 34,
+      borderRadius: R.sm,
+      flexShrink: 0,
+      background: actif ? "#fff" : C.surface2,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center"
+    }, children: /* @__PURE__ */ jsx19(Ti, { name: icon, size: 16, color: actif ? C.primary : C.text2 }) }),
+    /* @__PURE__ */ jsxs16("div", { style: { flex: 1, minWidth: 0 }, children: [
+      /* @__PURE__ */ jsx19("div", { style: { fontSize: 13.5, fontWeight: 800, color: C.text }, children: titre }),
+      /* @__PURE__ */ jsx19("div", { style: { fontSize: 11, color: C.text3, marginTop: 1 }, children: role })
+    ] }),
+    /* @__PURE__ */ jsx19("div", { style: { textAlign: "right", flexShrink: 0 }, children: /* @__PURE__ */ jsx19("div", { style: { fontSize: 11.5, fontWeight: 700, color: actif ? C.primaryD : C.text2 }, children: stat }) })
+  ] });
+}
+function TrainingScreen({ state, dispatch, content, navigate }) {
+  const C = useC();
+  const [tab, setTab] = useState15(null);
+  const rec = useRecommandation(state, content);
+  const reviewStats = useMemo9(
+    () => getReviewStats(content.quiz, state.reviewHistory, state.completedLessons),
+    [content.quiz, state.reviewHistory, state.completedLessons]
+  );
+  const gMastery = useMemo9(() => masteryStats(content, state), [content, state]);
+  const exoStat = useMemo9(() => {
     const all = content.exercises || [];
     const done = all.filter((e) => state.completedExercises?.[e.id]).length;
-    const pct = all.length ? Math.round(done / all.length * 100) : 0;
-    return { pct, line: `${done} / ${all.length} exercices compl\xE9t\xE9s` };
-  }, [tab, content.quiz, content.exercises, state.quizResults, state.completedExercises]);
+    return { done, total: all.length };
+  }, [content.exercises, state.completedExercises]);
+  const uniteEnAttente = useMemo9(() => {
+    const path = buildPath(content, state);
+    return path.find((u) => u.needsCheck) || null;
+  }, [content, state]);
   return /* @__PURE__ */ jsxs16("div", { children: [
     /* @__PURE__ */ jsxs16("div", { style: {
       backgroundColor: "#36b3d7",
       backgroundImage: "url('/ocean.jpg')",
       backgroundSize: "cover",
       backgroundPosition: "center 30%",
-      padding: "24px 20px 0",
+      padding: "24px 20px 18px",
       position: "relative",
       overflow: "hidden"
     }, children: [
       /* @__PURE__ */ jsx19("div", { style: { position: "absolute", inset: 0, background: "rgba(0,60,80,.52)", pointerEvents: "none" } }),
       /* @__PURE__ */ jsxs16("div", { style: { position: "relative", zIndex: 1 }, children: [
         /* @__PURE__ */ jsx19("div", { style: { fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: "-.4px" }, children: "Pratique" }),
-        /* @__PURE__ */ jsx19("div", { style: {
-          fontSize: 13,
-          fontWeight: 500,
-          color: "rgba(255,255,255,.8)",
-          marginTop: 2,
-          marginBottom: 12
-        }, children: stat.line }),
-        /* @__PURE__ */ jsx19(ProgressBar, { pct: stat.pct, color: C.teal, h: 6 }),
-        /* @__PURE__ */ jsx19("div", { style: { display: "flex", gap: 6, marginTop: 16 }, children: SUBTABS.map((t) => {
-          const active = tab === t.id;
-          return /* @__PURE__ */ jsxs16(
-            "button",
-            {
-              onClick: () => setTab(t.id),
-              style: {
-                flex: 1,
-                padding: "10px 6px 11px",
-                border: "none",
-                background: "none",
-                cursor: "pointer",
-                fontFamily: FONTS.ui,
-                borderBottom: `3px solid ${active ? "#fff" : "rgba(255,255,255,.22)"}`,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 7
-              },
-              children: [
-                /* @__PURE__ */ jsx19(Ti, { name: t.icon, size: 16, color: active ? "#fff" : "rgba(255,255,255,.6)" }),
-                /* @__PURE__ */ jsx19("span", { style: {
-                  fontSize: 13,
-                  fontWeight: 800,
-                  letterSpacing: "-.1px",
-                  color: active ? "#fff" : "rgba(255,255,255,.6)"
-                }, children: t.label })
-              ]
-            },
-            t.id
-          );
-        }) })
+        /* @__PURE__ */ jsxs16("div", { style: { fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,.8)", marginTop: 2 }, children: [
+          gMastery.comprises,
+          " compris \xB7 ",
+          gMastery.ancrees,
+          " ancr\xE9",
+          gMastery.ancrees > 1 ? "s" : "",
+          " sur ",
+          gMastery.total,
+          " le\xE7ons"
+        ] })
       ] })
     ] }),
-    tab === "theory" ? /* @__PURE__ */ jsx19(QuizScreen, { state, dispatch, content, embedded: true }) : /* @__PURE__ */ jsx19(ExercisesScreen, { state, dispatch, content, embedded: true })
+    /* @__PURE__ */ jsxs16("div", { style: { padding: "16px 20px 4px" }, children: [
+      /* @__PURE__ */ jsx19(CarteRecommandation, { rec, navigate, onOuvrirTheorie: () => setTab("theory") }),
+      /* @__PURE__ */ jsx19("div", { style: { fontSize: 11, fontWeight: 700, color: C.text3, textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 8 }, children: "Tous les modes" }),
+      /* @__PURE__ */ jsx19(
+        CarteMode,
+        {
+          icon: "history",
+          titre: "R\xE9vision",
+          role: "Ce qui est d\xFB, d\xE9cid\xE9 par la r\xE9p\xE9tition espac\xE9e",
+          stat: reviewStats.toReview > 0 ? `${reviewStats.toReview} d\xFB${reviewStats.toReview > 1 ? "es" : "e"}` : "\xE0 jour",
+          actif: false,
+          onClick: () => navigate("review")
+        }
+      ),
+      uniteEnAttente && /* @__PURE__ */ jsx19(
+        CarteMode,
+        {
+          icon: "lock-open",
+          titre: "V\xE9rification d'unit\xE9",
+          role: `${uniteEnAttente.title} \u2014 le\xE7ons finies, \xE0 valider`,
+          stat: "en attente",
+          actif: false,
+          onClick: () => navigate("home")
+        }
+      ),
+      /* @__PURE__ */ jsx19(
+        CarteMode,
+        {
+          icon: "help-circle",
+          titre: "Th\xE9orie",
+          role: "Quiz \u2014 v\xE9rifier et ancrer ce qui a \xE9t\xE9 lu",
+          stat: `${gMastery.comprises + gMastery.ancrees}/${gMastery.total} compris`,
+          actif: tab === "theory",
+          onClick: () => setTab((t) => t === "theory" ? null : "theory")
+        }
+      ),
+      /* @__PURE__ */ jsx19(
+        CarteMode,
+        {
+          icon: "guitar-pick",
+          titre: "Guitare en main",
+          role: "Exercices \u2014 la pratique physique, \xE0 son rythme",
+          stat: `${exoStat.done}/${exoStat.total}`,
+          actif: tab === "playing",
+          onClick: () => setTab((t) => t === "playing" ? null : "playing")
+        }
+      )
+    ] }),
+    tab === "theory" && /* @__PURE__ */ jsx19(QuizScreen, { state, dispatch, content, embedded: true }),
+    tab === "playing" && /* @__PURE__ */ jsx19(ExercisesScreen, { state, dispatch, content, embedded: true })
   ] });
 }
 
@@ -10308,90 +10556,6 @@ __export(OnboardingScreen_exports, {
   OnboardingScreen: () => OnboardingScreen
 });
 import { useState as useState18, useEffect as useEffect13, useMemo as useMemo12 } from "react";
-
-// src/store/placementEngine.js
-var TESTABLE_MODULES = ["neck", "scales", "harmony", "rhythm", "impro"];
-var TIER_ORDER = ["A1", "A2", "B1", "B2"];
-var TIER_VALUE = { A1: 1, A2: 2, B1: 3, B2: 4 };
-var MAX_STARTING_LEVEL = 8;
-var PLACEMENT_LEVELS = [1, 2, 3];
-var FALLBACK_TIER = "A2";
-function pickRandom(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
-var usableQuestions = (quizBank, moduleId, lvl) => (quizBank || []).filter(
-  (q) => q.courseId === moduleId && q.lvl === lvl && Array.isArray(q.o) && q.o.length >= 2
-);
-function availableModules(quizBank) {
-  if (!quizBank || quizBank.length === 0) return [...TESTABLE_MODULES];
-  return TESTABLE_MODULES.filter(
-    (m) => PLACEMENT_LEVELS.every((lvl) => usableQuestions(quizBank, m, lvl).length > 0)
-  );
-}
-function buildPlacementQueue(quizBank = null) {
-  const modules = quizBank ? availableModules(quizBank) : [...TESTABLE_MODULES];
-  const queue = [];
-  for (const lvl of PLACEMENT_LEVELS) {
-    for (const moduleId of modules) queue.push({ moduleId, lvl });
-  }
-  return queue;
-}
-function placementQuestionCount(quizBank = null) {
-  return buildPlacementQueue(quizBank).length;
-}
-var PLACEMENT_QUESTION_COUNT = TESTABLE_MODULES.length * PLACEMENT_LEVELS.length;
-function pickQuestion(quizBank, moduleId, lvl, excludeIds) {
-  const pool = usableQuestions(quizBank, moduleId, lvl).filter((q) => q.type !== "fretboard" && !excludeIds.has(q.id));
-  return pool.length === 0 ? null : pickRandom(pool);
-}
-function pickPlacementQuestion(quizBank, moduleId, lvl, excludeIds, preferFretboard = false) {
-  if (preferFretboard) {
-    const fretPool = (quizBank || []).filter(
-      (q2) => q2.courseId === moduleId && q2.lvl === lvl && q2.type === "fretboard" && !excludeIds.has(q2.id)
-    );
-    if (fretPool.length > 0) return { ...pickRandom(fretPool), moduleId };
-  }
-  const q = pickQuestion(quizBank, moduleId, lvl, excludeIds);
-  return q ? { ...q, moduleId } : null;
-}
-function startFromScore(totalCorrect, totalQuestions) {
-  const answered = Math.max(1, Number(totalQuestions) || 1);
-  const ratio = Math.max(0, Math.min(1, (Number(totalCorrect) || 0) / answered));
-  const level = Math.max(1, Math.min(
-    MAX_STARTING_LEVEL,
-    Math.round(1 + ratio * (MAX_STARTING_LEVEL - 1))
-  ));
-  return { grade: gradeForLevel(level), startXp: totalXpForLevel(level), level, startLevel: level };
-}
-function computeModuleTier(correctCount) {
-  const idx = Math.max(0, Math.min(TIER_ORDER.length - 1, Number(correctCount) || 0));
-  return TIER_ORDER[idx];
-}
-var averageTier = (skillLevels, modules) => {
-  const values = modules.map((m) => TIER_VALUE[skillLevels?.[m]]).filter(Boolean);
-  if (values.length === 0) return FALLBACK_TIER;
-  const avg = values.reduce((a, b) => a + b, 0) / values.length;
-  return TIER_ORDER[Math.max(0, Math.min(3, Math.round(avg) - 1))];
-};
-function inferMissingTier(skillLevels, testedModules = TESTABLE_MODULES) {
-  return averageTier(skillLevels, testedModules);
-}
-function computeOverallTier(skillLevels, testedModules = TESTABLE_MODULES) {
-  return averageTier(skillLevels, testedModules);
-}
-function weakestModule(skillLevels, testedModules = TESTABLE_MODULES) {
-  let weakest = null, weakestVal = 5;
-  for (const m of testedModules) {
-    const v = TIER_VALUE[skillLevels?.[m]];
-    if (v && v < weakestVal) {
-      weakestVal = v;
-      weakest = m;
-    }
-  }
-  return weakest;
-}
-
-// src/onboarding/OnboardingScreen.jsx
 import { Fragment as Fragment9, jsx as jsx22, jsxs as jsxs19 } from "react/jsx-runtime";
 var GOAL_OPTIONS = [
   { id: "impro", module: "impro", label: "Improviser librement", icon: "wand" },

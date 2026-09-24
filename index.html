@@ -11,13 +11,19 @@
          y compris dans l'écran de chargement, qui affiche une icône.
 
          L'objectif final reste l'auto-hébergement (voir CHANGELOG §3.2) :
-         cela supprime deux tiers qui reçoivent l'IP de chaque visiteur
-         (Google Fonts, jsDelivr) sans consentement, ce qui est aussi un
-         point RGPD. En attendant, preconnect + link non bloquant.
+         ça supprime le dernier tiers qui reçoit l'IP de chaque visiteur
+         (Google Fonts) sans consentement, ce qui est aussi un point RGPD.
+         En attendant, preconnect + link non bloquant.
+
+         jsDelivr a disparu de cette liste : les icônes sont passées d'une
+         webfont chargée depuis ce CDN à des SVG inline (src/design/icons.js),
+         précisément parce que le CSP posé depuis n'autorise plus jsDelivr
+         en style-src — cette ancienne webfont était bloquée par le
+         navigateur à CHAQUE chargement de page depuis, une requête vouée à
+         l'échec pour rien, puisque plus aucune icône n'en dépend.
          ══════════════════════════════════════════════════════════════════ -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
     <link
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Nunito:wght@800&display=swap"
@@ -26,11 +32,6 @@
       <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Nunito:wght@800&display=swap" />
     </noscript>
-    <!-- Les icônes ne sont PAS différées : toute l'iconographie de l'app en
-         dépend (Ti.jsx rend <i class="ti ti-…">). Une icône absente n'est pas
-         un défaut de style, c'est un bouton vide. -->
-    <link rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.20.0/dist/tabler-icons.min.css" />
 
     <!-- PWA core -->
     <link rel="manifest" href="/manifest.json" />
