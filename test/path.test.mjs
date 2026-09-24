@@ -43,11 +43,24 @@ test("les identifiants d'unité sont uniques", () => {
   assert.equal(new Set(units.map(u => u.id)).size, units.length);
 });
 
-test("le coffre et la vérification sont proportionnels à la taille", () => {
+test("le coffre est proportionnel à la taille de l'unité", () => {
   assert.ok(unitBonusXp(6) > unitBonusXp(3));
-  assert.ok(unitCheckSize(8) > unitCheckSize(3));
-  assert.ok(unitBonusXp(0) >= 20 && unitBonusXp(100) <= 150, "restent bornés");
-  assert.ok(unitCheckSize(0) >= 4 && unitCheckSize(100) <= 14);
+  assert.ok(unitBonusXp(0) >= 20 && unitBonusXp(100) <= 150, "reste borné");
+});
+
+// Changement de conception assumé : avant, plus l'unité était grande, plus
+// on posait de questions (4 à 14, proportionnel au nombre de leçons). La
+// taille de l'unité ne dit rien de si l'utilisateur a vraiment étudié le
+// contenu, ou juste eu de la chance sur un petit échantillon — la cible est
+// désormais FIXE à 15, quelle que soit la taille. Le vrai plafond (ce qui
+// est réellement disponible pour CET utilisateur) ne se calcule plus ici,
+// à la construction du parcours : il se calcule à l'exécution, dans
+// UnitCheckScreen.buildSample, contre le pool cœur + renfort + rappel —
+// voir test/unitCheck.test.mjs pour cette garantie-là.
+test("la cible de vérification est fixe, indépendante de la taille de l'unité", () => {
+  assert.equal(unitCheckSize(3), unitCheckSize(8), "la cible ne dépend plus du nombre de leçons");
+  assert.equal(unitCheckSize(3), 15);
+  assert.equal(unitCheckSize(0), 15, "même une unité vide vise la même cible — le plafonnement réel est ailleurs");
 });
 
 test("une leçon sans niveau est rattachée au dernier palier, pas ignorée", () => {
@@ -228,11 +241,22 @@ test("aucun doublon entre le coeur et le renfort", () => {
   for (const id of pool.core) assert.ok(!pool.extra.includes(id));
 });
 
-test("le nombre de questions de vérification ne dépasse jamais le stock", () => {
+test("checkSize est une cible fixe, quizPoolSize reste une mesure informative du cœur seul", () => {
+  // Avant : checkSize était plafonné ICI, au stock du cœur SEUL — d'où le
+  // nom du test précédent, "ne dépasse jamais le stock". C'était trop tôt
+  // pour bien faire ce calcul : à ce stade, on ne sait pas encore ce que
+  // l'utilisateur aura complété comme leçons antérieures, donc on ne peut
+  // pas savoir combien de questions de renfort ou de rappel seront
+  // vraiment disponibles pour lui. Plafonner ici revenait à sous-estimer
+  // systématiquement ce qui sera réellement accessible à l'exécution.
+  //
+  // checkSize est donc maintenant une CIBLE fixe (15, voir le test
+  // ci-dessus), et quizPoolSize continue de mesurer le cœur seul — mais
+  // seulement à titre INFORMATIF désormais, plus comme plafond.
   const { courses } = contenuAvecQuiz();
   for (const u of buildUnits(courses)) {
-    const stock = new Set(u.lessons.flatMap(l => l.quiz || [])).size;
-    assert.ok(u.checkSize <= Math.max(3, stock),
-      `${u.id} demande ${u.checkSize} questions pour ${stock} disponibles`);
+    const stockCoeurSeul = new Set(u.lessons.flatMap(l => l.quiz || [])).size;
+    assert.equal(u.checkSize, 15, `${u.id} vise toujours la cible fixe`);
+    assert.equal(u.quizPoolSize, stockCoeurSeul, `${u.id} : quizPoolSize doit rester le vrai compte du cœur`);
   }
 });

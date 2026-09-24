@@ -868,8 +868,8 @@ var TARGET_UNIT_SIZE = 6;
 var UNIT_BONUS_PER_LESSON = 10;
 var unitBonusXp = (lessonCount) => Math.max(20, Math.min(150, Math.round((lessonCount || 0) * UNIT_BONUS_PER_LESSON)));
 var UNIT_BONUS_XP = 40;
-var unitCheckSize = (lessonCount) => Math.max(4, Math.min(14, Math.round(4 + (lessonCount || 0) / 2)));
-var UNIT_CHECK_MAX_QUESTIONS = 14;
+var unitCheckSize = (lessonCount) => 15;
+var UNIT_CHECK_MAX_QUESTIONS = 15;
 var TIER_HEADSTART = { A1: 0, A2: 1, B1: 2, B2: 3 };
 function moduleOrderFor(state) {
   const ob = state?.onboarding || {};
@@ -908,7 +908,7 @@ function buildUnits(courses = [], state = null) {
     const chunks = chunkEvenly(lessons);
     chunks.forEach((chunk, partIdx) => {
       const stock = new Set(chunk.flatMap((l) => l.quiz || [])).size;
-      const checkSize = Math.max(3, Math.min(unitCheckSize(chunk.length), stock || 3));
+      const checkSize = Math.max(3, unitCheckSize(chunk.length));
       units.push({
         id: chunks.length > 1 ? `palier-${level}-${partIdx + 1}` : `palier-${level}`,
         level,
@@ -964,7 +964,7 @@ function buildPath(content, state, priorityModules = null) {
     };
   });
 }
-function getUnitQuizPool(unit, allQuiz = null, completedLessons = null) {
+function getUnitQuizPool(unit, allQuiz = null, completedLessons = null, allCourses = null) {
   const seen = /* @__PURE__ */ new Set();
   const core = [];
   for (const lesson of unit?.lessons || []) {
@@ -976,19 +976,28 @@ function getUnitQuizPool(unit, allQuiz = null, completedLessons = null) {
     }
   }
   if (!Array.isArray(allQuiz) || allQuiz.length === 0) {
-    return Object.assign([...core], { core, extra: [] });
+    return Object.assign([...core], { core, extra: [], review: [] });
   }
   const modules = new Set(unit?.courseIds || []);
   const lessonIds = new Set((unit?.lessons || []).map((l) => l.id));
+  const niveauParLecon = /* @__PURE__ */ new Map();
+  if (Array.isArray(allCourses)) {
+    for (const c of allCourses) {
+      for (const l of c.lessons || []) niveauParLecon.set(l.id, l.level);
+    }
+  }
   const extra = [];
+  const review = [];
   for (const q of allQuiz) {
     if (seen.has(q.id)) continue;
     if (!modules.has(q.courseId)) continue;
     if (q.lessonId && !lessonIds.has(q.lessonId) && !completedLessons?.[q.lessonId]) continue;
     seen.add(q.id);
-    extra.push(q.id);
+    const niveauOrigine = q.lessonId ? niveauParLecon.get(q.lessonId) : void 0;
+    const estPalierAnterieur = niveauOrigine != null && unit?.level != null && niveauOrigine < unit.level;
+    (estPalierAnterieur ? review : extra).push(q.id);
   }
-  return Object.assign([...core, ...extra], { core, extra });
+  return Object.assign([...core, ...extra, ...review], { core, extra, review });
 }
 function getPathStats(content, state) {
   const path = buildPath(content, state);
@@ -1280,8 +1289,7 @@ function GropiBubble({
   ] });
 }
 
-// src/screens/UnitCheckScreen.jsx
-import { Fragment as Fragment2, jsx as jsx5, jsxs as jsxs3 } from "react/jsx-runtime";
+// src/store/unitCheckSampler.js
 function shuffle(arr) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -1291,7 +1299,7 @@ function shuffle(arr) {
   return a;
 }
 function buildSample(unit, content, completedLessons, dejaVues = []) {
-  const pool = getUnitQuizPool(unit, content.quiz, completedLessons);
+  const pool = getUnitQuizPool(unit, content.quiz, completedLessons, content.courses);
   const parId = new Map(content.quiz.map((q) => [q.id, q]));
   const utilisable = (q) => q && q.type !== "fretboard" && Array.isArray(q.o) && q.o.length >= 2 && typeof q.a === "number" && q.a >= 0 && q.a < q.o.length;
   const resoudre = (ids) => ids.map((id) => parId.get(id)).filter(utilisable);
@@ -1301,6 +1309,7 @@ function buildSample(unit, content, completedLessons, dejaVues = []) {
   );
   const core = resoudre(pool.core ?? pool);
   const extra = resoudre(pool.extra ?? []);
+  const review = resoudre(pool.review ?? []);
   const ecarte = new Set(dejaVues);
   const parPriorite = (liste) => [
     ...shuffle(liste.filter((q) => !ecarte.has(q.id))),
@@ -1308,8 +1317,11 @@ function buildSample(unit, content, completedLessons, dejaVues = []) {
   ];
   const filesCore = parPriorite(core);
   const filesExtra = parPriorite(extra);
+  const filesReview = parPriorite(review);
+  const cibleRevision = Math.min(3, filesReview.length);
+  const restant = taille - cibleRevision;
   const cibleCore = Math.max(1, Math.min(
-    Math.round(taille * 0.65),
+    Math.round(restant * 0.65),
     Math.ceil(core.length / 2)
   ));
   const choisies = [];
@@ -1319,8 +1331,12 @@ function buildSample(unit, content, completedLessons, dejaVues = []) {
     prises.add(q.id);
     choisies.push(q);
   };
+  for (const q of filesReview) {
+    if (choisies.length >= cibleRevision) break;
+    ajouter(q);
+  }
   for (const q of filesCore) {
-    if (choisies.length >= cibleCore) break;
+    if (choisies.length >= cibleRevision + cibleCore) break;
     ajouter(q);
   }
   for (const q of filesExtra) {
@@ -1342,6 +1358,9 @@ function melangerOptions(q) {
     a: indices.indexOf(q.a)
   };
 }
+
+// src/screens/UnitCheckScreen.jsx
+import { Fragment as Fragment2, jsx as jsx5, jsxs as jsxs3 } from "react/jsx-runtime";
 function UnitCheckScreen({ unit, content, dispatch, onDone, state }) {
   const C = useC();
   const completedLessons = state?.completedLessons ?? {};

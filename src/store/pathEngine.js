@@ -48,10 +48,18 @@ export const unitBonusXp = (lessonCount) =>
 /** Conservé pour compatibilité d'import (valeur indicative, non normative). */
 export const UNIT_BONUS_XP = 40;
 
-/** Nombre de questions de vérification, proportionnel à la taille de l'unité. */
-export const unitCheckSize = (lessonCount) =>
-  Math.max(4, Math.min(14, Math.round(4 + (lessonCount || 0) / 2)));
-export const UNIT_CHECK_MAX_QUESTIONS = 14;   // borne haute
+/**
+ * Nombre CIBLE de questions de vérification.
+ *
+ * Passé de "proportionnel à la taille de l'unité" (4 à 14, borné) à une
+ * cible fixe de 15 : le nombre réel de leçons ne dit rien de si l'utilisateur
+ * a vraiment compris ou juste eu de la chance sur un petit échantillon.
+ *
+ * `lessonCount` reste dans la signature pour ne rien casser côté appelants,
+ * mais n'est plus utilisé — la cible ne dépend plus de la taille de l'unité.
+ */
+export const unitCheckSize = (lessonCount) => 15;
+export const UNIT_CHECK_MAX_QUESTIONS = 15;   // cible par défaut si unit.checkSize est absent
 
 /** Nombre de paliers ouverts d'emblée selon le résultat du placement. */
 const TIER_HEADSTART = { A1: 0, A2: 1, B1: 2, B2: 3 };
@@ -113,12 +121,22 @@ export function buildUnits(courses = [], state = null) {
 
     const chunks = chunkEvenly(lessons);
     chunks.forEach((chunk, partIdx) => {
-      // Le nombre de questions de vérification ne peut pas dépasser le stock
-      // réellement disponible : demander 7 questions quand les leçons de
-      // l'unité n'en référencent que 5 produirait une vérification tronquée,
-      // dont le pourcentage de réussite ne voudrait plus rien dire.
+      // `stock` reste calculé — c'est une donnée informative utile (voir
+      // `quizPoolSize` plus bas, et les scripts de vérification de contenu)
+      // — mais ne plafonne PLUS `checkSize` ici. Il ne compte que le cœur
+      // PROPRE de l'unité, alors que la vérification réelle pioche aussi
+      // dans le renfort (même module, déjà complété) et le rappel (palier
+      // antérieur, déjà complété) — deux pools qui dépendent de CE QUE
+      // l'utilisateur a fait, donc inconnus à ce stade-ci (buildUnits ne
+      // reçoit que le contenu, pas la banque de quiz complète ni un
+      // historique de progression exploitable pour ce calcul).
+      //
+      // Le vrai plafond se calcule à l'exécution, dans buildSample
+      // (UnitCheckScreen.jsx), contre le pool RÉELLEMENT disponible pour CET
+      // utilisateur au moment précis de la vérification — cœur + renfort +
+      // rappel confondus. `checkSize` ici n'est qu'une CIBLE.
       const stock = new Set(chunk.flatMap(l => l.quiz || [])).size;
-      const checkSize = Math.max(3, Math.min(unitCheckSize(chunk.length), stock || 3));
+      const checkSize = Math.max(3, unitCheckSize(chunk.length));
       units.push({
         id: chunks.length > 1 ? `palier-${level}-${partIdx + 1}` : `palier-${level}`,
         level,
@@ -208,26 +226,45 @@ export function buildPath(content, state, priorityModules = null) {
  * l'unité. Le contrôle ne contrôlait plus rien.
  *
  * ── Ce que renvoie cette version ─────────────────────────────────────────
- *   { core, extra }
+ *   { core, extra, review }
  *
- *   core   les quiz explicitement rattachés aux leçons de l'unité.
- *          C'est la matière de l'unité, elle reste prioritaire au tirage.
+ *   core    les quiz explicitement rattachés aux leçons de l'unité.
+ *           C'est la matière de l'unité, elle reste prioritaire au tirage.
  *
- *   extra  les quiz du ou des MÊMES modules dont la leçon d'origine est déjà
- *          complétée. Même discipline, contenu déjà vu : légitime dans un
- *          contrôle, et ça fait passer les premiers paliers de 8 à 25+
- *          questions disponibles.
+ *   extra   les quiz du ou des MÊMES modules, dont la leçon d'origine est
+ *           déjà complétée, au palier COURANT (ou sans palier de
+ *           rattachement précis). Renfort, pas rappel.
  *
- * Note importante : on ne filtre PAS sur le niveau de difficulté. `q.lvl` va
- * de 1 à 3 (difficulté de la question) alors que `lesson.level` va de 1 à 9
- * (palier du parcours) — les comparer était une erreur de catégorie, et
- * c'est ce qui faisait que le renfort ne remontait rien au-delà du palier 3.
+ *   review  NOUVEAU. Les quiz du ou des MÊMES modules dont la leçon
+ *           d'origine appartient à un PALIER STRICTEMENT ANTÉRIEUR à celui
+ *           de l'unité, ET déjà complétée. C'est le rappel explicitement
+ *           demandé : « est-ce que ce qui a été vu avant tient toujours ? »
+ *           Contrainte stricte, non négociable : une question ne peut
+ *           entrer dans `review` que si (a) elle appartient à un palier
+ *           strictement inférieur à celui de l'unité en cours, ET (b) la
+ *           leçon dont elle dépend est dans `completedLessons`. Sans ces
+ *           deux conditions réunies, elle retombe dans `extra` ou est
+ *           écartée — jamais promue en rappel sur la base d'une supposition.
+ *
+ * Distinguer `extra` de `review` demande de connaître le PALIER de la leçon
+ * d'origine de chaque question — pas seulement son identifiant. D'où le
+ * nouveau paramètre `allCourses` : sans lui, impossible de savoir si une
+ * leçon vient d'avant ou d'ici, donc tout retombe dans `extra` comme avant
+ * (comportement historique préservé, `review` reste vide).
+ *
+ * Note conservée de la version précédente : on ne filtre PAS sur `q.lvl`
+ * (difficulté 1-3), qui n'est PAS le palier (`lesson.level`, 1-9) — les
+ * confondre était une vraie erreur de catégorie corrigée plus tôt.
  *
  * @param unit              l'unité concernée
  * @param allQuiz           la banque complète (content.quiz) — facultatif
  * @param completedLessons  pour n'admettre que du contenu déjà vu
+ * @param allCourses        content.courses, pour connaître le palier
+ *                          d'origine de chaque leçon — facultatif ; sans
+ *                          lui, `review` reste vide et tout retombe dans
+ *                          `extra`, comme avant l'ajout de cette catégorie.
  */
-export function getUnitQuizPool(unit, allQuiz = null, completedLessons = null) {
+export function getUnitQuizPool(unit, allQuiz = null, completedLessons = null, allCourses = null) {
   const seen = new Set();
   const core = [];
   for (const lesson of unit?.lessons || []) {
@@ -239,29 +276,45 @@ export function getUnitQuizPool(unit, allQuiz = null, completedLessons = null) {
   // Sans la banque complète, on garde le comportement historique : un simple
   // tableau d'identifiants. Les appelants existants continuent de marcher.
   if (!Array.isArray(allQuiz) || allQuiz.length === 0) {
-    return Object.assign([...core], { core, extra: [] });
+    return Object.assign([...core], { core, extra: [], review: [] });
   }
 
   const modules   = new Set(unit?.courseIds || []);
   const lessonIds = new Set((unit?.lessons || []).map(l => l.id));
 
+  // Palier d'origine de chaque leçon, pour distinguer rappel (avant) de
+  // renfort (ici). Sans `allCourses`, cette table reste vide : aucune
+  // question ne pourra jamais être classée `review`, elle tombera dans
+  // `extra` — dégradation sans casse, pas d'erreur silencieuse.
+  const niveauParLecon = new Map();
+  if (Array.isArray(allCourses)) {
+    for (const c of allCourses) {
+      for (const l of c.lessons || []) niveauParLecon.set(l.id, l.level);
+    }
+  }
+
   const extra = [];
+  const review = [];
   for (const q of allQuiz) {
     if (seen.has(q.id)) continue;
     if (!modules.has(q.courseId)) continue;
     // Une question rattachée à une leçon extérieure à l'unité n'est admise
     // que si cette leçon a été complétée : on ne teste jamais sur du contenu
-    // que l'utilisateur n'a pas encore ouvert.
+    // que l'utilisateur n'a pas encore ouvert. Cette garde s'applique aux
+    // DEUX catégories, extra et review — c'est elle qui garantit qu'aucune
+    // question de rappel ne porte sur du contenu jamais vu.
     if (q.lessonId && !lessonIds.has(q.lessonId) && !completedLessons?.[q.lessonId]) continue;
-    // Une question sans leçon de rattachement est acceptée : elle appartient
-    // au module et n'appartient à aucune leçon en particulier.
+
     seen.add(q.id);
-    extra.push(q.id);
+    const niveauOrigine = q.lessonId ? niveauParLecon.get(q.lessonId) : undefined;
+    const estPalierAnterieur = niveauOrigine != null && unit?.level != null && niveauOrigine < unit.level;
+    (estPalierAnterieur ? review : extra).push(q.id);
   }
 
-  // Le tableau reste itérable comme avant (compatibilité), avec `core` et
-  // `extra` accessibles pour les appelants qui savent les exploiter.
-  return Object.assign([...core, ...extra], { core, extra });
+  // Le tableau reste itérable comme avant (compatibilité), avec `core`,
+  // `extra` et `review` accessibles pour les appelants qui savent les
+  // exploiter.
+  return Object.assign([...core, ...extra, ...review], { core, extra, review });
 }
 
 /**

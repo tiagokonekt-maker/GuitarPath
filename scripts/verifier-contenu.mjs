@@ -12,7 +12,7 @@
 import { COURSES, QUIZ, EXERCISES } from "../src/content.js";
 import { totalXpForLevel } from "../src/store/leveling.js";
 import { TESTABLE_MODULES, PLACEMENT_LEVELS, availableModules } from "../src/store/placementEngine.js";
-import { buildUnits } from "../src/store/pathEngine.js";
+import { buildUnits, getUnitQuizPool } from "../src/store/pathEngine.js";
 import { LESSON_XP } from "../src/store/xp.js";
 
 let alertes = 0;
@@ -88,9 +88,41 @@ const idsUnites = unites.map(u => u.id);
 if (new Set(idsUnites).size !== idsUnites.length) ko("identifiants d'unité en double");
 const lecInUnites = unites.flatMap(u => u.lessons.map(l => l.id));
 if (lecInUnites.length !== lecons.length) ko(`${lecons.length - lecInUnites.length} leçon(s) perdue(s) dans le découpage`);
-for (const u of unites) if (u.checkSize > new Set(u.lessons.flatMap(l => l.quiz || [])).size) {
-  ko(`${u.id} : ${u.checkSize} questions de vérification demandées, seulement ${new Set(u.lessons.flatMap(l => l.quiz || [])).size} disponibles`);
+// ── Vérification d'unité : le meilleur cas atteint-il un minimum exploitable ? ──
+//
+// `checkSize` (15) est une CIBLE, pas une garantie — c'est voulu (voir
+// pathEngine.js et unitCheckSampler.js). La comparer directement au cœur
+// d'UNE unité isolée, comme le faisait ce script avant, redonnait une
+// alerte sur la quasi-totalité des unités : 15 fut choisi précisément pour
+// dépasser ce qu'un cœur isolé fournit, quitte à piocher dans le renfort et
+// le rappel — deux pools qui n'existent qu'une fois qu'un utilisateur a
+// réellement progressé, donc invisibles à ce script qui ne regarde que le
+// contenu, sans état de progression.
+//
+// La question qu'il reste légitime de poser ICI, sans état utilisateur :
+// même dans le MEILLEUR DES CAS — tout le contenu qui précède cette unité
+// dans le parcours est supposé complété — la vérification reste-t-elle
+// exploitable ? Un plancher de 6 (pas 15) : suffisant pour qu'un contrôle
+// vaille la peine d'exister, sans faux positif sur les unités légitimement
+// modestes en tout début de parcours.
+const PLANCHER_VERIFICATION = 6;
+const disponibiliteMax = [];
+for (let i = 0; i < unites.length; i++) {
+  const u = unites[i];
+  // Simule : "si j'avais fait tout ce qui précède cette unité dans le
+  // parcours, dans l'ordre". C'est le scénario le plus favorable — et
+  // atteignable, un utilisateur qui progresse normalement y arrive un jour.
+  const completeAvant = {};
+  for (let j = 0; j < i; j++) for (const l of unites[j].lessons) completeAvant[l.id] = true;
+
+  const pool = getUnitQuizPool(u, QUIZ, completeAvant, COURSES);
+  disponibiliteMax.push(pool.length);
+  if (pool.length < PLANCHER_VERIFICATION) {
+    ko(`${u.id} : même avec tout le contenu antérieur complété, seulement ${pool.length} questions disponibles (minimum souhaité : ${PLANCHER_VERIFICATION})`);
+  }
 }
+const moyenne = Math.round(disponibiliteMax.reduce((a, b) => a + b, 0) / disponibiliteMax.length);
+console.log(`  vérification, meilleur cas par unité : min ${Math.min(...disponibiliteMax)} · moy ${moyenne} · max ${Math.max(...disponibiliteMax)} (cible 15)`);
 
 // ── Économie d'XP ─────────────────────────────────────────────────────────
 titre("Économie d'XP");
