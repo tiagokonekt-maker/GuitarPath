@@ -89,7 +89,13 @@ const chargerContenu = () => import("./content.js");
 // recouvrait le contenu sur certains écrans (voir plus bas, ce même
 // problème disparaît avec le bouton).
 const TABS = [
-  { id: "home",      label: "Accueil",  icon: "home" },
+  // Le label change ("Accueil" → "Parcours"), l'id reste "home" : c'est
+  // l'identifiant interne de route, référencé partout (navigate("home"),
+  // case "home"...) — le renommer serait un chantier bien plus large pour
+  // aucun bénéfice, seul ce que la personne VOIT doit changer.
+  // Icône passée de "home" à "route", plus cohérente avec le nouveau nom
+  // — c'était déjà l'icône de l'ancien onglet "Parcours" avant la fusion.
+  { id: "home",      label: "Parcours", icon: "route" },
   { id: "toolbox",   label: "Outils",   icon: "guitar-pick" },
   { id: "training",  label: "Pratique", icon: "target-arrow" },
   { id: "progress",  label: "Progrès",  icon: "chart-bar" },

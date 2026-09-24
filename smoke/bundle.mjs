@@ -2488,8 +2488,74 @@ function pickTip(state, rs = {}) {
   return { type: picked.type, text: picked.text(state, rs) };
 }
 
+// src/store/grades.js
+var GRADES = [
+  {
+    id: "bebe_rockeur",
+    minLevel: 1,
+    label: "B\xE9b\xE9 rockeur",
+    blurb: "Tu poses les bases, un accord \xE0 la fois.",
+    rarity: "commun",
+    tint: "amber",
+    icon: "ti-baby-carriage"
+  },
+  {
+    id: "gratteur_dimanche",
+    minLevel: 5,
+    label: "Gratteur du dimanche",
+    blurb: "Tu tiens un rythme de pratique r\xE9gulier.",
+    rarity: "commun",
+    tint: "green",
+    icon: "ti-guitar-pick"
+  },
+  {
+    id: "campeur_feu_camp",
+    minLevel: 10,
+    label: "Guitariste de feu de camp",
+    blurb: "Assez solide pour animer un moment autour d'un feu de camp.",
+    rarity: "rare",
+    tint: "coral",
+    icon: "ti-campfire"
+  },
+  {
+    id: "chevalier_riffs",
+    minLevel: 15,
+    label: "Chevalier des riffs",
+    blurb: "La technique tient la route, riffs compris.",
+    rarity: "rare",
+    tint: "primary",
+    icon: "ti-sword"
+  },
+  {
+    id: "seigneur_solo",
+    minLevel: 20,
+    label: "Seigneur du solo",
+    blurb: "Tu improvises avec de vraies intentions musicales.",
+    rarity: "epique",
+    tint: "pink",
+    icon: "ti-crown"
+  },
+  {
+    id: "star_legendaire",
+    minLevel: 30,
+    label: "Star l\xE9gendaire",
+    blurb: "Niveau de jeu et d'oreille au sommet du Parcours.",
+    rarity: "legend",
+    tint: "primary",
+    icon: "ti-trophy"
+  }
+];
+function gradeForLevel(level) {
+  let current = GRADES[0];
+  for (const g of GRADES) {
+    if (level >= g.minLevel) current = g;
+  }
+  return current;
+}
+
 // src/screens/CoursesScreen.jsx
 import { jsx as jsx6, jsxs as jsxs4 } from "react/jsx-runtime";
+var popupDejaAffiche = false;
 var PULSE_CSS = `
   @keyframes gropi-pulse {
     0%   { transform:scale(.88); opacity:.9; }
@@ -2840,100 +2906,170 @@ function UnitHeader({ unit, th }) {
     /* @__PURE__ */ jsx6("div", { style: { flex: 1, height: 1.5, background: unit.unlocked ? `${th.color}44` : C.border } })
   ] });
 }
-function HomeHeader({ state, dispatch, navigate, today, tip, tipDismissed, stats, MODULE_THEME: MODULE_THEME2 }) {
+function WelcomeModal({ state, tip, navigate, onClose }) {
   const C = useC();
   const dateStr = (/* @__PURE__ */ new Date()).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
-  const defiFait = state.dailyChallengeDone && state.dailyChallengeDate === today;
-  return /* @__PURE__ */ jsxs4("div", { style: { padding: "18px 20px 4px" }, children: [
-    /* @__PURE__ */ jsxs4("div", { style: {
-      position: "relative",
-      overflow: "hidden",
-      borderRadius: R.xl,
-      border: `1.5px solid ${C.primaryBorder}`,
-      marginBottom: 14,
-      backgroundImage: "url('/alhambra.jpg')",
-      backgroundSize: "cover",
-      backgroundPosition: "center 35%"
-    }, children: [
-      /* @__PURE__ */ jsx6("div", { style: { position: "absolute", inset: 0, background: C.surface, opacity: 0.68 } }),
-      /* @__PURE__ */ jsxs4("div", { style: { position: "relative", padding: "14px 15px" }, children: [
-        /* @__PURE__ */ jsxs4("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: tipDismissed ? 0 : 12 }, children: [
-          /* @__PURE__ */ jsxs4("div", { children: [
-            /* @__PURE__ */ jsx6("div", { style: { fontSize: 12, fontWeight: 500, color: C.text2, textTransform: "capitalize" }, children: dateStr }),
-            /* @__PURE__ */ jsx6("div", { style: { fontSize: 21, fontWeight: 800, color: C.text, letterSpacing: "-.3px", marginTop: 1 }, children: "Bonjour" })
-          ] }),
-          /* @__PURE__ */ jsxs4("div", { style: {
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            background: C.surface,
-            border: `1.5px solid ${C.border}`,
-            borderRadius: 999,
-            padding: "7px 12px"
-          }, children: [
-            /* @__PURE__ */ jsx6(Ti, { name: "flame", size: 15, color: state.streak > 0 ? C.primary : C.text3 }),
-            /* @__PURE__ */ jsx6("span", { style: { fontSize: 13, fontWeight: 800, color: C.text }, children: state.streak }),
-            /* @__PURE__ */ jsx6("span", { style: { width: 1, height: 12, background: C.border, margin: "0 2px" } }),
-            /* @__PURE__ */ jsxs4("span", { style: { fontSize: 11.5, fontWeight: 700, color: C.text2 }, children: [
-              "Niv. ",
-              state.level
-            ] })
-          ] })
-        ] }),
-        !tipDismissed && /* @__PURE__ */ jsxs4("div", { style: { display: "flex", gap: 11, alignItems: "flex-start", paddingTop: 12, borderTop: `1px dashed ${C.primaryBorder}` }, children: [
-          /* @__PURE__ */ jsx6(Gropi, { pose: "wave", size: 44, anim: "wiggle" }),
-          /* @__PURE__ */ jsxs4("div", { style: { flex: 1, minWidth: 0 }, children: [
-            /* @__PURE__ */ jsx6("div", { style: {
-              fontSize: 9,
-              fontWeight: 700,
-              letterSpacing: ".1em",
-              textTransform: "uppercase",
-              color: C.primaryD,
-              fontFamily: FONTS.ui,
-              marginBottom: 4
-            }, children: TIP_LABELS[tip.type] || "Conseil de Gropi" }),
-            /* @__PURE__ */ jsx6("p", { style: { margin: 0, fontSize: 12.5, lineHeight: 1.5, fontWeight: 500, color: C.text }, children: tip.text })
-          ] }),
-          /* @__PURE__ */ jsx6(
-            "button",
-            {
-              onClick: () => dispatch({ type: "DISMISS_GROPI_TIP" }),
-              "aria-label": "Fermer le conseil du jour",
-              className: "gr-focus",
-              style: { background: "none", border: "none", cursor: "pointer", color: C.text3, fontSize: 15, fontWeight: 600, padding: 2, flexShrink: 0, lineHeight: 1 },
-              children: "\u2715"
-            }
-          )
-        ] })
-      ] })
-    ] }),
-    /* @__PURE__ */ jsxs4(
-      "button",
-      {
-        onClick: () => navigate("challenge"),
-        className: "gr-focus",
-        style: {
-          width: "100%",
-          display: "flex",
-          alignItems: "center",
-          gap: 9,
-          background: defiFait ? C.greenL : C.amberL,
-          border: `1.5px solid ${defiFait ? C.greenBorder : C.amberBorder}`,
-          borderRadius: R.lg,
-          padding: "10px 12px",
-          marginBottom: 14,
-          cursor: "pointer",
-          textAlign: "left"
-        },
-        children: [
-          /* @__PURE__ */ jsx6(Ti, { name: defiFait ? "check" : "bolt", size: 16, color: defiFait ? C.greenD : C.amberInk ?? C.amber }),
-          /* @__PURE__ */ jsx6("span", { style: { fontSize: 12, fontWeight: 700, color: defiFait ? C.greenD : C.text }, children: defiFait ? "D\xE9fi relev\xE9" : "D\xE9fi du jour" })
-        ]
-      }
-    ),
-    /* @__PURE__ */ jsx6(CurrentUnitBanner, { stats, MODULE_THEME: MODULE_THEME2 }),
-    /* @__PURE__ */ jsx6("div", { style: { height: 10 } })
-  ] });
+  const grade = gradeForLevel(state.level);
+  const defiFait = state.dailyChallengeDone && state.dailyChallengeDate === todayStr();
+  const allerAuDefi = () => {
+    onClose();
+    navigate("challenge");
+  };
+  return /* @__PURE__ */ jsxs4(
+    "div",
+    {
+      role: "dialog",
+      "aria-modal": "true",
+      "aria-label": "Bienvenue",
+      onClick: onClose,
+      style: {
+        position: "fixed",
+        inset: 0,
+        zIndex: 300,
+        background: "rgba(20,10,5,.55)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 20,
+        animation: "gr-fade .18s ease"
+      },
+      children: [
+        /* @__PURE__ */ jsx6("style", { children: `@keyframes gr-fade{from{opacity:0}to{opacity:1}}
+        @keyframes gr-pop{from{opacity:0;transform:scale(.94) translateY(6px)}to{opacity:1;transform:scale(1) translateY(0)}}` }),
+        /* @__PURE__ */ jsxs4(
+          "div",
+          {
+            onClick: (e) => e.stopPropagation(),
+            style: {
+              width: "100%",
+              maxWidth: 360,
+              background: C.surface,
+              borderRadius: R.xl,
+              overflow: "hidden",
+              boxShadow: "0 16px 48px rgba(0,0,0,.35)",
+              animation: "gr-pop .22s cubic-bezier(.2,.9,.3,1.2)"
+            },
+            children: [
+              /* @__PURE__ */ jsxs4("div", { style: {
+                position: "relative",
+                padding: "20px 20px 18px",
+                backgroundImage: "url('/alhambra.jpg')",
+                backgroundSize: "cover",
+                backgroundPosition: "center 35%"
+              }, children: [
+                /* @__PURE__ */ jsx6("div", { style: { position: "absolute", inset: 0, background: "rgba(20,10,5,.65)" } }),
+                /* @__PURE__ */ jsxs4("div", { style: { position: "relative" }, children: [
+                  /* @__PURE__ */ jsxs4("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }, children: [
+                    /* @__PURE__ */ jsx6("img", { src: "/logo.svg", alt: "", style: { height: 20, width: 20 } }),
+                    /* @__PURE__ */ jsx6("span", { style: { fontSize: 13, fontWeight: 800, color: "#fff", letterSpacing: "-.1px" }, children: "Groply" })
+                  ] }),
+                  /* @__PURE__ */ jsx6("div", { style: { fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,.75)", textTransform: "capitalize" }, children: dateStr }),
+                  /* @__PURE__ */ jsx6("div", { style: { fontSize: 24, fontWeight: 800, color: "#fff", letterSpacing: "-.3px", marginTop: 1 }, children: "Bonjour !" })
+                ] })
+              ] }),
+              /* @__PURE__ */ jsxs4("div", { style: { padding: "16px 18px 18px" }, children: [
+                /* @__PURE__ */ jsxs4("div", { style: { display: "flex", gap: 8, marginBottom: 10 }, children: [
+                  /* @__PURE__ */ jsxs4("div", { style: {
+                    flex: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 7,
+                    background: C.surface2,
+                    border: `1.5px solid ${C.border}`,
+                    borderRadius: R.md,
+                    padding: "9px 11px"
+                  }, children: [
+                    /* @__PURE__ */ jsx6(Ti, { name: "flame", size: 16, color: state.streak > 0 ? C.primary : C.text3 }),
+                    /* @__PURE__ */ jsxs4("div", { children: [
+                      /* @__PURE__ */ jsx6("div", { style: { fontSize: 15, fontWeight: 800, color: C.text, lineHeight: 1.1 }, children: state.streak }),
+                      /* @__PURE__ */ jsx6("div", { style: { fontSize: 9.5, fontWeight: 700, color: C.text3, textTransform: "uppercase", letterSpacing: ".05em" }, children: state.streak > 1 ? "jours de s\xE9rie" : "jour de s\xE9rie" })
+                    ] })
+                  ] }),
+                  /* @__PURE__ */ jsxs4("div", { style: {
+                    flex: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 7,
+                    background: C.surface2,
+                    border: `1.5px solid ${C.border}`,
+                    borderRadius: R.md,
+                    padding: "9px 11px"
+                  }, children: [
+                    /* @__PURE__ */ jsx6(Ti, { name: "medal", size: 16, color: C.primary }),
+                    /* @__PURE__ */ jsxs4("div", { style: { minWidth: 0 }, children: [
+                      /* @__PURE__ */ jsx6("div", { style: { fontSize: 12.5, fontWeight: 800, color: C.text, lineHeight: 1.25, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, children: grade.label }),
+                      /* @__PURE__ */ jsxs4("div", { style: { fontSize: 9.5, fontWeight: 700, color: C.text3, textTransform: "uppercase", letterSpacing: ".05em" }, children: [
+                        "Niveau ",
+                        state.level
+                      ] })
+                    ] })
+                  ] })
+                ] }),
+                /* @__PURE__ */ jsxs4(
+                  "button",
+                  {
+                    onClick: allerAuDefi,
+                    className: "gr-focus",
+                    style: {
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 9,
+                      background: defiFait ? C.greenL : C.amberL,
+                      border: `1.5px solid ${defiFait ? C.greenBorder : C.amberBorder}`,
+                      borderRadius: R.md,
+                      padding: "9px 11px",
+                      marginBottom: 14,
+                      cursor: "pointer",
+                      textAlign: "left"
+                    },
+                    children: [
+                      /* @__PURE__ */ jsx6(Ti, { name: defiFait ? "check" : "bolt", size: 15, color: defiFait ? C.greenD : C.amberInk ?? C.amber }),
+                      /* @__PURE__ */ jsx6("span", { style: { fontSize: 12, fontWeight: 700, color: defiFait ? C.greenD : C.text }, children: defiFait ? "D\xE9fi du jour relev\xE9" : "D\xE9fi du jour" })
+                    ]
+                  }
+                ),
+                /* @__PURE__ */ jsxs4("div", { style: { display: "flex", gap: 10, alignItems: "flex-start", marginBottom: 14 }, children: [
+                  /* @__PURE__ */ jsx6(Gropi, { pose: "wave", size: 38, anim: "wiggle" }),
+                  /* @__PURE__ */ jsxs4("div", { style: { flex: 1, minWidth: 0 }, children: [
+                    /* @__PURE__ */ jsx6("div", { style: {
+                      fontSize: 9,
+                      fontWeight: 700,
+                      letterSpacing: ".1em",
+                      textTransform: "uppercase",
+                      color: C.primaryD,
+                      fontFamily: FONTS.ui,
+                      marginBottom: 3
+                    }, children: TIP_LABELS[tip.type] || "Conseil de Gropi" }),
+                    /* @__PURE__ */ jsx6("p", { style: { margin: 0, fontSize: 12.5, lineHeight: 1.45, fontWeight: 500, color: C.text }, children: tip.text })
+                  ] })
+                ] }),
+                /* @__PURE__ */ jsx6(
+                  "button",
+                  {
+                    onClick: onClose,
+                    className: "gr-focus",
+                    style: {
+                      width: "100%",
+                      background: C.primaryBtn,
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: R.lg,
+                      padding: "12px",
+                      fontSize: 14,
+                      fontWeight: 800,
+                      cursor: "pointer"
+                    },
+                    children: "Commencer"
+                  }
+                )
+              ] })
+            ]
+          }
+        )
+      ]
+    }
+  );
 }
 function CoursesScreen({ state, dispatch, content, navigate, variant = "courses" }) {
   const C = useC();
@@ -2942,8 +3078,12 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
   const [checkingUnit, setCheckingUnit] = useState4(null);
   const [chestPop, setChestPop] = useState4(false);
   const currentRef = useRef4(null);
-  const today = todayStr();
-  const tipDismissed = state.gropiTipDate === today;
+  const [tipDismissed, setTipDismissed] = useState4(() => popupDejaAffiche);
+  const fermerPopup = () => {
+    popupDejaAffiche = true;
+    setTipDismissed(true);
+    dispatch({ type: "DISMISS_GROPI_TIP" });
+  };
   const tip = useMemo(() => pickTip(state), [
     state.xp,
     state.streak,
@@ -2984,7 +3124,7 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
     const t = setTimeout(() => {
       currentRef.current?.scrollIntoView({
         behavior: scrolledTo.current === null ? "auto" : "smooth",
-        block: "center"
+        block: "start"
       });
       scrolledTo.current = focus.key;
     }, 140);
@@ -3031,19 +3171,16 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
     /* @__PURE__ */ jsx6("style", { children: PULSE_CSS }),
     chestPop && /* @__PURE__ */ jsx6(XPPop, { amount: UNIT_BONUS_XP, onDone: () => {
     } }),
-    variant === "home" ? /* @__PURE__ */ jsx6(
-      HomeHeader,
+    variant === "home" && !tipDismissed && /* @__PURE__ */ jsx6(
+      WelcomeModal,
       {
         state,
-        dispatch,
-        navigate,
-        today,
         tip,
-        tipDismissed,
-        stats,
-        MODULE_THEME: MODULE_THEME2
+        navigate,
+        onClose: fermerPopup
       }
-    ) : /* @__PURE__ */ jsxs4("div", { style: {
+    ),
+    variant !== "home" && /* @__PURE__ */ jsxs4("div", { style: {
       backgroundColor: "#613878",
       backgroundImage: "url('/lavender.jpg')",
       backgroundSize: "cover",
@@ -3066,16 +3203,6 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
         /* @__PURE__ */ jsx6(CurrentUnitBanner, { stats, MODULE_THEME: MODULE_THEME2 })
       ] })
     ] }),
-    /* @__PURE__ */ jsx6("div", { style: { display: "flex", gap: 14, padding: "12px 20px 4px", flexWrap: "wrap" }, children: [
-      { color: C.primary, label: "En cours" },
-      { color: C.primary, label: "\xC0 v\xE9rifier" },
-      { color: C.green, label: "Compl\xE9t\xE9e" },
-      { color: C.amber, label: "Coffre" },
-      { color: C.text3, label: "Verrouill\xE9e" }
-    ].map(({ color, label }) => /* @__PURE__ */ jsxs4("span", { style: { display: "flex", alignItems: "center", gap: 5, fontSize: 9, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: C.text3 }, children: [
-      /* @__PURE__ */ jsx6("span", { style: { width: 9, height: 9, borderRadius: "50%", background: color, display: "inline-block" } }),
-      label
-    ] }, label)) }),
     /* @__PURE__ */ jsxs4("div", { style: { padding: "8px 20px 40px" }, children: [
       path.map((unit) => {
         const th = MODULE_THEME2.palier;
@@ -3099,6 +3226,7 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
               "div",
               {
                 ref: focus?.type === "lesson" && focus.id === lesson.id ? currentRef : null,
+                style: focus?.type === "lesson" && focus.id === lesson.id ? { scrollMarginTop: 16 } : void 0,
                 children: [
                   li > 0 && /* @__PURE__ */ jsx6(
                     PathConnector,
@@ -3135,7 +3263,14 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
               done: unit.complete
             }
           ),
-          /* @__PURE__ */ jsx6("div", { ref: focus?.type === "chest" && focus.id === unit.id ? currentRef : null, children: /* @__PURE__ */ jsx6(UnitChest, { unit, th, onClaim: claimChest, onCheck: setCheckingUnit }) })
+          /* @__PURE__ */ jsx6(
+            "div",
+            {
+              ref: focus?.type === "chest" && focus.id === unit.id ? currentRef : null,
+              style: focus?.type === "chest" && focus.id === unit.id ? { scrollMarginTop: 16 } : void 0,
+              children: /* @__PURE__ */ jsx6(UnitChest, { unit, th, onClaim: claimChest, onCheck: setCheckingUnit })
+            }
+          )
         ] }, unit.id);
       }),
       stats.pct === 100 && /* @__PURE__ */ jsxs4("div", { style: { textAlign: "center", marginTop: 20 }, children: [
@@ -7522,71 +7657,6 @@ function prochainesAAncrer(content, state, limite = 5) {
   const quizIndex = new Map((content?.quiz || []).map((q) => [q.id, q]));
   const lecons = (content?.courses || []).flatMap((c) => (c.lessons || []).map((l) => ({ ...l, courseId: c.id })));
   return lecons.map((l) => ({ lesson: l, m: lessonMastery(l, state, quizIndex) })).filter((x) => x.m.level === MASTERY.UNDERSTOOD && x.m.masterable).map((x) => ({ ...x, reste: x.m.requisPourAncrer - x.m.ancrees })).sort((a, b) => a.reste - b.reste || b.m.ancrees - a.m.ancrees).slice(0, limite);
-}
-
-// src/store/grades.js
-var GRADES = [
-  {
-    id: "bebe_rockeur",
-    minLevel: 1,
-    label: "B\xE9b\xE9 rockeur",
-    blurb: "Tu poses les bases, un accord \xE0 la fois.",
-    rarity: "commun",
-    tint: "amber",
-    icon: "ti-baby-carriage"
-  },
-  {
-    id: "gratteur_dimanche",
-    minLevel: 5,
-    label: "Gratteur du dimanche",
-    blurb: "Tu tiens un rythme de pratique r\xE9gulier.",
-    rarity: "commun",
-    tint: "green",
-    icon: "ti-guitar-pick"
-  },
-  {
-    id: "campeur_feu_camp",
-    minLevel: 10,
-    label: "Guitariste de feu de camp",
-    blurb: "Assez solide pour animer un moment autour d'un feu de camp.",
-    rarity: "rare",
-    tint: "coral",
-    icon: "ti-campfire"
-  },
-  {
-    id: "chevalier_riffs",
-    minLevel: 15,
-    label: "Chevalier des riffs",
-    blurb: "La technique tient la route, riffs compris.",
-    rarity: "rare",
-    tint: "primary",
-    icon: "ti-sword"
-  },
-  {
-    id: "seigneur_solo",
-    minLevel: 20,
-    label: "Seigneur du solo",
-    blurb: "Tu improvises avec de vraies intentions musicales.",
-    rarity: "epique",
-    tint: "pink",
-    icon: "ti-crown"
-  },
-  {
-    id: "star_legendaire",
-    minLevel: 30,
-    label: "Star l\xE9gendaire",
-    blurb: "Niveau de jeu et d'oreille au sommet du Parcours.",
-    rarity: "legend",
-    tint: "primary",
-    icon: "ti-trophy"
-  }
-];
-function gradeForLevel(level) {
-  let current = GRADES[0];
-  for (const g of GRADES) {
-    if (level >= g.minLevel) current = g;
-  }
-  return current;
 }
 
 // src/store/badges.js

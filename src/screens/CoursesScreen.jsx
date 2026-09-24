@@ -30,6 +30,22 @@ import { useWakeLock } from "../hooks/useWakeLock.js";
 import { pickTip, TIP_LABELS } from "../store/gropiTips.js";
 import { gradeForLevel } from "../store/grades.js";
 
+// ── Popup de bienvenue : affiché une fois PAR CHARGEMENT DE PAGE ──────────
+// Volontairement une variable de MODULE, pas un état React ni une donnée
+// persistée (state.gropiTipDate, utilisée avant). La nuance :
+//   • un état React (useState) se réinitialise à chaque fois que le
+//     composant est remonté — donc à chaque fois qu'on change d'onglet et
+//     qu'on revient sur Accueil, ce qui rouvrirait le popup bien plus
+//     souvent que voulu ;
+//   • une donnée persistée (localStorage, state.gropiTipDate) survivrait au
+//     rechargement de la page — l'inverse de ce qui est demandé ;
+//   • une variable de module n'est réinitialisée que lorsque le fichier
+//     JavaScript est réévalué depuis le début, ce qui n'arrive QUE lors
+//     d'un vrai rechargement de page (F5, fermeture/réouverture de
+//     l'onglet) — jamais lors d'une simple navigation entre les onglets de
+//     l'app, qui réutilise le même module déjà chargé en mémoire.
+let popupDejaAffiche = false;
+
 // ── Animation CSS partagée ────────────────────────────────────────────────────
 const PULSE_CSS = `
   @keyframes gropi-pulse {
@@ -464,6 +480,16 @@ function WelcomeModal({ state, tip, navigate, onClose }) {
         }}>
           <div style={{ position:"absolute", inset:0, background:"rgba(20,10,5,.65)" }}/>
           <div style={{ position:"relative" }}>
+            {/* Petit logo, comme sur l'ancien accueil. Référencé par son
+                chemin (/logo.svg) — le vrai fichier vit dans public/, je ne
+                l'ai pas sous les yeux ici, exactement comme alhambra.jpg
+                plus haut. S'il intègre déjà le mot "Groply" dessiné dans le
+                SVG, le libellé texte juste à côté ferait doublon : à
+                retirer d'une ligne le cas échéant. */}
+            <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:8 }}>
+              <img src="/logo.svg" alt="" style={{ height:20, width:20 }}/>
+              <span style={{ fontSize:13, fontWeight:800, color:"#fff", letterSpacing:"-.1px" }}>Groply</span>
+            </div>
             <div style={{ fontSize:12, fontWeight:500, color:"rgba(255,255,255,.75)", textTransform:"capitalize" }}>{dateStr}</div>
             <div style={{ fontSize:24, fontWeight:800, color:"#fff", letterSpacing:"-.3px", marginTop:1 }}>Bonjour !</div>
           </div>
@@ -569,11 +595,18 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
   const [chestPop, setChestPop] = useState(false);
   const currentRef = useRef(null);
 
-  // ── En-tête « accueil » uniquement : conseil du jour ────────────────────
-  // Même mécanisme que l'ancien HomeScreen (state.gropiTipDate), pour que
-  // la fermeture du conseil se comporte exactement pareil qu'avant.
-  const today = todayStr();
-  const tipDismissed = state.gropiTipDate === today;
+  // ── En-tête « accueil » uniquement : popup de bienvenue ─────────────────
+  // `useState(() => ...)` avec une fonction : la valeur initiale n'est
+  // calculée QU'UNE FOIS, à la création du composant — pas à chaque rendu.
+  // C'est ce qui permet de lire `popupDejaAffiche` une seule fois par
+  // montage réel du composant, puis de piloter l'affichage avec un état
+  // React normal ensuite (pour que fermer le popup redéclenche un rendu).
+  const [tipDismissed, setTipDismissed] = useState(() => popupDejaAffiche);
+  const fermerPopup = () => {
+    popupDejaAffiche = true;
+    setTipDismissed(true);
+    dispatch({ type: "DISMISS_GROPI_TIP" });   // conservé : sans effet sur l'affichage désormais, mais gardé pour compatibilité avec le reste de l'état
+  };
   const tip = useMemo(() => pickTip(state), [
     state.xp, state.streak, state.level,
     Object.keys(state.completedLessons || {}).length,
@@ -708,7 +741,7 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
       {variant === "home" && !tipDismissed && (
         <WelcomeModal
           state={state} tip={tip} navigate={navigate}
-          onClose={()=>dispatch({type:"DISMISS_GROPI_TIP"})}
+          onClose={fermerPopup}
         />
       )}
 
