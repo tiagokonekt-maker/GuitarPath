@@ -595,7 +595,7 @@ export const COURSES = [
           { type: "ref", text: "Le solo emblématique de 'Beat It' (Eddie Van Halen sur le morceau de Michael Jackson) commence par un bend sur Sol (c3 case 7) → La. Cette technique bend du Sol corde 3 est partout dans le rock 80s." },
           { type: "tip", text: "Drill rapide : joue Sol c6 case 3, puis Sol c4 case 5, puis Sol c3 case 0. Trois Sol à différentes octaves. Identifie chaque note. Tu commences à 'voir' le manche en 3D." },
         ],
-        quiz: [],
+        quiz: ["q-neck-21","q-neck-22","q-neck-23"],
       },
       {
         id: "neck-c2-05", level: 4,
@@ -654,7 +654,7 @@ export const COURSES = [
           { type: "ref", text: "Le solo final de 'Hotel California' (Eagles) utilise massivement les cordes 1 et 2 dans les zones aiguës. Si tu apprends ce solo, tu vas naturellement intégrer la position des notes sur ces cordes." },
           { type: "tip", text: "Drill spécifique aux cordes aiguës : joue une note simple sur la corde 1 (ex : Sol case 3). Trouve immédiatement le même Sol sur la corde 6 case 3. Comprends que c'est la même note, à 2 octaves d'écart. Refais avec La, Si, Do, Ré." },
         ],
-        quiz: [],
+        quiz: ["q-neck-24","q-neck-25","q-neck-26"],
       },
       {
         id: "neck-c3-01", level: 5,
@@ -1196,7 +1196,7 @@ export const COURSES = [
           { type: "ref", text: "Reconnaître une quinte juste à l'oreille : les 2 premières notes du générique de Star Wars, c'est une quinte. Les premières notes de 'Twinkle Twinkle Little Star' (Au clair de la lune en France), c'est aussi une quinte ascendante. Une fois que ton oreille les a, tu les entendras partout." },
           { type: "tip", text: "Apprends d'abord les 5 intervalles 'piliers' : seconde majeure (1 ton), tierce majeure (2 tons), quarte juste (5 demi-tons), quinte juste (7 demi-tons), octave. Tout le reste se déduit." },
         ],
-        quiz: [],
+        quiz: ["q-scales-22","q-scales-23","q-scales-24"],
       },
       {
         id: "scales-c1-06", level: 4,
@@ -1222,7 +1222,7 @@ export const COURSES = [
           { type: "ref", text: "Reconnaître un triton à l'oreille : le célèbre riff d'intro de 'Black Sabbath' (le morceau, 1970) est un triton. La sonnerie 'Maria' de West Side Story commence aussi par un triton (puis se résout sur la quinte). Une fois que tu l'as entendu, tu ne l'oublieras plus." },
           { type: "tip", text: "Drill quotidien (2 min) : sur la corde de La (5e), choisis une case au hasard. Joue cette note puis trouve sa quinte juste (+7 cases) sans regarder. Refais avec sa tierce majeure (+4 cases). Cet exercice cale les intervalles dans tes doigts." },
         ],
-        quiz: [],
+        quiz: ["q-scales-25","q-scales-26","q-scales-27"],
       },
       {
         id: "scales-c2-01", level: 5,
@@ -4015,7 +4015,41 @@ export const COURSES = [
       colorL: "#FBEAF1",
       desc: "Phrasing, ciblage des notes d'accord, tension/résolution, langage musical",
       lessons: [
-  
+
+        {
+          id: "impro-intro-01", level: 6,
+          title: "Ta première improvisation : 3 notes, en rythme",
+          duration: 8,
+          content: [
+            { type: "p", text: "Improviser ne veut pas dire connaître toute la pentatonique par cœur, ni jouer vite. Ça veut dire faire des choix — même avec très peu de matière — et les assumer. Cette leçon te donne ta toute première impro, avec seulement 3 notes." },
+            { type: "h", text: "Le piège du débutant" },
+            { type: "p", text: "Beaucoup pensent qu'il faut d'abord maîtriser les 5 positions de la pentatonique avant de pouvoir improviser 'pour de vrai'. C'est faux, et ça retarde inutilement le plaisir de jouer. Avec 3 notes bien placées rythmiquement, tu improvises déjà — au sens plein du terme." },
+            { type: "h", text: "L'exercice : 3 notes, une pulsation" },
+            { type: "p", text: "Prends juste 3 notes de la pentatonique mineure que tu viens de voir : la fondamentale, la tierce mineure, la quinte. Sur un backing ou un métronome, joue UNIQUEMENT ces 3 notes pendant 2 minutes. Ta seule variable : QUAND tu les joues, pas lesquelles." },
+            { type: "h", text: "Pourquoi le rythme d'abord" },
+            { type: "p", text: "Une seule note bien placée dans le temps vaut mieux qu'une gamme entière jouée sans intention. Le rythme est le langage principal de l'expression musicale ; le choix des notes vient après, une fois que tu as un petit stock 'sûr' dans les doigts." },
+            { type: "ref", text: "B.B. King est resté toute sa carrière l'un des guitaristes les plus reconnaissables, avec un vocabulaire de notes volontairement restreint. Ce qui rend son jeu inoubliable, ce n'est pas la quantité de notes : c'est leur placement et leur intention." },
+            { type: "tip", text: "Drill (2 min) : en La mineur, prends La (corde 5, case 0 ou 12), Do (corde 4, case 5), Mi (corde 4, case 7). Lance un métronome à 70 BPM. Joue seulement ces 3 notes, en variant le rythme et les silences — jamais les notes elles-mêmes." },
+          ],
+          quiz: ["q-impro-32","q-impro-33"],
+        },
+        {
+          id: "impro-intro-02", level: 6,
+          title: "Question et réponse : ta première vraie phrase",
+          duration: 9,
+          content: [
+            { type: "p", text: "Tu sais maintenant placer 3 notes rythmiquement. L'étape suivante, c'est le phrasé : traiter ton improvisation comme une conversation — une courte 'question' musicale, suivie d'une 'réponse' qui lui répond." },
+            { type: "h", text: "Le principe du 'question-réponse'" },
+            { type: "p", text: "C'est l'une des structures les plus anciennes de la musique — présente dans le blues, le gospel et les chants de travail, bien avant d'être théorisée par le jazz. Une phrase est jouée (la question), suivie d'une phrase qui la complète ou la résout (la réponse)." },
+            { type: "h", text: "Comment construire ta première question-réponse" },
+            { type: "p", text: "Avec tes 3 notes de la leçon précédente : joue une courte idée rythmique (la question), laisse un SILENCE, puis réponds avec une idée légèrement différente, en utilisant les mêmes notes." },
+            { type: "h", text: "Le silence est une note" },
+            { type: "p", text: "Un débutant a souvent peur du silence et remplit chaque interstice de notes. Pourtant, l'espace est ce qui rend une phrase lisible — exactement comme la ponctuation dans une phrase parlée. Une question a besoin d'un temps de pause avant sa réponse." },
+            { type: "ref", text: "Le blues du delta du Mississippi repose largement sur ce principe : la voix chante une ligne, la guitare 'répond' immédiatement après, comme un second personnage dans le dialogue. B.B. King appelait sa guitare Lucille — elle 'parlait' littéralement en écho à sa voix." },
+            { type: "tip", text: "Drill (2 min) : joue une phrase de 2 secondes (question) avec tes 3 notes, reste silencieux 1 seconde, puis joue une phrase différente de 2 secondes (réponse) avec les mêmes notes. Répète 5 fois, en changeant le rythme à chaque fois." },
+          ],
+          quiz: ["q-impro-34","q-impro-35"],
+        },
         {
           id: "impro-01", level: 6,
           title: "Penser en phrases musicales",
@@ -4193,6 +4227,14 @@ export const QUIZ = [
   {id:"q-neck-19",courseId:"neck",lessonId:"neck-06",lvl:3,q:"Sur Cmaj7, quelle note évite-t-on en général de tenir longtemps ?",o:["Do","Mi","Fa","Sol"],a:2,exp:"Sur Cmaj7 (Do-Mi-Sol-Si), le Fa (4e) est 'note évitée' classique. Elle crée un demi-ton avec la 3e (Mi) et sonne dissonante tenue. À utiliser en passage uniquement.",xp:55},
   {id:"q-neck-20",courseId:"neck",lessonId:"neck-06",lvl:3,q:"Sur G7, quelles notes sont les guide tones ?",o:["Sol et Ré","Si et Fa","Sol et Si","Ré et Fa"],a:1,exp:"G7 = Sol-Si-Ré-Fa. Guide tones = 3e (Si) + 7e (Fa). Ces 2 notes définissent que c'est G7 (et pas Gm7 ou Gmaj7).",xp:50},
 
+  // ─── Ajoutées : neck-c2-04 et neck-c2-05 n'avaient aucune question ───
+  {id:"q-neck-21",courseId:"neck",lessonId:"neck-c2-04",lvl:2,q:"Sur la corde 3 (Sol), à quelle case trouve-t-on la note Si ?",o:["Case 7","Case 4","Case 5","Case 2"],a:1,exp:"Contrairement au schéma habituel (Si souvent case 7 sur d'autres cordes), la corde 3 a une cassure : Si arrive dès la case 4.",xp:35},
+  {id:"q-neck-22",courseId:"neck",lessonId:"neck-c2-04",lvl:2,q:"Sur la corde 3 (Sol), quelle note trouve-t-on à la case 5 ?",o:["Ré","Do","La","Si"],a:1,exp:"Case 0 Sol, 2 La, 4 Si, 5 Do : le demi-ton Si-Do tombe entre les cases 4 et 5, exactement comme sur les autres cordes.",xp:35},
+  {id:"q-neck-23",courseId:"neck",lessonId:"neck-c2-04",lvl:3,q:"Le bend le plus emblématique du blues/rock (B.B. King, Clapton, Gilmour) se joue sur la corde 3, à quelle case ?",o:["Case 5","Case 7","Case 9","Case 3"],a:1,exp:"Sol case 7 corde 3, bendé d'un ton vers La : le bend signature de plusieurs générations de guitaristes blues et rock.",xp:45},
+  {id:"q-neck-24",courseId:"neck",lessonId:"neck-c2-05",lvl:2,q:"Sur la corde 2 (Si), entre quelles cases trouve-t-on le demi-ton Si-Do ?",o:["Case 4 et 5","Case 0 et 1","Case 9 et 10","Case 7 et 8"],a:1,exp:"Sur la corde 2, Si (à vide) et Do (case 1) sont immédiatement adjacents — le demi-ton naturel tombe dès le début du manche.",xp:35},
+  {id:"q-neck-25",courseId:"neck",lessonId:"neck-c2-05",lvl:2,q:"La corde 1 (Mi aigu) porte exactement les mêmes notes qu'une autre corde, mais 2 octaves plus haut. Laquelle ?",o:["La corde 5","La corde 6","La corde 4","La corde 2"],a:1,exp:"Cordes 1 et 6 sont toutes deux accordées en Mi, à 2 octaves d'écart. Ce que tu apprends sur la corde 6 est donc gratuit sur la corde 1.",xp:40},
+  {id:"q-neck-26",courseId:"neck",lessonId:"neck-c2-05",lvl:3,q:"Sur la corde 1 (Mi aigu), quelle note trouve-t-on à la case 8 ?",o:["Si","Do","Ré","La"],a:1,exp:"0 Mi, 1 Fa, 3 Sol, 5 La, 7 Si, 8 Do — identique à la corde 6, simplement 2 octaves plus haut.",xp:45},
+
   // ═══ GAMMES — 21 questions ═══
   {id:"q-scales-01",courseId:"scales",lessonId:"scales-01",lvl:1,q:"La formule en tons et demi-tons de la gamme majeure est…",o:["T-T-DT-T-T-T-DT","T-DT-T-T-DT-T-T","T-T-T-DT-T-T-DT","DT-T-T-T-DT-T-T"],a:0,exp:"T-T-DT-T-T-T-DT. Demi-tons entre 3-4 et 7-8. Cette structure asymétrique crée le 'son majeur' (sensation de luminosité, attraction du Si vers le Do).",xp:30},
   {id:"q-scales-02",courseId:"scales",lessonId:"scales-01",lvl:2,q:"La gamme de Mi majeur contient combien de dièses ?",o:["2","3","4","5"],a:2,exp:"Mi majeur = Mi-Fa#-Sol#-La-Si-Do#-Ré#. Soit 4 dièses : Fa#, Sol#, Do#, Ré#. C'est l'armure de Mi majeur (et de Do# mineur, son relatif).",xp:40},
@@ -4215,6 +4257,14 @@ export const QUIZ = [
   {id:"q-scales-19",courseId:"scales",lessonId: "scales-c5-04",lvl:3,q:"Le mode lydien évoque typiquement quelle ambiance ?",o:["Tristesse","Tension dramatique","Espace, rêve, magie","Énergie blues"],a:2,exp:"Lydien (#4) crée une couleur 'flottante', non-résolue. Son utilisé par John Williams (Star Wars, E.T.), Spielberg. Ambiance ouverte, magique, filmique.",xp:45},
   {id:"q-scales-20",courseId:"scales",lessonId:"scales-07",lvl:2,q:"La gamme mineure harmonique se distingue de la mineure naturelle par…",o:["Une 6e majeure","Une 7e majeure","Une 4e augmentée","Une 2e mineure"],a:1,exp:"Mineure harmonique = mineure naturelle avec 7 majeure. La harmonique = La-Si-Do-Ré-Mi-Fa-Sol#. Le Sol# permet la cadence V-I forte en mineur.",xp:50},
   {id:"q-scales-21",courseId:"scales",lessonId:"scales-07",lvl:3,q:"La gamme mineure mélodique 'jazz' a quelle formule ?",o:["1-2-b3-4-5-b6-b7","1-2-b3-4-5-6-7","1-b2-b3-4-5-b6-7","1-2-3-4-5-6-b7"],a:1,exp:"Mélodique jazz = 1-2-b3-4-5-6-7. Mineure naturelle avec 6 ET 7 majeures. La mélodique jazz = La-Si-Do-Ré-Mi-Fa#-Sol#. Presque une majeure avec juste b3.",xp:55},
+
+  // ─── Ajoutées : scales-c1-05 et scales-c1-06 n'avaient aucune question ───
+  {id:"q-scales-22",courseId:"scales",lessonId:"scales-c1-05",lvl:2,q:"Quel est l'intervalle entre Sol et Do (Sol, La, Si, Do) ?",o:["Tierce","Quarte","Quinte","Seconde"],a:1,exp:"Sol(1)-La(2)-Si(3)-Do(4) : quatre notes en comptant les deux bornes, donc une quarte.",xp:35},
+  {id:"q-scales-23",courseId:"scales",lessonId:"scales-c1-05",lvl:2,q:"Une tierce majeure correspond à combien de demi-tons ?",o:["3","4","5","2"],a:1,exp:"Tierce majeure = 4 demi-tons (Do→Mi). Tierce mineure = 3 demi-tons (Do→Mib) — ce seul demi-ton distingue un accord majeur d'un accord mineur.",xp:35},
+  {id:"q-scales-24",courseId:"scales",lessonId:"scales-c1-05",lvl:3,q:"Sur une seule corde de guitare, comment mesure-t-on visuellement un intervalle ?",o:["Le nombre de cases d'écart = le nombre de demi-tons","Le nombre de cases divisé par 2","Toujours 12 cases quel que soit l'intervalle","Ça dépend de la corde utilisée"],a:0,exp:"Sur une seule corde, l'intervalle en demi-tons correspond exactement au nombre de cases d'écart — tierce majeure = 4 cases, quinte = 7 cases.",xp:45},
+  {id:"q-scales-25",courseId:"scales",lessonId:"scales-c1-06",lvl:2,q:"Combien de demi-tons contient une septième mineure ?",o:["9","10","11","12"],a:1,exp:"Septième mineure = 10 demi-tons (Do→Sib). C'est elle qui donne leur couleur à tous les accords '7' (G7, A7...) : l'âme du blues et du jazz.",xp:35},
+  {id:"q-scales-26",courseId:"scales",lessonId:"scales-c1-06",lvl:3,q:"Le triton se situe exactement entre quels deux intervalles ?",o:["Tierce et quarte","Quarte juste et quinte juste","Quinte et sixte","Sixte et septième"],a:1,exp:"Le triton (6 demi-tons) tombe entre la quarte juste (5) et la quinte juste (7) — surnommé 'diabolus in musica' au Moyen-Âge, aujourd'hui central dans le blues, le jazz et le metal.",xp:45},
+  {id:"q-scales-27",courseId:"scales",lessonId:"scales-c1-06",lvl:2,q:"Une octave représente combien de demi-tons ?",o:["10","12","7","14"],a:1,exp:"Octave = 12 demi-tons = 12 cases sur une même corde. Même note, mais deux fois plus aiguë (ou grave).",xp:35},
 
   // ═══ HARMONIE — 25 questions ═══
   {id:"q-harm-01",courseId:"harmony",lessonId:"harmony-01",lvl:1,q:"Une triade majeure se compose de…",o:["1-3-5","1-b3-5","1-3-b5","1-2-5"],a:0,exp:"Triade majeure : fondamentale + tierce majeure (4dt) + quinte juste (7dt). Formule 1-3-5. C'est la triade de référence.",xp:25},
@@ -4357,6 +4407,12 @@ export const QUIZ = [
   {id:"q-impro-29",courseId:"impro",lessonId:"impro-05",lvl:3,q:"Comment construire l'intensité d'un solo dans la durée ?",o:["En répétant la même phrase du début à la fin","En jouant fort et vite dès la première note","En montant progressivement en registre, en densité et en tension","En alternant au hasard les nuances"],a:2,exp:"Un solo est une courbe, pas un plateau. Commencer bas et clairsemé laisse de la place pour monter — commencer au maximum ne laisse nulle part où aller, et l'oreille s'habitue en quelques secondes.",xp:40},
   {id:"q-impro-30",courseId:"impro",lessonId:"impro-06",lvl:2,q:"Apprendre des licks par cœur, c'est…",o:["Inutile : l'improvisation doit rester spontanée","Se constituer un vocabulaire à réutiliser et transformer","Suffisant pour savoir improviser","Une étape réservée aux tout débutants"],a:1,exp:"Personne n'improvise sans vocabulaire, pas plus qu'on ne parle une langue sans mots. Le lick n'est pas là pour être replacé tel quel : il est là pour être découpé, transposé et recombiné.",xp:30},
   {id:"q-impro-31",courseId:"impro",lessonId:"impro-04",lvl:3,q:"Sur une grille où les accords changent toutes les deux mesures, quelle approche donne le plus de relief ?",o:["Rester sur la même gamme sans rien ajuster","Accélérer le débit à chaque changement","S'arrêter de jouer à chaque changement","Viser une note de chaque accord au moment du changement"],a:3,exp:"Ce qui rend un solo « dedans », c'est de tomber sur une note de l'accord au moment précis où il arrive. Une seule note bien placée au changement s'entend davantage que quinze notes entre deux changements.",xp:40},
+
+  // ─── Ajoutées : impro-intro-01 et impro-intro-02, les deux premières leçons d'impro ───
+  {id:"q-impro-32",courseId:"impro",lessonId:"impro-intro-01",lvl:1,q:"Dans l'exercice des 3 notes, sur quoi porte l'attention principale ?",o:["Jouer le plus de notes possible","Le rythme et le placement des notes","La vitesse d'exécution","Utiliser toute la gamme pentatonique"],a:1,exp:"L'exercice isole volontairement le choix des notes (3 seulement) pour que toute l'attention se porte sur QUAND elles sont jouées, pas lesquelles.",xp:25},
+  {id:"q-impro-33",courseId:"impro",lessonId:"impro-intro-01",lvl:1,q:"Le style de B.B. King est reconnu comme un jeu…",o:["Très rapide et très technique","Avec peu de notes mais un placement rythmique très travaillé","Uniquement basé sur des accords","Sans intention rythmique particulière"],a:1,exp:"B.B. King est célèbre pour l'inverse de la virtuosité rapide : un nombre de notes volontairement réduit, mais un placement et une expressivité incomparables.",xp:25},
+  {id:"q-impro-34",courseId:"impro",lessonId:"impro-intro-02",lvl:1,q:"Le principe « question-réponse » en improvisation vient d'abord de quelle tradition ?",o:["Le jazz be-bop des années 1940","Le blues et les chants de travail afro-américains","La musique classique baroque","Le rock progressif des années 1970"],a:1,exp:"Le call-and-response est une structure ancestrale, présente dans le blues, le gospel et les chants de travail bien avant sa formalisation dans le jazz.",xp:25},
+  {id:"q-impro-35",courseId:"impro",lessonId:"impro-intro-02",lvl:2,q:"Dans une phrase de question-réponse, le silence entre les deux sert à…",o:["Rien, c'est un vide à éviter","Marquer une ponctuation, comme dans une phrase parlée","Économiser de l'énergie","Attendre que le rythme reparte"],a:1,exp:"Le silence fonctionne comme la ponctuation d'une phrase parlée — sans lui, la question et la réponse se mélangent en un flux confus.",xp:30},
 ];
 
 
