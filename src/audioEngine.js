@@ -498,6 +498,122 @@ export async function playArpeggioFromRoot(root, chordType, bpm = 132, onStep) {
   return names;
 }
 
+// ─────────────────────────────────────────────────────────────────────────
+// TABLATURE — lecture d'une séquence analysée par tab/tabParser.js
+// ─────────────────────────────────────────────────────────────────────────
+
+/**
+ * Joue une séquence d'évènements de tablature (sortie de tabParser.parseTab).
+ *
+ * Convention rythmique ASSUMÉE, pas mesurée : chaque colonne de caractère
+ * vaut `subdivision` d'une noire (double-croche, 0.25, par défaut) au
+ * tempo `bpm`. Voir tab/tabParser.js pour le raisonnement complet — l'ASCII
+ * n'encode pas de vrai rythme, ce choix en impose un pour pouvoir jouer.
+ *
+ * Techniques et leur rendu réel avec un sampler à échantillons fixes (pas
+ * de synthèse, donc pas de hauteur continûment variable) :
+ *   note/mute   déclenchement direct — la note étouffée ne produit aucun son.
+ *   hammer/pull deux notes rapprochées, la seconde plus douce (pas
+ *               d'attaque au médiator) — pleinement authentique.
+ *   slide       enchaînement RAPIDE des cases intermédiaires plutôt qu'un
+ *               glissando continu — s'entend comme un slide, pas comme une
+ *               vraie glissade de hauteur.
+ *   bend        joue directement la hauteur CIBLE, sans geste de montée —
+ *               compromis assumé (voir la conversation produit), pas un
+ *               oubli.
+ *
+ * @param evenements    sortie de parseTab(texte).evenements
+ * @param opts.bpm          tempo, 90 par défaut
+ * @param opts.subdivision  fraction de noire par colonne (0.25 = double-croche)
+ * @param opts.onEvent(ev)  appelé à l'instant sonore de chaque évènement,
+ *                          synchronisé sur le MÊME minuteur que le son
+ *                          (comme onStep dans playScale) — pour un curseur
+ *                          visuel qui ne dérive jamais du son.
+ * @param opts.onDone()     appelé une fois la séquence terminée.
+ */
+export async function playTab(evenements, opts = {}) {
+  if (!await ensureLoaded()) return;
+  stopAll();
+  reveillerSortie();
+
+  const { bpm = 90, subdivision = 0.25, onEvent, onDone } = opts;
+  if (!Array.isArray(evenements) || evenements.length === 0) { onDone?.(); return; }
+
+  const secParColonne = (60 / bpm) * subdivision;
+  const dureeNote = secParColonne;
+  const dernierCol = Math.max(...evenements.map(e => e.col));
+
+  try {
+    for (const ev of evenements) {
+      const tMs = ev.col * secParColonne * 1000;
+
+      if (ev.type === "mute") {
+        differer(() => { onEvent?.(ev); }, tMs);   // aucun son, juste le curseur
+        continue;
+      }
+
+      if (ev.type === "note") {
+        const note = getToneNoteAtPosition(ev.string, ev.fret);
+        differer(() => {
+          onEvent?.(ev);
+          try { sampler.triggerAttackRelease(note, dureeNote, Tone.now(), 0.75); }
+          catch (e) { warn("playTab note:", e); }
+        }, tMs);
+        continue;
+      }
+
+      if (ev.type === "bend") {
+        // La hauteur d'arrivée, directement — voir le commentaire de tête.
+        const note = getToneNoteAtPosition(ev.string, ev.toFret);
+        differer(() => {
+          onEvent?.(ev);
+          try { sampler.triggerAttackRelease(note, dureeNote, Tone.now(), 0.75); }
+          catch (e) { warn("playTab bend:", e); }
+        }, tMs);
+        continue;
+      }
+
+      if (ev.type === "hammer" || ev.type === "pull") {
+        const noteDepart  = getToneNoteAtPosition(ev.string, ev.fromFret);
+        const noteArrivee = getToneNoteAtPosition(ev.string, ev.toFret);
+        differer(() => {
+          onEvent?.(ev);
+          try {
+            sampler.triggerAttackRelease(noteDepart, dureeNote * 0.6, Tone.now(), 0.75);
+            // Seconde note plus douce, sans attaque au médiator — c'est le
+            // doigt seul qui la produit sur un hammer-on ou un pull-off.
+            sampler.triggerAttackRelease(noteArrivee, dureeNote * 0.6, Tone.now() + 0.075, 0.45);
+          } catch (e) { warn("playTab hammer/pull:", e); }
+        }, tMs);
+        continue;
+      }
+
+      if (ev.type === "slide_up" || ev.type === "slide_down") {
+        const pas = ev.fromFret <= ev.toFret ? 1 : -1;
+        const cases = [];
+        for (let f = ev.fromFret; pas > 0 ? f <= ev.toFret : f >= ev.toFret; f += pas) cases.push(f);
+        const dureeGlissando = Math.min(0.16, dureeNote * 0.5);
+        differer(() => {
+          onEvent?.(ev);
+          cases.forEach((f, i) => {
+            const note = getToneNoteAtPosition(ev.string, f);
+            const estArrivee = i === cases.length - 1;
+            const t = Tone.now() + (cases.length > 1 ? (i / (cases.length - 1)) * dureeGlissando : 0);
+            try {
+              sampler.triggerAttackRelease(
+                note, estArrivee ? dureeNote : 0.045, t, estArrivee ? 0.75 : 0.4,
+              );
+            } catch (e) { warn("playTab slide:", e); }
+          });
+        }, tMs);
+        continue;
+      }
+    }
+
+    differer(() => onDone?.(), (dernierCol + 2) * secParColonne * 1000);
+  } catch (e) { warn("playTab:", e); }
+}
+
 // Joue un accord depuis root + chordType
 export async function playChordFromRoot(root, chordType, onStep) {
   const intervals = CHORD_TYPES[chordType]?.intervals;

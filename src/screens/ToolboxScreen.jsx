@@ -6,9 +6,10 @@ import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { Gropi, GropiTip } from "../design/Gropi.jsx";
 import * as Tone from "tone";
-import { playProgression, stopAll } from "../audioEngine.js";
+import { playProgression, playTab, stopAll, unlockAudio } from "../audioEngine.js";
 import { CHORD_TYPES } from "../fretboardUtils.js";
 import { FretboardExplorer } from "./FretboardExplorer.jsx";
+import { parseTab } from "../tab/tabParser.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // MÉTRONOME
@@ -1132,6 +1133,234 @@ function ChordPlayer() {
   );
 }
 
+const EXEMPLE_TAB = [
+  "e|--0---2---3h5---5/7---7b9---|",
+  "B|-----------------------------|",
+  "G|-----------------------------|",
+  "D|-----------------------------|",
+  "A|-----------------------------|",
+  "E|-----------------------------|",
+].join("\n");
+
+// Texte canonique d'un évènement, pour l'affichage sur la ligne de corde —
+// reconstruit depuis l'évènement analysé plutôt que depuis le texte brut,
+// ce qui a un effet de bord bienvenu : une cible de bend implicite (7b sans
+// chiffre après) s'affiche explicitement (7b9) une fois la valeur déduite.
+function texteEvenement(ev) {
+  switch (ev.type) {
+    case "note":       return String(ev.fret);
+    case "mute":       return "x";
+    case "hammer":     return `${ev.fromFret}h${ev.toFret}`;
+    case "pull":       return `${ev.fromFret}p${ev.toFret}`;
+    case "slide_up":   return `${ev.fromFret}/${ev.toFret}`;
+    case "slide_down": return `${ev.fromFret}\\${ev.toFret}`;
+    case "bend":       return `${ev.fromFret}b${ev.toFret}`;
+    default:           return "?";
+  }
+}
+
+const TAB_CHAR_W = 15;   // largeur d'une colonne de temps, en pixels
+const TAB_ROW_H  = 22;   // écart vertical entre deux cordes
+const TAB_LABELS = ["e", "B", "G", "D", "A", "E"];   // corde 1 en haut, comme à l'écrit
+
+/**
+ * Vue de lecture façon Songsterr / Guitar Pro : les 6 cordes en lignes
+ * horizontales fixes, les notes posées dessus à leur position temporelle
+ * réelle, une barre verticale qui balaie en jouant — et la vue défile
+ * TOUTE SEULE pour garder cette barre visible, plutôt que de forcer à
+ * suivre le texte des yeux. Remplace la zone de texte UNIQUEMENT pendant
+ * la lecture ; l'édition reste un texte classique (voir TabEditor).
+ */
+function TabScrollView({ evenements, colActuelle, maxCol, C }) {
+  const conteneurRef = useRef(null);
+
+  // Défilement automatique : la barre reste à ~30% depuis le bord gauche,
+  // pas collée dessus — assez de contexte À VENIR reste visible, comme
+  // une tête de lecture qui laisse voir la suite plutôt que de la révéler
+  // note par note.
+  useEffect(() => {
+    if (colActuelle == null || !conteneurRef.current) return;
+    const el = conteneurRef.current;
+    const cible = Math.max(0, colActuelle * TAB_CHAR_W - el.clientWidth * 0.3);
+    el.scrollTo({ left: cible, behavior: "smooth" });
+  }, [colActuelle]);
+
+  const largeurTotale = (maxCol + 6) * TAB_CHAR_W;
+  const hauteurTotale = TAB_LABELS.length * TAB_ROW_H + 12;
+
+  return (
+    <div style={{
+      display: "flex", border: `1.5px solid ${C.border}`, borderRadius: R.md,
+      background: C.surface, overflow: "hidden",
+    }}>
+      {/* Gouttière fixe : les noms de corde ne défilent jamais, comme la
+          clé sur une vraie partition qui reste en place pendant le défilement. */}
+      <div style={{
+        flexShrink: 0, width: 22, borderRight: `1.5px solid ${C.border}`,
+        background: C.surface2, paddingTop: 6,
+      }}>
+        {TAB_LABELS.map((l, i) => (
+          <div key={l} style={{
+            height: TAB_ROW_H, display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 10.5, fontWeight: 800, color: C.text3,
+          }}>{l}</div>
+        ))}
+      </div>
+
+      {/* Zone défilante */}
+      <div ref={conteneurRef} style={{
+        overflowX: "auto", WebkitOverflowScrolling: "touch",
+        position: "relative", height: hauteurTotale, flex: 1,
+      }}>
+        <div style={{ position: "relative", width: largeurTotale, height: hauteurTotale }}>
+          {/* Les 6 lignes de corde — de fins traits horizontaux, comme une
+              portée, plutôt que des tirets ASCII littéraux : plus lisible
+              une fois posé en colonnes fixes plutôt qu'en texte monospace. */}
+          {TAB_LABELS.map((_, i) => (
+            <div key={i} style={{
+              position: "absolute", left: 0, right: 0, top: 6 + i * TAB_ROW_H + TAB_ROW_H/2,
+              height: 1.5, background: C.border,
+            }}/>
+          ))}
+
+          {/* Barre de lecture — la tête qui balaie */}
+          {colActuelle != null && (
+            <div style={{
+              position: "absolute", top: 0, bottom: 0, width: 2,
+              left: colActuelle * TAB_CHAR_W, background: C.primary,
+              transition: "left .05s linear", zIndex: 2,
+            }}/>
+          )}
+
+          {/* Les notes elles-mêmes, posées sur leur corde à leur colonne */}
+          {evenements.map((ev, i) => {
+            const enCours = ev.col === colActuelle;
+            return (
+              <div key={i} style={{
+                position: "absolute", left: ev.col * TAB_CHAR_W,
+                top: 6 + (ev.string - 1) * TAB_ROW_H + TAB_ROW_H/2 - 8,
+                fontSize: 11, fontWeight: 800, fontFamily: "monospace",
+                color: enCours ? "#fff" : C.text,
+                background: enCours ? C.primary : C.surface,
+                padding: "0 2px", borderRadius: 3, whiteSpace: "nowrap",
+                zIndex: 1, lineHeight: "16px",
+              }}>{texteEvenement(ev)}</div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TabEditor() {
+  const C = useC();
+  const [texte, setTexte] = useState(EXEMPLE_TAB);
+  const [bpm, setBpm] = useState(90);
+  const [jouant, setJouant] = useState(false);
+  const [curseur, setCurseur] = useState(null);   // dernier évènement en cours de lecture
+  const enLectureRef = useRef(false);
+
+  const { evenements, erreur } = parseTab(texte);
+
+  const jouer = useCallback(async () => {
+    if (jouant) { stopAll(); setJouant(false); enLectureRef.current = false; return; }
+    if (erreur || evenements.length === 0) return;
+    await unlockAudio();
+    enLectureRef.current = true;
+    setJouant(true);
+    setCurseur(null);
+    playTab(evenements, {
+      bpm,
+      onEvent: (ev) => { if (enLectureRef.current) setCurseur(ev); },
+      onDone: () => { if (enLectureRef.current) { setJouant(false); enLectureRef.current = false; } },
+    });
+  }, [jouant, erreur, evenements, bpm]);
+
+  useEffect(() => () => { enLectureRef.current = false; stopAll(); }, []);
+
+  return (
+    <div>
+      <div style={{ fontSize: 12.5, color: C.text2, lineHeight: 1.5, marginBottom: 10 }}>
+        Colle une tab au format classique (une ligne par corde) ou écris la
+        tienne. Techniques reconnues : <b>h</b> (hammer-on), <b>p</b> (pull-off),{" "}
+        <b>/</b> et <b>\</b> (slide), <b>b</b> (bend), <b>x</b> (note étouffée).
+      </div>
+
+      {/* Texte classique pour écrire, vue défilante UNIQUEMENT pendant la
+          lecture — les deux exploitent le même texte/évènements analysés,
+          rien n'est dupliqué ni redemandé à l'utilisateur en changeant de
+          mode. */}
+      {jouant ? (
+        <TabScrollView
+          evenements={evenements} colActuelle={curseur?.col ?? null}
+          maxCol={Math.max(...evenements.map(e => e.col), 20)} C={C}
+        />
+      ) : (
+        <textarea
+          value={texte}
+          onChange={e => setTexte(e.target.value)}
+          spellCheck={false}
+          rows={7}
+          style={{
+            width: "100%", fontFamily: "monospace", fontSize: 13, lineHeight: 1.6,
+            padding: "10px 12px", borderRadius: R.md,
+            border: `1.5px solid ${erreur ? C.primary : C.border}`,
+            background: C.surface, color: C.text, resize: "vertical",
+          }}
+        />
+      )}
+
+      {!jouant && (erreur ? (
+        <div style={{ fontSize: 12, color: C.primary, marginTop: 6 }}>{erreur}</div>
+      ) : (
+        <div style={{ fontSize: 12, color: C.text3, marginTop: 6 }}>
+          {evenements.length} évènement{evenements.length > 1 ? "s" : ""} détecté{evenements.length > 1 ? "s" : ""}
+        </div>
+      ))}
+
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <button onClick={() => setBpm(b => Math.max(30, b - 5))} style={{
+            width: 32, height: 32, borderRadius: R.sm, border: `1.5px solid ${C.border}`,
+            background: C.surface, color: C.text2, cursor: "pointer", fontWeight: 700,
+          }}>−</button>
+          <div style={{ minWidth: 56, textAlign: "center" }}>
+            <div style={{ fontSize: 15, fontWeight: 800, color: C.text }}>{bpm}</div>
+            <div style={{ fontSize: 9, color: C.text3 }}>BPM</div>
+          </div>
+          <button onClick={() => setBpm(b => Math.min(240, b + 5))} style={{
+            width: 32, height: 32, borderRadius: R.sm, border: `1.5px solid ${C.border}`,
+            background: C.surface, color: C.text2, cursor: "pointer", fontWeight: 700,
+          }}>+</button>
+        </div>
+
+        <button onClick={jouer} disabled={!jouant && (!!erreur || evenements.length === 0)} style={{
+          flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+          padding: "11px", borderRadius: R.lg, border: "none",
+          background: jouant ? C.surface2 : C.primaryBtn,
+          color: jouant ? C.text2 : "#fff",
+          fontWeight: 800, fontSize: 13.5, cursor: "pointer",
+          opacity: (!jouant && (erreur || evenements.length === 0)) ? 0.5 : 1,
+        }}>
+          <Ti name={jouant ? "player-stop" : "player-play"} size={16} color={jouant ? C.text2 : "#fff"} />
+          {jouant ? "Arrêter" : "Jouer"}
+        </button>
+      </div>
+
+      {/* Limite assumée, dite clairement plutôt que cachée : voir
+          audioEngine.js/playTab pour le détail de ce qui est fidèle et ce
+          qui est approché avec des échantillons plutôt qu'une synthèse. */}
+      <div style={{ marginTop: 14, fontSize: 11, color: C.text3, lineHeight: 1.5 }}>
+        Le rythme suit une convention fixe (chaque colonne = une double-croche
+        au tempo réglé), pas une mesure exacte du texte. Le bend joue la bonne
+        hauteur d'arrivée, sans le geste de montée — les échantillons de
+        guitare ne permettent pas un vrai glissement continu.
+      </div>
+    </div>
+  );
+}
+
 function ToolboxScreen({ onBack, navigate }) {
   const C = useC();
   const [tab, setTab] = useState("metronome");
@@ -1160,25 +1389,37 @@ function ToolboxScreen({ onBack, navigate }) {
         </div>
       </div>
 
-      {/* Onglets */}
-      <div style={{ display:"flex", gap:8, padding:"14px 20px 0" }}>
-        {[
-          { id:"metronome", label:"Métronome", icon:"clock" },
-          { id:"tuner",     label:"Accordeur", icon:"microphone" },
-          { id:"chords",    label:"Accords",   icon:"music" },
-          { id:"neck",      label:"Manche",    icon:"guitar-pick" },
-        ].map(t => (
-          <button key={t.id} onClick={()=>setTab(t.id)} style={{
-            flex:1, padding:"10px 0", borderRadius:R.lg, cursor:"pointer", fontFamily:FONTS.ui,
-            border:`1.5px solid ${tab===t.id?C.primary:C.border}`,
-            background: tab===t.id?C.primaryL:C.surface,
-            color: tab===t.id?C.primaryD:C.text2, fontWeight:700, fontSize:11.5,
-            display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:3,
-          }}>
-            <Ti name={t.icon} size={15} color={tab===t.id?C.primary:C.text3}/>
-            {t.label}
-          </button>
-        ))}
+      {/* Onglets — en défilement horizontal, pas en répartition égale :
+          à 6 entrées, flex:1 chacun serait devenu trop étroit pour que le
+          libellé tienne proprement sur mobile. Jam Session et Ear Training
+          appellent `navigate` (elles quittent l'écran) au lieu de `setTab`
+          (qui change juste le contenu affiché) — mêmes onglets, deux
+          comportements au clic, comme n'importe quel onglet qui mène vers
+          une page à part ailleurs dans l'app. */}
+      <div style={{ overflowX:"auto", WebkitOverflowScrolling:"touch", padding:"14px 20px 0" }}>
+        <div style={{ display:"flex", gap:8, width:"max-content" }}>
+          {[
+            { id:"metronome", label:"Métronome",    icon:"clock" },
+            { id:"tuner",     label:"Accordeur",    icon:"microphone" },
+            { id:"chords",    label:"Accords",      icon:"music" },
+            { id:"neck",      label:"Manche",       icon:"guitar-pick" },
+            { id:"tablature", label:"Tablature",    icon:"edit" },
+            { id:"jam",       label:"Jam Session",  icon:"music-plus", externe:true },
+            { id:"ear",       label:"Ear Training", icon:"ear",        externe:true },
+          ].map(t => (
+            <button key={t.id} onClick={()=> t.externe ? navigate(t.id) : setTab(t.id)} style={{
+              flexShrink:0, width:82, padding:"10px 4px", borderRadius:R.lg, cursor:"pointer", fontFamily:FONTS.ui,
+              border:`1.5px solid ${tab===t.id?C.primary:C.border}`,
+              background: tab===t.id?C.primaryL:C.surface,
+              color: tab===t.id?C.primaryD:C.text2, fontWeight:700, fontSize:10.5,
+              display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:3,
+              textAlign:"center", lineHeight:1.2,
+            }}>
+              <Ti name={t.icon} size={15} color={tab===t.id?C.primary:C.text3}/>
+              {t.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Contenu */}
@@ -1186,55 +1427,10 @@ function ToolboxScreen({ onBack, navigate }) {
         {tab === "metronome" ? <Metronome/>
          : tab === "tuner"     ? <Tuner/>
          : tab === "chords"    ? <ChordPlayer/>
+         : tab === "tablature" ? <TabEditor/>
          : <FretboardExplorer embedded />}
       </div>
 
-      {/* ── Activités ──────────────────────────────────────────────────
-          Jam Session et Ear Training vivaient sur l'ancien Accueil, retirés
-          lors de la fusion avec Parcours — l'intention était qu'ils
-          rejoignent Pratique, mais ça n'a jamais été fait : ils étaient
-          devenus injoignables nulle part dans l'app. Ils atterrissent ici
-          plutôt : ce sont des activités libres, sans suivi de maîtrise,
-          alors que Pratique s'est construite autour du suivi Vu/Compris/
-          Ancré — la frontière est plus nette ainsi.
-
-          Section séparée du bloc d'onglets ci-dessus, pas une 5e et 6e
-          tuile dans la même rangée : les onglets changent le contenu
-          affiché sur place, ces deux cartes quittent l'écran vers une page
-          à part. Les mélanger aurait été trompeur. */}
-      <div style={{ padding:"22px 20px 0" }}>
-        <div style={{ fontSize:11, fontWeight:700, color:C.text3, textTransform:"uppercase", letterSpacing:".06em", marginBottom:8 }}>
-          Activités
-        </div>
-        <button onClick={()=>navigate("jam")} className="gr-focus" style={{
-          display:"flex", alignItems:"center", gap:12, width:"100%", textAlign:"left",
-          background:C.surface, border:`1.5px solid ${C.border}`, borderRadius:R.lg,
-          padding:"12px 14px", marginBottom:8, cursor:"pointer",
-        }}>
-          <div style={{ width:34, height:34, borderRadius:R.sm, background:C.surface2, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-            <Ti name="music-plus" size={16} color={C.pink}/>
-          </div>
-          <div style={{ flex:1, minWidth:0 }}>
-            <div style={{ fontSize:13.5, fontWeight:800, color:C.text }}>Jam Session</div>
-            <div style={{ fontSize:11, color:C.text3, marginTop:1 }}>Improvise sur un backing track, à ton rythme</div>
-          </div>
-          <Ti name="chevron-right" size={16} color={C.text3}/>
-        </button>
-        <button onClick={()=>navigate("ear")} className="gr-focus" style={{
-          display:"flex", alignItems:"center", gap:12, width:"100%", textAlign:"left",
-          background:C.surface, border:`1.5px solid ${C.border}`, borderRadius:R.lg,
-          padding:"12px 14px", marginBottom:8, cursor:"pointer",
-        }}>
-          <div style={{ width:34, height:34, borderRadius:R.sm, background:C.surface2, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-            <Ti name="ear" size={16} color={C.green}/>
-          </div>
-          <div style={{ flex:1, minWidth:0 }}>
-            <div style={{ fontSize:13.5, fontWeight:800, color:C.text }}>Ear Training</div>
-            <div style={{ fontSize:11, color:C.text3, marginTop:1 }}>Entraîne ton oreille à reconnaître intervalles et accords</div>
-          </div>
-          <Ti name="chevron-right" size={16} color={C.text3}/>
-        </button>
-      </div>
     </div>
   );
 }
