@@ -1132,7 +1132,7 @@ function ChordPlayer() {
   );
 }
 
-function ToolboxScreen({ onBack }) {
+function ToolboxScreen({ onBack, navigate }) {
   const C = useC();
   const [tab, setTab] = useState("metronome");
 
@@ -1187,6 +1187,53 @@ function ToolboxScreen({ onBack }) {
          : tab === "tuner"     ? <Tuner/>
          : tab === "chords"    ? <ChordPlayer/>
          : <FretboardExplorer embedded />}
+      </div>
+
+      {/* ── Activités ──────────────────────────────────────────────────
+          Jam Session et Ear Training vivaient sur l'ancien Accueil, retirés
+          lors de la fusion avec Parcours — l'intention était qu'ils
+          rejoignent Pratique, mais ça n'a jamais été fait : ils étaient
+          devenus injoignables nulle part dans l'app. Ils atterrissent ici
+          plutôt : ce sont des activités libres, sans suivi de maîtrise,
+          alors que Pratique s'est construite autour du suivi Vu/Compris/
+          Ancré — la frontière est plus nette ainsi.
+
+          Section séparée du bloc d'onglets ci-dessus, pas une 5e et 6e
+          tuile dans la même rangée : les onglets changent le contenu
+          affiché sur place, ces deux cartes quittent l'écran vers une page
+          à part. Les mélanger aurait été trompeur. */}
+      <div style={{ padding:"22px 20px 0" }}>
+        <div style={{ fontSize:11, fontWeight:700, color:C.text3, textTransform:"uppercase", letterSpacing:".06em", marginBottom:8 }}>
+          Activités
+        </div>
+        <button onClick={()=>navigate("jam")} className="gr-focus" style={{
+          display:"flex", alignItems:"center", gap:12, width:"100%", textAlign:"left",
+          background:C.surface, border:`1.5px solid ${C.border}`, borderRadius:R.lg,
+          padding:"12px 14px", marginBottom:8, cursor:"pointer",
+        }}>
+          <div style={{ width:34, height:34, borderRadius:R.sm, background:C.surface2, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+            <Ti name="music-plus" size={16} color={C.pink}/>
+          </div>
+          <div style={{ flex:1, minWidth:0 }}>
+            <div style={{ fontSize:13.5, fontWeight:800, color:C.text }}>Jam Session</div>
+            <div style={{ fontSize:11, color:C.text3, marginTop:1 }}>Improvise sur un backing track, à ton rythme</div>
+          </div>
+          <Ti name="chevron-right" size={16} color={C.text3}/>
+        </button>
+        <button onClick={()=>navigate("ear")} className="gr-focus" style={{
+          display:"flex", alignItems:"center", gap:12, width:"100%", textAlign:"left",
+          background:C.surface, border:`1.5px solid ${C.border}`, borderRadius:R.lg,
+          padding:"12px 14px", marginBottom:8, cursor:"pointer",
+        }}>
+          <div style={{ width:34, height:34, borderRadius:R.sm, background:C.surface2, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+            <Ti name="ear" size={16} color={C.green}/>
+          </div>
+          <div style={{ flex:1, minWidth:0 }}>
+            <div style={{ fontSize:13.5, fontWeight:800, color:C.text }}>Ear Training</div>
+            <div style={{ fontSize:11, color:C.text3, marginTop:1 }}>Entraîne ton oreille à reconnaître intervalles et accords</div>
+          </div>
+          <Ti name="chevron-right" size={16} color={C.text3}/>
+        </button>
       </div>
     </div>
   );

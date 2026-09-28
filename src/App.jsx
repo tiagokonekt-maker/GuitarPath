@@ -460,7 +460,7 @@ function AppInner({ onThemeChange }) {
       // que par un bouton flottant. Le bouton est protégé par
       // `{onBack && (...)}` dans ToolboxScreen.jsx — ne pas lui passer ce
       // prop suffit à le faire disparaître, sans toucher au fichier.
-      case "toolbox":   return <ToolboxScreen />;
+      case "toolbox":   return <ToolboxScreen navigate={navigate} />;
       case "review":    return <ReviewSession questions={reviewQuestions} state={state} dispatch={dispatch} onDone={() => navigate("home")} />;
       case "practice":  return <PracticeScreen state={state} dispatch={dispatch} />;
       case "challenge": return <ChallengeScreen state={state} dispatch={dispatch} navigate={navigate} />;

@@ -29,6 +29,7 @@ import { playLessonComplete, playChestOpen } from "../audioEngine.js";
 import { useWakeLock } from "../hooks/useWakeLock.js";
 import { pickTip, TIP_LABELS } from "../store/gropiTips.js";
 import { gradeForLevel } from "../store/grades.js";
+import { lessonMastery } from "../store/mastery.js";
 
 // ── Popup de bienvenue : affiché une fois PAR CHARGEMENT DE PAGE ──────────
 // Volontairement une variable de MODULE, pas un état React ni une donnée
@@ -130,6 +131,54 @@ function sideToX(side, inset) {
   return 50;   // le coffre, toujours centré
 }
 
+// ── Anneau de maîtrise ───────────────────────────────────────────────────
+// 3 segments égaux — Vu / Compris / Ancré — plutôt qu'une barre continue :
+// mastery.js modélise 3 PALIERS DISCRETS, pas un pourcentage. Un anneau
+// continu aurait suggéré une granularité qui n'existe pas dans les données.
+//
+// Trois cercles superposés, chacun tronqué en un seul arc de 104° (via
+// stroke-dasharray) et pivoté de 120° l'un par rapport à l'autre — plutôt
+// qu'un unique cercle avec un dasharray répété, pour pouvoir colorer
+// chaque segment indépendamment selon le palier atteint.
+function AnneauMaitrise({ niveau, size, couleur, C }) {
+  // Erreur corrigée : `rayon` valait size/2, exactement le rayon du BOUTON
+  // lui-même — l'anneau se dessinait donc pile sur la bordure existante,
+  // invisible par construction. Il doit être visiblement PLUS GRAND, avec
+  // un vrai espace entre le bouton et l'anneau, pour se lire comme un halo
+  // distinct plutôt qu'un renforcement de la bordure déjà là.
+  const traitLargeur = 3;
+  const ecartExterieur = 4;   // espace visible entre le bouton et l'anneau
+  const rayon = size / 2 + ecartExterieur + traitLargeur / 2;
+  const diametreSvg = (rayon + traitLargeur / 2) * 2;
+  const centre = diametreSvg / 2;
+  const decalage = -(diametreSvg - size) / 2;
+  const circonference = 2 * Math.PI * rayon;
+  const segDeg = 104, gapDeg = 360/3 - 104; // 3 segments + 3 espaces = 360°
+  const segLen = circonference * (segDeg / 360);
+  const dash = `${segLen} ${circonference - segLen}`;
+
+  return (
+    <svg
+      aria-hidden="true"
+      width={diametreSvg} height={diametreSvg}
+      style={{ position:"absolute", inset:decalage, pointerEvents:"none" }}
+    >
+      {[0, 1, 2].map(i => (
+        <circle
+          key={i}
+          cx={centre} cy={centre} r={rayon}
+          fill="none"
+          stroke={niveau > i ? couleur : C.border}
+          strokeWidth={traitLargeur}
+          strokeDasharray={dash}
+          strokeLinecap="round"
+          transform={`rotate(${-90 + i * 120} ${centre} ${centre})`}
+        />
+      ))}
+    </svg>
+  );
+}
+
 function PathNode({ lesson, index, state, th, onSelect, isCurrent, isLocked, gropiTip, layout }) {
   const C = useC();
   const done = !!state.completedLessons[lesson.id];
@@ -145,6 +194,13 @@ function PathNode({ lesson, index, state, th, onSelect, isCurrent, isLocked, gro
   else              { bg=C.surface;   border=th.color;   iconEl=<Ti name="book-2" size={17} color={th.color}/>; } // disponible dans l'unité ouverte
 
   const sz = isCurrent ? 64 : 54;
+  // Uniquement sur une leçon déjà faite : lessonMastery renvoie de toute
+  // façon LOCKED (0) tant que ce n'est pas le cas, et le nœud "en cours"
+  // porte déjà son propre anneau pulsant — superposer les deux aurait fait
+  // double emploi visuel sur le seul nœud qui ne peut de toute façon jamais
+  // être à la fois "en cours" et "fait" (isCurrent implique justement que
+  // la leçon ne l'est pas encore).
+  const mastery = done ? lessonMastery(lesson, state) : null;
 
   return (
     <div style={{
@@ -172,6 +228,9 @@ function PathNode({ lesson, index, state, th, onSelect, isCurrent, isLocked, gro
         }}
       >
         {iconEl}
+        {mastery && (
+          <AnneauMaitrise niveau={mastery.level} size={sz} couleur={th.color} C={C} />
+        )}
         {done&&(
           <div style={{
             position:"absolute",top:-4,right:-4,

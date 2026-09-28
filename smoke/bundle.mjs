@@ -2150,8 +2150,8 @@ async function playProgression(chords, secondsPerChord = 1.5, onStep) {
   voicedChords.forEach((voiced, idx) => {
     const jouer = () => {
       const direction = idx % 2 === 0 ? "down" : "up";
-      const humanize = (Math.random() - 0.5) * 0.012;
-      strumInto(voiced, secondsPerChord * 0.9, Tone.now() + 0.02 + humanize, direction);
+      const humanize2 = (Math.random() - 0.5) * 0.012;
+      strumInto(voiced, secondsPerChord * 0.9, Tone.now() + 0.02 + humanize2, direction);
       onStep?.(idx);
     };
     if (idx === 0) jouer();
@@ -2572,6 +2572,105 @@ function gradeForLevel(level) {
   return current;
 }
 
+// src/store/mastery.js
+var MASTERY = {
+  LOCKED: 0,
+  // pas encore ouverte
+  SEEN: 1,
+  // lue
+  UNDERSTOOD: 2,
+  // questions réussies
+  ANCHORED: 3
+  // questions retenues dans la durée
+};
+var MASTERY_LABELS = {
+  0: "\xC0 d\xE9couvrir",
+  1: "Vu",
+  2: "Compris",
+  3: "Ancr\xE9"
+};
+var MASTERY_HINTS = {
+  0: "Ouvre la le\xE7on pour commencer",
+  1: "R\xE9ussis ses questions pour passer \xE0 \xAB compris \xBB",
+  2: "Reviens la r\xE9viser dans les semaines qui viennent pour l'ancrer",
+  3: "Retenu dans la dur\xE9e"
+};
+var ANCHOR_DAYS = 21;
+var ANCHOR_RATIO = 0.8;
+var quizRequisPourAncrer = (n) => Math.max(1, Math.ceil(n * ANCHOR_RATIO));
+var questionReussie = (state, quizId) => !!state?.quizResults?.[quizId]?.correct;
+function questionAncree(state, quizId) {
+  const h = state?.reviewHistory?.[quizId];
+  if (!h) return false;
+  if ((h.interval || 0) < ANCHOR_DAYS) return false;
+  return (h.successes || 0) > 0;
+}
+function lessonMastery(lesson, state, quizIndex = null) {
+  const completee = !!state?.completedLessons?.[lesson?.id];
+  const ids = (lesson?.quiz || []).filter((id) => !quizIndex || quizIndex.has(id));
+  const total = ids.length;
+  const reussies = ids.filter((id) => questionReussie(state, id)).length;
+  const ancrees = ids.filter((id) => questionAncree(state, id)).length;
+  const requis = quizRequisPourAncrer(total);
+  const masterable = total > 0;
+  let level = MASTERY.LOCKED;
+  if (completee) level = MASTERY.SEEN;
+  if (completee && masterable && reussies === total) level = MASTERY.UNDERSTOOD;
+  if (completee && masterable && reussies === total && ancrees >= requis) level = MASTERY.ANCHORED;
+  let pct = 0;
+  if (completee) {
+    pct = 33;
+    if (masterable) {
+      pct += Math.round(33 * (total ? reussies / total : 0));
+      pct += Math.round(34 * (requis ? Math.min(1, ancrees / requis) : 0));
+    } else {
+      pct = 33;
+    }
+  }
+  return {
+    level,
+    label: MASTERY_LABELS[level],
+    hint: MASTERY_HINTS[level],
+    masterable,
+    total,
+    reussies,
+    ancrees,
+    requisPourAncrer: requis,
+    pct: Math.min(100, pct)
+  };
+}
+function masteryStats(content, state, moduleId = null) {
+  const quizIndex = new Map((content?.quiz || []).map((q) => [q.id, q]));
+  const lecons = (content?.courses || []).filter((c) => !moduleId || c.id === moduleId).flatMap((c) => (c.lessons || []).map((l) => ({ ...l, courseId: c.id })));
+  const paliers = [0, 0, 0, 0];
+  let masterables = 0, sansQuiz = 0, sommePct = 0;
+  for (const l of lecons) {
+    const m = lessonMastery(l, state, quizIndex);
+    paliers[m.level]++;
+    if (m.masterable) masterables++;
+    else sansQuiz++;
+    sommePct += m.pct;
+  }
+  const total = lecons.length;
+  return {
+    total,
+    sansQuiz,
+    // Une leçon sans question ne compte que pour un palier (vu).
+    objectifs: masterables * 3 + sansQuiz,
+    atteints: paliers[1] + paliers[2] * 2 + paliers[3] * 3,
+    aDecouvrir: paliers[0],
+    vues: paliers[1],
+    comprises: paliers[2],
+    ancrees: paliers[3],
+    pctMoyen: total ? Math.round(sommePct / total) : 0
+  };
+}
+function prochainesAAncrer(content, state, limite = 5) {
+  const quizIndex = new Map((content?.quiz || []).map((q) => [q.id, q]));
+  const lecons = (content?.courses || []).flatMap((c) => (c.lessons || []).map((l) => ({ ...l, courseId: c.id })));
+  return lecons.map((l) => ({ lesson: l, m: lessonMastery(l, state, quizIndex) })).filter((x) => x.m.level === MASTERY.UNDERSTOOD && x.m.masterable).map((x) => ({ ...x, reste: x.m.requisPourAncrer - x.m.ancrees })).sort((a, b) => a.reste - b.reste || b.m.ancrees - a.m.ancrees).slice(0, limite);
+}
+
 // src/screens/CoursesScreen.jsx
 import { jsx as jsx6, jsxs as jsxs4 } from "react/jsx-runtime";
 var popupDejaAffiche = false;
@@ -2611,6 +2710,42 @@ function sideToX(side, inset) {
   if (side === "right") return Math.min(92, Math.max(50, 100 - pct));
   return 50;
 }
+function AnneauMaitrise({ niveau, size, couleur, C }) {
+  const traitLargeur = 3;
+  const ecartExterieur = 4;
+  const rayon = size / 2 + ecartExterieur + traitLargeur / 2;
+  const diametreSvg = (rayon + traitLargeur / 2) * 2;
+  const centre = diametreSvg / 2;
+  const decalage = -(diametreSvg - size) / 2;
+  const circonference = 2 * Math.PI * rayon;
+  const segDeg = 104, gapDeg = 360 / 3 - 104;
+  const segLen = circonference * (segDeg / 360);
+  const dash = `${segLen} ${circonference - segLen}`;
+  return /* @__PURE__ */ jsx6(
+    "svg",
+    {
+      "aria-hidden": "true",
+      width: diametreSvg,
+      height: diametreSvg,
+      style: { position: "absolute", inset: decalage, pointerEvents: "none" },
+      children: [0, 1, 2].map((i) => /* @__PURE__ */ jsx6(
+        "circle",
+        {
+          cx: centre,
+          cy: centre,
+          r: rayon,
+          fill: "none",
+          stroke: niveau > i ? couleur : C.border,
+          strokeWidth: traitLargeur,
+          strokeDasharray: dash,
+          strokeLinecap: "round",
+          transform: `rotate(${-90 + i * 120} ${centre} ${centre})`
+        },
+        i
+      ))
+    }
+  );
+}
 function PathNode({ lesson, index, state, th, onSelect, isCurrent, isLocked, gropiTip, layout }) {
   const C = useC();
   const done = !!state.completedLessons[lesson.id];
@@ -2635,6 +2770,7 @@ function PathNode({ lesson, index, state, th, onSelect, isCurrent, isLocked, gro
     iconEl = /* @__PURE__ */ jsx6(Ti, { name: "book-2", size: 17, color: th.color });
   }
   const sz = isCurrent ? 64 : 54;
+  const mastery = done ? lessonMastery(lesson, state) : null;
   return /* @__PURE__ */ jsxs4("div", { style: {
     display: "flex",
     flexDirection: "column",
@@ -2668,6 +2804,7 @@ function PathNode({ lesson, index, state, th, onSelect, isCurrent, isLocked, gro
         },
         children: [
           iconEl,
+          mastery && /* @__PURE__ */ jsx6(AnneauMaitrise, { niveau: mastery.level, size: sz, couleur: th.color, C }),
           done && /* @__PURE__ */ jsx6("div", { style: {
             position: "absolute",
             top: -4,
@@ -6784,7 +6921,468 @@ function beatToToneTime(beat) {
 
 // src/screens/JamSession.jsx
 init_tone_stub();
+
+// src/jam/arrangement/arranger.js
+var SECTION_TEMPLATES = [
+  { role: "groove", bars: 32, offset: 0, weight: 3 },
+  { role: "groove", bars: 16, offset: 0, weight: 2 },
+  { role: "build", bars: 8, offset: 1, weight: 2 },
+  { role: "peak", bars: 16, offset: 2, weight: 2 },
+  { role: "drop", bars: 8, offset: -1, weight: 1 }
+];
+function createPlanner({ baseEnergy = 3, seedRole = "intro" } = {}) {
+  let sections = [];
+  let barCursor = 0;
+  let lastRole = seedRole;
+  let base = Math.max(1, Math.min(5, baseEnergy));
+  function push(role, bars, energy) {
+    const clamped = Math.max(1, Math.min(5, Math.round(energy)));
+    sections.push({ role, startBar: barCursor, bars, energy: clamped });
+    barCursor += bars;
+    lastRole = role;
+    return sections[sections.length - 1];
+  }
+  push("intro", 4, Math.max(1, base - 2));
+  return {
+    get sections() {
+      return sections;
+    },
+    get plannedBars() {
+      return barCursor;
+    },
+    /**
+     * Étend le plan jusqu'à couvrir `untilBar`.
+     * Génération par blocs glissants : le plan reste toujours en avance
+     * d'environ une minute, jamais plus — au-delà, on ne pourrait plus
+     * réagir si l'utilisateur change l'énergie.
+     */
+    ensurePlannedUpTo(untilBar) {
+      let guard = 0;
+      while (barCursor < untilBar && guard++ < 80) {
+        const candidates = SECTION_TEMPLATES.filter((t) => t.role !== lastRole);
+        const total = candidates.reduce((s, t) => s + t.weight, 0);
+        let r = Math.random() * total;
+        let chosen = candidates[candidates.length - 1];
+        for (const t of candidates) {
+          r -= t.weight;
+          if (r <= 0) {
+            chosen = t;
+            break;
+          }
+        }
+        push(chosen.role, chosen.bars, base + chosen.offset);
+      }
+    },
+    sectionAt(bar) {
+      for (const s of sections) {
+        if (bar >= s.startBar && bar < s.startBar + s.bars) return s;
+      }
+      return sections[sections.length - 1];
+    },
+    /**
+     * Décalage manuel de l'énergie (contrôles vivants).
+     * Déplace la RÉFÉRENCE : tout l'arrangement à venir suit, pas seulement
+     * la section en cours.
+     */
+    nudgeEnergy(delta, fromBar) {
+      base = Math.max(1, Math.min(5, base + delta));
+      sections = sections.filter((s) => s.startBar + s.bars <= fromBar + 2);
+      barCursor = sections.length ? sections[sections.length - 1].startBar + sections[sections.length - 1].bars : fromBar;
+      lastRole = "drop";
+      push("groove", 16, base);
+      return base;
+    },
+    get baseEnergy() {
+      return base;
+    },
+    reset() {
+      sections = [];
+      barCursor = 0;
+      base = Math.max(1, Math.min(5, baseEnergy));
+      lastRole = seedRole;
+    }
+  };
+}
+function weightedPick2(items, exclude = null) {
+  const pool = items.filter((i) => i.id !== exclude);
+  const list = pool.length ? pool : items;
+  const total = list.reduce((s, i) => s + (i.weight ?? 1), 0);
+  let r = Math.random() * total;
+  for (const i of list) {
+    r -= i.weight ?? 1;
+    if (r <= 0) return i;
+  }
+  return list[list.length - 1];
+}
+function createDirector(pack, { phraseBars = 4 } = {}) {
+  let lastPatternId = null;
+  let lastFillId = null;
+  let lastFillBar = -99;
+  let forceChange = false;
+  return {
+    /** Bouton « Change » : renouvelle le vocabulaire immédiatement. */
+    requestChange() {
+      forceChange = true;
+    },
+    /**
+     * Décide de tout ce qui concerne UNE mesure.
+     * @returns { patternId, fill, crash, useRide, ghostNotes, openHats }
+     */
+    decideBar(barIndex, section, energy) {
+      const barInPhrase = barIndex % phraseBars;
+      const isPhraseEnd = barInPhrase === phraseBars - 1;
+      const isSectionTop = barIndex === section.startBar;
+      const available = (pack.drumPatterns || []).filter((p) => (p.minEnergy ?? 1) <= energy);
+      let patternId = lastPatternId;
+      const mustChange = forceChange || isSectionTop || patternId === null || !available.some((p) => p.id === patternId);
+      if (mustChange && available.length) {
+        patternId = weightedPick2(available, available.length > 1 ? lastPatternId : null).id;
+        lastPatternId = patternId;
+        forceChange = false;
+      }
+      let fill = null;
+      const fillsOk = (pack.fills || []).filter((f) => (f.minEnergy ?? 1) <= energy);
+      if (isPhraseEnd && fillsOk.length && barIndex - lastFillBar >= 2) {
+        const probability = 0.18 + energy * 0.11;
+        if (Math.random() < probability) {
+          fill = weightedPick2(fillsOk, fillsOk.length > 1 ? lastFillId : null);
+          lastFillId = fill.id;
+          lastFillBar = barIndex;
+        }
+      }
+      return {
+        patternId,
+        fill,
+        // Crash uniquement en tête de section : c'est ce qui marque la forme.
+        crash: isSectionTop && section.role !== "intro" && energy >= 2,
+        useRide: energy >= 4,
+        ghostNotes: energy >= 3,
+        openHats: energy >= 4,
+        isPhraseEnd,
+        phasePos: barInPhrase / phraseBars
+      };
+    },
+    reset() {
+      lastPatternId = null;
+      lastFillId = null;
+      lastFillBar = -99;
+      forceChange = false;
+    }
+  };
+}
+
+// src/jam/music/groove.js
+var SYMBOL_VELOCITY = {
+  "X": 1,
+  // accent
+  "x": 0.72,
+  // normal
+  "o": 0.34,
+  // ghost — essentiel au groove, presque toujours oublié
+  "O": 0.85
+  // charleston ouverte
+};
+var OPEN_SYMBOLS = /* @__PURE__ */ new Set(["O"]);
+function parseGrid(grid) {
+  const steps = grid.length;
+  const out = [];
+  for (let i = 0; i < steps; i++) {
+    const sym = grid[i];
+    if (sym === "." || sym === " ") continue;
+    const vel = SYMBOL_VELOCITY[sym];
+    if (vel === void 0) continue;
+    out.push({ step: i, stepsPerBar: steps, velocity: vel, open: OPEN_SYMBOLS.has(sym) });
+  }
+  return out;
+}
+function swingRatio(base, bpm) {
+  if (base <= 0) return 0.5;
+  const tempoFactor = Math.max(0.4, Math.min(1, 1 - (bpm - 80) / 240));
+  return 0.5 + base * tempoFactor * (2 / 3 - 0.5);
+}
+function stepPosition(step, stepsPerBar, swing, beatsPerBar = 4) {
+  const stepsPerBeat = stepsPerBar / beatsPerBar;
+  const beat = Math.floor(step / stepsPerBeat);
+  const within = step % stepsPerBeat;
+  let frac = within / stepsPerBeat;
+  if (stepsPerBeat >= 2) {
+    const halfway = stepsPerBeat / 2;
+    if (within === halfway) frac = swing;
+  }
+  return (beat + frac) / beatsPerBar;
+}
+function gaussian(sigma = 1, clamp = 2.5) {
+  let u = 0, v = 0;
+  while (u === 0) u = Math.random();
+  while (v === 0) v = Math.random();
+  const z = Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  return Math.max(-clamp, Math.min(clamp, z)) * sigma;
+}
+function humanize(ev, feel, phasePos = 0, energy = 3) {
+  const offsets = feel.offsets || {};
+  const offsetMs = offsets[ev.instrument] ?? 0;
+  const jitterMs = gaussian((feel.jitterMs ?? 6) / 2);
+  const breath = 1 + Math.sin(phasePos * Math.PI) * 0.06;
+  const energyGain = 0.62 + (energy - 1) * 0.095;
+  const velJitter = gaussian(feel.velSigma ?? 0.055);
+  return {
+    ...ev,
+    time: ev.time + (offsetMs + jitterMs) / 1e3,
+    velocity: Math.max(0.05, Math.min(1, ev.velocity * energyGain * breath + velJitter))
+  };
+}
+
+// src/jam/generators/drums.js
+function generateDrumBar(pack, decision, opts) {
+  const { barStartTime, secPerBeat, beatsPerBar = 4, bpm, energy = 3 } = opts;
+  const barDuration = secPerBeat * beatsPerBar;
+  const feel = pack.humanize || {};
+  const swing = swingRatio(pack.feel?.swing ?? 0, bpm);
+  const pattern = (pack.drumPatterns || []).find((p) => p.id === decision.patternId) || (pack.drumPatterns || [])[0];
+  if (!pattern) return [];
+  const events = [];
+  for (const [instrument, grid] of Object.entries(pattern.grid || {})) {
+    const allowGhosts = decision.ghostNotes;
+    for (const hit of parseGrid(grid)) {
+      if (!allowGhosts && hit.velocity < 0.4) continue;
+      let inst = instrument;
+      if (instrument === "hihat" && decision.useRide) inst = "ride";
+      if (hit.open && !decision.openHats) continue;
+      const frac = stepPosition(hit.step, hit.stepsPerBar, swing, beatsPerBar);
+      events.push({
+        instrument: hit.open ? inst === "hihat" ? "hihatOpen" : inst : inst,
+        time: barStartTime + frac * barDuration,
+        velocity: hit.velocity,
+        open: hit.open
+      });
+    }
+  }
+  if (decision.fill?.grid) {
+    const fillStart = 1 - (decision.fill.beats ?? 2) / beatsPerBar;
+    for (let i = events.length - 1; i >= 0; i--) {
+      const rel = (events[i].time - barStartTime) / barDuration;
+      if (rel >= fillStart && events[i].instrument !== "kick") events.splice(i, 1);
+    }
+    for (const [instrument, grid] of Object.entries(decision.fill.grid)) {
+      for (const hit of parseGrid(grid)) {
+        const frac = hit.step / hit.stepsPerBar;
+        if (frac < fillStart) continue;
+        events.push({
+          instrument,
+          time: barStartTime + frac * barDuration,
+          velocity: hit.velocity,
+          open: false
+        });
+      }
+    }
+  }
+  if (decision.crash) {
+    events.push({ instrument: "crash", time: barStartTime, velocity: 0.9, open: false });
+  }
+  const humanized = events.map(
+    (ev) => humanize(ev, feel, decision.phasePos ?? 0, energy)
+  );
+  humanized.sort((a, b) => a.time - b.time);
+  return humanized;
+}
+
+// src/jam/packs/blues-shuffle.json
+var blues_shuffle_default = {
+  id: "blues-shuffle",
+  name: "Blues shuffle",
+  tempoRange: [70, 110],
+  defaultTempo: 88,
+  feel: {
+    subdivision: 12,
+    swing: 0.9
+  },
+  instruments: ["drums", "bass", "comp"],
+  audioPack: "drums-vcsl",
+  energyLevels: {
+    "1": { instruments: ["drums"], velocityRange: [0.3, 0.5] },
+    "2": { instruments: ["drums", "bass"], velocityRange: [0.4, 0.62] },
+    "3": { instruments: ["drums", "bass", "comp"], velocityRange: [0.5, 0.78] },
+    "4": { instruments: ["drums", "bass", "comp"], velocityRange: [0.62, 0.9] },
+    "5": { instruments: ["drums", "bass", "comp"], velocityRange: [0.72, 1] }
+  },
+  drumPatterns: [
+    {
+      id: "shuffle-base",
+      weight: 0.55,
+      minEnergy: 1,
+      grid: {
+        kick: "x..x..x..x..",
+        snare: "...X.....X..",
+        hihat: "x.xx.xx.xx.x"
+      }
+    },
+    {
+      id: "shuffle-ghosts",
+      weight: 0.28,
+      minEnergy: 3,
+      grid: {
+        kick: "x..x.ox..x..",
+        snare: "..oX..o..X.o",
+        hihat: "x.xx.xx.xx.x"
+      }
+    },
+    {
+      id: "shuffle-open",
+      weight: 0.17,
+      minEnergy: 4,
+      grid: {
+        kick: "x..x..x..x.x",
+        snare: "...X..o..X..",
+        hihat: "x.xO.xx.xO.x"
+      }
+    }
+  ],
+  fills: [
+    {
+      id: "fill-snare-2",
+      weight: 0.4,
+      minEnergy: 2,
+      beats: 2,
+      grid: { snare: "......x.x.xX" }
+    },
+    {
+      id: "fill-toms",
+      weight: 0.35,
+      minEnergy: 3,
+      beats: 2,
+      grid: {
+        snare: "......x.....",
+        tomMid: ".......x.x..",
+        tomLow: "..........xX"
+      }
+    },
+    {
+      id: "fill-short",
+      weight: 0.25,
+      minEnergy: 2,
+      beats: 1,
+      grid: { snare: ".........xxX" }
+    }
+  ],
+  humanize: {
+    offsets: {
+      kick: -3,
+      snare: 4,
+      hihat: 0,
+      ride: 1,
+      crash: -2,
+      tomMid: 2,
+      tomLow: 2
+    },
+    jitterMs: 7,
+    velSigma: 0.06
+  },
+  bassStyle: { approach: "shuffleWalk", ghostNotes: true },
+  compStyle: { instrument: "guitar-clean", rhythm: "shuffleChank", register: [48, 64] }
+};
+
+// src/jam/packs/funk-16.json
+var funk_16_default = {
+  id: "funk-16",
+  name: "Funk 16e",
+  tempoRange: [84, 112],
+  defaultTempo: 96,
+  feel: {
+    subdivision: 16,
+    swing: 0.12
+  },
+  instruments: ["drums", "bass", "comp"],
+  audioPack: "drums-vcsl",
+  energyLevels: {
+    "1": { instruments: ["drums"], velocityRange: [0.32, 0.52] },
+    "2": { instruments: ["drums", "bass"], velocityRange: [0.42, 0.64] },
+    "3": { instruments: ["drums", "bass", "comp"], velocityRange: [0.52, 0.8] },
+    "4": { instruments: ["drums", "bass", "comp"], velocityRange: [0.64, 0.92] },
+    "5": { instruments: ["drums", "bass", "comp"], velocityRange: [0.74, 1] }
+  },
+  drumPatterns: [
+    {
+      id: "funk-base",
+      weight: 0.5,
+      minEnergy: 1,
+      grid: {
+        kick: "x......x..x.....",
+        snare: "....X.......X...",
+        hihat: "x.x.x.x.x.x.x.x."
+      }
+    },
+    {
+      id: "funk-ghosts",
+      weight: 0.32,
+      minEnergy: 3,
+      grid: {
+        kick: "x..x...x..x...x.",
+        snare: "..o.X..o..o.X..o",
+        hihat: "xxxxxxxxxxxxxxxx"
+      }
+    },
+    {
+      id: "funk-open",
+      weight: 0.18,
+      minEnergy: 4,
+      grid: {
+        kick: "x..x...x..x.x...",
+        snare: "..o.X..o..o.X.o.",
+        hihat: "x.xOx.x.x.xOx.x."
+      }
+    }
+  ],
+  fills: [
+    {
+      id: "funk-fill-snare",
+      weight: 0.45,
+      minEnergy: 2,
+      beats: 1,
+      grid: { snare: "............xoxX" }
+    },
+    {
+      id: "funk-fill-toms",
+      weight: 0.35,
+      minEnergy: 3,
+      beats: 2,
+      grid: {
+        snare: "........x.x.....",
+        tomMid: "............x.x.",
+        tomLow: "..............xX"
+      }
+    },
+    {
+      id: "funk-fill-hat",
+      weight: 0.2,
+      minEnergy: 2,
+      beats: 1,
+      grid: { snare: "............x..X", hihat: "............xxx." }
+    }
+  ],
+  humanize: {
+    offsets: {
+      kick: -1,
+      snare: 1,
+      hihat: -1,
+      ride: 0,
+      crash: -2,
+      tomMid: 1,
+      tomLow: 1
+    },
+    jitterMs: 4,
+    velSigma: 0.05
+  },
+  bassStyle: { approach: "syncopated16", ghostNotes: true, octaveJumps: 0.15 },
+  compStyle: { instrument: "guitar-clean", rhythm: "chank16", register: [48, 64] }
+};
+
+// src/screens/JamSession.jsx
 import { Fragment as Fragment8, jsx as jsx12, jsxs as jsxs10 } from "react/jsx-runtime";
+var PACK_PAR_STYLE = {
+  blues: blues_shuffle_default,
+  blues12: blues_shuffle_default,
+  funk: funk_16_default
+};
 function shade2(hex, amount) {
   const h = hex.replace("#", "");
   const num = parseInt(h, 16);
@@ -6951,6 +7549,8 @@ function BackingTrackPlayer({ context: context2, root, bpm }) {
   const drumsRef = useRef7(null);
   const drumsLoadedRef = useRef7(false);
   const drumRRRef = useRef7({});
+  const plannerRef = useRef7(null);
+  const directorRef = useRef7(null);
   const reverbRef = useRef7(null);
   const delayRef = useRef7(null);
   const compRef = useRef7(null);
@@ -7258,6 +7858,11 @@ function BackingTrackPlayer({ context: context2, root, bpm }) {
         }).connect(compRef.current);
       }
       const style = getStyle(context2.id);
+      const pack = PACK_PAR_STYLE[style] || null;
+      if (pack) {
+        plannerRef.current = createPlanner({ baseEnergy: 3 });
+        directorRef.current = createDirector(pack);
+      }
       const progression2 = context2.chords;
       let barMap = [];
       for (const chord of progression2) {
@@ -7277,11 +7882,11 @@ function BackingTrackPlayer({ context: context2, root, bpm }) {
         const compHits = comperRef.current?.nextBar(barIdx, 3) || [];
         const nextVoiced = getVoicedChord(nextRoot, nextChord.quality, style);
         for (const hit of compHits) {
-          const humanize = (Math.random() - 0.5) * 8e-3;
+          const humanize2 = (Math.random() - 0.5) * 8e-3;
           samplerRef.current?.triggerAttackRelease(
             hit.anticipate ? nextVoiced : voiced,
             hit.dur,
-            Time(time) + Time(beatToToneTime(hit.beat)) + humanize,
+            Time(time) + Time(beatToToneTime(hit.beat)) + humanize2,
             hit.velocity
           );
         }
@@ -7293,6 +7898,19 @@ function BackingTrackPlayer({ context: context2, root, bpm }) {
             velocity ?? 0.8
           );
         });
+        if (pack && plannerRef.current && directorRef.current) {
+          plannerRef.current.ensurePlannedUpTo(barIdx + 24);
+          const section = plannerRef.current.sectionAt(barIdx);
+          const decision = directorRef.current.decideBar(barIdx, section, section.energy);
+          const events = generateDrumBar(pack, decision, {
+            barStartTime: time,
+            secPerBeat: 60 / bpm,
+            beatsPerBar: 4,
+            bpm,
+            energy: section.energy
+          });
+          for (const ev of events) playDrum(ev.instrument, ev.time, ev.velocity);
+        }
         getDraw().schedule(() => {
           setBeat(barIdx % totalBars2);
           const chordIdx = progression2.reduce((acc, c, i) => {
@@ -7302,25 +7920,30 @@ function BackingTrackPlayer({ context: context2, root, bpm }) {
           setCurrentChord(chordIdx);
         }, time);
       }, Array.from({ length: totalBars2 }, (_, i) => i), "1m");
-      const drumPattern = getDrumPattern(style);
-      const beatPart = new Part((time, event) => {
-        playDrum(event.type, time, event.velocity ?? 0.8);
-      }, [
-        ...drumPattern.kick.map((t) => ({ time: t, type: "kick" })),
-        ...drumPattern.snare.map((t) => ({ time: t, type: "snare" })),
-        ...drumPattern.hihat.map((t) => ({ time: t, type: "hihat" }))
-      ]);
-      beatPart.loop = true;
-      beatPart.loopEnd = "1m";
-      beatSeqRef.current = beatPart;
-      if (drumPattern.shuffle) {
-        getTransport().swing = 0.5;
-        getTransport().swingSubdivision = "8n";
+      let beatPart = null;
+      if (!pack) {
+        const drumPattern = getDrumPattern(style);
+        beatPart = new Part((time, event) => {
+          playDrum(event.type, time, event.velocity ?? 0.8);
+        }, [
+          ...drumPattern.kick.map((t) => ({ time: t, type: "kick" })),
+          ...drumPattern.snare.map((t) => ({ time: t, type: "snare" })),
+          ...drumPattern.hihat.map((t) => ({ time: t, type: "hihat" }))
+        ]);
+        beatPart.loop = true;
+        beatPart.loopEnd = "1m";
+        beatSeqRef.current = beatPart;
+        if (drumPattern.shuffle) {
+          getTransport().swing = 0.5;
+          getTransport().swingSubdivision = "8n";
+        } else {
+          getTransport().swing = 0;
+        }
       } else {
         getTransport().swing = 0;
       }
       seqRef.current.start(0);
-      beatPart.start(0);
+      if (beatPart) beatPart.start(0);
       getTransport().start();
       setPlaying(true);
     } catch (e) {
@@ -7365,6 +7988,8 @@ function BackingTrackPlayer({ context: context2, root, bpm }) {
       getTransport().cancel();
     } catch {
     }
+    plannerRef.current = null;
+    directorRef.current = null;
     setPlaying(false);
     setBeat(0);
     setCurrentChord(0);
@@ -7597,105 +8222,6 @@ __export(ProgressScreen_exports, {
   ProgressScreen: () => ProgressScreen
 });
 import { useState as useState11, useMemo as useMemo6 } from "react";
-
-// src/store/mastery.js
-var MASTERY = {
-  LOCKED: 0,
-  // pas encore ouverte
-  SEEN: 1,
-  // lue
-  UNDERSTOOD: 2,
-  // questions réussies
-  ANCHORED: 3
-  // questions retenues dans la durée
-};
-var MASTERY_LABELS = {
-  0: "\xC0 d\xE9couvrir",
-  1: "Vu",
-  2: "Compris",
-  3: "Ancr\xE9"
-};
-var MASTERY_HINTS = {
-  0: "Ouvre la le\xE7on pour commencer",
-  1: "R\xE9ussis ses questions pour passer \xE0 \xAB compris \xBB",
-  2: "Reviens la r\xE9viser dans les semaines qui viennent pour l'ancrer",
-  3: "Retenu dans la dur\xE9e"
-};
-var ANCHOR_DAYS = 21;
-var ANCHOR_RATIO = 0.8;
-var quizRequisPourAncrer = (n) => Math.max(1, Math.ceil(n * ANCHOR_RATIO));
-var questionReussie = (state, quizId) => !!state?.quizResults?.[quizId]?.correct;
-function questionAncree(state, quizId) {
-  const h = state?.reviewHistory?.[quizId];
-  if (!h) return false;
-  if ((h.interval || 0) < ANCHOR_DAYS) return false;
-  return (h.successes || 0) > 0;
-}
-function lessonMastery(lesson, state, quizIndex = null) {
-  const completee = !!state?.completedLessons?.[lesson?.id];
-  const ids = (lesson?.quiz || []).filter((id) => !quizIndex || quizIndex.has(id));
-  const total = ids.length;
-  const reussies = ids.filter((id) => questionReussie(state, id)).length;
-  const ancrees = ids.filter((id) => questionAncree(state, id)).length;
-  const requis = quizRequisPourAncrer(total);
-  const masterable = total > 0;
-  let level = MASTERY.LOCKED;
-  if (completee) level = MASTERY.SEEN;
-  if (completee && masterable && reussies === total) level = MASTERY.UNDERSTOOD;
-  if (completee && masterable && reussies === total && ancrees >= requis) level = MASTERY.ANCHORED;
-  let pct = 0;
-  if (completee) {
-    pct = 33;
-    if (masterable) {
-      pct += Math.round(33 * (total ? reussies / total : 0));
-      pct += Math.round(34 * (requis ? Math.min(1, ancrees / requis) : 0));
-    } else {
-      pct = 33;
-    }
-  }
-  return {
-    level,
-    label: MASTERY_LABELS[level],
-    hint: MASTERY_HINTS[level],
-    masterable,
-    total,
-    reussies,
-    ancrees,
-    requisPourAncrer: requis,
-    pct: Math.min(100, pct)
-  };
-}
-function masteryStats(content, state, moduleId = null) {
-  const quizIndex = new Map((content?.quiz || []).map((q) => [q.id, q]));
-  const lecons = (content?.courses || []).filter((c) => !moduleId || c.id === moduleId).flatMap((c) => (c.lessons || []).map((l) => ({ ...l, courseId: c.id })));
-  const paliers = [0, 0, 0, 0];
-  let masterables = 0, sansQuiz = 0, sommePct = 0;
-  for (const l of lecons) {
-    const m = lessonMastery(l, state, quizIndex);
-    paliers[m.level]++;
-    if (m.masterable) masterables++;
-    else sansQuiz++;
-    sommePct += m.pct;
-  }
-  const total = lecons.length;
-  return {
-    total,
-    sansQuiz,
-    // Une leçon sans question ne compte que pour un palier (vu).
-    objectifs: masterables * 3 + sansQuiz,
-    atteints: paliers[1] + paliers[2] * 2 + paliers[3] * 3,
-    aDecouvrir: paliers[0],
-    vues: paliers[1],
-    comprises: paliers[2],
-    ancrees: paliers[3],
-    pctMoyen: total ? Math.round(sommePct / total) : 0
-  };
-}
-function prochainesAAncrer(content, state, limite = 5) {
-  const quizIndex = new Map((content?.quiz || []).map((q) => [q.id, q]));
-  const lecons = (content?.courses || []).flatMap((c) => (c.lessons || []).map((l) => ({ ...l, courseId: c.id })));
-  return lecons.map((l) => ({ lesson: l, m: lessonMastery(l, state, quizIndex) })).filter((x) => x.m.level === MASTERY.UNDERSTOOD && x.m.masterable).map((x) => ({ ...x, reste: x.m.requisPourAncrer - x.m.ancrees })).sort((a, b) => a.reste - b.reste || b.m.ancrees - a.m.ancrees).slice(0, limite);
-}
 
 // src/store/badges.js
 var buildBadgeTints = (C) => ({

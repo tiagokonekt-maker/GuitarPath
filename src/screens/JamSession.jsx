@@ -11,6 +11,45 @@ import { generateWalkingBar, toToneNote as toToneNoteFromMidi, toToneTime } from
 import { createComper, beatToToneTime } from "../music/compRhythm.js";
 import * as Tone from "tone";
 
+// ── jamEngine, enfin branché — mais pas tel quel ──────────────────────────
+// jamEngine.js fait tourner sa PROPRE horloge sur son PROPRE AudioContext
+// (`createClock`, `new AudioContext()`) — entièrement indépendante de
+// `Tone.getTransport()`, que cet écran utilise déjà pour les accords et la
+// basse. Faire tourner les deux côte à côte aurait introduit deux horloges
+// distinctes, susceptibles de dériver l'une par rapport à l'autre au fil
+// d'une session longue — exactement le genre de bug qui ne se voit pas en
+// test rapide et qui devient audible après plusieurs minutes.
+//
+// La vraie valeur de jamEngine n'est pas son horloge (Tone.Transport fait
+// déjà ce travail très bien ici) : c'est son algorithme de génération —
+// planner (forme longue) + director (décisions de phrase) + generateDrumBar
+// (grille → évènements). Ces trois morceaux sont du JavaScript pur, sans
+// audio, conçus pour être importés indépendamment. On les branche donc
+// directement DANS la boucle par mesure qui existe déjà (le
+// `Tone.Sequence` plus bas), à la place de l'ancien motif statique qui
+// bouclait à l'identique — sans toucher au chargement des échantillons ni
+// à leur lecture (`playDrum`), qui restent celles de cet écran.
+import { createPlanner, createDirector } from "../jam/arrangement/arranger.js";
+import { generateDrumBar } from "../jam/generators/drums.js";
+
+// Chemin des packs à vérifier : je n'ai pas de confirmation directe de
+// l'emplacement réel de ces deux fichiers dans le dépôt (aucun en-tête n'y
+// fait référence, contrairement aux modules .js). Si l'import échoue au
+// build, c'est le seul détail à corriger — le reste de cette intégration
+// n'en dépend pas.
+import BLUES_SHUFFLE_PACK from "../jam/packs/blues-shuffle.json";
+import FUNK_16_PACK from "../jam/packs/funk-16.json";
+
+// Seuls les styles qui ont un vrai pack passent sur le nouveau moteur. Pour
+// "jazz" et "rock", aucun pack n'existe aujourd'hui : plutôt que d'en
+// fabriquer un sans les données ou l'oreille pour le valider, ces deux
+// styles gardent le système statique existant, plus bas — inchangé.
+const PACK_PAR_STYLE = {
+  blues:   BLUES_SHUFFLE_PACK,
+  blues12: BLUES_SHUFFLE_PACK,
+  funk:    FUNK_16_PACK,
+};
+
 // Assombrit une couleur hex d'une quantité fixe, quel que soit le thème.
 // Les boutons de lecture utilisaient `colorD` (celui de `context`, ou
 // `C.primaryD`) comme second point de dégradé — or ce token est une couleur
@@ -187,6 +226,8 @@ function BackingTrackPlayer({ context, root, bpm }) {
   const drumsRef       = useRef(null);
   const drumsLoadedRef = useRef(false);
   const drumRRRef      = useRef({});   // dernier échantillon joué par élément
+  const plannerRef     = useRef(null); // forme longue (jamEngine) — actif uniquement si un pack existe pour ce style
+  const directorRef    = useRef(null); // décisions de phrase (jamEngine)
   // Refs master chain
   const reverbRef   = useRef(null);
   const delayRef    = useRef(null);
@@ -580,6 +621,11 @@ function BackingTrackPlayer({ context, root, bpm }) {
 
       // ── Séquenceur principal (accords + basse) ────────────────────────
       const style      = getStyle(context.id);
+      const pack       = PACK_PAR_STYLE[style] || null;
+      if (pack) {
+        plannerRef.current  = createPlanner({ baseEnergy: 3 });
+        directorRef.current = createDirector(pack);
+      }
       const progression = context.chords;
       let barMap = [];
       for (const chord of progression) {
@@ -636,6 +682,28 @@ function BackingTrackPlayer({ context, root, bpm }) {
           );
         });
 
+        // ── Batterie vivante (jamEngine), uniquement si un pack existe ──
+        // Remplace le motif statique : forme longue (planner) + décision
+        // de phrase (director) + grille → évènements (generateDrumBar),
+        // rejoués par la MÊME fonction playDrum() qu'avant — mêmes
+        // échantillons, même round-robin, seule la source des évènements
+        // change. Le temps renvoyé par generateDrumBar est déjà une valeur
+        // absolue compatible avec `time` (le même repère que Tone.js utilise
+        // ici), donc aucune conversion n'est nécessaire.
+        if (pack && plannerRef.current && directorRef.current) {
+          plannerRef.current.ensurePlannedUpTo(barIdx + 24);
+          const section  = plannerRef.current.sectionAt(barIdx);
+          const decision = directorRef.current.decideBar(barIdx, section, section.energy);
+          const events = generateDrumBar(pack, decision, {
+            barStartTime: time,
+            secPerBeat: 60 / bpm,
+            beatsPerBar: 4,
+            bpm,
+            energy: section.energy,
+          });
+          for (const ev of events) playDrum(ev.instrument, ev.time, ev.velocity);
+        }
+
         Tone.getDraw().schedule(() => {
           setBeat(barIdx % totalBars);
           const chordIdx = progression.reduce((acc, c, i) => {
@@ -647,29 +715,39 @@ function BackingTrackPlayer({ context, root, bpm }) {
 
       }, Array.from({ length: totalBars }, (_, i) => i), "1m");
 
-      // ── Séquenceur batterie ───────────────────────────────────────────
-      const drumPattern = getDrumPattern(style);
-      const beatPart = new Tone.Part((time, event) => {
-        playDrum(event.type, time, event.velocity ?? 0.8);
-      }, [
-        ...drumPattern.kick.map(t  => ({ time: t, type: "kick"  })),
-        ...drumPattern.snare.map(t => ({ time: t, type: "snare" })),
-        ...drumPattern.hihat.map(t => ({ time: t, type: "hihat" })),
-      ]);
-      beatPart.loop = true;
-      beatPart.loopEnd = "1m";
-      beatSeqRef.current = beatPart;
+      // ── Séquenceur batterie — SEULEMENT si aucun pack n'existe pour ce
+      // style (jazz, rock aujourd'hui). Sinon la batterie est déjà générée
+      // ci-dessus, bar par bar, dans la boucle principale.
+      let beatPart = null;
+      if (!pack) {
+        const drumPattern = getDrumPattern(style);
+        beatPart = new Tone.Part((time, event) => {
+          playDrum(event.type, time, event.velocity ?? 0.8);
+        }, [
+          ...drumPattern.kick.map(t  => ({ time: t, type: "kick"  })),
+          ...drumPattern.snare.map(t => ({ time: t, type: "snare" })),
+          ...drumPattern.hihat.map(t => ({ time: t, type: "hihat" })),
+        ]);
+        beatPart.loop = true;
+        beatPart.loopEnd = "1m";
+        beatSeqRef.current = beatPart;
 
-      // Shuffle pour blues
-      if (drumPattern.shuffle) {
-        Tone.getTransport().swing     = 0.5;
-        Tone.getTransport().swingSubdivision = "8n";
+        // Shuffle pour blues — uniquement pertinent pour l'ancien système :
+        // le nouveau applique déjà son propre swing (pack.feel.swing),
+        // directement sur le temps de chaque frappe. Appliquer le swing du
+        // Transport EN PLUS aurait doublé l'effet.
+        if (drumPattern.shuffle) {
+          Tone.getTransport().swing     = 0.5;
+          Tone.getTransport().swingSubdivision = "8n";
+        } else {
+          Tone.getTransport().swing = 0;
+        }
       } else {
         Tone.getTransport().swing = 0;
       }
 
       seqRef.current.start(0);
-      beatPart.start(0);
+      if (beatPart) beatPart.start(0);
       Tone.getTransport().start();
       setPlaying(true);
 
@@ -690,6 +768,8 @@ function BackingTrackPlayer({ context, root, bpm }) {
       try { r.current?.releaseAll?.(); r.current?.dispose(); r.current = null; } catch {}
     });
     try { Tone.getTransport().stop(); Tone.getTransport().cancel(); } catch {}
+    plannerRef.current = null;
+    directorRef.current = null;
     setPlaying(false);
     setBeat(0);
     setCurrentChord(0);
