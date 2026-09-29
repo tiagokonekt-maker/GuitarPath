@@ -1,6 +1,7 @@
 // Groply — src/screens/ToolboxScreen.jsx
-// Boîte à outils : Métronome (Tone.js) + Accordeur (micro, autocorrélation)
-import { useState, useRef, useEffect, useCallback } from "react";
+// Boîte à outils : métronome, accordeur, lecteur d'accords, manche,
+// éditeur de tablature, et accès à Jam Session / Ear Training.
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { FONTS, R } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
@@ -10,6 +11,11 @@ import { playProgression, playTab, stopAll, unlockAudio } from "../audioEngine.j
 import { CHORD_TYPES } from "../fretboardUtils.js";
 import { FretboardExplorer } from "./FretboardExplorer.jsx";
 import { parseTab } from "../tab/tabParser.js";
+import {
+  grilleVide, lireCase, ecrireCase, derniereColonne, nbColsVisibles, nbMesuresUtilisees,
+  compatibleCroches, saisirChiffre, poserFret, grilleVersEvenements, evenementsVersGrille,
+  grilleExemple, grilleValide, PAS_PAR_MESURE,
+} from "../tab/tabGrid.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // MÉTRONOME
@@ -251,8 +257,6 @@ function Metronome() {
     setBpm(Math.min(240, Math.max(40, Math.round(60000 / median))));
   };
 
-  const resetTap = () => { tapsRef.current = []; setTapCount(0); };
-
   // Message d'aide contextuel : le tap tempo n'est évident que pour qui le
   // connaît déjà. Un appui ne suffit pas à déduire un tempo — il faut au moins
   // deux appuis pour mesurer un intervalle —, et rien ne le disait.
@@ -321,15 +325,16 @@ function Metronome() {
 
       {/* Slider */}
       <input type="range" min="40" max="240" value={bpm}
+        aria-label="Tempo" aria-valuetext={`${bpm} battements par minute, ${tempoLabel}`}
         onChange={e => setBpm(+e.target.value)}
         style={{ width:"100%", margin:"16px 0 6px", accentColor:C.primary }}/>
 
       {/* -/+ */}
       <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:14, marginBottom:20 }}>
         {[-5,-1].map(d=>(
-          <button key={d} onClick={()=>nudge(d)} style={pillBtn}>{d}</button>
+          <button key={d} onClick={()=>nudge(d)} aria-label={`Ralentir de ${-d}`} className="gr-focus" style={pillBtn}>{d}</button>
         ))}
-        <button onClick={toggle} style={{
+        <button onClick={toggle} aria-label={playing ? "Arrêter le métronome" : "Démarrer le métronome"} className="gr-focus" style={{
           width:72, height:72, borderRadius:"50%", border:"none", cursor:"pointer",
           background:`linear-gradient(135deg,#FF9155,${C.primary})`,
           color:"#fff", display:"flex", alignItems:"center", justifyContent:"center",
@@ -338,7 +343,7 @@ function Metronome() {
           <Ti name={playing ? "player-pause" : "player-play"} size={30} color="#fff"/>
         </button>
         {[1,5].map(d=>(
-          <button key={d} onClick={()=>nudge(d)} style={pillBtn}>+{d}</button>
+          <button key={d} onClick={()=>nudge(d)} aria-label={`Accélérer de ${d}`} className="gr-focus" style={pillBtn}>+{d}</button>
         ))}
       </div>
 
@@ -380,8 +385,8 @@ function Metronome() {
           <div style={{ fontSize:9.5, fontWeight:700, color:C.text3, textTransform:"uppercase", letterSpacing:".06em", marginBottom:7 }}>Mesure</div>
           <div style={{ display:"flex", gap:6 }}>
             {[2,3,4,6].map(n=>(
-              <button key={n} onClick={()=>setBeats(n)} style={{
-                flex:1, padding:"7px 0", borderRadius:8, cursor:"pointer",
+              <button key={n} onClick={()=>setBeats(n)} aria-pressed={beats===n} aria-label={`${n} temps par mesure`} className="gr-focus" style={{
+                flex:1, minHeight:40, padding:"7px 0", borderRadius:8, cursor:"pointer",
                 border:`1.5px solid ${beats===n?C.primary:C.border}`,
                 background:beats===n?C.primaryL:C.surface,
                 color:beats===n?C.primaryD:C.text2, fontWeight:700, fontSize:13, fontFamily:FONTS.ui,
@@ -391,7 +396,7 @@ function Metronome() {
         </div>
         <button
           onClick={tapTempo}
-          onDoubleClick={resetTap}
+          className="gr-focus"
           aria-label={tapCount > 0 ? `Tap tempo, ${tapCount} appuis comptés` : "Tap tempo"}
           style={{
           width:96, background:C.amberL, border:`1.5px solid ${C.amberBorder}`, borderRadius:R.lg,
@@ -803,7 +808,7 @@ function Tuner() {
           {/* Sélecteur d'accordage */}
           <TuningPicker tuningId={tuningId} setTuningId={setTuningId} />
 
-          <button onClick={start} style={{
+          <button onClick={start} className="gr-focus" style={{
             background:`linear-gradient(135deg,#FF9155,${C.primary})`, color:"#fff", border:"none",
             borderRadius:R.lg, padding:"13px 28px", fontSize:14, fontWeight:700, fontFamily:FONTS.ui,
             cursor:"pointer", boxShadow:`0 4px 16px ${C.primary}44`, marginTop:18,
@@ -834,7 +839,7 @@ function Tuner() {
           <div style={{ position:"relative", height:64, margin:"14px 0 8px", overflow:"hidden" }}>
             <div style={{ position:"absolute", left:0, right:0, top:30, height:3, background:C.border, borderRadius:2 }}/>
             {/* zone juste */}
-            <div style={{ position:"absolute", left:"calc(50% - 18px)", width:36, top:26, height:11, background:`${C.green}33`, borderRadius:6 }}/>
+            <div style={{ position:"absolute", left:"45%", width:"10%", top:26, height:11, background:`${C.green}33`, borderRadius:6 }}/>
             {/* repère central */}
             <div style={{ position:"absolute", left:"50%", top:18, width:2, height:27, background:C.green, transform:"translateX(-50%)" }}/>
             {/* aiguille — piste large de 100 %, déplacée par transformation
@@ -859,11 +864,9 @@ function Tuner() {
             <div style={{ position:"absolute", right:0, top:46, fontSize:9.5, color:C.text3, fontWeight:600 }}>trop haut ♯</div>
           </div>
 
-          {inTune && (
-            <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6, fontSize:13, fontWeight:700, color:C.green, marginBottom:8 }}>
-              <Ti name="check" size={15} color={C.green} /> Juste !
-            </div>
-          )}
+          <div aria-hidden={!inTune} style={{ height:22, display:"flex", alignItems:"center", justifyContent:"center", gap:6, fontSize:13, fontWeight:700, color:C.green, marginBottom:8, visibility: inTune ? "visible" : "hidden" }}>
+            <Ti name="check" size={15} color={C.green} /> Juste !
+          </div>
 
           {/* Accordage actif + chœurs de référence */}
           <div style={{ fontSize:10, fontWeight:700, color:C.text3, textTransform:"uppercase", letterSpacing:".07em", textAlign:"center", marginTop:8 }}>
@@ -895,7 +898,7 @@ function Tuner() {
             <TuningPicker tuningId={tuningId} setTuningId={setTuningId} compact />
           </div>
 
-          <button onClick={stop} style={{
+          <button onClick={stop} className="gr-focus" style={{
             width:"100%", padding:12, borderRadius:R.lg, border:`1.5px solid ${C.border}`,
             background:C.surface, color:C.text2, fontWeight:700, fontSize:13, fontFamily:FONTS.ui, cursor:"pointer",
           }}>
@@ -911,8 +914,8 @@ function Tuner() {
 // ÉCRAN
 // ═══════════════════════════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════════════════════════════
-// LECTEUR D'ACCORDS — construis une suite d'accords, écoute-la jouée en
-// boucle avec le vrai son de guitare (même moteur que le reste de l'app).
+// LECTEUR D'ACCORDS — construis une suite d'accords, écoute-la jouée avec
+// le vrai son de guitare (même moteur que le reste de l'app).
 // ═══════════════════════════════════════════════════════════════════════════
 const CHORD_ROOTS = [
   ["C","Do"],["C#","Do#"],["D","Ré"],["D#","Ré#"],["E","Mi"],["F","Fa"],
@@ -944,6 +947,11 @@ function ChordPlayer() {
   const [playing, setPlaying]   = useState(false);
   const [activeIdx, setActiveIdx] = useState(-1);
   const [speed, setSpeed] = useState("normal");
+  // « Vider » était une suppression sans retour, derrière un bouton minuscule :
+  // on garde la suite effacée quelques secondes pour pouvoir l'annuler.
+  const [suiteVidee, setSuiteVidee] = useState(null);
+  const timerViderRef = useRef(null);
+  useEffect(() => () => clearTimeout(timerViderRef.current), []);
 
   const stop = useCallback(() => {
     // stopAll() et non stopProgression() : le second n'annulait que les
@@ -969,7 +977,14 @@ function ChordPlayer() {
   const removeChord = (i) => {
     setSequence(s => s.filter((_, idx) => idx !== i));
   };
-  const clearAll = () => { stop(); setSequence([]); };
+  const clearAll = () => {
+    stop();
+    setSuiteVidee(sequence);
+    setSequence([]);
+    clearTimeout(timerViderRef.current);
+    timerViderRef.current = setTimeout(() => setSuiteVidee(null), 6000);
+  };
+  const annulerVider = () => { if (suiteVidee) setSequence(suiteVidee); setSuiteVidee(null); clearTimeout(timerViderRef.current); };
 
   const play = async () => {
     if (sequence.length === 0) return;
@@ -999,7 +1014,7 @@ function ChordPlayer() {
         <div style={{ fontSize:12, fontWeight:700, color:C.text3, marginBottom:9, fontFamily:FONTS.ui }}>Fondamentale</div>
         <div style={{ display:"grid", gridTemplateColumns:"repeat(6, 1fr)", gap:6, marginBottom:14 }}>
           {CHORD_ROOTS.map(([code, fr]) => (
-            <button key={code} onClick={() => setRoot(code)} style={{
+            <button key={code} onClick={() => setRoot(code)} aria-pressed={root===code} className="gr-focus" style={{
               ...chip, padding:"9px 0",
               border:`1.5px solid ${root===code ? C.primary : C.border}`,
               background: root===code ? C.primaryL : C.surface,
@@ -1013,7 +1028,7 @@ function ChordPlayer() {
         <div style={{ fontSize:12, fontWeight:700, color:C.text3, marginBottom:9, fontFamily:FONTS.ui }}>Famille</div>
         <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:12 }}>
           {CHORD_FAMILIES.map(f => (
-            <button key={f.id} onClick={() => {
+            <button key={f.id} aria-pressed={family===f.id} className="gr-focus" onClick={() => {
               setFamily(f.id);
               // On bascule sur la première qualité de la famille, pour ne
               // jamais laisser une sélection invisible dans un autre onglet.
@@ -1032,7 +1047,7 @@ function ChordPlayer() {
         <div style={{ fontSize:12, fontWeight:700, color:C.text3, marginBottom:9, fontFamily:FONTS.ui }}>Qualité</div>
         <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:14 }}>
           {(CHORD_FAMILIES.find(f => f.id === family)?.keys || []).map(key => (
-            <button key={key} onClick={() => setQuality(key)} style={{
+            <button key={key} onClick={() => setQuality(key)} aria-pressed={quality===key} aria-label={CHORD_TYPES[key]?.name || key} className="gr-focus" style={{
               ...chip,
               border:`1.5px solid ${quality===key ? C.primary : C.border}`,
               background: quality===key ? C.primaryL : C.surface,
@@ -1047,7 +1062,7 @@ function ChordPlayer() {
           {CHORD_TYPES[quality]?.name}
         </div>
 
-        <button onClick={addChord} disabled={sequence.length >= MAX_CHORDS} style={{
+        <button onClick={addChord} disabled={sequence.length >= MAX_CHORDS} className="gr-focus" style={{
           width:"100%", padding:"11px 0", borderRadius:R.md, border:"none",
           background: sequence.length >= MAX_CHORDS ? C.border : C.primary,
           color:"#fff", fontWeight:700, fontSize:13.5, fontFamily:FONTS.ui,
@@ -1066,9 +1081,9 @@ function ChordPlayer() {
             Ta suite ({sequence.length}/{MAX_CHORDS})
           </div>
           {sequence.length > 0 && (
-            <button onClick={clearAll} style={{
-              background:"none", border:"none", color:C.coral, fontSize:12, fontWeight:700,
-              fontFamily:FONTS.ui, cursor:"pointer", padding:0,
+            <button onClick={clearAll} className="gr-focus" style={{
+              background:"none", border:"none", color:C.coral, fontSize:12.5, fontWeight:700,
+              fontFamily:FONTS.ui, cursor:"pointer", padding:"8px 10px", margin:"-8px -10px", minHeight:36,
             }}>
               Vider
             </button>
@@ -1076,8 +1091,12 @@ function ChordPlayer() {
         </div>
 
         {sequence.length === 0 ? (
-          <div style={{ textAlign:"center", padding:"18px 0", color:C.text3, fontSize:13, fontFamily:FONTS.ui }}>
-            Ajoute des accords ci-dessus pour construire ta suite.
+          <div role="status" style={{ textAlign:"center", padding:"18px 0", color:C.text3, fontSize:13, fontFamily:FONTS.ui }}>
+            {suiteVidee ? (
+              <>Suite vidée.{" "}
+                <button onClick={annulerVider} className="gr-focus" style={{ background:"none", border:"none", padding:"6px 4px", color:C.primaryD, fontWeight:800, fontSize:13, fontFamily:FONTS.ui, cursor:"pointer", textDecoration:"underline" }}>Annuler</button>
+              </>
+            ) : "Ajoute des accords ci-dessus pour construire ta suite."}
           </div>
         ) : (
           <div style={{ display:"flex", flexWrap:"wrap", gap:8, marginBottom:16 }}>
@@ -1091,9 +1110,10 @@ function ChordPlayer() {
                 transition:"all 0.15s",
               }}>
                 {c.label}
-                <button onClick={() => removeChord(i)} style={{
-                  background:"none", border:"none", cursor:"pointer", padding:2,
-                  display:"flex", color:C.text3,
+                <button onClick={() => removeChord(i)} aria-label={`Retirer ${c.label}`} className="gr-focus" style={{
+                  background:"none", border:"none", cursor:"pointer", padding:0,
+                  width:32, height:32, margin:"-8px -4px -8px 0", borderRadius:8,
+                  display:"flex", alignItems:"center", justifyContent:"center", color:C.text3,
                 }}>
                   <Ti name="x" size={13} color={C.text3}/>
                 </button>
@@ -1105,7 +1125,7 @@ function ChordPlayer() {
         {/* Vitesse */}
         <div style={{ display:"flex", gap:6, marginBottom:14 }}>
           {SPEED_PRESETS.map(p => (
-            <button key={p.id} onClick={() => setSpeed(p.id)} disabled={playing} style={{
+            <button key={p.id} onClick={() => setSpeed(p.id)} disabled={playing} aria-pressed={speed===p.id} className="gr-focus" style={{
               flex:1, padding:"8px 0", borderRadius:R.sm, fontFamily:FONTS.ui,
               border:`1.5px solid ${speed===p.id ? C.primary : C.border}`,
               background: speed===p.id ? C.primaryL : C.surface,
@@ -1118,14 +1138,14 @@ function ChordPlayer() {
           ))}
         </div>
 
-        <button onClick={toggle} disabled={sequence.length === 0} style={{
+        <button onClick={toggle} disabled={sequence.length === 0} className="gr-focus" style={{
           width:"100%", padding:"13px 0", borderRadius:R.md, border:"none",
           background: sequence.length === 0 ? C.border : (playing ? C.coral : C.primary),
           color:"#fff", fontWeight:800, fontSize:14, fontFamily:FONTS.ui,
           cursor: sequence.length === 0 ? "default" : "pointer",
           display:"flex", alignItems:"center", justifyContent:"center", gap:7,
         }}>
-          <Ti name={playing ? "player-stop" : "player-play"} size={16} color="#fff"/>
+          <Ti name={playing ? "player-pause" : "player-play"} size={16} color="#fff"/>
           {playing ? "Arrêter" : "Écouter la suite"}
         </button>
       </div>
@@ -1133,237 +1153,578 @@ function ChordPlayer() {
   );
 }
 
-const EXEMPLE_TAB = [
-  "e|--0---2---3h5---5/7---7b9---|",
-  "B|-----------------------------|",
-  "G|-----------------------------|",
-  "D|-----------------------------|",
-  "A|-----------------------------|",
-  "E|-----------------------------|",
-].join("\n");
+// ══ Éditeur de tablature ════════════════════════════════════════════════
+// On touche une case de la tab (corde × temps), puis on choisit la case du
+// manche dans la grille 0-24 dessous. Une seule surface : l'aperçu alphaTab
+// a été retiré, il doublait la grille sans permettre d'éditer. Toute la
+// logique (modèle, conversions) vit dans tab/tabGrid.js, testée à part.
+//
+// Principes d'UX appliqués :
+//   • manipulation directe — on touche la note là où elle est ;
+//   • un appui par note : la case du manche se choisit dans une grille,
+//     pas en tapant deux chiffres dans un délai invisible ;
+//   • tout est réversible (« Annuler ») plutôt que protégé par des
+//     confirmations ; les actions secondaires vivent dans un menu « ⋯ » ;
+//   • une ligne d'aide contextuelle dit quoi faire, au lieu d'un mode
+//     d'emploi à lire avant de commencer ;
+//   • lecture et tempo en bas, dans la zone du pouce.
+const CORDES_LABELS = ["e", "B", "G", "D", "A", "E"];   // corde 1 en haut, comme à l'écrit
+const CELL_H = 34;
+const HAUT_ENTETE = 16;                          // bande des numéros de mesure
+const LARGEUR_CASE = { 2: 38, 1: 32 };           // croches : une mesure tient à l'écran
+const STOCKAGE_TAB = "groply:tab-brouillon";
+const HISTORIQUE_MAX = 60;
+const DELAI_DEUX_CHIFFRES = 900;                 // clavier physique uniquement
+const REPERES_SIMPLES = new Set([3, 5, 7, 9, 15, 17, 19, 21]);
+const REPERES_DOUBLES = new Set([12, 24]);
 
-// Texte canonique d'un évènement, pour l'affichage sur la ligne de corde —
-// reconstruit depuis l'évènement analysé plutôt que depuis le texte brut,
-// ce qui a un effet de bord bienvenu : une cible de bend implicite (7b sans
-// chiffre après) s'affiche explicitement (7b9) une fois la valeur déduite.
-function texteEvenement(ev) {
-  switch (ev.type) {
-    case "note":       return String(ev.fret);
-    case "mute":       return "x";
-    case "hammer":     return `${ev.fromFret}h${ev.toFret}`;
-    case "pull":       return `${ev.fromFret}p${ev.toFret}`;
-    case "slide_up":   return `${ev.fromFret}/${ev.toFret}`;
-    case "slide_down": return `${ev.fromFret}\\${ev.toFret}`;
-    case "bend":       return `${ev.fromFret}b${ev.toFret}`;
-    default:           return "?";
-  }
+function styleTouche(C, actif, extra = {}) {
+  return {
+    height: 40, borderRadius: R.sm, cursor: "pointer", fontFamily: FONTS.ui,
+    border: `1.5px solid ${actif ? C.primary : C.border}`,
+    background: actif ? C.primaryL : C.surface, color: actif ? C.primaryD : C.text,
+    fontWeight: 800, fontSize: 14, display: "flex", flexDirection: "column",
+    alignItems: "center", justifyContent: "center", gap: 2, padding: 0, ...extra,
+  };
 }
 
-const TAB_CHAR_W = 15;   // largeur d'une colonne de temps, en pixels
-const TAB_ROW_H  = 22;   // écart vertical entre deux cordes
-const TAB_LABELS = ["e", "B", "G", "D", "A", "E"];   // corde 1 en haut, comme à l'écrit
+function GrilleTab({ grille, evenements, res, selection, onSelect, colLecture, C }) {
+  const scrollRef = useRef(null);
+  const nbCols = nbColsVisibles(grille);
+  const cellW = LARGEUR_CASE[res];
+  const nbCases = nbCols / res;
+  const casesParMesure = PAS_PAR_MESURE / res;
+  const casesParTemps = 4 / res;
+  const vide = derniereColonne(grille) < 0;
+  const liaisons = evenements.filter(e => e.toCol != null);
+  const origines = new Set(liaisons.map(e => `${e.string}-${e.col}`));
 
-/**
- * Vue de lecture façon Songsterr / Guitar Pro : les 6 cordes en lignes
- * horizontales fixes, les notes posées dessus à leur position temporelle
- * réelle, une barre verticale qui balaie en jouant — et la vue défile
- * TOUTE SEULE pour garder cette barre visible, plutôt que de forcer à
- * suivre le texte des yeux. Remplace la zone de texte UNIQUEMENT pendant
- * la lecture ; l'édition reste un texte classique (voir TabEditor).
- */
-function TabScrollView({ evenements, colActuelle, maxCol, C }) {
-  const conteneurRef = useRef(null);
-
-  // Défilement automatique : la barre reste à ~30% depuis le bord gauche,
-  // pas collée dessus — assez de contexte À VENIR reste visible, comme
-  // une tête de lecture qui laisse voir la suite plutôt que de la révéler
-  // note par note.
+  // Garde visible la case active : la sélection quand on édite, la tête de
+  // lecture (à ~30 % du bord, pour voir venir la suite) quand on écoute.
+  // Si le focus clavier est dans la grille, il suit la sélection (déplacée
+  // aux flèches) — sinon il resterait sur une case qui n'est plus active.
   useEffect(() => {
-    if (colActuelle == null || !conteneurRef.current) return;
-    const el = conteneurRef.current;
-    const cible = Math.max(0, colActuelle * TAB_CHAR_W - el.clientWidth * 0.3);
-    el.scrollTo({ left: cible, behavior: "smooth" });
-  }, [colActuelle]);
+    const el = scrollRef.current;
+    if (!el || !el.contains(document.activeElement)) return;
+    el.querySelector(`[data-case="${selection.corde}-${selection.col}"]`)?.focus({ preventScroll: true });
+  }, [selection]);
 
-  const largeurTotale = (maxCol + 6) * TAB_CHAR_W;
-  const hauteurTotale = TAB_LABELS.length * TAB_ROW_H + 12;
+  const colSuivie = colLecture ?? selection.col;
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const x = (colSuivie / res) * cellW;
+    const horsVue = x < el.scrollLeft + 8 || x + cellW > el.scrollLeft + el.clientWidth - 8;
+    if (colLecture != null || horsVue) el.scrollTo({ left: Math.max(0, x - el.clientWidth * 0.3), behavior: "smooth" });
+  }, [colSuivie, colLecture, res, cellW]);
 
   return (
-    <div style={{
-      display: "flex", border: `1.5px solid ${C.border}`, borderRadius: R.md,
-      background: C.surface, overflow: "hidden",
-    }}>
-      {/* Gouttière fixe : les noms de corde ne défilent jamais, comme la
-          clé sur une vraie partition qui reste en place pendant le défilement. */}
-      <div style={{
-        flexShrink: 0, width: 22, borderRight: `1.5px solid ${C.border}`,
-        background: C.surface2, paddingTop: 6,
-      }}>
-        {TAB_LABELS.map((l, i) => (
-          <div key={l} style={{
-            height: TAB_ROW_H, display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 10.5, fontWeight: 800, color: C.text3,
-          }}>{l}</div>
+    <div style={{ position: "relative", display: "flex", border: `1.5px solid ${C.border}`, borderRadius: R.md, background: C.surface, overflow: "hidden" }}>
+      {/* Noms de corde, fixes ; la corde sélectionnée est mise en avant */}
+      <div aria-hidden="true" style={{ flexShrink: 0, width: 24, background: C.surface2, borderRight: `1.5px solid ${C.border}`, paddingTop: HAUT_ENTETE }}>
+        {CORDES_LABELS.map((l, i) => (
+          <div key={l + i} style={{ height: CELL_H, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11.5, fontWeight: 800, color: selection.corde === i + 1 ? C.primary : C.text3 }}>{l}</div>
         ))}
       </div>
 
-      {/* Zone défilante */}
-      <div ref={conteneurRef} style={{
-        overflowX: "auto", WebkitOverflowScrolling: "touch",
-        position: "relative", height: hauteurTotale, flex: 1,
-      }}>
-        <div style={{ position: "relative", width: largeurTotale, height: hauteurTotale }}>
-          {/* Les 6 lignes de corde — de fins traits horizontaux, comme une
-              portée, plutôt que des tirets ASCII littéraux : plus lisible
-              une fois posé en colonnes fixes plutôt qu'en texte monospace. */}
-          {TAB_LABELS.map((_, i) => (
-            <div key={i} style={{
-              position: "absolute", left: 0, right: 0, top: 6 + i * TAB_ROW_H + TAB_ROW_H/2,
-              height: 1.5, background: C.border,
-            }}/>
-          ))}
+      <div ref={scrollRef} style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", flex: 1 }}>
+        <div style={{ position: "relative", width: nbCases * cellW, height: HAUT_ENTETE + CELL_H * 6 }}>
+          {/* Un temps sur deux légèrement teinté : on lit le rythme d'un coup d'œil */}
+          {Array.from({ length: nbCols / 4 }, (_, t) => t % 2 === 1 ? (
+            <div key={"t" + t} style={{ position: "absolute", top: HAUT_ENTETE, bottom: 0, left: t * casesParTemps * cellW, width: casesParTemps * cellW, background: C.surface2, opacity: .55 }} />
+          ) : null)}
 
-          {/* Barre de lecture — la tête qui balaie */}
-          {colActuelle != null && (
-            <div style={{
-              position: "absolute", top: 0, bottom: 0, width: 2,
-              left: colActuelle * TAB_CHAR_W, background: C.primary,
-              transition: "left .05s linear", zIndex: 2,
-            }}/>
+          {/* Colonne sélectionnée, puis tête de lecture */}
+          <div style={{ position: "absolute", top: HAUT_ENTETE, bottom: 0, left: (selection.col / res) * cellW, width: cellW, background: C.primaryL, opacity: .6 }} />
+          {colLecture != null && (
+            <div style={{ position: "absolute", top: HAUT_ENTETE, bottom: 0, left: (colLecture / res) * cellW, width: cellW, background: C.primary, opacity: .22 }} />
           )}
 
-          {/* Les notes elles-mêmes, posées sur leur corde à leur colonne */}
-          {evenements.map((ev, i) => {
-            const enCours = ev.col === colActuelle;
+          {/* Numéros et barres de mesure */}
+          {Array.from({ length: nbCols / PAS_PAR_MESURE }, (_, m) => (
+            <div key={"n" + m} style={{ position: "absolute", top: 1, left: m * casesParMesure * cellW + 5, fontSize: 10, fontWeight: 700, color: C.text3 }}>{m + 1}</div>
+          ))}
+          {Array.from({ length: nbCols / PAS_PAR_MESURE }, (_, m) => m > 0 ? (
+            <div key={"b" + m} style={{ position: "absolute", top: HAUT_ENTETE + CELL_H / 2, height: CELL_H * 5, left: m * casesParMesure * cellW - 1, width: 2, background: C.text3 }} />
+          ) : null)}
+
+          {/* Les 6 cordes et leurs cases */}
+          {CORDES_LABELS.map((label, idx) => {
+            const corde = idx + 1;
             return (
-              <div key={i} style={{
-                position: "absolute", left: ev.col * TAB_CHAR_W,
-                top: 6 + (ev.string - 1) * TAB_ROW_H + TAB_ROW_H/2 - 8,
-                fontSize: 11, fontWeight: 800, fontFamily: "monospace",
-                color: enCours ? "#fff" : C.text,
-                background: enCours ? C.primary : C.surface,
-                padding: "0 2px", borderRadius: 3, whiteSpace: "nowrap",
-                zIndex: 1, lineHeight: "16px",
-              }}>{texteEvenement(ev)}</div>
+              <div key={corde} style={{ position: "absolute", top: HAUT_ENTETE + idx * CELL_H, left: 0, height: CELL_H, width: "100%", display: "flex" }}>
+                <div style={{ position: "absolute", left: 0, right: 0, top: CELL_H / 2, height: 1.5, background: C.border }} />
+                {Array.from({ length: nbCases }, (_, d) => {
+                  const col = d * res;
+                  const cell = lireCase(grille, corde, col);
+                  const sel = selection.corde === corde && selection.col === col;
+                  const enAttente = cell && (cell.lie || cell.slide) && !origines.has(`${corde}-${col}`);
+                  const repere = cell?.bend === 2 ? "full" : cell?.bend === 1 ? "½" : enAttente ? (cell.slide ? "sl…" : "h/p…") : "";
+                  return (
+                    <button key={col} onClick={() => onSelect({ corde, col })} className="gr-focus"
+                      data-case={`${corde}-${col}`}
+                      tabIndex={sel ? 0 : -1}
+                      aria-current={sel ? "true" : undefined}
+                      aria-label={`Corde ${label}, mesure ${Math.floor(col / PAS_PAR_MESURE) + 1}, temps ${Math.floor((col % PAS_PAR_MESURE) / 4) + 1}${cell ? (cell.mute ? ", note étouffée" : `, case ${cell.fret}`) : ", vide"}`}
+                      style={{ position: "relative", width: cellW, height: CELL_H, flexShrink: 0, padding: 0, background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {cell ? (
+                        <span style={{
+                          position: "relative", zIndex: 1, minWidth: 18, padding: "1px 3px", borderRadius: 4,
+                          fontFamily: "monospace", fontWeight: 800, fontSize: 13.5, lineHeight: "18px",
+                          background: sel ? C.primary : C.surface, color: sel ? "#fff" : C.text,
+                        }}>{cell.mute ? "x" : cell.fret}</span>
+                      ) : sel ? (
+                        <span style={{ position: "relative", zIndex: 1, width: 20, height: 20, borderRadius: 5, border: `2px solid ${C.primary}`, background: C.surface }} />
+                      ) : null}
+                      {repere && (
+                        <span style={{ position: "absolute", top: -1, right: 1, zIndex: 2, fontSize: 9.5, fontWeight: 800, color: enAttente ? C.text3 : C.primary }}>{repere}</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })}
+
+          {/* Liaisons, dessinées comme sur une tab imprimée */}
+          {liaisons.map((e, i) => {
+            const x1 = (e.col / res) * cellW + cellW / 2;
+            const x2 = (e.toCol / res) * cellW + cellW / 2;
+            const y = HAUT_ENTETE + (e.string - 1) * CELL_H;
+            if (e.type === "hammer" || e.type === "pull") {
+              return (
+                <div key={"l" + i} aria-hidden="true" style={{ pointerEvents: "none" }}>
+                  <div style={{ position: "absolute", zIndex: 3, left: x1 + 5, width: Math.max(6, x2 - x1 - 10), top: y + 3, height: 8, border: `1.5px solid ${C.primary}`, borderBottom: "none", borderRadius: "50% 50% 0 0 / 100% 100% 0 0" }} />
+                  <div style={{ position: "absolute", zIndex: 4, left: (x1 + x2) / 2 - 4, top: y - 3, fontSize: 9, fontWeight: 800, lineHeight: "10px", color: C.primary, background: C.surface, padding: "0 1px" }}>{e.type === "hammer" ? "h" : "p"}</div>
+                </div>
+              );
+            }
+            return (
+              <div key={"l" + i} aria-hidden="true" style={{ position: "absolute", zIndex: 3, pointerEvents: "none", left: (x1 + x2) / 2 - 5, top: y + CELL_H / 2 - 9, fontSize: 14, fontWeight: 800, color: C.primary, lineHeight: "16px" }}>
+                {e.type === "slide_up" ? "/" : "\\"}
+              </div>
             );
           })}
         </div>
       </div>
+
+      {vide && (
+        <div aria-hidden="true" style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
+          <div style={{ fontSize: 12.5, fontWeight: 600, color: C.text2, background: C.surface, padding: "6px 10px", borderRadius: R.sm, border: `1px solid ${C.border}` }}>
+            Touche une case pour placer ta première note
+          </div>
+        </div>
+      )}
     </div>
   );
+}
+
+/** Grille 0-24, avec les repères de touche d'un vrai manche (3, 5, 7, 9, 12…). */
+function ClavierManche({ cell, onFret, onMute, onEffacer, C }) {
+  const fretActif = cell && !cell.mute ? cell.fret : null;
+  const point = (k) => <span key={k} style={{ width: 4, height: 4, borderRadius: 2, background: C.text3 }} />;
+  return (
+    <div role="group" aria-label="Case du manche" style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 5 }}>
+      {Array.from({ length: 25 }, (_, f) => (
+        <button key={f} onClick={() => onFret(f)} aria-pressed={fretActif === f} className="gr-focus" style={styleTouche(C, fretActif === f)}>
+          <span style={{ lineHeight: "16px" }}>{f}</span>
+          <span aria-hidden="true" style={{ display: "flex", gap: 3, height: 4 }}>
+            {REPERES_DOUBLES.has(f) ? [point(1), point(2)] : REPERES_SIMPLES.has(f) ? [point(1)] : null}
+          </span>
+        </button>
+      ))}
+      <button onClick={onMute} aria-pressed={!!cell?.mute} aria-label="Note étouffée" className="gr-focus" style={styleTouche(C, !!cell?.mute)}>x</button>
+      <button onClick={onEffacer} disabled={!cell} className="gr-focus"
+        style={styleTouche(C, false, { gridColumn: "span 2", fontSize: 12.5, opacity: cell ? 1 : .4, cursor: cell ? "pointer" : "default" })}>
+        Effacer
+      </button>
+    </div>
+  );
+}
+
+function TechniquesNote({ cell, onLie, onSlide, onBend, C }) {
+  const aNote = !!cell && !cell.mute && typeof cell.fret === "number";
+  const bouton = (label, actif, onClick) => (
+    <button onClick={onClick} disabled={!aNote} aria-pressed={actif} className="gr-focus"
+      style={styleTouche(C, actif, { flex: 1, fontSize: 12.5, opacity: aNote ? 1 : .4, cursor: aNote ? "pointer" : "default" })}>
+      {label}
+    </button>
+  );
+  return (
+    <div role="group" aria-label="Technique de la note" style={{ display: "flex", gap: 5, marginTop: 5 }}>
+      {bouton("Liaison h/p", !!cell?.lie, onLie)}
+      {bouton("Slide", !!cell?.slide, onSlide)}
+      {bouton(cell?.bend === 2 ? "Bend · 1 ton" : cell?.bend === 1 ? "Bend · ½ ton" : "Bend", !!cell?.bend, onBend)}
+    </div>
+  );
+}
+
+function initialiserEditeur() {
+  let grille = null;
+  try {
+    const brut = localStorage.getItem(STOCKAGE_TAB);
+    if (brut) {
+      const g = JSON.parse(brut);
+      if (grilleValide(g)) grille = { notes: g.notes };
+    }
+  } catch { /* stockage indisponible ou corrompu : on repart de l'exemple */ }
+  return grille || grilleExemple();
 }
 
 function TabEditor() {
   const C = useC();
-  const [texte, setTexte] = useState(EXEMPLE_TAB);
-  const [bpm, setBpm] = useState(90);
+  const initRef = useRef(null);
+  if (!initRef.current) initRef.current = initialiserEditeur();
+
+  // Grille + historique dans un même état, mis à jour par des fonctions
+  // PURES : React (mode strict) peut les exécuter deux fois sans doubler
+  // une entrée d'historique.
+  const [edit, setEdit] = useState(() => ({ grille: initRef.current, passe: [] }));
+  const grille = edit.grille;
+  const [res, setRes] = useState(() => (compatibleCroches(initRef.current) ? 2 : 1));
+  const [selection, setSelection] = useState({ corde: 3, col: 0 });
+  const [bpm, setBpm] = useState(80);
+  const [boucle, setBoucle] = useState(false);
   const [jouant, setJouant] = useState(false);
-  const [curseur, setCurseur] = useState(null);   // dernier évènement en cours de lecture
+  const [colLecture, setColLecture] = useState(null);
+  const [menuOuvert, setMenuOuvert] = useState(false);
+  const [importOuvert, setImportOuvert] = useState(false);
+  const [texteImport, setTexteImport] = useState("");
+  const [erreurImport, setErreurImport] = useState(null);
+  const [message, setMessage] = useState(null);
+
   const enLectureRef = useRef(false);
+  const timerBoucleRef = useRef(null);
+  const boucleRef = useRef(boucle);  boucleRef.current = boucle;
+  const bpmRef = useRef(bpm);        bpmRef.current = bpm;
+  const derniereSaisieRef = useRef(null);
+  const menuRef = useRef(null);
+  const timerMessageRef = useRef(null);
 
-  const { evenements, erreur } = parseTab(texte);
+  const evenements = useMemo(() => grilleVersEvenements(grille), [grille]);
+  const origines = useMemo(() => new Set(evenements.filter(e => e.toCol != null).map(e => `${e.string}-${e.col}`)), [evenements]);
+  const cellSel = lireCase(grille, selection.corde, selection.col);
 
-  const jouer = useCallback(async () => {
-    if (jouant) { stopAll(); setJouant(false); enLectureRef.current = false; return; }
-    if (erreur || evenements.length === 0) return;
+  // Brouillon conservé entre deux visites (même appareil).
+  useEffect(() => {
+    try { localStorage.setItem(STOCKAGE_TAB, JSON.stringify(grille)); } catch { /* noop */ }
+  }, [grille]);
+
+  // Une tab importée (ou restaurée par « Annuler ») peut contenir des
+  // doubles-croches : la vue croches les cacherait, on bascule donc seul.
+  useEffect(() => { if (res === 2 && !compatibleCroches(grille)) setRes(1); }, [grille, res]);
+  useEffect(() => {
+    const max = nbColsVisibles(grille) - res;
+    if (selection.col > max) setSelection(s => ({ ...s, col: max }));
+  }, [grille, res, selection.col]);
+
+  const annoncer = useCallback((txt) => {
+    setMessage(txt);
+    clearTimeout(timerMessageRef.current);
+    timerMessageRef.current = setTimeout(() => setMessage(null), 3500);
+  }, []);
+  const effacerMessage = useCallback(() => { setMessage(null); clearTimeout(timerMessageRef.current); }, []);
+
+  const modifier = useCallback((fn) => {
+    setEdit(e => {
+      const n = fn(e.grille);
+      if (n === e.grille) return e;
+      return { grille: n, passe: [...e.passe.slice(-(HISTORIQUE_MAX - 1)), e.grille] };
+    });
+  }, []);
+  const modifierSelection = useCallback((fn) => {
+    const { corde, col } = selection;
+    effacerMessage();
+    modifier(g => {
+      const avant = lireCase(g, corde, col);
+      const apres = fn(avant);
+      return apres === avant ? g : ecrireCase(g, corde, col, apres);
+    });
+  }, [selection, modifier, effacerMessage]);
+
+  const annuler = useCallback(() => {
+    effacerMessage();
+    setEdit(e => e.passe.length ? { grille: e.passe[e.passe.length - 1], passe: e.passe.slice(0, -1) } : e);
+  }, [effacerMessage]);
+
+  const onFret = useCallback((f) => { derniereSaisieRef.current = null; modifierSelection(c => poserFret(c, f)); }, [modifierSelection]);
+  const onMute = useCallback(() => modifierSelection(c => (c?.mute ? null : { mute: true })), [modifierSelection]);
+  const onEffacer = useCallback(() => { derniereSaisieRef.current = null; modifierSelection(() => null); }, [modifierSelection]);
+  const basculer = useCallback((champ) => modifierSelection(c => {
+    if (!c || c.mute || typeof c.fret !== "number") return c;
+    return { fret: c.fret, [champ]: c[champ] ? undefined : true };
+  }), [modifierSelection]);
+  const onLie = useCallback(() => basculer("lie"), [basculer]);
+  const onSlide = useCallback(() => basculer("slide"), [basculer]);
+  // bend : aucun → ton entier (le plus courant) → demi-ton → aucun
+  const onBend = useCallback(() => modifierSelection(c => {
+    if (!c || c.mute || typeof c.fret !== "number") return c;
+    return { fret: c.fret, bend: c.bend === 2 ? 1 : c.bend === 1 ? undefined : 2 };
+  }), [modifierSelection]);
+
+  const deplacer = useCallback((dCase, dCorde) => {
+    derniereSaisieRef.current = null;
+    effacerMessage();
+    setSelection(s => ({
+      corde: Math.max(1, Math.min(6, s.corde + dCorde)),
+      col: Math.max(0, Math.min(nbColsVisibles(grille) - res, s.col + dCase * res)),
+    }));
+  }, [grille, res, effacerMessage]);
+
+  const choisirResolution = (r) => {
+    if (r === 2 && !compatibleCroches(grille)) {
+      annoncer("Cette tab contient des doubles-croches : la vue croches en cacherait certaines.");
+      return;
+    }
+    setRes(r);
+    setSelection(s => ({ ...s, col: s.col - (s.col % r) }));
+  };
+
+  // ── Lecture ──
+  const arreter = useCallback(() => {
+    enLectureRef.current = false;
+    clearTimeout(timerBoucleRef.current); timerBoucleRef.current = null;
+    stopAll();
+    setJouant(false); setColLecture(null);
+  }, []);
+
+  const lancerRef = useRef(null);
+  const lancer = useCallback(async (bpmLecture) => {
+    const evs = grilleVersEvenements(grille);
+    if (evs.length === 0) return;
     await unlockAudio();
     enLectureRef.current = true;
     setJouant(true);
-    setCurseur(null);
-    playTab(evenements, {
-      bpm,
-      onEvent: (ev) => { if (enLectureRef.current) setCurseur(ev); },
-      onDone: () => { if (enLectureRef.current) { setJouant(false); enLectureRef.current = false; } },
+    clearTimeout(timerBoucleRef.current); timerBoucleRef.current = null;
+    playTab(evs, {
+      bpm: bpmLecture,
+      onEvent: (ev) => { if (enLectureRef.current) setColLecture(ev.col); },
+      onDone: () => {
+        if (!enLectureRef.current) return;
+        if (boucleRef.current) { if (!timerBoucleRef.current) lancerRef.current?.(bpmRef.current); return; }
+        arreter();
+      },
     });
-  }, [jouant, erreur, evenements, bpm]);
+    // En boucle, on repart à la fin de la DERNIÈRE MESURE, pas de la
+    // dernière note : la boucle reste calée sur la pulsation.
+    if (boucleRef.current) {
+      const secParPas = (60 / bpmLecture) / 4;
+      const dureeMs = nbMesuresUtilisees(grille) * PAS_PAR_MESURE * secParPas * 1000;
+      timerBoucleRef.current = setTimeout(() => {
+        timerBoucleRef.current = null;
+        if (enLectureRef.current) lancerRef.current?.(bpmRef.current);
+      }, dureeMs);
+    }
+  }, [grille, arreter]);
+  lancerRef.current = lancer;   // la boucle relit la grille à jour : on peut corriger en jouant
 
-  useEffect(() => () => { enLectureRef.current = false; stopAll(); }, []);
+  const basculerLecture = useCallback(() => { if (jouant) arreter(); else lancer(bpm); }, [jouant, arreter, lancer, bpm]);
+
+  const changerTempo = (delta) => {
+    const nb = Math.max(30, Math.min(240, bpm + delta));
+    setBpm(nb); bpmRef.current = nb;
+    if (jouant) lancer(nb);   // appliqué tout de suite, pas au tour suivant
+  };
+  const basculerBoucle = () => {
+    const suivant = !boucle;
+    setBoucle(suivant); boucleRef.current = suivant;
+    if (!suivant) { clearTimeout(timerBoucleRef.current); timerBoucleRef.current = null; }
+  };
+
+  useEffect(() => () => { enLectureRef.current = false; clearTimeout(timerBoucleRef.current); clearTimeout(timerMessageRef.current); stopAll(); }, []);
+
+  // ── Clavier physique (ordinateur) ──
+  useEffect(() => {
+    const onKey = (e) => {
+      const tag = e.target?.tagName;
+      if (e.key === "Escape") { setMenuOuvert(false); setImportOuvert(false); return; }
+      if (tag === "TEXTAREA" || tag === "INPUT" || tag === "SELECT") return;
+      if ((e.key === " " || e.key === "Enter") && tag === "BUTTON") return;
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { annuler(); e.preventDefault(); return; }
+      if (/^[0-9]$/.test(e.key)) {
+        const now = Date.now(), d = Number(e.key), der = derniereSaisieRef.current;
+        const enchainer = !!der && der.corde === selection.corde && der.col === selection.col && now - der.t < DELAI_DEUX_CHIFFRES;
+        const c = lireCase(grille, selection.corde, selection.col);
+        const combine = enchainer && c && !c.mute && typeof c.fret === "number" && c.fret * 10 + d <= 24;
+        modifierSelection(cell => saisirChiffre(cell, d, enchainer));
+        derniereSaisieRef.current = combine ? null : { corde: selection.corde, col: selection.col, t: now };
+        e.preventDefault(); return;
+      }
+      const actions = {
+        ArrowLeft: () => deplacer(-1, 0), ArrowRight: () => deplacer(1, 0),
+        ArrowUp: () => deplacer(0, -1), ArrowDown: () => deplacer(0, 1),
+        Backspace: onEffacer, Delete: onEffacer, " ": basculerLecture,
+        x: onMute, h: onLie, s: onSlide, b: onBend,
+      };
+      const a = actions[e.key];
+      if (a) { a(); e.preventDefault(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [grille, selection, modifierSelection, annuler, deplacer, onEffacer, basculerLecture, onMute, onLie, onSlide, onBend]);
+
+  // Menu « ⋯ » : se ferme au premier appui en dehors.
+  useEffect(() => {
+    if (!menuOuvert) return;
+    const fermer = (e) => { if (!menuRef.current?.contains(e.target)) setMenuOuvert(false); };
+    document.addEventListener("pointerdown", fermer);
+    return () => document.removeEventListener("pointerdown", fermer);
+  }, [menuOuvert]);
+
+  const importer = () => {
+    const { evenements: ev, erreur } = parseTab(texteImport);
+    if (erreur) { setErreurImport(erreur); return; }
+    modifier(() => evenementsVersGrille(ev));
+    setSelection({ corde: 1, col: 0 });
+    setErreurImport(null); setTexteImport(""); setImportOuvert(false);
+    annoncer("Tab importée. « Annuler » revient à la version précédente.");
+  };
+
+  // Ligne d'aide : un message ponctuel d'abord, sinon ce qu'il faut faire
+  // pour la case sélectionnée. Hauteur fixe : rien ne saute à l'écran.
+  const cle = `${selection.corde}-${selection.col}`;
+  const nomCorde = CORDES_LABELS[selection.corde - 1];
+  const aide = message
+    || (!cellSel ? `Choisis la case du manche pour la corde ${nomCorde}.`
+      : cellSel.mute ? "Note étouffée : jouée sans hauteur, pour le rythme."
+      : (cellSel.lie || cellSel.slide) && !origines.has(cle)
+        ? (cellSel.slide ? "Place une note plus loin sur cette corde pour terminer le slide."
+                         : "Place une note plus loin sur cette corde : hammer-on si elle monte, pull-off si elle descend.")
+      : cellSel.bend ? `Case ${cellSel.fret}, tirée d'${cellSel.bend === 2 ? "un ton" : "un demi-ton"}.`
+      : `Corde ${nomCorde}, case ${cellSel.fret}.`);
+
+  const itemMenu = (icon, label, onClick, danger) => (
+    <button role="menuitem" onClick={() => { setMenuOuvert(false); onClick(); }} className="gr-focus" style={{
+      display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "11px 12px", border: "none",
+      background: "transparent", cursor: "pointer", fontSize: 13, fontWeight: 700, textAlign: "left",
+      color: danger ? C.primaryD : C.text, fontFamily: FONTS.ui,
+    }}>
+      <Ti name={icon} size={16} color={danger ? C.primary : C.text2} />{label}
+    </button>
+  );
+  const boutonCarre = { width: 40, height: 40, borderRadius: R.sm, border: `1.5px solid ${C.border}`, background: C.surface, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: C.text2, fontWeight: 800, fontFamily: FONTS.ui, padding: 0 };
 
   return (
     <div>
-      <div style={{ fontSize: 12.5, color: C.text2, lineHeight: 1.5, marginBottom: 10 }}>
-        Colle une tab au format classique (une ligne par corde) ou écris la
-        tienne. Techniques reconnues : <b>h</b> (hammer-on), <b>p</b> (pull-off),{" "}
-        <b>/</b> et <b>\</b> (slide), <b>b</b> (bend), <b>x</b> (note étouffée).
+      {/* ── Barre d'édition : densité, annuler, menu ── */}
+      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+        <div role="group" aria-label="Densité de la grille" style={{ display: "flex", background: C.surface2, borderRadius: R.sm, padding: 3 }}>
+          {[[2, "Croches"], [1, "Doubles"]].map(([r, label]) => (
+            <button key={r} onClick={() => choisirResolution(r)} aria-pressed={res === r} className="gr-focus" style={{
+              padding: "7px 11px", borderRadius: R.sm - 2, border: "none", cursor: "pointer", fontFamily: FONTS.ui,
+              fontSize: 12, fontWeight: 800, background: res === r ? C.surface : "transparent",
+              color: res === r ? C.text : C.text3, boxShadow: res === r ? `0 0 0 1.5px ${C.border}` : "none",
+            }}>{label}</button>
+          ))}
+        </div>
+        <div style={{ flex: 1 }} />
+        <button onClick={annuler} disabled={edit.passe.length === 0} className="gr-focus" style={{
+          ...boutonCarre, width: "auto", padding: "0 12px", fontSize: 12.5,
+          opacity: edit.passe.length ? 1 : .4, cursor: edit.passe.length ? "pointer" : "default",
+        }}>Annuler</button>
+        <div ref={menuRef} style={{ position: "relative" }}>
+          <button onClick={() => setMenuOuvert(o => !o)} aria-haspopup="menu" aria-expanded={menuOuvert} aria-label="Plus d'actions" className="gr-focus" style={{ ...boutonCarre, fontSize: 18 }}>⋯</button>
+          {menuOuvert && (
+            <div role="menu" style={{ position: "absolute", right: 0, top: 44, zIndex: 20, minWidth: 220, background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.md, boxShadow: "0 8px 24px rgba(0,0,0,.18)", overflow: "hidden" }}>
+              {itemMenu("clipboard-check", "Importer une tab texte", () => setImportOuvert(true))}
+              {itemMenu("sparkles", "Repartir de l'exemple", () => { modifier(() => grilleExemple()); annoncer("Exemple rechargé. « Annuler » pour revenir."); })}
+              {itemMenu("trash", "Tout effacer", () => { modifier(() => grilleVide()); annoncer("Tab effacée. « Annuler » la fait revenir."); }, true)}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Texte classique pour écrire, vue défilante UNIQUEMENT pendant la
-          lecture — les deux exploitent le même texte/évènements analysés,
-          rien n'est dupliqué ni redemandé à l'utilisateur en changeant de
-          mode. */}
-      {jouant ? (
-        <TabScrollView
-          evenements={evenements} colActuelle={curseur?.col ?? null}
-          maxCol={Math.max(...evenements.map(e => e.col), 20)} C={C}
-        />
-      ) : (
-        <textarea
-          value={texte}
-          onChange={e => setTexte(e.target.value)}
-          spellCheck={false}
-          rows={7}
-          style={{
-            width: "100%", fontFamily: "monospace", fontSize: 13, lineHeight: 1.6,
-            padding: "10px 12px", borderRadius: R.md,
-            border: `1.5px solid ${erreur ? C.primary : C.border}`,
-            background: C.surface, color: C.text, resize: "vertical",
-          }}
-        />
+      {importOuvert && (
+        <div style={{ marginBottom: 10, padding: 10, borderRadius: R.md, background: C.surface2 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: C.text2, marginBottom: 6 }}>Colle une tab au format texte (6 lignes, une par corde)</div>
+          <textarea value={texteImport} onChange={e => setTexteImport(e.target.value)} spellCheck={false} rows={6}
+            placeholder={"e|--0---2---3h5---|\nB|----------------|\n…"}
+            style={{ width: "100%", fontFamily: "monospace", fontSize: 12.5, lineHeight: 1.5, padding: "10px 12px", borderRadius: R.md, border: `1.5px solid ${erreurImport ? C.primary : C.border}`, background: C.surface, color: C.text, resize: "vertical" }} />
+          {erreurImport && <div style={{ fontSize: 12, color: C.primaryD, marginTop: 4 }}>{erreurImport}</div>}
+          <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+            <button onClick={importer} className="gr-focus" style={{ flex: 1, height: 40, borderRadius: R.sm, border: "none", background: C.primaryBtn, color: "#fff", fontWeight: 800, cursor: "pointer", fontFamily: FONTS.ui }}>Importer</button>
+            <button onClick={() => { setImportOuvert(false); setErreurImport(null); }} className="gr-focus" style={{ ...boutonCarre, width: "auto", padding: "0 14px", fontSize: 12.5 }}>Fermer</button>
+          </div>
+        </div>
       )}
 
-      {!jouant && (erreur ? (
-        <div style={{ fontSize: 12, color: C.primary, marginTop: 6 }}>{erreur}</div>
-      ) : (
-        <div style={{ fontSize: 12, color: C.text3, marginTop: 6 }}>
-          {evenements.length} évènement{evenements.length > 1 ? "s" : ""} détecté{evenements.length > 1 ? "s" : ""}
-        </div>
-      ))}
+      <GrilleTab grille={grille} evenements={evenements} res={res} selection={selection}
+        onSelect={(s) => { setSelection(s); derniereSaisieRef.current = null; effacerMessage(); }} colLecture={colLecture} C={C} />
 
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 14 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <button onClick={() => setBpm(b => Math.max(30, b - 5))} style={{
-            width: 32, height: 32, borderRadius: R.sm, border: `1.5px solid ${C.border}`,
-            background: C.surface, color: C.text2, cursor: "pointer", fontWeight: 700,
-          }}>−</button>
-          <div style={{ minWidth: 56, textAlign: "center" }}>
-            <div style={{ fontSize: 15, fontWeight: 800, color: C.text }}>{bpm}</div>
-            <div style={{ fontSize: 9, color: C.text3 }}>BPM</div>
-          </div>
-          <button onClick={() => setBpm(b => Math.min(240, b + 5))} style={{
-            width: 32, height: 32, borderRadius: R.sm, border: `1.5px solid ${C.border}`,
-            background: C.surface, color: C.text2, cursor: "pointer", fontWeight: 700,
-          }}>+</button>
-        </div>
-
-        <button onClick={jouer} disabled={!jouant && (!!erreur || evenements.length === 0)} style={{
-          flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-          padding: "11px", borderRadius: R.lg, border: "none",
-          background: jouant ? C.surface2 : C.primaryBtn,
-          color: jouant ? C.text2 : "#fff",
-          fontWeight: 800, fontSize: 13.5, cursor: "pointer",
-          opacity: (!jouant && (erreur || evenements.length === 0)) ? 0.5 : 1,
-        }}>
-          <Ti name={jouant ? "player-stop" : "player-play"} size={16} color={jouant ? C.text2 : "#fff"} />
-          {jouant ? "Arrêter" : "Jouer"}
-        </button>
+      <div role="status" aria-live="polite" style={{ minHeight: 34, display: "flex", alignItems: "center", fontSize: 12, lineHeight: 1.35, color: message ? C.primaryD : C.text2, fontWeight: message ? 700 : 500, padding: "4px 2px" }}>
+        {aide}
       </div>
 
-      {/* Limite assumée, dite clairement plutôt que cachée : voir
-          audioEngine.js/playTab pour le détail de ce qui est fidèle et ce
-          qui est approché avec des échantillons plutôt qu'une synthèse. */}
-      <div style={{ marginTop: 14, fontSize: 11, color: C.text3, lineHeight: 1.5 }}>
-        Le rythme suit une convention fixe (chaque colonne = une double-croche
-        au tempo réglé), pas une mesure exacte du texte. Le bend joue la bonne
-        hauteur d'arrivée, sans le geste de montée — les échantillons de
-        guitare ne permettent pas un vrai glissement continu.
+      <ClavierManche cell={cellSel} onFret={onFret} onMute={onMute} onEffacer={onEffacer} C={C} />
+      <TechniquesNote cell={cellSel} onLie={onLie} onSlide={onSlide} onBend={onBend} C={C} />
+
+      {/* ── Lecture, dans la zone du pouce ── */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 14 }}>
+        <button onClick={basculerLecture} disabled={!jouant && evenements.length === 0} className="gr-focus" style={{
+          flex: 1, height: 44, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+          borderRadius: R.lg, border: "none", background: jouant ? C.surface2 : C.primaryBtn,
+          color: jouant ? C.text : "#fff", fontWeight: 800, fontSize: 14, cursor: "pointer", fontFamily: FONTS.ui,
+          opacity: (!jouant && evenements.length === 0) ? .5 : 1,
+        }}>
+          <Ti name={jouant ? "player-pause" : "player-play"} size={17} color={jouant ? C.text : "#fff"} />
+          {jouant ? "Arrêter" : "Écouter"}
+        </button>
+        <div role="group" aria-label="Tempo" style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <button onClick={() => changerTempo(-5)} aria-label="Ralentir" className="gr-focus" style={{ ...boutonCarre, width: 36 }}>−</button>
+          <div style={{ minWidth: 44, textAlign: "center" }}>
+            <div style={{ fontSize: 15, fontWeight: 800, color: C.text, lineHeight: 1 }}>{bpm}</div>
+            <div style={{ fontSize: 9, color: C.text3, marginTop: 2 }}>BPM</div>
+          </div>
+          <button onClick={() => changerTempo(5)} aria-label="Accélérer" className="gr-focus" style={{ ...boutonCarre, width: 36 }}>+</button>
+        </div>
+        <button onClick={basculerBoucle} aria-pressed={boucle} aria-label="Lecture en boucle" className="gr-focus" style={{
+          ...boutonCarre, width: 52, height: 44, flexDirection: "column", gap: 1,
+          border: `1.5px solid ${boucle ? C.primary : C.border}`, background: boucle ? C.primaryL : C.surface,
+        }}>
+          <Ti name="refresh" size={15} color={boucle ? C.primary : C.text2} />
+          <span style={{ fontSize: 9.5, fontWeight: 800, color: boucle ? C.primaryD : C.text3 }}>Boucle</span>
+        </button>
       </div>
     </div>
   );
 }
 
+const ONGLETS_OUTILS = [
+  { id:"metronome", label:"Métronome",    icon:"clock" },
+  { id:"tuner",     label:"Accordeur",    icon:"microphone" },
+  { id:"chords",    label:"Accords",      icon:"music" },
+  { id:"neck",      label:"Manche",       icon:"guitar-pick" },
+  { id:"tablature", label:"Tablature",    icon:"notebook" },
+  { id:"jam",       label:"Jam Session",  icon:"music-plus", externe:true },
+  { id:"ear",       label:"Ear Training", icon:"ear",        externe:true },
+];
+const OUTILS_INTERNES = new Set(ONGLETS_OUTILS.filter(t => !t.externe).map(t => t.id));
+
 function ToolboxScreen({ onBack, navigate }) {
   const C = useC();
-  const [tab, setTab] = useState("metronome");
+  // L'outil actif est mémorisé : revenir dans Outils ramène là où on était
+  // (au milieu d'une tab, par exemple), pas systématiquement au métronome.
+  const [tab, setTabBrut] = useState(() => {
+    try { const t = localStorage.getItem("groply:outil-actif"); if (OUTILS_INTERNES.has(t)) return t; } catch { /* noop */ }
+    return "metronome";
+  });
+  const setTab = (t) => { setTabBrut(t); try { localStorage.setItem("groply:outil-actif", t); } catch { /* noop */ } };
+  // Sur mobile, la barre de défilement horizontale est masquée par le
+  // système : rien n'indiquait qu'il y avait d'autres outils à droite. Un
+  // fondu + une flèche le signalent, et disparaissent une fois au bout.
+  const ongletsRef = useRef(null);
+  const [finOnglets, setFinOnglets] = useState(false);
+  const majFinOnglets = useCallback(() => {
+    const el = ongletsRef.current;
+    if (el) setFinOnglets(el.scrollLeft + el.clientWidth >= el.scrollWidth - 4);
+  }, []);
+  useEffect(() => {
+    // Un outil restauré peut se trouver hors de la vue (Tablature, à droite).
+    ongletsRef.current?.querySelector('[aria-selected="true"]')?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+    majFinOnglets();
+    window.addEventListener("resize", majFinOnglets);
+    return () => window.removeEventListener("resize", majFinOnglets);
+  }, [majFinOnglets]);
 
   return (
     <div style={{ paddingBottom: 30 }}>
@@ -1375,7 +1736,7 @@ function ToolboxScreen({ onBack, navigate }) {
         <div style={{ position:"absolute", inset:0, background:"rgba(160,55,0,.5)" }}/>
         <div style={{ position:"relative", zIndex:1, display:"flex", alignItems:"center", gap:12 }}>
           {onBack && (
-            <button onClick={onBack} style={{
+            <button onClick={onBack} aria-label="Retour" className="gr-focus" style={{
               background:"rgba(255,255,255,.85)", border:"none", borderRadius:R.sm,
               width:36, height:36, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer",
             }}>
@@ -1384,7 +1745,7 @@ function ToolboxScreen({ onBack, navigate }) {
           )}
           <div style={{ flex:1 }}>
             <div style={{ fontSize:24, fontWeight:800, color:"#fff", letterSpacing:"-.4px" }}>Boîte à outils</div>
-            <div style={{ fontSize:12, color:"rgba(255,255,255,.8)", marginTop:1 }}>Métronome & accordeur</div>
+            <div style={{ fontSize:12, color:"rgba(255,255,255,.8)", marginTop:1 }}>Tout ce qu'il faut pour pratiquer</div>
           </div>
         </div>
       </div>
@@ -1396,34 +1757,54 @@ function ToolboxScreen({ onBack, navigate }) {
           (qui change juste le contenu affiché) — mêmes onglets, deux
           comportements au clic, comme n'importe quel onglet qui mène vers
           une page à part ailleurs dans l'app. */}
-      <div style={{ overflowX:"auto", WebkitOverflowScrolling:"touch", padding:"14px 20px 0" }}>
-        <div style={{ display:"flex", gap:8, width:"max-content" }}>
-          {[
-            { id:"metronome", label:"Métronome",    icon:"clock" },
-            { id:"tuner",     label:"Accordeur",    icon:"microphone" },
-            { id:"chords",    label:"Accords",      icon:"music" },
-            { id:"neck",      label:"Manche",       icon:"guitar-pick" },
-            { id:"tablature", label:"Tablature",    icon:"edit" },
-            { id:"jam",       label:"Jam Session",  icon:"music-plus", externe:true },
-            { id:"ear",       label:"Ear Training", icon:"ear",        externe:true },
-          ].map(t => (
-            <button key={t.id} onClick={()=> t.externe ? navigate(t.id) : setTab(t.id)} style={{
-              flexShrink:0, width:82, padding:"10px 4px", borderRadius:R.lg, cursor:"pointer", fontFamily:FONTS.ui,
-              border:`1.5px solid ${tab===t.id?C.primary:C.border}`,
-              background: tab===t.id?C.primaryL:C.surface,
-              color: tab===t.id?C.primaryD:C.text2, fontWeight:700, fontSize:10.5,
-              display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:3,
-              textAlign:"center", lineHeight:1.2,
-            }}>
-              <Ti name={t.icon} size={15} color={tab===t.id?C.primary:C.text3}/>
-              {t.label}
-            </button>
-          ))}
+      <div style={{ position:"relative" }}>
+      <div ref={ongletsRef} onScroll={majFinOnglets} style={{ overflowX:"auto", WebkitOverflowScrolling:"touch", padding:"14px 20px 0" }}>
+        <div role="tablist" aria-label="Outils" style={{ display:"flex", gap:8, width:"max-content", alignItems:"stretch" }}>
+          {ONGLETS_OUTILS.map((t, i) => {
+            const actif = tab === t.id;
+            // Jam Session et Ear Training ouvrent une autre page : un petit
+            // séparateur et une flèche ↗ le signalent avant l'appui, sans
+            // les sortir de la rangée (où tu voulais les voir).
+            const premierExterne = t.externe && !ONGLETS_OUTILS[i - 1]?.externe;
+            return (
+              <div key={t.id} style={{ display:"flex", alignItems:"stretch", gap:8 }}>
+                {premierExterne && <div aria-hidden="true" style={{ width:1.5, background:C.border, margin:"6px 0" }}/>}
+                <button
+                  role={t.externe ? undefined : "tab"}
+                  aria-selected={t.externe ? undefined : actif}
+                  aria-label={t.externe ? `${t.label} (ouvre une autre page)` : undefined}
+                  onClick={()=> t.externe ? navigate(t.id) : setTab(t.id)}
+                  className="gr-focus"
+                  style={{
+                    position:"relative", flexShrink:0, width:82, padding:"10px 4px", borderRadius:R.lg, cursor:"pointer", fontFamily:FONTS.ui,
+                    border:`1.5px solid ${actif?C.primary:C.border}`,
+                    background: actif?C.primaryL:C.surface,
+                    color: actif?C.primaryD:C.text2, fontWeight:700, fontSize:10.5,
+                    display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:3,
+                    textAlign:"center", lineHeight:1.2,
+                  }}>
+                  {t.externe && <span aria-hidden="true" style={{ position:"absolute", top:3, right:6, fontSize:10, color:C.text3 }}>↗</span>}
+                  <Ti name={t.icon} size={15} color={actif?C.primary:C.text3}/>
+                  {t.label}
+                </button>
+              </div>
+            );
+          })}
         </div>
+      </div>
+      {!finOnglets && (
+        <div aria-hidden="true" style={{
+          position:"absolute", top:14, right:0, bottom:0, width:56, pointerEvents:"none",
+          background:`linear-gradient(to right, transparent, ${C.bg} 70%)`,
+          display:"flex", alignItems:"center", justifyContent:"flex-end", paddingRight:6,
+        }}>
+          <Ti name="chevron-right" size={18} color={C.text2}/>
+        </div>
+      )}
       </div>
 
       {/* Contenu */}
-      <div style={{ padding:"18px 20px 0" }}>
+      <div role="tabpanel" aria-label={ONGLETS_OUTILS.find(t => t.id === tab)?.label} style={{ padding:"18px 20px 0" }}>
         {tab === "metronome" ? <Metronome/>
          : tab === "tuner"     ? <Tuner/>
          : tab === "chords"    ? <ChordPlayer/>

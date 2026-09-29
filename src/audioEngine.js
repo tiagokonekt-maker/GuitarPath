@@ -541,7 +541,8 @@ export async function playTab(evenements, opts = {}) {
 
   const secParColonne = (60 / bpm) * subdivision;
   const dureeNote = secParColonne;
-  const dernierCol = Math.max(...evenements.map(e => e.col));
+  // toCol (liaisons issues de la grille de saisie) peut dépasser col.
+  const dernierCol = Math.max(...evenements.map(e => e.toCol ?? e.col));
 
   try {
     for (const ev of evenements) {
@@ -576,13 +577,16 @@ export async function playTab(evenements, opts = {}) {
       if (ev.type === "hammer" || ev.type === "pull") {
         const noteDepart  = getToneNoteAtPosition(ev.string, ev.fromFret);
         const noteArrivee = getToneNoteAtPosition(ev.string, ev.toFret);
+        // Avec toCol (grille de saisie), la note d'arrivée tombe sur SA
+        // colonne ; sans (texte collé), 75 ms après, comme avant.
+        const ecart = ev.toCol != null ? (ev.toCol - ev.col) * secParColonne : 0.075;
         differer(() => {
           onEvent?.(ev);
           try {
-            sampler.triggerAttackRelease(noteDepart, dureeNote * 0.6, Tone.now(), 0.75);
+            sampler.triggerAttackRelease(noteDepart, Math.max(0.04, ecart), Tone.now(), 0.75);
             // Seconde note plus douce, sans attaque au médiator — c'est le
             // doigt seul qui la produit sur un hammer-on ou un pull-off.
-            sampler.triggerAttackRelease(noteArrivee, dureeNote * 0.6, Tone.now() + 0.075, 0.45);
+            sampler.triggerAttackRelease(noteArrivee, dureeNote * 0.9, Tone.now() + ecart, 0.45);
           } catch (e) { warn("playTab hammer/pull:", e); }
         }, tMs);
         continue;
@@ -592,7 +596,10 @@ export async function playTab(evenements, opts = {}) {
         const pas = ev.fromFret <= ev.toFret ? 1 : -1;
         const cases = [];
         for (let f = ev.fromFret; pas > 0 ? f <= ev.toFret : f >= ev.toFret; f += pas) cases.push(f);
-        const dureeGlissando = Math.min(0.16, dureeNote * 0.5);
+        // Avec toCol, l'arrivée du slide tombe sur sa propre colonne.
+        const dureeGlissando = ev.toCol != null
+          ? (ev.toCol - ev.col) * secParColonne
+          : Math.min(0.16, dureeNote * 0.5);
         differer(() => {
           onEvent?.(ev);
           cases.forEach((f, i) => {

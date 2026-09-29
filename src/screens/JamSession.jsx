@@ -1,6 +1,7 @@
 // GuitarPath -- screens/JamSession.jsx
 // Outil interactif d'improvisation : gamme active, notes cibles, contraintes + backing track
 import { useState, useMemo, useEffect, useRef } from "react";
+import { useWakeLock } from "../hooks/useWakeLock.js";
 import { FONTS, R } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
@@ -129,7 +130,7 @@ const makeContexts = (C) => [
     label: "Modal Dorien",
     color: "#185FA5", colorL: "#E6F1FB", colorD: "#042C53", colorB: "#A0BFE0",
     scale: "dorian",
-    desc: "La 6te majeure est ta note caracteristique. Evite de resoudre trop tot.",
+    desc: "La sixte majeure est ta note caractéristique. Évite de résoudre trop tôt.",
     targetDesc: "Fondamentale, 6te majeure (couleur dorien), tierce mineure",
     bpm: 90,
     // Im7 - IV7 : c'est ce va-et-vient qui FAIT entendre le dorien.
@@ -160,8 +161,8 @@ const makeContexts = (C) => [
 
 const ROOTS_FR = [
   { en: "A",  fr: "La"   }, { en: "B",  fr: "Si"   }, { en: "C",  fr: "Do"   },
-  { en: "D",  fr: "Re"   }, { en: "E",  fr: "Mi"   }, { en: "F",  fr: "Fa"   },
-  { en: "G",  fr: "Sol"  }, { en: "C#", fr: "Do#"  }, { en: "D#", fr: "Re#"  },
+  { en: "D",  fr: "Ré"   }, { en: "E",  fr: "Mi"   }, { en: "F",  fr: "Fa"   },
+  { en: "G",  fr: "Sol"  }, { en: "C#", fr: "Do#"  }, { en: "D#", fr: "Ré#"  },
   { en: "F#", fr: "Fa#"  }, { en: "G#", fr: "Sol#" }, { en: "A#", fr: "La#"  },
 ];
 
@@ -178,22 +179,52 @@ const CHORD_INTERVALS = {
   maj7:  [0, 4, 7, 11],
   min7:  [0, 3, 7, 10],
   dom7:  [0, 4, 7, 10],
+  maj:   [0, 4, 7],
+  min:   [0, 3, 7],
+};
+const QUALITE_LABEL = { maj7: "maj7", min7: "m7", dom7: "7", maj: "", min: "m" };
+
+/** Notes (noms anglais) d'un accord de la grille, transposé dans la tonalité. */
+function notesAccord(root, chord) {
+  const r = transposeNote(root, chord.degree);
+  return (CHORD_INTERVALS[chord.quality] || CHORD_INTERVALS.dom7).map(i => transposeNote(r, i));
+}
+const nomAccord = (root, chord) => {
+  const r = transposeNote(root, chord.degree);
+  return (ROOTS_FR.find(x => x.en === r)?.fr ?? r) + (QUALITE_LABEL[chord.quality] ?? "");
 };
 
+// Contraintes : une limite claire, tenue 2 minutes. `contextes` restreint
+// une contrainte aux styles où elle a un sens musical (absent = tous).
 const CONSTRAINTS = [
-  { text: "Joue UNIQUEMENT des notes longues. Zero doubles-croches.", level: "Facile" },
-  { text: "Chaque phrase doit finir sur une note de l'accord (chord tone).", level: "Facile" },
-  { text: "Maximum 4 notes par phrase. Silence entre chaque phrase.", level: "Facile" },
-  { text: "Joue une phrase de 2 mesures, silence 2 mesures. Call & response.", level: "Facile" },
-  { text: "Reste dans les 3 premieres cordes (aigues) uniquement.", level: "Moyen" },
-  { text: "Commence chaque phrase sur un temps fort (temps 1 ou 3).", level: "Moyen" },
-  { text: "Utilise le silence pendant au moins 50% du temps.", level: "Moyen" },
-  { text: "Monte progressivement en intensite pendant 2 minutes, puis redescends.", level: "Moyen" },
-  { text: "Chaque phrase doit contenir exactement une note chromatique (hors gamme).", level: "Difficile" },
+  { text: "Joue UNIQUEMENT des notes longues. Zéro double-croche.", level: "Facile" },
+  { text: "Chaque phrase doit finir sur une note de l'accord.", level: "Facile" },
+  { text: "4 notes maximum par phrase, et un silence entre chaque phrase.", level: "Facile" },
+  { text: "Joue une phrase de 2 mesures, puis 2 mesures de silence : question-réponse.", level: "Facile" },
+  { text: "Fais entendre la sixte majeure au moins une fois par phrase : c'est elle qui signe le dorien.", level: "Facile", contextes: ["modal_dorian"] },
+  { text: "Reste uniquement sur les 3 cordes aiguës.", level: "Moyen" },
+  { text: "Commence chaque phrase sur un temps fort (1 ou 3).", level: "Moyen" },
+  { text: "Utilise le silence pendant au moins 50 % du temps.", level: "Moyen" },
+  { text: "Monte progressivement en intensité pendant 2 minutes, puis redescends.", level: "Moyen" },
+  { text: "Glisse la note bleue (quinte diminuée) dans chaque phrase, en note de passage.", level: "Moyen", contextes: ["blues_12"] },
+  { text: "Termine tes phrases sur la septième mineure plutôt que sur la fondamentale.", level: "Moyen", contextes: ["modal_mixo"] },
+  { text: "Sur l'accord IVm7, vise sa tierce mineure : elle sort de ta penta et fait entendre le changement.", level: "Difficile", contextes: ["blues_minor"] },
+  { text: "Chaque phrase contient exactement une note chromatique (hors gamme).", level: "Difficile" },
   { text: "Cible uniquement les guide tones (3e et 7e) sur les temps 1 et 3.", level: "Difficile" },
-  { text: "Construis un solo en 3 actes : calme (1 min) -> montee (2 min) -> climax (30s).", level: "Difficile" },
-  { text: "Joue les yeux fermes. Sens le manche, ne le regarde pas.", level: "Difficile" },
+  { text: "Relie les accords : la 7e de chaque accord descend d'un demi-ton vers la 3e du suivant.", level: "Difficile", contextes: ["jazz_251"] },
+  { text: "Construis un solo en 3 actes : calme (1 min), montée (2 min), sommet (30 s).", level: "Difficile" },
+  { text: "Joue les yeux fermés. Sens le manche, ne le regarde pas.", level: "Difficile" },
 ];
+const NIVEAUX_CONTRAINTE = ["Facile", "Moyen", "Difficile"];
+const DUREE_CONTRAINTE = 120;          // secondes de jeu réel
+const SEUIL_SESSION = 180;             // 3 min de jeu réel pour compter une session
+
+/** Niveau de départ des contraintes, d'après le niveau de l'app — modifiable ensuite. */
+const niveauParDefaut = (niveauApp) => (niveauApp >= 16 ? "Difficile" : niveauApp >= 6 ? "Moyen" : "Facile");
+const fmtDuree = (sec) => `${Math.floor(sec / 60)}:${String(Math.max(0, sec) % 60).padStart(2, "0")}`;
+
+const BPM_MIN = 40;
+const BPM_MAX = 200;
 
 const makeLevelColor = (C) => ({ "Facile": C.green, "Moyen": C.amber, "Difficile": C.coral });
 
@@ -202,9 +233,21 @@ const makeLevelColor = (C) => ({ "Facile": C.green, "Moyen": C.amber, "Difficile
 // Samples FatBoy guitare steel + basse compressée + batterie procédurale
 // Chaîne audio : instruments -> reverb/delay -> compresseur master
 // ─────────────────────────────────────────────────────────────────────────
-function BackingTrackPlayer({ context, root, bpm }) {
+function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecondeJouee, onLecture }) {
   const C = useC();
   const [playing, setPlaying]       = useState(false);
+  const [compte, setCompte]         = useState(null);   // décompte 1-2-3-4 avant l'entrée
+  const [rampe, setRampe]           = useState(false);  // +5 BPM toutes les 2 grilles
+  // Le « groupe » se dirige : intensité (1 calme → 5 intense) et mixage.
+  // Les trois moteurs acceptaient déjà une intensité, mais recevaient
+  // toujours 3 en dur. Couper un instrument sert à travailler avec moins
+  // de soutien (sans basse, on doit faire entendre l'harmonie soi-même).
+  const [energie, setEnergie]       = useState(3);
+  const [coupes, setCoupes]         = useState({ accords: false, basse: false, batterie: false });
+  const [reglagesOuverts, setReglagesOuverts] = useState(false);
+  // L'écran reste allumé pendant qu'on joue : guitare en main, on ne
+  // touche pas le téléphone, et il se mettait en veille en pleine session.
+  useWakeLock(playing);
   const [beat, setBeat]             = useState(0);
   const [currentChord, setCurrentChord] = useState(0);
   const [loading, setLoading]       = useState(false);
@@ -233,8 +276,38 @@ function BackingTrackPlayer({ context, root, bpm }) {
   const delayRef    = useRef(null);
   const compRef     = useRef(null);
 
-  // Arrêt si contexte ou root change
-  useEffect(() => { if (playing) stopBacking(); }, [context.id, root]);
+  // La tonalité et le tempo sont RELUS à chaque mesure (refs) au lieu d'être
+  // figés au démarrage : changer de tonalité ou de tempo en jouant s'entend
+  // dès la mesure suivante, sans couper la musique.
+  const rootRef    = useRef(root);   rootRef.current = root;
+  const rampeRef   = useRef(rampe);  rampeRef.current = rampe;
+  const onChordRef = useRef(onChord); onChordRef.current = onChord;
+  const onBpmRef   = useRef(onBpmChange); onBpmRef.current = onBpmChange;
+  const playingRef = useRef(false);  playingRef.current = playing;
+  const energieRef = useRef(energie); energieRef.current = energie;
+  const coupesRef  = useRef(coupes);  coupesRef.current = coupes;
+  const mesureRef  = useRef(0);       // dernière mesure jouée, pour ajuster le plan en direct
+  const onSecondeRef = useRef(onSecondeJouee); onSecondeRef.current = onSecondeJouee;
+  const onLectureRef = useRef(onLecture); onLectureRef.current = onLecture;
+  useEffect(() => { onLectureRef.current?.(playing); }, [playing]);
+
+  // Temps de jeu réel, décompte exclu : c'est lui qui fera compter la
+  // session dans la série et l'XP (voir JamSession).
+  useEffect(() => {
+    if (!playing || compte != null) return;
+    const t = setInterval(() => onSecondeRef.current?.(), 1000);
+    return () => clearInterval(t);
+  }, [playing, compte]);
+  useEffect(() => { try { Tone.getTransport().bpm.value = bpm; } catch { /* noop */ } }, [bpm]);
+
+  // Changer de STYLE en jouant change la grille, le son et la batterie :
+  // on relance aussitôt, plutôt que de s'arrêter en silence.
+  const contexteRef = useRef(context.id);
+  useEffect(() => {
+    if (contexteRef.current === context.id) return;
+    contexteRef.current = context.id;
+    if (playingRef.current) { stopBacking(); startBacking(); }
+  }, [context.id]);
   useEffect(() => () => stopBacking(), []);
 
   // ── Voicings d'accords réalistes (positions de guitare) ──────────────────
@@ -246,13 +319,19 @@ function BackingTrackPlayer({ context, root, bpm }) {
     dom7:  { intervals: [0, 10, 16, 19], desc: "x-R-b7-3-5" },
     // Pour le blues : accords ouverts plus puissants
     dom7b: { intervals: [0, 7, 10, 16],  desc: "R-5-b7-3"   },
+    // Triades. Sans elles, le bVII majeur du mixolydien retombait sur le
+    // voicing m7 par défaut : en La, le Sol affiché « Sol » sonnait Sol m7
+    // (Sol-Si♭-Ré-Fa) — deux notes étrangères au mode (Si♭ et Fa), sur
+    // l'accord même qui doit le faire entendre.
+    maj:   { intervals: [0, 4, 7, 16],   desc: "R-3-5-3"    },
+    min:   { intervals: [0, 3, 7, 15],   desc: "R-b3-5-b3"  },
   };
 
   function getVoicedChord(rootNote, quality, style = "jazz") {
     const iBlues = style === "blues" || style === "blues12";
     const voicing = iBlues && quality === "dom7"
       ? VOICINGS.dom7b
-      : VOICINGS[quality] || VOICINGS.min7;
+      : VOICINGS[quality] || VOICINGS.dom7;
 
     const rootIdx = CHROMATIC.indexOf(rootNote);
     if (rootIdx < 0) return [];
@@ -287,7 +366,7 @@ function BackingTrackPlayer({ context, root, bpm }) {
     });
   }
 
-  function getBassPattern(rootNote, quality, style, nextRoot, barIdx) {
+  function getBassPattern(rootNote, quality, style, nextRoot, barIdx, energy = 3) {
     // Délègue au générateur de walking bass. L'ancienne version répétait le
     // même arpège (R-5-6-b7) à chaque mesure, indéfiniment : c'était la
     // cause principale du rendu mécanique, bien avant la qualité des
@@ -301,7 +380,7 @@ function BackingTrackPlayer({ context, root, bpm }) {
       nextRoot: normalizeNote(nextRoot || rootNote),
       style: bluesy ? "blues" : "jazz",
       barIndex: barIdx || 0,
-      energy: 3,
+      energy,
     });
     return notes.map(n => ({
       note: toToneNoteFromMidi(n.midi),
@@ -623,7 +702,7 @@ function BackingTrackPlayer({ context, root, bpm }) {
       const style      = getStyle(context.id);
       const pack       = PACK_PAR_STYLE[style] || null;
       if (pack) {
-        plannerRef.current  = createPlanner({ baseEnergy: 3 });
+        plannerRef.current  = createPlanner({ baseEnergy: energieRef.current });
         directorRef.current = createDirector(pack);
       }
       const progression = context.chords;
@@ -641,14 +720,26 @@ function BackingTrackPlayer({ context, root, bpm }) {
 
       seqRef.current = new Tone.Sequence((time, barIdx) => {
         const chord     = barMap[barIdx % totalBars];
-        const chordRoot = transposeNote(root, chord.degree);
+        const rootNow   = rootRef.current;
+        const chordRoot = transposeNote(rootNow, chord.degree);
         const voiced    = getVoicedChord(chordRoot, chord.quality, style);
         // L'accord SUIVANT est indispensable : c'est lui qui détermine la
         // note d'approche du 4e temps, le geste qui fait qu'une walking bass
         // avance au lieu de tourner en rond.
         const nextChord = barMap[(barIdx + 1) % totalBars];
-        const nextRoot  = transposeNote(root, nextChord.degree);
-        const bassPattern = getBassPattern(chordRoot, chord.quality, style, nextRoot, barIdx);
+        const nextRoot  = transposeNote(rootNow, nextChord.degree);
+        mesureRef.current = barIdx;
+        // Intensité : celle du plan (qui ajoute les respirations d'une vraie
+        // forme — intro, montée, relâche) quand un pack existe, sinon celle
+        // choisie par la personne.
+        let section = null;
+        if (pack && plannerRef.current) {
+          plannerRef.current.ensurePlannedUpTo(barIdx + 24);
+          section = plannerRef.current.sectionAt(barIdx);
+        }
+        const energieMesure = section?.energy ?? energieRef.current;
+        const coupe = coupesRef.current;
+        const bassPattern = getBassPattern(chordRoot, chord.quality, style, nextRoot, barIdx, energieMesure);
 
         // ── Accompagnement rythmé ──────────────────────────────────
         // Avant : un seul accord tenu sur la mesure entière ("1m"). C'est
@@ -656,7 +747,7 @@ function BackingTrackPlayer({ context, root, bpm }) {
         // pas un accord quatre temps durant, il place des accents et il
         // laisse du silence. C'est aussi ce qui rend un playback jouable :
         // le soliste a besoin de repères rythmiques.
-        const compHits = comperRef.current?.nextBar(barIdx, 3) || [];
+        const compHits = coupe.accords ? [] : (comperRef.current?.nextBar(barIdx, energieMesure) || []);
         // L'anticipation joue l'accord de la mesure SUIVANTE une croche
         // avant : le geste le plus caractéristique du comping.
         const nextVoiced = getVoicedChord(nextRoot, nextChord.quality, style);
@@ -674,7 +765,7 @@ function BackingTrackPlayer({ context, root, bpm }) {
         // fondamentale s'appuie, une note d'approche reste discrète, une
         // ghost note est presque inaudible. Sans ça, toutes les notes
         // sortent au même niveau et la ligne redevient mécanique.
-        bassPattern.forEach(({ note, time: t, dur, velocity }) => {
+        if (!coupe.basse) bassPattern.forEach(({ note, time: t, dur, velocity }) => {
           bassRef.current?.triggerAttackRelease(
             note, dur,
             Tone.Time(time) + Tone.Time(t),
@@ -690,18 +781,25 @@ function BackingTrackPlayer({ context, root, bpm }) {
         // change. Le temps renvoyé par generateDrumBar est déjà une valeur
         // absolue compatible avec `time` (le même repère que Tone.js utilise
         // ici), donc aucune conversion n'est nécessaire.
-        if (pack && plannerRef.current && directorRef.current) {
-          plannerRef.current.ensurePlannedUpTo(barIdx + 24);
-          const section  = plannerRef.current.sectionAt(barIdx);
+        if (pack && section && directorRef.current && !coupe.batterie) {
           const decision = directorRef.current.decideBar(barIdx, section, section.energy);
+          const bpmNow = Tone.getTransport().bpm.value;
           const events = generateDrumBar(pack, decision, {
             barStartTime: time,
-            secPerBeat: 60 / bpm,
+            secPerBeat: 60 / bpmNow,
             beatsPerBar: 4,
-            bpm,
+            bpm: bpmNow,
             energy: section.energy,
           });
           for (const ev of events) playDrum(ev.instrument, ev.time, ev.velocity);
+        }
+
+        // Montée de tempo progressive : +5 BPM toutes les deux grilles,
+        // appliquée pile au début de la mesure.
+        if (rampeRef.current && barIdx > 0 && barIdx % (totalBars * 2) === 0) {
+          const nb = Math.min(BPM_MAX, Math.round(Tone.getTransport().bpm.value) + 5);
+          Tone.getTransport().bpm.setValueAtTime(nb, time);
+          Tone.getDraw().schedule(() => onBpmRef.current?.(nb), time);
         }
 
         Tone.getDraw().schedule(() => {
@@ -711,6 +809,7 @@ function BackingTrackPlayer({ context, root, bpm }) {
             return (barIdx % totalBars) >= start ? i : acc;
           }, 0);
           setCurrentChord(chordIdx);
+          onChordRef.current?.(chordIdx);
         }, time);
 
       }, Array.from({ length: totalBars }, (_, i) => i), "1m");
@@ -722,6 +821,7 @@ function BackingTrackPlayer({ context, root, bpm }) {
       if (!pack) {
         const drumPattern = getDrumPattern(style);
         beatPart = new Tone.Part((time, event) => {
+          if (coupesRef.current.batterie) return;
           playDrum(event.type, time, event.velocity ?? 0.8);
         }, [
           ...drumPattern.kick.map(t  => ({ time: t, type: "kick"  })),
@@ -746,9 +846,22 @@ function BackingTrackPlayer({ context, root, bpm }) {
         Tone.getTransport().swing = 0;
       }
 
-      seqRef.current.start(0);
-      if (beatPart) beatPart.start(0);
-      Tone.getTransport().start();
+      // Décompte : 4 clics sur la première mesure, affichés en grand, puis
+      // tout entre ensemble sur le 1. Sans lui, on devait rentrer « au vol ».
+      const transport = Tone.getTransport();
+      for (let i = 0; i < 4; i++) {
+        transport.schedule((t) => {
+          playDrum("hihat", t, i === 0 ? 0.95 : 0.7);
+          Tone.getDraw().schedule(() => setCompte(i + 1), t);
+        }, `0:${i}:0`);
+      }
+      transport.schedule((t) => Tone.getDraw().schedule(() => setCompte(null), t), "1m");
+      seqRef.current.start("1m");
+      if (beatPart) beatPart.start("1m");
+      // Le décompte est en cours DÈS le lancement : sans ça, le temps de
+      // jeu (qui ne tourne que hors décompte) partait avant le premier clic.
+      setCompte(1);
+      transport.start();
       setPlaying(true);
 
     } catch (e) {
@@ -771,14 +884,36 @@ function BackingTrackPlayer({ context, root, bpm }) {
     plannerRef.current = null;
     directorRef.current = null;
     setPlaying(false);
+    setCompte(null);
     setBeat(0);
     setCurrentChord(0);
+    onChordRef.current?.(null);
   }
 
   const toggle = () => playing ? stopBacking() : startBacking();
 
   const progression = context.chords;
   const totalBars   = progression.reduce((s, c) => s + c.bars, 0);
+
+  // ── Mode scène ──────────────────────────────────────────────────────────
+  // On joue guitare en main, téléphone posé à un mètre : l'accord en cours
+  // doit se lire de loin (grand), l'accord suivant doit s'anticiper, et les
+  // mesures restantes dans l'accord doivent se voir d'un coup d'œil.
+  const idx       = playing ? currentChord : 0;
+  const accord    = progression[idx];
+  const suivant   = progression[(idx + 1) % progression.length];
+  const debutAcc  = progression.slice(0, idx).reduce((s, c) => s + c.bars, 0);
+  const mesureDansAccord = playing && compte == null ? beat - debutAcc : -1;
+  const changerTempo = (d) => onBpmChange?.(Math.max(BPM_MIN, Math.min(BPM_MAX, bpm + d)));
+  const changerEnergie = (d) => {
+    const n = Math.max(1, Math.min(5, energie + d));
+    if (n === energie) return;
+    setEnergie(n);
+    // Le plan à venir est recalculé : l'effet s'entend dans les 2 mesures.
+    plannerRef.current?.nudgeEnergy(n - energie, mesureRef.current);
+  };
+  const LIBELLE_ENERGIE = ["", "Très calme", "Calme", "Normal", "Soutenu", "Intense"];
+  const carre = { width: 40, height: 40, borderRadius: R.sm, border: `1.5px solid ${C.border}`, background: C.surface, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: C.text2, fontWeight: 800, fontSize: 16, fontFamily: FONTS.ui, padding: 0 };
 
   return (
     <div style={{
@@ -789,49 +924,47 @@ function BackingTrackPlayer({ context, root, bpm }) {
       boxShadow: playing ? `0 0 20px ${context.color}22` : "none",
     }}>
 
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-        <div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em" }}>
-            Backing Track
+      {/* Accord en cours (grand) + accord suivant + bouton lecture */}
+      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <div style={{ flex: 1, minWidth: 0 }} aria-live="polite">
+          <div style={{ fontSize: 10.5, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+            {compte != null ? "Prépare-toi" : playing ? "Maintenant" : "Premier accord"}
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 3 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: playing ? context.colorD : C.text2, fontFamily: FONTS.ui }}>
-              {bpm} BPM
-            </span>
-            {playing && (
-              <span style={{ fontSize: 10, color: context.color, fontFamily: FONTS.ui, fontWeight: 600 }}>
-                EN COURS
-              </span>
-            )}
+          <div style={{ fontSize: compte != null ? 46 : 40, fontWeight: 800, lineHeight: 1.05, letterSpacing: "-1px", fontFamily: FONTS.title, color: playing ? context.colorD : C.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            {compte != null ? `${compte}…` : nomAccord(root, accord)}
+          </div>
+          {/* Une pastille par mesure de l'accord en cours : on voit combien il en reste */}
+          <div aria-hidden="true" style={{ display: "flex", gap: 4, marginTop: 6, height: 6 }}>
+            {Array.from({ length: accord.bars }, (_, b) => (
+              <div key={b} style={{ width: 18, height: 6, borderRadius: 3, background: b <= mesureDansAccord ? context.color : C.border, transition: "background .08s" }} />
+            ))}
+          </div>
+          <div style={{ fontSize: 13, color: C.text2, fontFamily: FONTS.ui, marginTop: 7 }}>
+            Ensuite : <b style={{ color: C.text }}>{nomAccord(root, suivant)}</b>
           </div>
         </div>
 
-        <button onClick={toggle} disabled={loading} style={{
-          width: 52, height: 52, borderRadius: "50%", border: "none",
-          background: loading
-            ? C.surface2
-            : playing
-            ? `linear-gradient(135deg, ${context.color}, ${shade(context.color, -45)})`
-            : `linear-gradient(135deg, ${C.primary}, ${shade(C.primary, -45)})`,
-          cursor: loading ? "default" : "pointer",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          boxShadow: playing
-            ? `0 4px 18px ${context.color}66`
-            : loading ? "none"
-            : "0 4px 14px rgba(76,66,200,0.35)",
-          transition: "all 0.2s",
-        }}>
+        <button onClick={toggle} disabled={loading} className="gr-focus"
+          aria-label={loading ? "Chargement des sons" : playing ? "Arrêter le backing track" : "Lancer le backing track"}
+          style={{
+            width: 64, height: 64, borderRadius: "50%", border: "none", flexShrink: 0,
+            background: loading ? C.surface2 : playing
+              ? `linear-gradient(135deg, ${context.color}, ${shade(context.color, -45)})`
+              : `linear-gradient(135deg, ${C.primary}, ${shade(C.primary, -45)})`,
+            cursor: loading ? "default" : "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: loading ? "none" : `0 4px 16px ${(playing ? context.color : C.primary)}55`,
+            transition: "background 0.2s, box-shadow 0.2s",
+          }}>
           {loading
-            ? <Ti name="loader" size={22} color={C.text3} />
-            : <Ti name={playing ? "player-stop" : "player-play"} size={22} color="#fff" />
-          }
+            ? <Ti name="loader" size={24} color={C.text3} />
+            : <Ti name={playing ? "player-pause" : "player-play"} size={26} color="#fff" />}
         </button>
       </div>
 
       {playError && (
-        <div style={{
-          display: "flex", alignItems: "center", gap: 8, marginBottom: 10,
+        <div role="alert" style={{
+          display: "flex", alignItems: "center", gap: 8, marginTop: 10,
           padding: "9px 12px", borderRadius: R.md,
           background: C.coralL, border: `1px solid ${C.coral}`,
         }}>
@@ -839,8 +972,8 @@ function BackingTrackPlayer({ context, root, bpm }) {
           <span style={{ fontSize: 12, color: C.coralD, fontFamily: FONTS.ui, lineHeight: 1.4, flex: 1 }}>
             {playError}
           </span>
-          <button onClick={startBacking} style={{
-            background: "none", border: "none", color: C.coralD, fontWeight: 700,
+          <button onClick={startBacking} className="gr-focus" style={{
+            background: "none", border: "none", color: C.coralD, fontWeight: 700, padding: "6px 4px",
             fontSize: 12, fontFamily: FONTS.ui, cursor: "pointer", flexShrink: 0, textDecoration: "underline",
           }}>
             Réessayer
@@ -848,46 +981,100 @@ function BackingTrackPlayer({ context, root, bpm }) {
         </div>
       )}
 
-      {/* Visualiseur mesures */}
-      <div style={{ display: "flex", gap: 3, marginBottom: 10 }}>
+      {/* La grille complète, l'accord en cours mis en avant */}
+      <div style={{ display: "flex", gap: 3, margin: "14px 0 8px" }} aria-hidden="true">
         {Array.from({ length: totalBars }).map((_, i) => (
           <div key={i} style={{
             flex: 1, height: 5, borderRadius: 3,
-            background: playing && i === beat
-              ? context.color
-              : playing && i < beat
-              ? `${context.color}44`
-              : C.border,
+            background: playing && compte == null && i === beat ? context.color
+              : playing && compte == null && i < beat ? `${context.color}44` : C.border,
             transition: "background 0.08s",
           }} />
         ))}
       </div>
-
-      {/* Accords de la progression */}
       <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
         {progression.map((chord, i) => {
-          const chordRoot   = transposeNote(root, chord.degree);
-          const chordRootFr = ROOTS_FR.find(r => r.en === chordRoot)?.fr ?? chordRoot;
-          const qualLabel   = { maj7:"maj7", min7:"m7", dom7:"7" }[chord.quality];
-          const isActive    = playing && i === currentChord;
+          const isActive = playing && compte == null && i === currentChord;
           return (
             <div key={i} style={{
               padding: "5px 11px", borderRadius: R.pill,
               background: isActive ? context.colorL : C.bg,
               border: `1.5px solid ${isActive ? context.color : C.border}`,
-              fontSize: 12, fontWeight: isActive ? 700 : 400,
+              fontSize: 12.5, fontWeight: isActive ? 800 : 500,
               color: isActive ? context.colorD : C.text2,
-              fontFamily: FONTS.ui, transition: "all 0.12s",
-              boxShadow: isActive ? `0 2px 8px ${context.color}33` : "none",
+              fontFamily: FONTS.ui, transition: "background 0.12s, border-color 0.12s",
             }}>
-              {chordRootFr}{qualLabel}
-              <span style={{ fontSize: 9, color: isActive ? context.color : C.text3, marginLeft: 4 }}>
-                x{chord.bars}
+              {nomAccord(root, chord)}
+              <span style={{ fontSize: 10, color: isActive ? context.color : C.text3, marginLeft: 4 }}>
+                ×{chord.bars}
               </span>
             </div>
           );
         })}
       </div>
+
+      {/* Tempo : réglable, y compris en jouant, et montée progressive */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 14, paddingTop: 12, borderTop: `1px solid ${C.border}` }}>
+        <div role="group" aria-label="Tempo" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <button onClick={() => changerTempo(-5)} aria-label="Ralentir de 5" className="gr-focus" style={carre}>−</button>
+          <div style={{ minWidth: 52, textAlign: "center" }}>
+            <div style={{ fontSize: 18, fontWeight: 800, color: C.text, lineHeight: 1, fontFamily: FONTS.ui }}>{bpm}</div>
+            <div style={{ fontSize: 9.5, color: C.text3, marginTop: 2, fontFamily: FONTS.ui }}>BPM</div>
+          </div>
+          <button onClick={() => changerTempo(5)} aria-label="Accélérer de 5" className="gr-focus" style={carre}>+</button>
+        </div>
+        <div style={{ flex: 1 }} />
+        <button onClick={() => setRampe(r => !r)} aria-pressed={rampe} className="gr-focus" style={{
+          height: 40, padding: "0 12px", borderRadius: R.sm, cursor: "pointer", fontFamily: FONTS.ui,
+          border: `1.5px solid ${rampe ? context.color : C.border}`,
+          background: rampe ? context.colorL : C.surface,
+          color: rampe ? context.colorD : C.text2, fontWeight: 700, fontSize: 12, textAlign: "left", lineHeight: 1.2,
+        }}>
+          Accélération
+          <div style={{ fontSize: 10, fontWeight: 600, color: rampe ? context.colorD : C.text3 }}>+5 toutes les 2 grilles</div>
+        </button>
+      </div>
+
+      {/* Réglages du groupe : repliés par défaut, pour garder la scène lisible */}
+      <button onClick={() => setReglagesOuverts(o => !o)} aria-expanded={reglagesOuverts} className="gr-focus" style={{
+        display: "flex", alignItems: "center", gap: 6, width: "100%", marginTop: 10, padding: "8px 2px",
+        background: "none", border: "none", cursor: "pointer", fontFamily: FONTS.ui,
+        fontSize: 12, fontWeight: 700, color: C.text2, textAlign: "left",
+      }}>
+        <span aria-hidden="true" style={{ display: "inline-block", transform: reglagesOuverts ? "rotate(90deg)" : "none", transition: "transform .15s" }}>›</span>
+        Régler le groupe
+        <span style={{ fontWeight: 500, color: C.text3 }}>
+          · {LIBELLE_ENERGIE[energie].toLowerCase()}{Object.values(coupes).some(Boolean) ? ` · sans ${Object.entries(coupes).filter(([, v]) => v).map(([k]) => k).join(", ")}` : ""}
+        </span>
+      </button>
+      {reglagesOuverts && (
+        <div style={{ paddingTop: 4 }}>
+          <div role="group" aria-label="Intensité du groupe" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 12, color: C.text2, fontFamily: FONTS.ui, width: 64 }}>Intensité</span>
+            <button onClick={() => changerEnergie(-1)} aria-label="Plus calme" disabled={energie === 1} className="gr-focus" style={{ ...carre, opacity: energie === 1 ? .4 : 1 }}>−</button>
+            <div style={{ flex: 1, textAlign: "center" }}>
+              <div aria-hidden="true" style={{ display: "flex", gap: 4, justifyContent: "center" }}>
+                {[1, 2, 3, 4, 5].map(n => <span key={n} style={{ width: 16, height: 8, borderRadius: 4, background: n <= energie ? context.color : C.border }} />)}
+              </div>
+              <div style={{ fontSize: 11, color: C.text2, marginTop: 3, fontFamily: FONTS.ui }}>{LIBELLE_ENERGIE[energie]}</div>
+            </div>
+            <button onClick={() => changerEnergie(1)} aria-label="Plus intense" disabled={energie === 5} className="gr-focus" style={{ ...carre, opacity: energie === 5 ? .4 : 1 }}>+</button>
+          </div>
+          <div role="group" aria-label="Instruments" style={{ display: "flex", gap: 6, marginTop: 10 }}>
+            {[["accords", "Accords"], ["basse", "Basse"], ["batterie", "Batterie"]].map(([k, label]) => (
+              <button key={k} onClick={() => setCoupes(c => ({ ...c, [k]: !c[k] }))} aria-pressed={!coupes[k]} className="gr-focus" style={{
+                flex: 1, height: 40, borderRadius: R.sm, cursor: "pointer", fontFamily: FONTS.ui, fontSize: 12, fontWeight: 700,
+                border: `1.5px ${coupes[k] ? "dashed" : "solid"} ${coupes[k] ? C.border : context.color}`,
+                background: coupes[k] ? C.surface : context.colorL,
+                color: coupes[k] ? C.text3 : context.colorD, textDecoration: coupes[k] ? "line-through" : "none",
+              }}>{label}</button>
+            ))}
+          </div>
+          <div style={{ fontSize: 11, color: C.text3, marginTop: 6, fontFamily: FONTS.ui }}>
+            Coupe la basse pour faire entendre l'harmonie toi-même.
+          </div>
+        </div>
+      )}
 
     </div>
   );
@@ -896,7 +1083,7 @@ function BackingTrackPlayer({ context, root, bpm }) {
 // ─────────────────────────────────────────────────────────────────────────
 // COMPOSANT PRINCIPAL
 // ─────────────────────────────────────────────────────────────────────────
-export function JamSession({ onBack }) {
+export function JamSession({ onBack, dispatch, state }) {
   const C = useC();
   const LEVEL_COLOR = makeLevelColor(C);
   const CONTEXTS = makeContexts(C);
@@ -905,14 +1092,78 @@ export function JamSession({ onBack }) {
   const [displayMode, setDisplayMode] = useState("notes");
   const [constraint, setConstraint]   = useState(null);
   const [showRootPicker, setShowRootPicker] = useState(false);
+  const [bpm, setBpm] = useState(CONTEXTS[0].bpm);
+  const [accordIdx, setAccordIdx] = useState(null);   // accord en cours de lecture (null = arrêt)
+  const [enLecture, setEnLecture] = useState(false);
+
+  // ── La pratique compte ──────────────────────────────────────────────────
+  // 3 minutes de jeu réel (décompte exclu) comptent comme une séance de
+  // pratique libre : mêmes actions que l'écran Pratique (PRACTICE_DONE,
+  // MARK_STREAK, UPDATE_WEEKLY). L'XP reste soumise au plafond quotidien du
+  // reducer : on affiche donc ce qui a VRAIMENT été crédité, pas un chiffre
+  // promis. Une séance au plus par visite de l'écran.
+  const [secondesJouees, setSecondesJouees] = useState(0);
+  const [sessionComptee, setSessionComptee] = useState(null);   // null | { xp }
+  const attenteGainRef = useRef(false);
+  useEffect(() => {
+    if (sessionComptee || secondesJouees < SEUIL_SESSION || !dispatch) return;
+    attenteGainRef.current = true;
+    setSessionComptee({ xp: null });
+    dispatch({ type: "MARK_STREAK" });
+    dispatch({ type: "UPDATE_WEEKLY", field: "sessions" });
+    // En dernier : lastGain décrit la dernière action traitée.
+    dispatch({ type: "PRACTICE_DONE", minutes: Math.round(secondesJouees / 60) });
+  }, [secondesJouees, sessionComptee, dispatch]);
+  useEffect(() => {
+    if (!attenteGainRef.current || state?.lastGain?.kind !== "practice") return;
+    attenteGainRef.current = false;
+    setSessionComptee({ xp: state.lastGain.xp || 0 });
+  }, [state?.lastGain]);
+
+  // ── Contraintes : adaptées au style et au niveau, tenues 2 minutes ─────
+  const [niveauContrainte, setNiveauContrainte] = useState(() => niveauParDefaut(state?.level || 1));
+  const [resteContrainte, setResteContrainte] = useState(DUREE_CONTRAINTE);
+  const [contraintesTenues, setContraintesTenues] = useState(0);
+  const unSecondeDePlus = () => {
+    setSecondesJouees(n => n + 1);
+    setResteContrainte(r => (constraintRef.current && r > 0 ? r - 1 : r));
+  };
+  const constraintRef = useRef(null);
 
   const ctx    = CONTEXTS.find(c => c.id === contextId);
   const rootFr = ROOTS_FR.find(r => r.en === root)?.fr ?? root;
   const activeNotes = useMemo(() => getScaleNotes(root, ctx.scale), [root, ctx.scale]);
 
-  const randomConstraint = () => {
-    const next = CONSTRAINTS[Math.floor(Math.random() * CONSTRAINTS.length)];
-    setConstraint(next);
+  // ── Le manche suit les accords ──────────────────────────────────────────
+  // Pendant la lecture, les notes de l'accord en cours s'allument sur la
+  // gamme : c'est la compétence « jouer les changements » (leçon impro-04),
+  // pratiquée au lieu d'être seulement décrite. Le manche n'allume que les
+  // notes présentes dans la gamme affichée ; celles qui en sortent (la
+  // tierce majeure du IV7 sur un blues, par exemple) sont signalées à part,
+  // parce que c'est justement là que se joue le changement.
+  const accordEnCours = accordIdx != null ? ctx.chords[accordIdx] : null;
+  const notesDeLAccord = useMemo(
+    () => (accordEnCours ? notesAccord(root, accordEnCours) : []),
+    [accordEnCours, root]
+  );
+  const dansLaGamme = (n) => activeNotes.some(g => normalizeNote(g) === normalizeNote(n));
+  const choisirContexte = (c) => { setContextId(c.id); setBpm(c.bpm); };
+
+  constraintRef.current = constraint;
+  const tenue = constraint && resteContrainte === 0;
+  const contrainteTenueRef = useRef(null);
+  useEffect(() => {
+    if (tenue && contrainteTenueRef.current !== constraint) {
+      contrainteTenueRef.current = constraint;
+      setContraintesTenues(n => n + 1);
+    }
+  }, [tenue, constraint]);
+  const randomConstraint = (niveau = niveauContrainte) => {
+    const candidates = CONSTRAINTS.filter(c =>
+      c.level === niveau && (!c.contextes || c.contextes.includes(contextId)) && c !== constraint);
+    const pool = candidates.length ? candidates : CONSTRAINTS.filter(c => c.level === niveau);
+    setConstraint(pool[Math.floor(Math.random() * pool.length)]);
+    setResteContrainte(DUREE_CONTRAINTE);
   };
 
   const transposeSemitone = (dir) => {
@@ -925,7 +1176,7 @@ export function JamSession({ onBack }) {
 
       {/* Header */}
       <div style={{ padding: "14px 16px 12px", display: "flex", alignItems: "center", gap: 10, borderBottom: `1px solid ${C.border}`, background: C.surface, position: "sticky", top: 0, zIndex: 10 }}>
-        <button onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", color: C.text2, padding: 0 }}>
+        <button onClick={onBack} aria-label="Retour aux outils" className="gr-focus" style={{ width: 40, height: 40, margin: "-4px 0 -4px -8px", background: "none", border: "none", borderRadius: R.sm, cursor: "pointer", color: C.text2, padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <Ti name="chevron-left" size={22} />
         </button>
         <div style={{ flex: 1 }}>
@@ -941,8 +1192,8 @@ export function JamSession({ onBack }) {
         <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
           <div style={{ display: "flex", gap: 8, paddingBottom: 4 }}>
             {CONTEXTS.map(c => (
-              <button key={c.id} onClick={() => setContextId(c.id)} style={{
-                flexShrink: 0, padding: "8px 14px", borderRadius: R.pill,
+              <button key={c.id} onClick={() => choisirContexte(c)} aria-pressed={contextId === c.id} className="gr-focus" style={{
+                flexShrink: 0, padding: "10px 14px", borderRadius: R.pill,
                 border: `1.5px solid ${contextId === c.id ? c.color : C.border}`,
                 background: contextId === c.id ? c.colorL : C.surface,
                 color: contextId === c.id ? c.colorD : C.text2,
@@ -961,18 +1212,44 @@ export function JamSession({ onBack }) {
         </div>
 
         {/* Backing track player */}
-        <BackingTrackPlayer context={ctx} root={root} bpm={ctx.bpm} />
+        <BackingTrackPlayer context={ctx} root={root} bpm={bpm} onBpmChange={setBpm} onChord={setAccordIdx} onSecondeJouee={unSecondeDePlus} onLecture={setEnLecture} />
+
+        {/* Séance de pratique : on voit ce qu'il reste pour qu'elle compte */}
+        {(secondesJouees > 0 || sessionComptee) && (
+          <div role="status" style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: R.md, background: sessionComptee ? C.greenL : C.surface, border: `1px solid ${sessionComptee ? C.greenBorder : C.border}` }}>
+            {sessionComptee ? (
+              <>
+                <Ti name="check" size={16} color={C.greenD} />
+                <div style={{ fontSize: 12.5, color: C.greenD, fontFamily: FONTS.ui, lineHeight: 1.4 }}>
+                  <b>Séance comptée</b> dans ta série et tes objectifs
+                  {sessionComptee.xp > 0 ? ` · +${sessionComptee.xp} XP` : sessionComptee.xp === 0 ? " · XP de pratique du jour déjà au maximum" : ""}
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 12, color: C.text2, fontFamily: FONTS.ui }}>
+                    Encore <b>{fmtDuree(SEUIL_SESSION - secondesJouees)}</b> de jeu pour que la séance compte
+                  </div>
+                  <div aria-hidden="true" style={{ height: 4, borderRadius: 2, background: C.border, marginTop: 6, overflow: "hidden" }}>
+                    <div style={{ width: `${Math.min(100, (secondesJouees / SEUIL_SESSION) * 100)}%`, height: "100%", background: ctx.color, transition: "width 1s linear" }} />
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
 
         {/* Tonique */}
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <div style={{ fontSize: 11, fontWeight: 600, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", width: 60 }}>Tonique</div>
-          <button onClick={() => transposeSemitone(-1)} style={{ width: 34, height: 34, borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <button onClick={() => transposeSemitone(-1)} aria-label="Un demi-ton plus bas" className="gr-focus" style={{ width: 40, height: 40, borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Ti name="chevron-left" size={16} color={C.text2} />
           </button>
-          <button onClick={() => setShowRootPicker(!showRootPicker)} style={{ flex: 1, height: 34, borderRadius: 10, border: `1.5px solid ${ctx.color}`, background: ctx.colorL, cursor: "pointer", fontSize: 16, fontWeight: 700, color: ctx.colorD, fontFamily: FONTS.ui }}>
+          <button onClick={() => setShowRootPicker(!showRootPicker)} aria-expanded={showRootPicker} aria-label={`Tonique : ${rootFr}. Choisir une autre tonique`} className="gr-focus" style={{ flex: 1, height: 40, borderRadius: 10, border: `1.5px solid ${ctx.color}`, background: ctx.colorL, cursor: "pointer", fontSize: 16, fontWeight: 700, color: ctx.colorD, fontFamily: FONTS.ui }}>
             {rootFr}
           </button>
-          <button onClick={() => transposeSemitone(1)} style={{ width: 34, height: 34, borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <button onClick={() => transposeSemitone(1)} aria-label="Un demi-ton plus haut" className="gr-focus" style={{ width: 40, height: 40, borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Ti name="chevron-right" size={16} color={C.text2} />
           </button>
         </div>
@@ -981,8 +1258,8 @@ export function JamSession({ onBack }) {
         {showRootPicker && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6, background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: 10 }}>
             {ROOTS_FR.map(r => (
-              <button key={r.en} onClick={() => { setRoot(r.en); setShowRootPicker(false); }} style={{
-                padding: "8px 4px", borderRadius: 8,
+              <button key={r.en} onClick={() => { setRoot(r.en); setShowRootPicker(false); }} aria-pressed={root === r.en} className="gr-focus" style={{
+                minHeight: 40, padding: "8px 4px", borderRadius: 8,
                 border: `1px solid ${root === r.en ? ctx.color : C.border}`,
                 background: root === r.en ? ctx.colorL : C.bg,
                 color: root === r.en ? ctx.colorD : C.text,
@@ -995,9 +1272,9 @@ export function JamSession({ onBack }) {
 
         {/* Affichage manche */}
         <div style={{ display: "flex", gap: 6 }}>
-          {[{ key: "notes", label: "Notes" }, { key: "intervals", label: "Intervalles" }, { key: "degrees", label: "Degres" }].map(m => (
-            <button key={m.key} onClick={() => setDisplayMode(m.key)} style={{
-              flex: 1, padding: "7px 0", borderRadius: 8,
+          {[{ key: "notes", label: "Notes" }, { key: "intervals", label: "Intervalles" }, { key: "degrees", label: "Degrés" }].map(m => (
+            <button key={m.key} onClick={() => setDisplayMode(m.key)} aria-pressed={displayMode === m.key} className="gr-focus" style={{
+              flex: 1, minHeight: 40, padding: "7px 0", borderRadius: 8,
               border: `1px solid ${displayMode === m.key ? ctx.color : C.border}`,
               background: displayMode === m.key ? ctx.colorL : C.surface,
               color: displayMode === m.key ? ctx.colorD : C.text3,
@@ -1010,7 +1287,37 @@ export function JamSession({ onBack }) {
         {/* Manche */}
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, overflow: "hidden" }}>
           <div style={{ padding: "8px 8px 4px", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-            <Fretboard mode="scale" root={root} scale={ctx.scale} displayMode={displayMode} lang="fr" compact={true} />
+            <Fretboard mode="scale" root={root} scale={ctx.scale} displayMode={displayMode} lang="fr" compact={true}
+              flashNotes={notesDeLAccord.length ? notesDeLAccord : null} />
+          </div>
+          <div style={{ padding: "8px 12px 10px", borderTop: `1px solid ${C.border}`, minHeight: 44, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }} aria-live="polite">
+            {accordEnCours ? (
+              <>
+                <span style={{ fontSize: 11, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, marginRight: 2 }}>
+                  Notes de {nomAccord(root, accordEnCours)} :
+                </span>
+                {notesDeLAccord.map(n => {
+                  const dedans = dansLaGamme(n);
+                  return (
+                    <span key={n} title={dedans ? "Dans ta gamme" : "Hors de ta gamme : c'est la note qui fait entendre le changement"} style={{
+                      padding: "3px 8px", borderRadius: R.pill, fontSize: 12, fontWeight: 800, fontFamily: FONTS.ui,
+                      background: dedans ? ctx.colorL : C.surface,
+                      border: `1.5px ${dedans ? "solid" : "dashed"} ${dedans ? ctx.color : C.text3}`,
+                      color: dedans ? ctx.colorD : C.text,
+                    }}>{noteToFr(n)}{dedans ? "" : " *"}</span>
+                  );
+                })}
+                {notesDeLAccord.some(n => !dansLaGamme(n)) && (
+                  <span style={{ fontSize: 11, color: C.text3, fontFamily: FONTS.ui, width: "100%" }}>
+                    * hors de ta gamme : c'est elle qui fait entendre le changement d'accord.
+                  </span>
+                )}
+              </>
+            ) : (
+              <span style={{ fontSize: 12, color: C.text3, fontFamily: FONTS.ui }}>
+                Lance le backing : les notes de chaque accord s'allumeront sur le manche.
+              </span>
+            )}
           </div>
         </div>
 
@@ -1032,30 +1339,64 @@ export function JamSession({ onBack }) {
           </div>
         </div>
 
-        {/* Contrainte */}
+        {/* Contrainte : adaptée au style et au niveau, chronométrée */}
         <div style={{ background: constraint ? C.amberL : C.surface, border: `1px solid ${constraint ? C.amberBorder : C.border}`, borderRadius: R.lg, padding: "12px 14px" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: constraint ? 8 : 0 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: constraint ? C.amberD : C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+            <div style={{ flex: 1, fontSize: 10.5, fontWeight: 700, color: constraint ? C.amberD : C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em" }}>
               Contrainte du moment
             </div>
-            <button onClick={randomConstraint} style={{ padding: "5px 12px", borderRadius: R.pill, border: `1px solid ${C.amber}`, background: C.amber, color: "#fff", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }}>
-              {constraint ? "Nouvelle" : "Tirer"}
-            </button>
+            {contraintesTenues > 0 && (
+              <span style={{ fontSize: 11, fontWeight: 700, color: C.amberD, fontFamily: FONTS.ui }}>{contraintesTenues} tenue{contraintesTenues > 1 ? "s" : ""}</span>
+            )}
+          </div>
+          <div role="group" aria-label="Difficulté des contraintes" style={{ display: "flex", gap: 4, marginBottom: 10, background: C.surface2, borderRadius: R.sm, padding: 3 }}>
+            {NIVEAUX_CONTRAINTE.map(n => (
+              <button key={n} onClick={() => { setNiveauContrainte(n); if (constraint) randomConstraint(n); }} aria-pressed={niveauContrainte === n} className="gr-focus" style={{
+                flex: 1, minHeight: 34, borderRadius: R.sm - 2, border: "none", cursor: "pointer", fontFamily: FONTS.ui, fontSize: 12, fontWeight: 700,
+                background: niveauContrainte === n ? C.surface : "transparent", color: niveauContrainte === n ? LEVEL_COLOR[n] : C.text3,
+                boxShadow: niveauContrainte === n ? `0 0 0 1.5px ${C.border}` : "none",
+              }}>{n}</button>
+            ))}
           </div>
           {constraint ? (
             <>
-              <div style={{ fontSize: 13, color: C.amberD, fontFamily: FONTS.title, lineHeight: 1.55, fontWeight: 500 }}>{constraint.text}</div>
-              <div style={{ fontSize: 10, fontFamily: FONTS.ui, marginTop: 4, color: LEVEL_COLOR[constraint.level] }}>{constraint.level}</div>
+              <div id="contrainte-texte" aria-live="polite" style={{ fontSize: 14, color: C.amberD, fontFamily: FONTS.title, lineHeight: 1.5, fontWeight: 600 }}>{constraint.text}</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
+                {tenue ? (
+                  <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 700, color: C.greenD, fontFamily: FONTS.ui }}>
+                    <Ti name="check" size={15} color={C.greenD} /> Tenue 2 minutes, bravo.
+                  </div>
+                ) : (
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 12, color: C.amberD, fontFamily: FONTS.ui }}>
+                      {!enLecture ? "Lance le backing : le chrono tourne pendant que tu joues." : <>Tiens-la encore <b>{fmtDuree(resteContrainte)}</b></>}
+                    </div>
+                    <div aria-hidden="true" style={{ height: 4, borderRadius: 2, background: C.amberBorder, marginTop: 6, overflow: "hidden" }}>
+                      <div style={{ width: `${((DUREE_CONTRAINTE - resteContrainte) / DUREE_CONTRAINTE) * 100}%`, height: "100%", background: C.amber, transition: "width 1s linear" }} />
+                    </div>
+                  </div>
+                )}
+                <button onClick={() => randomConstraint()} className="gr-focus" style={{ minHeight: 36, padding: "0 14px", borderRadius: R.pill, border: `1px solid ${C.amber}`, background: tenue ? C.amber : C.surface, color: tenue ? "#fff" : C.amberD, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }}>
+                  {tenue ? "Suivante" : "Changer"}
+                </button>
+              </div>
             </>
           ) : (
-            <div style={{ fontSize: 12, color: C.text3, fontFamily: FONTS.ui }}>Tire une contrainte pour booster ta creativite</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ flex: 1, fontSize: 12.5, color: C.text2, fontFamily: FONTS.ui, lineHeight: 1.45 }}>
+                Une limite claire, tenue 2 minutes : c'est ce qui fait progresser en impro.
+              </div>
+              <button onClick={() => randomConstraint()} className="gr-focus" style={{ minHeight: 36, padding: "0 14px", borderRadius: R.pill, border: "none", background: C.amber, color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }}>
+                Tirer
+              </button>
+            </div>
           )}
         </div>
 
         {/* Rappels */}
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: "12px 14px" }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Rappels</div>
-          {["Silence = note. Utilise-le.", "Arrive sur une chord tone sur les temps forts.", "Une bonne phrase monte puis descend.", "Le climax aux 2/3 du solo, pas a la fin."].map((tip, i) => (
+          {["Silence = note. Utilise-le.", "Arrive sur une note de l'accord sur les temps forts.", "Une bonne phrase monte puis descend.", "Le sommet d'un solo se place vers les deux tiers, pas à la fin."].map((tip, i) => (
             <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: i < 3 ? 6 : 0 }}>
               <div style={{ width: 4, height: 4, borderRadius: "50%", background: ctx.color, marginTop: 6, flexShrink: 0 }} />
               <div style={{ fontSize: 12, color: C.text2, fontFamily: FONTS.ui, lineHeight: 1.5 }}>{tip}</div>
