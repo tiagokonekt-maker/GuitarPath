@@ -3,35 +3,9 @@
   <head>
     <meta charset="UTF-8" />
 
-    <!-- ══════════════════════════════════════════════════════════════════
-         POLICES — découvertes immédiatement par le preload scanner.
-         Avant, elles étaient chargées par @import DANS un <style> injecté
-         par React : la requête ne partait qu'après le montage, et @import
-         est sérialisant. Résultat, un premier rendu sans aucune icône —
-         y compris dans l'écran de chargement, qui affiche une icône.
-
-         L'objectif final reste l'auto-hébergement (voir CHANGELOG §3.2) :
-         ça supprime le dernier tiers qui reçoit l'IP de chaque visiteur
-         (Google Fonts) sans consentement, ce qui est aussi un point RGPD.
-         En attendant, preconnect + link non bloquant.
-
-         jsDelivr a disparu de cette liste : les icônes sont passées d'une
-         webfont chargée depuis ce CDN à des SVG inline (src/design/icons.js),
-         précisément parce que le CSP posé depuis n'autorise plus jsDelivr
-         en style-src — cette ancienne webfont était bloquée par le
-         navigateur à CHAQUE chargement de page depuis, une requête vouée à
-         l'échec pour rien, puisque plus aucune icône n'en dépend.
-         ══════════════════════════════════════════════════════════════════ -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Nunito:wght@800&display=swap"
-      media="print" onload="this.media='all'" />
-    <noscript>
-      <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Nunito:wght@800&display=swap" />
-    </noscript>
+    <!-- Polices : auto-hébergées (paquets @fontsource importés dans
+         src/main.jsx), servies depuis ce domaine. Plus aucun tiers ne reçoit
+         l'adresse IP des visiteurs au chargement de la page (point RGPD). -->
 
     <!-- PWA core -->
     <link rel="manifest" href="/manifest.json" />

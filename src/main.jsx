@@ -9,6 +9,16 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
+// Polices AUTO-HÉBERGÉES (paquets @fontsource, licence OFL) : servies depuis
+// notre propre domaine, elles n'envoient plus l'adresse IP de chaque
+// visiteur à Google (point RGPD). Mêmes familles et mêmes graisses
+// qu'avant : Poppins 400 à 800, Nunito 800 (logo de l'écran de connexion).
+import '@fontsource/poppins/400.css';
+import '@fontsource/poppins/500.css';
+import '@fontsource/poppins/600.css';
+import '@fontsource/poppins/700.css';
+import '@fontsource/poppins/800.css';
+import '@fontsource/nunito/800.css';
 import './index.css';
 
 // ── Error Boundary ─────────────────────────────────────────────────────────

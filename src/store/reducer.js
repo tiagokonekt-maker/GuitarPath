@@ -210,6 +210,20 @@ function reducer(state, action) {
       break;
     }
 
+    case "JAM_PROGRES": {
+      // Compteurs de la Jam Session (badges). Aucune XP ici : la séance est
+      // déjà créditée par PRACTICE_DONE, plafonnée par jour. Les valeurs sont
+      // bornées pour qu'une action mal formée ne gonfle pas les compteurs.
+      const j = { ...defaultState().jam, ...(s.jam || {}) };
+      const sec = Math.max(0, Math.min(3600, Math.round(Number(action.secondes) || 0)));
+      s.jam = {
+        seances:     (Number(j.seances) || 0) + (action.seance ? 1 : 0),
+        secondes:    (Number(j.secondes) || 0) + sec,
+        contraintes: (Number(j.contraintes) || 0) + (action.contrainte ? 1 : 0),
+      };
+      break;
+    }
+
     case "UPDATE_WEEKLY": {
       const w = weekStr();
       const base = s.weeklyGoals?.week === w

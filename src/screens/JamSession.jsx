@@ -1,6 +1,6 @@
 // GuitarPath -- screens/JamSession.jsx
 // Outil interactif d'improvisation : gamme active, notes cibles, contraintes + backing track
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useWakeLock } from "../hooks/useWakeLock.js";
 import { FONTS, R } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
@@ -1095,6 +1095,8 @@ export function JamSession({ onBack, dispatch, state }) {
   const [bpm, setBpm] = useState(CONTEXTS[0].bpm);
   const [accordIdx, setAccordIdx] = useState(null);   // accord en cours de lecture (null = arrêt)
   const [enLecture, setEnLecture] = useState(false);
+  const surLecture = (joue) => { setEnLecture(joue); if (!joue) enregistrerTempsRef.current?.(); };
+  const enregistrerTempsRef = useRef(null);
 
   // ── La pratique compte ──────────────────────────────────────────────────
   // 3 minutes de jeu réel (décompte exclu) comptent comme une séance de
@@ -1111,6 +1113,7 @@ export function JamSession({ onBack, dispatch, state }) {
     setSessionComptee({ xp: null });
     dispatch({ type: "MARK_STREAK" });
     dispatch({ type: "UPDATE_WEEKLY", field: "sessions" });
+    dispatch({ type: "JAM_PROGRES", seance: true });
     // En dernier : lastGain décrit la dernière action traitée.
     dispatch({ type: "PRACTICE_DONE", minutes: Math.round(secondesJouees / 60) });
   }, [secondesJouees, sessionComptee, dispatch]);
@@ -1119,6 +1122,25 @@ export function JamSession({ onBack, dispatch, state }) {
     attenteGainRef.current = false;
     setSessionComptee({ xp: state.lastGain.xp || 0 });
   }, [state?.lastGain]);
+
+  // Temps de jeu total (badges « heures de jam »). Accumulé localement, et
+  // enregistré quand la lecture s'arrête, quand on quitte l'écran ou quand
+  // l'app passe en arrière-plan — pas une écriture de sauvegarde par seconde.
+  const secondesRef = useRef(0);  secondesRef.current = secondesJouees;
+  const dejaEnregistreRef = useRef(0);
+  const dispatchRef = useRef(dispatch); dispatchRef.current = dispatch;
+  const enregistrerTemps = useCallback(() => {
+    const delta = secondesRef.current - dejaEnregistreRef.current;
+    if (delta <= 0 || !dispatchRef.current) return;
+    dejaEnregistreRef.current = secondesRef.current;
+    dispatchRef.current({ type: "JAM_PROGRES", secondes: delta });
+  }, []);
+  enregistrerTempsRef.current = enregistrerTemps;
+  useEffect(() => {
+    const auMasquage = () => { if (document.visibilityState === "hidden") enregistrerTemps(); };
+    document.addEventListener("visibilitychange", auMasquage);
+    return () => { document.removeEventListener("visibilitychange", auMasquage); enregistrerTemps(); };
+  }, [enregistrerTemps]);
 
   // ── Contraintes : adaptées au style et au niveau, tenues 2 minutes ─────
   const [niveauContrainte, setNiveauContrainte] = useState(() => niveauParDefaut(state?.level || 1));
@@ -1156,6 +1178,7 @@ export function JamSession({ onBack, dispatch, state }) {
     if (tenue && contrainteTenueRef.current !== constraint) {
       contrainteTenueRef.current = constraint;
       setContraintesTenues(n => n + 1);
+      dispatch?.({ type: "JAM_PROGRES", contrainte: true });
     }
   }, [tenue, constraint]);
   const randomConstraint = (niveau = niveauContrainte) => {
@@ -1212,7 +1235,7 @@ export function JamSession({ onBack, dispatch, state }) {
         </div>
 
         {/* Backing track player */}
-        <BackingTrackPlayer context={ctx} root={root} bpm={bpm} onBpmChange={setBpm} onChord={setAccordIdx} onSecondeJouee={unSecondeDePlus} onLecture={setEnLecture} />
+        <BackingTrackPlayer context={ctx} root={root} bpm={bpm} onBpmChange={setBpm} onChord={setAccordIdx} onSecondeJouee={unSecondeDePlus} onLecture={surLecture} />
 
         {/* Séance de pratique : on voit ce qu'il reste pour qu'elle compte */}
         {(secondesJouees > 0 || sessionComptee) && (

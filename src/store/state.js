@@ -35,6 +35,9 @@ export const defaultState = () => ({
   unitChecks: {},
   weeklyGoals: { sessions: 0, exercises: 0, quizzes: 0, week: "" },
   practiceLibre: { count: 0, totalMinutes: 0 },
+  // Jam Session : séances comptées (3 min de jeu réel), temps de jeu total
+  // (secondes, décompte exclu) et contraintes tenues 2 minutes.
+  jam: { seances: 0, secondes: 0, contraintes: 0 },
   sessionHistory: [],
   gropiTipDate: "",
 
@@ -88,6 +91,7 @@ function migrate(parsed) {
   if (!Array.isArray(s.wrongQuiz)) s.wrongQuiz = [];
   if (!Array.isArray(s.unlockedBadges)) s.unlockedBadges = [];
   if (!Array.isArray(s.sessionHistory)) s.sessionHistory = [];
+  s.jam = { ...defaultState().jam, ...(s.jam && typeof s.jam === "object" ? s.jam : {}) };
   if (typeof s.resetAt !== "string") s.resetAt = "";
   s.onboarding = { ...defaultState().onboarding, ...(s.onboarding || {}) };
 
@@ -291,6 +295,14 @@ export const mergeStates = (local, cloud) => {
   m.practiceLibre = {
     count:        maxNum(L.practiceLibre?.count,        C.practiceLibre?.count),
     totalMinutes: maxNum(L.practiceLibre?.totalMinutes, C.practiceLibre?.totalMinutes),
+  };
+
+  // Jam Session : même règle que la pratique libre (max champ par champ) —
+  // un compteur qui ne fait que croître ne doit jamais reculer à la synchro.
+  m.jam = {
+    seances:     maxNum(L.jam?.seances,     C.jam?.seances),
+    secondes:    maxNum(L.jam?.secondes,    C.jam?.secondes),
+    contraintes: maxNum(L.jam?.contraintes, C.jam?.contraintes),
   };
 
   // Historique : concat dédupliqué, tri par date décroissante, 10 max

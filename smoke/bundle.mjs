@@ -6220,7 +6220,7 @@ var JamSession_exports = {};
 __export(JamSession_exports, {
   JamSession: () => JamSession
 });
-import { useState as useState10, useMemo as useMemo5, useEffect as useEffect9, useRef as useRef7 } from "react";
+import { useState as useState10, useMemo as useMemo5, useEffect as useEffect9, useRef as useRef7, useCallback as useCallback3 } from "react";
 
 // src/Fretboard.jsx
 var Fretboard_exports = {};
@@ -9232,6 +9232,11 @@ function JamSession({ onBack, dispatch, state }) {
   const [bpm, setBpm] = useState10(CONTEXTS[0].bpm);
   const [accordIdx, setAccordIdx] = useState10(null);
   const [enLecture, setEnLecture] = useState10(false);
+  const surLecture = (joue) => {
+    setEnLecture(joue);
+    if (!joue) enregistrerTempsRef.current?.();
+  };
+  const enregistrerTempsRef = useRef7(null);
   const [secondesJouees, setSecondesJouees] = useState10(0);
   const [sessionComptee, setSessionComptee] = useState10(null);
   const attenteGainRef = useRef7(false);
@@ -9241,6 +9246,7 @@ function JamSession({ onBack, dispatch, state }) {
     setSessionComptee({ xp: null });
     dispatch({ type: "MARK_STREAK" });
     dispatch({ type: "UPDATE_WEEKLY", field: "sessions" });
+    dispatch({ type: "JAM_PROGRES", seance: true });
     dispatch({ type: "PRACTICE_DONE", minutes: Math.round(secondesJouees / 60) });
   }, [secondesJouees, sessionComptee, dispatch]);
   useEffect9(() => {
@@ -9248,6 +9254,28 @@ function JamSession({ onBack, dispatch, state }) {
     attenteGainRef.current = false;
     setSessionComptee({ xp: state.lastGain.xp || 0 });
   }, [state?.lastGain]);
+  const secondesRef = useRef7(0);
+  secondesRef.current = secondesJouees;
+  const dejaEnregistreRef = useRef7(0);
+  const dispatchRef = useRef7(dispatch);
+  dispatchRef.current = dispatch;
+  const enregistrerTemps = useCallback3(() => {
+    const delta = secondesRef.current - dejaEnregistreRef.current;
+    if (delta <= 0 || !dispatchRef.current) return;
+    dejaEnregistreRef.current = secondesRef.current;
+    dispatchRef.current({ type: "JAM_PROGRES", secondes: delta });
+  }, []);
+  enregistrerTempsRef.current = enregistrerTemps;
+  useEffect9(() => {
+    const auMasquage = () => {
+      if (document.visibilityState === "hidden") enregistrerTemps();
+    };
+    document.addEventListener("visibilitychange", auMasquage);
+    return () => {
+      document.removeEventListener("visibilitychange", auMasquage);
+      enregistrerTemps();
+    };
+  }, [enregistrerTemps]);
   const [niveauContrainte, setNiveauContrainte] = useState10(() => niveauParDefaut(state?.level || 1));
   const [resteContrainte, setResteContrainte] = useState10(DUREE_CONTRAINTE);
   const [contraintesTenues, setContraintesTenues] = useState10(0);
@@ -9276,6 +9304,7 @@ function JamSession({ onBack, dispatch, state }) {
     if (tenue && contrainteTenueRef.current !== constraint) {
       contrainteTenueRef.current = constraint;
       setContraintesTenues((n) => n + 1);
+      dispatch?.({ type: "JAM_PROGRES", contrainte: true });
     }
   }, [tenue, constraint]);
   const randomConstraint = (niveau = niveauContrainte) => {
@@ -9316,7 +9345,7 @@ function JamSession({ onBack, dispatch, state }) {
         whiteSpace: "nowrap"
       }, children: c.label }, c.id)) }) }),
       /* @__PURE__ */ jsx12("div", { style: { background: ctx.colorL, border: `1px solid ${ctx.colorB}`, borderRadius: R.lg, padding: "10px 14px" }, children: /* @__PURE__ */ jsx12("div", { style: { fontSize: 12, color: ctx.colorD, fontFamily: FONTS.title, lineHeight: 1.5 }, children: ctx.desc }) }),
-      /* @__PURE__ */ jsx12(BackingTrackPlayer, { context: ctx, root, bpm, onBpmChange: setBpm, onChord: setAccordIdx, onSecondeJouee: unSecondeDePlus, onLecture: setEnLecture }),
+      /* @__PURE__ */ jsx12(BackingTrackPlayer, { context: ctx, root, bpm, onBpmChange: setBpm, onChord: setAccordIdx, onSecondeJouee: unSecondeDePlus, onLecture: surLecture }),
       (secondesJouees > 0 || sessionComptee) && /* @__PURE__ */ jsx12("div", { role: "status", style: { display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: R.md, background: sessionComptee ? C.greenL : C.surface, border: `1px solid ${sessionComptee ? C.greenBorder : C.border}` }, children: sessionComptee ? /* @__PURE__ */ jsxs10(Fragment8, { children: [
         /* @__PURE__ */ jsx12(Ti, { name: "check", size: 16, color: C.greenD }),
         /* @__PURE__ */ jsxs10("div", { style: { fontSize: 12.5, color: C.greenD, fontFamily: FONTS.ui, lineHeight: 1.4 }, children: [
@@ -9549,16 +9578,18 @@ var BADGES = [
   // ── Maîtrise exercices
   { id: "ex_10", cat: "Ma\xEEtrise", tint: "green", rarity: "commun", icon: "ti-circle-check", label: "10 exercices", cond: (s) => Object.keys(s.completedExercises).length >= 10 },
   { id: "ex_25", cat: "Ma\xEEtrise", tint: "green", rarity: "rare", icon: "ti-target-arrow", label: "25 exercices", cond: (s) => Object.keys(s.completedExercises).length >= 25 },
-  { id: "ex_100", cat: "Ma\xEEtrise", tint: "green", rarity: "legend", icon: "ti-medal", label: "100 exercices", cond: (s) => Object.keys(s.completedExercises).length >= 100 },
+  // « 100 exercices » était impossible : l'app n'en compte que 36. On
+  // récompense désormais le fait de TOUS les avoir faits, quel que soit leur nombre.
+  { id: "ex_all", cat: "Ma\xEEtrise", tint: "green", rarity: "legend", icon: "ti-medal", label: "Tous les exercices", cond: (s, ctx) => ctx.exercises.length > 0 && ctx.exercises.every((e) => s.completedExercises[e.id]) },
   // ── Skill (par module)
   { id: "skill_neck", cat: "Skill", tint: "amber", rarity: "rare", icon: "ti-map-2", label: "Manche ma\xEEtris\xE9", cond: (s, ctx) => skillMastery(s, ctx, "neck") >= 80 },
-  { id: "skill_scales", cat: "Skill", tint: "green", rarity: "rare", icon: "ti-music", label: "Modes ma\xEEtris\xE9s", cond: (s, ctx) => skillMastery(s, ctx, "scales") >= 80 },
+  { id: "skill_scales", cat: "Skill", tint: "green", rarity: "rare", icon: "ti-music", label: "Gammes ma\xEEtris\xE9es", cond: (s, ctx) => skillMastery(s, ctx, "scales") >= 80 },
   { id: "skill_harmony", cat: "Skill", tint: "primary", rarity: "rare", icon: "ti-stack-2", label: "Harmonie pro", cond: (s, ctx) => skillMastery(s, ctx, "harmony") >= 80 },
   { id: "skill_rhythm", cat: "Skill", tint: "blue", rarity: "rare", icon: "ti-metronome", label: "Rythme solide", cond: (s, ctx) => skillMastery(s, ctx, "rhythm") >= 80 },
   { id: "skill_impro", cat: "Skill", tint: "pink", rarity: "rare", icon: "ti-wand", label: "Improvisateur", cond: (s, ctx) => skillMastery(s, ctx, "impro") >= 80 },
   // ── Quiz
   { id: "quiz_perfect", cat: "Quiz", tint: "amber", rarity: "commun", icon: "ti-circle-check", label: "Quiz parfait", cond: (s) => perfectQuizCount(s) >= 1 },
-  { id: "quiz_50", cat: "Quiz", tint: "amber", rarity: "rare", icon: "ti-target", label: "50 quiz r\xE9ussis", cond: (s) => Object.values(s.quizResults).filter((r) => r.correct).length >= 50 },
+  { id: "quiz_50", cat: "Quiz", tint: "amber", rarity: "rare", icon: "ti-target-arrow", label: "50 quiz r\xE9ussis", cond: (s) => Object.values(s.quizResults).filter((r) => r.correct).length >= 50 },
   { id: "quiz_100", cat: "Quiz", tint: "amber", rarity: "epique", icon: "ti-crown", label: "100 quiz r\xE9ussis", cond: (s) => Object.values(s.quizResults).filter((r) => r.correct).length >= 100 },
   // ── Leçons
   { id: "lessons_25", cat: "Le\xE7ons", tint: "primary", rarity: "commun", icon: "ti-book-2", label: "25 le\xE7ons", cond: (s) => Object.keys(s.completedLessons).length >= 25 },
@@ -9578,9 +9609,34 @@ var BADGES = [
   { id: "anchor_1", cat: "Ma\xEEtrise", tint: "green", rarity: "commun", icon: "ti-anchor", label: "Premier ancrage", cond: (s, ctx) => anchoredCount(s, ctx) >= 1 },
   { id: "anchor_10", cat: "Ma\xEEtrise", tint: "green", rarity: "rare", icon: "ti-anchor", label: "10 le\xE7ons ancr\xE9es", cond: (s, ctx) => anchoredCount(s, ctx) >= 10 },
   { id: "anchor_30", cat: "Ma\xEEtrise", tint: "green", rarity: "epique", icon: "ti-anchor", label: "30 le\xE7ons ancr\xE9es", cond: (s, ctx) => anchoredCount(s, ctx) >= 30 },
+  // ── Compétences ─────────────────────────────────────────────────────────
+  // Fondées sur les compétences générées (store/generateurs.js) : chacune a
+  // 3 niveaux, gagnés par des réussites répétées en révision, et perdus d'un
+  // cran après une erreur. Le niveau 3 ne s'obtient donc qu'en maîtrisant
+  // réellement la compétence — et jamais avant sa leçon, puisque la
+  // compétence n'existe pas tant que la leçon n'est pas faite.
+  { id: "comp_first", cat: "Comp\xE9tences", tint: "primary", rarity: "rare", icon: "ti-target-arrow", label: "Premi\xE8re comp\xE9tence au niveau 3", cond: (s) => competencesAuMax(s) >= 1 },
+  { id: "comp_10", cat: "Comp\xE9tences", tint: "primary", rarity: "epique", icon: "ti-sparkles", label: "10 comp\xE9tences au niveau 3", cond: (s) => competencesAuMax(s) >= 10 },
+  { id: "comp_manche", cat: "Comp\xE9tences", tint: "amber", rarity: "epique", icon: "ti-map-2", label: "Manche cartographi\xE9", cond: (s) => toutesAuMax(s, ["notes-corde-6", "notes-corde-5", "notes-corde-4", "notes-corde-3", "notes-corde-2", "notes-corde-1"]) },
+  { id: "comp_oreille", cat: "Comp\xE9tences", tint: "green", rarity: "epique", icon: "ti-ear", label: "Oreille aff\xFBt\xE9e", cond: (s) => toutesAuMax(s, ["oreille-hauteur", "oreille-intervalles", "oreille-accords"]) },
+  { id: "comp_accords", cat: "Comp\xE9tences", tint: "coral", rarity: "epique", icon: "ti-stack-2", label: "B\xE2tisseur d'accords", cond: (s) => toutesAuMax(s, ["triades", "accords-7", "guide-tones"]) },
+  // ── Jam Session ─────────────────────────────────────────────────────────
+  // Du jeu réel, guitare en main : une séance ne compte qu'après 3 minutes
+  // de jeu (décompte exclu), et le temps total ne tourne que pendant la lecture.
+  { id: "jam_1", cat: "Jam Session", tint: "pink", rarity: "commun", icon: "ti-music-plus", label: "Premi\xE8re jam", cond: (s) => (s.jam?.seances || 0) >= 1 },
+  { id: "jam_10", cat: "Jam Session", tint: "pink", rarity: "rare", icon: "ti-music-plus", label: "10 jams", cond: (s) => (s.jam?.seances || 0) >= 10 },
+  { id: "jam_5h", cat: "Jam Session", tint: "pink", rarity: "epique", icon: "ti-clock", label: "5 heures de jam", cond: (s) => (s.jam?.secondes || 0) >= 5 * 3600 },
+  { id: "jam_c10", cat: "Jam Session", tint: "amber", rarity: "rare", icon: "ti-target-arrow", label: "10 contraintes tenues", cond: (s) => (s.jam?.contraintes || 0) >= 10 },
+  { id: "jam_c50", cat: "Jam Session", tint: "amber", rarity: "epique", icon: "ti-trophy", label: "50 contraintes tenues", cond: (s) => (s.jam?.contraintes || 0) >= 50 },
   // ── Grade (généré depuis grades.js)
   ...GRADE_BADGES
 ];
+var auMax = (s, familleId) => {
+  const h = s.reviewHistory?.[idQuestion(familleId)];
+  return !!h && niveauFamille(h) === 3;
+};
+var competencesAuMax = (s) => Object.keys(s.reviewHistory || {}).filter((k) => k.startsWith("gen:") && niveauFamille(s.reviewHistory[k]) === 3).length;
+var toutesAuMax = (s, familles) => familles.every((f) => auMax(s, f));
 var _cacheEtat = null;
 var _cacheValeur = 0;
 function anchoredCount(state, content) {
@@ -10150,7 +10206,7 @@ var ToolboxScreen_exports = {};
 __export(ToolboxScreen_exports, {
   ToolboxScreen: () => ToolboxScreen
 });
-import { useState as useState14, useRef as useRef9, useEffect as useEffect11, useCallback as useCallback3, useMemo as useMemo9 } from "react";
+import { useState as useState14, useRef as useRef9, useEffect as useEffect11, useCallback as useCallback4, useMemo as useMemo9 } from "react";
 init_tone_stub();
 
 // src/screens/FretboardExplorer.jsx
@@ -10965,14 +11021,14 @@ function Metronome() {
   const loopRef = useRef9(null);
   const beatRef = useRef9(0);
   const beatsRef = useRef9(beats);
-  const libererVoix = useCallback3(() => {
+  const libererVoix = useCallback4(() => {
     try {
       voixRef.current?.dispose?.();
     } catch {
     }
     voixRef.current = null;
   }, []);
-  const construireVoix = useCallback3((id) => {
+  const construireVoix = useCallback4((id) => {
     if (id === "bois") {
       const filtre = new Filter({ type: "bandpass", frequency: 1800, Q: 2.2 }).toDestination();
       const corps = new NoiseSynth({
@@ -11042,11 +11098,11 @@ function Metronome() {
       }
     };
   }, []);
-  const ensureClick = useCallback3(async () => {
+  const ensureClick = useCallback4(async () => {
     await start();
     if (!voixRef.current) voixRef.current = construireVoix(timbre);
   }, [timbre, construireVoix]);
-  const stop = useCallback3(() => {
+  const stop = useCallback4(() => {
     if (loopRef.current) {
       loopRef.current.stop();
       loopRef.current.dispose();
@@ -11057,7 +11113,7 @@ function Metronome() {
     setCurrent(-1);
     beatRef.current = 0;
   }, []);
-  const start2 = useCallback3(async () => {
+  const start2 = useCallback4(async () => {
     await ensureClick();
     beatRef.current = 0;
     const transport = getTransport();
@@ -11518,7 +11574,7 @@ function Tuner() {
   const centsTargetRef = useRef9(0);
   const centsShownRef = useRef9(0);
   const hasSignalRef = useRef9(false);
-  const stop = useCallback3(() => {
+  const stop = useCallback4(() => {
     if (holdTimer.current) {
       clearTimeout(holdTimer.current);
       holdTimer.current = null;
@@ -11535,7 +11591,7 @@ function Tuner() {
     setFreq(0);
     setNote(null);
   }, []);
-  const start2 = useCallback3(async () => {
+  const start2 = useCallback4(async () => {
     try {
       let stream;
       try {
@@ -11777,7 +11833,7 @@ function ChordPlayer() {
   const [suiteVidee, setSuiteVidee] = useState14(null);
   const timerViderRef = useRef9(null);
   useEffect11(() => () => clearTimeout(timerViderRef.current), []);
-  const stop = useCallback3(() => {
+  const stop = useCallback4(() => {
     stopAll();
     setPlaying(false);
     setActiveIdx(-1);
@@ -12178,23 +12234,23 @@ function TabEditor() {
     const max = nbColsVisibles(grille) - res;
     if (selection.col > max) setSelection((s) => ({ ...s, col: max }));
   }, [grille, res, selection.col]);
-  const annoncer = useCallback3((txt) => {
+  const annoncer = useCallback4((txt) => {
     setMessage(txt);
     clearTimeout(timerMessageRef.current);
     timerMessageRef.current = setTimeout(() => setMessage(null), 3500);
   }, []);
-  const effacerMessage = useCallback3(() => {
+  const effacerMessage = useCallback4(() => {
     setMessage(null);
     clearTimeout(timerMessageRef.current);
   }, []);
-  const modifier = useCallback3((fn) => {
+  const modifier = useCallback4((fn) => {
     setEdit((e) => {
       const n = fn(e.grille);
       if (n === e.grille) return e;
       return { grille: n, passe: [...e.passe.slice(-(HISTORIQUE_MAX - 1)), e.grille] };
     });
   }, []);
-  const modifierSelection = useCallback3((fn) => {
+  const modifierSelection = useCallback4((fn) => {
     const { corde, col } = selection;
     effacerMessage();
     modifier((g) => {
@@ -12203,30 +12259,30 @@ function TabEditor() {
       return apres === avant ? g : ecrireCase(g, corde, col, apres);
     });
   }, [selection, modifier, effacerMessage]);
-  const annuler = useCallback3(() => {
+  const annuler = useCallback4(() => {
     effacerMessage();
     setEdit((e) => e.passe.length ? { grille: e.passe[e.passe.length - 1], passe: e.passe.slice(0, -1) } : e);
   }, [effacerMessage]);
-  const onFret = useCallback3((f) => {
+  const onFret = useCallback4((f) => {
     derniereSaisieRef.current = null;
     modifierSelection((c) => poserFret(c, f));
   }, [modifierSelection]);
-  const onMute = useCallback3(() => modifierSelection((c) => c?.mute ? null : { mute: true }), [modifierSelection]);
-  const onEffacer = useCallback3(() => {
+  const onMute = useCallback4(() => modifierSelection((c) => c?.mute ? null : { mute: true }), [modifierSelection]);
+  const onEffacer = useCallback4(() => {
     derniereSaisieRef.current = null;
     modifierSelection(() => null);
   }, [modifierSelection]);
-  const basculer = useCallback3((champ) => modifierSelection((c) => {
+  const basculer = useCallback4((champ) => modifierSelection((c) => {
     if (!c || c.mute || typeof c.fret !== "number") return c;
     return { fret: c.fret, [champ]: c[champ] ? void 0 : true };
   }), [modifierSelection]);
-  const onLie = useCallback3(() => basculer("lie"), [basculer]);
-  const onSlide = useCallback3(() => basculer("slide"), [basculer]);
-  const onBend = useCallback3(() => modifierSelection((c) => {
+  const onLie = useCallback4(() => basculer("lie"), [basculer]);
+  const onSlide = useCallback4(() => basculer("slide"), [basculer]);
+  const onBend = useCallback4(() => modifierSelection((c) => {
     if (!c || c.mute || typeof c.fret !== "number") return c;
     return { fret: c.fret, bend: c.bend === 2 ? 1 : c.bend === 1 ? void 0 : 2 };
   }), [modifierSelection]);
-  const deplacer = useCallback3((dCase, dCorde) => {
+  const deplacer = useCallback4((dCase, dCorde) => {
     derniereSaisieRef.current = null;
     effacerMessage();
     setSelection((s) => ({
@@ -12242,7 +12298,7 @@ function TabEditor() {
     setRes(r);
     setSelection((s) => ({ ...s, col: s.col - s.col % r }));
   };
-  const arreter = useCallback3(() => {
+  const arreter = useCallback4(() => {
     enLectureRef.current = false;
     clearTimeout(timerBoucleRef.current);
     timerBoucleRef.current = null;
@@ -12251,7 +12307,7 @@ function TabEditor() {
     setColLecture(null);
   }, []);
   const lancerRef = useRef9(null);
-  const lancer = useCallback3(async (bpmLecture) => {
+  const lancer = useCallback4(async (bpmLecture) => {
     const evs = grilleVersEvenements(grille);
     if (evs.length === 0) return;
     await unlockAudio();
@@ -12283,7 +12339,7 @@ function TabEditor() {
     }
   }, [grille, arreter]);
   lancerRef.current = lancer;
-  const basculerLecture = useCallback3(() => {
+  const basculerLecture = useCallback4(() => {
     if (jouant) arreter();
     else lancer(bpm);
   }, [jouant, arreter, lancer, bpm]);
@@ -12553,7 +12609,7 @@ function ToolboxScreen({ onBack, navigate }) {
   };
   const ongletsRef = useRef9(null);
   const [finOnglets, setFinOnglets] = useState14(false);
-  const majFinOnglets = useCallback3(() => {
+  const majFinOnglets = useCallback4(() => {
     const el = ongletsRef.current;
     if (el) setFinOnglets(el.scrollLeft + el.clientWidth >= el.scrollWidth - 4);
   }, []);
@@ -12887,7 +12943,7 @@ function CompetencesPratique({ state, navigate }) {
       " appara\xEEtront ici au fil des le\xE7ons : notes du manche, intervalles, oreille, rythme. Chacune a 3 niveaux, et la r\xE9vision s'adapte au tien."
     ] });
   }
-  const auMax = prog.filter((p) => p.restant == null && p.commencee).length;
+  const auMax2 = prog.filter((p) => p.restant == null && p.commencee).length;
   return /* @__PURE__ */ jsxs16("div", { style: { marginBottom: 16 }, children: [
     /* @__PURE__ */ jsxs16("div", { style: { display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }, children: [
       /* @__PURE__ */ jsx19("div", { style: { fontSize: 11, fontWeight: 700, color: C.text3, textTransform: "uppercase", letterSpacing: ".06em" }, children: "Tes comp\xE9tences" }),
@@ -12895,7 +12951,7 @@ function CompetencesPratique({ state, navigate }) {
         prog.length,
         " d\xE9bloqu\xE9e",
         prog.length > 1 ? "s" : "",
-        auMax ? ` \xB7 ${auMax} au niveau max` : ""
+        auMax2 ? ` \xB7 ${auMax2} au niveau max` : ""
       ] })
     ] }),
     ORDRE_DOMAINES.map((dom) => {
@@ -13051,7 +13107,7 @@ var PracticeScreen_exports = {};
 __export(PracticeScreen_exports, {
   PracticeScreen: () => PracticeScreen
 });
-import { useState as useState16, useEffect as useEffect12, useRef as useRef10, useCallback as useCallback4, useMemo as useMemo11 } from "react";
+import { useState as useState16, useEffect as useEffect12, useRef as useRef10, useCallback as useCallback5, useMemo as useMemo11 } from "react";
 
 // src/store/challenges.js
 var KEYS = ["A", "B", "C", "D", "E", "F", "G"];
@@ -13229,7 +13285,7 @@ var ChallengeScreen_exports = {};
 __export(ChallengeScreen_exports, {
   ChallengeScreen: () => ChallengeScreen
 });
-import { useState as useState17, useEffect as useEffect13, useRef as useRef11, useCallback as useCallback5, useMemo as useMemo12 } from "react";
+import { useState as useState17, useEffect as useEffect13, useRef as useRef11, useCallback as useCallback6, useMemo as useMemo12 } from "react";
 import { jsx as jsx21, jsxs as jsxs18 } from "react/jsx-runtime";
 function ChallengeScreen({ state, dispatch, navigate }) {
   const C = useC();

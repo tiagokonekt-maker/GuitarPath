@@ -4,6 +4,7 @@
 import { LIGHT } from "../design/tokens.js";
 import { masteryStats } from "./mastery.js";
 import { GRADES } from "./grades.js";
+import { niveauFamille, idQuestion } from "./generateurs.js";
 
 const buildBadgeTints = (C) => ({
   primary: { bg: C.primaryL, border: C.primaryBorder, icon: C.primary, text: C.primaryD },
@@ -76,18 +77,20 @@ const BADGES = [
   // ── Maîtrise exercices
   { id: "ex_10",  cat: "Maîtrise", tint: "green", rarity: "commun", icon: "ti-circle-check",  label: "10 exercices",  cond: s => Object.keys(s.completedExercises).length >= 10 },
   { id: "ex_25",  cat: "Maîtrise", tint: "green", rarity: "rare",   icon: "ti-target-arrow",  label: "25 exercices",  cond: s => Object.keys(s.completedExercises).length >= 25 },
-  { id: "ex_100", cat: "Maîtrise", tint: "green", rarity: "legend", icon: "ti-medal",         label: "100 exercices", cond: s => Object.keys(s.completedExercises).length >= 100 },
+  // « 100 exercices » était impossible : l'app n'en compte que 36. On
+  // récompense désormais le fait de TOUS les avoir faits, quel que soit leur nombre.
+  { id: "ex_all", cat: "Maîtrise", tint: "green", rarity: "legend", icon: "ti-medal",         label: "Tous les exercices", cond: (s, ctx) => ctx.exercises.length > 0 && ctx.exercises.every(e => s.completedExercises[e.id]) },
 
   // ── Skill (par module)
   { id: "skill_neck",    cat: "Skill", tint: "amber",   rarity: "rare", icon: "ti-map-2",   label: "Manche maîtrisé",   cond: (s, ctx) => skillMastery(s, ctx, "neck")    >= 80 },
-  { id: "skill_scales",  cat: "Skill", tint: "green",   rarity: "rare", icon: "ti-music",   label: "Modes maîtrisés",   cond: (s, ctx) => skillMastery(s, ctx, "scales")  >= 80 },
+  { id: "skill_scales",  cat: "Skill", tint: "green",   rarity: "rare", icon: "ti-music",   label: "Gammes maîtrisées", cond: (s, ctx) => skillMastery(s, ctx, "scales")  >= 80 },
   { id: "skill_harmony", cat: "Skill", tint: "primary", rarity: "rare", icon: "ti-stack-2", label: "Harmonie pro",       cond: (s, ctx) => skillMastery(s, ctx, "harmony") >= 80 },
   { id: "skill_rhythm",  cat: "Skill", tint: "blue",    rarity: "rare", icon: "ti-metronome", label: "Rythme solide",    cond: (s, ctx) => skillMastery(s, ctx, "rhythm")  >= 80 },
   { id: "skill_impro",   cat: "Skill", tint: "pink",    rarity: "rare", icon: "ti-wand",    label: "Improvisateur",     cond: (s, ctx) => skillMastery(s, ctx, "impro")   >= 80 },
 
   // ── Quiz
   { id: "quiz_perfect", cat: "Quiz", tint: "amber", rarity: "commun", icon: "ti-circle-check", label: "Quiz parfait",      cond: s => perfectQuizCount(s) >= 1 },
-  { id: "quiz_50",      cat: "Quiz", tint: "amber", rarity: "rare",   icon: "ti-target",       label: "50 quiz réussis",   cond: s => Object.values(s.quizResults).filter(r => r.correct).length >= 50 },
+  { id: "quiz_50",      cat: "Quiz", tint: "amber", rarity: "rare",   icon: "ti-target-arrow", label: "50 quiz réussis",   cond: s => Object.values(s.quizResults).filter(r => r.correct).length >= 50 },
   { id: "quiz_100",     cat: "Quiz", tint: "amber", rarity: "epique", icon: "ti-crown",        label: "100 quiz réussis",  cond: s => Object.values(s.quizResults).filter(r => r.correct).length >= 100 },
 
   // ── Leçons
@@ -112,14 +115,44 @@ const BADGES = [
   { id: "anchor_10",  cat: "Maîtrise", tint: "green", rarity: "rare",   icon: "ti-anchor",  label: "10 leçons ancrées", cond: (s, ctx) => anchoredCount(s, ctx) >= 10 },
   { id: "anchor_30",  cat: "Maîtrise", tint: "green", rarity: "epique", icon: "ti-anchor",  label: "30 leçons ancrées", cond: (s, ctx) => anchoredCount(s, ctx) >= 30 },
 
+  // ── Compétences ─────────────────────────────────────────────────────────
+  // Fondées sur les compétences générées (store/generateurs.js) : chacune a
+  // 3 niveaux, gagnés par des réussites répétées en révision, et perdus d'un
+  // cran après une erreur. Le niveau 3 ne s'obtient donc qu'en maîtrisant
+  // réellement la compétence — et jamais avant sa leçon, puisque la
+  // compétence n'existe pas tant que la leçon n'est pas faite.
+  { id: "comp_first",   cat: "Compétences", tint: "primary", rarity: "rare",   icon: "ti-target-arrow", label: "Première compétence au niveau 3", cond: s => competencesAuMax(s) >= 1 },
+  { id: "comp_10",      cat: "Compétences", tint: "primary", rarity: "epique", icon: "ti-sparkles",     label: "10 compétences au niveau 3",      cond: s => competencesAuMax(s) >= 10 },
+  { id: "comp_manche",  cat: "Compétences", tint: "amber",   rarity: "epique", icon: "ti-map-2",        label: "Manche cartographié",             cond: s => toutesAuMax(s, ["notes-corde-6", "notes-corde-5", "notes-corde-4", "notes-corde-3", "notes-corde-2", "notes-corde-1"]) },
+  { id: "comp_oreille", cat: "Compétences", tint: "green",   rarity: "epique", icon: "ti-ear",          label: "Oreille affûtée",                 cond: s => toutesAuMax(s, ["oreille-hauteur", "oreille-intervalles", "oreille-accords"]) },
+  { id: "comp_accords", cat: "Compétences", tint: "coral",   rarity: "epique", icon: "ti-stack-2",      label: "Bâtisseur d'accords",             cond: s => toutesAuMax(s, ["triades", "accords-7", "guide-tones"]) },
+
+  // ── Jam Session ─────────────────────────────────────────────────────────
+  // Du jeu réel, guitare en main : une séance ne compte qu'après 3 minutes
+  // de jeu (décompte exclu), et le temps total ne tourne que pendant la lecture.
+  { id: "jam_1",   cat: "Jam Session", tint: "pink", rarity: "commun", icon: "ti-music-plus",   label: "Première jam",          cond: s => (s.jam?.seances || 0) >= 1 },
+  { id: "jam_10",  cat: "Jam Session", tint: "pink", rarity: "rare",   icon: "ti-music-plus",   label: "10 jams",               cond: s => (s.jam?.seances || 0) >= 10 },
+  { id: "jam_5h",  cat: "Jam Session", tint: "pink", rarity: "epique", icon: "ti-clock",        label: "5 heures de jam",       cond: s => (s.jam?.secondes || 0) >= 5 * 3600 },
+  { id: "jam_c10", cat: "Jam Session", tint: "amber", rarity: "rare",  icon: "ti-target-arrow", label: "10 contraintes tenues", cond: s => (s.jam?.contraintes || 0) >= 10 },
+  { id: "jam_c50", cat: "Jam Session", tint: "amber", rarity: "epique", icon: "ti-trophy",      label: "50 contraintes tenues", cond: s => (s.jam?.contraintes || 0) >= 50 },
+
   // ── Grade (généré depuis grades.js)
   ...GRADE_BADGES,
 ];
 
+// Compétences générées au niveau 3 (niveau maximal).
+const auMax = (s, familleId) => {
+  const h = s.reviewHistory?.[idQuestion(familleId)];
+  return !!h && niveauFamille(h) === 3;
+};
+const competencesAuMax = (s) =>
+  Object.keys(s.reviewHistory || {}).filter(k => k.startsWith("gen:") && niveauFamille(s.reviewHistory[k]) === 3).length;
+const toutesAuMax = (s, familles) => familles.every(f => auMax(s, f));
+
 // Mise en cache légère : `anchoredCount` peut être appelée plusieurs fois par
 // cycle de calcul de badges (trois seuils la consultent) ; on ne recalcule
 // qu'une fois par état de progression distinct, `masteryStats` parcourant les
-// 108 leçons et toutes leurs questions.
+// leçons et toutes leurs questions.
 let _cacheEtat = null, _cacheValeur = 0;
 
 function anchoredCount(state, content) {
