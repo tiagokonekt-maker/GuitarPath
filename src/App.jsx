@@ -39,6 +39,7 @@ import { loadState, saveState, loadContent, mergeStates, STATE_KEY } from "./sto
 import { reducer } from "./store/reducer.js";
 import { BADGES, computeNewBadges } from "./store/badges.js";
 import { buildReviewSession } from "./store/reviewEngine.js";
+import { questionsGenereesPour } from "./store/generateurs.js";
 import { dailyTargetFromTime } from "./store/placementEngine.js";
 import { analytics, EVENTS } from "./analytics.js";
 
@@ -348,8 +349,11 @@ function AppInner({ onThemeChange }) {
   const navigate = useCallback((s, { remplacer = false } = {}) => {
     if (!ECRANS_VALIDES.has(s)) return;
     if (s === "review" && content) {
+      // Questions écrites + une question GÉNÉRÉE par compétence débloquée (au
+      // niveau de l'élève, jamais avant sa leçon) : le moteur de révision
+      // choisit ensuite ce qui est dû ou nouveau, comme pour les autres.
       const session = buildReviewSession(
-        content.quiz, state.reviewHistory || {}, state.completedLessons,
+        [...content.quiz, ...questionsGenereesPour(state)], state.reviewHistory || {}, state.completedLessons,
         { targetCount: cibleSession, maxNew: Math.ceil(cibleSession / 3) },
       );
       setReviewQuestions(session.questions);

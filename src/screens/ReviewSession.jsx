@@ -1,11 +1,14 @@
 // Groply — screens/ReviewSession.jsx
 // Session de révision espacée — mélange QCM et manche interactif
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { FONTS, R } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { Gropi } from "../design/Gropi.jsx";
 import { updateReviewHistory } from "../store/reviewEngine.js";
+import { todayStr } from "../store/dates.js";
+import { familleDe, niveauFamille, avantNiveauSuivant } from "../store/generateurs.js";
+import { jouerEcoute, stopAll, unlockAudio } from "../audioEngine.js";
 
 // ── Composants de rendu injectés par contexte ─────────────────────────────
 // Avant, App.jsx MUTAIT ce module au démarrage (`setXxx(...)`) : un singleton
@@ -13,6 +16,27 @@ import { updateReviewHistory } from "../store/reviewEngine.js";
 // fragilité — si un écran se rendait avant l'injection, le composant valait
 // null. Un contexte React rend l'ordre de rendu sans importance.
 import { useRenderers } from "../renderers.jsx";
+
+/**
+ * Grille rythmique compacte pour les réponses de la dictée : 4 options
+ * doivent tenir sur un écran de téléphone, là où le schéma complet des
+ * leçons prend ~110 px de haut chacun.
+ */
+function MiniGrille({ grille, C, active }) {
+  const n = 4 * grille.pas, sonne = new Set(grille.attaques);
+  return (
+    <div aria-hidden="true" style={{ display: "flex", gap: 3, flex: 1 }}>
+      {Array.from({ length: 4 }, (_, t) => (
+        <div key={t} style={{ display: "flex", gap: 2, flex: 1, paddingLeft: t ? 4 : 0, borderLeft: t ? `1.5px solid ${C.border}` : "none" }}>
+          {Array.from({ length: grille.pas }, (_, k) => {
+            const i = t * grille.pas + k;
+            return <div key={k} style={{ flex: 1, height: 20, borderRadius: 4, background: sonne.has(i) ? (active || C.primary) : C.surface2, border: `1px solid ${sonne.has(i) ? "transparent" : C.border}` }} />;
+          })}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export function ReviewSession({ questions, state, dispatch, onDone }) {
   const { FretboardQuizQuestion } = useRenderers();
@@ -23,8 +47,15 @@ export function ReviewSession({ questions, state, dispatch, onDone }) {
   const [fretCorrect, setFretCorrect]   = useState(null);
   const [results, setResults]   = useState([]); // { id, correct }
   const [finished, setFinished] = useState(false);
+  const [suiviFamille, setSuiviFamille] = useState(null);   // progression de la famille après la réponse
+  // Écoute : on n'autorise la réponse qu'après une première écoute (sinon on
+  // devine), et on peut réécouter à volonté. « Pas de son maintenant » retire
+  // les questions d'écoute de la séance, sans pénalité.
+  const [ecoutee, setEcoutee] = useState(false);
+  const [sansSon, setSansSon] = useState(false);
+  useEffect(() => () => { try { stopAll(); } catch { /* noop */ } }, []);
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = todayStr();
   const q = questions[idx];
   const isFret = q?.type === "fretboard";
   const answered = isFret ? fretAnswered : sel !== null;
@@ -55,32 +86,52 @@ export function ReviewSession({ questions, state, dispatch, onDone }) {
     );
     dispatch({ type: "REVIEW_ANSWER", questionId: q.id, correct, history: newHistory, xp: correct ? (q.xp || 30) : 0 });
     setResults(prev => [...prev, { id: q.id, correct }]);
+    // Question générée : on dit à l'élève où il en est dans cette compétence.
+    const fam = q.genere ? familleDe(q.id) : null;
+    if (fam) {
+      const avant = niveauFamille((state.reviewHistory || {})[q.id]);
+      const h = newHistory[q.id];
+      const apres = niveauFamille(h);
+      setSuiviFamille({ avant, apres, restant: avantNiveauSuivant(h), suivant: fam.niveaux[apres] || null, libelle: fam.niveaux[apres - 1] });
+    } else setSuiviFamille(null);
   };
 
   // ── Question suivante ─────────────────────────────────────────────────────
-  const next = () => {
+  const prochaine = (depuis, muet) => {
+    let j = depuis + 1;
+    while (j < questions.length && muet && questions[j]?.audio) j++;
+    return j;
+  };
+  const next = (muetForce) => {
+    const muet = muetForce ?? sansSon;
+    try { stopAll(); } catch { /* noop */ }
     const currentCorrect = results.filter(r => r.correct).length;
-    if (idx + 1 >= questions.length) {
+    const j = prochaine(idx, muet);
+    if (j >= questions.length) {
+      if (results.length === 0) { onDone?.(); return; }   // rien n'a été répondu : on ne compte pas de séance
       // Dispatcher les actions de fin de session
-      dispatch({ type: "REVIEW_SESSION_DONE", xp: currentCorrect * 20, score: `${currentCorrect}/${questions.length}` });
+      dispatch({ type: "REVIEW_SESSION_DONE", xp: currentCorrect * 20, score: `${currentCorrect}/${results.length}` });
       dispatch({ type: "MARK_STREAK" });
       dispatch({ type: "UPDATE_WEEKLY", field: "quizzes" });
       setFinished(true);
     } else {
       setSel(null);
+      setSuiviFamille(null);
+      setEcoutee(false);
       setFretAnswered(false);
       setFretCorrect(null);
-      setIdx(i => i + 1);
+      setIdx(j);
     }
   };
 
   // ── Ecran de fin ─────────────────────────────────────────────────────────
   if (finished) {
     const correct = results.filter(r => r.correct).length;
-    const incorrect = questions.length - correct;
-    const pct = Math.round((correct / questions.length) * 100);
+    const repondues = results.length || 1;
+    const incorrect = results.length - correct;
+    const pct = Math.round((correct / repondues) * 100);
     const xpEarned = correct * 20;
-    const title = pct >= 80 ? "Excellent !" : pct >= 50 ? "Bien joue !" : "Continue !";
+    const title = pct >= 80 ? "Excellent !" : pct >= 50 ? "Bien joué !" : "Continue !";
 
     // Questions ratees pour affichage
     const wrongItems = results
@@ -108,6 +159,29 @@ export function ReviewSession({ questions, state, dispatch, onDone }) {
               : "Les erreurs sont normales, c'est comme ça qu'on progresse."}
           </div>
         </div>
+
+        {/* Compétences générées travaillées pendant la séance, avec leur niveau */}
+        {(() => {
+          const vues = [...new Set(results.map(r => r.id))].map(id => ({ id, fam: familleDe(id) })).filter(x => x.fam && questions.find(q => q.id === x.id)?.genere);
+          if (!vues.length) return null;
+          const h = state.reviewHistory || {};
+          return (
+            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: "14px" }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 8 }}>Tes compétences</div>
+              {vues.map(({ id, fam }) => {
+                const n = niveauFamille(h[id]);
+                return (
+                  <div key={id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0" }}>
+                    <div style={{ flex: 1, fontSize: 12.5, color: C.text, fontFamily: FONTS.ui }}>{fam.titre}</div>
+                    <div aria-label={`niveau ${n} sur 3`} style={{ display: "flex", gap: 3 }}>
+                      {[1, 2, 3].map(k => <span key={k} style={{ width: 14, height: 6, borderRadius: 3, background: k <= n ? C.primary : C.border }} />)}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
 
         {/* Stats principales */}
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: "16px 14px" }}>
@@ -174,7 +248,7 @@ export function ReviewSession({ questions, state, dispatch, onDone }) {
           background: C.primary, color: "#fff", fontSize: 14, fontWeight: 700,
           cursor: "pointer", fontFamily: FONTS.ui, marginTop: 4,
         }}>
-          Retour a l'accueil
+          Retour à l'accueil
         </button>
       </div>
     );
@@ -183,6 +257,10 @@ export function ReviewSession({ questions, state, dispatch, onDone }) {
   if (!q) return null;
 
   const isCorrect = isFret ? fretCorrect : sel === q.a;
+  const xpReelle = state?.lastGain?.kind === "review" ? (state.lastGain.xp || 0) : 0;
+  const attendEcoute = !!q.audio && !ecoutee && !answered;
+  const ecouter = async () => { try { await unlockAudio(); await jouerEcoute(q.audio); } catch { /* noop */ } setEcoutee(true); };
+  const passerSansSon = () => { setSansSon(true); next(true); };
 
   return (
     <div style={{ padding: "14px 16px 0" }}>
@@ -218,8 +296,9 @@ export function ReviewSession({ questions, state, dispatch, onDone }) {
           background: isFret ? C.amberL : C.primaryL,
           color: isFret ? C.amberD : C.primaryD,
         }}>
-          {isFret ? "Manche" : "QCM"} · Niv. {q.lvl}
+          {q.genere ? `${q.famille} · niveau ${q.niveauFamille}/3` : `${isFret ? "Manche" : "QCM"} · Niv. ${q.lvl}`}
         </div>
+        {q.genere && <div style={{ fontSize: 10.5, color: C.text3, fontFamily: FONTS.ui }}>{q.libelleNiveau}</div>}
       </div>
 
       {/* Question */}
@@ -231,6 +310,29 @@ export function ReviewSession({ questions, state, dispatch, onDone }) {
           {q.q}
         </p>
       </div>
+
+      {/* Écoute */}
+      {q.audio && (
+        <div style={{ marginBottom: 12 }}>
+          <button onClick={ecouter} className="gr-focus" style={{
+            width: "100%", height: 52, borderRadius: R.lg, border: "none", cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+            background: ecoutee ? C.surface2 : C.primary, color: ecoutee ? C.text : "#fff",
+            fontSize: 15, fontWeight: 800, fontFamily: FONTS.ui,
+          }}>
+            <Ti name="volume" size={18} color={ecoutee ? C.text : "#fff"} />
+            {ecoutee ? "Réécouter" : "Écouter"}
+          </button>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6 }}>
+            <span style={{ fontSize: 11.5, color: C.text3, fontFamily: FONTS.ui }}>{attendEcoute ? "Écoute d'abord, puis choisis." : "Tu peux réécouter autant que tu veux."}</span>
+            {!answered && (
+              <button onClick={passerSansSon} className="gr-focus" style={{ background: "none", border: "none", padding: "8px 2px", cursor: "pointer", fontSize: 11.5, fontWeight: 700, color: C.text2, fontFamily: FONTS.ui, textDecoration: "underline" }}>
+                Pas de son maintenant
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Question fretboard */}
       {isFret ? (
@@ -252,13 +354,13 @@ export function ReviewSession({ questions, state, dispatch, onDone }) {
                 <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
                   <Ti name={isCorrect ? "check" : "alert-circle"} size={14} color={isCorrect ? C.green : C.coral} />
                   <div style={{ fontSize: 12, fontWeight: 500, color: isCorrect ? C.greenD : C.coralD, fontFamily: FONTS.ui }}>
-                    {isCorrect ? `Correct · +${q.xp || 40} XP` : "Pas tout a fait..."}
+                    {isCorrect ? `Correct${xpReelle > 0 ? ` · +${xpReelle} XP` : ""}` : "Pas tout à fait…"}
                   </div>
                 </div>
                 {q.exp && <div style={{ fontSize: 12, color: isCorrect ? C.greenD : C.coralD, lineHeight: 1.55, fontFamily: FONTS.ui }}>{q.exp}</div>}
               </div>
-              <button onClick={next} style={{ width: "100%", padding: "14px", borderRadius: R.md, border: "none", background: C.primary, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }}>
-                {idx + 1 >= questions.length ? "Voir les resultats" : "Suivant"}
+              <button onClick={() => next()} style={{ width: "100%", padding: "14px", borderRadius: R.md, border: "none", background: C.primary, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }}>
+                {prochaine(idx, sansSon) >= questions.length ? "Voir les résultats" : "Suivant"}
               </button>
             </>
           )}
@@ -274,7 +376,8 @@ export function ReviewSession({ questions, state, dispatch, onDone }) {
               else if (i === sel) { bg = C.coralL; border = `1px solid ${C.coral}`; col = C.coralD; badgeBg = C.coralBorder; badgeFg = C.coralD; ic = "✗"; }
             }
             return (
-              <button key={i} onClick={() => choose(i)} disabled={answered} style={{
+              <button key={i} onClick={() => choose(i)} disabled={answered || attendEcoute} aria-label={q.grilles ? opt : undefined} className="gr-focus" style={{
+                opacity: attendEcoute ? .45 : 1,
                 display: "flex", alignItems: "center", gap: 10,
                 background: bg, border, borderRadius: 11, padding: "11px 13px",
                 cursor: answered ? "default" : "pointer", textAlign: "left",
@@ -283,7 +386,9 @@ export function ReviewSession({ questions, state, dispatch, onDone }) {
                 <div style={{ width: 24, height: 24, borderRadius: 7, background: badgeBg, color: badgeFg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 500, flexShrink: 0, fontFamily: FONTS.ui }}>
                   {ic}
                 </div>
-                <span style={{ fontSize: 13, color: col, lineHeight: 1.4, fontFamily: FONTS.title, fontWeight: answered && i === q.a ? 500 : 400 }}>{opt}</span>
+                {q.grilles
+                  ? <MiniGrille grille={q.grilles[i]} C={C} active={answered && i === q.a ? C.green : answered && i === sel ? C.coral : null} />
+                  : <span style={{ fontSize: 13, color: col, lineHeight: 1.4, fontFamily: FONTS.title, fontWeight: answered && i === q.a ? 500 : 400 }}>{opt}</span>}
               </button>
             );
           })}
@@ -298,13 +403,27 @@ export function ReviewSession({ questions, state, dispatch, onDone }) {
                 <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
                   <Ti name={isCorrect ? "check" : "alert-circle"} size={14} color={isCorrect ? C.green : C.coral} />
                   <div style={{ fontSize: 12, fontWeight: 500, color: isCorrect ? C.greenD : C.coralD, fontFamily: FONTS.ui }}>
-                    {isCorrect ? `Correct · +${q.xp || 30} XP` : "Pas tout a fait..."}
+                    {isCorrect ? `Correct${xpReelle > 0 ? ` · +${xpReelle} XP` : ""}` : "Pas tout à fait…"}
                   </div>
                 </div>
                 {(q.exp || q.x) && <div style={{ fontSize: 12, color: isCorrect ? C.greenD : C.coralD, lineHeight: 1.55, fontFamily: FONTS.ui }}>{q.exp || q.x}</div>}
               </div>
-              <button onClick={next} style={{ width: "100%", padding: "14px", borderRadius: R.md, border: "none", background: C.primary, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }}>
-                {idx + 1 >= questions.length ? "Voir les resultats" : "Suivant"}
+              {suiviFamille && (
+                <div role="status" style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 12, lineHeight: 1.45, color: C.text2, fontFamily: FONTS.ui, background: C.surface2, borderRadius: R.md, padding: "10px 12px", marginBottom: 12 }}>
+                  <Ti name={suiviFamille.apres > suiviFamille.avant ? "sparkles" : "target-arrow"} size={15} color={suiviFamille.apres > suiviFamille.avant ? C.primary : C.text3} />
+                  <span>
+                    {suiviFamille.apres > suiviFamille.avant
+                      ? <><b style={{ color: C.primaryD }}>Niveau {suiviFamille.apres} débloqué</b> : {suiviFamille.libelle}.</>
+                      : suiviFamille.apres < suiviFamille.avant
+                      ? <>On consolide au niveau {suiviFamille.apres} ({suiviFamille.libelle}) avant de remonter.</>
+                      : suiviFamille.restant == null
+                      ? <>Niveau maximal atteint pour cette compétence. Elle reviendra de temps en temps pour rester ancrée.</>
+                      : <>Encore {suiviFamille.restant} réussite{suiviFamille.restant > 1 ? "s" : ""} avant le niveau {suiviFamille.apres + 1} : {suiviFamille.suivant}.</>}
+                  </span>
+                </div>
+              )}
+              <button onClick={() => next()} style={{ width: "100%", padding: "14px", borderRadius: R.md, border: "none", background: C.primary, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }}>
+                {prochaine(idx, sansSon) >= questions.length ? "Voir les résultats" : "Suivant"}
               </button>
             </>
           )}

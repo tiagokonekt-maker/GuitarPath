@@ -47,6 +47,7 @@ import { TESTABLE_MODULES } from "../store/placementEngine.js";
 // ailleurs dans l'app cet été (le défi du jour se déclarerait "fait" ou
 // "pas fait" à la mauvaise date passé 22h en France).
 import { todayStr } from "../store/state.js";
+import { itemsGeneres, progressionFamilles } from "../store/generateurs.js";
 
 // Noms d'affichage des modules. Une table locale plutôt qu'un import : ce
 // fichier n'a pas la certitude d'avoir accès à moduleTheme.js dans cette
@@ -75,7 +76,7 @@ const SEUIL_MODULE_FAIBLE = 90;
  */
 function useRecommandation(state, content) {
   return useMemo(() => {
-    const reviewStats = getReviewStats(content.quiz, state.reviewHistory, state.completedLessons);
+    const reviewStats = getReviewStats([...content.quiz, ...itemsGeneres(state.completedLessons)], state.reviewHistory, state.completedLessons);
     if (reviewStats.toReview > 0) {
       return {
         type: "review",
@@ -95,7 +96,7 @@ function useRecommandation(state, content) {
         type: "module", moduleId: id,
         titre: `Concentre-toi sur : ${NOM_MODULE[id] || id}`,
         texte: `${stats.pctMoyen}% de maîtrise sur ce module — ${stats.comprises} leçon${stats.comprises>1?"s":""} comprise${stats.comprises>1?"s":""}, ${stats.ancrees} ancrée${stats.ancrees>1?"s":""}. Encore de la marge.`,
-        icon: "target", cta: "Travailler ce module",
+        icon: "target-arrow", cta: "Travailler ce module",
       };
     }
 
@@ -178,6 +179,83 @@ function CarteMode({ icon, titre, role, stat, actif, onClick }) {
   );
 }
 
+// ── Tes compétences ──────────────────────────────────────────────────────
+// Chaque compétence générée (notes d'une corde, intervalles, oreille…) avec
+// son niveau sur 3. Regroupées par domaine et repliées par défaut : la liste
+// s'allonge avec le parcours, elle ne doit pas noyer l'écran.
+const ORDRE_DOMAINES = ["Manche", "Théorie", "Oreille", "Rythme"];
+const titreCourt = (t) => t.replace(/^(Oreille|Rythme) : /, "");
+
+function Jauge({ niveau, C, taille = 14 }) {
+  return (
+    <div aria-label={`niveau ${niveau} sur 3`} role="img" style={{ display: "flex", gap: 3, flexShrink: 0 }}>
+      {[1, 2, 3].map(k => <span key={k} style={{ width: taille, height: 6, borderRadius: 3, background: k <= niveau ? C.primary : C.border }} />)}
+    </div>
+  );
+}
+
+function CompetencesPratique({ state, navigate }) {
+  const C = useC();
+  const [ouvert, setOuvert] = useState(null);
+  const prog = useMemo(() => progressionFamilles(state), [state.completedLessons, state.reviewHistory]);
+
+  if (!prog.length) {
+    return (
+      <div style={{ background: C.surface, border: `1px dashed ${C.border}`, borderRadius: R.lg, padding: "14px 16px", marginBottom: 16, fontSize: 12.5, color: C.text2, lineHeight: 1.5 }}>
+        <b style={{ color: C.text }}>Tes compétences</b> apparaîtront ici au fil des leçons : notes du manche, intervalles, oreille, rythme. Chacune a 3 niveaux, et la révision s'adapte au tien.
+      </div>
+    );
+  }
+  const auMax = prog.filter(p => p.restant == null && p.commencee).length;
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: C.text3, textTransform: "uppercase", letterSpacing: ".06em" }}>Tes compétences</div>
+        <div style={{ fontSize: 11.5, color: C.text3 }}>{prog.length} débloquée{prog.length > 1 ? "s" : ""}{auMax ? ` · ${auMax} au niveau max` : ""}</div>
+      </div>
+      {ORDRE_DOMAINES.map(dom => {
+        const liste = prog.filter(p => p.domaine === dom);
+        if (!liste.length) return null;
+        const moyenne = Math.round(liste.reduce((a, p) => a + (p.commencee ? p.niveau : 0), 0) / liste.length);
+        const estOuvert = ouvert === dom;
+        return (
+          <div key={dom} style={{ background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, marginBottom: 8, overflow: "hidden" }}>
+            <button onClick={() => setOuvert(estOuvert ? null : dom)} aria-expanded={estOuvert} className="gr-focus" style={{
+              display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "12px 14px", background: "none", border: "none", cursor: "pointer", textAlign: "left",
+            }}>
+              <span aria-hidden="true" style={{ display: "inline-block", transform: estOuvert ? "rotate(90deg)" : "none", transition: "transform .15s", color: C.text3, fontWeight: 800 }}>›</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 800, color: C.text }}>{dom}</div>
+                <div style={{ fontSize: 11, color: C.text3, marginTop: 1 }}>{liste.length} compétence{liste.length > 1 ? "s" : ""}</div>
+              </div>
+              <Jauge niveau={moyenne} C={C} />
+            </button>
+            {estOuvert && (
+              <div style={{ borderTop: `1px solid ${C.border}`, padding: "4px 14px 10px" }}>
+                {liste.map(p => (
+                  <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${C.surface2}` }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12.5, fontWeight: 700, color: C.text }}>{titreCourt(p.titre)}</div>
+                      <div style={{ fontSize: 11, color: C.text3, marginTop: 1 }}>
+                        {!p.commencee ? "Nouvelle — pas encore travaillée" : p.restant == null ? `Niveau max · ${p.libelle}` : `Niveau ${p.niveau} · ${p.libelle} · encore ${p.restant} réussite${p.restant > 1 ? "s" : ""}`}
+                      </div>
+                    </div>
+                    <Jauge niveau={p.commencee ? p.niveau : 0} C={C} taille={12} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+      <button onClick={() => navigate("review")} className="gr-focus" style={{
+        width: "100%", marginTop: 2, padding: "11px", borderRadius: R.md, cursor: "pointer",
+        border: `1.5px solid ${C.primaryBorder}`, background: C.primaryL, color: C.primaryD, fontSize: 13, fontWeight: 800,
+      }}>S'entraîner sur mes compétences</button>
+    </div>
+  );
+}
+
 export function TrainingScreen({ state, dispatch, content, navigate }) {
   const C = useC();
   const [tab, setTab] = useState(null);   // null = aucun mode embarqué ouvert
@@ -185,7 +263,7 @@ export function TrainingScreen({ state, dispatch, content, navigate }) {
   const rec = useRecommandation(state, content);
 
   const reviewStats = useMemo(
-    () => getReviewStats(content.quiz, state.reviewHistory, state.completedLessons),
+    () => getReviewStats([...content.quiz, ...itemsGeneres(state.completedLessons)], state.reviewHistory, state.completedLessons),
     [content.quiz, state.reviewHistory, state.completedLessons]
   );
   const gMastery = useMemo(() => masteryStats(content, state), [content, state]);
@@ -223,6 +301,8 @@ export function TrainingScreen({ state, dispatch, content, navigate }) {
       <div style={{ padding: "16px 20px 4px" }}>
         <CarteRecommandation rec={rec} navigate={navigate} onOuvrirTheorie={() => setTab("theory")} />
 
+        <CompetencesPratique state={state} navigate={navigate} />
+
         {/* ── Les modes, chacun avec son rôle ── */}
         <div style={{ fontSize: 11, fontWeight: 700, color: C.text3, textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 8 }}>
           Tous les modes
@@ -237,7 +317,7 @@ export function TrainingScreen({ state, dispatch, content, navigate }) {
 
         {uniteEnAttente && (
           <CarteMode
-            icon="lock-open" titre="Vérification d'unité" role={`${uniteEnAttente.title} — leçons finies, à valider`}
+            icon="lock" titre="Vérification d'unité" role={`${uniteEnAttente.title} — leçons finies, à valider`}
             stat="en attente" actif={false}
             onClick={() => navigate("home")}
           />

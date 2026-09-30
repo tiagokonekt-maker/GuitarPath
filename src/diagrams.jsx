@@ -276,7 +276,16 @@ export function ScalePattern({ data, caption }) {
     noteMap = {},
     rootColor = "amber",
     noteColor = "primary",
+    // Note caractéristique (ex. la sixte majeure du dorien). Avant, les
+    // légendes promettaient « en corail » / « en rose » alors que le
+    // composant ne savait afficher que 2 couleurs : la note la plus
+    // importante d'un mode n'était jamais distinguée. strings[i].accent
+    // liste les cases concernées ; un anneau s'ajoute à la couleur, pour
+    // que la distinction ne repose pas sur la couleur seule.
+    accentColor = "coral",
+    accentLabel = "note caractéristique",
   } = data;
+  const aDesAccents = strings.some(st => (st.accent || []).length);
 
   const STRINGS = 6;
   const displayFrets = endFret - startFret + 1;
@@ -341,7 +350,7 @@ export function ScalePattern({ data, caption }) {
 
         {/* Notes */}
         {stringsArr.map((str, s) => {
-          const { frets = [], root = [] } = str;
+          const { frets = [], root = [], accent = [] } = str;
           return frets.map(f => {
             if (f < startFret || f > endFret) {
               if (typeof console !== "undefined" && console.warn) {
@@ -350,7 +359,8 @@ export function ScalePattern({ data, caption }) {
               return null;
             }
             const isRoot = root.includes(f);
-            const col = isRoot ? NOTE_COLORS[rootColor] : NOTE_COLORS[noteColor];
+            const isAccent = !isRoot && accent.includes(f);
+            const col = isRoot ? NOTE_COLORS[rootColor] : isAccent ? NOTE_COLORS[accentColor] : NOTE_COLORS[noteColor];
             const key = `${f},${s}`;
             const label = noteMap[key] || (isRoot ? "R" : "");
             const x = fx(f);
@@ -359,6 +369,7 @@ export function ScalePattern({ data, caption }) {
               <g key={`${s}-${f}`}>
                 <circle cx={x} cy={y} r={NOTE_R}
                   fill={col.fill}
+                  stroke={isAccent ? DC.text : "none"} strokeWidth={isAccent ? 1.5 : 0}
                   style={{ filter: isRoot ? `drop-shadow(0 0 4px ${col.fill}80)` : "none" }}
                 />
                 {label && (
@@ -372,6 +383,16 @@ export function ScalePattern({ data, caption }) {
           });
         })}
       </svg>
+      <div aria-hidden="true" style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 6, fontSize: 11, color: DC.text2, fontFamily: FONT }}>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+          <span style={{ width: 10, height: 10, borderRadius: 5, background: NOTE_COLORS[rootColor]?.fill }} /> fondamentale
+        </span>
+        {aDesAccents && (
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+            <span style={{ width: 10, height: 10, borderRadius: 5, background: NOTE_COLORS[accentColor]?.fill, boxShadow: `0 0 0 1.5px ${DC.text}` }} /> {accentLabel}
+          </span>
+        )}
+      </div>
     </DiagramCard>
   );
 }

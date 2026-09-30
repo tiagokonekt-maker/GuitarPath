@@ -445,6 +445,69 @@ export async function playScale(notes, bpm = 80, onStep) {
   } catch (e) { warn("playScale:", e); }
 }
 
+// ─────────────────────────────────────────────────────────────────────────
+// ÉCOUTE — questions d'oreille et de rythme générées (store/generateurs.js)
+// ─────────────────────────────────────────────────────────────────────────
+
+/**
+ * Joue une mesure rythmique, précédée d'un décompte de 4 clics.
+ * @param spec.bpm        tempo
+ * @param spec.pas        cases par temps (2 = croches, 4 = doubles-croches)
+ * @param spec.attaques   index des cases qui sonnent, sur une mesure de 4 temps
+ * @param spec.swing      true = croches ternaires (longue-courte, rapport 2/3-1/3)
+ * Tout passe par des minuteurs annulables : stopAll() coupe net, même au
+ * milieu du décompte. Les temps restent marqués par un clic léger pendant
+ * la mesure, pour que l'élève sache toujours où est le « 1 ».
+ * @returns la durée totale en millisecondes
+ */
+export async function playRythme(spec) {
+  if (!await ensureLoaded()) return 0;
+  stopAll();
+  reveillerSortie();
+  const { bpm = 70, pas = 2, attaques = [], swing = false, note = "A3", clic = "E5" } = spec || {};
+  const spb = 60 / bpm, t0 = 4 * spb;   // la mesure commence après le décompte
+  const quand = (i) => {
+    const temps = Math.floor(i / pas), sous = i % pas;
+    const frac = swing && pas === 2 ? (sous === 0 ? 0 : 2 / 3) : sous / pas;
+    return (t0 + (temps + frac) * spb) * 1000;
+  };
+  try {
+    for (let b = 0; b < 8; b++) {        // 4 clics de décompte + 4 temps marqués
+      differer(() => { try { sampler.triggerAttackRelease(clic, 0.05, Tone.now(), b === 0 || b === 4 ? 0.5 : 0.3); } catch { /* noop */ } }, b * spb * 1000);
+    }
+    const duree = Math.max(0.08, (spb / pas) * (swing ? 0.6 : 0.8));
+    for (const i of attaques) {
+      differer(() => { try { sampler.triggerAttackRelease(note, duree, Tone.now(), 0.85); } catch { /* noop */ } }, quand(i));
+    }
+  } catch (e) { warn("playRythme:", e); }
+  return 8 * spb * 1000;
+}
+
+/**
+ * Suite d'accords donnés NOTE PAR NOTE (pas par nom) : la question d'oreille
+ * maîtrise exactement ce qui sonne, et les tests peuvent le vérifier.
+ * Même grattage que le reste de l'app, minuteurs annulables.
+ */
+export async function playSuite(accords, secondesParAccord = 1.6) {
+  if (!await ensureLoaded()) return;
+  stopAll();
+  reveillerSortie();
+  try {
+    accords.forEach((notes, i) => {
+      differer(() => { try { strumInto(notes, secondesParAccord * 0.9, Tone.now(), i % 2 ? "up" : "down"); } catch { /* noop */ } }, i * secondesParAccord * 1000);
+    });
+  } catch (e) { warn("playSuite:", e); }
+}
+
+/** Point d'entrée unique pour les questions d'écoute générées. */
+export async function jouerEcoute(spec) {
+  if (!spec) return;
+  if (spec.type === "suite") return playSuite(spec.accords);
+  if (spec.type === "intervalle") return playInterval(spec.notes[0], spec.notes[1], spec.mode || "ascending");
+  if (spec.type === "accord") return spec.arpege ? playScale(spec.notes, 150) : playChord(spec.notes, "2n");
+  if (spec.type === "rythme") return playRythme(spec);
+}
+
 export const ECART_INTERVALLE_MS = 650;
 
 export async function playInterval(note1, note2, mode = "ascending") {
