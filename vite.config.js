@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+﻿import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
@@ -7,15 +7,10 @@ export default defineConfig({
     chunkSizeWarningLimit: 700,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom'],
-          'content': ['./src/content.js'],
-          'supabase': [
-            './src/supabase/useAuth.js',
-            './src/supabase/useProgress.js',
-            './src/supabase/AuthScreen.jsx',
-            './src/supabaseClient.js',
-          ],
+        manualChunks(id) {
+          if (/[\\/]node_modules[\\/](react|react-dom)[\\/]/.test(id)) return 'vendor-react'
+          if (/[\\/]src[\\/]content\.js$/.test(id)) return 'content'
+          if (/[\\/]src[\\/]supabase[\\/]/.test(id) || /[\\/]src[\\/]supabaseClient\.js$/.test(id)) return 'supabase'
         },
       },
     },
