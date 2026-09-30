@@ -456,7 +456,7 @@ function AppInner({ onThemeChange }) {
       case "exercises":
       case "quiz":      return <TrainingScreen {...props} />;
       case "progress":  return <ProgressScreen state={state} content={content} onOpenSettings={ouvrirReglages} />;
-      case "ear":       return <EarTraining onBack={() => navigate("toolbox")} dispatch={dispatch} />;
+      case "ear":       return <EarTraining onBack={() => navigate("toolbox")} dispatch={dispatch} state={state} />;
       case "explorer":  return <FretboardExplorer onBack={() => navigate("home")} />;
       case "jam":       return <JamSession onBack={() => navigate("toolbox")} dispatch={dispatch} state={state} />;
       // Toolbox est un onglet à part entière désormais : on n'a plus besoin

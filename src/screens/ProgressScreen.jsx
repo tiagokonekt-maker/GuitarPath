@@ -58,7 +58,7 @@ function ProgressScreen({ state, content, onOpenSettings }) {
       <div style={{ position:"absolute", inset:0, background:"rgba(120,50,10,.48)", pointerEvents:"none" }} />
       <div style={{ position:"relative", zIndex:1 }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
-          <div style={{ fontSize:26, fontWeight:800, color:"#fff", letterSpacing:"-.4px" }}>Progression</div>
+          <h1 style={{ margin:0, fontSize:26, fontWeight:800, color:"#fff", letterSpacing:"-.4px" }}>Progression</h1>
           <button onClick={onOpenSettings} style={{
             background:"rgba(255,255,255,.18)", border:"1.5px solid rgba(255,255,255,.3)",
             borderRadius:R.sm, padding:"7px 12px",
@@ -107,7 +107,9 @@ function ProgressScreen({ state, content, onOpenSettings }) {
           <span style={{ fontSize:13, fontWeight:700, color:"#fff" }}>{state.xp} XP total</span>
           <span style={{ fontSize:12, fontWeight:600, color:"rgba(255,255,255,.8)" }}>Niv. {state.level+1} → {totalForNext} XP</span>
         </div>
-        <div style={{ height:8, background:"rgba(255,255,255,.25)", borderRadius:99, overflow:"hidden" }}>
+        <div role="progressbar" aria-valuenow={lvlPct} aria-valuemin={0} aria-valuemax={100}
+          aria-label={`Progression vers le niveau ${state.level + 1} : ${xpToNext} XP restants`}
+          style={{ height:8, background:"rgba(255,255,255,.25)", borderRadius:99, overflow:"hidden" }}>
           <div style={{ width:`${lvlPct}%`, height:"100%", background:`linear-gradient(90deg,#FF9155,${C.primary})`, borderRadius:99, transition:"width .4s ease" }} />
         </div>
         <div style={{ fontSize:11, color:"rgba(255,255,255,.65)", marginTop:4 }}>
@@ -158,7 +160,7 @@ function ProgressScreen({ state, content, onOpenSettings }) {
             n'est plus « faite ou pas faite » : elle est vue, comprise, puis
             ancrée — ce dernier palier ne s'obtenant qu'en revenant dessus
             plusieurs fois sur plusieurs semaines. */}
-        <div style={{ fontSize:16, fontWeight:800, color:C.text, marginBottom:12, letterSpacing:"-.2px" }}>Maîtrise</div>
+        <h2 style={{ margin:"0 0 12px", fontSize:16, fontWeight:800, color:C.text, letterSpacing:"-.2px" }}>Maîtrise</h2>
         <div style={{
           background:C.surface, border:`1.5px solid ${C.border}`,
           borderRadius:R.lg, padding:"14px 16px", marginBottom:20,
@@ -223,7 +225,7 @@ function ProgressScreen({ state, content, onOpenSettings }) {
         </div>
 
         {/* ── COMPÉTENCES PAR MODULE ───────────────────────────────────────── */}
-        <div style={{ fontSize:16, fontWeight:800, color:C.text, marginBottom:12, letterSpacing:"-.2px" }}>Compétences</div>
+        <h2 style={{ margin:"0 0 12px", fontSize:16, fontWeight:800, color:C.text, letterSpacing:"-.2px" }}>Compétences</h2>
         {skills.map(sk => {
           const th = MODULE_THEME[sk.id] || {};
           return (
@@ -249,7 +251,7 @@ function ProgressScreen({ state, content, onOpenSettings }) {
 
         {/* ── BADGES ───────────────────────────────────────────────────────── */}
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", margin:"20px 0 10px" }}>
-          <div style={{ fontSize:16, fontWeight:800, color:C.text, letterSpacing:"-.2px" }}>Badges</div>
+          <h2 style={{ margin:0, fontSize:16, fontWeight:800, color:C.text, letterSpacing:"-.2px" }}>Badges</h2>
           <div style={{ fontSize:12, fontWeight:600, color:C.text3 }}>
             {state.unlockedBadges.length} / {BADGES.length}
           </div>
@@ -257,16 +259,18 @@ function ProgressScreen({ state, content, onOpenSettings }) {
 
         {Object.entries(badgesByCategory).map(([cat, badges]) => (
           <div key={cat}>
-            <div style={{ fontSize:11, fontWeight:700, textTransform:"uppercase", letterSpacing:".07em", color:C.text3, margin:"8px 0 8px" }}>
+            <h3 style={{ margin:"8px 0 8px", fontSize:11, fontWeight:700, textTransform:"uppercase", letterSpacing:".07em", color:C.text3 }}>
               {cat}
-            </div>
+            </h3>
             <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:8, marginBottom:8 }}>
               {badges.map(b => {
                 const ok     = state.unlockedBadges.includes(b.id);
                 const tint   = BADGE_TINTS[b.tint];
                 const rarity = BADGE_RARITIES[b.rarity];
                 return (
-                  <div key={b.id} style={{
+                  <div key={b.id} role="group"
+                    aria-label={`${b.label}, rareté ${rarity.label}, ${ok ? "débloqué" : "verrouillé"}`}
+                    style={{
                     borderRadius:R.md, padding:"10px 6px", textAlign:"center",
                     border:`1.5px solid ${tint.border}`, background:tint.bg,
                     position:"relative",

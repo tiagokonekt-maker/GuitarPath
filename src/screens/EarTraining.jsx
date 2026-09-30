@@ -1,17 +1,18 @@
-// GuitarPath -- screens/EarTraining.jsx
-// Quiz d'oreille : intervalles et qualite d'accords
+// Groply -- screens/EarTraining.jsx
+// Quiz d'oreille : intervalles et qualité d'accords
 import { useState, useEffect, useRef } from "react";
 import { FONTS, R } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { Gropi } from "../design/Gropi.jsx";
 import { loadAudio, isAudioLoaded, generateEarTrainingQuestion, playInterval, playChord, stopProgression, stopAll, unlockAudio } from "../audioEngine.js";
+import { updateReviewHistory } from "../store/reviewEngine.js";
 
 const MODES = [
-  { key: "interval",      label: "Intervalles",      icon: "arrows-up-down",  desc: "Identifie l'ecart entre deux notes" },
-  { key: "chord_quality", label: "Qualite d'accord", icon: "music",           desc: "Majeur, mineur, dominant..." },
+  { key: "interval",      label: "Intervalles",      icon: "arrows-up-down",  desc: "Identifie l'écart entre deux notes" },
+  { key: "chord_quality", label: "Qualité d'accord", icon: "music",           desc: "Majeur, mineur, dominant..." },
   { key: "chord_full",    label: "Accord complet",   icon: "music-plus",      desc: "Nomme l'accord : La mineur, Do7..." },
-  { key: "progression",   label: "Suites d'accords", icon: "list-numbers",    desc: "Nomme la suite entiere" },
+  { key: "progression",   label: "Suites d'accords", icon: "list-numbers",    desc: "Nomme la suite entière" },
 ];
 
 // Assombrit une couleur hex d'une quantité fixe, quel que soit le thème.
@@ -32,7 +33,7 @@ function shade(hex, amount) {
   return "#" + ((r << 16) | (g << 8) | b).toString(16).padStart(6, "0");
 }
 
-export function EarTraining({ onBack, dispatch }) {
+export function EarTraining({ onBack, dispatch, state }) {
   const C = useC();
   const [audioReady, setAudioReady]   = useState(isAudioLoaded());
   const [audioError, setAudioError]   = useState(false);
@@ -136,7 +137,16 @@ export function EarTraining({ onBack, dispatch }) {
     const newScore = { correct: score.correct + (correct ? 1 : 0), total: score.total + 1 };
     setScore(newScore);
     setAnswers(prev => [...prev, { question: question.options.find(o => (mode === "interval" ? o.semitones : o.key) === question.answer)?.label, correct }]);
-    dispatch?.({ type: "REVIEW_ANSWER", questionId: `ear-${Date.now()}`, correct, history: {}, xp: correct ? 25 : 0 });
+    // CORRECTIF : `history: {}` écrasait TOUT l'historique de révision espacée
+    // à chaque réponse — celui des quiz écrits ET celui des compétences
+    // générées (store/generateurs.js). Une question d'oreille est aléatoire,
+    // jamais deux fois la même : c'est le MODE (Intervalles, Qualité
+    // d'accord...) qui sert d'identifiant suivi dans le temps, comme une
+    // compétence — avec le même bénéfice en plus : Ear Training entre dans
+    // la révision espacée au lieu d'en rester exclu.
+    const itemId = `ear-${mode}`;
+    const newHistory = updateReviewHistory(state?.reviewHistory, itemId, correct);
+    dispatch?.({ type: "REVIEW_ANSWER", questionId: itemId, id: itemId, history: newHistory, correct, xp: correct ? 25 : 0 });
     if (newScore.total >= SESSION_LENGTH) {
       setTimeout(() => setSessionDone(true), 1200);
     }
@@ -165,9 +175,9 @@ export function EarTraining({ onBack, dispatch }) {
           <div style={{ marginBottom: 10 }}>
             <Ti name={pct >= 75 ? "headphones" : pct >= 50 ? "ear" : "book-2"} size={44} color={pct >= 75 ? C.green : pct >= 50 ? C.amber : C.text3} />
           </div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: C.text, fontFamily: FONTS.title }}>
-            {pct >= 75 ? "Belle oreille !" : pct >= 50 ? "Bon travail !" : "Continue l'entrainement !"}
-          </div>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: C.text, fontFamily: FONTS.title }}>
+            {pct >= 75 ? "Belle oreille !" : pct >= 50 ? "Bon travail !" : "Continue l'entraînement !"}
+          </h1>
         </div>
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: "16px" }}>
           <div style={{ display: "flex", justifyContent: "space-around" }}>
@@ -178,7 +188,7 @@ export function EarTraining({ onBack, dispatch }) {
             <div style={{ width: 1, background: C.border }} />
             <div style={{ textAlign: "center" }}>
               <div style={{ fontSize: 28, fontWeight: 700, color: C.coral }}>{score.total - score.correct}</div>
-              <div style={{ fontSize: 11, color: C.text3, fontFamily: FONTS.ui }}>Ratees</div>
+              <div style={{ fontSize: 11, color: C.text3, fontFamily: FONTS.ui }}>Ratées</div>
             </div>
             <div style={{ width: 1, background: C.border }} />
             <div style={{ textAlign: "center" }}>
@@ -191,10 +201,10 @@ export function EarTraining({ onBack, dispatch }) {
           </div>
         </div>
         <div style={{ display: "flex", gap: 10 }}>
-          <button onClick={() => { setScore({ correct:0, total:0 }); setAnswers([]); setSessionDone(false); nextQuestion(); }} style={{ flex: 1, padding: "13px", borderRadius: R.md, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: FONTS.ui }}>
+          <button onClick={() => { setScore({ correct:0, total:0 }); setAnswers([]); setSessionDone(false); nextQuestion(); }} className="gr-focus" style={{ flex: 1, minHeight: 48, padding: "13px", borderRadius: R.md, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: FONTS.ui }}>
             Recommencer
           </button>
-          <button onClick={onBack} style={{ flex: 1, padding: "13px", borderRadius: R.md, border: "none", background: C.primary, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }}>
+          <button onClick={onBack} className="gr-focus" style={{ flex: 1, minHeight: 48, padding: "13px", borderRadius: R.md, border: "none", background: C.primary, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }}>
             Retour
           </button>
         </div>
@@ -207,12 +217,12 @@ export function EarTraining({ onBack, dispatch }) {
 
       {/* Header */}
       <div style={{ padding: "14px 16px 12px", display: "flex", alignItems: "center", gap: 10, borderBottom: `1px solid ${C.border}`, background: C.surface, position: "sticky", top: 0, zIndex: 10 }}>
-        <button onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", color: C.text2, padding: 0 }}>
+        <button onClick={onBack} aria-label="Retour" className="gr-focus" style={{ width: 40, height: 40, margin: "-8px 0 -8px -8px", background: "none", border: "none", borderRadius: R.sm, cursor: "pointer", color: C.text2, padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <Ti name="chevron-left" size={22} />
         </button>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: C.text, fontFamily: FONTS.title }}>Ear Training</div>
-          <div style={{ fontSize: 11, color: C.text3, fontFamily: FONTS.ui }}>{score.total}/{SESSION_LENGTH} · {score.correct} correctes</div>
+          <h1 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: C.text, fontFamily: FONTS.title }}>Ear Training</h1>
+          <div role="status" aria-live="polite" style={{ fontSize: 11, color: C.text3, fontFamily: FONTS.ui }}>{score.total}/{SESSION_LENGTH} · {score.correct} correctes</div>
         </div>
         <Gropi pose="listen" size={46} anim="bob" />
         <div style={{ fontSize: 13, fontWeight: 600, color: C.primary, fontFamily: FONTS.ui }}>
@@ -222,8 +232,9 @@ export function EarTraining({ onBack, dispatch }) {
 
       <div style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: 12 }}>
 
-        {/* Barre de progression */}
-        <div style={{ display: "flex", gap: 3 }}>
+        {/* Barre de progression — décorative : le score ci-dessus, déjà
+            annoncé (aria-live), dit la même chose en mots. */}
+        <div aria-hidden="true" style={{ display: "flex", gap: 3 }}>
           {Array.from({ length: SESSION_LENGTH }).map((_, i) => {
             const ans = answers[i];
             return (
@@ -235,7 +246,7 @@ export function EarTraining({ onBack, dispatch }) {
         {/* Toggle mode */}
         <div style={{ display: "flex", background: C.surface2, borderRadius: R.lg, padding: 3, gap: 2 }}>
           {MODES.map(m => (
-            <button key={m.key} onClick={() => changeMode(m.key)} style={{ flex: 1, padding: "8px 10px", borderRadius: R.md, border: "none", cursor: "pointer", fontFamily: FONTS.ui, background: mode === m.key ? C.surface : "transparent", boxShadow: mode === m.key ? "0 1px 4px rgba(0,0,0,0.08)" : "none", color: mode === m.key ? C.text : C.text3, fontSize: 12, fontWeight: mode === m.key ? 600 : 400 }}>
+            <button key={m.key} onClick={() => changeMode(m.key)} aria-pressed={mode === m.key} className="gr-focus" style={{ flex: 1, minHeight: 40, padding: "8px 10px", borderRadius: R.md, border: "none", cursor: "pointer", fontFamily: FONTS.ui, background: mode === m.key ? C.surface : "transparent", boxShadow: mode === m.key ? "0 1px 4px rgba(0,0,0,0.08)" : "none", color: mode === m.key ? C.text : C.text3, fontSize: 12, fontWeight: mode === m.key ? 600 : 400 }}>
               {m.label}
             </button>
           ))}
@@ -243,14 +254,14 @@ export function EarTraining({ onBack, dispatch }) {
 
         {/* Etat chargement audio */}
         {audioError && (
-          <div style={{ background: C.coralL, border: `1px solid ${C.coralBorder}`, borderRadius: R.md, padding: "12px 14px", fontSize: 12, color: C.coralD, fontFamily: FONTS.ui }}>
-            Les samples audio n'ont pas ete trouves. Verifie que les fichiers .mp3 sont dans public/audio/guitar/
+          <div role="alert" style={{ background: C.coralL, border: `1px solid ${C.coralBorder}`, borderRadius: R.md, padding: "12px 14px", fontSize: 12, color: C.coralD, fontFamily: FONTS.ui }}>
+            Les échantillons audio n'ont pas été trouvés. Vérifie que les fichiers .mp3 sont dans public/audio/guitar/
           </div>
         )}
 
         {!audioReady && !audioError && (
-          <div style={{ background: C.amberL, border: `1px solid ${C.amberBorder}`, borderRadius: R.md, padding: "12px 14px", fontSize: 12, color: C.amberD, fontFamily: FONTS.ui }}>
-            Chargement des samples audio...
+          <div role="status" aria-live="polite" style={{ background: C.amberL, border: `1px solid ${C.amberBorder}`, borderRadius: R.md, padding: "12px 14px", fontSize: 12, color: C.amberD, fontFamily: FONTS.ui }}>
+            Chargement des échantillons audio…
           </div>
         )}
 
@@ -260,7 +271,8 @@ export function EarTraining({ onBack, dispatch }) {
             <div style={{ textAlign: "center", padding: "16px 0 8px" }}>
               {/* Un seul bouton, qui bascule lecture / arret — plutot qu'un
                   bouton desactive pendant toute la duree du son. */}
-              <button onClick={isPlaying ? stopPlayback : playQuestion} style={{
+              <button onClick={isPlaying ? stopPlayback : playQuestion}
+                aria-label={isPlaying ? "Arrêter l'écoute" : "Écouter"} className="gr-focus" style={{
                 width: 80, height: 80, borderRadius: "50%",
                 border: "none",
                 background: `linear-gradient(135deg, ${C.primary}, ${shade(C.primary, -45)})`,
@@ -283,8 +295,8 @@ export function EarTraining({ onBack, dispatch }) {
                   absolue ; ce bouton donne un point d'ancrage a qui en a
                   besoin, sans l'imposer a tout le monde. */}
               {question.playReference && selected === null && (
-                <button onClick={playRef} style={{
-                  marginTop: 12, padding: "7px 14px", borderRadius: 999,
+                <button onClick={playRef} className="gr-focus" style={{
+                  marginTop: 12, minHeight: 40, padding: "7px 14px", borderRadius: 999,
                   border: `1.5px solid ${C.border}`, background: C.surface,
                   color: C.text2, fontSize: 11.5, fontWeight: 700,
                   fontFamily: FONTS.ui, cursor: "pointer",
@@ -312,8 +324,11 @@ export function EarTraining({ onBack, dispatch }) {
                   if (isAnswer)        { bg = C.greenL;  border = `1px solid ${C.green}`;  col = C.greenD; }
                   else if (isSelected) { bg = C.coralL;  border = `1px solid ${C.coral}`;  col = C.coralD; }
                 }
+                const suffixe = selected === null ? "" : isAnswer ? ", bonne réponse" : isSelected ? ", ta réponse, incorrecte" : "";
                 return (
-                  <button key={i} onClick={() => handleAnswer(opt)} disabled={selected !== null} style={{ padding: "14px 16px", borderRadius: 12, border, background: bg, cursor: selected !== null ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", fontFamily: FONTS.title }}>
+                  <button key={i} onClick={() => handleAnswer(opt)} disabled={selected !== null}
+                    aria-label={suffixe ? `${opt.label}${suffixe}` : undefined} className="gr-focus"
+                    style={{ padding: "14px 16px", minHeight: 48, borderRadius: 12, border, background: bg, cursor: selected !== null ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", fontFamily: FONTS.title }}>
                     <span style={{ fontSize: 14, fontWeight: 500, color: col }}>{opt.label}</span>
                     {selected !== null && isAnswer && <Ti name="check" size={18} color={C.green} />}
                     {selected !== null && isSelected && !isAnswer && <Ti name="x" size={18} color={C.coral} />}
@@ -325,10 +340,10 @@ export function EarTraining({ onBack, dispatch }) {
             {/* Feedback + bouton suivant */}
             {selected !== null && (
               <div style={{ marginTop: 4 }}>
-                <div style={{ background: selected === question.answer ? C.greenL : C.coralL, border: `1px solid ${selected === question.answer ? C.greenBorder : C.coralBorder}`, borderRadius: R.md, padding: "10px 14px", marginBottom: 10, fontSize: 12, color: selected === question.answer ? C.greenD : C.coralD, fontFamily: FONTS.ui, lineHeight: 1.5 }}>
+                <div role="status" aria-live="assertive" style={{ background: selected === question.answer ? C.greenL : C.coralL, border: `1px solid ${selected === question.answer ? C.greenBorder : C.coralBorder}`, borderRadius: R.md, padding: "10px 14px", marginBottom: 10, fontSize: 12, color: selected === question.answer ? C.greenD : C.coralD, fontFamily: FONTS.ui, lineHeight: 1.5 }}>
                   {selected === question.answer
                     ? "Correct ! +25 XP"
-                    : `La bonne reponse etait : ${question.options.find(o => (mode === "interval" ? o.semitones : o.key) === question.answer)?.label}`
+                    : `La bonne réponse était : ${question.options.find(o => (mode === "interval" ? o.semitones : o.key) === question.answer)?.label}`
                   }
                 </div>
                 {score.total < SESSION_LENGTH && (
