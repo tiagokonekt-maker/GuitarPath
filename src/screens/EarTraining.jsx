@@ -282,7 +282,7 @@ export function EarTraining({ onBack, dispatch, state }) {
                 boxShadow: "0 4px 20px rgba(232,93,26,0.4)",
                 transition: "all 0.2s",
               }}>
-                <Ti name={isPlaying ? "player-stop" : "player-play"} size={28} color="#fff" />
+                <Ti name={isPlaying ? "player-pause" : "player-play"} size={28} color="#fff" />
               </button>
               <div style={{ fontSize: 12, color: C.text3, fontFamily: FONTS.ui, marginTop: 10 }}>
                 {mode === "interval" ? "Ecoute l'intervalle"
@@ -302,7 +302,7 @@ export function EarTraining({ onBack, dispatch, state }) {
                   fontFamily: FONTS.ui, cursor: "pointer",
                   display: "inline-flex", alignItems: "center", gap: 6,
                 }}>
-                  <Ti name="tuning-fork" size={13} color={C.text3} />
+                  <Ti name="volume" size={13} color={C.text3} />
                   Entendre le {question.referenceLabel} de référence
                 </button>
               )}

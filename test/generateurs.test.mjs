@@ -135,6 +135,25 @@ function verifier(fid, niv, q) {
     return attendu === bonne && qualOk ? null : `décalage ${dec} (${qual}) ≠ ${bonne}`;
   }
   if (fid === "rythme-binaire-ternaire") return (bonne.startsWith("Ternaire")) === !!q.audio.swing ? null : `swing=${q.audio.swing} ≠ ${bonne}`;
+  if (fid === "rythme-lecture-mesure") {
+    const positions = [...q.grilleQuestion.attaques].sort((a, b) => a - b);
+    // Part de 0 : un silence placé AVANT la première note doit compter, lui
+    // aussi — l'ignorer est ce qui a fait planter cette vérification au
+    // premier essai, sur un cas où la mesure commence par un silence.
+    let dureeTotale = 0, prev = 0;
+    for (const p of positions) { dureeTotale += (p - prev) / 4; prev = p; }
+    dureeTotale += (16 - prev) / 4;
+    if (Math.abs(dureeTotale - 4) > 1e-6) return `la mesure ne fait pas 4 temps (${dureeTotale})`;
+    return +bonne === positions.length ? null : `${positions.length} attaque(s) dans la grille ≠ ${bonne}`;
+  }
+  if (fid === "rythme-sens-du-geste") {
+    const m = /position « ([^»]+) »/.exec(q.q); const txt = m[1];
+    const temps = /^(\d)$/.exec(txt); let pas;
+    if (temps) pas = (+temps[1] - 1) * 4;
+    else { const m2 = /^(e|et|a) du (\d)$/.exec(txt); const sub = { e: 1, et: 2, a: 3 }[m2[1]]; pas = (+m2[2] - 1) * 4 + sub; }
+    const attendu = pas % 2 === 0 ? "Vers le bas" : "Vers le haut";
+    return bonne === attendu ? null : `position ${txt} (pas ${pas}) ≠ ${bonne}`;
+  }
   return `famille non couverte par l'oracle : ${fid}`;
 }
 
@@ -249,4 +268,58 @@ test("itemsGeneres : une entrée par compétence débloquée, comptée par le mo
   const stats = getReviewStats(items, {}, lecons);
   assert.equal(stats.total ?? items.length, 3);
   assert.deepEqual([...new Set(FAMILLES.map(domaineDe))].sort(), ["Manche", "Oreille", "Rythme", "Théorie"]);
+});
+
+test("après une erreur au niveau max : le niveau affiché ET le message restent cohérents", () => {
+  const h = { attempts: 12, successes: 9, streak: 0 };
+  assert.equal(niveauFamille(h), 2, "on consolide au niveau 2");
+  assert.equal(avantNiveauSuivant(h), 1, "une seule réussite pour remonter, pas « niveau max »");
+  assert.equal(avantNiveauSuivant({ attempts: 13, successes: 10, streak: 1 }), null, "après la réussite suivante : de nouveau au max");
+  assert.equal(avantNiveauSuivant({ attempts: 5, successes: 4, streak: 0 }), 1, "même règle au niveau 2 redescendu au 1");
+  assert.equal(avantNiveauSuivant({ attempts: 2, successes: 1, streak: 0 }), 2, "au niveau 1, rien à consolider : il manque 2 réussites");
+});
+
+test("lire une mesure : rien avant rhy-c2-01, puis croches et silences débloqués par leur propre leçon", () => {
+  const f = FAMILLES.find(x => x.id === "rythme-lecture-mesure"), r = rng(41);
+  assert.deepEqual(famillesDisponibles({}).filter(x => x.id === f.id), []);
+  for (let i = 0; i < 60; i++) {
+    const q = genererQuestion(f, 1, r, { completedLessons: { "rhy-c2-01": "x" } });
+    assert.ok(!/croche|silence/i.test(q.exp), `niveau 1 sans les leçons suivantes ne devrait montrer ni croche ni silence : ${q.exp}`);
+  }
+  let vuCroche = false, vuSilence = false;
+  for (let i = 0; i < 80; i++) {
+    const q = genererQuestion(f, 3, r, { completedLessons: { "rhy-c2-01": "x", "rhy-c2-02": "x", "rhy-c2-04": "x" } });
+    // L'oracle général ne passe jamais de contexte : il ne voit donc jamais
+    // ces questions avec silences. Il faut les vérifier ICI, précisément.
+    assert.equal(verifier(f.id, 3, q), null, q.q + " → " + q.o[q.a]);
+    if (/croche/i.test(q.exp)) vuCroche = true; if (/soupir/i.test(q.exp)) vuSilence = true;
+  }
+  assert.ok(vuCroche && vuSilence, "une fois les 3 leçons faites, croches et silences doivent apparaître");
+});
+
+test("lire une mesure : niveau 3 demandé mais leçon des silences non faite → pas de silence quand même", () => {
+  const f = FAMILLES.find(x => x.id === "rythme-lecture-mesure"), r = rng(17);
+  for (let i = 0; i < 80; i++) {
+    const q = genererQuestion(f, 3, r, { completedLessons: { "rhy-c2-01": "x", "rhy-c2-02": "x" } });
+    assert.ok(!/soupir/i.test(q.exp), "la leçon rhy-c2-04 n'est pas faite : aucun silence ne doit apparaître");
+  }
+});
+
+test("le sens du geste : paire → vers le bas, impaire → vers le haut, sur toutes les positions", () => {
+  const f = FAMILLES.find(x => x.id === "rythme-sens-du-geste"), r = rng(23);
+  const vues = new Set();
+  for (let i = 0; i < 300; i++) {
+    const q = genererQuestion(f, 3, r, { completedLessons: { "rhy-c4-01": "x", "rhy-c2-02": "x" } });
+    assert.equal(verifier(f.id, 3, q), null);
+    vues.add(q.q.match(/« ([^»]+) »/)[1]);
+  }
+  assert.ok(vues.size >= 10, `assez de positions différentes vues : ${vues.size}`);
+});
+
+test("le sens du geste : sans la leçon des doubles-croches, reste sur temps et « et » seulement", () => {
+  const f = FAMILLES.find(x => x.id === "rythme-sens-du-geste"), r = rng(9);
+  for (let i = 0; i < 60; i++) {
+    const q = genererQuestion(f, 3, r, { completedLessons: { "rhy-c4-01": "x" } });
+    assert.ok(/^\d$|^et du \d$/.test(q.q.match(/« ([^»]+) »/)[1]), `position inattendue sans la leçon des doubles : ${q.q}`);
+  }
 });

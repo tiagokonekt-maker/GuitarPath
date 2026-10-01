@@ -226,6 +226,20 @@ const fmtDuree = (sec) => `${Math.floor(sec / 60)}:${String(Math.max(0, sec) % 6
 const BPM_MIN = 40;
 const BPM_MAX = 200;
 
+// ── Mixage ───────────────────────────────────────────────────────────────
+// Avant : tous les instruments au centre, sans égalisation ni limiteur. Le
+// piano et la basse se disputaient les graves, et les pics pouvaient saturer
+// sur un haut-parleur de téléphone. Gestes classiques, volontairement
+// mesurés, et regroupés ici pour être ajustés à l'oreille.
+export const MIXAGE = {
+  pianoPasseHaut: 160,   // Hz — sous ce seuil, le piano laisse la place à la basse
+  pianoPan: 0.18,        // −1 gauche … +1 droite — légèrement à droite
+  charlestonPan: -0.22,  // légèrement à gauche (basse et grosse caisse restent au centre)
+  bassePasseHaut: 45,    // Hz — infra-basses : inaudibles au téléphone, elles font pomper le compresseur
+  batterieReverb: 0.14,  // part de la batterie envoyée dans la réverbération : même « pièce » que le piano
+  limiteurDb: -1,        // plafond final : aucun pic ne dépasse −1 dB
+};
+
 const makeLevelColor = (C) => ({ "Facile": C.green, "Moyen": C.amber, "Difficile": C.coral });
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -275,6 +289,14 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
   const reverbRef   = useRef(null);
   const delayRef    = useRef(null);
   const compRef     = useRef(null);
+  const mixRef      = useRef([]);   // éléments de mixage à libérer à l'arrêt
+  // Annulation du lancement. Le lancement attend 6 chargements (démarrage
+  // audio, réverbération, piano, basse, batterie…) : quitter l'écran ou
+  // changer de style PENDANT ce temps lançait quand même la musique, sans
+  // plus personne pour l'arrêter. Chaque lancement a un numéro ; l'arrêt le
+  // change ; un lancement périmé libère ce qu'il a créé et ne joue rien.
+  const generationRef = useRef(0);
+  const demarrageRef  = useRef(null);
 
   // La tonalité et le tempo sont RELUS à chaque mesure (refs) au lieu d'être
   // figés au démarrage : changer de tonalité ou de tempo en jouant s'entend
@@ -466,19 +488,37 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
   }
 
   // ── Démarrage du backing ────────────────────────────────────────────────
-  async function startBacking() {
+  // Un nouveau lancement attend que le précédent se soit retiré avant de
+  // toucher aux instruments : deux lancements ne se disputent jamais les mêmes.
+  function startBacking() {
+    const moi = ++generationRef.current;
+    const precedent = demarrageRef.current;
+    const lancement = (async () => {
+      if (precedent) { try { await precedent; } catch { /* noop */ } }
+      if (moi !== generationRef.current) return;
+      await demarrerBacking(moi);
+    })();
+    demarrageRef.current = lancement;
+    return lancement;
+  }
+
+  async function demarrerBacking(moi) {
+    const perime = () => moi !== generationRef.current;
     setLoading(true);
     setPlayError(null);
     try {
       await Tone.start();
       await Tone.getContext().resume();
+      if (perime()) { libererAudio(); return; }
       Tone.getTransport().bpm.value = bpm;
       Tone.getTransport().cancel();
 
       // ── Chaîne master ─────────────────────────────────────────────────
+      const limiteur = new Tone.Limiter(MIXAGE.limiteurDb).toDestination();
+      mixRef.current.push(limiteur);
       compRef.current = new Tone.Compressor({
         threshold: -18, ratio: 4, attack: 0.003, release: 0.25,
-      }).toDestination();
+      }).connect(limiteur);
 
       reverbRef.current = new Tone.Reverb({
         decay: context.id === "jazz_251" ? 2.5 : 1.8,
@@ -486,6 +526,7 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
         preDelay: 0.02,
       });
       await reverbRef.current.generate();
+      if (perime()) { libererAudio(); return; }
       reverbRef.current.connect(compRef.current);
 
       // Delay subtil pour le jazz
@@ -560,7 +601,12 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
           volume: context.id === "jazz_251" ? -8 : -10,
         });
       }
-      samplerRef.current.connect(masterOut);
+      const pianoPasseHaut = new Tone.Filter({ type: "highpass", frequency: MIXAGE.pianoPasseHaut, rolloff: -12 });
+      const pianoPan = new Tone.Panner(MIXAGE.pianoPan);
+      mixRef.current.push(pianoPasseHaut, pianoPan);
+      samplerRef.current.chain(pianoPasseHaut, pianoPan, masterOut);
+
+      if (perime()) { libererAudio(); return; }
 
       // ── Basse échantillonnée ──────────────────────────────────────────
       // La version précédente était un Tone.Synth en dents de scie : c'est
@@ -626,7 +672,9 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
       const bassComp = new Tone.Compressor({ threshold: -18, ratio: 4, attack: 0.008, release: 0.12 });
       bassFilterRef.current = bassFilter;
       bassCompRef.current = bassComp;
-      bassRef.current.chain(bassFilter, bassComp, compRef.current);
+      const basseSub = new Tone.Filter({ type: "highpass", frequency: MIXAGE.bassePasseHaut, rolloff: -12 });
+      mixRef.current.push(basseSub);
+      bassRef.current.chain(basseSub, bassFilter, bassComp, compRef.current);
 
       // ── Batterie échantillonnée ───────────────────────────────────
       // Remplace MembraneSynth / NoiseSynth : c'était de la synthèse pure,
@@ -648,6 +696,7 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
         tomMid:    ["tomMid1.mp3"],
       };
 
+      if (perime()) { libererAudio(); return; }
       const drumUrls = {};
       for (const [inst, files] of Object.entries(DRUM_FILES)) {
         files.forEach((f, i) => { drumUrls[`${inst}${i}`] = f; });
@@ -668,6 +717,27 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
         drumsLoaded = true;
       } catch {
         drumsRef.current = null;
+      }
+      if (perime()) { libererAudio(); return; }
+      // Mixage de la batterie, HORS du bloc de chargement : un souci de
+      // mixage ne doit jamais faire basculer la vraie batterie sur le synthé
+      // de secours. Au pire, elle reste simplement sèche et centrée.
+      if (drumsLoaded) {
+        try {
+          const envoiBatterie = new Tone.Gain(MIXAGE.batterieReverb);
+          drumsRef.current.connect(envoiBatterie);
+          envoiBatterie.connect(reverbRef.current);
+          mixRef.current.push(envoiBatterie);
+        } catch { /* batterie sans réverbération */ }
+        try {
+          const panCharleston = new Tone.Panner(MIXAGE.charlestonPan).connect(compRef.current);
+          mixRef.current.push(panCharleston);
+          for (const cle of Object.keys(drumUrls).filter(k => k.startsWith("hihat"))) {
+            const pl = drumsRef.current.player(cle);
+            pl.disconnect();
+            pl.connect(panCharleston);
+          }
+        } catch { /* le charleston reste au centre */ }
       }
       drumsLoadedRef.current = drumsLoaded;
 
@@ -865,14 +935,27 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
       setPlaying(true);
 
     } catch (e) {
+      if (perime()) { libererAudio(); return; }
       console.warn("[BackingTrackPlayer] Erreur:", e);
       setPlayError(e?.message || "Le lecteur n'a pas pu démarrer.");
     }
-    setLoading(false);
+    if (!perime()) setLoading(false);
   }
 
   // ── Arrêt propre ────────────────────────────────────────────────────────
   function stopBacking() {
+    generationRef.current++;   // tout lancement en cours devient périmé
+    libererAudio();
+    setPlaying(false);
+    setCompte(null);
+    setBeat(0);
+    setCurrentChord(0);
+    onChordRef.current?.(null);
+  }
+
+  // Libère tous les éléments audio. Sans effet d'affichage : un lancement
+  // périmé l'appelle aussi, alors qu'un autre lancement peut être en cours.
+  function libererAudio() {
     [seqRef, beatSeqRef].forEach(r => {
       try { r.current?.stop(); r.current?.dispose(); r.current = null; } catch {}
     });
@@ -880,14 +963,11 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
      bassFilterRef, bassCompRef, kickCompRef, snareFilterRef].forEach(r => {
       try { r.current?.releaseAll?.(); r.current?.dispose(); r.current = null; } catch {}
     });
+    for (const n of mixRef.current) { try { n.dispose(); } catch {} }
+    mixRef.current = [];
     try { Tone.getTransport().stop(); Tone.getTransport().cancel(); } catch {}
     plannerRef.current = null;
     directorRef.current = null;
-    setPlaying(false);
-    setCompte(null);
-    setBeat(0);
-    setCurrentChord(0);
-    onChordRef.current?.(null);
   }
 
   const toggle = () => playing ? stopBacking() : startBacking();

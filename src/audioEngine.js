@@ -30,6 +30,7 @@ export const isToneReady = () => Tone !== null;
 // que playChord et playInterval n'en ont pas besoin — d'où le fait que les
 // autres modes fonctionnaient et que celui-là, spécifiquement, restait muet.
 import { CHORD_TYPES, normalizeNote, getScaleNotes, getChordNotes } from "./fretboardUtils.js";
+import { planifierTab } from "./tab/tabSon.js";
 
 // ─────────────────────────────────────────────────────────────────────────
 // SAMPLES — noms exacts des fichiers dans public/audio/guitar/
@@ -49,6 +50,25 @@ const SAMPLE_URLS = {
   "Eb2": "Eb2.mp3", "Eb3": "Eb3.mp3", "Eb4": "Eb4.mp3",
   "Gb2": "Gb2.mp3", "Gb3": "Gb3.mp3", "Gb4": "Gb4.mp3",
 };
+
+// ── Moteur de cordes (lecteur de tablatures) ─────────────────────────────
+// Le sampler déclenche des notes indépendantes : il ne sait ni faire
+// glisser une hauteur, ni arrêter une note quand sa corde rejoue. Pour les
+// tablatures, chaque note devient une VOIX qui lit l'échantillon de sa note
+// de départ et fait varier sa vitesse de lecture pour changer de hauteur :
+// vrais bends, vrais slides, hammer-on sans nouvelle attaque. Le plan
+// (quand, combien de temps, quelle force, quelle courbe de hauteur) vient de
+// tab/tabSon.js, testé à part.
+let busGuitare = null;
+let buffersCordes = null;          // Tone.ToneAudioBuffers, chargés à la demande
+const voixCordes = new Set();      // voix actives, pour que stopAll() les coupe
+// Numéro de la lecture en cours. stopAll() le change : une lecture qui se
+// réveille APRÈS son chargement vérifie qu'elle est toujours la bonne. Sans
+// ça, appuyer sur Arrêter pendant le chargement des échantillons ne servait
+// à rien — la tab se jouait quand même une fois le chargement fini.
+let generationTab = 0;
+const NOMS_ECHANTILLONS = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
+const MIDI_MIN_ECH = 36, MIDI_MAX_ECH = 71;   // C2 → B4 : un échantillon par demi-ton
 
 const BASE_URL = "/audio/guitar/";
 
@@ -289,6 +309,7 @@ export function loadAudio() {
       sortieMaitre = new Tone.Gain(1).toDestination();
       const reverb = new Tone.Reverb({ decay: 1.9, wet: 0.19 });
       reverb.connect(sortieMaitre);
+      busGuitare = reverb;   // les voix de corde de playTab passent par le même chemin
 
       sampler = new Tone.Sampler({
         urls: SAMPLE_URLS,
@@ -594,7 +615,114 @@ export async function playArpeggioFromRoot(root, chordType, bpm = 132, onStep) {
  *                          visuel qui ne dérive jamais du son.
  * @param opts.onDone()     appelé une fois la séquence terminée.
  */
+/** Charge (une fois) les échantillons sous forme de buffers bruts, pour les voix de corde. */
+async function chargerBuffersCordes() {
+  if (buffersCordes?.loaded) return buffersCordes;
+  await new Promise((resolve, reject) => {
+    const minuteur = setTimeout(() => reject(new Error("délai dépassé")), 8000);
+    buffersCordes = new Tone.ToneAudioBuffers({
+      urls: SAMPLE_URLS, baseUrl: BASE_URL,
+      onload: () => { clearTimeout(minuteur); resolve(); },
+      onerror: (e) => { clearTimeout(minuteur); reject(e); },
+    });
+  });
+  return buffersCordes;
+}
+
+/** Échantillon le plus proche d'une hauteur MIDI (un par demi-ton, C2 → B4). */
+function echantillonPour(midi) {
+  const m = Math.max(MIDI_MIN_ECH, Math.min(MIDI_MAX_ECH, Math.round(midi)));
+  return { nom: NOMS_ECHANTILLONS[m % 12] + (Math.floor(m / 12) - 1), base: m };
+}
+const vitessePour = (midi, base) => Math.pow(2, (midi - base) / 12);
+
+/** Joue une voix du plan (tab/tabSon.js) : attaque, courbe de hauteur, arrêt. */
+function jouerVoix(v, t0) {
+  const depart = v.hauteurs[0].midi;
+  const { nom, base } = echantillonPour(depart);
+  const T = t0 + v.debut, Tfin = t0 + v.fin;
+  const src = new Tone.ToneBufferSource(buffersCordes.get(nom));
+  const gain = new Tone.Gain(0);
+  let filtre = null;
+  if (v.etouffee) {
+    // « Tchk » : la corde étouffée ne garde que son attaque, sourde.
+    filtre = new Tone.Filter({ frequency: 1100, type: "lowpass", rolloff: -24 });
+    src.chain(filtre, gain, busGuitare);
+  } else {
+    src.chain(gain, busGuitare);
+  }
+  // Courbe de hauteur = vitesse de lecture de l'échantillon.
+  src.playbackRate.setValueAtTime(vitessePour(depart, base), T);
+  for (const p of v.hauteurs.slice(1)) {
+    const r = vitessePour(p.midi, base);
+    if (p.forme === "rampe") src.playbackRate.exponentialRampToValueAtTime(r, T + p.t);
+    else src.playbackRate.setValueAtTime(r, T + p.t);
+  }
+  // Attaque quasi immédiate ; à la fin, extinction rapide (la corde rejoue ou
+  // la note s'arrête), plus sèche encore pour une note étouffée.
+  gain.gain.setValueAtTime(0, T);
+  gain.gain.linearRampToValueAtTime(v.velocite, T + 0.004);
+  gain.gain.setTargetAtTime(0, Tfin, v.etouffee ? 0.01 : 0.03);
+  src.start(T);
+  src.stop(Tfin + 0.3);
+  const voix = { src, gain };
+  voixCordes.add(voix);
+  src.onended = () => {
+    voixCordes.delete(voix);
+    try { src.dispose(); gain.dispose(); filtre?.dispose(); } catch { /* noop */ }
+  };
+}
+
+/**
+ * Joue une tablature avec le moteur de cordes. Rendu (détails dans
+ * tab/tabSon.js) : chaque note résonne jusqu'à ce que sa corde rejoue ;
+ * bends et slides glissent en continu ; hammer-on et pull-off changent de
+ * hauteur sans nouvelle attaque ; une note étouffée fait « tchk » ; les
+ * accords sont grattés du grave vers l'aigu ; les temps sont accentués et
+ * chaque note varie légèrement, comme sous de vrais doigts.
+ *
+ * @param evenements    sortie de parseTab(texte).evenements ou grilleVersEvenements
+ * @param opts.bpm, opts.subdivision (0.25 = double-croche par colonne)
+ * @param opts.onEvent(ev)  appelé à l'instant de chaque évènement (curseur visuel)
+ * @param opts.onDone()     appelé une fois la séquence terminée
+ * @param opts.reglages     surcharge partielle des réglages sonores (tabSon.js)
+ */
 export async function playTab(evenements, opts = {}) {
+  if (!await ensureLoaded()) return;
+  stopAll();
+  reveillerSortie();
+  const { bpm = 90, subdivision = 0.25, onEvent, onDone } = opts;
+  if (!Array.isArray(evenements) || evenements.length === 0) { onDone?.(); return; }
+  const maLecture = ++generationTab;
+
+  try {
+    await chargerBuffersCordes();
+    if (!busGuitare) throw new Error("bus guitare absent");
+  } catch (e) {
+    // Repli : l'ancien lecteur à sampler. Aucune régression, juste l'ancien
+    // rendu si le moteur de cordes n'a pas pu démarrer sur cet appareil.
+    warn("moteur de cordes indisponible, repli sur le sampler :", e);
+    return playTabSampler(evenements, opts);
+  }
+
+  if (maLecture !== generationTab) return;   // arrêtée pendant le chargement : on ne joue rien
+  const { voix } = planifierTab(evenements, { bpm, subdivision, reglages: opts.reglages });
+  const AVANCE_MS = 80;   // l'audio est planifié à l'échantillon près, un peu à l'avance
+  const t0 = Tone.now() + AVANCE_MS / 1000;
+  try { for (const v of voix) jouerVoix(v, t0); } catch (e) { warn("playTab:", e); }
+
+  // Curseur et fin : minuteurs annulables, que stopAll() coupe aussi.
+  const spc = (60 / bpm) * subdivision;
+  for (const ev of evenements) differer(() => onEvent?.(ev), AVANCE_MS + ev.col * spc * 1000);
+  const dernierCol = Math.max(...evenements.map(e => e.toCol ?? e.col));
+  differer(() => onDone?.(), AVANCE_MS + (dernierCol + 2) * spc * 1000);
+}
+
+/*
+ * ANCIEN LECTEUR — conservé comme REPLI si le moteur de cordes échoue.
+ * (Sampler : notes coupées à une case, bend sans glissement, slide en escalier.)
+ */
+async function playTabSampler(evenements, opts = {}) {
   if (!await ensureLoaded()) return;
   stopAll();
   reveillerSortie();
@@ -857,7 +985,18 @@ export function playBadgeUnlocked() {
  * et rien ici n'y touche. Le raccourcissement est temporaire et n'existe que
  * pendant la fenêtre de coupure.
  */
+function couperVoixCordes() {
+  if (!Tone || !voixCordes.size) return;
+  const t = Tone.now();
+  for (const v of voixCordes) {
+    try { v.gain.gain.cancelScheduledValues(t); v.gain.gain.setTargetAtTime(0, t, 0.01); v.src.stop(t + 0.1); } catch { /* noop */ }
+  }
+  voixCordes.clear();
+}
+
 export function stopAll() {
+  generationTab++;
+  couperVoixCordes();
   annulerEnAttente();
   progressionTimers.forEach(clearTimeout);
   progressionTimers = [];

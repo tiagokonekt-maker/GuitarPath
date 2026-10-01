@@ -21,10 +21,12 @@ __export(tone_stub_exports, {
   FeedbackDelay: () => FeedbackDelay,
   Filter: () => Filter,
   Gain: () => Gain,
+  Limiter: () => Limiter,
   Loop: () => Loop,
   MembraneSynth: () => MembraneSynth,
   MetalSynth: () => MetalSynth,
   NoiseSynth: () => NoiseSynth,
+  Panner: () => Panner,
   Part: () => Part,
   Players: () => Players,
   Reverb: () => Reverb,
@@ -47,7 +49,7 @@ function getTransport() {
   }, cancel() {
   } };
 }
-var now, context, Draw, Sampler, Reverb, getContext, getDraw, Time, Compressor, FeedbackDelay, Synth, Filter, Players, MembraneSynth, NoiseSynth, Sequence, Part, Loop, FauxParam, Gain, MetalSynth;
+var now, context, Draw, Sampler, Reverb, getContext, getDraw, Time, Compressor, FeedbackDelay, Synth, Filter, Players, MembraneSynth, NoiseSynth, Sequence, Part, Loop, FauxParam, Gain, MetalSynth, Limiter, Panner;
 var init_tone_stub = __esm({
   "stub:tone-stub"() {
     now = () => 0;
@@ -268,6 +270,31 @@ var init_tone_stub = __esm({
         return this;
       }
       triggerAttackRelease() {
+      }
+      dispose() {
+      }
+    };
+    Limiter = class {
+      constructor() {
+      }
+      toDestination() {
+        return this;
+      }
+      connect() {
+        return this;
+      }
+      dispose() {
+      }
+    };
+    Panner = class {
+      constructor(v) {
+        this.pan = new FauxParam(v ?? 0);
+      }
+      toDestination() {
+        return this;
+      }
+      connect() {
+        return this;
       }
       dispose() {
       }
@@ -1814,6 +1841,141 @@ function checkQuizCompletion(selected, correct) {
   };
 }
 
+// src/tab/tabSon.js
+var CORDE_MIDI = { 6: 40, 5: 45, 4: 50, 3: 55, 2: 59, 1: 64 };
+var REGLAGES = {
+  resonanceMax: 2.2,
+  // s — une note seule ne sonne pas plus longtemps
+  resonanceFinale: 1.6,
+  // s — dernière note d'une corde, si rien ne la coupe
+  velociteTemps: 0.86,
+  // sur le temps
+  velociteCroche: 0.74,
+  // sur le « et »
+  velociteDouble: 0.64,
+  // sur les doubles-croches intermédiaires
+  variationVelocite: 0.05,
+  // ± aléatoire, pour ne jamais jouer deux fois pareil
+  decalageMaxMs: 7,
+  // retard aléatoire max (jamais en avance sur la grille)
+  grattageMs: 12,
+  // écart entre deux cordes d'un accord
+  bendDelaiS: 0.03,
+  // le bend commence juste après l'attaque
+  bendDureeMax: 0.18,
+  // s — durée max de la montée d'un bend
+  slidePart: 0.85,
+  // part du temps disponible occupée par le glissé
+  etouffeeDuree: 0.05,
+  // s — le « tchk » d'une note étouffée
+  velociteEtouffee: 0.55
+};
+var vel = (col, rng, R2) => {
+  const base = col % 4 === 0 ? R2.velociteTemps : col % 2 === 0 ? R2.velociteCroche : R2.velociteDouble;
+  const v = base + (rng() * 2 - 1) * R2.variationVelocite;
+  return Math.max(0.2, Math.min(1, v));
+};
+function planifierTab(evenements, opts = {}) {
+  const { bpm = 90, subdivision = 0.25, rng = Math.random } = opts;
+  const R2 = { ...REGLAGES, ...opts.reglages || {} };
+  const spc = 60 / bpm * subdivision;
+  if (!Array.isArray(evenements) || !evenements.length) return { voix: [], duree: 0 };
+  const parCol = /* @__PURE__ */ new Map();
+  for (const ev of evenements) {
+    if (!parCol.has(ev.col)) parCol.set(ev.col, []);
+    parCol.get(ev.col).push(ev);
+  }
+  const decalageGrattage = /* @__PURE__ */ new Map();
+  for (const [, evs] of parCol) {
+    if (evs.length < 3) continue;
+    [...evs].sort((a, b) => b.string - a.string).forEach((ev, i) => decalageGrattage.set(ev, i * R2.grattageMs / 1e3));
+  }
+  const voix = [];
+  for (const ev of [...evenements].sort((a, b) => a.col - b.col || b.string - a.string)) {
+    const ouverte = CORDE_MIDI[ev.string];
+    if (ouverte == null) continue;
+    const jitter = rng() * R2.decalageMaxMs / 1e3;
+    const debut = ev.col * spc + (decalageGrattage.get(ev) || 0) + jitter;
+    const v = vel(ev.col, rng, R2);
+    if (ev.type === "mute") {
+      voix.push({
+        corde: ev.string,
+        debut,
+        fin: debut + R2.etouffeeDuree,
+        velocite: R2.velociteEtouffee,
+        etouffee: true,
+        hauteurs: [{ t: 0, midi: ouverte, forme: "saut" }],
+        ev
+      });
+      continue;
+    }
+    if (ev.type === "note") {
+      voix.push({ corde: ev.string, debut, fin: null, velocite: v, etouffee: false, hauteurs: [{ t: 0, midi: ouverte + ev.fret, forme: "saut" }], ev });
+      continue;
+    }
+    if (ev.type === "bend") {
+      const depart = ouverte + ev.fromFret, arrivee = ouverte + ev.toFret;
+      voix.push({
+        corde: ev.string,
+        debut,
+        fin: null,
+        velocite: v,
+        etouffee: false,
+        ev,
+        hauteurs: [
+          { t: 0, midi: depart, forme: "saut" },
+          { t: R2.bendDelaiS, midi: depart, forme: "saut" },
+          { t: R2.bendDelaiS + Math.min(R2.bendDureeMax, spc * 2), midi: arrivee, forme: "rampe" }
+        ]
+      });
+      continue;
+    }
+    if (ev.type === "hammer" || ev.type === "pull") {
+      const ecart = ev.toCol != null ? (ev.toCol - ev.col) * spc : 0.075;
+      voix.push({
+        corde: ev.string,
+        debut,
+        fin: null,
+        velocite: v,
+        etouffee: false,
+        ev,
+        hauteurs: [{ t: 0, midi: ouverte + ev.fromFret, forme: "saut" }, { t: ecart, midi: ouverte + ev.toFret, forme: "saut" }]
+      });
+      continue;
+    }
+    if (ev.type === "slide_up" || ev.type === "slide_down") {
+      const dispo = ev.toCol != null ? (ev.toCol - ev.col) * spc : Math.min(0.16, spc);
+      voix.push({
+        corde: ev.string,
+        debut,
+        fin: null,
+        velocite: v,
+        etouffee: false,
+        ev,
+        hauteurs: [{ t: 0, midi: ouverte + ev.fromFret, forme: "saut" }, { t: Math.max(0.03, dispo * R2.slidePart), midi: ouverte + ev.toFret, forme: "rampe" }]
+      });
+      continue;
+    }
+  }
+  const parCorde = /* @__PURE__ */ new Map();
+  for (const x of voix) {
+    if (!parCorde.has(x.corde)) parCorde.set(x.corde, []);
+    parCorde.get(x.corde).push(x);
+  }
+  for (const [, liste2] of parCorde) {
+    liste2.sort((a, b) => a.debut - b.debut);
+    liste2.forEach((x, i) => {
+      if (x.etouffee) return;
+      const derniereHauteur = x.hauteurs[x.hauteurs.length - 1].t;
+      const suivante = liste2[i + 1];
+      const naturelle = x.debut + Math.max(derniereHauteur + 0.05, suivante ? R2.resonanceMax : R2.resonanceFinale);
+      x.fin = suivante ? Math.min(suivante.debut, naturelle) : naturelle;
+    });
+  }
+  voix.sort((a, b) => a.debut - b.debut);
+  return { voix, duree: voix.reduce((m, x) => Math.max(m, x.fin), 0) };
+}
+
 // src/audioEngine.js
 var Tone = null;
 var tonePromise = null;
@@ -1863,6 +2025,13 @@ var SAMPLE_URLS = {
   "Gb3": "Gb3.mp3",
   "Gb4": "Gb4.mp3"
 };
+var busGuitare = null;
+var buffersCordes = null;
+var voixCordes = /* @__PURE__ */ new Set();
+var generationTab = 0;
+var NOMS_ECHANTILLONS = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
+var MIDI_MIN_ECH = 36;
+var MIDI_MAX_ECH = 71;
 var BASE_URL = "/audio/guitar/";
 var RELEASE = 1.6;
 var QUEUE_AUDIBLE_MS = Math.round(RELEASE * 1e3);
@@ -1986,6 +2155,7 @@ function loadAudio() {
         sortieMaitre = new Tone.Gain(1).toDestination();
         const reverb = new Tone.Reverb({ decay: 1.9, wet: 0.19 });
         reverb.connect(sortieMaitre);
+        busGuitare = reverb;
         sampler = new Tone.Sampler({
           urls: SAMPLE_URLS,
           baseUrl: BASE_URL,
@@ -2194,7 +2364,98 @@ async function playArpeggioFromRoot(root, chordType, bpm = 132, onStep) {
   await playScale(toneNotes, bpm, onStep ? (i) => onStep(i, names[i] ?? null) : void 0);
   return names;
 }
+async function chargerBuffersCordes() {
+  if (buffersCordes?.loaded) return buffersCordes;
+  await new Promise((resolve, reject) => {
+    const minuteur = setTimeout(() => reject(new Error("d\xE9lai d\xE9pass\xE9")), 8e3);
+    buffersCordes = new Tone.ToneAudioBuffers({
+      urls: SAMPLE_URLS,
+      baseUrl: BASE_URL,
+      onload: () => {
+        clearTimeout(minuteur);
+        resolve();
+      },
+      onerror: (e) => {
+        clearTimeout(minuteur);
+        reject(e);
+      }
+    });
+  });
+  return buffersCordes;
+}
+function echantillonPour(midi) {
+  const m = Math.max(MIDI_MIN_ECH, Math.min(MIDI_MAX_ECH, Math.round(midi)));
+  return { nom: NOMS_ECHANTILLONS[m % 12] + (Math.floor(m / 12) - 1), base: m };
+}
+var vitessePour = (midi, base) => Math.pow(2, (midi - base) / 12);
+function jouerVoix(v, t0) {
+  const depart = v.hauteurs[0].midi;
+  const { nom: nom2, base } = echantillonPour(depart);
+  const T2 = t0 + v.debut, Tfin = t0 + v.fin;
+  const src = new Tone.ToneBufferSource(buffersCordes.get(nom2));
+  const gain = new Tone.Gain(0);
+  let filtre = null;
+  if (v.etouffee) {
+    filtre = new Tone.Filter({ frequency: 1100, type: "lowpass", rolloff: -24 });
+    src.chain(filtre, gain, busGuitare);
+  } else {
+    src.chain(gain, busGuitare);
+  }
+  src.playbackRate.setValueAtTime(vitessePour(depart, base), T2);
+  for (const p of v.hauteurs.slice(1)) {
+    const r = vitessePour(p.midi, base);
+    if (p.forme === "rampe") src.playbackRate.exponentialRampToValueAtTime(r, T2 + p.t);
+    else src.playbackRate.setValueAtTime(r, T2 + p.t);
+  }
+  gain.gain.setValueAtTime(0, T2);
+  gain.gain.linearRampToValueAtTime(v.velocite, T2 + 4e-3);
+  gain.gain.setTargetAtTime(0, Tfin, v.etouffee ? 0.01 : 0.03);
+  src.start(T2);
+  src.stop(Tfin + 0.3);
+  const voix = { src, gain };
+  voixCordes.add(voix);
+  src.onended = () => {
+    voixCordes.delete(voix);
+    try {
+      src.dispose();
+      gain.dispose();
+      filtre?.dispose();
+    } catch {
+    }
+  };
+}
 async function playTab(evenements, opts = {}) {
+  if (!await ensureLoaded()) return;
+  stopAll();
+  reveillerSortie();
+  const { bpm = 90, subdivision = 0.25, onEvent, onDone } = opts;
+  if (!Array.isArray(evenements) || evenements.length === 0) {
+    onDone?.();
+    return;
+  }
+  const maLecture = ++generationTab;
+  try {
+    await chargerBuffersCordes();
+    if (!busGuitare) throw new Error("bus guitare absent");
+  } catch (e) {
+    warn("moteur de cordes indisponible, repli sur le sampler :", e);
+    return playTabSampler(evenements, opts);
+  }
+  if (maLecture !== generationTab) return;
+  const { voix } = planifierTab(evenements, { bpm, subdivision, reglages: opts.reglages });
+  const AVANCE_MS = 80;
+  const t0 = Tone.now() + AVANCE_MS / 1e3;
+  try {
+    for (const v of voix) jouerVoix(v, t0);
+  } catch (e) {
+    warn("playTab:", e);
+  }
+  const spc = 60 / bpm * subdivision;
+  for (const ev of evenements) differer(() => onEvent?.(ev), AVANCE_MS + ev.col * spc * 1e3);
+  const dernierCol = Math.max(...evenements.map((e) => e.toCol ?? e.col));
+  differer(() => onDone?.(), AVANCE_MS + (dernierCol + 2) * spc * 1e3);
+}
+async function playTabSampler(evenements, opts = {}) {
   if (!await ensureLoaded()) return;
   stopAll();
   reveillerSortie();
@@ -2348,7 +2609,22 @@ function playLessonComplete() {
 function playChestOpen() {
   return fioriture(["G3", "D4"], { gap: 0.1, duration: "2n", from: 0.55, to: 0.45 });
 }
+function couperVoixCordes() {
+  if (!Tone || !voixCordes.size) return;
+  const t = Tone.now();
+  for (const v of voixCordes) {
+    try {
+      v.gain.gain.cancelScheduledValues(t);
+      v.gain.gain.setTargetAtTime(0, t, 0.01);
+      v.src.stop(t + 0.1);
+    } catch {
+    }
+  }
+  voixCordes.clear();
+}
 function stopAll() {
+  generationTab++;
+  couperVoixCordes();
   annulerEnAttente();
   progressionTimers.forEach(clearTimeout);
   progressionTimers = [];
@@ -4558,10 +4834,10 @@ var ARMURES = {
   "Lab": [4, "b"],
   "R\xE9b": [5, "b"]
 };
-var CORDE_MIDI = { 6: 40, 5: 45, 4: 50, 3: 55, 2: 59, 1: 64 };
+var CORDE_MIDI2 = { 6: 40, 5: 45, 4: 50, 3: 55, 2: 59, 1: 64 };
 var NOM_CORDE = { 6: "Mi grave", 5: "La", 4: "R\xE9", 3: "Sol", 2: "Si", 1: "Mi aigu" };
 var NOMS_PC = ["Do", "Do#", "R\xE9", "R\xE9#", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "La#", "Si"];
-var noteManche = (corde, cas) => NOMS_PC[(CORDE_MIDI[corde] + cas) % 12];
+var noteManche = (corde, cas) => NOMS_PC[(CORDE_MIDI2[corde] + cas) % 12];
 var estNaturelle = (corde, cas) => !noteManche(corde, cas).includes("#");
 var choisir = (rng, arr) => arr[Math.floor(rng() * arr.length)];
 function melanger(rng, arr) {
@@ -5006,6 +5282,92 @@ var familleDictee = {
     };
   }
 };
+var VALEURS_MESURE = {
+  1: [{ duree: 1 }],
+  // noire
+  2: [{ duree: 2 }],
+  // blanche
+  4: [{ duree: 4 }],
+  // ronde
+  v5: [{ duree: 0.5 }],
+  // croche
+  s1: [{ duree: 1, silence: true }],
+  // soupir
+  s5: [{ duree: 0.5, silence: true }]
+  // demi-soupir
+};
+function tirerMesure(rng, cles) {
+  let reste = 4, jetons = [], essais = 0;
+  while (reste > 1e-9 && essais++ < 40) {
+    const possibles = cles.filter((k2) => VALEURS_MESURE[k2][0].duree <= reste + 1e-9);
+    if (!possibles.length) return null;
+    const k = choisir(rng, possibles);
+    jetons.push({ ...VALEURS_MESURE[k][0] });
+    reste -= VALEURS_MESURE[k][0].duree;
+  }
+  return Math.abs(reste) < 1e-9 ? jetons : null;
+}
+function grilleDeMesure(jetons) {
+  const attaques = [];
+  let t = 0;
+  for (const j of jetons) {
+    if (!j.silence) attaques.push(Math.round(t * 4));
+    t += j.duree;
+  }
+  return { pas: 4, attaques };
+}
+var familleLectureMesure = {
+  id: "rythme-lecture-mesure",
+  module: "rhythm",
+  lecon: "rhy-c2-01",
+  titre: "Rythme : lire une mesure",
+  niveaux: ["noires, blanches, rondes", "+ les croches", "+ les silences"],
+  generer(niv, rng, contexte) {
+    const aCroches = !!contexte?.completedLessons?.["rhy-c2-02"];
+    const aSilences = !!contexte?.completedLessons?.["rhy-c2-04"];
+    const effectif = niv >= 3 && aSilences ? 3 : niv >= 2 && aCroches ? 2 : 1;
+    const cles = effectif === 1 ? [1, 2, 4] : effectif === 2 ? [1, 2, 4, "v5", "v5"] : [1, 2, 4, "v5", "v5", "s1", "s5"];
+    const jetons = tirerMesure(rng, cles);
+    if (!jetons || jetons.length < 2) return null;
+    const bonne = jetons.filter((j) => !j.silence).length;
+    const o = melanger(rng, [.../* @__PURE__ */ new Set([bonne, Math.max(1, bonne - 1), bonne + 1, bonne + 2])]).map(String);
+    if (o.length < 4) return null;
+    const nomsValeur = (j) => j.duree === 4 ? "une ronde" : j.duree === 2 ? "une blanche" : j.duree === 1 ? j.silence ? "un soupir" : "une noire" : j.silence ? "un demi-soupir" : "une croche";
+    return {
+      q: "Regarde la grille. Combien de notes sont r\xE9ellement jou\xE9es (attaques) dans cette mesure ?",
+      o,
+      a: o.indexOf(String(bonne)),
+      grilleQuestion: grilleDeMesure(jetons),
+      exp: `De gauche \xE0 droite : ${jetons.map(nomsValeur).join(", ")}. ${bonne} note${bonne > 1 ? "s" : ""} jou\xE9e${bonne > 1 ? "s" : ""}${jetons.some((j) => j.silence) ? " \u2014 les silences occupent du temps sans sonner" : ""}.`
+    };
+  }
+};
+var NOMS_SUBDIVISION = ["1", "e", "et", "a"];
+function nomPosition(pas) {
+  const temps = Math.floor(pas / 4) + 1, reste = pas % 4;
+  return reste === 0 ? String(temps) : reste === 2 ? "et du " + temps : NOMS_SUBDIVISION[reste] + " du " + temps;
+}
+var familleGeste = {
+  id: "rythme-sens-du-geste",
+  module: "rhythm",
+  lecon: "rhy-c4-01",
+  titre: "Rythme : le sens du geste",
+  niveaux: ["sur les temps et les \xAB et \xBB", "sur toutes les doubles-croches", "sur les positions les plus pi\xE9geuses"],
+  generer(niv, rng, contexte) {
+    const aDoubles = !!contexte?.completedLessons?.["rhy-c2-02"];
+    const effectif = niv >= 2 && aDoubles ? niv : 1;
+    const piege = effectif === 3 && rng() < 0.7;
+    const pas = effectif === 1 ? choisir(rng, [0, 2, 4, 6, 8, 10, 12, 14]) : piege ? choisir(rng, [1, 3, 5, 7, 9, 11, 13, 15]) : entre(rng, 0, 15);
+    const descend = pas % 2 === 0;
+    const o = ["Vers le bas", "Vers le haut"];
+    return {
+      q: "Sur la position \xAB " + nomPosition(pas) + " \xBB de la mesure, la main va\u2026",
+      o,
+      a: descend ? 0 : 1,
+      exp: "La main ne s'arr\xEAte jamais : bas sur chaque position paire, haut sur chaque impaire \u2014 m\xEAme sans toucher la corde. \xAB " + nomPosition(pas) + " \xBB est " + (descend ? "paire : vers le bas." : "impaire : vers le haut.")
+    };
+  }
+};
 var familleBinaire = {
   id: "rythme-binaire-ternaire",
   module: "rhythm",
@@ -5109,7 +5471,9 @@ var FAMILLES = [
   familleDictee,
   familleBinaire,
   familleOreilleManche,
-  familleFonctions
+  familleFonctions,
+  familleLectureMesure,
+  familleGeste
 ];
 var PAR_ID = new Map(FAMILLES.map((f) => [f.id, f]));
 var idQuestion = (familleId) => `gen:${familleId}`;
@@ -5122,8 +5486,11 @@ function niveauFamille(historique) {
   return n;
 }
 function avantNiveauSuivant(historique) {
-  const r = historique?.successes || 0;
-  return r >= 8 ? null : r >= 3 ? 8 - r : 3 - r;
+  const h = historique || {};
+  const r = h.successes || 0;
+  const base = r >= 8 ? 3 : r >= 3 ? 2 : 1;
+  if (niveauFamille(h) < base) return 1;
+  return base === 3 ? null : base === 2 ? 8 - r : 3 - r;
 }
 var famillesDisponibles = (completedLessons) => FAMILLES.filter((f) => completedLessons?.[f.lecon]);
 var itemsGeneres = (completedLessons) => famillesDisponibles(completedLessons).map((f) => ({ id: idQuestion(f.id), lessonId: f.lecon }));
@@ -5190,10 +5557,13 @@ function ReviewSession({ questions, state, dispatch, onDone }) {
     setResults((prev) => [...prev, { id: q.id, correct }]);
     const fam = q.genere ? familleDe(q.id) : null;
     if (fam) {
-      const avant = niveauFamille((state.reviewHistory || {})[q.id]);
+      const hAvant = (state.reviewHistory || {})[q.id];
+      const avant = niveauFamille(hAvant);
       const h = newHistory[q.id];
       const apres = niveauFamille(h);
-      setSuiviFamille({ avant, apres, restant: avantNiveauSuivant(h), suivant: fam.niveaux[apres] || null, libelle: fam.niveaux[apres - 1] });
+      const seuil = { 2: 3, 3: 8 }[apres] ?? Infinity;
+      const retour = apres > avant && (hAvant?.successes || 0) >= seuil;
+      setSuiviFamille({ avant, apres, retour, restant: avantNiveauSuivant(h), suivant: fam.niveaux[apres] || null, libelle: fam.niveaux[apres - 1] });
     } else setSuiviFamille(null);
   };
   const prochaine = (depuis, muet) => {
@@ -5379,6 +5749,7 @@ function ReviewSession({ questions, state, dispatch, onDone }) {
       padding: 16,
       marginBottom: 12
     }, children: /* @__PURE__ */ jsx8("p", { style: { margin: 0, fontSize: 15, fontWeight: 500, lineHeight: 1.5, color: C.text, fontFamily: FONTS.title }, children: q.q }) }),
+    q.grilleQuestion && /* @__PURE__ */ jsx8("div", { style: { margin: "4px 0 14px", padding: "10px 12px", background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.md }, children: /* @__PURE__ */ jsx8(MiniGrille, { grille: q.grilleQuestion, C }) }),
     q.audio && /* @__PURE__ */ jsxs6("div", { style: { marginBottom: 12 }, children: [
       /* @__PURE__ */ jsxs6("button", { onClick: ecouter, className: "gr-focus", style: {
         width: "100%",
@@ -5489,7 +5860,15 @@ function ReviewSession({ questions, state, dispatch, onDone }) {
           ] }),
           suiviFamille && /* @__PURE__ */ jsxs6("div", { role: "status", style: { display: "flex", gap: 8, alignItems: "flex-start", fontSize: 12, lineHeight: 1.45, color: C.text2, fontFamily: FONTS.ui, background: C.surface2, borderRadius: R.md, padding: "10px 12px", marginBottom: 12 }, children: [
             /* @__PURE__ */ jsx8(Ti, { name: suiviFamille.apres > suiviFamille.avant ? "sparkles" : "target-arrow", size: 15, color: suiviFamille.apres > suiviFamille.avant ? C.primary : C.text3 }),
-            /* @__PURE__ */ jsx8("span", { children: suiviFamille.apres > suiviFamille.avant ? /* @__PURE__ */ jsxs6(Fragment4, { children: [
+            /* @__PURE__ */ jsx8("span", { children: suiviFamille.apres > suiviFamille.avant ? suiviFamille.retour ? /* @__PURE__ */ jsxs6(Fragment4, { children: [
+              /* @__PURE__ */ jsxs6("b", { style: { color: C.primaryD }, children: [
+                "De retour au niveau ",
+                suiviFamille.apres
+              ] }),
+              " : ",
+              suiviFamille.libelle,
+              "."
+            ] }) : /* @__PURE__ */ jsxs6(Fragment4, { children: [
               /* @__PURE__ */ jsxs6("b", { style: { color: C.primaryD }, children: [
                 "Niveau ",
                 suiviFamille.apres,
@@ -5958,10 +6337,10 @@ __export(EarTraining_exports, {
 import { useState as useState8, useEffect as useEffect7, useRef as useRef6 } from "react";
 import { Fragment as Fragment6, jsx as jsx10, jsxs as jsxs8 } from "react/jsx-runtime";
 var MODES = [
-  { key: "interval", label: "Intervalles", icon: "arrows-up-down", desc: "Identifie l'ecart entre deux notes" },
-  { key: "chord_quality", label: "Qualite d'accord", icon: "music", desc: "Majeur, mineur, dominant..." },
+  { key: "interval", label: "Intervalles", icon: "arrows-up-down", desc: "Identifie l'\xE9cart entre deux notes" },
+  { key: "chord_quality", label: "Qualit\xE9 d'accord", icon: "music", desc: "Majeur, mineur, dominant..." },
   { key: "chord_full", label: "Accord complet", icon: "music-plus", desc: "Nomme l'accord : La mineur, Do7..." },
-  { key: "progression", label: "Suites d'accords", icon: "list-numbers", desc: "Nomme la suite entiere" }
+  { key: "progression", label: "Suites d'accords", icon: "list-numbers", desc: "Nomme la suite enti\xE8re" }
 ];
 function shade(hex, amount) {
   const h = hex.replace("#", "");
@@ -5972,7 +6351,7 @@ function shade(hex, amount) {
   b = Math.max(0, Math.min(255, b));
   return "#" + (r << 16 | g << 8 | b).toString(16).padStart(6, "0");
 }
-function EarTraining({ onBack, dispatch }) {
+function EarTraining({ onBack, dispatch, state }) {
   const C = useC();
   const [audioReady, setAudioReady] = useState8(isAudioLoaded());
   const [audioError, setAudioError] = useState8(false);
@@ -6061,7 +6440,9 @@ function EarTraining({ onBack, dispatch }) {
     const newScore = { correct: score.correct + (correct ? 1 : 0), total: score.total + 1 };
     setScore(newScore);
     setAnswers((prev) => [...prev, { question: question.options.find((o) => (mode === "interval" ? o.semitones : o.key) === question.answer)?.label, correct }]);
-    dispatch?.({ type: "REVIEW_ANSWER", questionId: `ear-${Date.now()}`, correct, history: {}, xp: correct ? 25 : 0 });
+    const itemId = `ear-${mode}`;
+    const newHistory = updateReviewHistory(state?.reviewHistory, itemId, correct);
+    dispatch?.({ type: "REVIEW_ANSWER", questionId: itemId, id: itemId, history: newHistory, correct, xp: correct ? 25 : 0 });
     if (newScore.total >= SESSION_LENGTH) {
       setTimeout(() => setSessionDone(true), 1200);
     }
@@ -6085,7 +6466,7 @@ function EarTraining({ onBack, dispatch }) {
     return /* @__PURE__ */ jsxs8("div", { style: { padding: "24px 16px 32px", display: "flex", flexDirection: "column", gap: 14 }, children: [
       /* @__PURE__ */ jsxs8("div", { style: { textAlign: "center", padding: "20px 0" }, children: [
         /* @__PURE__ */ jsx10("div", { style: { marginBottom: 10 }, children: /* @__PURE__ */ jsx10(Ti, { name: pct >= 75 ? "headphones" : pct >= 50 ? "ear" : "book-2", size: 44, color: pct >= 75 ? C.green : pct >= 50 ? C.amber : C.text3 }) }),
-        /* @__PURE__ */ jsx10("div", { style: { fontSize: 22, fontWeight: 700, color: C.text, fontFamily: FONTS.title }, children: pct >= 75 ? "Belle oreille !" : pct >= 50 ? "Bon travail !" : "Continue l'entrainement !" })
+        /* @__PURE__ */ jsx10("h1", { style: { margin: 0, fontSize: 22, fontWeight: 700, color: C.text, fontFamily: FONTS.title }, children: pct >= 75 ? "Belle oreille !" : pct >= 50 ? "Bon travail !" : "Continue l'entra\xEEnement !" })
       ] }),
       /* @__PURE__ */ jsxs8("div", { style: { background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: "16px" }, children: [
         /* @__PURE__ */ jsxs8("div", { style: { display: "flex", justifyContent: "space-around" }, children: [
@@ -6096,7 +6477,7 @@ function EarTraining({ onBack, dispatch }) {
           /* @__PURE__ */ jsx10("div", { style: { width: 1, background: C.border } }),
           /* @__PURE__ */ jsxs8("div", { style: { textAlign: "center" }, children: [
             /* @__PURE__ */ jsx10("div", { style: { fontSize: 28, fontWeight: 700, color: C.coral }, children: score.total - score.correct }),
-            /* @__PURE__ */ jsx10("div", { style: { fontSize: 11, color: C.text3, fontFamily: FONTS.ui }, children: "Ratees" })
+            /* @__PURE__ */ jsx10("div", { style: { fontSize: 11, color: C.text3, fontFamily: FONTS.ui }, children: "Rat\xE9es" })
           ] }),
           /* @__PURE__ */ jsx10("div", { style: { width: 1, background: C.border } }),
           /* @__PURE__ */ jsxs8("div", { style: { textAlign: "center" }, children: [
@@ -6115,17 +6496,17 @@ function EarTraining({ onBack, dispatch }) {
           setAnswers([]);
           setSessionDone(false);
           nextQuestion();
-        }, style: { flex: 1, padding: "13px", borderRadius: R.md, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: FONTS.ui }, children: "Recommencer" }),
-        /* @__PURE__ */ jsx10("button", { onClick: onBack, style: { flex: 1, padding: "13px", borderRadius: R.md, border: "none", background: C.primary, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }, children: "Retour" })
+        }, className: "gr-focus", style: { flex: 1, minHeight: 48, padding: "13px", borderRadius: R.md, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: FONTS.ui }, children: "Recommencer" }),
+        /* @__PURE__ */ jsx10("button", { onClick: onBack, className: "gr-focus", style: { flex: 1, minHeight: 48, padding: "13px", borderRadius: R.md, border: "none", background: C.primary, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }, children: "Retour" })
       ] })
     ] });
   }
   return /* @__PURE__ */ jsxs8("div", { style: { display: "flex", flexDirection: "column", minHeight: "100vh", background: C.bg }, children: [
     /* @__PURE__ */ jsxs8("div", { style: { padding: "14px 16px 12px", display: "flex", alignItems: "center", gap: 10, borderBottom: `1px solid ${C.border}`, background: C.surface, position: "sticky", top: 0, zIndex: 10 }, children: [
-      /* @__PURE__ */ jsx10("button", { onClick: onBack, style: { background: "none", border: "none", cursor: "pointer", color: C.text2, padding: 0 }, children: /* @__PURE__ */ jsx10(Ti, { name: "chevron-left", size: 22 }) }),
+      /* @__PURE__ */ jsx10("button", { onClick: onBack, "aria-label": "Retour", className: "gr-focus", style: { width: 40, height: 40, margin: "-8px 0 -8px -8px", background: "none", border: "none", borderRadius: R.sm, cursor: "pointer", color: C.text2, padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }, children: /* @__PURE__ */ jsx10(Ti, { name: "chevron-left", size: 22 }) }),
       /* @__PURE__ */ jsxs8("div", { style: { flex: 1 }, children: [
-        /* @__PURE__ */ jsx10("div", { style: { fontSize: 16, fontWeight: 700, color: C.text, fontFamily: FONTS.title }, children: "Ear Training" }),
-        /* @__PURE__ */ jsxs8("div", { style: { fontSize: 11, color: C.text3, fontFamily: FONTS.ui }, children: [
+        /* @__PURE__ */ jsx10("h1", { style: { margin: 0, fontSize: 16, fontWeight: 700, color: C.text, fontFamily: FONTS.title }, children: "Ear Training" }),
+        /* @__PURE__ */ jsxs8("div", { role: "status", "aria-live": "polite", style: { fontSize: 11, color: C.text3, fontFamily: FONTS.ui }, children: [
           score.total,
           "/",
           SESSION_LENGTH,
@@ -6138,32 +6519,42 @@ function EarTraining({ onBack, dispatch }) {
       /* @__PURE__ */ jsx10("div", { style: { fontSize: 13, fontWeight: 600, color: C.primary, fontFamily: FONTS.ui }, children: score.total > 0 ? `${Math.round(score.correct / score.total * 100)}%` : "" })
     ] }),
     /* @__PURE__ */ jsxs8("div", { style: { padding: "14px 16px", display: "flex", flexDirection: "column", gap: 12 }, children: [
-      /* @__PURE__ */ jsx10("div", { style: { display: "flex", gap: 3 }, children: Array.from({ length: SESSION_LENGTH }).map((_, i) => {
+      /* @__PURE__ */ jsx10("div", { "aria-hidden": "true", style: { display: "flex", gap: 3 }, children: Array.from({ length: SESSION_LENGTH }).map((_, i) => {
         const ans = answers[i];
         return /* @__PURE__ */ jsx10("div", { style: { flex: 1, height: 5, borderRadius: 3, background: ans ? ans.correct ? C.green : C.coral : i === score.total ? C.primary : C.border, transition: "background 0.3s" } }, i);
       }) }),
-      /* @__PURE__ */ jsx10("div", { style: { display: "flex", background: C.surface2, borderRadius: R.lg, padding: 3, gap: 2 }, children: MODES.map((m) => /* @__PURE__ */ jsx10("button", { onClick: () => changeMode(m.key), style: { flex: 1, padding: "8px 10px", borderRadius: R.md, border: "none", cursor: "pointer", fontFamily: FONTS.ui, background: mode === m.key ? C.surface : "transparent", boxShadow: mode === m.key ? "0 1px 4px rgba(0,0,0,0.08)" : "none", color: mode === m.key ? C.text : C.text3, fontSize: 12, fontWeight: mode === m.key ? 600 : 400 }, children: m.label }, m.key)) }),
-      audioError && /* @__PURE__ */ jsx10("div", { style: { background: C.coralL, border: `1px solid ${C.coralBorder}`, borderRadius: R.md, padding: "12px 14px", fontSize: 12, color: C.coralD, fontFamily: FONTS.ui }, children: "Les samples audio n'ont pas ete trouves. Verifie que les fichiers .mp3 sont dans public/audio/guitar/" }),
-      !audioReady && !audioError && /* @__PURE__ */ jsx10("div", { style: { background: C.amberL, border: `1px solid ${C.amberBorder}`, borderRadius: R.md, padding: "12px 14px", fontSize: 12, color: C.amberD, fontFamily: FONTS.ui }, children: "Chargement des samples audio..." }),
+      /* @__PURE__ */ jsx10("div", { style: { display: "flex", background: C.surface2, borderRadius: R.lg, padding: 3, gap: 2 }, children: MODES.map((m) => /* @__PURE__ */ jsx10("button", { onClick: () => changeMode(m.key), "aria-pressed": mode === m.key, className: "gr-focus", style: { flex: 1, minHeight: 40, padding: "8px 10px", borderRadius: R.md, border: "none", cursor: "pointer", fontFamily: FONTS.ui, background: mode === m.key ? C.surface : "transparent", boxShadow: mode === m.key ? "0 1px 4px rgba(0,0,0,0.08)" : "none", color: mode === m.key ? C.text : C.text3, fontSize: 12, fontWeight: mode === m.key ? 600 : 400 }, children: m.label }, m.key)) }),
+      audioError && /* @__PURE__ */ jsx10("div", { role: "alert", style: { background: C.coralL, border: `1px solid ${C.coralBorder}`, borderRadius: R.md, padding: "12px 14px", fontSize: 12, color: C.coralD, fontFamily: FONTS.ui }, children: "Les \xE9chantillons audio n'ont pas \xE9t\xE9 trouv\xE9s. V\xE9rifie que les fichiers .mp3 sont dans public/audio/guitar/" }),
+      !audioReady && !audioError && /* @__PURE__ */ jsx10("div", { role: "status", "aria-live": "polite", style: { background: C.amberL, border: `1px solid ${C.amberBorder}`, borderRadius: R.md, padding: "12px 14px", fontSize: 12, color: C.amberD, fontFamily: FONTS.ui }, children: "Chargement des \xE9chantillons audio\u2026" }),
       audioReady && question && /* @__PURE__ */ jsxs8(Fragment6, { children: [
         /* @__PURE__ */ jsxs8("div", { style: { textAlign: "center", padding: "16px 0 8px" }, children: [
-          /* @__PURE__ */ jsx10("button", { onClick: isPlaying ? stopPlayback : playQuestion, style: {
-            width: 80,
-            height: 80,
-            borderRadius: "50%",
-            border: "none",
-            background: `linear-gradient(135deg, ${C.primary}, ${shade(C.primary, -45)})`,
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            margin: "0 auto",
-            boxShadow: "0 4px 20px rgba(232,93,26,0.4)",
-            transition: "all 0.2s"
-          }, children: /* @__PURE__ */ jsx10(Ti, { name: isPlaying ? "player-stop" : "player-play", size: 28, color: "#fff" }) }),
+          /* @__PURE__ */ jsx10(
+            "button",
+            {
+              onClick: isPlaying ? stopPlayback : playQuestion,
+              "aria-label": isPlaying ? "Arr\xEAter l'\xE9coute" : "\xC9couter",
+              className: "gr-focus",
+              style: {
+                width: 80,
+                height: 80,
+                borderRadius: "50%",
+                border: "none",
+                background: `linear-gradient(135deg, ${C.primary}, ${shade(C.primary, -45)})`,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "0 auto",
+                boxShadow: "0 4px 20px rgba(232,93,26,0.4)",
+                transition: "all 0.2s"
+              },
+              children: /* @__PURE__ */ jsx10(Ti, { name: isPlaying ? "player-pause" : "player-play", size: 28, color: "#fff" })
+            }
+          ),
           /* @__PURE__ */ jsx10("div", { style: { fontSize: 12, color: C.text3, fontFamily: FONTS.ui, marginTop: 10 }, children: mode === "interval" ? "Ecoute l'intervalle" : mode === "progression" ? "Ecoute la suite d'accords" : "Ecoute l'accord" }),
-          question.playReference && selected === null && /* @__PURE__ */ jsxs8("button", { onClick: playRef, style: {
+          question.playReference && selected === null && /* @__PURE__ */ jsxs8("button", { onClick: playRef, className: "gr-focus", style: {
             marginTop: 12,
+            minHeight: 40,
             padding: "7px 14px",
             borderRadius: 999,
             border: `1.5px solid ${C.border}`,
@@ -6177,7 +6568,7 @@ function EarTraining({ onBack, dispatch }) {
             alignItems: "center",
             gap: 6
           }, children: [
-            /* @__PURE__ */ jsx10(Ti, { name: "tuning-fork", size: 13, color: C.text3 }),
+            /* @__PURE__ */ jsx10(Ti, { name: "volume", size: 13, color: C.text3 }),
             "Entendre le ",
             question.referenceLabel,
             " de r\xE9f\xE9rence"
@@ -6200,14 +6591,26 @@ function EarTraining({ onBack, dispatch }) {
               col = C.coralD;
             }
           }
-          return /* @__PURE__ */ jsxs8("button", { onClick: () => handleAnswer(opt), disabled: selected !== null, style: { padding: "14px 16px", borderRadius: 12, border, background: bg, cursor: selected !== null ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", fontFamily: FONTS.title }, children: [
-            /* @__PURE__ */ jsx10("span", { style: { fontSize: 14, fontWeight: 500, color: col }, children: opt.label }),
-            selected !== null && isAnswer && /* @__PURE__ */ jsx10(Ti, { name: "check", size: 18, color: C.green }),
-            selected !== null && isSelected && !isAnswer && /* @__PURE__ */ jsx10(Ti, { name: "x", size: 18, color: C.coral })
-          ] }, i);
+          const suffixe2 = selected === null ? "" : isAnswer ? ", bonne r\xE9ponse" : isSelected ? ", ta r\xE9ponse, incorrecte" : "";
+          return /* @__PURE__ */ jsxs8(
+            "button",
+            {
+              onClick: () => handleAnswer(opt),
+              disabled: selected !== null,
+              "aria-label": suffixe2 ? `${opt.label}${suffixe2}` : void 0,
+              className: "gr-focus",
+              style: { padding: "14px 16px", minHeight: 48, borderRadius: 12, border, background: bg, cursor: selected !== null ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", fontFamily: FONTS.title },
+              children: [
+                /* @__PURE__ */ jsx10("span", { style: { fontSize: 14, fontWeight: 500, color: col }, children: opt.label }),
+                selected !== null && isAnswer && /* @__PURE__ */ jsx10(Ti, { name: "check", size: 18, color: C.green }),
+                selected !== null && isSelected && !isAnswer && /* @__PURE__ */ jsx10(Ti, { name: "x", size: 18, color: C.coral })
+              ]
+            },
+            i
+          );
         }) }),
         selected !== null && /* @__PURE__ */ jsxs8("div", { style: { marginTop: 4 }, children: [
-          /* @__PURE__ */ jsx10("div", { style: { background: selected === question.answer ? C.greenL : C.coralL, border: `1px solid ${selected === question.answer ? C.greenBorder : C.coralBorder}`, borderRadius: R.md, padding: "10px 14px", marginBottom: 10, fontSize: 12, color: selected === question.answer ? C.greenD : C.coralD, fontFamily: FONTS.ui, lineHeight: 1.5 }, children: selected === question.answer ? "Correct ! +25 XP" : `La bonne reponse etait : ${question.options.find((o) => (mode === "interval" ? o.semitones : o.key) === question.answer)?.label}` }),
+          /* @__PURE__ */ jsx10("div", { role: "status", "aria-live": "assertive", style: { background: selected === question.answer ? C.greenL : C.coralL, border: `1px solid ${selected === question.answer ? C.greenBorder : C.coralBorder}`, borderRadius: R.md, padding: "10px 14px", marginBottom: 10, fontSize: 12, color: selected === question.answer ? C.greenD : C.coralD, fontFamily: FONTS.ui, lineHeight: 1.5 }, children: selected === question.answer ? "Correct ! +25 XP" : `La bonne r\xE9ponse \xE9tait : ${question.options.find((o) => (mode === "interval" ? o.semitones : o.key) === question.answer)?.label}` }),
           score.total < SESSION_LENGTH && /* @__PURE__ */ jsx10("button", { onClick: nextQuestion, style: { width: "100%", padding: "13px", borderRadius: R.md, border: "none", background: C.primary, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }, children: "Question suivante" })
         ] })
       ] })
@@ -6218,7 +6621,8 @@ function EarTraining({ onBack, dispatch }) {
 // src/screens/JamSession.jsx
 var JamSession_exports = {};
 __export(JamSession_exports, {
-  JamSession: () => JamSession
+  JamSession: () => JamSession,
+  MIXAGE: () => MIXAGE
 });
 import { useState as useState10, useMemo as useMemo5, useEffect as useEffect9, useRef as useRef7, useCallback as useCallback3 } from "react";
 
@@ -8019,9 +8423,9 @@ function parseGrid(grid) {
   for (let i = 0; i < steps; i++) {
     const sym = grid[i];
     if (sym === "." || sym === " ") continue;
-    const vel = SYMBOL_VELOCITY[sym];
-    if (vel === void 0) continue;
-    out.push({ step: i, stepsPerBar: steps, velocity: vel, open: OPEN_SYMBOLS.has(sym) });
+    const vel2 = SYMBOL_VELOCITY[sym];
+    if (vel2 === void 0) continue;
+    out.push({ step: i, stepsPerBar: steps, velocity: vel2, open: OPEN_SYMBOLS.has(sym) });
   }
   return out;
 }
@@ -8484,6 +8888,20 @@ var niveauParDefaut = (niveauApp) => niveauApp >= 16 ? "Difficile" : niveauApp >
 var fmtDuree = (sec) => `${Math.floor(sec / 60)}:${String(Math.max(0, sec) % 60).padStart(2, "0")}`;
 var BPM_MIN = 40;
 var BPM_MAX = 200;
+var MIXAGE = {
+  pianoPasseHaut: 160,
+  // Hz — sous ce seuil, le piano laisse la place à la basse
+  pianoPan: 0.18,
+  // −1 gauche … +1 droite — légèrement à droite
+  charlestonPan: -0.22,
+  // légèrement à gauche (basse et grosse caisse restent au centre)
+  bassePasseHaut: 45,
+  // Hz — infra-basses : inaudibles au téléphone, elles font pomper le compresseur
+  batterieReverb: 0.14,
+  // part de la batterie envoyée dans la réverbération : même « pièce » que le piano
+  limiteurDb: -1
+  // plafond final : aucun pic ne dépasse −1 dB
+};
 var makeLevelColor = (C) => ({ "Facile": C.green, "Moyen": C.amber, "Difficile": C.coral });
 function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord, onSecondeJouee, onLecture }) {
   const C = useC();
@@ -8518,6 +8936,9 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
   const reverbRef = useRef7(null);
   const delayRef = useRef7(null);
   const compRef = useRef7(null);
+  const mixRef = useRef7([]);
+  const generationRef = useRef7(0);
+  const demarrageRef = useRef7(null);
   const rootRef = useRef7(root);
   rootRef.current = root;
   const rampeRef = useRef7(rampe);
@@ -8674,26 +9095,53 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
     if (type === "snare") snareRef.current?.triggerAttackRelease("8n", time);
     if (type === "hihat") hihatRef.current?.triggerAttackRelease("32n", time);
   }
-  async function startBacking() {
+  function startBacking() {
+    const moi = ++generationRef.current;
+    const precedent = demarrageRef.current;
+    const lancement = (async () => {
+      if (precedent) {
+        try {
+          await precedent;
+        } catch {
+        }
+      }
+      if (moi !== generationRef.current) return;
+      await demarrerBacking(moi);
+    })();
+    demarrageRef.current = lancement;
+    return lancement;
+  }
+  async function demarrerBacking(moi) {
+    const perime = () => moi !== generationRef.current;
     setLoading(true);
     setPlayError(null);
     try {
       await start();
       await getContext().resume();
+      if (perime()) {
+        libererAudio();
+        return;
+      }
       getTransport().bpm.value = bpm;
       getTransport().cancel();
+      const limiteur = new Limiter(MIXAGE.limiteurDb).toDestination();
+      mixRef.current.push(limiteur);
       compRef.current = new Compressor({
         threshold: -18,
         ratio: 4,
         attack: 3e-3,
         release: 0.25
-      }).toDestination();
+      }).connect(limiteur);
       reverbRef.current = new Reverb({
         decay: context2.id === "jazz_251" ? 2.5 : 1.8,
         wet: context2.id === "jazz_251" ? 0.18 : 0.12,
         preDelay: 0.02
       });
       await reverbRef.current.generate();
+      if (perime()) {
+        libererAudio();
+        return;
+      }
       reverbRef.current.connect(compRef.current);
       if (context2.id === "jazz_251") {
         delayRef.current = new FeedbackDelay({
@@ -8767,7 +9215,14 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
           volume: context2.id === "jazz_251" ? -8 : -10
         });
       }
-      samplerRef.current.connect(masterOut);
+      const pianoPasseHaut = new Filter({ type: "highpass", frequency: MIXAGE.pianoPasseHaut, rolloff: -12 });
+      const pianoPan = new Panner(MIXAGE.pianoPan);
+      mixRef.current.push(pianoPasseHaut, pianoPan);
+      samplerRef.current.chain(pianoPasseHaut, pianoPan, masterOut);
+      if (perime()) {
+        libererAudio();
+        return;
+      }
       const BASS_SAMPLES = {
         "C1": "C1.mp3",
         "Gb1": "Gb1.mp3",
@@ -8808,7 +9263,9 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
       const bassComp = new Compressor({ threshold: -18, ratio: 4, attack: 8e-3, release: 0.12 });
       bassFilterRef.current = bassFilter;
       bassCompRef.current = bassComp;
-      bassRef.current.chain(bassFilter, bassComp, compRef.current);
+      const basseSub = new Filter({ type: "highpass", frequency: MIXAGE.bassePasseHaut, rolloff: -12 });
+      mixRef.current.push(basseSub);
+      bassRef.current.chain(basseSub, bassFilter, bassComp, compRef.current);
       const DRUM_FILES = {
         kick: ["kick1.mp3", "kick2.mp3", "kick3.mp3"],
         snare: ["snare1.mp3", "snare2.mp3"],
@@ -8819,6 +9276,10 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
         tomLow: ["tomLow1.mp3"],
         tomMid: ["tomMid1.mp3"]
       };
+      if (perime()) {
+        libererAudio();
+        return;
+      }
       const drumUrls = {};
       for (const [inst, files] of Object.entries(DRUM_FILES)) {
         files.forEach((f, i) => {
@@ -8840,6 +9301,29 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
         drumsLoaded = true;
       } catch {
         drumsRef.current = null;
+      }
+      if (perime()) {
+        libererAudio();
+        return;
+      }
+      if (drumsLoaded) {
+        try {
+          const envoiBatterie = new Gain(MIXAGE.batterieReverb);
+          drumsRef.current.connect(envoiBatterie);
+          envoiBatterie.connect(reverbRef.current);
+          mixRef.current.push(envoiBatterie);
+        } catch {
+        }
+        try {
+          const panCharleston = new Panner(MIXAGE.charlestonPan).connect(compRef.current);
+          mixRef.current.push(panCharleston);
+          for (const cle2 of Object.keys(drumUrls).filter((k) => k.startsWith("hihat"))) {
+            const pl = drumsRef.current.player(cle2);
+            pl.disconnect();
+            pl.connect(panCharleston);
+          }
+        } catch {
+        }
       }
       drumsLoadedRef.current = drumsLoaded;
       if (!drumsLoaded) {
@@ -8980,12 +9464,25 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
       transport.start();
       setPlaying(true);
     } catch (e) {
+      if (perime()) {
+        libererAudio();
+        return;
+      }
       console.warn("[BackingTrackPlayer] Erreur:", e);
       setPlayError(e?.message || "Le lecteur n'a pas pu d\xE9marrer.");
     }
-    setLoading(false);
+    if (!perime()) setLoading(false);
   }
   function stopBacking() {
+    generationRef.current++;
+    libererAudio();
+    setPlaying(false);
+    setCompte(null);
+    setBeat(0);
+    setCurrentChord(0);
+    onChordRef.current?.(null);
+  }
+  function libererAudio() {
     [seqRef, beatSeqRef].forEach((r) => {
       try {
         r.current?.stop();
@@ -9016,6 +9513,13 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
       } catch {
       }
     });
+    for (const n of mixRef.current) {
+      try {
+        n.dispose();
+      } catch {
+      }
+    }
+    mixRef.current = [];
     try {
       getTransport().stop();
       getTransport().cancel();
@@ -9023,11 +9527,6 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
     }
     plannerRef.current = null;
     directorRef.current = null;
-    setPlaying(false);
-    setCompte(null);
-    setBeat(0);
-    setCurrentChord(0);
-    onChordRef.current?.(null);
   }
   const toggle = () => playing ? stopBacking() : startBacking();
   const progression = context2.chords;
@@ -9691,7 +10190,7 @@ function ProgressScreen({ state, content, onOpenSettings }) {
       /* @__PURE__ */ jsx14("div", { style: { position: "absolute", inset: 0, background: "rgba(120,50,10,.48)", pointerEvents: "none" } }),
       /* @__PURE__ */ jsxs11("div", { style: { position: "relative", zIndex: 1 }, children: [
         /* @__PURE__ */ jsxs11("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }, children: [
-          /* @__PURE__ */ jsx14("div", { style: { fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: "-.4px" }, children: "Progression" }),
+          /* @__PURE__ */ jsx14("h1", { style: { margin: 0, fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: "-.4px" }, children: "Progression" }),
           /* @__PURE__ */ jsxs11("button", { onClick: onOpenSettings, style: {
             background: "rgba(255,255,255,.18)",
             border: "1.5px solid rgba(255,255,255,.3)",
@@ -9766,7 +10265,18 @@ function ProgressScreen({ state, content, onOpenSettings }) {
             " XP"
           ] })
         ] }),
-        /* @__PURE__ */ jsx14("div", { style: { height: 8, background: "rgba(255,255,255,.25)", borderRadius: 99, overflow: "hidden" }, children: /* @__PURE__ */ jsx14("div", { style: { width: `${lvlPct}%`, height: "100%", background: `linear-gradient(90deg,#FF9155,${C.primary})`, borderRadius: 99, transition: "width .4s ease" } }) }),
+        /* @__PURE__ */ jsx14(
+          "div",
+          {
+            role: "progressbar",
+            "aria-valuenow": lvlPct,
+            "aria-valuemin": 0,
+            "aria-valuemax": 100,
+            "aria-label": `Progression vers le niveau ${state.level + 1} : ${xpToNext} XP restants`,
+            style: { height: 8, background: "rgba(255,255,255,.25)", borderRadius: 99, overflow: "hidden" },
+            children: /* @__PURE__ */ jsx14("div", { style: { width: `${lvlPct}%`, height: "100%", background: `linear-gradient(90deg,#FF9155,${C.primary})`, borderRadius: 99, transition: "width .4s ease" } })
+          }
+        ),
         /* @__PURE__ */ jsxs11("div", { style: { fontSize: 11, color: "rgba(255,255,255,.65)", marginTop: 4 }, children: [
           xpToNext,
           " XP pour le niveau ",
@@ -9799,7 +10309,7 @@ function ProgressScreen({ state, content, onOpenSettings }) {
           children: state.streak >= 7 ? `${state.streak} jours d'affil\xE9e. Tu tiens une vraie habitude, continue.` : state.streak >= 3 ? `S\xE9rie de ${state.streak} jours. La r\xE9gularit\xE9, c'est 80 % du chemin.` : state.streak === 0 ? "Ta s\xE9rie est retomb\xE9e \xE0 z\xE9ro. Une seule session suffit pour en relancer une." : "Chaque session compte. Reviens demain pour continuer ta progression."
         }
       ) }),
-      /* @__PURE__ */ jsx14("div", { style: { fontSize: 16, fontWeight: 800, color: C.text, marginBottom: 12, letterSpacing: "-.2px" }, children: "Ma\xEEtrise" }),
+      /* @__PURE__ */ jsx14("h2", { style: { margin: "0 0 12px", fontSize: 16, fontWeight: 800, color: C.text, letterSpacing: "-.2px" }, children: "Ma\xEEtrise" }),
       /* @__PURE__ */ jsxs11("div", { style: {
         background: C.surface,
         border: `1.5px solid ${C.border}`,
@@ -9864,7 +10374,7 @@ function ProgressScreen({ state, content, onOpenSettings }) {
           ] }, lesson.id))
         ] })
       ] }),
-      /* @__PURE__ */ jsx14("div", { style: { fontSize: 16, fontWeight: 800, color: C.text, marginBottom: 12, letterSpacing: "-.2px" }, children: "Comp\xE9tences" }),
+      /* @__PURE__ */ jsx14("h2", { style: { margin: "0 0 12px", fontSize: 16, fontWeight: 800, color: C.text, letterSpacing: "-.2px" }, children: "Comp\xE9tences" }),
       skills.map((sk) => {
         const th = MODULE_THEME2[sk.id] || {};
         return /* @__PURE__ */ jsxs11("div", { style: {
@@ -9894,7 +10404,7 @@ function ProgressScreen({ state, content, onOpenSettings }) {
         ] }, sk.label);
       }),
       /* @__PURE__ */ jsxs11("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", margin: "20px 0 10px" }, children: [
-        /* @__PURE__ */ jsx14("div", { style: { fontSize: 16, fontWeight: 800, color: C.text, letterSpacing: "-.2px" }, children: "Badges" }),
+        /* @__PURE__ */ jsx14("h2", { style: { margin: 0, fontSize: 16, fontWeight: 800, color: C.text, letterSpacing: "-.2px" }, children: "Badges" }),
         /* @__PURE__ */ jsxs11("div", { style: { fontSize: 12, fontWeight: 600, color: C.text3 }, children: [
           state.unlockedBadges.length,
           " / ",
@@ -9902,37 +10412,46 @@ function ProgressScreen({ state, content, onOpenSettings }) {
         ] })
       ] }),
       Object.entries(badgesByCategory).map(([cat, badges]) => /* @__PURE__ */ jsxs11("div", { children: [
-        /* @__PURE__ */ jsx14("div", { style: { fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".07em", color: C.text3, margin: "8px 0 8px" }, children: cat }),
+        /* @__PURE__ */ jsx14("h3", { style: { margin: "8px 0 8px", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".07em", color: C.text3 }, children: cat }),
         /* @__PURE__ */ jsx14("div", { style: { display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 8 }, children: badges.map((b) => {
           const ok = state.unlockedBadges.includes(b.id);
           const tint = BADGE_TINTS2[b.tint];
           const rarity = BADGE_RARITIES2[b.rarity];
-          return /* @__PURE__ */ jsxs11("div", { style: {
-            borderRadius: R.md,
-            padding: "10px 6px",
-            textAlign: "center",
-            border: `1.5px solid ${tint.border}`,
-            background: tint.bg,
-            position: "relative",
-            opacity: ok ? 1 : 0.3,
-            filter: ok ? "none" : "grayscale(.5)"
-          }, children: [
-            /* @__PURE__ */ jsx14("span", { style: {
-              position: "absolute",
-              top: 4,
-              right: 4,
-              fontSize: 7,
-              fontWeight: 700,
-              padding: "1px 4px",
-              borderRadius: 3,
-              letterSpacing: ".05em",
-              textTransform: "uppercase",
-              background: rarity.bg,
-              color: rarity.fg
-            }, children: rarity.label }),
-            /* @__PURE__ */ jsx14(Ti, { name: b.icon.replace("ti-", ""), size: 22, color: tint.icon }),
-            /* @__PURE__ */ jsx14("div", { style: { fontSize: 9.5, fontWeight: 600, lineHeight: 1.25, marginTop: 5, color: tint.text }, children: b.label })
-          ] }, b.id);
+          return /* @__PURE__ */ jsxs11(
+            "div",
+            {
+              role: "group",
+              "aria-label": `${b.label}, raret\xE9 ${rarity.label}, ${ok ? "d\xE9bloqu\xE9" : "verrouill\xE9"}`,
+              style: {
+                borderRadius: R.md,
+                padding: "10px 6px",
+                textAlign: "center",
+                border: `1.5px solid ${tint.border}`,
+                background: tint.bg,
+                position: "relative",
+                opacity: ok ? 1 : 0.3,
+                filter: ok ? "none" : "grayscale(.5)"
+              },
+              children: [
+                /* @__PURE__ */ jsx14("span", { style: {
+                  position: "absolute",
+                  top: 4,
+                  right: 4,
+                  fontSize: 7,
+                  fontWeight: 700,
+                  padding: "1px 4px",
+                  borderRadius: 3,
+                  letterSpacing: ".05em",
+                  textTransform: "uppercase",
+                  background: rarity.bg,
+                  color: rarity.fg
+                }, children: rarity.label }),
+                /* @__PURE__ */ jsx14(Ti, { name: b.icon.replace("ti-", ""), size: 22, color: tint.icon }),
+                /* @__PURE__ */ jsx14("div", { style: { fontSize: 9.5, fontWeight: 600, lineHeight: 1.25, marginTop: 5, color: tint.text }, children: b.label })
+              ]
+            },
+            b.id
+          );
         }) })
       ] }, cat)),
       /* @__PURE__ */ jsx14("div", { style: { height: 28 } })
@@ -12315,7 +12834,7 @@ function TabEditor() {
     setJouant(true);
     clearTimeout(timerBoucleRef.current);
     timerBoucleRef.current = null;
-    playTab(evs, {
+    await playTab(evs, {
       bpm: bpmLecture,
       onEvent: (ev) => {
         if (enLectureRef.current) setColLecture(ev.col);
@@ -12329,6 +12848,7 @@ function TabEditor() {
         arreter();
       }
     });
+    if (!enLectureRef.current) return;
     if (boucleRef.current) {
       const secParPas = 60 / bpmLecture / 4;
       const dureeMs2 = nbMesuresUtilisees(grille) * PAS_PAR_MESURE * secParPas * 1e3;
@@ -12817,7 +13337,7 @@ function useRecommandation(state, content) {
         type: "review",
         titre: "R\xE9vision du jour",
         texte: `${reviewStats.toReview} question${reviewStats.toReview > 1 ? "s" : ""} ${reviewStats.toReview > 1 ? "attendent" : "attend"} d'\xEAtre revue${reviewStats.toReview > 1 ? "s" : ""} \u2014 la m\xE9moire s'efface vite, c'est le bon moment.`,
-        icon: "history",
+        icon: "refresh",
         cta: "R\xE9viser maintenant"
       };
     }
@@ -13055,7 +13575,7 @@ function TrainingScreen({ state, dispatch, content, navigate }) {
       /* @__PURE__ */ jsx19(
         CarteMode,
         {
-          icon: "history",
+          icon: "refresh",
           titre: "R\xE9vision",
           role: "Ce qui est d\xFB, d\xE9cid\xE9 par la r\xE9p\xE9tition espac\xE9e",
           stat: reviewStats.toReview > 0 ? `${reviewStats.toReview} d\xFB${reviewStats.toReview > 1 ? "es" : "e"}` : "\xE0 jour",

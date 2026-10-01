@@ -466,6 +466,85 @@ const familleDictee = {
   },
 };
 
+// ── Lire une mesure (lecture de notation, pas d'écoute) ──────────────────
+// Valeurs qui composent une mesure de 4 temps, avec leur durée EN TEMPS et le
+// nombre d'ATTAQUES qu'elles produisent (toujours 1 : une ronde tenue 4
+// temps n'est frappée qu'une fois). `silence` : un soupir ou demi-soupir,
+// qui occupe sa durée sans aucune attaque.
+const VALEURS_MESURE = {
+  1:  [{ duree: 1 }],                                    // noire
+  2:  [{ duree: 2 }],                                     // blanche
+  4:  [{ duree: 4 }],                                     // ronde
+  v5: [{ duree: 0.5 }],                                   // croche
+  s1: [{ duree: 1, silence: true }],                      // soupir
+  s5: [{ duree: 0.5, silence: true }],                     // demi-soupir
+};
+/** Construit une mesure de 4 temps en tirant des valeurs au hasard parmi celles permises, jusqu'à la remplir exactement. */
+function tirerMesure(rng, cles) {
+  let reste = 4, jetons = [], essais = 0;
+  while (reste > 1e-9 && essais++ < 40) {
+    const possibles = cles.filter(k => VALEURS_MESURE[k][0].duree <= reste + 1e-9);
+    if (!possibles.length) return null;
+    const k = choisir(rng, possibles);
+    jetons.push({ ...VALEURS_MESURE[k][0] });
+    reste -= VALEURS_MESURE[k][0].duree;
+  }
+  return Math.abs(reste) < 1e-9 ? jetons : null;
+}
+/** Jetons → grille MiniGrille (pas=4 : la double-croche sert d'unité commune à toutes les valeurs, y compris la croche à 0,5 temps). */
+function grilleDeMesure(jetons) {
+  const attaques = []; let t = 0;
+  for (const j of jetons) { if (!j.silence) attaques.push(Math.round(t * 4)); t += j.duree; }
+  return { pas: 4, attaques };
+}
+const familleLectureMesure = {
+  id: "rythme-lecture-mesure", module: "rhythm", lecon: "rhy-c2-01", titre: "Rythme : lire une mesure",
+  niveaux: ["noires, blanches, rondes", "+ les croches", "+ les silences"],
+  generer(niv, rng, contexte) {
+    const aCroches = !!contexte?.completedLessons?.["rhy-c2-02"];
+    const aSilences = !!contexte?.completedLessons?.["rhy-c2-04"];
+    const effectif = niv >= 3 && aSilences ? 3 : niv >= 2 && aCroches ? 2 : 1;
+    const cles = effectif === 1 ? [1, 2, 4] : effectif === 2 ? [1, 2, 4, "v5", "v5"] : [1, 2, 4, "v5", "v5", "s1", "s5"];
+    const jetons = tirerMesure(rng, cles);
+    if (!jetons || jetons.length < 2) return null;
+    const bonne = jetons.filter(j => !j.silence).length;
+    const o = melanger(rng, [...new Set([bonne, Math.max(1, bonne - 1), bonne + 1, bonne + 2])]).map(String);
+    if (o.length < 4) return null;
+    const nomsValeur = (j) => j.duree === 4 ? "une ronde" : j.duree === 2 ? "une blanche" : j.duree === 1 ? (j.silence ? "un soupir" : "une noire") : (j.silence ? "un demi-soupir" : "une croche");
+    return { q: "Regarde la grille. Combien de notes sont réellement jouées (attaques) dans cette mesure ?", o, a: o.indexOf(String(bonne)),
+      grilleQuestion: grilleDeMesure(jetons),
+      exp: `De gauche à droite : ${jetons.map(nomsValeur).join(", ")}. ${bonne} note${bonne > 1 ? "s" : ""} jouée${bonne > 1 ? "s" : ""}${jetons.some(j => j.silence) ? " — les silences occupent du temps sans sonner" : ""}.` };
+  },
+};
+
+// ── Le sens du geste (main droite, mouvement pendulaire) ─────────────────
+// Règle de rhy-c4-01 et rhy-c2-02 : la main ne s'arrête jamais. Elle descend
+// sur chaque temps et chaque subdivision paire, remonte sur chaque
+// subdivision impaire — un pur mouvement de pendule, qu'on joue la corde ou
+// non à cet instant.
+const NOMS_SUBDIVISION = ["1", "e", "et", "a"];
+function nomPosition(pas) {
+  const temps = Math.floor(pas / 4) + 1, reste = pas % 4;
+  return reste === 0 ? String(temps) : (reste === 2 ? "et du " + temps : NOMS_SUBDIVISION[reste] + " du " + temps);
+}
+const familleGeste = {
+  id: "rythme-sens-du-geste", module: "rhythm", lecon: "rhy-c4-01", titre: "Rythme : le sens du geste",
+  niveaux: ["sur les temps et les « et »", "sur toutes les doubles-croches", "sur les positions les plus piégeuses"],
+  generer(niv, rng, contexte) {
+    const aDoubles = !!contexte?.completedLessons?.["rhy-c2-02"];
+    const effectif = niv >= 2 && aDoubles ? niv : 1;
+    const piege = effectif === 3 && rng() < 0.7;
+    const pas = effectif === 1
+      ? choisir(rng, [0, 2, 4, 6, 8, 10, 12, 14])
+      : piege ? choisir(rng, [1, 3, 5, 7, 9, 11, 13, 15])
+      : entre(rng, 0, 15);
+    const descend = pas % 2 === 0;
+    const o = ["Vers le bas", "Vers le haut"];
+    return { q: "Sur la position « " + nomPosition(pas) + " » de la mesure, la main va…", o, a: descend ? 0 : 1,
+      exp: "La main ne s'arrête jamais : bas sur chaque position paire, haut sur chaque impaire — même sans toucher la corde. « " + nomPosition(pas) + " » est " + (descend ? "paire : vers le bas." : "impaire : vers le haut.") };
+  },
+};
+
 const familleBinaire = {
   id: "rythme-binaire-ternaire", module: "rhythm", lecon: "rhy-c2-03", titre: "Rythme : binaire ou ternaire", ecoute: true,
   niveaux: ["croches continues, tempo lent", "croches continues, tempo plus rapide", "avec des silences"],
@@ -548,6 +627,8 @@ export const FAMILLES = [
   familleBinaire,
   familleOreilleManche,
   familleFonctions,
+  familleLectureMesure,
+  familleGeste,
 ];
 const PAR_ID = new Map(FAMILLES.map(f => [f.id, f]));
 export const idQuestion = (familleId) => `gen:${familleId}`;
@@ -569,10 +650,19 @@ export function niveauFamille(historique) {
   if ((h.attempts || 0) > 0 && (h.streak || 0) === 0) n = Math.max(1, n - 1);
   return n;
 }
-/** Réussites qui manquent pour atteindre le niveau suivant (null au niveau max). */
+/**
+ * Réussites qui manquent pour atteindre le niveau suivant (null au niveau max).
+ * En consolidation (redescendu d'un cran après une erreur), UNE réussite
+ * suffit à remonter : c'est l'erreur récente qui a fait redescendre. Avant,
+ * seul le total comptait, et l'écran affichait « niveau max » à côté d'une
+ * jauge à 2 sur 3.
+ */
 export function avantNiveauSuivant(historique) {
-  const r = historique?.successes || 0;
-  return r >= 8 ? null : r >= 3 ? 8 - r : 3 - r;
+  const h = historique || {};
+  const r = h.successes || 0;
+  const base = r >= 8 ? 3 : r >= 3 ? 2 : 1;
+  if (niveauFamille(h) < base) return 1;
+  return base === 3 ? null : base === 2 ? 8 - r : 3 - r;
 }
 
 /** Familles débloquées : celles dont la leçon est terminée. */

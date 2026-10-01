@@ -1496,7 +1496,10 @@ function TabEditor() {
     enLectureRef.current = true;
     setJouant(true);
     clearTimeout(timerBoucleRef.current); timerBoucleRef.current = null;
-    playTab(evs, {
+    // ATTENDRE playTab : au premier lancement, il charge les échantillons
+    // avant de jouer. Sans attendre, le chronomètre de la boucle démarrait
+    // pendant ce chargement et la tab repartait trop tôt, fin coupée.
+    await playTab(evs, {
       bpm: bpmLecture,
       onEvent: (ev) => { if (enLectureRef.current) setColLecture(ev.col); },
       onDone: () => {
@@ -1505,6 +1508,7 @@ function TabEditor() {
         arreter();
       },
     });
+    if (!enLectureRef.current) return;   // arrêtée pendant le chargement
     // En boucle, on repart à la fin de la DERNIÈRE MESURE, pas de la
     // dernière note : la boucle reste calée sur la pulsation.
     if (boucleRef.current) {

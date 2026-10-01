@@ -50,6 +50,12 @@ const stubs = {
           class FauxParam { constructor(v){this.value=v;} cancelScheduledValues(){return this;} setValueAtTime(v){this.value=v;return this;} linearRampToValueAtTime(v){this.value=v;return this;} }
           export class Gain { constructor(v){ this.gain = new FauxParam(v ?? 1); } toDestination(){return this;} connect(){return this;} dispose(){} }
           export class MetalSynth { constructor(){ this.volume = new FauxParam(0); } toDestination(){return this;} connect(){return this;} triggerAttackRelease(){} dispose(){} }
+          // Ajoutés pour le mixage de Jam Session (src/screens/JamSession.jsx) :
+          // un limiteur en toute fin de chaîne, et le placement stéréo du
+          // piano et du charleston. Sans eux, esbuild avertissait que ces
+          // imports seraient "always undefined" dans ce stub.
+          export class Limiter { constructor(){} toDestination(){return this;} connect(){return this;} dispose(){} }
+          export class Panner { constructor(v){ this.pan = new FauxParam(v ?? 0); } toDestination(){return this;} connect(){return this;} dispose(){} }
         `, loader: "js" };
       return { contents: `export const supabase = { auth: { getSession: async () => ({ data: {} }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe(){} } } }) }, from: () => ({}) };
         export const getCachedAccessToken = () => null; export const SUPABASE_REST = ""; export const SUPABASE_KEY = "";`, loader: "js" };

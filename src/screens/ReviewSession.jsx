@@ -89,10 +89,15 @@ export function ReviewSession({ questions, state, dispatch, onDone }) {
     // Question générée : on dit à l'élève où il en est dans cette compétence.
     const fam = q.genere ? familleDe(q.id) : null;
     if (fam) {
-      const avant = niveauFamille((state.reviewHistory || {})[q.id]);
+      const hAvant = (state.reviewHistory || {})[q.id];
+      const avant = niveauFamille(hAvant);
       const h = newHistory[q.id];
       const apres = niveauFamille(h);
-      setSuiviFamille({ avant, apres, restant: avantNiveauSuivant(h), suivant: fam.niveaux[apres] || null, libelle: fam.niveaux[apres - 1] });
+      // Remonter après une consolidation n'est pas un nouveau déblocage : le
+      // niveau avait déjà été atteint (le total de réussites le prouve).
+      const seuil = { 2: 3, 3: 8 }[apres] ?? Infinity;
+      const retour = apres > avant && (hAvant?.successes || 0) >= seuil;
+      setSuiviFamille({ avant, apres, retour, restant: avantNiveauSuivant(h), suivant: fam.niveaux[apres] || null, libelle: fam.niveaux[apres - 1] });
     } else setSuiviFamille(null);
   };
 
@@ -311,6 +316,14 @@ export function ReviewSession({ questions, state, dispatch, onDone }) {
         </p>
       </div>
 
+      {/* Grille affichée dans l'énoncé (lecture de mesure) — avant l'écoute et
+          les options : c'est elle qui pose la question. */}
+      {q.grilleQuestion && (
+        <div style={{ margin: "4px 0 14px", padding: "10px 12px", background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.md }}>
+          <MiniGrille grille={q.grilleQuestion} C={C} />
+        </div>
+      )}
+
       {/* Écoute */}
       {q.audio && (
         <div style={{ marginBottom: 12 }}>
@@ -413,7 +426,9 @@ export function ReviewSession({ questions, state, dispatch, onDone }) {
                   <Ti name={suiviFamille.apres > suiviFamille.avant ? "sparkles" : "target-arrow"} size={15} color={suiviFamille.apres > suiviFamille.avant ? C.primary : C.text3} />
                   <span>
                     {suiviFamille.apres > suiviFamille.avant
-                      ? <><b style={{ color: C.primaryD }}>Niveau {suiviFamille.apres} débloqué</b> : {suiviFamille.libelle}.</>
+                      ? (suiviFamille.retour
+                          ? <><b style={{ color: C.primaryD }}>De retour au niveau {suiviFamille.apres}</b> : {suiviFamille.libelle}.</>
+                          : <><b style={{ color: C.primaryD }}>Niveau {suiviFamille.apres} débloqué</b> : {suiviFamille.libelle}.</>)
                       : suiviFamille.apres < suiviFamille.avant
                       ? <>On consolide au niveau {suiviFamille.apres} ({suiviFamille.libelle}) avant de remonter.</>
                       : suiviFamille.restant == null

@@ -82,7 +82,7 @@ function useRecommandation(state, content) {
         type: "review",
         titre: "Révision du jour",
         texte: `${reviewStats.toReview} question${reviewStats.toReview > 1 ? "s" : ""} ${reviewStats.toReview > 1 ? "attendent" : "attend"} d'être revue${reviewStats.toReview > 1 ? "s" : ""} — la mémoire s'efface vite, c'est le bon moment.`,
-        icon: "history", cta: "Réviser maintenant",
+        icon: "refresh", cta: "Réviser maintenant",
       };
     }
 
@@ -309,7 +309,7 @@ export function TrainingScreen({ state, dispatch, content, navigate }) {
         </div>
 
         <CarteMode
-          icon="history" titre="Révision" role="Ce qui est dû, décidé par la répétition espacée"
+          icon="refresh" titre="Révision" role="Ce qui est dû, décidé par la répétition espacée"
           stat={reviewStats.toReview > 0 ? `${reviewStats.toReview} dû${reviewStats.toReview>1?"es":"e"}` : "à jour"}
           actif={false}
           onClick={() => navigate("review")}
