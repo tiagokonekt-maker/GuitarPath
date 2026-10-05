@@ -40,6 +40,7 @@ import { reducer } from "./store/reducer.js";
 import { BADGES, computeNewBadges } from "./store/badges.js";
 import { buildReviewSession } from "./store/reviewEngine.js";
 import { questionsGenereesPour } from "./store/generateurs.js";
+import { vivierDuDomaine } from "./store/seance.js";
 import { dailyTargetFromTime } from "./store/placementEngine.js";
 import { analytics, EVENTS } from "./analytics.js";
 
@@ -346,18 +347,27 @@ function AppInner({ onThemeChange }) {
   // ── Navigation ─────────────────────────────────────────────────────────
   const cibleSession = dailyTargetFromTime(state.onboarding?.timePerWeek);
 
-  const navigate = useCallback((s, { remplacer = false } = {}) => {
+  // Options de navigation (toutes facultatives) :
+  //   retour  : écran où revenir à la fin (la séance du jour revient à Pratique) ;
+  //   cible   : nombre de questions de révision (selon la durée de séance) ;
+  //   domaine : réviser un seul domaine ("Manche", "Théorie", "Oreille", "Rythme", "Impro").
+  const [retourEcran, setRetourEcran] = useState(null);
+  const navigate = useCallback((s, { remplacer = false, retour = null, cible = null, domaine = null } = {}) => {
     if (!ECRANS_VALIDES.has(s)) return;
     if (s === "review" && content) {
       // Questions écrites + une question GÉNÉRÉE par compétence débloquée (au
       // niveau de l'élève, jamais avant sa leçon) : le moteur de révision
       // choisit ensuite ce qui est dû ou nouveau, comme pour les autres.
+      let vivier = [...content.quiz, ...questionsGenereesPour(state)];
+      if (domaine) vivier = vivierDuDomaine(vivier, domaine);
+      const taille = cible || cibleSession;
       const session = buildReviewSession(
-        [...content.quiz, ...questionsGenereesPour(state)], state.reviewHistory || {}, state.completedLessons,
-        { targetCount: cibleSession, maxNew: Math.ceil(cibleSession / 3) },
+        vivier, state.reviewHistory || {}, state.completedLessons,
+        { targetCount: taille, maxNew: Math.ceil(taille / 3) },
       );
       setReviewQuestions(session.questions);
     }
+    setRetourEcran(retour);
     setShowSettings(false);
     setScreen(s);
     // Une entrée d'historique par écran : le bouton retour Android revient à
@@ -367,7 +377,7 @@ function AppInner({ onThemeChange }) {
       if (remplacer) history.replaceState({ screen: s }, "", url);
       else history.pushState({ screen: s }, "", url);
     } catch { /* contexte sans history (tests, iframe) */ }
-  }, [content, state.reviewHistory, state.completedLessons, cibleSession]);
+  }, [content, state, cibleSession]);
 
   useEffect(() => {
     const auRetour = (e) => {
@@ -456,16 +466,16 @@ function AppInner({ onThemeChange }) {
       case "exercises":
       case "quiz":      return <TrainingScreen {...props} />;
       case "progress":  return <ProgressScreen state={state} content={content} onOpenSettings={ouvrirReglages} />;
-      case "ear":       return <EarTraining onBack={() => navigate("toolbox")} dispatch={dispatch} state={state} />;
+      case "ear":       return <EarTraining onBack={() => navigate(retourEcran || "toolbox")} dispatch={dispatch} state={state} />;
       case "explorer":  return <FretboardExplorer onBack={() => navigate("home")} />;
-      case "jam":       return <JamSession onBack={() => navigate("toolbox")} dispatch={dispatch} state={state} />;
+      case "jam":       return <JamSession onBack={() => navigate(retourEcran || "toolbox")} dispatch={dispatch} state={state} />;
       // Toolbox est un onglet à part entière désormais : on n'a plus besoin
       // de la flèche retour qu'elle affichait quand elle n'était accessible
       // que par un bouton flottant. Le bouton est protégé par
       // `{onBack && (...)}` dans ToolboxScreen.jsx — ne pas lui passer ce
       // prop suffit à le faire disparaître, sans toucher au fichier.
       case "toolbox":   return <ToolboxScreen navigate={navigate} />;
-      case "review":    return <ReviewSession questions={reviewQuestions} state={state} dispatch={dispatch} onDone={() => navigate("home")} />;
+      case "review":    return <ReviewSession questions={reviewQuestions} state={state} dispatch={dispatch} onDone={() => navigate(retourEcran || "home")} />;
       case "practice":  return <PracticeScreen state={state} dispatch={dispatch} />;
       case "challenge": return <ChallengeScreen state={state} dispatch={dispatch} navigate={navigate} />;
       default:          return <HomeScreen {...props} />;

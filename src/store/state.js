@@ -37,7 +37,12 @@ export const defaultState = () => ({
   practiceLibre: { count: 0, totalMinutes: 0 },
   // Jam Session : séances comptées (3 min de jeu réel), temps de jeu total
   // (secondes, décompte exclu) et contraintes tenues 2 minutes.
-  jam: { seances: 0, secondes: 0, contraintes: 0 },
+  jam: { seances: 0, secondes: 0, contraintes: 0, jour: "", secondesJour: 0 },
+  // Jours où l'élève a pratiqué cette semaine (marqués avec la série), et
+  // date de la dernière révision terminée : la séance du jour s'en sert
+  // pour savoir ce qui est fait, sans dépendre de l'historique (10 entrées).
+  semaine: { cle: "", jours: [] },
+  derniereRevision: "",
   sessionHistory: [],
   gropiTipDate: "",
 
@@ -92,6 +97,8 @@ function migrate(parsed) {
   if (!Array.isArray(s.unlockedBadges)) s.unlockedBadges = [];
   if (!Array.isArray(s.sessionHistory)) s.sessionHistory = [];
   s.jam = { ...defaultState().jam, ...(s.jam && typeof s.jam === "object" ? s.jam : {}) };
+  if (!s.semaine || typeof s.semaine !== "object" || !Array.isArray(s.semaine.jours)) s.semaine = defaultState().semaine;
+  if (typeof s.derniereRevision !== "string") s.derniereRevision = "";
   if (typeof s.resetAt !== "string") s.resetAt = "";
   s.onboarding = { ...defaultState().onboarding, ...(s.onboarding || {}) };
 
@@ -303,7 +310,21 @@ export const mergeStates = (local, cloud) => {
     seances:     maxNum(L.jam?.seances,     C.jam?.seances),
     secondes:    maxNum(L.jam?.secondes,    C.jam?.secondes),
     contraintes: maxNum(L.jam?.contraintes, C.jam?.contraintes),
+    // Temps de jeu DU JOUR : seul le jour le plus récent compte ; même jour
+    // sur les deux appareils → le plus grand des deux (jamais de recul).
+    ...(() => {
+      const jl = L.jam?.jour || "", jc = C.jam?.jour || "";
+      if (jl === jc) return { jour: jl, secondesJour: maxNum(L.jam?.secondesJour, C.jam?.secondesJour) };
+      return jl > jc ? { jour: jl, secondesJour: L.jam?.secondesJour || 0 } : { jour: jc, secondesJour: C.jam?.secondesJour || 0 };
+    })(),
   };
+  // Jours de pratique : même semaine → union des jours ; sinon la plus récente.
+  {
+    const sl = L.semaine || {}, sc = C.semaine || {};
+    if ((sl.cle || "") === (sc.cle || "")) m.semaine = { cle: sl.cle || "", jours: [...new Set([...(sl.jours || []), ...(sc.jours || [])])].sort() };
+    else m.semaine = compareWeeks(sl.cle || "", sc.cle || "") > 0 ? { cle: sl.cle, jours: [...(sl.jours || [])] } : { cle: sc.cle, jours: [...(sc.jours || [])] };
+  }
+  m.derniereRevision = maxStr(L.derniereRevision, C.derniereRevision);
 
   // Historique : concat dédupliqué, tri par date décroissante, 10 max
   const seen = new Set();

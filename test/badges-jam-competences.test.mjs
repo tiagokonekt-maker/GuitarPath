@@ -3,6 +3,10 @@ import assert from "node:assert/strict";
 import { BADGES, computeNewBadges } from "../src/store/badges.js";
 import { defaultState, mergeStates } from "../src/store/state.js";
 import { reducer } from "../src/store/reducer.js";
+
+// Les trois compteurs des badges (le compteur de jam porte aussi le temps du
+// jour, pour la séance du jour : on ne fige pas la liste complète des champs).
+const compteurs = (j) => ({ seances: j.seances, secondes: j.secondes, contraintes: j.contraintes });
 import { COURSES, QUIZ, EXERCISES } from "../src/content.js";
 
 const content = { courses: COURSES, quiz: QUIZ, exercises: EXERCISES };
@@ -66,7 +70,7 @@ test("Jam Session : séances, temps et contraintes via le reducer", () => {
   for (let i = 0; i < 10; i++) s = reducer(s, { type: "JAM_PROGRES", seance: true });
   s = reducer(s, { type: "JAM_PROGRES", secondes: 3600 });
   for (let i = 0; i < 10; i++) s = reducer(s, { type: "JAM_PROGRES", contrainte: true });
-  assert.deepEqual(s.jam, { seances: 10, secondes: 3600, contraintes: 10 });
+  assert.deepEqual(compteurs(s.jam), { seances: 10, secondes: 3600, contraintes: 10 });
   const b = computeNewBadges(s, content);
   for (const id of ["jam_1", "jam_10", "jam_c10"]) assert.ok(b.includes(id), id);
   assert.ok(!b.includes("jam_5h"), "1 h de jam ne donne pas le badge 5 h");
@@ -81,14 +85,14 @@ test("JAM_PROGRES : une valeur aberrante ne gonfle pas le temps, et aucune XP n'
 
 test("JAM_PROGRES sur un ancien état sans champ jam : pas de NaN", () => {
   const ancien = { ...defaultState() }; delete ancien.jam;
-  assert.deepEqual(reducer(ancien, { type: "JAM_PROGRES", seance: true, secondes: 30 }).jam, { seances: 1, secondes: 30, contraintes: 0 });
+  assert.deepEqual(compteurs(reducer(ancien, { type: "JAM_PROGRES", seance: true, secondes: 30 }).jam), { seances: 1, secondes: 30, contraintes: 0 });
 });
 
 test("synchro entre appareils : le compteur de jam ne recule jamais (max champ par champ)", () => {
   const a = { ...defaultState(), jam: { seances: 4, secondes: 900, contraintes: 1 } };
   const b = { ...defaultState(), jam: { seances: 2, secondes: 2000, contraintes: 5 } };
-  assert.deepEqual(mergeStates(a, b).jam, { seances: 4, secondes: 2000, contraintes: 5 });
+  assert.deepEqual(compteurs(mergeStates(a, b).jam), { seances: 4, secondes: 2000, contraintes: 5 });
   assert.deepEqual(mergeStates(b, a).jam, mergeStates(a, b).jam, "le merge est commutatif");
   const sansJam = { ...defaultState() }; delete sansJam.jam;
-  assert.deepEqual(mergeStates(sansJam, a).jam, a.jam, "un appareil resté sur l'ancienne version ne fait rien perdre");
+  assert.deepEqual(compteurs(mergeStates(sansJam, a).jam), compteurs(a.jam), "un appareil resté sur l'ancienne version ne fait rien perdre");
 });

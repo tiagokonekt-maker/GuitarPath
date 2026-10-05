@@ -1,285 +1,91 @@
-// Groply — screens/TrainingScreen.jsx  v2 — refonte adaptative
+// Groply — screens/TrainingScreen.jsx (onglet Pratique)
 //
-// ── Ce qui change ──────────────────────────────────────────────────────────
-// La v1 fusionnait Quiz et Exercices sous deux sous-onglets, "Théorie" et
-// "Guitare en main" — un vrai progrès sur l'empilement d'avant, mais qui
-// laissait la moitié du problème intact : révision espacée, vérification
-// d'unité en attente et défi du jour vivaient ailleurs dans l'app (surtout
-// sur l'ancien Accueil), sans qu'aucun endroit ne réponde clairement à
-// « qu'est-ce que je dois retravailler MAINTENANT ? ».
-//
-// Depuis la fusion Accueil/Parcours, la frontière est nette :
-//   Parcours  → qu'est-ce que j'apprends ensuite (contenu neuf, structuré)
-//   Pratique  → qu'est-ce que je dois retravailler (déjà appris, à ancrer)
-//
-// Cette version fait de Pratique ce vrai centre : une recommandation
-// unique en tête, décidée par l'app à partir de reviewEngine (ce qui est
-// dû) et mastery (ce qui est réellement maîtrisé, module par module) —
-// deux moteurs déjà construits, jamais branchés ensemble jusqu'ici. En
-// dessous, chaque mode porte sa propre raison d'être en une ligne, au lieu
-// de deux libellés (Théorie / Guitare en main) qui ne disent rien de quand
-// les choisir.
-//
-// Ce qui n'est VOLONTAIREMENT PAS fait ici, pour rester honnête sur le
-// périmètre :
-//   • Pas de filtrage du quiz par module recommandé : QuizScreen.jsx et
-//     ExercisesScreen.jsx n'ont pas cette capacité aujourd'hui, et je ne
-//     les ai pas sous les yeux dans cette session pour la leur ajouter sans
-//     risque. La carte nomme le module faible, mais ouvrir "Théorie" montre
-//     encore l'ensemble du quiz.
-//   • Pas d'ouverture directe de la vérification d'unité en attente depuis
-//     cet écran : ce mécanisme vit entièrement dans l'état local de
-//     CoursesScreen (`checkingUnit`), sans route générique pour le
-//     déclencher de l'extérieur. La carte renvoie vers Parcours, où le
-//     coffre à vérifier est déjà visible.
+// Organisé autour de ce que l'élève veut faire, plus selon nos types de
+// contenu (Révision / Théorie / Guitare en main) :
+//   1. « Ta séance du jour » — composée automatiquement (store/seance.js),
+//      5, 15 ou 30 min, qui enchaîne des activités existantes. Chaque étape
+//      est faite quand la progression RÉELLE le dit : rien ne se coche à la
+//      main, et une séance commencée sur un appareil continue sur un autre.
+//   2. « Cette semaine » — les jours de pratique, face à l'objectif tiré du
+//      temps indiqué au test d'accueil (les objectifs hebdomadaires
+//      existaient dans les données, mais n'étaient affichés nulle part).
+//   3. La vérification d'unité, seulement quand elle est due.
+//   4. « S'entraîner sur… » — un domaine (Manche, Théorie, Oreille, Rythme,
+//      Impro) qui réunit ses compétences, ses exercices et son outil libre :
+//      Ear Training rejoint l'Oreille, la Jam Session l'Impro.
+
 import { useState, useMemo } from "react";
 import { R } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
-import { ExercisesScreen } from "./ExercisesScreen.jsx";
+import { ExerciseDetail } from "./ExercisesScreen.jsx";
 import { QuizScreen } from "./QuizScreen.jsx";
-import { getReviewStats } from "../store/reviewEngine.js";
 import { masteryStats } from "../store/mastery.js";
 import { buildPath } from "../store/pathEngine.js";
-import { TESTABLE_MODULES } from "../store/placementEngine.js";
-// todayStr en heure LOCALE — ne pas réimplémenter avec
-// `new Date().toISOString()`, qui reproduirait le bug UTC déjà corrigé
-// ailleurs dans l'app cet été (le défi du jour se déclarerait "fait" ou
-// "pas fait" à la mauvaise date passé 22h en France).
-import { todayStr } from "../store/state.js";
-import { itemsGeneres, progressionFamilles } from "../store/generateurs.js";
+// todayStr / weekStr en heure LOCALE — ne jamais réimplémenter avec
+// `new Date().toISOString()` (bug UTC déjà corrigé ailleurs dans l'app).
+import { todayStr, weekStr } from "../store/state.js";
+import { FAMILLES, domaineDe, progressionFamilles, itemsGeneres } from "../store/generateurs.js";
+import { getReviewStats } from "../store/reviewEngine.js";
+import { DUREES, dureeParDefaut, objectifJoursSemaine, planSeance, joursDeLaSemaine, indexJour } from "../store/seance.js";
 
-// Noms d'affichage des modules. Une table locale plutôt qu'un import : ce
-// fichier n'a pas la certitude d'avoir accès à moduleTheme.js dans cette
-// session, et TESTABLE_MODULES est stable depuis le début du projet — le
-// risque de diverger est faible, et une table locale explicite vaut mieux
-// qu'une dépendance non vérifiée.
-const NOM_MODULE = {
-  neck: "Manche", scales: "Gammes", harmony: "Harmonie",
-  rhythm: "Rythme", impro: "Improvisation",
-};
+const CLE_DUREE = "groply:duree-seance";
+const lireDuree = (defaut) => { try { const v = Number(localStorage.getItem(CLE_DUREE)); return DUREES.includes(v) ? v : defaut; } catch { return defaut; } };
+const ecrireDuree = (v) => { try { localStorage.setItem(CLE_DUREE, String(v)); } catch { /* stockage indisponible */ } };
 
-// Seuil de maîtrise en dessous duquel un module est considéré comme ayant
-// encore de la marge de progression. Au-dessus, on ne relance pas dessus —
-// "presque fini" ne mérite pas une recommandation, seulement "fini" ou
-// "loin d'être fini".
-const SEUIL_MODULE_FAIBLE = 90;
-
-/**
- * Calcule LA recommandation du moment, par ordre de priorité :
- *   1. Révision due (dette de mémoire — passe toujours en premier)
- *   2. Module le plus faible parmi ceux réellement entamés (mastery réelle,
- *      pas le résultat figé du test de placement — un module peut avoir
- *      progressé ou régressé depuis)
- *   3. Défi du jour, si pas encore relevé
- *   4. Rien de pressant
- */
-function useRecommandation(state, content) {
-  return useMemo(() => {
-    const reviewStats = getReviewStats([...content.quiz, ...itemsGeneres(state.completedLessons)], state.reviewHistory, state.completedLessons);
-    if (reviewStats.toReview > 0) {
-      return {
-        type: "review",
-        titre: "Révision du jour",
-        texte: `${reviewStats.toReview} question${reviewStats.toReview > 1 ? "s" : ""} ${reviewStats.toReview > 1 ? "attendent" : "attend"} d'être revue${reviewStats.toReview > 1 ? "s" : ""} — la mémoire s'efface vite, c'est le bon moment.`,
-        icon: "refresh", cta: "Réviser maintenant",
-      };
-    }
-
-    const parModule = TESTABLE_MODULES
-      .map(m => ({ id: m, stats: masteryStats(content, state, m) }))
-      .filter(x => x.stats.total > 0 && x.stats.atteints > 0 && x.stats.pctMoyen < SEUIL_MODULE_FAIBLE);
-    if (parModule.length > 0) {
-      parModule.sort((a, b) => a.stats.pctMoyen - b.stats.pctMoyen);
-      const { id, stats } = parModule[0];
-      return {
-        type: "module", moduleId: id,
-        titre: `Concentre-toi sur : ${NOM_MODULE[id] || id}`,
-        texte: `${stats.pctMoyen}% de maîtrise sur ce module — ${stats.comprises} leçon${stats.comprises>1?"s":""} comprise${stats.comprises>1?"s":""}, ${stats.ancrees} ancrée${stats.ancrees>1?"s":""}. Encore de la marge.`,
-        icon: "target-arrow", cta: "Travailler ce module",
-      };
-    }
-
-    if (!(state.dailyChallengeDone && state.dailyChallengeDate === todayStr())) {
-      return {
-        type: "challenge",
-        titre: "Défi du jour",
-        texte: "Rien de plus urgent à revoir pour l'instant — un défi rapide pour garder le rythme ?",
-        icon: "bolt", cta: "Relever le défi",
-      };
-    }
-
-    return {
-      type: "none",
-      titre: "Tout est à jour",
-      texte: "Rien à revoir, rien de faible en ce moment. Explore librement ci-dessous, ou reviens plus tard.",
-      icon: "check", cta: null,
-    };
-  }, [content, state.reviewHistory, state.completedLessons, state.quizResults, state.dailyChallengeDone, state.dailyChallengeDate]);
-}
-
-function CarteRecommandation({ rec, navigate, onOuvrirTheorie }) {
-  const C = useC();
-  const agir = () => {
-    if (rec.type === "review") navigate("review");
-    else if (rec.type === "challenge") navigate("challenge");
-    else if (rec.type === "module") onOuvrirTheorie();
-  };
-  return (
-    <div style={{
-      background: C.surface, border: `1.5px solid ${C.primaryBorder}`,
-      borderRadius: R.xl, padding: "16px 16px 14px", marginBottom: 16,
-    }}>
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 11 }}>
-        <div style={{
-          width: 38, height: 38, borderRadius: R.md, flexShrink: 0,
-          background: C.primaryL, display: "flex", alignItems: "center", justifyContent: "center",
-        }}>
-          <Ti name={rec.icon} size={18} color={C.primary} />
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 15, fontWeight: 800, color: C.text, letterSpacing: "-.2px" }}>{rec.titre}</div>
-          <p style={{ margin: "3px 0 0", fontSize: 12.5, lineHeight: 1.5, color: C.text2 }}>{rec.texte}</p>
-        </div>
-      </div>
-      {rec.cta && (
-        <button onClick={agir} className="gr-focus" style={{
-          width: "100%", marginTop: 13, padding: "11px", borderRadius: R.md, border: "none",
-          background: C.primaryBtn, color: "#fff", fontSize: 13.5, fontWeight: 800, cursor: "pointer",
-        }}>{rec.cta}</button>
-      )}
-    </div>
-  );
-}
-
-/** Une carte de mode : icône, rôle en une ligne, stat, état actif optionnel. */
-function CarteMode({ icon, titre, role, stat, actif, onClick }) {
-  const C = useC();
-  return (
-    <button onClick={onClick} className="gr-focus" style={{
-      display: "flex", alignItems: "center", gap: 12, width: "100%", textAlign: "left",
-      background: actif ? C.primaryL : C.surface,
-      border: `1.5px solid ${actif ? C.primaryBorder : C.border}`,
-      borderRadius: R.lg, padding: "12px 14px", marginBottom: 8, cursor: "pointer",
-    }}>
-      <div style={{
-        width: 34, height: 34, borderRadius: R.sm, flexShrink: 0,
-        background: actif ? "#fff" : C.surface2, display: "flex", alignItems: "center", justifyContent: "center",
-      }}>
-        <Ti name={icon} size={16} color={actif ? C.primary : C.text2} />
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13.5, fontWeight: 800, color: C.text }}>{titre}</div>
-        <div style={{ fontSize: 11, color: C.text3, marginTop: 1 }}>{role}</div>
-      </div>
-      <div style={{ textAlign: "right", flexShrink: 0 }}>
-        <div style={{ fontSize: 11.5, fontWeight: 700, color: actif ? C.primaryD : C.text2 }}>{stat}</div>
-      </div>
-    </button>
-  );
-}
-
-// ── Tes compétences ──────────────────────────────────────────────────────
-// Chaque compétence générée (notes d'une corde, intervalles, oreille…) avec
-// son niveau sur 3. Regroupées par domaine et repliées par défaut : la liste
-// s'allonge avec le parcours, elle ne doit pas noyer l'écran.
-const ORDRE_DOMAINES = ["Manche", "Théorie", "Oreille", "Rythme"];
-const titreCourt = (t) => t.replace(/^(Oreille|Rythme) : /, "");
-
-function Jauge({ niveau, C, taille = 14 }) {
-  return (
-    <div aria-label={`niveau ${niveau} sur 3`} role="img" style={{ display: "flex", gap: 3, flexShrink: 0 }}>
-      {[1, 2, 3].map(k => <span key={k} style={{ width: taille, height: 6, borderRadius: 3, background: k <= niveau ? C.primary : C.border }} />)}
-    </div>
-  );
-}
-
-function CompetencesPratique({ state, navigate }) {
-  const C = useC();
-  const [ouvert, setOuvert] = useState(null);
-  const prog = useMemo(() => progressionFamilles(state), [state.completedLessons, state.reviewHistory]);
-
-  if (!prog.length) {
-    return (
-      <div style={{ background: C.surface, border: `1px dashed ${C.border}`, borderRadius: R.lg, padding: "14px 16px", marginBottom: 16, fontSize: 12.5, color: C.text2, lineHeight: 1.5 }}>
-        <b style={{ color: C.text }}>Tes compétences</b> apparaîtront ici au fil des leçons : notes du manche, intervalles, oreille, rythme. Chacune a 3 niveaux, et la révision s'adapte au tien.
-      </div>
-    );
-  }
-  const auMax = prog.filter(p => p.restant == null && p.commencee).length;
-  return (
-    <div style={{ marginBottom: 16 }}>
-      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: C.text3, textTransform: "uppercase", letterSpacing: ".06em" }}>Tes compétences</div>
-        <div style={{ fontSize: 11.5, color: C.text3 }}>{prog.length} débloquée{prog.length > 1 ? "s" : ""}{auMax ? ` · ${auMax} au niveau max` : ""}</div>
-      </div>
-      {ORDRE_DOMAINES.map(dom => {
-        const liste = prog.filter(p => p.domaine === dom);
-        if (!liste.length) return null;
-        const moyenne = Math.round(liste.reduce((a, p) => a + (p.commencee ? p.niveau : 0), 0) / liste.length);
-        const estOuvert = ouvert === dom;
-        return (
-          <div key={dom} style={{ background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, marginBottom: 8, overflow: "hidden" }}>
-            <button onClick={() => setOuvert(estOuvert ? null : dom)} aria-expanded={estOuvert} className="gr-focus" style={{
-              display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "12px 14px", background: "none", border: "none", cursor: "pointer", textAlign: "left",
-            }}>
-              <span aria-hidden="true" style={{ display: "inline-block", transform: estOuvert ? "rotate(90deg)" : "none", transition: "transform .15s", color: C.text3, fontWeight: 800 }}>›</span>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 800, color: C.text }}>{dom}</div>
-                <div style={{ fontSize: 11, color: C.text3, marginTop: 1 }}>{liste.length} compétence{liste.length > 1 ? "s" : ""}</div>
-              </div>
-              <Jauge niveau={moyenne} C={C} />
-            </button>
-            {estOuvert && (
-              <div style={{ borderTop: `1px solid ${C.border}`, padding: "4px 14px 10px" }}>
-                {liste.map(p => (
-                  <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${C.surface2}` }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 12.5, fontWeight: 700, color: C.text }}>{titreCourt(p.titre)}</div>
-                      <div style={{ fontSize: 11, color: C.text3, marginTop: 1 }}>
-                        {!p.commencee ? "Nouvelle — pas encore travaillée" : p.restant == null ? `Niveau max · ${p.libelle}` : `Niveau ${p.niveau} · ${p.libelle} · encore ${p.restant} réussite${p.restant > 1 ? "s" : ""}`}
-                      </div>
-                    </div>
-                    <Jauge niveau={p.commencee ? p.niveau : 0} C={C} taille={12} />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        );
-      })}
-      <button onClick={() => navigate("review")} className="gr-focus" style={{
-        width: "100%", marginTop: 2, padding: "11px", borderRadius: R.md, cursor: "pointer",
-        border: `1.5px solid ${C.primaryBorder}`, background: C.primaryL, color: C.primaryD, fontSize: 13, fontWeight: 800,
-      }}>S'entraîner sur mes compétences</button>
-    </div>
-  );
-}
+// Domaines : couleur du module, icône, modules d'exercices, outil libre.
+const DOMAINES = [
+  { id: "Manche",  couleur: "amber",  icone: "map-2",     modules: ["neck"],              objectif: "manche",  libre: { titre: "Explorer le manche", detail: "Notes, gammes et accords sur tout le manche", ecran: "toolbox" } },
+  { id: "Théorie", couleur: "green",  icone: "stack-2",   modules: ["scales", "harmony"], objectif: "theorie", libre: { titre: "Quiz par module", detail: "Toutes les questions de théorie, à ton rythme", quiz: true } },
+  { id: "Oreille", couleur: "purple", icone: "ear",       modules: [],                    objectif: null,      libre: { titre: "Ear Training", detail: "Intervalles, accords, suites : sans limite", ecran: "ear" } },
+  { id: "Rythme",  couleur: "blue",   icone: "metronome", modules: ["rhythm"],            objectif: null,      libre: { titre: "Métronome", detail: "Dans la boîte à outils", ecran: "toolbox" } },
+  { id: "Impro",   couleur: "pink",   icone: "wand",      modules: ["impro"],             objectif: "impro",   libre: { titre: "Jam Session", detail: "Un groupe qui suit les accords, et des contraintes à tenir", ecran: "jam" } },
+];
+const ICONE_ETAPE = { revision: "refresh", guitare: "guitar-pick", jouer: "music" };
+const JOURS = ["L", "M", "M", "J", "V", "S", "D"];
+const NOMS_JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"];
 
 export function TrainingScreen({ state, dispatch, content, navigate }) {
   const C = useC();
-  const [tab, setTab] = useState(null);   // null = aucun mode embarqué ouvert
+  const [domaineOuvert, setDomaineOuvert] = useState(null);
+  const [exerciceOuvert, setExerciceOuvert] = useState(null);
+  const [quizOuvert, setQuizOuvert] = useState(false);
+  const [duree, setDuree] = useState(() => lireDuree(dureeParDefaut(state.onboarding?.timePerWeek)));
+  const objectif = state.onboarding?.goal || "global";
+  const today = todayStr();
 
-  const rec = useRecommandation(state, content);
-
-  const reviewStats = useMemo(
-    () => getReviewStats([...content.quiz, ...itemsGeneres(state.completedLessons)], state.reviewHistory, state.completedLessons),
-    [content.quiz, state.reviewHistory, state.completedLessons]
-  );
+  // Ce qui reste réellement à réviser (dû + jamais vu) : la séance n'annonce
+  // jamais plus de questions qu'il n'en existe.
+  const revisionDisponible = useMemo(() => {
+    const st = getReviewStats([...content.quiz, ...itemsGeneres(state.completedLessons)], state.reviewHistory, state.completedLessons);
+    return st.toReview + st.neverSeen;
+  }, [content.quiz, state.reviewHistory, state.completedLessons]);
+  const seance = useMemo(() => planSeance({ duree, objectif, state, content, today, revisionDisponible }), [duree, objectif, state, content, today, revisionDisponible]);
+  const progression = useMemo(() => progressionFamilles(state), [state.completedLessons, state.reviewHistory]);
   const gMastery = useMemo(() => masteryStats(content, state), [content, state]);
+  const uniteEnAttente = useMemo(() => buildPath(content, state).find(u => u.needsCheck) || null, [content, state]);
 
-  const exoStat = useMemo(() => {
-    const all = content.exercises || [];
-    const done = all.filter(e => state.completedExercises?.[e.id]).length;
-    return { done, total: all.length };
-  }, [content.exercises, state.completedExercises]);
+  const lancerEtape = (e) => {
+    if (e.aJour) return;
+    if (e.id === "revision") navigate("review", { cible: e.questions, retour: "training" });
+    else if (e.id === "guitare") setExerciceOuvert(e.exercice);
+    else if (e.id === "jouer") navigate("jam", { retour: "training" });
+  };
 
-  // Unité en attente de vérification, s'il y en a une — voir la note en
-  // tête de fichier sur ce que cette carte ne fait pas (encore).
-  const uniteEnAttente = useMemo(() => {
-    const path = buildPath(content, state);
-    return path.find(u => u.needsCheck) || null;
-  }, [content, state]);
+  if (exerciceOuvert) {
+    return <ExerciseDetail ex={exerciceOuvert} state={state} dispatch={dispatch} content={content} onBack={() => setExerciceOuvert(null)} />;
+  }
+  if (domaineOuvert) {
+    const d = DOMAINES.find(x => x.id === domaineOuvert);
+    return (
+      <VueDomaine C={C} d={d} state={state} dispatch={dispatch} content={content} navigate={navigate} progression={progression}
+        quizOuvert={quizOuvert} setQuizOuvert={setQuizOuvert}
+        onExercice={setExerciceOuvert} onRetour={() => { setDomaineOuvert(null); setQuizOuvert(false); }} />
+    );
+  }
+
+  // L'objectif de l'élève passe en tête des domaines.
+  const domainesOrdonnes = [...DOMAINES].sort((a, b) => (b.objectif === objectif) - (a.objectif === objectif));
 
   return (
     <div>
@@ -291,56 +97,309 @@ export function TrainingScreen({ state, dispatch, content, navigate }) {
       }}>
         <div style={{ position: "absolute", inset: 0, background: "rgba(0,60,80,.52)", pointerEvents: "none" }} />
         <div style={{ position: "relative", zIndex: 1 }}>
-          <div style={{ fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: "-.4px" }}>Pratique</div>
-          <div style={{ fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,.8)", marginTop: 2 }}>
-            {gMastery.comprises} compris · {gMastery.ancrees} ancré{gMastery.ancrees>1?"s":""} sur {gMastery.total} leçons
+          <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: "-.4px" }}>Pratique</h1>
+          <div style={{ fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,.85)", marginTop: 2 }}>
+            {gMastery.comprises} compris · {gMastery.ancrees} ancré{gMastery.ancrees > 1 ? "s" : ""} sur {gMastery.total} leçons
           </div>
         </div>
       </div>
 
-      <div style={{ padding: "16px 20px 4px" }}>
-        <CarteRecommandation rec={rec} navigate={navigate} onOuvrirTheorie={() => setTab("theory")} />
-
-        <CompetencesPratique state={state} navigate={navigate} />
-
-        {/* ── Les modes, chacun avec son rôle ── */}
-        <div style={{ fontSize: 11, fontWeight: 700, color: C.text3, textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 8 }}>
-          Tous les modes
-        </div>
-
-        <CarteMode
-          icon="refresh" titre="Révision" role="Ce qui est dû, décidé par la répétition espacée"
-          stat={reviewStats.toReview > 0 ? `${reviewStats.toReview} dû${reviewStats.toReview>1?"es":"e"}` : "à jour"}
-          actif={false}
-          onClick={() => navigate("review")}
-        />
-
-        {uniteEnAttente && (
-          <CarteMode
-            icon="lock" titre="Vérification d'unité" role={`${uniteEnAttente.title} — leçons finies, à valider`}
-            stat="en attente" actif={false}
-            onClick={() => navigate("home")}
-          />
+      <div style={{ padding: "16px 16px 24px", display: "flex", flexDirection: "column", gap: 14 }}>
+        {seance.vide ? (
+          <section style={{ background: C.surface, border: `1.5px solid ${C.primaryBorder}`, borderRadius: 22, padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: C.primaryD, textTransform: "uppercase", letterSpacing: ".06em" }}>Ta séance du jour</div>
+            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: C.text }}>Commence par une leçon</h2>
+            <div style={{ fontSize: 13, color: C.text2, lineHeight: 1.5 }}>Ta séance se composera d'elle-même dès ta première leçon : révision de ce que tu as appris, puis du jeu.</div>
+            <button onClick={() => navigate("home")} className="gr-focus" style={{ minHeight: 52, border: "none", borderRadius: 16, background: C.primaryBtn || C.primary, color: "#fff", fontFamily: "inherit", fontSize: 16, fontWeight: 800, cursor: "pointer" }}>
+              Aller au Parcours
+            </button>
+          </section>
+        ) : (
+          <SeanceDuJour C={C} seance={seance} duree={duree}
+            onDuree={(v) => { setDuree(v); ecrireDuree(v); }} onLancer={lancerEtape} />
         )}
 
-        <CarteMode
-          icon="help-circle" titre="Théorie" role="Quiz — vérifier et ancrer ce qui a été lu"
-          stat={`${gMastery.comprises + gMastery.ancrees}/${gMastery.total} compris`}
-          actif={tab === "theory"}
-          onClick={() => setTab(t => t === "theory" ? null : "theory")}
-        />
+        <Semaine C={C} state={state} objectifJours={objectifJoursSemaine(state.onboarding?.timePerWeek)} />
 
-        <CarteMode
-          icon="guitar-pick" titre="Guitare en main" role="Exercices — la pratique physique, à son rythme"
-          stat={`${exoStat.done}/${exoStat.total}`}
-          actif={tab === "playing"}
-          onClick={() => setTab(t => t === "playing" ? null : "playing")}
-        />
+        {uniteEnAttente && (
+          <section style={{ background: C.amberL, border: `1.5px solid ${C.amberBorder}`, borderRadius: R.lg, padding: "12px 14px", display: "flex", alignItems: "center", gap: 12 }}>
+            <Ti name="lock" size={22} color={C.amberD} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: C.amberD }}>Vérification prête</div>
+              <div style={{ fontSize: 12, color: C.amberD }}>{uniteEnAttente.title} : leçons finies, à valider</div>
+            </div>
+            <button onClick={() => navigate("home")} className="gr-focus" style={{ minHeight: 44, padding: "0 14px", borderRadius: R.md, border: `1.5px solid ${C.amber}`, background: C.surface, color: C.amberD, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+              Valider
+            </button>
+          </section>
+        )}
+
+        <section aria-labelledby="titre-domaines" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <h2 id="titre-domaines" style={{ margin: "4px 4px 0", fontSize: 17, fontWeight: 800, color: C.text }}>S'entraîner sur…</h2>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
+            {domainesOrdonnes.map(d => (
+              <CarteDomaine key={d.id} C={C} d={d} state={state} progression={progression} onOuvrir={() => setDomaineOuvert(d.id)} />
+            ))}
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+// ── Séance du jour ─────────────────────────────────────────────────────────
+function SeanceDuJour({ C, seance, duree, onDuree, onLancer }) {
+  const { etapes, prochaine, terminee, totalMinutes } = seance;
+  const commencee = etapes.some(e => e.fait);
+  return (
+    <section aria-labelledby="titre-seance" style={{ background: C.surface, border: `1.5px solid ${C.primaryBorder}`, borderRadius: 22, padding: 16, display: "flex", flexDirection: "column", gap: 14, boxShadow: "0 6px 20px rgba(184,64,16,.10)" }}>
+      <div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: C.primaryD, textTransform: "uppercase", letterSpacing: ".06em" }}>Ta séance du jour</div>
+        <h2 id="titre-seance" style={{ margin: "4px 0 0", fontSize: 20, fontWeight: 800, color: C.text, letterSpacing: "-.3px" }}>
+          {terminee ? "Séance terminée" : commencee ? "On continue ?" : "Composée pour toi"}
+        </h2>
       </div>
 
-      {/* ── Contenu du mode ouvert, sans son propre en-tête ── */}
-      {tab === "theory" && <QuizScreen state={state} dispatch={dispatch} content={content} embedded />}
-      {tab === "playing" && <ExercisesScreen state={state} dispatch={dispatch} content={content} embedded />}
+      {!terminee && (
+        <div role="group" aria-label="Durée de la séance" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 6, background: C.surface2, padding: 4, borderRadius: 14 }}>
+          {DUREES.map(v => (
+            <button key={v} onClick={() => onDuree(v)} aria-pressed={v === duree} className="gr-focus" style={{
+              minHeight: 44, border: "none", borderRadius: 11, fontFamily: "inherit", fontSize: 14, fontWeight: 700, cursor: "pointer",
+              background: v === duree ? C.surface : "transparent", color: v === duree ? C.text : C.text2,
+              boxShadow: v === duree ? "0 1px 4px rgba(24,19,15,.12)" : "none",
+            }}>{v} min</button>
+          ))}
+        </div>
+      )}
+
+      <ol style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+        {etapes.map((e, i) => {
+          const estProchaine = prochaine?.id === e.id;
+          const reste = e.id === "jouer" && !e.fait && e.secondesFaites > 0
+            ? ` · ${Math.floor(e.secondesFaites / 60)} min jouée${e.secondesFaites >= 120 ? "s" : ""} sur ${e.minutes}` : "";
+          return (
+            <li key={e.id}>
+              <button onClick={() => onLancer(e)} className="gr-focus"
+                aria-label={`Étape ${i + 1} : ${e.titre}, ${e.minutes} minutes, ${e.fait ? "faite" : estProchaine ? "à faire maintenant" : "à faire"}`}
+                style={{
+                  width: "100%", minHeight: 56, display: "flex", alignItems: "center", gap: 12, padding: "8px 10px", textAlign: "left",
+                  borderRadius: 14, cursor: "pointer", fontFamily: "inherit",
+                  background: estProchaine ? C.primaryL : "transparent",
+                  border: `1.5px solid ${estProchaine ? C.primaryBorder : "transparent"}`,
+                }}>
+                <div style={{
+                  width: 34, height: 34, flexShrink: 0, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center",
+                  background: e.fait ? C.green : C.primaryL, border: e.fait ? "none" : `1.5px solid ${C.primaryBorder}`,
+                }}>
+                  <Ti name={e.fait ? "check" : ICONE_ETAPE[e.id]} size={17} color={e.fait ? "#fff" : C.primaryD} />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: C.text, textDecorationLine: e.fait ? "line-through" : "none", textDecorationColor: C.text3 }}>{e.titre}</div>
+                  <div style={{ fontSize: 12, color: C.text2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.detail}{reste}</div>
+                </div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: C.text2, whiteSpace: "nowrap" }}>{e.aJour ? "à jour" : `${e.minutes} min`}</div>
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+
+      {terminee ? (
+        <div role="status" style={{ display: "flex", alignItems: "center", gap: 10, background: C.greenL, border: `1.5px solid ${C.greenBorder}`, borderRadius: 14, padding: "12px 14px", color: C.greenD, fontSize: 13, lineHeight: 1.5 }}>
+          <Ti name="trophy" size={22} color={C.greenD} />
+          <div><b>Bravo, c'est fait pour aujourd'hui.</b> Envie de continuer ? Choisis un domaine ci-dessous.</div>
+        </div>
+      ) : (
+        <button onClick={() => onLancer(prochaine)} className="gr-focus" style={{
+          minHeight: 52, border: "none", borderRadius: 16, background: C.primaryBtn || C.primary, color: "#fff",
+          fontFamily: "inherit", fontSize: 16, fontWeight: 800, cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+        }}>
+          <Ti name="player-play" size={18} color="#fff" />
+          {commencee ? `Continuer : ${prochaine.titre}` : `Commencer · ${totalMinutes} min`}
+        </button>
+      )}
+    </section>
+  );
+}
+
+// ── Cette semaine ──────────────────────────────────────────────────────────
+function Semaine({ C, state, objectifJours }) {
+  const jours = joursDeLaSemaine(state, weekStr());
+  const faits = new Set(jours.map(indexJour));
+  const auj = indexJour(todayStr());
+  const n = jours.length;
+  return (
+    <section aria-labelledby="titre-semaine" style={{ background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
+        <h2 id="titre-semaine" style={{ margin: 0, fontSize: 15, fontWeight: 800, color: C.text }}>Cette semaine</h2>
+        <div style={{ fontSize: 13, color: C.text2 }}>
+          <b style={{ color: C.text }}>{n} jour{n > 1 ? "s" : ""}</b> de pratique sur {objectifJours}
+        </div>
+      </div>
+      <ul aria-label={`Jours de pratique : ${n} sur ${objectifJours} visés`} style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: 6 }}>
+        {JOURS.map((l, i) => (
+          <li key={i} aria-label={`${NOMS_JOURS[i]} : ${faits.has(i) ? "pratiqué" : i === auj ? "aujourd'hui" : "pas de pratique"}`}
+            style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+            <div style={{
+              width: 30, height: 30, borderRadius: 999, display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box",
+              background: faits.has(i) ? C.green : i === auj ? C.surface : C.surface2,
+              border: !faits.has(i) && i === auj ? `2px solid ${C.primary}` : "none",
+            }}>
+              {faits.has(i) && <Ti name="check" size={14} color="#fff" />}
+            </div>
+            <div aria-hidden="true" style={{ fontSize: 11, fontWeight: i === auj ? 800 : 600, color: i === auj ? C.primaryD : C.text2 }}>{l}</div>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+// ── Domaines ───────────────────────────────────────────────────────────────
+function familleDomaine(f) { return domaineDe(f); }
+function couleurs(C, nom) { return { c: C[nom], l: C[nom + "L"], d: C[nom + "D"], b: C[nom + "Border"] }; }
+
+function CarteDomaine({ C, d, state, progression, onOuvrir }) {
+  const k = couleurs(C, d.couleur);
+  const miennes = progression.filter(p => p.domaine === d.id);
+  const commencees = miennes.filter(p => p.commencee);
+  const niveau = commencees.length ? Math.round(commencees.reduce((s, p) => s + p.niveau, 0) / commencees.length) : 0;
+  const detail = d.id === "Impro"
+    ? `Jam Session · ${state.jam?.seances || 0} séance${(state.jam?.seances || 0) > 1 ? "s" : ""}`
+    : miennes.length ? `${miennes.length} compétence${miennes.length > 1 ? "s" : ""}` : "À débloquer dans le parcours";
+  return (
+    <button onClick={onOuvrir} className="gr-focus" aria-label={`${d.id} : ${detail}${commencees.length ? `, niveau moyen ${niveau} sur 3` : ""}`}
+      style={{ minHeight: 148, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10, padding: 14, borderRadius: 18, background: C.surface, border: `1.5px solid ${k.b}`, cursor: "pointer", textAlign: "left", fontFamily: "inherit" }}>
+      <div style={{ width: 38, height: 38, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", background: k.l }}>
+        <Ti name={d.icone} size={20} color={k.c} />
+      </div>
+      <div style={{ fontSize: 15, fontWeight: 800, color: C.text }}>{d.id}</div>
+      {d.id !== "Impro" && (
+        <div aria-hidden="true" style={{ display: "flex", gap: 4, width: "100%" }}>
+          {[1, 2, 3].map(n => <div key={n} style={{ flex: 1, height: 6, borderRadius: 3, background: n <= niveau ? k.c : C.border }} />)}
+        </div>
+      )}
+      <div style={{ fontSize: 12, color: C.text2 }}>{detail}</div>
+    </button>
+  );
+}
+
+function VueDomaine({ C, d, state, dispatch, content, navigate, progression, quizOuvert, setQuizOuvert, onExercice, onRetour }) {
+  const k = couleurs(C, d.couleur);
+  const lecons = useMemo(() => new Map(content.courses.flatMap(c => c.lessons).map(l => [l.id, l.title])), [content.courses]);
+  const debloquees = progression.filter(p => p.domaine === d.id);
+  const verrouillees = FAMILLES.filter(f => familleDomaine(f) === d.id && !state.completedLessons?.[f.lecon]);
+  const exercices = (content.exercises || []).filter(e => d.modules.includes(e.mod) &&
+    (!e.unlockedBy?.length || e.unlockedBy.every(id => state.completedLessons?.[id])) &&
+    (!e.courseLink || state.completedLessons?.[e.courseLink]));
+  const quizDispo = (content.quiz || []).some(q => d.modules.includes(q.courseId) && state.completedLessons?.[q.lessonId]);
+  const peutReviser = debloquees.length > 0 || quizDispo;
+
+  const ouvrirLibre = () => {
+    if (d.libre.quiz) setQuizOuvert(true);
+    else navigate(d.libre.ecran, d.libre.ecran === "toolbox" ? {} : { retour: "training" });
+  };
+
+  return (
+    <div>
+      <div style={{ background: k.l, borderBottom: `1.5px solid ${k.b}`, padding: "18px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
+        <button onClick={onRetour} aria-label="Retour à Pratique" className="gr-focus" style={{ width: 44, height: 44, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", background: C.surface, border: `1.5px solid ${k.b}`, cursor: "pointer" }}>
+          <Ti name="arrow-left" size={18} color={k.d} />
+        </button>
+        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, letterSpacing: "-.5px", color: k.d }}>{d.id}</h1>
+        {peutReviser ? (
+          <button onClick={() => navigate("review", { domaine: d.id, cible: 10, retour: "training" })} className="gr-focus" style={{
+            minHeight: 52, border: "none", borderRadius: 16, background: k.d, color: "#fff", fontFamily: "inherit", fontSize: 15, fontWeight: 800, cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+          }}>
+            <Ti name="player-play" size={18} color="#fff" /> S'entraîner sur {d.id === "Impro" ? "l'impro" : d.id === "Oreille" ? "l'oreille" : `le ${d.id.toLowerCase()}`}
+          </button>
+        ) : d.id !== "Impro" && (
+          <div style={{ fontSize: 13, color: k.d }}>Rien à réviser pour l'instant : les compétences de ce domaine se débloquent avec les leçons du parcours.</div>
+        )}
+      </div>
+
+      <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 16 }}>
+        {quizOuvert ? (
+          <section>
+            <button onClick={() => setQuizOuvert(false)} className="gr-focus" style={{ minHeight: 44, border: "none", background: "none", color: C.text2, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", padding: 0 }}>
+              ← Fermer les quiz
+            </button>
+            <QuizScreen state={state} dispatch={dispatch} content={content} embedded />
+          </section>
+        ) : (<>
+          {d.id === "Impro" ? (
+            <Bloc C={C} titre="Ta Jam Session">
+              <Ligne C={C} titre={`${state.jam?.seances || 0} séance${(state.jam?.seances || 0) > 1 ? "s" : ""} comptée${(state.jam?.seances || 0) > 1 ? "s" : ""}`}
+                detail={`${Math.floor((state.jam?.secondes || 0) / 60)} min de jeu · ${state.jam?.contraintes || 0} contrainte${(state.jam?.contraintes || 0) > 1 ? "s" : ""} tenue${(state.jam?.contraintes || 0) > 1 ? "s" : ""}`} />
+            </Bloc>
+          ) : (
+            <Bloc C={C} titre="Tes compétences">
+              {debloquees.map(p => (
+                <Ligne key={p.id} C={C} titre={p.titre.replace(/^[^:]+ : /, "")}
+                  detail={p.commencee ? `Niveau ${p.niveau} · ${p.libelle}` : "Nouvelle"}
+                  jauge={p.commencee ? p.niveau : 0} couleur={k.c} />
+              ))}
+              {verrouillees.map(f => (
+                <Ligne key={f.id} C={C} titre={f.titre.replace(/^[^:]+ : /, "")} verrou
+                  detail={`Se débloque avec « ${lecons.get(f.lecon) || "une leçon du parcours"} »`} />
+              ))}
+              {!debloquees.length && !verrouillees.length && <Ligne C={C} titre="Aucune compétence dans ce domaine" detail="" />}
+            </Bloc>
+          )}
+
+          {exercices.length > 0 && (
+            <Bloc C={C} titre="Guitare en main">
+              {exercices.map(e => (
+                <Ligne key={e.id} C={C} titre={e.title} detail={`${e.dur ?? "?"} min${state.completedExercises?.[e.id] ? " · déjà fait" : ""}`}
+                  onClick={() => onExercice(e)} />
+              ))}
+            </Bloc>
+          )}
+
+          <Bloc C={C} titre="En libre">
+            <Ligne C={C} titre={d.libre.titre} detail={d.libre.detail} onClick={ouvrirLibre} />
+          </Bloc>
+        </>)}
+      </div>
     </div>
+  );
+}
+
+function Bloc({ C, titre, children }) {
+  return (
+    <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <h2 style={{ margin: "0 4px", fontSize: 16, fontWeight: 800, color: C.text }}>{titre}</h2>
+      <ul style={{ listStyle: "none", margin: 0, padding: 0, background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: 18, overflow: "hidden" }}>
+        {children}
+      </ul>
+    </section>
+  );
+}
+
+function Ligne({ C, titre, detail, jauge, couleur, verrou, onClick }) {
+  const contenu = (
+    <>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: verrou ? C.text2 : C.text }}>{titre}</div>
+        {detail && <div style={{ fontSize: 12, color: C.text2 }}>{detail}</div>}
+      </div>
+      {verrou && <Ti name="lock" size={17} color={C.text2} label="Verrouillée" />}
+      {jauge != null && !verrou && (
+        <div role="img" aria-label={`niveau ${jauge} sur 3`} style={{ display: "flex", gap: 3, flexShrink: 0 }}>
+          {[1, 2, 3].map(n => <div key={n} style={{ width: 14, height: 6, borderRadius: 3, background: n <= jauge ? couleur : C.border }} />)}
+        </div>
+      )}
+      {onClick && <Ti name="chevron-right" size={18} color={C.text2} />}
+    </>
+  );
+  const style = { display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", minHeight: 56, boxSizing: "border-box", borderTop: `1px solid ${C.surface2}` };
+  return (
+    <li style={{ borderTop: "none" }}>
+      {onClick
+        ? <button onClick={onClick} className="gr-focus" style={{ ...style, width: "100%", background: "none", border: "none", borderTop: `1px solid ${C.surface2}`, textAlign: "left", cursor: "pointer", fontFamily: "inherit" }}>{contenu}</button>
+        : <div style={style}>{contenu}</div>}
+    </li>
   );
 }

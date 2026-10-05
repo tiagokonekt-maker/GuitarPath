@@ -1109,6 +1109,14 @@ var daysBetween = (a, b) => {
   const tb = Date.UTC(pb[0], pb[1] - 1, pb[2]);
   return Math.round((tb - ta) / 864e5);
 };
+var weekStr = (date = /* @__PURE__ */ new Date()) => {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const week = Math.ceil(((d - yearStart) / 864e5 + 1) / 7);
+  return `${d.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
+};
 
 // src/screens/UnitCheckScreen.jsx
 var UnitCheckScreen_exports = {};
@@ -13237,312 +13245,200 @@ __export(TrainingScreen_exports, {
 });
 import { useState as useState15, useMemo as useMemo10 } from "react";
 
-// src/store/placementEngine.js
-var TESTABLE_MODULES = ["neck", "scales", "harmony", "rhythm", "impro"];
-var TIER_ORDER = ["A1", "A2", "B1", "B2"];
-var TIER_VALUE = { A1: 1, A2: 2, B1: 3, B2: 4 };
-var MAX_STARTING_LEVEL = 8;
-var PLACEMENT_LEVELS = [1, 2, 3];
-var FALLBACK_TIER = "A2";
-function pickRandom(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
+// src/store/seance.js
+var DUREES = [5, 15, 30];
+function dureeParDefaut(timePerWeek) {
+  return { short: 5, medium: 15, long: 30 }[timePerWeek] ?? 15;
 }
-var usableQuestions = (quizBank, moduleId, lvl) => (quizBank || []).filter(
-  (q) => q.courseId === moduleId && q.lvl === lvl && Array.isArray(q.o) && q.o.length >= 2
-);
-function availableModules(quizBank) {
-  if (!quizBank || quizBank.length === 0) return [...TESTABLE_MODULES];
-  return TESTABLE_MODULES.filter(
-    (m) => PLACEMENT_LEVELS.every((lvl) => usableQuestions(quizBank, m, lvl).length > 0)
-  );
+function objectifJoursSemaine(timePerWeek) {
+  return { short: 2, medium: 3, long: 5 }[timePerWeek] ?? 3;
 }
-function buildPlacementQueue(quizBank = null) {
-  const modules = quizBank ? availableModules(quizBank) : [...TESTABLE_MODULES];
-  const queue = [];
-  for (const lvl of PLACEMENT_LEVELS) {
-    for (const moduleId of modules) queue.push({ moduleId, lvl });
-  }
-  return queue;
-}
-function placementQuestionCount(quizBank = null) {
-  return buildPlacementQueue(quizBank).length;
-}
-var PLACEMENT_QUESTION_COUNT = TESTABLE_MODULES.length * PLACEMENT_LEVELS.length;
-function pickQuestion(quizBank, moduleId, lvl, excludeIds) {
-  const pool = usableQuestions(quizBank, moduleId, lvl).filter((q) => q.type !== "fretboard" && !excludeIds.has(q.id));
-  return pool.length === 0 ? null : pickRandom(pool);
-}
-function pickPlacementQuestion(quizBank, moduleId, lvl, excludeIds, preferFretboard = false) {
-  if (preferFretboard) {
-    const fretPool = (quizBank || []).filter(
-      (q2) => q2.courseId === moduleId && q2.lvl === lvl && q2.type === "fretboard" && !excludeIds.has(q2.id)
-    );
-    if (fretPool.length > 0) return { ...pickRandom(fretPool), moduleId };
-  }
-  const q = pickQuestion(quizBank, moduleId, lvl, excludeIds);
-  return q ? { ...q, moduleId } : null;
-}
-function startFromScore(totalCorrect, totalQuestions) {
-  const answered = Math.max(1, Number(totalQuestions) || 1);
-  const ratio = Math.max(0, Math.min(1, (Number(totalCorrect) || 0) / answered));
-  const level = Math.max(1, Math.min(
-    MAX_STARTING_LEVEL,
-    Math.round(1 + ratio * (MAX_STARTING_LEVEL - 1))
-  ));
-  return { grade: gradeForLevel(level), startXp: totalXpForLevel(level), level, startLevel: level };
-}
-function computeModuleTier(correctCount) {
-  const idx = Math.max(0, Math.min(TIER_ORDER.length - 1, Number(correctCount) || 0));
-  return TIER_ORDER[idx];
-}
-var averageTier = (skillLevels, modules) => {
-  const values = modules.map((m) => TIER_VALUE[skillLevels?.[m]]).filter(Boolean);
-  if (values.length === 0) return FALLBACK_TIER;
-  const avg = values.reduce((a, b) => a + b, 0) / values.length;
-  return TIER_ORDER[Math.max(0, Math.min(3, Math.round(avg) - 1))];
+var BASE2 = {
+  5: { revision: 3, jouer: 2 },
+  15: { revision: 6, jouer: 9 },
+  30: { revision: 8, jouer: 10 }
 };
-function inferMissingTier(skillLevels, testedModules = TESTABLE_MODULES) {
-  return averageTier(skillLevels, testedModules);
+var MODULES_OBJECTIF = { manche: ["neck"], theorie: ["scales", "harmony"], impro: ["impro"] };
+var DUREE_EXERCICE_IDEALE = 12;
+var questionsPour = (minutes) => Math.max(3, Math.round(minutes * 1.4));
+function choisirExercice(state, content, objectif) {
+  const faites = state.completedLessons || {};
+  const fait = state.completedExercises || {};
+  const prefere = MODULES_OBJECTIF[objectif] || [];
+  const candidats = (content.exercises || []).filter((e) => (!e.unlockedBy?.length || e.unlockedBy.every((id) => faites[id])) && (!e.courseLink || faites[e.courseLink]));
+  if (!candidats.length) return null;
+  const cle2 = (e) => [
+    fait[e.id] ? 1 : 0,
+    // jamais fait d'abord
+    fait[e.id]?.lastAt || "",
+    // sinon le plus ancien
+    prefere.includes(e.mod) ? 0 : 1,
+    // module de l'objectif
+    (e.dur ?? 99) <= DUREE_EXERCICE_IDEALE ? 0 : 1,
+    // pas trop long
+    e.lvl ?? 9
+  ];
+  return [...candidats].sort((a, b) => {
+    const ka = cle2(a), kb = cle2(b);
+    for (let i = 0; i < ka.length; i++) if (ka[i] !== kb[i]) return ka[i] < kb[i] ? -1 : 1;
+    return 0;
+  })[0];
 }
-function computeOverallTier(skillLevels, testedModules = TESTABLE_MODULES) {
-  return averageTier(skillLevels, testedModules);
-}
-function weakestModule(skillLevels, testedModules = TESTABLE_MODULES) {
-  let weakest = null, weakestVal = 5;
-  for (const m of testedModules) {
-    const v = TIER_VALUE[skillLevels?.[m]];
-    if (v && v < weakestVal) {
-      weakestVal = v;
-      weakest = m;
+function planSeance({ duree = 15, objectif = "global", state, content, today, revisionDisponible = Infinity }) {
+  if (!Object.keys(state.completedLessons || {}).length) return { vide: true, etapes: [], prochaine: null, terminee: false, totalMinutes: 0 };
+  const d = BASE2[duree] ? duree : 15;
+  let { revision, jouer } = BASE2[d];
+  if (objectif === "impro") {
+    const t = Math.min(2, revision - 2);
+    revision -= t;
+    jouer += t;
+  }
+  if (objectif === "theorie") {
+    const t = Math.min(2, jouer - 2);
+    jouer -= t;
+    revision += t;
+  }
+  const etapes = [];
+  const reviseAujourdhui = state.derniereRevision === today || (state.sessionHistory || []).some((h) => h.type === "review" && h.date === today);
+  if (!reviseAujourdhui && revisionDisponible <= 0) {
+    jouer += revision;
+    etapes.push({
+      id: "revision",
+      titre: "R\xE9vision",
+      minutes: 0,
+      questions: 0,
+      aJour: true,
+      detail: "Tout est \xE0 jour aujourd'hui",
+      fait: true
+    });
+    revision = 0;
+  } else {
+    const nbQuestions = Math.max(1, Math.min(questionsPour(revision), revisionDisponible));
+    etapes.push({
+      id: "revision",
+      titre: "R\xE9vision",
+      minutes: revision,
+      questions: nbQuestions,
+      detail: `${nbQuestions} question${nbQuestions > 1 ? "s" : ""} \xB7 comp\xE9tences et quiz`,
+      fait: reviseAujourdhui
+    });
+  }
+  if (d === 30) {
+    const ex = choisirExercice(state, content, objectif);
+    if (ex) {
+      const exFaitAujourdhui = Object.values(state.completedExercises || {}).some((x) => x?.lastAt === today);
+      const minutesEx = ex.dur ?? DUREE_EXERCICE_IDEALE;
+      jouer = Math.max(5, 30 - revision - minutesEx);
+      etapes.push({
+        id: "guitare",
+        titre: "Guitare en main",
+        minutes: minutesEx,
+        exercice: ex,
+        detail: ex.title,
+        fait: exFaitAujourdhui
+      });
+    } else {
+      jouer = 30 - revision;
     }
   }
-  return weakest;
+  const jam = state.jam || {};
+  const secondesJour = jam.jour === today ? jam.secondesJour || 0 : 0;
+  etapes.push({
+    id: "jouer",
+    titre: "Jouer",
+    minutes: jouer,
+    secondesCible: jouer * 60,
+    secondesFaites: Math.min(secondesJour, jouer * 60),
+    detail: "Jam Session \xB7 avec une contrainte \xE0 tenir",
+    fait: secondesJour >= jouer * 60
+  });
+  const prochaine = etapes.find((e) => !e.fait) || null;
+  return { etapes, prochaine, terminee: !prochaine, totalMinutes: etapes.reduce((s, e) => s + e.minutes, 0) };
+}
+function joursDeLaSemaine(state, semaineCourante) {
+  const s = state.semaine;
+  return s && s.cle === semaineCourante ? [...new Set(s.jours || [])] : [];
+}
+function indexJour(dateStr) {
+  const [a, m, j] = dateStr.split("-").map(Number);
+  return (new Date(a, m - 1, j).getDay() + 6) % 7;
 }
 
 // src/screens/TrainingScreen.jsx
-import { jsx as jsx19, jsxs as jsxs16 } from "react/jsx-runtime";
-var NOM_MODULE = {
-  neck: "Manche",
-  scales: "Gammes",
-  harmony: "Harmonie",
-  rhythm: "Rythme",
-  impro: "Improvisation"
-};
-var SEUIL_MODULE_FAIBLE = 90;
-function useRecommandation(state, content) {
-  return useMemo10(() => {
-    const reviewStats = getReviewStats([...content.quiz, ...itemsGeneres(state.completedLessons)], state.reviewHistory, state.completedLessons);
-    if (reviewStats.toReview > 0) {
-      return {
-        type: "review",
-        titre: "R\xE9vision du jour",
-        texte: `${reviewStats.toReview} question${reviewStats.toReview > 1 ? "s" : ""} ${reviewStats.toReview > 1 ? "attendent" : "attend"} d'\xEAtre revue${reviewStats.toReview > 1 ? "s" : ""} \u2014 la m\xE9moire s'efface vite, c'est le bon moment.`,
-        icon: "refresh",
-        cta: "R\xE9viser maintenant"
-      };
-    }
-    const parModule = TESTABLE_MODULES.map((m) => ({ id: m, stats: masteryStats(content, state, m) })).filter((x) => x.stats.total > 0 && x.stats.atteints > 0 && x.stats.pctMoyen < SEUIL_MODULE_FAIBLE);
-    if (parModule.length > 0) {
-      parModule.sort((a, b) => a.stats.pctMoyen - b.stats.pctMoyen);
-      const { id, stats } = parModule[0];
-      return {
-        type: "module",
-        moduleId: id,
-        titre: `Concentre-toi sur : ${NOM_MODULE[id] || id}`,
-        texte: `${stats.pctMoyen}% de ma\xEEtrise sur ce module \u2014 ${stats.comprises} le\xE7on${stats.comprises > 1 ? "s" : ""} comprise${stats.comprises > 1 ? "s" : ""}, ${stats.ancrees} ancr\xE9e${stats.ancrees > 1 ? "s" : ""}. Encore de la marge.`,
-        icon: "target-arrow",
-        cta: "Travailler ce module"
-      };
-    }
-    if (!(state.dailyChallengeDone && state.dailyChallengeDate === todayStr())) {
-      return {
-        type: "challenge",
-        titre: "D\xE9fi du jour",
-        texte: "Rien de plus urgent \xE0 revoir pour l'instant \u2014 un d\xE9fi rapide pour garder le rythme ?",
-        icon: "bolt",
-        cta: "Relever le d\xE9fi"
-      };
-    }
-    return {
-      type: "none",
-      titre: "Tout est \xE0 jour",
-      texte: "Rien \xE0 revoir, rien de faible en ce moment. Explore librement ci-dessous, ou reviens plus tard.",
-      icon: "check",
-      cta: null
-    };
-  }, [content, state.reviewHistory, state.completedLessons, state.quizResults, state.dailyChallengeDone, state.dailyChallengeDate]);
-}
-function CarteRecommandation({ rec, navigate, onOuvrirTheorie }) {
-  const C = useC();
-  const agir = () => {
-    if (rec.type === "review") navigate("review");
-    else if (rec.type === "challenge") navigate("challenge");
-    else if (rec.type === "module") onOuvrirTheorie();
-  };
-  return /* @__PURE__ */ jsxs16("div", { style: {
-    background: C.surface,
-    border: `1.5px solid ${C.primaryBorder}`,
-    borderRadius: R.xl,
-    padding: "16px 16px 14px",
-    marginBottom: 16
-  }, children: [
-    /* @__PURE__ */ jsxs16("div", { style: { display: "flex", alignItems: "flex-start", gap: 11 }, children: [
-      /* @__PURE__ */ jsx19("div", { style: {
-        width: 38,
-        height: 38,
-        borderRadius: R.md,
-        flexShrink: 0,
-        background: C.primaryL,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center"
-      }, children: /* @__PURE__ */ jsx19(Ti, { name: rec.icon, size: 18, color: C.primary }) }),
-      /* @__PURE__ */ jsxs16("div", { style: { flex: 1, minWidth: 0 }, children: [
-        /* @__PURE__ */ jsx19("div", { style: { fontSize: 15, fontWeight: 800, color: C.text, letterSpacing: "-.2px" }, children: rec.titre }),
-        /* @__PURE__ */ jsx19("p", { style: { margin: "3px 0 0", fontSize: 12.5, lineHeight: 1.5, color: C.text2 }, children: rec.texte })
-      ] })
-    ] }),
-    rec.cta && /* @__PURE__ */ jsx19("button", { onClick: agir, className: "gr-focus", style: {
-      width: "100%",
-      marginTop: 13,
-      padding: "11px",
-      borderRadius: R.md,
-      border: "none",
-      background: C.primaryBtn,
-      color: "#fff",
-      fontSize: 13.5,
-      fontWeight: 800,
-      cursor: "pointer"
-    }, children: rec.cta })
-  ] });
-}
-function CarteMode({ icon, titre, role, stat, actif, onClick }) {
-  const C = useC();
-  return /* @__PURE__ */ jsxs16("button", { onClick, className: "gr-focus", style: {
-    display: "flex",
-    alignItems: "center",
-    gap: 12,
-    width: "100%",
-    textAlign: "left",
-    background: actif ? C.primaryL : C.surface,
-    border: `1.5px solid ${actif ? C.primaryBorder : C.border}`,
-    borderRadius: R.lg,
-    padding: "12px 14px",
-    marginBottom: 8,
-    cursor: "pointer"
-  }, children: [
-    /* @__PURE__ */ jsx19("div", { style: {
-      width: 34,
-      height: 34,
-      borderRadius: R.sm,
-      flexShrink: 0,
-      background: actif ? "#fff" : C.surface2,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center"
-    }, children: /* @__PURE__ */ jsx19(Ti, { name: icon, size: 16, color: actif ? C.primary : C.text2 }) }),
-    /* @__PURE__ */ jsxs16("div", { style: { flex: 1, minWidth: 0 }, children: [
-      /* @__PURE__ */ jsx19("div", { style: { fontSize: 13.5, fontWeight: 800, color: C.text }, children: titre }),
-      /* @__PURE__ */ jsx19("div", { style: { fontSize: 11, color: C.text3, marginTop: 1 }, children: role })
-    ] }),
-    /* @__PURE__ */ jsx19("div", { style: { textAlign: "right", flexShrink: 0 }, children: /* @__PURE__ */ jsx19("div", { style: { fontSize: 11.5, fontWeight: 700, color: actif ? C.primaryD : C.text2 }, children: stat }) })
-  ] });
-}
-var ORDRE_DOMAINES = ["Manche", "Th\xE9orie", "Oreille", "Rythme"];
-var titreCourt = (t) => t.replace(/^(Oreille|Rythme) : /, "");
-function Jauge({ niveau, C, taille = 14 }) {
-  return /* @__PURE__ */ jsx19("div", { "aria-label": `niveau ${niveau} sur 3`, role: "img", style: { display: "flex", gap: 3, flexShrink: 0 }, children: [1, 2, 3].map((k) => /* @__PURE__ */ jsx19("span", { style: { width: taille, height: 6, borderRadius: 3, background: k <= niveau ? C.primary : C.border } }, k)) });
-}
-function CompetencesPratique({ state, navigate }) {
-  const C = useC();
-  const [ouvert, setOuvert] = useState15(null);
-  const prog = useMemo10(() => progressionFamilles(state), [state.completedLessons, state.reviewHistory]);
-  if (!prog.length) {
-    return /* @__PURE__ */ jsxs16("div", { style: { background: C.surface, border: `1px dashed ${C.border}`, borderRadius: R.lg, padding: "14px 16px", marginBottom: 16, fontSize: 12.5, color: C.text2, lineHeight: 1.5 }, children: [
-      /* @__PURE__ */ jsx19("b", { style: { color: C.text }, children: "Tes comp\xE9tences" }),
-      " appara\xEEtront ici au fil des le\xE7ons : notes du manche, intervalles, oreille, rythme. Chacune a 3 niveaux, et la r\xE9vision s'adapte au tien."
-    ] });
+import { Fragment as Fragment10, jsx as jsx19, jsxs as jsxs16 } from "react/jsx-runtime";
+var CLE_DUREE = "groply:duree-seance";
+var lireDuree = (defaut) => {
+  try {
+    const v = Number(localStorage.getItem(CLE_DUREE));
+    return DUREES.includes(v) ? v : defaut;
+  } catch {
+    return defaut;
   }
-  const auMax2 = prog.filter((p) => p.restant == null && p.commencee).length;
-  return /* @__PURE__ */ jsxs16("div", { style: { marginBottom: 16 }, children: [
-    /* @__PURE__ */ jsxs16("div", { style: { display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }, children: [
-      /* @__PURE__ */ jsx19("div", { style: { fontSize: 11, fontWeight: 700, color: C.text3, textTransform: "uppercase", letterSpacing: ".06em" }, children: "Tes comp\xE9tences" }),
-      /* @__PURE__ */ jsxs16("div", { style: { fontSize: 11.5, color: C.text3 }, children: [
-        prog.length,
-        " d\xE9bloqu\xE9e",
-        prog.length > 1 ? "s" : "",
-        auMax2 ? ` \xB7 ${auMax2} au niveau max` : ""
-      ] })
-    ] }),
-    ORDRE_DOMAINES.map((dom) => {
-      const liste2 = prog.filter((p) => p.domaine === dom);
-      if (!liste2.length) return null;
-      const moyenne = Math.round(liste2.reduce((a, p) => a + (p.commencee ? p.niveau : 0), 0) / liste2.length);
-      const estOuvert = ouvert === dom;
-      return /* @__PURE__ */ jsxs16("div", { style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, marginBottom: 8, overflow: "hidden" }, children: [
-        /* @__PURE__ */ jsxs16("button", { onClick: () => setOuvert(estOuvert ? null : dom), "aria-expanded": estOuvert, className: "gr-focus", style: {
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          width: "100%",
-          padding: "12px 14px",
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          textAlign: "left"
-        }, children: [
-          /* @__PURE__ */ jsx19("span", { "aria-hidden": "true", style: { display: "inline-block", transform: estOuvert ? "rotate(90deg)" : "none", transition: "transform .15s", color: C.text3, fontWeight: 800 }, children: "\u203A" }),
-          /* @__PURE__ */ jsxs16("div", { style: { flex: 1 }, children: [
-            /* @__PURE__ */ jsx19("div", { style: { fontSize: 13.5, fontWeight: 800, color: C.text }, children: dom }),
-            /* @__PURE__ */ jsxs16("div", { style: { fontSize: 11, color: C.text3, marginTop: 1 }, children: [
-              liste2.length,
-              " comp\xE9tence",
-              liste2.length > 1 ? "s" : ""
-            ] })
-          ] }),
-          /* @__PURE__ */ jsx19(Jauge, { niveau: moyenne, C })
-        ] }),
-        estOuvert && /* @__PURE__ */ jsx19("div", { style: { borderTop: `1px solid ${C.border}`, padding: "4px 14px 10px" }, children: liste2.map((p) => /* @__PURE__ */ jsxs16("div", { style: { display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${C.surface2}` }, children: [
-          /* @__PURE__ */ jsxs16("div", { style: { flex: 1, minWidth: 0 }, children: [
-            /* @__PURE__ */ jsx19("div", { style: { fontSize: 12.5, fontWeight: 700, color: C.text }, children: titreCourt(p.titre) }),
-            /* @__PURE__ */ jsx19("div", { style: { fontSize: 11, color: C.text3, marginTop: 1 }, children: !p.commencee ? "Nouvelle \u2014 pas encore travaill\xE9e" : p.restant == null ? `Niveau max \xB7 ${p.libelle}` : `Niveau ${p.niveau} \xB7 ${p.libelle} \xB7 encore ${p.restant} r\xE9ussite${p.restant > 1 ? "s" : ""}` })
-          ] }),
-          /* @__PURE__ */ jsx19(Jauge, { niveau: p.commencee ? p.niveau : 0, C, taille: 12 })
-        ] }, p.id)) })
-      ] }, dom);
-    }),
-    /* @__PURE__ */ jsx19("button", { onClick: () => navigate("review"), className: "gr-focus", style: {
-      width: "100%",
-      marginTop: 2,
-      padding: "11px",
-      borderRadius: R.md,
-      cursor: "pointer",
-      border: `1.5px solid ${C.primaryBorder}`,
-      background: C.primaryL,
-      color: C.primaryD,
-      fontSize: 13,
-      fontWeight: 800
-    }, children: "S'entra\xEEner sur mes comp\xE9tences" })
-  ] });
-}
+};
+var ecrireDuree = (v) => {
+  try {
+    localStorage.setItem(CLE_DUREE, String(v));
+  } catch {
+  }
+};
+var DOMAINES = [
+  { id: "Manche", couleur: "amber", icone: "map-2", modules: ["neck"], objectif: "manche", libre: { titre: "Explorer le manche", detail: "Notes, gammes et accords sur tout le manche", ecran: "toolbox" } },
+  { id: "Th\xE9orie", couleur: "green", icone: "stack-2", modules: ["scales", "harmony"], objectif: "theorie", libre: { titre: "Quiz par module", detail: "Toutes les questions de th\xE9orie, \xE0 ton rythme", quiz: true } },
+  { id: "Oreille", couleur: "purple", icone: "ear", modules: [], objectif: null, libre: { titre: "Ear Training", detail: "Intervalles, accords, suites : sans limite", ecran: "ear" } },
+  { id: "Rythme", couleur: "blue", icone: "metronome", modules: ["rhythm"], objectif: null, libre: { titre: "M\xE9tronome", detail: "Dans la bo\xEEte \xE0 outils", ecran: "toolbox" } },
+  { id: "Impro", couleur: "pink", icone: "wand", modules: ["impro"], objectif: "impro", libre: { titre: "Jam Session", detail: "Un groupe qui suit les accords, et des contraintes \xE0 tenir", ecran: "jam" } }
+];
+var ICONE_ETAPE = { revision: "refresh", guitare: "guitar-pick", jouer: "music" };
+var JOURS = ["L", "M", "M", "J", "V", "S", "D"];
+var NOMS_JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"];
 function TrainingScreen({ state, dispatch, content, navigate }) {
   const C = useC();
-  const [tab, setTab] = useState15(null);
-  const rec = useRecommandation(state, content);
-  const reviewStats = useMemo10(
-    () => getReviewStats([...content.quiz, ...itemsGeneres(state.completedLessons)], state.reviewHistory, state.completedLessons),
-    [content.quiz, state.reviewHistory, state.completedLessons]
-  );
+  const [domaineOuvert, setDomaineOuvert] = useState15(null);
+  const [exerciceOuvert, setExerciceOuvert] = useState15(null);
+  const [quizOuvert, setQuizOuvert] = useState15(false);
+  const [duree, setDuree] = useState15(() => lireDuree(dureeParDefaut(state.onboarding?.timePerWeek)));
+  const objectif = state.onboarding?.goal || "global";
+  const today = todayStr();
+  const revisionDisponible = useMemo10(() => {
+    const st = getReviewStats([...content.quiz, ...itemsGeneres(state.completedLessons)], state.reviewHistory, state.completedLessons);
+    return st.toReview + st.neverSeen;
+  }, [content.quiz, state.reviewHistory, state.completedLessons]);
+  const seance = useMemo10(() => planSeance({ duree, objectif, state, content, today, revisionDisponible }), [duree, objectif, state, content, today, revisionDisponible]);
+  const progression = useMemo10(() => progressionFamilles(state), [state.completedLessons, state.reviewHistory]);
   const gMastery = useMemo10(() => masteryStats(content, state), [content, state]);
-  const exoStat = useMemo10(() => {
-    const all = content.exercises || [];
-    const done = all.filter((e) => state.completedExercises?.[e.id]).length;
-    return { done, total: all.length };
-  }, [content.exercises, state.completedExercises]);
-  const uniteEnAttente = useMemo10(() => {
-    const path = buildPath(content, state);
-    return path.find((u) => u.needsCheck) || null;
-  }, [content, state]);
+  const uniteEnAttente = useMemo10(() => buildPath(content, state).find((u) => u.needsCheck) || null, [content, state]);
+  const lancerEtape = (e) => {
+    if (e.aJour) return;
+    if (e.id === "revision") navigate("review", { cible: e.questions, retour: "training" });
+    else if (e.id === "guitare") setExerciceOuvert(e.exercice);
+    else if (e.id === "jouer") navigate("jam", { retour: "training" });
+  };
+  if (exerciceOuvert) {
+    return /* @__PURE__ */ jsx19(ExerciseDetail, { ex: exerciceOuvert, state, dispatch, content, onBack: () => setExerciceOuvert(null) });
+  }
+  if (domaineOuvert) {
+    const d = DOMAINES.find((x) => x.id === domaineOuvert);
+    return /* @__PURE__ */ jsx19(
+      VueDomaine,
+      {
+        C,
+        d,
+        state,
+        dispatch,
+        content,
+        navigate,
+        progression,
+        quizOuvert,
+        setQuizOuvert,
+        onExercice: setExerciceOuvert,
+        onRetour: () => {
+          setDomaineOuvert(null);
+          setQuizOuvert(false);
+        }
+      }
+    );
+  }
+  const domainesOrdonnes = [...DOMAINES].sort((a, b) => (b.objectif === objectif) - (a.objectif === objectif));
   return /* @__PURE__ */ jsxs16("div", { children: [
     /* @__PURE__ */ jsxs16("div", { style: {
       backgroundColor: "#36b3d7",
@@ -13555,8 +13451,8 @@ function TrainingScreen({ state, dispatch, content, navigate }) {
     }, children: [
       /* @__PURE__ */ jsx19("div", { style: { position: "absolute", inset: 0, background: "rgba(0,60,80,.52)", pointerEvents: "none" } }),
       /* @__PURE__ */ jsxs16("div", { style: { position: "relative", zIndex: 1 }, children: [
-        /* @__PURE__ */ jsx19("div", { style: { fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: "-.4px" }, children: "Pratique" }),
-        /* @__PURE__ */ jsxs16("div", { style: { fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,.8)", marginTop: 2 }, children: [
+        /* @__PURE__ */ jsx19("h1", { style: { margin: 0, fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: "-.4px" }, children: "Pratique" }),
+        /* @__PURE__ */ jsxs16("div", { style: { fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,.85)", marginTop: 2 }, children: [
           gMastery.comprises,
           " compris \xB7 ",
           gMastery.ancrees,
@@ -13568,58 +13464,313 @@ function TrainingScreen({ state, dispatch, content, navigate }) {
         ] })
       ] })
     ] }),
-    /* @__PURE__ */ jsxs16("div", { style: { padding: "16px 20px 4px" }, children: [
-      /* @__PURE__ */ jsx19(CarteRecommandation, { rec, navigate, onOuvrirTheorie: () => setTab("theory") }),
-      /* @__PURE__ */ jsx19(CompetencesPratique, { state, navigate }),
-      /* @__PURE__ */ jsx19("div", { style: { fontSize: 11, fontWeight: 700, color: C.text3, textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 8 }, children: "Tous les modes" }),
-      /* @__PURE__ */ jsx19(
-        CarteMode,
+    /* @__PURE__ */ jsxs16("div", { style: { padding: "16px 16px 24px", display: "flex", flexDirection: "column", gap: 14 }, children: [
+      seance.vide ? /* @__PURE__ */ jsxs16("section", { style: { background: C.surface, border: `1.5px solid ${C.primaryBorder}`, borderRadius: 22, padding: 16, display: "flex", flexDirection: "column", gap: 12 }, children: [
+        /* @__PURE__ */ jsx19("div", { style: { fontSize: 12, fontWeight: 700, color: C.primaryD, textTransform: "uppercase", letterSpacing: ".06em" }, children: "Ta s\xE9ance du jour" }),
+        /* @__PURE__ */ jsx19("h2", { style: { margin: 0, fontSize: 20, fontWeight: 800, color: C.text }, children: "Commence par une le\xE7on" }),
+        /* @__PURE__ */ jsx19("div", { style: { fontSize: 13, color: C.text2, lineHeight: 1.5 }, children: "Ta s\xE9ance se composera d'elle-m\xEAme d\xE8s ta premi\xE8re le\xE7on : r\xE9vision de ce que tu as appris, puis du jeu." }),
+        /* @__PURE__ */ jsx19("button", { onClick: () => navigate("home"), className: "gr-focus", style: { minHeight: 52, border: "none", borderRadius: 16, background: C.primaryBtn || C.primary, color: "#fff", fontFamily: "inherit", fontSize: 16, fontWeight: 800, cursor: "pointer" }, children: "Aller au Parcours" })
+      ] }) : /* @__PURE__ */ jsx19(
+        SeanceDuJour,
         {
-          icon: "refresh",
-          titre: "R\xE9vision",
-          role: "Ce qui est d\xFB, d\xE9cid\xE9 par la r\xE9p\xE9tition espac\xE9e",
-          stat: reviewStats.toReview > 0 ? `${reviewStats.toReview} d\xFB${reviewStats.toReview > 1 ? "es" : "e"}` : "\xE0 jour",
-          actif: false,
-          onClick: () => navigate("review")
+          C,
+          seance,
+          duree,
+          onDuree: (v) => {
+            setDuree(v);
+            ecrireDuree(v);
+          },
+          onLancer: lancerEtape
         }
       ),
-      uniteEnAttente && /* @__PURE__ */ jsx19(
-        CarteMode,
-        {
-          icon: "lock",
-          titre: "V\xE9rification d'unit\xE9",
-          role: `${uniteEnAttente.title} \u2014 le\xE7ons finies, \xE0 valider`,
-          stat: "en attente",
-          actif: false,
-          onClick: () => navigate("home")
-        }
-      ),
-      /* @__PURE__ */ jsx19(
-        CarteMode,
-        {
-          icon: "help-circle",
-          titre: "Th\xE9orie",
-          role: "Quiz \u2014 v\xE9rifier et ancrer ce qui a \xE9t\xE9 lu",
-          stat: `${gMastery.comprises + gMastery.ancrees}/${gMastery.total} compris`,
-          actif: tab === "theory",
-          onClick: () => setTab((t) => t === "theory" ? null : "theory")
-        }
-      ),
-      /* @__PURE__ */ jsx19(
-        CarteMode,
-        {
-          icon: "guitar-pick",
-          titre: "Guitare en main",
-          role: "Exercices \u2014 la pratique physique, \xE0 son rythme",
-          stat: `${exoStat.done}/${exoStat.total}`,
-          actif: tab === "playing",
-          onClick: () => setTab((t) => t === "playing" ? null : "playing")
-        }
-      )
-    ] }),
-    tab === "theory" && /* @__PURE__ */ jsx19(QuizScreen, { state, dispatch, content, embedded: true }),
-    tab === "playing" && /* @__PURE__ */ jsx19(ExercisesScreen, { state, dispatch, content, embedded: true })
+      /* @__PURE__ */ jsx19(Semaine, { C, state, objectifJours: objectifJoursSemaine(state.onboarding?.timePerWeek) }),
+      uniteEnAttente && /* @__PURE__ */ jsxs16("section", { style: { background: C.amberL, border: `1.5px solid ${C.amberBorder}`, borderRadius: R.lg, padding: "12px 14px", display: "flex", alignItems: "center", gap: 12 }, children: [
+        /* @__PURE__ */ jsx19(Ti, { name: "lock", size: 22, color: C.amberD }),
+        /* @__PURE__ */ jsxs16("div", { style: { flex: 1, minWidth: 0 }, children: [
+          /* @__PURE__ */ jsx19("div", { style: { fontSize: 14, fontWeight: 700, color: C.amberD }, children: "V\xE9rification pr\xEAte" }),
+          /* @__PURE__ */ jsxs16("div", { style: { fontSize: 12, color: C.amberD }, children: [
+            uniteEnAttente.title,
+            " : le\xE7ons finies, \xE0 valider"
+          ] })
+        ] }),
+        /* @__PURE__ */ jsx19("button", { onClick: () => navigate("home"), className: "gr-focus", style: { minHeight: 44, padding: "0 14px", borderRadius: R.md, border: `1.5px solid ${C.amber}`, background: C.surface, color: C.amberD, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }, children: "Valider" })
+      ] }),
+      /* @__PURE__ */ jsxs16("section", { "aria-labelledby": "titre-domaines", style: { display: "flex", flexDirection: "column", gap: 10 }, children: [
+        /* @__PURE__ */ jsx19("h2", { id: "titre-domaines", style: { margin: "4px 4px 0", fontSize: 17, fontWeight: 800, color: C.text }, children: "S'entra\xEEner sur\u2026" }),
+        /* @__PURE__ */ jsx19("div", { style: { display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }, children: domainesOrdonnes.map((d) => /* @__PURE__ */ jsx19(CarteDomaine, { C, d, state, progression, onOuvrir: () => setDomaineOuvert(d.id) }, d.id)) })
+      ] })
+    ] })
   ] });
+}
+function SeanceDuJour({ C, seance, duree, onDuree, onLancer }) {
+  const { etapes, prochaine, terminee, totalMinutes } = seance;
+  const commencee = etapes.some((e) => e.fait);
+  return /* @__PURE__ */ jsxs16("section", { "aria-labelledby": "titre-seance", style: { background: C.surface, border: `1.5px solid ${C.primaryBorder}`, borderRadius: 22, padding: 16, display: "flex", flexDirection: "column", gap: 14, boxShadow: "0 6px 20px rgba(184,64,16,.10)" }, children: [
+    /* @__PURE__ */ jsxs16("div", { children: [
+      /* @__PURE__ */ jsx19("div", { style: { fontSize: 12, fontWeight: 700, color: C.primaryD, textTransform: "uppercase", letterSpacing: ".06em" }, children: "Ta s\xE9ance du jour" }),
+      /* @__PURE__ */ jsx19("h2", { id: "titre-seance", style: { margin: "4px 0 0", fontSize: 20, fontWeight: 800, color: C.text, letterSpacing: "-.3px" }, children: terminee ? "S\xE9ance termin\xE9e" : commencee ? "On continue ?" : "Compos\xE9e pour toi" })
+    ] }),
+    !terminee && /* @__PURE__ */ jsx19("div", { role: "group", "aria-label": "Dur\xE9e de la s\xE9ance", style: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 6, background: C.surface2, padding: 4, borderRadius: 14 }, children: DUREES.map((v) => /* @__PURE__ */ jsxs16("button", { onClick: () => onDuree(v), "aria-pressed": v === duree, className: "gr-focus", style: {
+      minHeight: 44,
+      border: "none",
+      borderRadius: 11,
+      fontFamily: "inherit",
+      fontSize: 14,
+      fontWeight: 700,
+      cursor: "pointer",
+      background: v === duree ? C.surface : "transparent",
+      color: v === duree ? C.text : C.text2,
+      boxShadow: v === duree ? "0 1px 4px rgba(24,19,15,.12)" : "none"
+    }, children: [
+      v,
+      " min"
+    ] }, v)) }),
+    /* @__PURE__ */ jsx19("ol", { style: { listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 8 }, children: etapes.map((e, i) => {
+      const estProchaine = prochaine?.id === e.id;
+      const reste = e.id === "jouer" && !e.fait && e.secondesFaites > 0 ? ` \xB7 ${Math.floor(e.secondesFaites / 60)} min jou\xE9e${e.secondesFaites >= 120 ? "s" : ""} sur ${e.minutes}` : "";
+      return /* @__PURE__ */ jsx19("li", { children: /* @__PURE__ */ jsxs16(
+        "button",
+        {
+          onClick: () => onLancer(e),
+          className: "gr-focus",
+          "aria-label": `\xC9tape ${i + 1} : ${e.titre}, ${e.minutes} minutes, ${e.fait ? "faite" : estProchaine ? "\xE0 faire maintenant" : "\xE0 faire"}`,
+          style: {
+            width: "100%",
+            minHeight: 56,
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            padding: "8px 10px",
+            textAlign: "left",
+            borderRadius: 14,
+            cursor: "pointer",
+            fontFamily: "inherit",
+            background: estProchaine ? C.primaryL : "transparent",
+            border: `1.5px solid ${estProchaine ? C.primaryBorder : "transparent"}`
+          },
+          children: [
+            /* @__PURE__ */ jsx19("div", { style: {
+              width: 34,
+              height: 34,
+              flexShrink: 0,
+              borderRadius: 10,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: e.fait ? C.green : C.primaryL,
+              border: e.fait ? "none" : `1.5px solid ${C.primaryBorder}`
+            }, children: /* @__PURE__ */ jsx19(Ti, { name: e.fait ? "check" : ICONE_ETAPE[e.id], size: 17, color: e.fait ? "#fff" : C.primaryD }) }),
+            /* @__PURE__ */ jsxs16("div", { style: { flex: 1, minWidth: 0 }, children: [
+              /* @__PURE__ */ jsx19("div", { style: { fontSize: 14, fontWeight: 700, color: C.text, textDecorationLine: e.fait ? "line-through" : "none", textDecorationColor: C.text3 }, children: e.titre }),
+              /* @__PURE__ */ jsxs16("div", { style: { fontSize: 12, color: C.text2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, children: [
+                e.detail,
+                reste
+              ] })
+            ] }),
+            /* @__PURE__ */ jsx19("div", { style: { fontSize: 12, fontWeight: 700, color: C.text2, whiteSpace: "nowrap" }, children: e.aJour ? "\xE0 jour" : `${e.minutes} min` })
+          ]
+        }
+      ) }, e.id);
+    }) }),
+    terminee ? /* @__PURE__ */ jsxs16("div", { role: "status", style: { display: "flex", alignItems: "center", gap: 10, background: C.greenL, border: `1.5px solid ${C.greenBorder}`, borderRadius: 14, padding: "12px 14px", color: C.greenD, fontSize: 13, lineHeight: 1.5 }, children: [
+      /* @__PURE__ */ jsx19(Ti, { name: "trophy", size: 22, color: C.greenD }),
+      /* @__PURE__ */ jsxs16("div", { children: [
+        /* @__PURE__ */ jsx19("b", { children: "Bravo, c'est fait pour aujourd'hui." }),
+        " Envie de continuer ? Choisis un domaine ci-dessous."
+      ] })
+    ] }) : /* @__PURE__ */ jsxs16("button", { onClick: () => onLancer(prochaine), className: "gr-focus", style: {
+      minHeight: 52,
+      border: "none",
+      borderRadius: 16,
+      background: C.primaryBtn || C.primary,
+      color: "#fff",
+      fontFamily: "inherit",
+      fontSize: 16,
+      fontWeight: 800,
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 10
+    }, children: [
+      /* @__PURE__ */ jsx19(Ti, { name: "player-play", size: 18, color: "#fff" }),
+      commencee ? `Continuer : ${prochaine.titre}` : `Commencer \xB7 ${totalMinutes} min`
+    ] })
+  ] });
+}
+function Semaine({ C, state, objectifJours }) {
+  const jours = joursDeLaSemaine(state, weekStr());
+  const faits = new Set(jours.map(indexJour));
+  const auj = indexJour(todayStr());
+  const n = jours.length;
+  return /* @__PURE__ */ jsxs16("section", { "aria-labelledby": "titre-semaine", style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }, children: [
+    /* @__PURE__ */ jsxs16("div", { style: { display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }, children: [
+      /* @__PURE__ */ jsx19("h2", { id: "titre-semaine", style: { margin: 0, fontSize: 15, fontWeight: 800, color: C.text }, children: "Cette semaine" }),
+      /* @__PURE__ */ jsxs16("div", { style: { fontSize: 13, color: C.text2 }, children: [
+        /* @__PURE__ */ jsxs16("b", { style: { color: C.text }, children: [
+          n,
+          " jour",
+          n > 1 ? "s" : ""
+        ] }),
+        " de pratique sur ",
+        objectifJours
+      ] })
+    ] }),
+    /* @__PURE__ */ jsx19("ul", { "aria-label": `Jours de pratique : ${n} sur ${objectifJours} vis\xE9s`, style: { listStyle: "none", margin: 0, padding: 0, display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: 6 }, children: JOURS.map((l, i) => /* @__PURE__ */ jsxs16(
+      "li",
+      {
+        "aria-label": `${NOMS_JOURS[i]} : ${faits.has(i) ? "pratiqu\xE9" : i === auj ? "aujourd'hui" : "pas de pratique"}`,
+        style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 4 },
+        children: [
+          /* @__PURE__ */ jsx19("div", { style: {
+            width: 30,
+            height: 30,
+            borderRadius: 999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxSizing: "border-box",
+            background: faits.has(i) ? C.green : i === auj ? C.surface : C.surface2,
+            border: !faits.has(i) && i === auj ? `2px solid ${C.primary}` : "none"
+          }, children: faits.has(i) && /* @__PURE__ */ jsx19(Ti, { name: "check", size: 14, color: "#fff" }) }),
+          /* @__PURE__ */ jsx19("div", { "aria-hidden": "true", style: { fontSize: 11, fontWeight: i === auj ? 800 : 600, color: i === auj ? C.primaryD : C.text2 }, children: l })
+        ]
+      },
+      i
+    )) })
+  ] });
+}
+function familleDomaine(f) {
+  return domaineDe(f);
+}
+function couleurs(C, nom2) {
+  return { c: C[nom2], l: C[nom2 + "L"], d: C[nom2 + "D"], b: C[nom2 + "Border"] };
+}
+function CarteDomaine({ C, d, state, progression, onOuvrir }) {
+  const k = couleurs(C, d.couleur);
+  const miennes = progression.filter((p) => p.domaine === d.id);
+  const commencees = miennes.filter((p) => p.commencee);
+  const niveau = commencees.length ? Math.round(commencees.reduce((s, p) => s + p.niveau, 0) / commencees.length) : 0;
+  const detail = d.id === "Impro" ? `Jam Session \xB7 ${state.jam?.seances || 0} s\xE9ance${(state.jam?.seances || 0) > 1 ? "s" : ""}` : miennes.length ? `${miennes.length} comp\xE9tence${miennes.length > 1 ? "s" : ""}` : "\xC0 d\xE9bloquer dans le parcours";
+  return /* @__PURE__ */ jsxs16(
+    "button",
+    {
+      onClick: onOuvrir,
+      className: "gr-focus",
+      "aria-label": `${d.id} : ${detail}${commencees.length ? `, niveau moyen ${niveau} sur 3` : ""}`,
+      style: { minHeight: 148, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10, padding: 14, borderRadius: 18, background: C.surface, border: `1.5px solid ${k.b}`, cursor: "pointer", textAlign: "left", fontFamily: "inherit" },
+      children: [
+        /* @__PURE__ */ jsx19("div", { style: { width: 38, height: 38, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", background: k.l }, children: /* @__PURE__ */ jsx19(Ti, { name: d.icone, size: 20, color: k.c }) }),
+        /* @__PURE__ */ jsx19("div", { style: { fontSize: 15, fontWeight: 800, color: C.text }, children: d.id }),
+        d.id !== "Impro" && /* @__PURE__ */ jsx19("div", { "aria-hidden": "true", style: { display: "flex", gap: 4, width: "100%" }, children: [1, 2, 3].map((n) => /* @__PURE__ */ jsx19("div", { style: { flex: 1, height: 6, borderRadius: 3, background: n <= niveau ? k.c : C.border } }, n)) }),
+        /* @__PURE__ */ jsx19("div", { style: { fontSize: 12, color: C.text2 }, children: detail })
+      ]
+    }
+  );
+}
+function VueDomaine({ C, d, state, dispatch, content, navigate, progression, quizOuvert, setQuizOuvert, onExercice, onRetour }) {
+  const k = couleurs(C, d.couleur);
+  const lecons = useMemo10(() => new Map(content.courses.flatMap((c) => c.lessons).map((l) => [l.id, l.title])), [content.courses]);
+  const debloquees = progression.filter((p) => p.domaine === d.id);
+  const verrouillees = FAMILLES.filter((f) => familleDomaine(f) === d.id && !state.completedLessons?.[f.lecon]);
+  const exercices = (content.exercises || []).filter((e) => d.modules.includes(e.mod) && (!e.unlockedBy?.length || e.unlockedBy.every((id) => state.completedLessons?.[id])) && (!e.courseLink || state.completedLessons?.[e.courseLink]));
+  const quizDispo = (content.quiz || []).some((q) => d.modules.includes(q.courseId) && state.completedLessons?.[q.lessonId]);
+  const peutReviser = debloquees.length > 0 || quizDispo;
+  const ouvrirLibre = () => {
+    if (d.libre.quiz) setQuizOuvert(true);
+    else navigate(d.libre.ecran, d.libre.ecran === "toolbox" ? {} : { retour: "training" });
+  };
+  return /* @__PURE__ */ jsxs16("div", { children: [
+    /* @__PURE__ */ jsxs16("div", { style: { background: k.l, borderBottom: `1.5px solid ${k.b}`, padding: "18px 16px", display: "flex", flexDirection: "column", gap: 14 }, children: [
+      /* @__PURE__ */ jsx19("button", { onClick: onRetour, "aria-label": "Retour \xE0 Pratique", className: "gr-focus", style: { width: 44, height: 44, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", background: C.surface, border: `1.5px solid ${k.b}`, cursor: "pointer" }, children: /* @__PURE__ */ jsx19(Ti, { name: "arrow-left", size: 18, color: k.d }) }),
+      /* @__PURE__ */ jsx19("h1", { style: { margin: 0, fontSize: 28, fontWeight: 800, letterSpacing: "-.5px", color: k.d }, children: d.id }),
+      peutReviser ? /* @__PURE__ */ jsxs16("button", { onClick: () => navigate("review", { domaine: d.id, cible: 10, retour: "training" }), className: "gr-focus", style: {
+        minHeight: 52,
+        border: "none",
+        borderRadius: 16,
+        background: k.d,
+        color: "#fff",
+        fontFamily: "inherit",
+        fontSize: 15,
+        fontWeight: 800,
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 10
+      }, children: [
+        /* @__PURE__ */ jsx19(Ti, { name: "player-play", size: 18, color: "#fff" }),
+        " S'entra\xEEner sur ",
+        d.id === "Impro" ? "l'impro" : d.id === "Oreille" ? "l'oreille" : `le ${d.id.toLowerCase()}`
+      ] }) : d.id !== "Impro" && /* @__PURE__ */ jsx19("div", { style: { fontSize: 13, color: k.d }, children: "Rien \xE0 r\xE9viser pour l'instant : les comp\xE9tences de ce domaine se d\xE9bloquent avec les le\xE7ons du parcours." })
+    ] }),
+    /* @__PURE__ */ jsx19("div", { style: { padding: 16, display: "flex", flexDirection: "column", gap: 16 }, children: quizOuvert ? /* @__PURE__ */ jsxs16("section", { children: [
+      /* @__PURE__ */ jsx19("button", { onClick: () => setQuizOuvert(false), className: "gr-focus", style: { minHeight: 44, border: "none", background: "none", color: C.text2, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", padding: 0 }, children: "\u2190 Fermer les quiz" }),
+      /* @__PURE__ */ jsx19(QuizScreen, { state, dispatch, content, embedded: true })
+    ] }) : /* @__PURE__ */ jsxs16(Fragment10, { children: [
+      d.id === "Impro" ? /* @__PURE__ */ jsx19(Bloc, { C, titre: "Ta Jam Session", children: /* @__PURE__ */ jsx19(
+        Ligne,
+        {
+          C,
+          titre: `${state.jam?.seances || 0} s\xE9ance${(state.jam?.seances || 0) > 1 ? "s" : ""} compt\xE9e${(state.jam?.seances || 0) > 1 ? "s" : ""}`,
+          detail: `${Math.floor((state.jam?.secondes || 0) / 60)} min de jeu \xB7 ${state.jam?.contraintes || 0} contrainte${(state.jam?.contraintes || 0) > 1 ? "s" : ""} tenue${(state.jam?.contraintes || 0) > 1 ? "s" : ""}`
+        }
+      ) }) : /* @__PURE__ */ jsxs16(Bloc, { C, titre: "Tes comp\xE9tences", children: [
+        debloquees.map((p) => /* @__PURE__ */ jsx19(
+          Ligne,
+          {
+            C,
+            titre: p.titre.replace(/^[^:]+ : /, ""),
+            detail: p.commencee ? `Niveau ${p.niveau} \xB7 ${p.libelle}` : "Nouvelle",
+            jauge: p.commencee ? p.niveau : 0,
+            couleur: k.c
+          },
+          p.id
+        )),
+        verrouillees.map((f) => /* @__PURE__ */ jsx19(
+          Ligne,
+          {
+            C,
+            titre: f.titre.replace(/^[^:]+ : /, ""),
+            verrou: true,
+            detail: `Se d\xE9bloque avec \xAB ${lecons.get(f.lecon) || "une le\xE7on du parcours"} \xBB`
+          },
+          f.id
+        )),
+        !debloquees.length && !verrouillees.length && /* @__PURE__ */ jsx19(Ligne, { C, titre: "Aucune comp\xE9tence dans ce domaine", detail: "" })
+      ] }),
+      exercices.length > 0 && /* @__PURE__ */ jsx19(Bloc, { C, titre: "Guitare en main", children: exercices.map((e) => /* @__PURE__ */ jsx19(
+        Ligne,
+        {
+          C,
+          titre: e.title,
+          detail: `${e.dur ?? "?"} min${state.completedExercises?.[e.id] ? " \xB7 d\xE9j\xE0 fait" : ""}`,
+          onClick: () => onExercice(e)
+        },
+        e.id
+      )) }),
+      /* @__PURE__ */ jsx19(Bloc, { C, titre: "En libre", children: /* @__PURE__ */ jsx19(Ligne, { C, titre: d.libre.titre, detail: d.libre.detail, onClick: ouvrirLibre }) })
+    ] }) })
+  ] });
+}
+function Bloc({ C, titre, children }) {
+  return /* @__PURE__ */ jsxs16("section", { style: { display: "flex", flexDirection: "column", gap: 8 }, children: [
+    /* @__PURE__ */ jsx19("h2", { style: { margin: "0 4px", fontSize: 16, fontWeight: 800, color: C.text }, children: titre }),
+    /* @__PURE__ */ jsx19("ul", { style: { listStyle: "none", margin: 0, padding: 0, background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: 18, overflow: "hidden" }, children })
+  ] });
+}
+function Ligne({ C, titre, detail, jauge, couleur, verrou, onClick }) {
+  const contenu = /* @__PURE__ */ jsxs16(Fragment10, { children: [
+    /* @__PURE__ */ jsxs16("div", { style: { flex: 1, minWidth: 0 }, children: [
+      /* @__PURE__ */ jsx19("div", { style: { fontSize: 14, fontWeight: 700, color: verrou ? C.text2 : C.text }, children: titre }),
+      detail && /* @__PURE__ */ jsx19("div", { style: { fontSize: 12, color: C.text2 }, children: detail })
+    ] }),
+    verrou && /* @__PURE__ */ jsx19(Ti, { name: "lock", size: 17, color: C.text2, label: "Verrouill\xE9e" }),
+    jauge != null && !verrou && /* @__PURE__ */ jsx19("div", { role: "img", "aria-label": `niveau ${jauge} sur 3`, style: { display: "flex", gap: 3, flexShrink: 0 }, children: [1, 2, 3].map((n) => /* @__PURE__ */ jsx19("div", { style: { width: 14, height: 6, borderRadius: 3, background: n <= jauge ? couleur : C.border } }, n)) }),
+    onClick && /* @__PURE__ */ jsx19(Ti, { name: "chevron-right", size: 18, color: C.text2 })
+  ] });
+  const style = { display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", minHeight: 56, boxSizing: "border-box", borderTop: `1px solid ${C.surface2}` };
+  return /* @__PURE__ */ jsx19("li", { style: { borderTop: "none" }, children: onClick ? /* @__PURE__ */ jsx19("button", { onClick, className: "gr-focus", style: { ...style, width: "100%", background: "none", border: "none", borderTop: `1px solid ${C.surface2}`, textAlign: "left", cursor: "pointer", fontFamily: "inherit" }, children: contenu }) : /* @__PURE__ */ jsx19("div", { style, children: contenu }) });
 }
 
 // src/screens/PracticeScreen.jsx
@@ -13877,7 +14028,91 @@ __export(OnboardingScreen_exports, {
   OnboardingScreen: () => OnboardingScreen
 });
 import { useState as useState18, useEffect as useEffect14, useMemo as useMemo13 } from "react";
-import { Fragment as Fragment10, jsx as jsx22, jsxs as jsxs19 } from "react/jsx-runtime";
+
+// src/store/placementEngine.js
+var TESTABLE_MODULES = ["neck", "scales", "harmony", "rhythm", "impro"];
+var TIER_ORDER = ["A1", "A2", "B1", "B2"];
+var TIER_VALUE = { A1: 1, A2: 2, B1: 3, B2: 4 };
+var MAX_STARTING_LEVEL = 8;
+var PLACEMENT_LEVELS = [1, 2, 3];
+var FALLBACK_TIER = "A2";
+function pickRandom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+var usableQuestions = (quizBank, moduleId, lvl) => (quizBank || []).filter(
+  (q) => q.courseId === moduleId && q.lvl === lvl && Array.isArray(q.o) && q.o.length >= 2
+);
+function availableModules(quizBank) {
+  if (!quizBank || quizBank.length === 0) return [...TESTABLE_MODULES];
+  return TESTABLE_MODULES.filter(
+    (m) => PLACEMENT_LEVELS.every((lvl) => usableQuestions(quizBank, m, lvl).length > 0)
+  );
+}
+function buildPlacementQueue(quizBank = null) {
+  const modules = quizBank ? availableModules(quizBank) : [...TESTABLE_MODULES];
+  const queue = [];
+  for (const lvl of PLACEMENT_LEVELS) {
+    for (const moduleId of modules) queue.push({ moduleId, lvl });
+  }
+  return queue;
+}
+function placementQuestionCount(quizBank = null) {
+  return buildPlacementQueue(quizBank).length;
+}
+var PLACEMENT_QUESTION_COUNT = TESTABLE_MODULES.length * PLACEMENT_LEVELS.length;
+function pickQuestion(quizBank, moduleId, lvl, excludeIds) {
+  const pool = usableQuestions(quizBank, moduleId, lvl).filter((q) => q.type !== "fretboard" && !excludeIds.has(q.id));
+  return pool.length === 0 ? null : pickRandom(pool);
+}
+function pickPlacementQuestion(quizBank, moduleId, lvl, excludeIds, preferFretboard = false) {
+  if (preferFretboard) {
+    const fretPool = (quizBank || []).filter(
+      (q2) => q2.courseId === moduleId && q2.lvl === lvl && q2.type === "fretboard" && !excludeIds.has(q2.id)
+    );
+    if (fretPool.length > 0) return { ...pickRandom(fretPool), moduleId };
+  }
+  const q = pickQuestion(quizBank, moduleId, lvl, excludeIds);
+  return q ? { ...q, moduleId } : null;
+}
+function startFromScore(totalCorrect, totalQuestions) {
+  const answered = Math.max(1, Number(totalQuestions) || 1);
+  const ratio = Math.max(0, Math.min(1, (Number(totalCorrect) || 0) / answered));
+  const level = Math.max(1, Math.min(
+    MAX_STARTING_LEVEL,
+    Math.round(1 + ratio * (MAX_STARTING_LEVEL - 1))
+  ));
+  return { grade: gradeForLevel(level), startXp: totalXpForLevel(level), level, startLevel: level };
+}
+function computeModuleTier(correctCount) {
+  const idx = Math.max(0, Math.min(TIER_ORDER.length - 1, Number(correctCount) || 0));
+  return TIER_ORDER[idx];
+}
+var averageTier = (skillLevels, modules) => {
+  const values = modules.map((m) => TIER_VALUE[skillLevels?.[m]]).filter(Boolean);
+  if (values.length === 0) return FALLBACK_TIER;
+  const avg = values.reduce((a, b) => a + b, 0) / values.length;
+  return TIER_ORDER[Math.max(0, Math.min(3, Math.round(avg) - 1))];
+};
+function inferMissingTier(skillLevels, testedModules = TESTABLE_MODULES) {
+  return averageTier(skillLevels, testedModules);
+}
+function computeOverallTier(skillLevels, testedModules = TESTABLE_MODULES) {
+  return averageTier(skillLevels, testedModules);
+}
+function weakestModule(skillLevels, testedModules = TESTABLE_MODULES) {
+  let weakest = null, weakestVal = 5;
+  for (const m of testedModules) {
+    const v = TIER_VALUE[skillLevels?.[m]];
+    if (v && v < weakestVal) {
+      weakestVal = v;
+      weakest = m;
+    }
+  }
+  return weakest;
+}
+
+// src/onboarding/OnboardingScreen.jsx
+import { Fragment as Fragment11, jsx as jsx22, jsxs as jsxs19 } from "react/jsx-runtime";
 var GOAL_OPTIONS = [
   { id: "impro", module: "impro", label: "Improviser librement", icon: "wand" },
   { id: "theorie", module: "harmony", label: "Comprendre la th\xE9orie en profondeur", icon: "stack-2" },
@@ -14050,7 +14285,7 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
             PLACEMENT_QUESTION_COUNT
           ] })
         ] }),
-        currentQ.type === "fretboard" ? /* @__PURE__ */ jsxs19(Fragment10, { children: [
+        currentQ.type === "fretboard" ? /* @__PURE__ */ jsxs19(Fragment11, { children: [
           /* @__PURE__ */ jsx22("div", { style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: 16 }, children: /* @__PURE__ */ jsx22("p", { style: { margin: 0, fontSize: 15, fontWeight: 600, lineHeight: 1.5, color: C.text }, children: currentQ.q }) }),
           /* @__PURE__ */ jsx22(
             FretboardQuizQuestion,
@@ -14061,7 +14296,7 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
               forceReveal
             }
           )
-        ] }) : /* @__PURE__ */ jsxs19(Fragment10, { children: [
+        ] }) : /* @__PURE__ */ jsxs19(Fragment11, { children: [
           /* @__PURE__ */ jsx22("div", { style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: 16 }, children: /* @__PURE__ */ jsx22("p", { style: { margin: 0, fontSize: 15, fontWeight: 600, lineHeight: 1.5, color: C.text }, children: currentQ.q }) }),
           /* @__PURE__ */ jsx22("div", { style: { display: "flex", flexDirection: "column", gap: 8 }, children: currentQ.o.map((opt, i) => {
             let bg = C.surface, border = `1.5px solid ${C.border}`, col = C.text;
@@ -14112,7 +14347,7 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
             children: "Je ne sais pas"
           }
         ),
-        answered && /* @__PURE__ */ jsxs19(Fragment10, { children: [
+        answered && /* @__PURE__ */ jsxs19(Fragment11, { children: [
           currentQ.type !== "fretboard" && /* @__PURE__ */ jsxs19("p", { style: {
             margin: 0,
             fontSize: 12.5,

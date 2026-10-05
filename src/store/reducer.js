@@ -143,6 +143,7 @@ function reducer(state, action) {
       break;
 
     case "REVIEW_SESSION_DONE": {
+      s.derniereRevision = today;
       const g = gainXp(s, "review", "review-session", action.xp || 0);
       pushHistory(s, { type: "review", title: "Session de révision", xp: g, score: action.score, date: today });
       break;
@@ -153,6 +154,14 @@ function reducer(state, action) {
       break;
 
     case "MARK_STREAK": {
+      // Jour de pratique de la semaine (avant la sortie anticipée : il doit
+      // être noté même si la série est déjà comptée aujourd'hui).
+      {
+        const cle = weekStr();
+        const jours = s.semaine?.cle === cle ? (s.semaine.jours || []) : [];
+        if (!jours.includes(today)) s.semaine = { cle, jours: [...jours, today] };
+        else if (s.semaine?.cle !== cle) s.semaine = { cle, jours };
+      }
       if (s.lastSessionDate === today) break;
 
       // On raisonne en écart de jours calendaires plutôt qu'en comparaison
@@ -216,10 +225,14 @@ function reducer(state, action) {
       // bornées pour qu'une action mal formée ne gonfle pas les compteurs.
       const j = { ...defaultState().jam, ...(s.jam || {}) };
       const sec = Math.max(0, Math.min(3600, Math.round(Number(action.secondes) || 0)));
+      const memeJour = j.jour === today;
       s.jam = {
         seances:     (Number(j.seances) || 0) + (action.seance ? 1 : 0),
         secondes:    (Number(j.secondes) || 0) + sec,
         contraintes: (Number(j.contraintes) || 0) + (action.contrainte ? 1 : 0),
+        // Temps de jeu du jour : l'étape « Jouer » de la séance du jour.
+        jour: today,
+        secondesJour: (memeJour ? (Number(j.secondesJour) || 0) : 0) + sec,
       };
       break;
     }
