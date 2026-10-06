@@ -204,7 +204,7 @@ export function EarTraining({ onBack, dispatch, state }) {
           <button onClick={() => { setScore({ correct:0, total:0 }); setAnswers([]); setSessionDone(false); nextQuestion(); }} className="gr-focus" style={{ flex: 1, minHeight: 48, padding: "13px", borderRadius: R.md, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: FONTS.ui }}>
             Recommencer
           </button>
-          <button onClick={onBack} className="gr-focus" style={{ flex: 1, minHeight: 48, padding: "13px", borderRadius: R.md, border: "none", background: C.primary, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }}>
+          <button onClick={onBack} className="gr-focus" style={{ flex: 1, minHeight: 48, padding: "13px", borderRadius: R.md, border: "none", background: C.primary, color: C.onPrimaryBtn, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }}>
             Retour
           </button>
         </div>
@@ -282,7 +282,7 @@ export function EarTraining({ onBack, dispatch, state }) {
                 boxShadow: "0 4px 20px rgba(232,93,26,0.4)",
                 transition: "all 0.2s",
               }}>
-                <Ti name={isPlaying ? "player-pause" : "player-play"} size={28} color="#fff" />
+                <Ti name={isPlaying ? "player-pause" : "player-play"} size={28} color={C.onPrimaryBtn} />
               </button>
               <div style={{ fontSize: 12, color: C.text3, fontFamily: FONTS.ui, marginTop: 10 }}>
                 {mode === "interval" ? "Ecoute l'intervalle"
@@ -347,7 +347,7 @@ export function EarTraining({ onBack, dispatch, state }) {
                   }
                 </div>
                 {score.total < SESSION_LENGTH && (
-                  <button onClick={nextQuestion} style={{ width: "100%", padding: "13px", borderRadius: R.md, border: "none", background: C.primary, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }}>
+                  <button onClick={nextQuestion} style={{ width: "100%", padding: "13px", borderRadius: R.md, border: "none", background: C.primary, color: C.onPrimaryBtn, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }}>
                     Question suivante
                   </button>
                 )}

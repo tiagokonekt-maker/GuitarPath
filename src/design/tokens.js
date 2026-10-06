@@ -15,6 +15,7 @@
 //     <color>L    fond teinté
 //     <color>B    bordure teintée (alias borderXxx)
 //     <color>D    texte sur fond teinté <color>L
+//     onPrimaryBtn  texte / icône posé sur un APLAT plein (bouton, pastille, coche)
 //
 // ── Ce qui change (audit §6.1) ───────────────────────────────────────────────
 // L'ancienne version plaçait les couleurs sémantiques (blue, purple, teal,
@@ -53,6 +54,8 @@ export const LIGHT = {
   // ── Primaire (orange) ─────────────────────────────────
   primary:       "#E85D1A",   // décor, aplats, icônes ≥ 24 px
   primaryBtn:    "#C64E12",   //  4,67:1 avec du blanc → fond de CTA
+  onPrimaryBtn:  "#FFFFFF",   //  4,67:1 sur primaryBtn — TEXTE et icônes posés sur un aplat plein
+                              //  (primaryBtn, primary, ou une couleur de module). Égal à surface.
   primaryInk:    "#B8430E",   //  4,60:1 sur bg · 5,46:1 sur surface → texte/lien
   primaryBorder: "#F5C4A8",
   primaryL:      "#FFF0E8",
@@ -139,6 +142,8 @@ export const DARK = {
   // comme accent, et le bouton reste lisible avec un texte foncé.
   primary:       "#F2762F",
   primaryBtn:    "#E85D1A",
+  onPrimaryBtn:  "#26180A",   //  4,94:1 sur primaryBtn · égal à surface. Le blanc fixe n'y atteint que
+                              //  3,49:1 : TOUJOURS passer par ce jeton, jamais "#fff", sur un aplat.
   primaryInk:    "#FFAA78",
   primaryBorder: "#7A3A12",
   primaryL:      "#3D1E08",

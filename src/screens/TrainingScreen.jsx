@@ -37,7 +37,7 @@ const ecrireDuree = (v) => { try { localStorage.setItem(CLE_DUREE, String(v)); }
 const DOMAINES = [
   { id: "Manche",  couleur: "amber",  icone: "map-2",     modules: ["neck"],              objectif: "manche",  libre: { titre: "Explorer le manche", detail: "Notes, gammes et accords sur tout le manche", ecran: "toolbox" } },
   { id: "Théorie", couleur: "green",  icone: "stack-2",   modules: ["scales", "harmony"], objectif: "theorie", libre: { titre: "Quiz par module", detail: "Toutes les questions de théorie, à ton rythme", quiz: true } },
-  { id: "Oreille", couleur: "purple", icone: "ear",       modules: [],                    objectif: null,      libre: { titre: "Ear Training", detail: "Intervalles, accords, suites : sans limite", ecran: "ear" } },
+  { id: "Oreille", couleur: "teal",   icone: "ear",       modules: [],                    objectif: null,      libre: { titre: "Ear Training", detail: "Intervalles, accords, suites : sans limite", ecran: "ear" } },
   { id: "Rythme",  couleur: "blue",   icone: "metronome", modules: ["rhythm"],            objectif: null,      libre: { titre: "Métronome", detail: "Dans la boîte à outils", ecran: "toolbox" } },
   { id: "Impro",   couleur: "pink",   icone: "wand",      modules: ["impro"],             objectif: "impro",   libre: { titre: "Jam Session", detail: "Un groupe qui suit les accords, et des contraintes à tenir", ecran: "jam" } },
 ];
@@ -110,7 +110,7 @@ export function TrainingScreen({ state, dispatch, content, navigate }) {
             <div style={{ fontSize: 12, fontWeight: 700, color: C.primaryD, textTransform: "uppercase", letterSpacing: ".06em" }}>Ta séance du jour</div>
             <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: C.text }}>Commence par une leçon</h2>
             <div style={{ fontSize: 13, color: C.text2, lineHeight: 1.5 }}>Ta séance se composera d'elle-même dès ta première leçon : révision de ce que tu as appris, puis du jeu.</div>
-            <button onClick={() => navigate("home")} className="gr-focus" style={{ minHeight: 52, border: "none", borderRadius: 16, background: C.primaryBtn || C.primary, color: "#fff", fontFamily: "inherit", fontSize: 16, fontWeight: 800, cursor: "pointer" }}>
+            <button onClick={() => navigate("home")} className="gr-focus" style={{ minHeight: 52, border: "none", borderRadius: 16, background: C.primaryBtn || C.primary, color: C.onPrimaryBtn, fontFamily: "inherit", fontSize: 16, fontWeight: 800, cursor: "pointer" }}>
               Aller au Parcours
             </button>
           </section>
@@ -191,7 +191,7 @@ function SeanceDuJour({ C, seance, duree, onDuree, onLancer }) {
                   width: 34, height: 34, flexShrink: 0, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center",
                   background: e.fait ? C.green : C.primaryL, border: e.fait ? "none" : `1.5px solid ${C.primaryBorder}`,
                 }}>
-                  <Ti name={e.fait ? "check" : ICONE_ETAPE[e.id]} size={17} color={e.fait ? "#fff" : C.primaryD} />
+                  <Ti name={e.fait ? "check" : ICONE_ETAPE[e.id]} size={17} color={e.fait ? C.onPrimaryBtn : C.primaryD} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 14, fontWeight: 700, color: C.text, textDecorationLine: e.fait ? "line-through" : "none", textDecorationColor: C.text3 }}>{e.titre}</div>
@@ -211,11 +211,11 @@ function SeanceDuJour({ C, seance, duree, onDuree, onLancer }) {
         </div>
       ) : (
         <button onClick={() => onLancer(prochaine)} className="gr-focus" style={{
-          minHeight: 52, border: "none", borderRadius: 16, background: C.primaryBtn || C.primary, color: "#fff",
+          minHeight: 52, border: "none", borderRadius: 16, background: C.primaryBtn || C.primary, color: C.onPrimaryBtn,
           fontFamily: "inherit", fontSize: 16, fontWeight: 800, cursor: "pointer",
           display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
         }}>
-          <Ti name="player-play" size={18} color="#fff" />
+          <Ti name="player-play" size={18} color={C.onPrimaryBtn} />
           {commencee ? `Continuer : ${prochaine.titre}` : `Commencer · ${totalMinutes} min`}
         </button>
       )}
@@ -246,7 +246,7 @@ function Semaine({ C, state, objectifJours }) {
               background: faits.has(i) ? C.green : i === auj ? C.surface : C.surface2,
               border: !faits.has(i) && i === auj ? `2px solid ${C.primary}` : "none",
             }}>
-              {faits.has(i) && <Ti name="check" size={14} color="#fff" />}
+              {faits.has(i) && <Ti name="check" size={14} color={C.onPrimaryBtn} />}
             </div>
             <div aria-hidden="true" style={{ fontSize: 11, fontWeight: i === auj ? 800 : 600, color: i === auj ? C.primaryD : C.text2 }}>{l}</div>
           </li>
@@ -258,7 +258,7 @@ function Semaine({ C, state, objectifJours }) {
 
 // ── Domaines ───────────────────────────────────────────────────────────────
 function familleDomaine(f) { return domaineDe(f); }
-function couleurs(C, nom) { return { c: C[nom], l: C[nom + "L"], d: C[nom + "D"], b: C[nom + "Border"] }; }
+function couleurs(C, nom) { return { c: C[nom], l: C[nom + "L"], d: C[nom + "D"], b: C[nom + "Border"], ink: C[nom + "Ink"] || C[nom + "D"] }; }
 
 function CarteDomaine({ C, d, state, progression, onOuvrir }) {
   const k = couleurs(C, d.couleur);
@@ -310,10 +310,10 @@ function VueDomaine({ C, d, state, dispatch, content, navigate, progression, qui
         <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, letterSpacing: "-.5px", color: k.d }}>{d.id}</h1>
         {peutReviser ? (
           <button onClick={() => navigate("review", { domaine: d.id, cible: 10, retour: "training" })} className="gr-focus" style={{
-            minHeight: 52, border: "none", borderRadius: 16, background: k.d, color: "#fff", fontFamily: "inherit", fontSize: 15, fontWeight: 800, cursor: "pointer",
+            minHeight: 52, border: "none", borderRadius: 16, background: k.ink, color: C.onPrimaryBtn, fontFamily: "inherit", fontSize: 15, fontWeight: 800, cursor: "pointer",
             display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
           }}>
-            <Ti name="player-play" size={18} color="#fff" /> S'entraîner sur {d.id === "Impro" ? "l'impro" : d.id === "Oreille" ? "l'oreille" : `le ${d.id.toLowerCase()}`}
+            <Ti name="player-play" size={18} color={C.onPrimaryBtn} /> S'entraîner sur {d.id === "Impro" ? "l'impro" : d.id === "Oreille" ? "l'oreille" : `le ${d.id.toLowerCase()}`}
           </button>
         ) : d.id !== "Impro" && (
           <div style={{ fontSize: 13, color: k.d }}>Rien à réviser pour l'instant : les compétences de ce domaine se débloquent avec les leçons du parcours.</div>

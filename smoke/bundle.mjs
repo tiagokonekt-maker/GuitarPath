@@ -337,6 +337,9 @@ var LIGHT = {
   // décor, aplats, icônes ≥ 24 px
   primaryBtn: "#C64E12",
   //  4,67:1 avec du blanc → fond de CTA
+  onPrimaryBtn: "#FFFFFF",
+  //  4,67:1 sur primaryBtn — TEXTE et icônes posés sur un aplat plein
+  //  (primaryBtn, primary, ou une couleur de module). Égal à surface.
   primaryInk: "#B8430E",
   //  4,60:1 sur bg · 5,46:1 sur surface → texte/lien
   primaryBorder: "#F5C4A8",
@@ -423,6 +426,9 @@ var DARK = {
   // comme accent, et le bouton reste lisible avec un texte foncé.
   primary: "#F2762F",
   primaryBtn: "#E85D1A",
+  onPrimaryBtn: "#26180A",
+  //  4,94:1 sur primaryBtn · égal à surface. Le blanc fixe n'y atteint que
+  //  3,49:1 : TOUJOURS passer par ce jeton, jamais "#fff", sur un aplat.
   primaryInk: "#FFAA78",
   primaryBorder: "#7A3A12",
   primaryL: "#3D1E08",
@@ -725,7 +731,7 @@ function XPPop({ amount, onDone }) {
     left: "50%",
     transform: "translateX(-50%)",
     background: C.primaryBtn,
-    color: "#fff",
+    color: C.onPrimaryBtn,
     padding: "9px 18px",
     borderRadius: 999,
     fontSize: T.body,
@@ -836,7 +842,7 @@ function ConfirmDialog({
                 border: "none",
                 minHeight: 48,
                 background: !pret ? C.surface2 : danger ? C.danger : C.primaryBtn,
-                color: !pret ? C.text3 : "#fff",
+                color: !pret ? C.text3 : C.onPrimaryBtn,
                 fontWeight: 700,
                 fontSize: T.body,
                 fontFamily: FONTS.ui,
@@ -1477,7 +1483,7 @@ function UnitCheckScreen({ unit, content, dispatch, onDone, state }) {
         borderRadius: R.lg,
         border: "none",
         background: passed ? `linear-gradient(135deg,#FF9155,${C.primary})` : C.surface2,
-        color: passed ? "#fff" : C.text2,
+        color: passed ? C.onPrimaryBtn : C.text2,
         fontSize: 14,
         fontWeight: 700,
         cursor: "pointer",
@@ -1552,7 +1558,7 @@ function UnitCheckScreen({ unit, content, dispatch, onDone, state }) {
         borderRadius: R.lg,
         border: "none",
         background: C.primary,
-        color: "#fff",
+        color: C.onPrimaryBtn,
         fontSize: 14,
         fontWeight: 700,
         cursor: "pointer",
@@ -3259,7 +3265,7 @@ function PathNode({ lesson, index, state, th, onSelect, isCurrent, isLocked, gro
             display: "flex",
             alignItems: "center",
             justifyContent: "center"
-          }, children: /* @__PURE__ */ jsx6(Ti, { name: "check", size: 9, color: "#fff" }) }),
+          }, children: /* @__PURE__ */ jsx6(Ti, { name: "check", size: 9, color: C.onPrimaryBtn }) }),
           isCurrent && /* @__PURE__ */ jsx6("div", { style: {
             position: "absolute",
             inset: -9,
@@ -3296,7 +3302,7 @@ function PathNode({ lesson, index, state, th, onSelect, isCurrent, isLocked, gro
             display: "inline-block",
             marginTop: 8,
             background: C.primary,
-            color: "#fff",
+            color: C.onPrimaryBtn,
             borderRadius: 999,
             padding: "5px 14px",
             fontSize: 10,
@@ -3650,7 +3656,7 @@ function WelcomeModal({ state, tip, navigate, onClose }) {
                     style: {
                       width: "100%",
                       background: C.primaryBtn,
-                      color: "#fff",
+                      color: C.onPrimaryBtn,
                       border: "none",
                       borderRadius: R.lg,
                       padding: "12px",
@@ -3962,14 +3968,14 @@ function LessonView({ lesson, state, dispatch, onBack }) {
         /* @__PURE__ */ jsx6(Gropi, { pose: "celebrate", size: 120, anim: "cheer", style: { margin: "0 auto" } }),
         /* @__PURE__ */ jsx6("div", { style: { fontSize: 20, fontWeight: 800, color: C.greenD, letterSpacing: "-.3px", marginTop: 8 }, children: "Le\xE7on compl\xE9t\xE9e !" }),
         /* @__PURE__ */ jsx6("div", { style: { fontSize: 13, color: C.green, marginTop: 4 }, children: "+30 XP \xB7 Continue sur ta lanc\xE9e" }),
-        /* @__PURE__ */ jsx6("button", { onClick: onBack, style: { marginTop: 16, padding: "12px 32px", borderRadius: R.lg, border: "none", background: C.green, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui, boxShadow: `0 4px 14px ${C.green}44` }, children: "Retour au parcours" })
+        /* @__PURE__ */ jsx6("button", { onClick: onBack, style: { marginTop: 16, padding: "12px 32px", borderRadius: R.lg, border: "none", background: C.green, color: C.onPrimaryBtn, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui, boxShadow: `0 4px 14px ${C.green}44` }, children: "Retour au parcours" })
       ] }) : /* @__PURE__ */ jsx6("button", { onClick: finish, style: {
         width: "100%",
         padding: 14,
         borderRadius: R.lg,
         border: "none",
         background: C.primary,
-        color: "#fff",
+        color: C.onPrimaryBtn,
         fontSize: 14,
         fontWeight: 700,
         cursor: "pointer",
@@ -5680,7 +5686,7 @@ function ReviewSession({ questions, state, dispatch, onDone }) {
           ")"
         ] }),
         wrongItems.map((q2, i) => /* @__PURE__ */ jsxs6("div", { style: { display: "flex", alignItems: "flex-start", gap: 8, marginBottom: i < wrongItems.length - 1 ? 8 : 0 }, children: [
-          /* @__PURE__ */ jsx8("div", { style: { width: 18, height: 18, borderRadius: "50%", background: C.coral, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }, children: /* @__PURE__ */ jsx8(Ti, { name: "x", size: 10, color: "#fff" }) }),
+          /* @__PURE__ */ jsx8("div", { style: { width: 18, height: 18, borderRadius: "50%", background: C.coral, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }, children: /* @__PURE__ */ jsx8(Ti, { name: "x", size: 10, color: C.onPrimaryBtn }) }),
           /* @__PURE__ */ jsxs6("div", { style: { fontSize: 12, color: C.coralD, fontFamily: FONTS.ui, lineHeight: 1.45 }, children: [
             q2.q?.substring(0, 80),
             q2.q?.length > 80 ? "..." : ""
@@ -5695,7 +5701,7 @@ function ReviewSession({ questions, state, dispatch, onDone }) {
         borderRadius: R.md,
         border: "none",
         background: C.primary,
-        color: "#fff",
+        color: C.onPrimaryBtn,
         fontSize: 14,
         fontWeight: 700,
         cursor: "pointer",
@@ -5770,12 +5776,12 @@ function ReviewSession({ questions, state, dispatch, onDone }) {
         justifyContent: "center",
         gap: 10,
         background: ecoutee ? C.surface2 : C.primary,
-        color: ecoutee ? C.text : "#fff",
+        color: ecoutee ? C.text : C.onPrimaryBtn,
         fontSize: 15,
         fontWeight: 800,
         fontFamily: FONTS.ui
       }, children: [
-        /* @__PURE__ */ jsx8(Ti, { name: "volume", size: 18, color: ecoutee ? C.text : "#fff" }),
+        /* @__PURE__ */ jsx8(Ti, { name: "volume", size: 18, color: ecoutee ? C.text : C.onPrimaryBtn }),
         ecoutee ? "R\xE9\xE9couter" : "\xC9couter"
       ] }),
       /* @__PURE__ */ jsxs6("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6 }, children: [
@@ -5807,7 +5813,7 @@ function ReviewSession({ questions, state, dispatch, onDone }) {
           ] }),
           q.exp && /* @__PURE__ */ jsx8("div", { style: { fontSize: 12, color: isCorrect ? C.greenD : C.coralD, lineHeight: 1.55, fontFamily: FONTS.ui }, children: q.exp })
         ] }),
-        /* @__PURE__ */ jsx8("button", { onClick: () => next(), style: { width: "100%", padding: "14px", borderRadius: R.md, border: "none", background: C.primary, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }, children: prochaine(idx, sansSon) >= questions.length ? "Voir les r\xE9sultats" : "Suivant" })
+        /* @__PURE__ */ jsx8("button", { onClick: () => next(), style: { width: "100%", padding: "14px", borderRadius: R.md, border: "none", background: C.primary, color: C.onPrimaryBtn, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }, children: prochaine(idx, sansSon) >= questions.length ? "Voir les r\xE9sultats" : "Suivant" })
       ] })
     ] }) : (
       /* QCM */
@@ -5903,7 +5909,7 @@ function ReviewSession({ questions, state, dispatch, onDone }) {
               "."
             ] }) })
           ] }),
-          /* @__PURE__ */ jsx8("button", { onClick: () => next(), style: { width: "100%", padding: "14px", borderRadius: R.md, border: "none", background: C.primary, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }, children: prochaine(idx, sansSon) >= questions.length ? "Voir les r\xE9sultats" : "Suivant" })
+          /* @__PURE__ */ jsx8("button", { onClick: () => next(), style: { width: "100%", padding: "14px", borderRadius: R.md, border: "none", background: C.primary, color: C.onPrimaryBtn, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }, children: prochaine(idx, sansSon) >= questions.length ? "Voir les r\xE9sultats" : "Suivant" })
         ] })
       ] })
     ),
@@ -6505,7 +6511,7 @@ function EarTraining({ onBack, dispatch, state }) {
           setSessionDone(false);
           nextQuestion();
         }, className: "gr-focus", style: { flex: 1, minHeight: 48, padding: "13px", borderRadius: R.md, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: FONTS.ui }, children: "Recommencer" }),
-        /* @__PURE__ */ jsx10("button", { onClick: onBack, className: "gr-focus", style: { flex: 1, minHeight: 48, padding: "13px", borderRadius: R.md, border: "none", background: C.primary, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }, children: "Retour" })
+        /* @__PURE__ */ jsx10("button", { onClick: onBack, className: "gr-focus", style: { flex: 1, minHeight: 48, padding: "13px", borderRadius: R.md, border: "none", background: C.primary, color: C.onPrimaryBtn, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }, children: "Retour" })
       ] })
     ] });
   }
@@ -6556,7 +6562,7 @@ function EarTraining({ onBack, dispatch, state }) {
                 boxShadow: "0 4px 20px rgba(232,93,26,0.4)",
                 transition: "all 0.2s"
               },
-              children: /* @__PURE__ */ jsx10(Ti, { name: isPlaying ? "player-pause" : "player-play", size: 28, color: "#fff" })
+              children: /* @__PURE__ */ jsx10(Ti, { name: isPlaying ? "player-pause" : "player-play", size: 28, color: C.onPrimaryBtn })
             }
           ),
           /* @__PURE__ */ jsx10("div", { style: { fontSize: 12, color: C.text3, fontFamily: FONTS.ui, marginTop: 10 }, children: mode === "interval" ? "Ecoute l'intervalle" : mode === "progression" ? "Ecoute la suite d'accords" : "Ecoute l'accord" }),
@@ -6619,7 +6625,7 @@ function EarTraining({ onBack, dispatch, state }) {
         }) }),
         selected !== null && /* @__PURE__ */ jsxs8("div", { style: { marginTop: 4 }, children: [
           /* @__PURE__ */ jsx10("div", { role: "status", "aria-live": "assertive", style: { background: selected === question.answer ? C.greenL : C.coralL, border: `1px solid ${selected === question.answer ? C.greenBorder : C.coralBorder}`, borderRadius: R.md, padding: "10px 14px", marginBottom: 10, fontSize: 12, color: selected === question.answer ? C.greenD : C.coralD, fontFamily: FONTS.ui, lineHeight: 1.5 }, children: selected === question.answer ? "Correct ! +25 XP" : `La bonne r\xE9ponse \xE9tait : ${question.options.find((o) => (mode === "interval" ? o.semitones : o.key) === question.answer)?.label}` }),
-          score.total < SESSION_LENGTH && /* @__PURE__ */ jsx10("button", { onClick: nextQuestion, style: { width: "100%", padding: "13px", borderRadius: R.md, border: "none", background: C.primary, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }, children: "Question suivante" })
+          score.total < SESSION_LENGTH && /* @__PURE__ */ jsx10("button", { onClick: nextQuestion, style: { width: "100%", padding: "13px", borderRadius: R.md, border: "none", background: C.primary, color: C.onPrimaryBtn, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }, children: "Question suivante" })
         ] })
       ] })
     ] })
@@ -9592,7 +9598,7 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
             boxShadow: loading ? "none" : `0 4px 16px ${playing ? context2.color : C.primary}55`,
             transition: "background 0.2s, box-shadow 0.2s"
           },
-          children: loading ? /* @__PURE__ */ jsx12(Ti, { name: "loader", size: 24, color: C.text3 }) : /* @__PURE__ */ jsx12(Ti, { name: playing ? "player-pause" : "player-play", size: 26, color: "#fff" })
+          children: loading ? /* @__PURE__ */ jsx12(Ti, { name: "loader", size: 24, color: C.text3 }) : /* @__PURE__ */ jsx12(Ti, { name: playing ? "player-pause" : "player-play", size: 26, color: C.onPrimaryBtn })
         }
       )
     ] }),
@@ -9991,11 +9997,11 @@ function JamSession({ onBack, dispatch, state }) {
               ] }) }),
               /* @__PURE__ */ jsx12("div", { "aria-hidden": "true", style: { height: 4, borderRadius: 2, background: C.amberBorder, marginTop: 6, overflow: "hidden" }, children: /* @__PURE__ */ jsx12("div", { style: { width: `${(DUREE_CONTRAINTE - resteContrainte) / DUREE_CONTRAINTE * 100}%`, height: "100%", background: C.amber, transition: "width 1s linear" } }) })
             ] }),
-            /* @__PURE__ */ jsx12("button", { onClick: () => randomConstraint(), className: "gr-focus", style: { minHeight: 36, padding: "0 14px", borderRadius: R.pill, border: `1px solid ${C.amber}`, background: tenue ? C.amber : C.surface, color: tenue ? "#fff" : C.amberD, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }, children: tenue ? "Suivante" : "Changer" })
+            /* @__PURE__ */ jsx12("button", { onClick: () => randomConstraint(), className: "gr-focus", style: { minHeight: 36, padding: "0 14px", borderRadius: R.pill, border: `1px solid ${C.amber}`, background: tenue ? C.amber : C.surface, color: tenue ? C.onPrimaryBtn : C.amberD, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }, children: tenue ? "Suivante" : "Changer" })
           ] })
         ] }) : /* @__PURE__ */ jsxs10("div", { style: { display: "flex", alignItems: "center", gap: 10 }, children: [
           /* @__PURE__ */ jsx12("div", { style: { flex: 1, fontSize: 12.5, color: C.text2, fontFamily: FONTS.ui, lineHeight: 1.45 }, children: "Une limite claire, tenue 2 minutes : c'est ce qui fait progresser en impro." }),
-          /* @__PURE__ */ jsx12("button", { onClick: () => randomConstraint(), className: "gr-focus", style: { minHeight: 36, padding: "0 14px", borderRadius: R.pill, border: "none", background: C.amber, color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }, children: "Tirer" })
+          /* @__PURE__ */ jsx12("button", { onClick: () => randomConstraint(), className: "gr-focus", style: { minHeight: 36, padding: "0 14px", borderRadius: R.pill, border: "none", background: C.amber, color: C.onPrimaryBtn, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }, children: "Tirer" })
         ] })
       ] }),
       /* @__PURE__ */ jsxs10("div", { style: { background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: "12px 14px" }, children: [
@@ -11768,12 +11774,12 @@ function Metronome() {
         border: "none",
         cursor: "pointer",
         background: `linear-gradient(135deg,#FF9155,${C.primary})`,
-        color: "#fff",
+        color: C.onPrimaryBtn,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         boxShadow: `0 6px 20px ${C.primary}55`
-      }, children: /* @__PURE__ */ jsx18(Ti, { name: playing ? "player-pause" : "player-play", size: 30, color: "#fff" }) }),
+      }, children: /* @__PURE__ */ jsx18(Ti, { name: playing ? "player-pause" : "player-play", size: 30, color: C.onPrimaryBtn }) }),
       [1, 5].map((d) => /* @__PURE__ */ jsxs15("button", { onClick: () => nudge(d), "aria-label": `Acc\xE9l\xE9rer de ${d}`, className: "gr-focus", style: pillBtn, children: [
         "+",
         d
@@ -12226,7 +12232,7 @@ function Tuner() {
     /* @__PURE__ */ jsx18(TuningPicker, { tuningId, setTuningId }),
     /* @__PURE__ */ jsxs15("button", { onClick: start2, className: "gr-focus", style: {
       background: `linear-gradient(135deg,#FF9155,${C.primary})`,
-      color: "#fff",
+      color: C.onPrimaryBtn,
       border: "none",
       borderRadius: R.lg,
       padding: "13px 28px",
@@ -12240,7 +12246,7 @@ function Tuner() {
       alignItems: "center",
       gap: 8
     }, children: [
-      /* @__PURE__ */ jsx18(Ti, { name: "microphone", size: 16, color: "#fff" }),
+      /* @__PURE__ */ jsx18(Ti, { name: "microphone", size: 16, color: C.onPrimaryBtn }),
       " Activer l'accordeur"
     ] }),
     error && /* @__PURE__ */ jsx18("p", { style: { fontSize: 12, color: C.pink, marginTop: 14, lineHeight: 1.5 }, children: error })
@@ -12444,7 +12450,7 @@ function ChordPlayer() {
         borderRadius: R.md,
         border: "none",
         background: sequence.length >= MAX_CHORDS ? C.border : C.primary,
-        color: "#fff",
+        color: C.onPrimaryBtn,
         fontWeight: 700,
         fontSize: 13.5,
         fontFamily: FONTS.ui,
@@ -12454,7 +12460,7 @@ function ChordPlayer() {
         justifyContent: "center",
         gap: 6
       }, children: [
-        /* @__PURE__ */ jsx18(Ti, { name: "plus", size: 15, color: "#fff" }),
+        /* @__PURE__ */ jsx18(Ti, { name: "plus", size: 15, color: C.onPrimaryBtn }),
         "Ajouter \xE0 la suite"
       ] })
     ] }),
@@ -12533,7 +12539,7 @@ function ChordPlayer() {
         borderRadius: R.md,
         border: "none",
         background: sequence.length === 0 ? C.border : playing ? C.coral : C.primary,
-        color: "#fff",
+        color: C.onPrimaryBtn,
         fontWeight: 800,
         fontSize: 14,
         fontFamily: FONTS.ui,
@@ -12543,7 +12549,7 @@ function ChordPlayer() {
         justifyContent: "center",
         gap: 7
       }, children: [
-        /* @__PURE__ */ jsx18(Ti, { name: playing ? "player-pause" : "player-play", size: 16, color: "#fff" }),
+        /* @__PURE__ */ jsx18(Ti, { name: playing ? "player-pause" : "player-play", size: 16, color: C.onPrimaryBtn }),
         playing ? "Arr\xEAter" : "\xC9couter la suite"
       ] })
     ] })
@@ -12641,7 +12647,7 @@ function GrilleTab({ grille, evenements, res, selection, onSelect, colLecture, C
                     fontSize: 13.5,
                     lineHeight: "18px",
                     background: sel ? C.primary : C.surface,
-                    color: sel ? "#fff" : C.text
+                    color: sel ? C.onPrimaryBtn : C.text
                   }, children: cell.mute ? "x" : cell.fret }) : sel ? /* @__PURE__ */ jsx18("span", { style: { position: "relative", zIndex: 1, width: 20, height: 20, borderRadius: 5, border: `2px solid ${C.primary}`, background: C.surface } }) : null,
                   repere && /* @__PURE__ */ jsx18("span", { style: { position: "absolute", top: -1, right: 1, zIndex: 2, fontSize: 9.5, fontWeight: 800, color: enAttente2 ? C.text3 : C.primary }, children: repere })
                 ]
@@ -13038,7 +13044,7 @@ function TabEditor() {
       ),
       erreurImport && /* @__PURE__ */ jsx18("div", { style: { fontSize: 12, color: C.primaryD, marginTop: 4 }, children: erreurImport }),
       /* @__PURE__ */ jsxs15("div", { style: { display: "flex", gap: 6, marginTop: 8 }, children: [
-        /* @__PURE__ */ jsx18("button", { onClick: importer, className: "gr-focus", style: { flex: 1, height: 40, borderRadius: R.sm, border: "none", background: C.primaryBtn, color: "#fff", fontWeight: 800, cursor: "pointer", fontFamily: FONTS.ui }, children: "Importer" }),
+        /* @__PURE__ */ jsx18("button", { onClick: importer, className: "gr-focus", style: { flex: 1, height: 40, borderRadius: R.sm, border: "none", background: C.primaryBtn, color: C.onPrimaryBtn, fontWeight: 800, cursor: "pointer", fontFamily: FONTS.ui }, children: "Importer" }),
         /* @__PURE__ */ jsx18("button", { onClick: () => {
           setImportOuvert(false);
           setErreurImport(null);
@@ -13075,14 +13081,14 @@ function TabEditor() {
         borderRadius: R.lg,
         border: "none",
         background: jouant ? C.surface2 : C.primaryBtn,
-        color: jouant ? C.text : "#fff",
+        color: jouant ? C.text : C.onPrimaryBtn,
         fontWeight: 800,
         fontSize: 14,
         cursor: "pointer",
         fontFamily: FONTS.ui,
         opacity: !jouant && evenements.length === 0 ? 0.5 : 1
       }, children: [
-        /* @__PURE__ */ jsx18(Ti, { name: jouant ? "player-pause" : "player-play", size: 17, color: jouant ? C.text : "#fff" }),
+        /* @__PURE__ */ jsx18(Ti, { name: jouant ? "player-pause" : "player-play", size: 17, color: jouant ? C.text : C.onPrimaryBtn }),
         jouant ? "Arr\xEAter" : "\xC9couter"
       ] }),
       /* @__PURE__ */ jsxs15("div", { role: "group", "aria-label": "Tempo", style: { display: "flex", alignItems: "center", gap: 4 }, children: [
@@ -13384,7 +13390,7 @@ var ecrireDuree = (v) => {
 var DOMAINES = [
   { id: "Manche", couleur: "amber", icone: "map-2", modules: ["neck"], objectif: "manche", libre: { titre: "Explorer le manche", detail: "Notes, gammes et accords sur tout le manche", ecran: "toolbox" } },
   { id: "Th\xE9orie", couleur: "green", icone: "stack-2", modules: ["scales", "harmony"], objectif: "theorie", libre: { titre: "Quiz par module", detail: "Toutes les questions de th\xE9orie, \xE0 ton rythme", quiz: true } },
-  { id: "Oreille", couleur: "purple", icone: "ear", modules: [], objectif: null, libre: { titre: "Ear Training", detail: "Intervalles, accords, suites : sans limite", ecran: "ear" } },
+  { id: "Oreille", couleur: "teal", icone: "ear", modules: [], objectif: null, libre: { titre: "Ear Training", detail: "Intervalles, accords, suites : sans limite", ecran: "ear" } },
   { id: "Rythme", couleur: "blue", icone: "metronome", modules: ["rhythm"], objectif: null, libre: { titre: "M\xE9tronome", detail: "Dans la bo\xEEte \xE0 outils", ecran: "toolbox" } },
   { id: "Impro", couleur: "pink", icone: "wand", modules: ["impro"], objectif: "impro", libre: { titre: "Jam Session", detail: "Un groupe qui suit les accords, et des contraintes \xE0 tenir", ecran: "jam" } }
 ];
@@ -13469,7 +13475,7 @@ function TrainingScreen({ state, dispatch, content, navigate }) {
         /* @__PURE__ */ jsx19("div", { style: { fontSize: 12, fontWeight: 700, color: C.primaryD, textTransform: "uppercase", letterSpacing: ".06em" }, children: "Ta s\xE9ance du jour" }),
         /* @__PURE__ */ jsx19("h2", { style: { margin: 0, fontSize: 20, fontWeight: 800, color: C.text }, children: "Commence par une le\xE7on" }),
         /* @__PURE__ */ jsx19("div", { style: { fontSize: 13, color: C.text2, lineHeight: 1.5 }, children: "Ta s\xE9ance se composera d'elle-m\xEAme d\xE8s ta premi\xE8re le\xE7on : r\xE9vision de ce que tu as appris, puis du jeu." }),
-        /* @__PURE__ */ jsx19("button", { onClick: () => navigate("home"), className: "gr-focus", style: { minHeight: 52, border: "none", borderRadius: 16, background: C.primaryBtn || C.primary, color: "#fff", fontFamily: "inherit", fontSize: 16, fontWeight: 800, cursor: "pointer" }, children: "Aller au Parcours" })
+        /* @__PURE__ */ jsx19("button", { onClick: () => navigate("home"), className: "gr-focus", style: { minHeight: 52, border: "none", borderRadius: 16, background: C.primaryBtn || C.primary, color: C.onPrimaryBtn, fontFamily: "inherit", fontSize: 16, fontWeight: 800, cursor: "pointer" }, children: "Aller au Parcours" })
       ] }) : /* @__PURE__ */ jsx19(
         SeanceDuJour,
         {
@@ -13559,7 +13565,7 @@ function SeanceDuJour({ C, seance, duree, onDuree, onLancer }) {
               justifyContent: "center",
               background: e.fait ? C.green : C.primaryL,
               border: e.fait ? "none" : `1.5px solid ${C.primaryBorder}`
-            }, children: /* @__PURE__ */ jsx19(Ti, { name: e.fait ? "check" : ICONE_ETAPE[e.id], size: 17, color: e.fait ? "#fff" : C.primaryD }) }),
+            }, children: /* @__PURE__ */ jsx19(Ti, { name: e.fait ? "check" : ICONE_ETAPE[e.id], size: 17, color: e.fait ? C.onPrimaryBtn : C.primaryD }) }),
             /* @__PURE__ */ jsxs16("div", { style: { flex: 1, minWidth: 0 }, children: [
               /* @__PURE__ */ jsx19("div", { style: { fontSize: 14, fontWeight: 700, color: C.text, textDecorationLine: e.fait ? "line-through" : "none", textDecorationColor: C.text3 }, children: e.titre }),
               /* @__PURE__ */ jsxs16("div", { style: { fontSize: 12, color: C.text2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, children: [
@@ -13583,7 +13589,7 @@ function SeanceDuJour({ C, seance, duree, onDuree, onLancer }) {
       border: "none",
       borderRadius: 16,
       background: C.primaryBtn || C.primary,
-      color: "#fff",
+      color: C.onPrimaryBtn,
       fontFamily: "inherit",
       fontSize: 16,
       fontWeight: 800,
@@ -13593,7 +13599,7 @@ function SeanceDuJour({ C, seance, duree, onDuree, onLancer }) {
       justifyContent: "center",
       gap: 10
     }, children: [
-      /* @__PURE__ */ jsx19(Ti, { name: "player-play", size: 18, color: "#fff" }),
+      /* @__PURE__ */ jsx19(Ti, { name: "player-play", size: 18, color: C.onPrimaryBtn }),
       commencee ? `Continuer : ${prochaine.titre}` : `Commencer \xB7 ${totalMinutes} min`
     ] })
   ] });
@@ -13632,7 +13638,7 @@ function Semaine({ C, state, objectifJours }) {
             boxSizing: "border-box",
             background: faits.has(i) ? C.green : i === auj ? C.surface : C.surface2,
             border: !faits.has(i) && i === auj ? `2px solid ${C.primary}` : "none"
-          }, children: faits.has(i) && /* @__PURE__ */ jsx19(Ti, { name: "check", size: 14, color: "#fff" }) }),
+          }, children: faits.has(i) && /* @__PURE__ */ jsx19(Ti, { name: "check", size: 14, color: C.onPrimaryBtn }) }),
           /* @__PURE__ */ jsx19("div", { "aria-hidden": "true", style: { fontSize: 11, fontWeight: i === auj ? 800 : 600, color: i === auj ? C.primaryD : C.text2 }, children: l })
         ]
       },
@@ -13644,7 +13650,7 @@ function familleDomaine(f) {
   return domaineDe(f);
 }
 function couleurs(C, nom2) {
-  return { c: C[nom2], l: C[nom2 + "L"], d: C[nom2 + "D"], b: C[nom2 + "Border"] };
+  return { c: C[nom2], l: C[nom2 + "L"], d: C[nom2 + "D"], b: C[nom2 + "Border"], ink: C[nom2 + "Ink"] || C[nom2 + "D"] };
 }
 function CarteDomaine({ C, d, state, progression, onOuvrir }) {
   const k = couleurs(C, d.couleur);
@@ -13688,8 +13694,8 @@ function VueDomaine({ C, d, state, dispatch, content, navigate, progression, qui
         minHeight: 52,
         border: "none",
         borderRadius: 16,
-        background: k.d,
-        color: "#fff",
+        background: k.ink,
+        color: C.onPrimaryBtn,
         fontFamily: "inherit",
         fontSize: 15,
         fontWeight: 800,
@@ -13699,7 +13705,7 @@ function VueDomaine({ C, d, state, dispatch, content, navigate, progression, qui
         justifyContent: "center",
         gap: 10
       }, children: [
-        /* @__PURE__ */ jsx19(Ti, { name: "player-play", size: 18, color: "#fff" }),
+        /* @__PURE__ */ jsx19(Ti, { name: "player-play", size: 18, color: C.onPrimaryBtn }),
         " S'entra\xEEner sur ",
         d.id === "Impro" ? "l'impro" : d.id === "Oreille" ? "l'oreille" : `le ${d.id.toLowerCase()}`
       ] }) : d.id !== "Impro" && /* @__PURE__ */ jsx19("div", { style: { fontSize: 13, color: k.d }, children: "Rien \xE0 r\xE9viser pour l'instant : les comp\xE9tences de ce domaine se d\xE9bloquent avec les le\xE7ons du parcours." })

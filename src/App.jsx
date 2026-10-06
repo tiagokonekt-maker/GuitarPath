@@ -592,7 +592,7 @@ function EcranErreur({ C, message }) {
         Ta progression est en sécurité.
       </div>
       <button onClick={() => window.location.reload()} className="gr-focus" style={{
-        marginTop: 6, background: C.primaryBtn, color: "#fff", border: "none",
+        marginTop: 6, background: C.primaryBtn, color: C.onPrimaryBtn, border: "none",
         borderRadius: 12, padding: "14px 24px", fontSize: 14, fontWeight: 700,
         cursor: "pointer", fontFamily: FONTS.ui, minHeight: 48,
       }}>Recharger Groply</button>

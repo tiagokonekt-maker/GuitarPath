@@ -238,7 +238,7 @@ function PathNode({ lesson, index, state, th, onSelect, isCurrent, isLocked, gro
             background:th.color,border:`2px solid ${C.bg}`,
             display:"flex",alignItems:"center",justifyContent:"center",
           }}>
-            <Ti name="check" size={9} color="#fff"/>
+            <Ti name="check" size={9} color={C.onPrimaryBtn}/>
           </div>
         )}
         {isCurrent&&(
@@ -278,7 +278,7 @@ function PathNode({ lesson, index, state, th, onSelect, isCurrent, isLocked, gro
           {isCurrent&&(
             <div style={{
               display:"inline-block",marginTop:8,
-              background:C.primary,color:"#fff",
+              background:C.primary,color:C.onPrimaryBtn,
               borderRadius:999,padding:"5px 14px",
               fontSize:10,fontWeight:700,letterSpacing:".06em",textTransform:"uppercase",
               boxShadow:`0 3px 10px ${C.primary}44`,
@@ -620,7 +620,7 @@ function WelcomeModal({ state, tip, navigate, onClose }) {
             onClick={onClose}
             className="gr-focus"
             style={{
-              width:"100%", background:C.primaryBtn, color:"#fff",
+              width:"100%", background:C.primaryBtn, color:C.onPrimaryBtn,
               border:"none", borderRadius:R.lg, padding:"12px",
               fontSize:14, fontWeight:800, cursor:"pointer",
             }}
@@ -1033,14 +1033,14 @@ function LessonView({ lesson, state, dispatch, onBack }) {
             <Gropi pose="celebrate" size={120} anim="cheer" style={{ margin:"0 auto" }}/>
             <div style={{ fontSize:20, fontWeight:800, color:C.greenD, letterSpacing:"-.3px", marginTop:8 }}>Leçon complétée !</div>
             <div style={{ fontSize:13, color:C.green, marginTop:4 }}>+30 XP · Continue sur ta lancée</div>
-            <button onClick={onBack} style={{ marginTop:16, padding:"12px 32px", borderRadius:R.lg, border:"none", background:C.green, color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:FONTS.ui, boxShadow:`0 4px 14px ${C.green}44` }}>
+            <button onClick={onBack} style={{ marginTop:16, padding:"12px 32px", borderRadius:R.lg, border:"none", background:C.green, color:C.onPrimaryBtn, fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:FONTS.ui, boxShadow:`0 4px 14px ${C.green}44` }}>
               Retour au parcours
             </button>
           </div>
         ) : (
           <button onClick={finish} style={{
             width:"100%", padding:14, borderRadius:R.lg, border:"none",
-            background:C.primary, color:"#fff",
+            background:C.primary, color:C.onPrimaryBtn,
             fontSize:14, fontWeight:700, cursor:"pointer", fontFamily:FONTS.ui,
             letterSpacing:".01em", display:"flex", alignItems:"center", justifyContent:"center", gap:6,
             boxShadow:`0 4px 16px ${C.primary}44`,

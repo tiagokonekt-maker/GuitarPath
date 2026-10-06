@@ -48,7 +48,7 @@ export function XPPop({ amount, onDone }) {
   return (
     <div role="status" aria-live="polite" style={{
       position: "fixed", bottom: 92, left: "50%", transform: "translateX(-50%)",
-      background: C.primaryBtn, color: "#fff", padding: "9px 18px", borderRadius: 999,
+      background: C.primaryBtn, color: C.onPrimaryBtn, padding: "9px 18px", borderRadius: 999,
       fontSize: T.body, fontWeight: 700, fontFamily: FONTS.ui, zIndex: 200,
       pointerEvents: "none", animation: "fadeUp 1.4s ease forwards",
       boxShadow: "0 6px 20px rgba(0,0,0,.18)",
@@ -154,7 +154,7 @@ export function ConfirmDialog({
             style={{
               padding: "14px", borderRadius: 12, border: "none", minHeight: 48,
               background: !pret ? C.surface2 : danger ? C.danger : C.primaryBtn,
-              color: !pret ? C.text3 : "#fff",
+              color: !pret ? C.text3 : C.onPrimaryBtn,
               fontWeight: 700, fontSize: T.body, fontFamily: FONTS.ui,
               cursor: pret ? "pointer" : "not-allowed",
             }}

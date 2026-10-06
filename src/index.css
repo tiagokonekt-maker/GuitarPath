@@ -32,6 +32,7 @@
   --gr-text-3:        #6B645B;
   --gr-primary:       #E85D1A;
   --gr-primary-btn:   #C64E12;
+  --gr-on-primary-btn: #FFFFFF;
   --gr-primary-ink:   #B8430E;
   --gr-focus:         #0A4FB0;
   --gr-shadow:        0 6px 24px rgba(60, 30, 10, .10);
@@ -50,6 +51,7 @@
   --gr-text-3:        #A08A74;
   --gr-primary:       #F2762F;
   --gr-primary-btn:   #E85D1A;
+  --gr-on-primary-btn: #26180A;
   --gr-primary-ink:   #FFAA78;
   --gr-focus:         #8CBCF5;
   --gr-shadow:        0 6px 24px rgba(0, 0, 0, .45);

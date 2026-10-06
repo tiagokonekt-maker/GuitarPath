@@ -228,7 +228,7 @@ export function ReviewSession({ questions, state, dispatch, onDone }) {
             {wrongItems.map((q, i) => (
               <div key={q.id} style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: i < wrongItems.length - 1 ? 8 : 0 }}>
                 <div style={{ width: 18, height: 18, borderRadius: "50%", background: C.coral, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
-                  <Ti name="x" size={10} color="#fff" />
+                  <Ti name="x" size={10} color={C.onPrimaryBtn} />
                 </div>
                 <div style={{ fontSize: 12, color: C.coralD, fontFamily: FONTS.ui, lineHeight: 1.45 }}>
                   {q.q?.substring(0, 80)}{q.q?.length > 80 ? "..." : ""}
@@ -250,7 +250,7 @@ export function ReviewSession({ questions, state, dispatch, onDone }) {
 
         <button onClick={onDone} style={{
           width: "100%", padding: "14px", borderRadius: R.md, border: "none",
-          background: C.primary, color: "#fff", fontSize: 14, fontWeight: 700,
+          background: C.primary, color: C.onPrimaryBtn, fontSize: 14, fontWeight: 700,
           cursor: "pointer", fontFamily: FONTS.ui, marginTop: 4,
         }}>
           Retour à l'accueil
@@ -330,10 +330,10 @@ export function ReviewSession({ questions, state, dispatch, onDone }) {
           <button onClick={ecouter} className="gr-focus" style={{
             width: "100%", height: 52, borderRadius: R.lg, border: "none", cursor: "pointer",
             display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-            background: ecoutee ? C.surface2 : C.primary, color: ecoutee ? C.text : "#fff",
+            background: ecoutee ? C.surface2 : C.primary, color: ecoutee ? C.text : C.onPrimaryBtn,
             fontSize: 15, fontWeight: 800, fontFamily: FONTS.ui,
           }}>
-            <Ti name="volume" size={18} color={ecoutee ? C.text : "#fff"} />
+            <Ti name="volume" size={18} color={ecoutee ? C.text : C.onPrimaryBtn} />
             {ecoutee ? "Réécouter" : "Écouter"}
           </button>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6 }}>
@@ -372,7 +372,7 @@ export function ReviewSession({ questions, state, dispatch, onDone }) {
                 </div>
                 {q.exp && <div style={{ fontSize: 12, color: isCorrect ? C.greenD : C.coralD, lineHeight: 1.55, fontFamily: FONTS.ui }}>{q.exp}</div>}
               </div>
-              <button onClick={() => next()} style={{ width: "100%", padding: "14px", borderRadius: R.md, border: "none", background: C.primary, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }}>
+              <button onClick={() => next()} style={{ width: "100%", padding: "14px", borderRadius: R.md, border: "none", background: C.primary, color: C.onPrimaryBtn, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }}>
                 {prochaine(idx, sansSon) >= questions.length ? "Voir les résultats" : "Suivant"}
               </button>
             </>
@@ -437,7 +437,7 @@ export function ReviewSession({ questions, state, dispatch, onDone }) {
                   </span>
                 </div>
               )}
-              <button onClick={() => next()} style={{ width: "100%", padding: "14px", borderRadius: R.md, border: "none", background: C.primary, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }}>
+              <button onClick={() => next()} style={{ width: "100%", padding: "14px", borderRadius: R.md, border: "none", background: C.primary, color: C.onPrimaryBtn, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }}>
                 {prochaine(idx, sansSon) >= questions.length ? "Voir les résultats" : "Suivant"}
               </button>
             </>

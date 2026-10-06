@@ -117,7 +117,7 @@ export function UnitCheckScreen({ unit, content, dispatch, onDone, state }) {
         <button onClick={onDone} style={{
           width: "100%", maxWidth: 280, marginTop: 20, padding: 14, borderRadius: R.lg, border: "none",
           background: passed ? `linear-gradient(135deg,#FF9155,${C.primary})` : C.surface2,
-          color: passed ? "#fff" : C.text2, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui,
+          color: passed ? C.onPrimaryBtn : C.text2, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui,
         }}>
           {passed ? "Réclamer le coffre" : "Revoir les leçons"}
         </button>
@@ -184,7 +184,7 @@ export function UnitCheckScreen({ unit, content, dispatch, onDone, state }) {
           </div>
           <button onClick={next} style={{
             width: "100%", padding: 13, borderRadius: R.lg, border: "none",
-            background: C.primary, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui,
+            background: C.primary, color: C.onPrimaryBtn, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui,
           }}>
             {idx + 1 >= questions.length ? "Voir le résultat" : "Continuer"}
           </button>

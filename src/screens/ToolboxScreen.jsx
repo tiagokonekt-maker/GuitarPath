@@ -337,10 +337,10 @@ function Metronome() {
         <button onClick={toggle} aria-label={playing ? "Arrêter le métronome" : "Démarrer le métronome"} className="gr-focus" style={{
           width:72, height:72, borderRadius:"50%", border:"none", cursor:"pointer",
           background:`linear-gradient(135deg,#FF9155,${C.primary})`,
-          color:"#fff", display:"flex", alignItems:"center", justifyContent:"center",
+          color:C.onPrimaryBtn, display:"flex", alignItems:"center", justifyContent:"center",
           boxShadow:`0 6px 20px ${C.primary}55`,
         }}>
-          <Ti name={playing ? "player-pause" : "player-play"} size={30} color="#fff"/>
+          <Ti name={playing ? "player-pause" : "player-play"} size={30} color={C.onPrimaryBtn}/>
         </button>
         {[1,5].map(d=>(
           <button key={d} onClick={()=>nudge(d)} aria-label={`Accélérer de ${d}`} className="gr-focus" style={pillBtn}>+{d}</button>
@@ -809,12 +809,12 @@ function Tuner() {
           <TuningPicker tuningId={tuningId} setTuningId={setTuningId} />
 
           <button onClick={start} className="gr-focus" style={{
-            background:`linear-gradient(135deg,#FF9155,${C.primary})`, color:"#fff", border:"none",
+            background:`linear-gradient(135deg,#FF9155,${C.primary})`, color:C.onPrimaryBtn, border:"none",
             borderRadius:R.lg, padding:"13px 28px", fontSize:14, fontWeight:700, fontFamily:FONTS.ui,
             cursor:"pointer", boxShadow:`0 4px 16px ${C.primary}44`, marginTop:18,
             display:"inline-flex", alignItems:"center", gap:8,
           }}>
-            <Ti name="microphone" size={16} color="#fff"/> Activer l'accordeur
+            <Ti name="microphone" size={16} color={C.onPrimaryBtn}/> Activer l'accordeur
           </button>
           {error && <p style={{ fontSize:12, color:C.pink, marginTop:14, lineHeight:1.5 }}>{error}</p>}
         </div>
@@ -1065,11 +1065,11 @@ function ChordPlayer() {
         <button onClick={addChord} disabled={sequence.length >= MAX_CHORDS} className="gr-focus" style={{
           width:"100%", padding:"11px 0", borderRadius:R.md, border:"none",
           background: sequence.length >= MAX_CHORDS ? C.border : C.primary,
-          color:"#fff", fontWeight:700, fontSize:13.5, fontFamily:FONTS.ui,
+          color:C.onPrimaryBtn, fontWeight:700, fontSize:13.5, fontFamily:FONTS.ui,
           cursor: sequence.length >= MAX_CHORDS ? "default" : "pointer",
           display:"flex", alignItems:"center", justifyContent:"center", gap:6,
         }}>
-          <Ti name="plus" size={15} color="#fff"/>
+          <Ti name="plus" size={15} color={C.onPrimaryBtn}/>
           Ajouter à la suite
         </button>
       </div>
@@ -1141,11 +1141,11 @@ function ChordPlayer() {
         <button onClick={toggle} disabled={sequence.length === 0} className="gr-focus" style={{
           width:"100%", padding:"13px 0", borderRadius:R.md, border:"none",
           background: sequence.length === 0 ? C.border : (playing ? C.coral : C.primary),
-          color:"#fff", fontWeight:800, fontSize:14, fontFamily:FONTS.ui,
+          color:C.onPrimaryBtn, fontWeight:800, fontSize:14, fontFamily:FONTS.ui,
           cursor: sequence.length === 0 ? "default" : "pointer",
           display:"flex", alignItems:"center", justifyContent:"center", gap:7,
         }}>
-          <Ti name={playing ? "player-pause" : "player-play"} size={16} color="#fff"/>
+          <Ti name={playing ? "player-pause" : "player-play"} size={16} color={C.onPrimaryBtn}/>
           {playing ? "Arrêter" : "Écouter la suite"}
         </button>
       </div>
@@ -1271,7 +1271,7 @@ function GrilleTab({ grille, evenements, res, selection, onSelect, colLecture, C
                         <span style={{
                           position: "relative", zIndex: 1, minWidth: 18, padding: "1px 3px", borderRadius: 4,
                           fontFamily: "monospace", fontWeight: 800, fontSize: 13.5, lineHeight: "18px",
-                          background: sel ? C.primary : C.surface, color: sel ? "#fff" : C.text,
+                          background: sel ? C.primary : C.surface, color: sel ? C.onPrimaryBtn : C.text,
                         }}>{cell.mute ? "x" : cell.fret}</span>
                       ) : sel ? (
                         <span style={{ position: "relative", zIndex: 1, width: 20, height: 20, borderRadius: 5, border: `2px solid ${C.primary}`, background: C.surface }} />
@@ -1646,7 +1646,7 @@ function TabEditor() {
             style={{ width: "100%", fontFamily: "monospace", fontSize: 12.5, lineHeight: 1.5, padding: "10px 12px", borderRadius: R.md, border: `1.5px solid ${erreurImport ? C.primary : C.border}`, background: C.surface, color: C.text, resize: "vertical" }} />
           {erreurImport && <div style={{ fontSize: 12, color: C.primaryD, marginTop: 4 }}>{erreurImport}</div>}
           <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
-            <button onClick={importer} className="gr-focus" style={{ flex: 1, height: 40, borderRadius: R.sm, border: "none", background: C.primaryBtn, color: "#fff", fontWeight: 800, cursor: "pointer", fontFamily: FONTS.ui }}>Importer</button>
+            <button onClick={importer} className="gr-focus" style={{ flex: 1, height: 40, borderRadius: R.sm, border: "none", background: C.primaryBtn, color: C.onPrimaryBtn, fontWeight: 800, cursor: "pointer", fontFamily: FONTS.ui }}>Importer</button>
             <button onClick={() => { setImportOuvert(false); setErreurImport(null); }} className="gr-focus" style={{ ...boutonCarre, width: "auto", padding: "0 14px", fontSize: 12.5 }}>Fermer</button>
           </div>
         </div>
@@ -1667,10 +1667,10 @@ function TabEditor() {
         <button onClick={basculerLecture} disabled={!jouant && evenements.length === 0} className="gr-focus" style={{
           flex: 1, height: 44, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
           borderRadius: R.lg, border: "none", background: jouant ? C.surface2 : C.primaryBtn,
-          color: jouant ? C.text : "#fff", fontWeight: 800, fontSize: 14, cursor: "pointer", fontFamily: FONTS.ui,
+          color: jouant ? C.text : C.onPrimaryBtn, fontWeight: 800, fontSize: 14, cursor: "pointer", fontFamily: FONTS.ui,
           opacity: (!jouant && evenements.length === 0) ? .5 : 1,
         }}>
-          <Ti name={jouant ? "player-pause" : "player-play"} size={17} color={jouant ? C.text : "#fff"} />
+          <Ti name={jouant ? "player-pause" : "player-play"} size={17} color={jouant ? C.text : C.onPrimaryBtn} />
           {jouant ? "Arrêter" : "Écouter"}
         </button>
         <div role="group" aria-label="Tempo" style={{ display: "flex", alignItems: "center", gap: 4 }}>

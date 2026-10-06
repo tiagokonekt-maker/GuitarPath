@@ -1038,7 +1038,7 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
           }}>
           {loading
             ? <Ti name="loader" size={24} color={C.text3} />
-            : <Ti name={playing ? "player-pause" : "player-play"} size={26} color="#fff" />}
+            : <Ti name={playing ? "player-pause" : "player-play"} size={26} color={C.onPrimaryBtn} />}
         </button>
       </div>
 
@@ -1479,7 +1479,7 @@ export function JamSession({ onBack, dispatch, state }) {
                     </div>
                   </div>
                 )}
-                <button onClick={() => randomConstraint()} className="gr-focus" style={{ minHeight: 36, padding: "0 14px", borderRadius: R.pill, border: `1px solid ${C.amber}`, background: tenue ? C.amber : C.surface, color: tenue ? "#fff" : C.amberD, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }}>
+                <button onClick={() => randomConstraint()} className="gr-focus" style={{ minHeight: 36, padding: "0 14px", borderRadius: R.pill, border: `1px solid ${C.amber}`, background: tenue ? C.amber : C.surface, color: tenue ? C.onPrimaryBtn : C.amberD, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }}>
                   {tenue ? "Suivante" : "Changer"}
                 </button>
               </div>
@@ -1489,7 +1489,7 @@ export function JamSession({ onBack, dispatch, state }) {
               <div style={{ flex: 1, fontSize: 12.5, color: C.text2, fontFamily: FONTS.ui, lineHeight: 1.45 }}>
                 Une limite claire, tenue 2 minutes : c'est ce qui fait progresser en impro.
               </div>
-              <button onClick={() => randomConstraint()} className="gr-focus" style={{ minHeight: 36, padding: "0 14px", borderRadius: R.pill, border: "none", background: C.amber, color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }}>
+              <button onClick={() => randomConstraint()} className="gr-focus" style={{ minHeight: 36, padding: "0 14px", borderRadius: R.pill, border: "none", background: C.amber, color: C.onPrimaryBtn, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }}>
                 Tirer
               </button>
             </div>
