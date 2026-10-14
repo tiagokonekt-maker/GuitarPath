@@ -13,8 +13,71 @@ let tonePromise = null;
 
 async function chargerTone() {
   if (Tone) return Tone;
-  if (!tonePromise) tonePromise = import("tone").then(m => { Tone = m; return m; });
+  if (!tonePromise) tonePromise = import("tone").then(m => { adopterContexteDuGeste(m); Tone = m; return m; });
   return tonePromise;
+}
+
+// ── Déverrouillage iOS ────────────────────────────────────────────────────
+// iOS n'autorise la (re)prise d'un AudioContext QUE dans la pile d'appel
+// synchrone d'un geste. Or Tone.js est chargé à la demande : `await
+// import("tone")` puis `Tone.start()` sortait du geste dès le premier appui,
+// d'où le classique « il faut appuyer deux fois pour avoir du son ».
+// On crée donc un AudioContext brut, synchrone, dans le geste, et on le donne
+// à Tone une fois chargé (adopterContexteDuGeste).
+let ctxGeste = null;
+
+/**
+ * Catégorie audio « lecture » (Safari 16.4+) : le son de l'app n'est plus
+ * coupé par le bouton silencieux de l'iPhone, comme une app de musique.
+ * Sans effet ailleurs.
+ */
+export function activerSessionAudio() {
+  try {
+    if (typeof navigator !== "undefined" && navigator.audioSession && navigator.audioSession.type !== "playback") {
+      navigator.audioSession.type = "playback";
+    }
+  } catch { /* API absente ou refusée : rien à faire */ }
+}
+
+/** Partie SYNCHRONE du déverrouillage : à appeler avant tout await. */
+function deverrouillerDansLeGeste() {
+  activerSessionAudio();
+  try {
+    if (Tone) {
+      // Tone déjà chargé : reprise immédiate, sans attendre quoi que ce soit.
+      const ctx = Tone.getContext();
+      if (ctx.state !== "running") ctx.resume().catch(() => {});
+      return;
+    }
+    if (typeof window === "undefined") return;
+    // Uniquement le constructeur standard : Tone ne sait pas adopter un
+    // webkitAudioContext (iOS < 14.5), qui garde alors le chemin habituel.
+    const AC = window.AudioContext;
+    if (!AC) return;
+    if (!ctxGeste || ctxGeste.state === "closed") ctxGeste = new AC({ latencyHint: "interactive" });
+    if (ctxGeste.state !== "running") ctxGeste.resume().catch(() => {});
+  } catch { /* le chargement normal de Tone prendra le relais */ }
+}
+
+/**
+ * Tone.js crée son propre contexte à l'import. S'il n'a encore jamais
+ * tourné (currentTime nul : aucun son n'y a jamais été joué, aucun autre
+ * écran ne l'utilise), on le remplace par celui créé dans le geste, déjà
+ * déverrouillé. Sinon (la Jam ou le métronome l'ont déjà démarré), on garde
+ * celui de Tone et on ferme le nôtre : un seul contexte pour toute l'app.
+ */
+function adopterContexteDuGeste(T) {
+  const brut = ctxGeste;
+  ctxGeste = null;
+  if (!brut) return;
+  try {
+    const actuel = T.getContext();
+    if (actuel.state !== "running" && actuel.currentTime === 0 && brut.state !== "closed") {
+      T.setContext(brut, true);
+      return;
+    }
+  } catch { /* on garde le contexte de Tone */ }
+  try { brut.close(); } catch { /* noop */ }
 }
 
 /** Vrai si Tone.js est déjà en mémoire (permet d'éviter un await inutile). */
@@ -108,9 +171,32 @@ export const RELEASE = 1.6;
  */
 export const QUEUE_AUDIBLE_MS = Math.round(RELEASE * 1000);
 
-/** Durée d'une valeur de note Tone.js en secondes, au tempo par défaut (120). */
-const DUREE_NOTE = { "1n": 2, "2n": 1, "4n": 0.5, "8n": 0.25, "16n": 0.125 };
-const secondes = (v) => (typeof v === "number" ? v : DUREE_NOTE[v] ?? 1);
+/**
+ * Durée d'une valeur de note Tone.js en SECONDES, au tempo de référence
+ * (120) — FIXE. Les lectures de ce module convertissent toujours leurs durées
+ * avec cette fonction au lieu de passer "4n" à Tone : "4n" se lit au tempo
+ * du Transport, que la Jam et le métronome modifient. Après une Jam à 70,
+ * un intervalle durait 0,86 s au lieu de 0,5 s, et `durationMs` (calculé ici
+ * à 120) ne correspondait plus au son.
+ * Formes acceptées : nombre (secondes), "4n", "8n." (pointée), "8t"
+ * (triolet), "1m" (mesure de 4 temps), "0.5" (secondes en texte).
+ */
+const RONDE_120 = 2;   // une ronde à 120 BPM, en secondes
+function secondes(v) {
+  if (typeof v === "number") return v;
+  const m = /^(\d+(?:\.\d+)?)([nmt])(\.?)$/.exec(String(v ?? "").trim());
+  if (m && parseFloat(m[1]) > 0) {
+    const n = parseFloat(m[1]);
+    let s = m[2] === "m" ? n * RONDE_120 : RONDE_120 / n;
+    if (m[2] === "t") s *= 2 / 3;
+    if (m[3]) s *= 1.5;
+    return s;
+  }
+  const brut = parseFloat(v);
+  return Number.isFinite(brut) ? brut : 1;
+}
+/** Exposé pour les tests : durée d'une valeur de note, en secondes (120 BPM fixe). */
+export const dureeEnSecondes = secondes;
 
 /**
  * URLs complètes des samples — utilisées par les Réglages pour proposer
@@ -195,7 +281,7 @@ function buildVoicingFromIntervals(rootName, intervals) {
 // à intensité identique et à la milliseconde près, l'oreille entend un
 // orgue, pas une guitare.
 // ─────────────────────────────────────────────────────────────────────────
-function strumInto(notes, duration, when, direction = "down", spread = 0.026) {
+function strumInto(notes, duration, when, direction = "down", spread = 0.026, cible = sampler) {
   const ordered = direction === "down" ? notes : [...notes].reverse();
   const n = ordered.length;
   ordered.forEach((note, i) => {
@@ -207,7 +293,7 @@ function strumInto(notes, duration, when, direction = "down", spread = 0.026) {
     // jamais parfaitement régulier.
     const jitter = (Math.random() - 0.5) * spread * 0.35;
     const t = when + i * spread + jitter;
-    try { sampler.triggerAttackRelease(note, duration, t, velocity); } catch { /* noop */ }
+    try { cible.triggerAttackRelease(note, secondes(duration), t, velocity); } catch { /* noop */ }
   });
 }
 
@@ -243,9 +329,10 @@ let sortieMaitre = null;
 // partaient donc quand même. C'est ce que tu as constaté en arrêtant entre
 // les deux notes d'un intervalle.
 //
-// Tout ce qui est différé passe désormais par des minuteurs JavaScript
-// enregistrés ici, donc annulables. L'imprécision d'un setTimeout est de
-// quelques millisecondes : inaudible sur des écarts de 200 ms et plus.
+// Deux mécanismes annulables : les notes passent par un bus propre à chaque
+// lecture, que stopAll() ferme (voir nouvelleLecture, plus bas) ; les rappels
+// d'interface (surlignage, curseur, fin) passent par des minuteurs JavaScript
+// enregistrés ici.
 let enAttente = [];
 
 /** Programme une lecture différée, annulable par stopAll(). */
@@ -263,6 +350,54 @@ function differer(fn, ms) {
 function annulerEnAttente() {
   for (const id of enAttente) clearTimeout(id);
   enAttente = [];
+}
+
+// ── Lectures planifiées dans le temps AUDIO ───────────────────────────────
+// Les minuteurs ci-dessus rendaient l'arrêt possible, mais au prix de la
+// précision : un setTimeout peut glisser de 10 à 50 ms (onglet chargé,
+// mobile en économie d'énergie), ce qui s'entend sur une dictée rythmique
+// ou une gamme. Désormais chaque lecture (gamme, rythme, suite, intervalle)
+// planifie TOUTES ses notes d'avance, à l'échantillon près, sur un sampler
+// et un bus de gain qui lui sont propres. L'arrêt reste immédiat : stopAll()
+// ferme ce bus et le libère, ce qui emporte les notes pas encore jouées.
+// Le sampler de lecture ne coûte presque rien : il lit les buffers déjà
+// décodés (chargerBuffersCordes), rien n'est rechargé.
+let lectureEnCours = null;   // { sampler, bus }
+
+function nouvelleLecture() {
+  arreterLecturePlanifiee();
+  const bus = new Tone.Gain(1).connect(busGuitare);
+  const s = new Tone.Sampler({ urls: urlsCordes(buffersCordes), release: RELEASE }).connect(bus);
+  lectureEnCours = { sampler: s, bus };
+  return s;
+}
+
+function arreterLecturePlanifiee() {
+  const l = lectureEnCours;
+  lectureEnCours = null;
+  if (!l || !Tone) return;
+  try {
+    const t = Tone.immediate();
+    l.bus.gain.cancelScheduledValues(t);
+    l.bus.gain.setValueAtTime(l.bus.gain.value, t);
+    l.bus.gain.linearRampToValueAtTime(0, t + 0.008);
+  } catch { /* noop */ }
+  // Libération après la rampe : les notes futures disparaissent avec le bus.
+  setTimeout(() => {
+    try { l.sampler.dispose(); } catch { /* noop */ }
+    try { l.bus.dispose(); } catch { /* noop */ }
+  }, 60);
+}
+
+/** Départ d'une lecture planifiée : un peu d'avance pour tout planifier à temps. */
+const departLecture = () => Tone.now() + 0.03;
+
+/**
+ * Rappel visuel synchronisé sur l'instant AUDIO `t` : minuteur calculé
+ * depuis l'horloge audio (donc sans dérive cumulée), annulable par stopAll().
+ */
+function visuelA(t, fn) {
+  differer(fn, Math.max(0, (t - Tone.immediate()) * 1000));
 }
 
 let restaurationTimer = null;
@@ -302,8 +437,10 @@ export function loadAudio() {
   // rechargement complet de l'app, et sans aucun message.
   loadPromise = (async () => {
     await chargerTone();
-    return new Promise((resolve, reject) => {
     try {
+      // Une nouvelle tentative repart d'une chaîne propre : sans ça, chaque
+      // échec laissait une sortie et une réverbération orphelines.
+      libererChaine();
       // Une guitare est toujours entendue dans une pièce. Un signal trop
       // sec et frontal sonne artificiel, même avec de vrais samples — un
       // peu plus d'espace et de longueur suffisent à replacer l'instrument
@@ -316,23 +453,21 @@ export function loadAudio() {
       reverb.connect(sortieMaitre);
       busGuitare = reverb;   // les voix de corde de playTab passent par le même chemin
 
+      // Les échantillons sont décodés UNE fois, dans les buffers partagés
+      // avec le moteur de cordes (playTab). Avant, le Sampler et playTab
+      // chargeaient chacun leur copie : deux fois la mémoire décodée.
+      const buffers = await chargerBuffersCordes();
       sampler = new Tone.Sampler({
-        urls: SAMPLE_URLS,
-        baseUrl: BASE_URL,
-        release: 1.6,
-        onload: () => { isLoaded = true; resolve(true); },
-        onerror: (err) => {
-          loadError = err;
-          warn("Erreur samples:", err);
-          reject(err);
-        },
+        urls: urlsCordes(buffers),
+        release: RELEASE,
       }).connect(reverb);
-
+      isLoaded = true;
+      return true;
     } catch (err) {
       loadError = err;
-      reject(err);
+      warn("Erreur samples:", err);
+      throw err;
     }
-    });
   })();
 
   loadPromise.catch(() => { loadPromise = null; isLoaded = false; });
@@ -341,8 +476,17 @@ export function loadAudio() {
 
 /** Remet le moteur à zéro pour permettre une nouvelle tentative. */
 export function resetAudio() {
-  try { sampler?.dispose?.(); } catch { /* noop */ }
-  sampler = null; loadPromise = null; isLoaded = false; loadError = null;
+  libererChaine();
+  loadPromise = null; isLoaded = false; loadError = null;
+}
+
+/** Libère sampler, réverbération et sortie maître (pas les buffers partagés). */
+function libererChaine() {
+  arreterLecturePlanifiee();
+  for (const n of [sampler, busGuitare, sortieMaitre]) {
+    try { n?.dispose?.(); } catch { /* déjà libéré */ }
+  }
+  sampler = null; busGuitare = null; sortieMaitre = null;
 }
 
 /**
@@ -358,14 +502,22 @@ export function resetAudio() {
  * On démarre donc le contexte d'abord, on charge ensuite.
  */
 export async function unlockAudio() {
+  // Synchrone, AVANT le premier await : c'est ce qui garde le geste.
+  deverrouillerDansLeGeste();
   try {
     await chargerTone();
-    if (Tone.context.state !== "running") await Tone.start();
-    return Tone.context.state === "running";
+    // Tone.getContext() et non Tone.context : ce dernier est figé à l'import
+    // et ne suit pas le contexte adopté (adopterContexteDuGeste).
+    if (Tone.getContext().state !== "running") await Tone.start();
+    return Tone.getContext().state === "running";
   } catch { return false; }
 }
 
 async function ensureLoaded() {
+  // Les fonctions de lecture appellent ensureLoaded() en premier : la partie
+  // synchrone du déverrouillage s'exécute donc encore dans le geste, même
+  // pour un appelant qui n'a pas appelé unlockAudio().
+  deverrouillerDansLeGeste();
   try {
     await chargerTone();
   } catch { return false; }
@@ -373,11 +525,11 @@ async function ensureLoaded() {
   // Le contexte d'abord — y compris l'état "interrupted" propre à iOS (appel
   // entrant, retrait du casque, dialogue système), que Tone.context.resume()
   // ne traite pas : cf. Tone.js #767.
-  const etat = Tone.context.state;
-  if (etat !== "running") {
+  const ctx = Tone.getContext();
+  if (ctx.state !== "running") {
     try {
       await Tone.start();
-      if (Tone.context.state !== "running") await Tone.context.rawContext?.resume?.();
+      if (ctx.state !== "running") await ctx.rawContext?.resume?.();
     } catch { /* on tente quand même la lecture */ }
   }
 
@@ -426,7 +578,7 @@ export async function playNote(note, duration = "4n") {
   if (!await ensureLoaded()) return;
   stopAll();
   reveillerSortie();
-  try { sampler.triggerAttackRelease(note, duration, Tone.now()); }
+  try { sampler.triggerAttackRelease(note, secondes(duration), Tone.now()); }
   catch (e) { warn("playNote:", e); }
 }
 
@@ -438,18 +590,21 @@ export async function playChord(notes, duration = "2n", opts = {}) {
   stopAll();
   reveillerSortie();
   const { strum = true, direction = "down", spread = 0.026 } = opts;
+  const duree = secondes(duration);
   try {
-    if (!strum) { sampler.triggerAttackRelease(notes, duration); return; }
-    strumInto(notes, duration, Tone.now(), direction, spread);
+    if (!strum) { sampler.triggerAttackRelease(notes, duree, Tone.now()); return; }
+    strumInto(notes, duree, Tone.now(), direction, spread);
   }
   catch (e) { warn("playChord:", e); }
 }
 
 /**
  * Joue une gamme note à note.
- * @param onStep(index, note) appelé À CHAQUE note, synchronisé sur l'horloge
- *        AUDIO via Tone.Draw — pas sur un minuteur séparé, qui dériverait et
- *        désynchroniserait l'affichage du son.
+ * Toutes les notes sont planifiées d'avance dans le temps audio (voir
+ * nouvelleLecture) : aucune gigue de minuteur entre deux notes, et stopAll()
+ * coupe toujours net.
+ * @param onStep(index, note) appelé À CHAQUE note, à l'instant où elle sonne
+ *        (minuteur calculé depuis l'horloge audio, voir visuelA).
  */
 export async function playScale(notes, bpm = 80, onStep) {
   if (!await ensureLoaded()) return;
@@ -457,17 +612,15 @@ export async function playScale(notes, bpm = 80, onStep) {
   reveillerSortie();
   const spb = 60 / bpm;
   try {
+    const s = nouvelleLecture();
+    const t0 = departLecture();
     notes.forEach((note, i) => {
-      // Chaque note par minuteur annulable, au lieu d'une planification
-      // audio irrévocable : c'est ce qui rend la gamme interruptible. Le
-      // surlignage part du même minuteur, donc reste synchrone avec le son.
-      differer(() => {
-        try { sampler.triggerAttackRelease(note, spb * 0.85, Tone.now()); } catch { /* noop */ }
-        onStep?.(i, note);
-      }, i * spb * 1000);
+      const t = t0 + i * spb;
+      try { s.triggerAttackRelease(note, spb * 0.85, t); } catch { /* noop */ }
+      if (onStep) visuelA(t, () => onStep(i, note));
     });
     // Signale la fin, pour éteindre le dernier surlignage.
-    differer(() => onStep?.(-1, null), notes.length * spb * 1000);
+    if (onStep) visuelA(t0 + notes.length * spb, () => onStep(-1, null));
   } catch (e) { warn("playScale:", e); }
 }
 
@@ -476,51 +629,71 @@ export async function playScale(notes, bpm = 80, onStep) {
 // ─────────────────────────────────────────────────────────────────────────
 
 /**
+ * Instants (en secondes depuis le début) d'une dictée rythmique : 8 clics
+ * (4 de décompte + 4 temps marqués) et les attaques de la mesure. Pur, sans
+ * audio : testé à part (test/audioTiming.test.mjs).
+ */
+export function planRythme(spec) {
+  const { bpm = 70, pas = 2, attaques = [], swing = false } = spec || {};
+  const spb = 60 / bpm, t0 = 4 * spb;   // la mesure commence après le décompte
+  const quand = (i) => {
+    const temps = Math.floor(i / pas), sous = i % pas;
+    const frac = swing && pas === 2 ? (sous === 0 ? 0 : 2 / 3) : sous / pas;
+    return t0 + (temps + frac) * spb;
+  };
+  return {
+    clics: Array.from({ length: 8 }, (_, b) => ({ t: b * spb, fort: b === 0 || b === 4 })),
+    attaques: attaques.map(quand),
+    duree: Math.max(0.08, (spb / pas) * (swing ? 0.6 : 0.8)),
+    totalMs: 8 * spb * 1000,
+  };
+}
+
+/**
  * Joue une mesure rythmique, précédée d'un décompte de 4 clics.
  * @param spec.bpm        tempo
  * @param spec.pas        cases par temps (2 = croches, 4 = doubles-croches)
  * @param spec.attaques   index des cases qui sonnent, sur une mesure de 4 temps
  * @param spec.swing      true = croches ternaires (longue-courte, rapport 2/3-1/3)
- * Tout passe par des minuteurs annulables : stopAll() coupe net, même au
- * milieu du décompte. Les temps restent marqués par un clic léger pendant
- * la mesure, pour que l'élève sache toujours où est le « 1 ».
+ * Tout est planifié dans le temps audio, sur le bus de la lecture : la
+ * dictée tombe exactement en place, et stopAll() coupe net, même au milieu
+ * du décompte. Les temps restent marqués par un clic léger pendant la
+ * mesure, pour que l'élève sache toujours où est le « 1 ».
  * @returns la durée totale en millisecondes
  */
 export async function playRythme(spec) {
   if (!await ensureLoaded()) return 0;
   stopAll();
   reveillerSortie();
-  const { bpm = 70, pas = 2, attaques = [], swing = false, note = "A3", clic = "E5" } = spec || {};
-  const spb = 60 / bpm, t0 = 4 * spb;   // la mesure commence après le décompte
-  const quand = (i) => {
-    const temps = Math.floor(i / pas), sous = i % pas;
-    const frac = swing && pas === 2 ? (sous === 0 ? 0 : 2 / 3) : sous / pas;
-    return (t0 + (temps + frac) * spb) * 1000;
-  };
+  const { note = "A3", clic = "E5" } = spec || {};
+  const plan = planRythme(spec);
   try {
-    for (let b = 0; b < 8; b++) {        // 4 clics de décompte + 4 temps marqués
-      differer(() => { try { sampler.triggerAttackRelease(clic, 0.05, Tone.now(), b === 0 || b === 4 ? 0.5 : 0.3); } catch { /* noop */ } }, b * spb * 1000);
+    const s = nouvelleLecture();
+    const t0 = departLecture();
+    for (const c of plan.clics) {
+      try { s.triggerAttackRelease(clic, 0.05, t0 + c.t, c.fort ? 0.5 : 0.3); } catch { /* noop */ }
     }
-    const duree = Math.max(0.08, (spb / pas) * (swing ? 0.6 : 0.8));
-    for (const i of attaques) {
-      differer(() => { try { sampler.triggerAttackRelease(note, duree, Tone.now(), 0.85); } catch { /* noop */ } }, quand(i));
+    for (const t of plan.attaques) {
+      try { s.triggerAttackRelease(note, plan.duree, t0 + t, 0.85); } catch { /* noop */ }
     }
   } catch (e) { warn("playRythme:", e); }
-  return 8 * spb * 1000;
+  return plan.totalMs;
 }
 
 /**
  * Suite d'accords donnés NOTE PAR NOTE (pas par nom) : la question d'oreille
  * maîtrise exactement ce qui sonne, et les tests peuvent le vérifier.
- * Même grattage que le reste de l'app, minuteurs annulables.
+ * Même grattage que le reste de l'app, planifié dans le temps audio.
  */
 export async function playSuite(accords, secondesParAccord = 1.6) {
   if (!await ensureLoaded()) return;
   stopAll();
   reveillerSortie();
   try {
+    const s = nouvelleLecture();
+    const t0 = departLecture();
     accords.forEach((notes, i) => {
-      differer(() => { try { strumInto(notes, secondesParAccord * 0.9, Tone.now(), i % 2 ? "up" : "down"); } catch { /* noop */ } }, i * secondesParAccord * 1000);
+      try { strumInto(notes, secondesParAccord * 0.9, t0 + i * secondesParAccord, i % 2 ? "up" : "down", 0.026, s); } catch { /* noop */ }
     });
   } catch (e) { warn("playSuite:", e); }
 }
@@ -542,17 +715,17 @@ export async function playInterval(note1, note2, mode = "ascending") {
   reveillerSortie();
   try {
     if (mode === "harmonic") {
-      sampler.triggerAttackRelease([note1, note2], "2n", Tone.now());
+      sampler.triggerAttackRelease([note1, note2], secondes("2n"), Tone.now());
       return;
     }
     const [premiere, seconde] = mode === "descending" ? [note2, note1] : [note1, note2];
-    sampler.triggerAttackRelease(premiere, "4n", Tone.now());
-    // La seconde note passe par un minuteur ANNULABLE. Avant, elle était
-    // planifiée à `now + 0.65` dans le temps audio : arrêter entre les deux
-    // notes ne l'empêchait pas de sonner.
-    differer(() => {
-      try { sampler.triggerAttackRelease(seconde, "4n", Tone.now()); } catch { /* noop */ }
-    }, ECART_INTERVALLE_MS);
+    // Les deux notes sont planifiées dans le temps audio, sur le bus de la
+    // lecture : l'écart est exact, et arrêter entre les deux notes coupe
+    // bien la seconde (stopAll ferme et libère ce bus).
+    const s = nouvelleLecture();
+    const t0 = departLecture();
+    s.triggerAttackRelease(premiere, secondes("4n"), t0);
+    s.triggerAttackRelease(seconde, secondes("4n"), t0 + ECART_INTERVALLE_MS / 1000);
   } catch (e) { warn("playInterval:", e); }
 }
 
@@ -620,18 +793,44 @@ export async function playArpeggioFromRoot(root, chordType, bpm = 132, onStep) {
  *                          visuel qui ne dérive jamais du son.
  * @param opts.onDone()     appelé une fois la séquence terminée.
  */
-/** Charge (une fois) les échantillons sous forme de buffers bruts, pour les voix de corde. */
-async function chargerBuffersCordes() {
-  if (buffersCordes?.loaded) return buffersCordes;
-  await new Promise((resolve, reject) => {
-    const minuteur = setTimeout(() => reject(new Error("délai dépassé")), 8000);
-    buffersCordes = new Tone.ToneAudioBuffers({
-      urls: SAMPLE_URLS, baseUrl: BASE_URL,
-      onload: () => { clearTimeout(minuteur); resolve(); },
-      onerror: (e) => { clearTimeout(minuteur); reject(e); },
+/**
+ * Charge (une fois) les échantillons de guitare sous forme de buffers bruts.
+ * UNIQUE source décodée : le Sampler principal (loadAudio), les lectures
+ * planifiées et les voix de corde (playTab) lisent tous ces mêmes buffers.
+ * Pas de délai ici : un réseau lent doit pouvoir finir ; c'est l'appelant
+ * qui décide s'il attend (voir avecDelai dans playTab).
+ */
+let promesseCordes = null;
+function chargerBuffersCordes() {
+  if (buffersCordes?.loaded) return Promise.resolve(buffersCordes);
+  if (!promesseCordes) {
+    promesseCordes = new Promise((resolve, reject) => {
+      const b = new Tone.ToneAudioBuffers({
+        urls: SAMPLE_URLS, baseUrl: BASE_URL,
+        onload: () => { buffersCordes = b; resolve(b); },
+        onerror: (e) => {
+          try { b.dispose(); } catch { /* noop */ }
+          reject(e instanceof Error ? e : new Error(String(e)));
+        },
+      });
     });
-  });
-  return buffersCordes;
+    // Un échec n'est pas mémorisé : la tentative suivante recharge.
+    promesseCordes.catch(() => { promesseCordes = null; });
+  }
+  return promesseCordes;
+}
+
+/** { "A2": ToneAudioBuffer… } : forme attendue par Tone.Sampler pour des buffers déjà décodés. */
+const urlsCordes = (buffers) =>
+  Object.fromEntries(Object.keys(SAMPLE_URLS).map(n => [n, buffers.get(n)]));
+
+/** Rejette si `promesse` n'aboutit pas dans le délai (sans l'interrompre). */
+function avecDelai(promesse, ms) {
+  let minuteur = null;
+  return Promise.race([
+    promesse,
+    new Promise((_, reject) => { minuteur = setTimeout(() => reject(new Error("délai dépassé")), ms); }),
+  ]).finally(() => clearTimeout(minuteur));
 }
 
 /** Échantillon le plus proche d'une hauteur MIDI (un par demi-ton, C2 → B5). */
@@ -701,7 +900,7 @@ export async function playTab(evenements, opts = {}) {
   const maLecture = ++generationTab;
 
   try {
-    await chargerBuffersCordes();
+    await avecDelai(chargerBuffersCordes(), 8000);
     if (!busGuitare) throw new Error("bus guitare absent");
   } catch (e) {
     // Repli : l'ancien lecteur à sampler. Aucune régression, juste l'ancien
@@ -935,7 +1134,7 @@ function fioriture(notes, { gap = 0.055, duration = "8n", from = 0.62, to = 0.30
     // un vrai balayage au médiator qui finit en effleurement.
     const t = notes.length === 1 ? 0 : i / (notes.length - 1);
     const velocity = from + (to - from) * t;
-    try { sampler.triggerAttackRelease(note, duration, now + i * gap, velocity); }
+    try { sampler.triggerAttackRelease(note, secondes(duration), now + i * gap, velocity); }
     catch { /* noop */ }
   });
   return true;
@@ -978,7 +1177,9 @@ export function playBadgeUnlocked() {
  *
  *  1. ANNULER LES NOTES À VENIR. Une note remise au contexte audio est
  *     irrévocable — c'est pour ça que la deuxième note d'un intervalle partait
- *     malgré le stop. Elles passent maintenant par des minuteurs annulables.
+ *     malgré le stop. Elles passent maintenant par le bus de leur lecture,
+ *     fermé et libéré ici (arreterLecturePlanifiee), et les rappels visuels
+ *     par des minuteurs annulables.
  *  2. FERMER LA SORTIE MAÎTRE. Une rampe de 8 ms : assez court pour être perçu
  *     comme instantané, assez long pour éviter le clic d'une coupure à zéro.
  *     C'est ça qui rend le silence immédiat, réverbération comprise.
@@ -1002,7 +1203,8 @@ function couperVoixCordes() {
 export function stopAll() {
   generationTab++;
   couperVoixCordes();
-  annulerEnAttente();
+  annulerEnAttente();           // rappels visuels et minuteurs encore à venir
+  arreterLecturePlanifiee();    // notes planifiées d'avance : leur bus se ferme
   progressionTimers.forEach(clearTimeout);
   progressionTimers = [];
   if (progressionTimer) { clearTimeout(progressionTimer); progressionTimer = null; }

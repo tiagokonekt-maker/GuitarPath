@@ -56,21 +56,82 @@ export function swingRatio(base, bpm) {
 }
 
 /**
- * Position temporelle d'un pas, en fraction de mesure (0..1), swing appliqué.
- * Le swing ne concerne que les pas IMPAIRS du niveau croche.
+ * Applique le swing à une position exprimée en TEMPS (1.5 = croche faible
+ * du temps 2). C'est la fonction partagée par la batterie, la basse et
+ * l'accompagnement : si chacun swinguait à sa façon, la croche faible de la
+ * basse tomberait à côté de celle de la charleston — un « flam » audible.
+ *
+ * Le swing agit par PAIRES de cases du niveau `stepsPerBeat` (2 = croches,
+ * 4 = doubles-croches) : la case impaire de chaque paire est repoussée à
+ * `ratio` de la paire. Entre les deux, l'interpolation est linéaire, ce qui
+ * place correctement une position plus fine (une double-croche dans un swing
+ * de croches) et garde l'ordre des notes.
+ *
+ * @param beat          position en temps (≥ 0)
+ * @param ratio         0.5 = binaire, 0.667 = ternaire (voir swingRatio)
+ * @param stepsPerBeat  niveau du swing : 2 = croches, 4 = doubles-croches.
+ *                      Un niveau impair (3 = triolets) ne swingue pas : la
+ *                      grille est déjà ternaire.
  */
-export function stepPosition(step, stepsPerBar, swing, beatsPerBar = 4) {
-  const stepsPerBeat = stepsPerBar / beatsPerBar;
-  const beat = Math.floor(step / stepsPerBeat);
-  const within = step % stepsPerBeat;
-  let frac = within / stepsPerBeat;
+export function swingBeat(beat, ratio, stepsPerBeat = 2) {
+  if (!(ratio > 0 && ratio < 1) || ratio === 0.5) return beat;
+  if (!(stepsPerBeat >= 2) || stepsPerBeat % 2 !== 0) return beat;
+  const pair = 2 / stepsPerBeat;          // durée d'une paire, en temps
+  const unit = pair / 2;
+  // Petite tolérance : 1.5 calculé en flottant ne doit pas tomber dans la
+  // paire précédente.
+  const k = Math.floor(beat / pair + 1e-9);
+  const within = Math.max(0, beat - k * pair);
+  const pivot = ratio * pair;
+  const w = within <= unit
+    ? (within / unit) * pivot
+    : pivot + ((within - unit) / unit) * (pair - pivot);
+  return k * pair + w;
+}
 
-  // Swing sur la deuxième croche de chaque temps.
-  if (stepsPerBeat >= 2) {
-    const halfway = stepsPerBeat / 2;
-    if (within === halfway) frac = swing;
+/**
+ * Niveau de swing de la GRILLE de batterie d'un pack : celui de sa
+ * subdivision (16 → doubles-croches, 8 → croches, 12 → triolets, donc pas
+ * de swing ajouté). Sans subdivision déclarée : croches.
+ */
+export function packSwing(pack, bpm, beatsPerBar = 4) {
+  const sub = pack?.feel?.subdivision;
+  const stepsPerBeat = sub ? sub / beatsPerBar : 2;
+  return { ratio: swingRatio(pack?.feel?.swing ?? 0, bpm), stepsPerBeat };
+}
+
+/**
+ * Swing à appliquer à la basse et à l'accompagnement, écrits en temps
+ * BINAIRES (1.5, 3.5…), pour qu'ils tombent exactement avec la batterie.
+ *
+ * Cas particulier : une grille ternaire (blues shuffle, 12 cases par
+ * mesure) écrit déjà le shuffle — sa croche faible est la 3e case du
+ * triolet, à 2/3 du temps, quel que soit `feel.swing`. La croche faible de
+ * la basse doit donc aller à 2/3, pas au ratio de swingRatio(), sinon elle
+ * tomberait une quinzaine de millisecondes avant la charleston.
+ */
+export function companionSwing(pack, bpm, beatsPerBar = 4) {
+  const grille = packSwing(pack, bpm, beatsPerBar);
+  if (Number.isInteger(grille.stepsPerBeat) && grille.stepsPerBeat % 3 === 0) {
+    return { ratio: 2 / 3, stepsPerBeat: 2 };
   }
-  return (beat + frac) / beatsPerBar;
+  return grille;
+}
+
+/**
+ * Position temporelle d'un pas, en fraction de mesure (0..1), swing appliqué.
+ * Le swing concerne les cases IMPAIRES du niveau `swingStepsPerBeat`
+ * (croches par défaut ; les packs passent leur propre subdivision, voir
+ * packSwing). Une grille ternaire (triolets) n'est jamais déformée : elle
+ * porte déjà son swing.
+ */
+export function stepPosition(step, stepsPerBar, swing, beatsPerBar = 4, swingStepsPerBeat = 2) {
+  const stepsPerBeat = stepsPerBar / beatsPerBar;
+  const beat = step / stepsPerBeat;
+  // Le swing ne s'applique que si la grille est un raffinement binaire du
+  // niveau de swing (8 ou 16 cases pour un swing de croches…).
+  if (!(stepsPerBeat % swingStepsPerBeat === 0)) return beat / beatsPerBar;
+  return swingBeat(beat, swing, swingStepsPerBeat) / beatsPerBar;
 }
 
 // ─────────────────────────────────────────────────────────────────────────

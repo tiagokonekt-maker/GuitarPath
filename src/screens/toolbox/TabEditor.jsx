@@ -480,12 +480,16 @@ export function TabEditor() {
   }, [menuOuvert]);
 
   const importer = () => {
-    const { evenements: ev, erreur } = parseTab(texteImport);
+    const { evenements: ev, erreur, avertissements = [] } = parseTab(texteImport);
     if (erreur) { setErreurImport(erreur); return; }
     modifier(() => evenementsVersGrille(ev));
     setSelection({ corde: 1, col: 0 });
     setErreurImport(null); setTexteImport(""); setImportOuvert(false);
-    annoncer("Tab importée. « Annuler » revient à la version précédente.");
+    // Un bloc ignoré (basse 4 cordes, ligne perdue…) ne doit pas passer
+    // inaperçu : l'élève croirait que la tab est complète.
+    annoncer(avertissements.length
+      ? `Tab importée. ${avertissements.join(" ")}`
+      : "Tab importée. « Annuler » revient à la version précédente.");
   };
 
   // Ligne d'aide : un message ponctuel d'abord, sinon ce qu'il faut faire

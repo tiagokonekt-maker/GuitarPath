@@ -15,6 +15,11 @@
 //           monte, pull-off si elle descend (déduit, pas à choisir)
 //   slide : glissé vers la prochaine note de la même corde (sens déduit)
 //   bend  : 1 (demi-ton) ou 2 (ton entier), hauteur d'arrivée = fret+bend
+//   relache : { apres, fret } — bend relâché (7b9r7 collé en texte) : la
+//           redescente commence `apres` pas après l'attaque, vers `fret`
+//   vibrato : true — note tenue avec vibrato (5~ collé en texte)
+// relache et vibrato n'ont pas (encore) de bouton dans l'éditeur : ils ne
+// viennent que d'un texte importé, et sont conservés pour la lecture.
 //
 // ── La taille n'est plus stockée ────────────────────────────────────────
 // Elle se déduit du contenu : toujours au moins 2 mesures, et toujours une
@@ -124,22 +129,30 @@ export function grilleVersEvenements(grille) {
       const suivante = notes[i + 1];
       const suivanteJouable = suivante && !suivante.cell.mute && typeof suivante.cell.fret === "number";
 
+      const vibNote = cell.vibrato ? { vibrato: true } : {};
       if ((cell.lie || cell.slide) && suivanteJouable) {
         const monte = suivante.cell.fret >= cell.fret;
         const type = cell.slide ? (monte ? "slide_up" : "slide_down") : (monte ? "hammer" : "pull");
-        evenements.push({ type, fromFret: cell.fret, toFret: suivante.cell.fret, col, toCol: suivante.col, string: corde });
+        // Le vibrato d'une liaison est porté par la note d'arrivée.
+        const vibArrivee = suivante.cell.vibrato ? { vibrato: true } : {};
+        evenements.push({ type, fromFret: cell.fret, toFret: suivante.cell.fret, col, toCol: suivante.col, string: corde, ...vibArrivee });
         consommees.add(suivante.col);
         return;
       }
       if (cell.bend === 1 || cell.bend === 2) {
-        evenements.push({ type: "bend", fromFret: cell.fret, toFret: cell.fret + cell.bend, col, string: corde });
+        const rel = cell.relache && typeof cell.relache.fret === "number"
+          ? { releaseFret: cell.relache.fret, releaseCol: col + (cell.relache.apres || 0) } : {};
+        evenements.push({ type: "bend", fromFret: cell.fret, toFret: cell.fret + cell.bend, col, string: corde, ...rel, ...vibNote });
         return;
       }
-      evenements.push({ type: "note", fret: cell.fret, col, string: corde });
+      evenements.push({ type: "note", fret: cell.fret, col, string: corde, ...vibNote });
     });
   }
   return evenements.sort((a, b) => a.col - b.col || a.string - b.string);
 }
+
+/** Champ vibrato à recopier, s'il y a lieu. */
+const vib = (ev) => (ev.vibrato ? { vibrato: true } : {});
 
 /**
  * Évènements (issus d'un texte collé, via parseTab) → grille. La colonne de
@@ -150,17 +163,19 @@ export function evenementsVersGrille(evenements) {
   let g = grilleVide();
   for (const ev of evenements || []) {
     switch (ev.type) {
-      case "note": g = ecrireCase(g, ev.string, ev.col, { fret: ev.fret }); break;
+      case "note": g = ecrireCase(g, ev.string, ev.col, { fret: ev.fret, ...vib(ev) }); break;
       case "mute": g = ecrireCase(g, ev.string, ev.col, { mute: true }); break;
       case "bend": {
         const b = Math.max(1, Math.min(2, ev.toFret - ev.fromFret));
-        g = ecrireCase(g, ev.string, ev.col, { fret: ev.fromFret, bend: b });
+        const relache = ev.releaseFret != null
+          ? { relache: { apres: Math.max(0, (ev.releaseCol ?? ev.col) - ev.col), fret: ev.releaseFret } } : {};
+        g = ecrireCase(g, ev.string, ev.col, { fret: ev.fromFret, bend: b, ...relache, ...vib(ev) });
         break;
       }
       case "hammer": case "pull": case "slide_up": case "slide_down": {
         const lien = ev.type.startsWith("slide") ? { slide: true } : { lie: true };
         g = ecrireCase(g, ev.string, ev.col, { fret: ev.fromFret, ...lien });
-        g = ecrireCase(g, ev.string, ev.toCol ?? ev.col + 1, { fret: ev.toFret });
+        g = ecrireCase(g, ev.string, ev.toCol ?? ev.col + 1, { fret: ev.toFret, ...vib(ev) });
         break;
       }
       default: break;

@@ -3,7 +3,7 @@
 // c'est le renderer qui traduira en échantillons. Cette séparation rend
 // tout ce fichier testable en Node.
 
-import { parseGrid, stepPosition, swingRatio, humanize } from "../music/groove.js";
+import { parseGrid, stepPosition, packSwing, humanize } from "../music/groove.js";
 
 /**
  * Génère les évènements d'UNE mesure de batterie.
@@ -17,7 +17,10 @@ export function generateDrumBar(pack, decision, opts) {
   const { barStartTime, secPerBeat, beatsPerBar = 4, bpm, energy = 3 } = opts;
   const barDuration = secPerBeat * beatsPerBar;
   const feel = pack.humanize || {};
-  const swing = swingRatio(pack.feel?.swing ?? 0, bpm);
+  // Swing au niveau de la subdivision du pack : croches pour un pack en
+  // croches, doubles-croches pour le funk 16 (les « e » et « a »), aucun
+  // pour une grille en triolets qui porte déjà son shuffle.
+  const { ratio: swing, stepsPerBeat: swingSteps } = packSwing(pack, bpm, beatsPerBar);
 
   const pattern = (pack.drumPatterns || []).find(p => p.id === decision.patternId)
                || (pack.drumPatterns || [])[0];
@@ -41,7 +44,7 @@ export function generateDrumBar(pack, decision, opts) {
       // Ouvertures de charleston seulement à haute énergie.
       if (hit.open && !decision.openHats) continue;
 
-      const frac = stepPosition(hit.step, hit.stepsPerBar, swing, beatsPerBar);
+      const frac = stepPosition(hit.step, hit.stepsPerBar, swing, beatsPerBar, swingSteps);
       events.push({
         instrument: hit.open ? (inst === "hihat" ? "hihatOpen" : inst) : inst,
         time: barStartTime + frac * barDuration,
@@ -62,7 +65,9 @@ export function generateDrumBar(pack, decision, opts) {
     }
     for (const [instrument, grid] of Object.entries(decision.fill.grid)) {
       for (const hit of parseGrid(grid)) {
-        const frac = hit.step / hit.stepsPerBar;
+        // Même swing que le motif : un fill droit sur un groove swingué
+        // sonnerait « à côté ».
+        const frac = stepPosition(hit.step, hit.stepsPerBar, swing, beatsPerBar, swingSteps);
         if (frac < fillStart) continue;
         events.push({
           instrument,

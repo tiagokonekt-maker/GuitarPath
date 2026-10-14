@@ -114,6 +114,9 @@ export function getBassPattern(rootNote, quality, style, nextRoot, barIdx, energ
   return notes.map(n => ({
     note: toToneNoteFromMidi(n.midi),
     time: toToneTime(n.beat),
+    // Position en temps, droite : le lecteur y applique le swing du style
+    // (swingBeat) — `time`, arrondi à la double-croche, ne le pourrait pas.
+    beat: n.beat,
     dur: n.dur,
     velocity: n.velocity,
   }));

@@ -957,19 +957,19 @@ function planifierTab(evenements, opts = {}) {
     }
     if (ev.type === "bend") {
       const depart = ouverte + ev.fromFret, arrivee = ouverte + ev.toFret;
-      voix.push({
-        corde: ev.string,
-        debut,
-        fin: null,
-        velocite: v,
-        etouffee: false,
-        ev,
-        hauteurs: [
-          { t: 0, midi: depart, forme: "saut" },
-          { t: R2.bendDelaiS, midi: depart, forme: "saut" },
-          { t: R2.bendDelaiS + Math.min(R2.bendDureeMax, spc * 2), midi: arrivee, forme: "rampe" }
-        ]
-      });
+      const montee = Math.min(R2.bendDureeMax, spc * 2);
+      const tHaut = R2.bendDelaiS + montee;
+      const hauteurs = [
+        { t: 0, midi: depart, forme: "saut" },
+        { t: R2.bendDelaiS, midi: depart, forme: "saut" },
+        { t: tHaut, midi: arrivee, forme: "rampe" }
+      ];
+      if (ev.releaseFret != null) {
+        const tRelache = Math.max(tHaut + 0.02, ev.releaseCol != null ? (ev.releaseCol - ev.col) * spc : tHaut + spc);
+        hauteurs.push({ t: tRelache, midi: arrivee, forme: "saut" });
+        hauteurs.push({ t: tRelache + montee, midi: ouverte + ev.releaseFret, forme: "rampe" });
+      }
+      voix.push({ corde: ev.string, debut, fin: null, velocite: v, etouffee: false, ev, hauteurs });
       continue;
     }
     if (ev.type === "hammer" || ev.type === "pull") {
@@ -1014,6 +1014,19 @@ function planifierTab(evenements, opts = {}) {
       x.fin = suivante ? Math.min(suivante.debut, naturelle) : naturelle;
     });
   }
+  for (const x of voix) {
+    if (!x.ev?.vibrato || x.etouffee) continue;
+    const dernier = x.hauteurs[x.hauteurs.length - 1];
+    const tDebut = dernier.t + R2.vibratoDelaiS;
+    const tFin = x.fin - x.debut;
+    if (tFin <= tDebut) continue;
+    const pas = 1 / (4 * R2.vibratoFrequence);
+    x.hauteurs.push({ t: tDebut, midi: dernier.midi, forme: "saut" });
+    for (let k = 1; tDebut + k * pas <= tFin; k++) {
+      const ecart = [0, 1, 0, -1][k % 4] * R2.vibratoAmplitude;
+      x.hauteurs.push({ t: tDebut + k * pas, midi: dernier.midi + ecart, forme: "rampe" });
+    }
+  }
   voix.sort((a, b) => a.debut - b.debut);
   return { voix, duree: voix.reduce((m, x) => Math.max(m, x.fin), 0) };
 }
@@ -1043,7 +1056,12 @@ var init_tabSon = __esm({
       bendDureeMax: 0.18,
       // s — durée max de la montée d'un bend
       slidePart: 0.85,
-      // part du temps disponible occupée par le glissé
+      vibratoAmplitude: 0.3,
+      // demi-ton — écart max de part et d'autre de la note
+      vibratoFrequence: 5.5,
+      // Hz — oscillations par seconde
+      vibratoDelaiS: 0.06,
+      // s — la note est d'abord tenue droite, puis vibre          // part du temps disponible occupée par le glissé
       etouffeeDuree: 0.05,
       // s — le « tchk » d'une note étouffée
       velociteEtouffee: 0.55
@@ -1349,10 +1367,67 @@ var init_tone_stub = __esm({
 async function chargerTone() {
   if (Tone) return Tone;
   if (!tonePromise) tonePromise = Promise.resolve().then(() => (init_tone_stub(), tone_stub_exports)).then((m) => {
+    adopterContexteDuGeste(m);
     Tone = m;
     return m;
   });
   return tonePromise;
+}
+function activerSessionAudio() {
+  try {
+    if (typeof navigator !== "undefined" && navigator.audioSession && navigator.audioSession.type !== "playback") {
+      navigator.audioSession.type = "playback";
+    }
+  } catch {
+  }
+}
+function deverrouillerDansLeGeste() {
+  activerSessionAudio();
+  try {
+    if (Tone) {
+      const ctx = Tone.getContext();
+      if (ctx.state !== "running") ctx.resume().catch(() => {
+      });
+      return;
+    }
+    if (typeof window === "undefined") return;
+    const AC = window.AudioContext;
+    if (!AC) return;
+    if (!ctxGeste || ctxGeste.state === "closed") ctxGeste = new AC({ latencyHint: "interactive" });
+    if (ctxGeste.state !== "running") ctxGeste.resume().catch(() => {
+    });
+  } catch {
+  }
+}
+function adopterContexteDuGeste(T2) {
+  const brut = ctxGeste;
+  ctxGeste = null;
+  if (!brut) return;
+  try {
+    const actuel = T2.getContext();
+    if (actuel.state !== "running" && actuel.currentTime === 0 && brut.state !== "closed") {
+      T2.setContext(brut, true);
+      return;
+    }
+  } catch {
+  }
+  try {
+    brut.close();
+  } catch {
+  }
+}
+function secondes(v) {
+  if (typeof v === "number") return v;
+  const m = /^(\d+(?:\.\d+)?)([nmt])(\.?)$/.exec(String(v ?? "").trim());
+  if (m && parseFloat(m[1]) > 0) {
+    const n = parseFloat(m[1]);
+    let s = m[2] === "m" ? n * RONDE_120 : RONDE_120 / n;
+    if (m[2] === "t") s *= 2 / 3;
+    if (m[3]) s *= 1.5;
+    return s;
+  }
+  const brut = parseFloat(v);
+  return Number.isFinite(brut) ? brut : 1;
 }
 function toToneNote(note, octave) {
   const flat = SHARP_TO_FLAT[note];
@@ -1384,7 +1459,7 @@ function buildVoicingFromIntervals(rootName, intervals) {
   }
   return [...rel].sort((a, b) => a - b).map((r) => bass + r).filter((m) => m >= LOW && m <= HIGH).map(fromMidi);
 }
-function strumInto(notes, duration, when, direction = "down", spread = 0.026) {
+function strumInto(notes, duration, when, direction = "down", spread = 0.026, cible = sampler) {
   const ordered = direction === "down" ? notes : [...notes].reverse();
   const n = ordered.length;
   ordered.forEach((note, i) => {
@@ -1393,7 +1468,7 @@ function strumInto(notes, duration, when, direction = "down", spread = 0.026) {
     const jitter = (Math.random() - 0.5) * spread * 0.35;
     const t = when + i * spread + jitter;
     try {
-      sampler.triggerAttackRelease(note, duration, t, velocity);
+      cible.triggerAttackRelease(note, secondes(duration), t, velocity);
     } catch {
     }
   });
@@ -1422,6 +1497,38 @@ function annulerEnAttente() {
   for (const id of enAttente) clearTimeout(id);
   enAttente = [];
 }
+function nouvelleLecture() {
+  arreterLecturePlanifiee();
+  const bus = new Tone.Gain(1).connect(busGuitare);
+  const s = new Tone.Sampler({ urls: urlsCordes(buffersCordes), release: RELEASE }).connect(bus);
+  lectureEnCours = { sampler: s, bus };
+  return s;
+}
+function arreterLecturePlanifiee() {
+  const l = lectureEnCours;
+  lectureEnCours = null;
+  if (!l || !Tone) return;
+  try {
+    const t = Tone.immediate();
+    l.bus.gain.cancelScheduledValues(t);
+    l.bus.gain.setValueAtTime(l.bus.gain.value, t);
+    l.bus.gain.linearRampToValueAtTime(0, t + 8e-3);
+  } catch {
+  }
+  setTimeout(() => {
+    try {
+      l.sampler.dispose();
+    } catch {
+    }
+    try {
+      l.bus.dispose();
+    } catch {
+    }
+  }, 60);
+}
+function visuelA(t, fn) {
+  differer(fn, Math.max(0, (t - Tone.immediate()) * 1e3));
+}
 function reveillerSortie() {
   if (restaurationTimer) {
     clearTimeout(restaurationTimer);
@@ -1445,31 +1552,24 @@ function loadAudio() {
   if (loadPromise) return loadPromise;
   loadPromise = (async () => {
     await chargerTone();
-    return new Promise((resolve, reject) => {
-      try {
-        sortieMaitre = new Tone.Gain(1).toDestination();
-        const reverb = new Tone.Reverb({ decay: 1.9, wet: 0.19 });
-        reverb.connect(sortieMaitre);
-        busGuitare = reverb;
-        sampler = new Tone.Sampler({
-          urls: SAMPLE_URLS,
-          baseUrl: BASE_URL,
-          release: 1.6,
-          onload: () => {
-            isLoaded = true;
-            resolve(true);
-          },
-          onerror: (err) => {
-            loadError = err;
-            warn("Erreur samples:", err);
-            reject(err);
-          }
-        }).connect(reverb);
-      } catch (err) {
-        loadError = err;
-        reject(err);
-      }
-    });
+    try {
+      libererChaine();
+      sortieMaitre = new Tone.Gain(1).toDestination();
+      const reverb = new Tone.Reverb({ decay: 1.9, wet: 0.19 });
+      reverb.connect(sortieMaitre);
+      busGuitare = reverb;
+      const buffers = await chargerBuffersCordes();
+      sampler = new Tone.Sampler({
+        urls: urlsCordes(buffers),
+        release: RELEASE
+      }).connect(reverb);
+      isLoaded = true;
+      return true;
+    } catch (err) {
+      loadError = err;
+      warn("Erreur samples:", err);
+      throw err;
+    }
   })();
   loadPromise.catch(() => {
     loadPromise = null;
@@ -1477,26 +1577,40 @@ function loadAudio() {
   });
   return loadPromise;
 }
+function libererChaine() {
+  arreterLecturePlanifiee();
+  for (const n of [sampler, busGuitare, sortieMaitre]) {
+    try {
+      n?.dispose?.();
+    } catch {
+    }
+  }
+  sampler = null;
+  busGuitare = null;
+  sortieMaitre = null;
+}
 async function unlockAudio() {
+  deverrouillerDansLeGeste();
   try {
     await chargerTone();
-    if (Tone.context.state !== "running") await Tone.start();
-    return Tone.context.state === "running";
+    if (Tone.getContext().state !== "running") await Tone.start();
+    return Tone.getContext().state === "running";
   } catch {
     return false;
   }
 }
 async function ensureLoaded() {
+  deverrouillerDansLeGeste();
   try {
     await chargerTone();
   } catch {
     return false;
   }
-  const etat = Tone.context.state;
-  if (etat !== "running") {
+  const ctx = Tone.getContext();
+  if (ctx.state !== "running") {
     try {
       await Tone.start();
-      if (Tone.context.state !== "running") await Tone.context.rawContext?.resume?.();
+      if (ctx.state !== "running") await ctx.rawContext?.resume?.();
     } catch {
     }
   }
@@ -1514,7 +1628,7 @@ async function playNote(note, duration = "4n") {
   stopAll();
   reveillerSortie();
   try {
-    sampler.triggerAttackRelease(note, duration, Tone.now());
+    sampler.triggerAttackRelease(note, secondes(duration), Tone.now());
   } catch (e) {
     warn("playNote:", e);
   }
@@ -1524,12 +1638,13 @@ async function playChord(notes, duration = "2n", opts = {}) {
   stopAll();
   reveillerSortie();
   const { strum = true, direction = "down", spread = 0.026 } = opts;
+  const duree = secondes(duration);
   try {
     if (!strum) {
-      sampler.triggerAttackRelease(notes, duration);
+      sampler.triggerAttackRelease(notes, duree, Tone.now());
       return;
     }
-    strumInto(notes, duration, Tone.now(), direction, spread);
+    strumInto(notes, duree, Tone.now(), direction, spread);
   } catch (e) {
     warn("playChord:", e);
   }
@@ -1540,66 +1655,74 @@ async function playScale(notes, bpm = 80, onStep) {
   reveillerSortie();
   const spb = 60 / bpm;
   try {
+    const s = nouvelleLecture();
+    const t0 = departLecture();
     notes.forEach((note, i) => {
-      differer(() => {
-        try {
-          sampler.triggerAttackRelease(note, spb * 0.85, Tone.now());
-        } catch {
-        }
-        onStep?.(i, note);
-      }, i * spb * 1e3);
+      const t = t0 + i * spb;
+      try {
+        s.triggerAttackRelease(note, spb * 0.85, t);
+      } catch {
+      }
+      if (onStep) visuelA(t, () => onStep(i, note));
     });
-    differer(() => onStep?.(-1, null), notes.length * spb * 1e3);
+    if (onStep) visuelA(t0 + notes.length * spb, () => onStep(-1, null));
   } catch (e) {
     warn("playScale:", e);
   }
+}
+function planRythme(spec) {
+  const { bpm = 70, pas = 2, attaques = [], swing = false } = spec || {};
+  const spb = 60 / bpm, t0 = 4 * spb;
+  const quand = (i) => {
+    const temps = Math.floor(i / pas), sous = i % pas;
+    const frac = swing && pas === 2 ? sous === 0 ? 0 : 2 / 3 : sous / pas;
+    return t0 + (temps + frac) * spb;
+  };
+  return {
+    clics: Array.from({ length: 8 }, (_, b) => ({ t: b * spb, fort: b === 0 || b === 4 })),
+    attaques: attaques.map(quand),
+    duree: Math.max(0.08, spb / pas * (swing ? 0.6 : 0.8)),
+    totalMs: 8 * spb * 1e3
+  };
 }
 async function playRythme(spec) {
   if (!await ensureLoaded()) return 0;
   stopAll();
   reveillerSortie();
-  const { bpm = 70, pas = 2, attaques = [], swing = false, note = "A3", clic = "E5" } = spec || {};
-  const spb = 60 / bpm, t0 = 4 * spb;
-  const quand = (i) => {
-    const temps = Math.floor(i / pas), sous = i % pas;
-    const frac = swing && pas === 2 ? sous === 0 ? 0 : 2 / 3 : sous / pas;
-    return (t0 + (temps + frac) * spb) * 1e3;
-  };
+  const { note = "A3", clic = "E5" } = spec || {};
+  const plan = planRythme(spec);
   try {
-    for (let b = 0; b < 8; b++) {
-      differer(() => {
-        try {
-          sampler.triggerAttackRelease(clic, 0.05, Tone.now(), b === 0 || b === 4 ? 0.5 : 0.3);
-        } catch {
-        }
-      }, b * spb * 1e3);
+    const s = nouvelleLecture();
+    const t0 = departLecture();
+    for (const c of plan.clics) {
+      try {
+        s.triggerAttackRelease(clic, 0.05, t0 + c.t, c.fort ? 0.5 : 0.3);
+      } catch {
+      }
     }
-    const duree = Math.max(0.08, spb / pas * (swing ? 0.6 : 0.8));
-    for (const i of attaques) {
-      differer(() => {
-        try {
-          sampler.triggerAttackRelease(note, duree, Tone.now(), 0.85);
-        } catch {
-        }
-      }, quand(i));
+    for (const t of plan.attaques) {
+      try {
+        s.triggerAttackRelease(note, plan.duree, t0 + t, 0.85);
+      } catch {
+      }
     }
   } catch (e) {
     warn("playRythme:", e);
   }
-  return 8 * spb * 1e3;
+  return plan.totalMs;
 }
 async function playSuite(accords, secondesParAccord = 1.6) {
   if (!await ensureLoaded()) return;
   stopAll();
   reveillerSortie();
   try {
+    const s = nouvelleLecture();
+    const t0 = departLecture();
     accords.forEach((notes, i) => {
-      differer(() => {
-        try {
-          strumInto(notes, secondesParAccord * 0.9, Tone.now(), i % 2 ? "up" : "down");
-        } catch {
-        }
-      }, i * secondesParAccord * 1e3);
+      try {
+        strumInto(notes, secondesParAccord * 0.9, t0 + i * secondesParAccord, i % 2 ? "up" : "down", 0.026, s);
+      } catch {
+      }
     });
   } catch (e) {
     warn("playSuite:", e);
@@ -1618,17 +1741,14 @@ async function playInterval(note1, note2, mode = "ascending") {
   reveillerSortie();
   try {
     if (mode === "harmonic") {
-      sampler.triggerAttackRelease([note1, note2], "2n", Tone.now());
+      sampler.triggerAttackRelease([note1, note2], secondes("2n"), Tone.now());
       return;
     }
     const [premiere, seconde] = mode === "descending" ? [note2, note1] : [note1, note2];
-    sampler.triggerAttackRelease(premiere, "4n", Tone.now());
-    differer(() => {
-      try {
-        sampler.triggerAttackRelease(seconde, "4n", Tone.now());
-      } catch {
-      }
-    }, ECART_INTERVALLE_MS);
+    const s = nouvelleLecture();
+    const t0 = departLecture();
+    s.triggerAttackRelease(premiere, secondes("4n"), t0);
+    s.triggerAttackRelease(seconde, secondes("4n"), t0 + ECART_INTERVALLE_MS / 1e3);
   } catch (e) {
     warn("playInterval:", e);
   }
@@ -1647,24 +1767,40 @@ async function playArpeggioFromRoot(root, chordType, bpm = 132, onStep) {
   await playScale(toneNotes, bpm, onStep ? (i) => onStep(i, names[i] ?? null) : void 0);
   return names;
 }
-async function chargerBuffersCordes() {
-  if (buffersCordes?.loaded) return buffersCordes;
-  await new Promise((resolve, reject) => {
-    const minuteur = setTimeout(() => reject(new Error("d\xE9lai d\xE9pass\xE9")), 8e3);
-    buffersCordes = new Tone.ToneAudioBuffers({
-      urls: SAMPLE_URLS,
-      baseUrl: BASE_URL,
-      onload: () => {
-        clearTimeout(minuteur);
-        resolve();
-      },
-      onerror: (e) => {
-        clearTimeout(minuteur);
-        reject(e);
-      }
+function chargerBuffersCordes() {
+  if (buffersCordes?.loaded) return Promise.resolve(buffersCordes);
+  if (!promesseCordes) {
+    promesseCordes = new Promise((resolve, reject) => {
+      const b = new Tone.ToneAudioBuffers({
+        urls: SAMPLE_URLS,
+        baseUrl: BASE_URL,
+        onload: () => {
+          buffersCordes = b;
+          resolve(b);
+        },
+        onerror: (e) => {
+          try {
+            b.dispose();
+          } catch {
+          }
+          reject(e instanceof Error ? e : new Error(String(e)));
+        }
+      });
     });
-  });
-  return buffersCordes;
+    promesseCordes.catch(() => {
+      promesseCordes = null;
+    });
+  }
+  return promesseCordes;
+}
+function avecDelai(promesse, ms) {
+  let minuteur = null;
+  return Promise.race([
+    promesse,
+    new Promise((_, reject) => {
+      minuteur = setTimeout(() => reject(new Error("d\xE9lai d\xE9pass\xE9")), ms);
+    })
+  ]).finally(() => clearTimeout(minuteur));
 }
 function echantillonPour(midi) {
   const m = Math.max(MIDI_MIN_ECH, Math.min(MIDI_MAX_ECH, Math.round(midi)));
@@ -1717,7 +1853,7 @@ async function playTab(evenements, opts = {}) {
   }
   const maLecture = ++generationTab;
   try {
-    await chargerBuffersCordes();
+    await avecDelai(chargerBuffersCordes(), 8e3);
     if (!busGuitare) throw new Error("bus guitare absent");
   } catch (e) {
     warn("moteur de cordes indisponible, repli sur le sampler :", e);
@@ -1877,7 +2013,7 @@ function fioriture(notes, { gap = 0.055, duration = "8n", from = 0.62, to = 0.3 
     const t = notes.length === 1 ? 0 : i / (notes.length - 1);
     const velocity = from + (to - from) * t;
     try {
-      sampler.triggerAttackRelease(note, duration, now2 + i * gap, velocity);
+      sampler.triggerAttackRelease(note, secondes(duration), now2 + i * gap, velocity);
     } catch {
     }
   });
@@ -1906,6 +2042,7 @@ function stopAll() {
   generationTab++;
   couperVoixCordes();
   annulerEnAttente();
+  arreterLecturePlanifiee();
   progressionTimers.forEach(clearTimeout);
   progressionTimers = [];
   if (progressionTimer) {
@@ -2128,13 +2265,14 @@ function makeEarQuizQuestion(mode = "interval") {
     play: ear.play
   };
 }
-var Tone, tonePromise, SAMPLE_URLS, busGuitare, buffersCordes, voixCordes, generationTab, NOMS_ECHANTILLONS, MIDI_MIN_ECH, MIDI_MAX_ECH, BASE_URL, RELEASE, QUEUE_AUDIBLE_MS, DUREE_NOTE, secondes, listSampleUrls, SAMPLE_COUNT, SHARP_TO_FLAT, CHROMATIC, OPEN_STRINGS2, DEV, warn, sortieMaitre, enAttente, restaurationTimer, sampler, loadPromise, isLoaded, loadError, ECART_INTERVALLE_MS, vitessePour, progressionTimers, progressionTimer, dureeMs;
+var Tone, tonePromise, ctxGeste, SAMPLE_URLS, busGuitare, buffersCordes, voixCordes, generationTab, NOMS_ECHANTILLONS, MIDI_MIN_ECH, MIDI_MAX_ECH, BASE_URL, RELEASE, QUEUE_AUDIBLE_MS, RONDE_120, listSampleUrls, SAMPLE_COUNT, SHARP_TO_FLAT, CHROMATIC, OPEN_STRINGS2, DEV, warn, sortieMaitre, enAttente, lectureEnCours, departLecture, restaurationTimer, sampler, loadPromise, isLoaded, loadError, ECART_INTERVALLE_MS, promesseCordes, urlsCordes, vitessePour, progressionTimers, progressionTimer, dureeMs;
 var init_audioEngine = __esm({
   "src/audioEngine.js"() {
     init_fretboardUtils();
     init_tabSon();
     Tone = null;
     tonePromise = null;
+    ctxGeste = null;
     SAMPLE_URLS = {
       "A2": "A2.mp3",
       "A3": "A3.mp3",
@@ -2197,8 +2335,7 @@ var init_audioEngine = __esm({
     BASE_URL = "/audio/guitar/";
     RELEASE = 1.6;
     QUEUE_AUDIBLE_MS = Math.round(RELEASE * 1e3);
-    DUREE_NOTE = { "1n": 2, "2n": 1, "4n": 0.5, "8n": 0.25, "16n": 0.125 };
-    secondes = (v) => typeof v === "number" ? v : DUREE_NOTE[v] ?? 1;
+    RONDE_120 = 2;
     listSampleUrls = () => Object.values(SAMPLE_URLS).map((f) => BASE_URL + f);
     SAMPLE_COUNT = Object.keys(SAMPLE_URLS).length;
     SHARP_TO_FLAT = {
@@ -2216,6 +2353,8 @@ var init_audioEngine = __esm({
     };
     sortieMaitre = null;
     enAttente = [];
+    lectureEnCours = null;
+    departLecture = () => Tone.now() + 0.03;
     restaurationTimer = null;
     sampler = null;
     loadPromise = null;
@@ -2233,6 +2372,8 @@ var init_audioEngine = __esm({
       });
     }
     ECART_INTERVALLE_MS = 650;
+    promesseCordes = null;
+    urlsCordes = (buffers) => Object.fromEntries(Object.keys(SAMPLE_URLS).map((n) => [n, buffers.get(n)]));
     vitessePour = (midi, base) => Math.pow(2, (midi - base) / 12);
     progressionTimers = [];
     progressionTimer = null;
@@ -2352,11 +2493,11 @@ var init_chordShapes = __esm({
       ],
       dim7: [
         { id: "Ddim7", label: "Forme R\xE9", rootString: 2, offsets: [null, null, 0, 1, 0, 1], fingers: [0, 0, 1, 3, 2, 4] },
-        { id: "Adim7", label: "Forme La", rootString: 1, offsets: [null, 0, 1, 2, 1, null], fingers: [0, 1, 2, 4, 3, 0] }
+        { id: "Adim7", label: "Forme La", rootString: 1, offsets: [null, 0, 1, -1, 1, null], fingers: [0, 2, 3, 1, 4, 0] }
       ],
       maj6: [
         { id: "A6", label: "Forme La", rootString: 1, offsets: [null, 0, 2, 2, 2, 2], fingers: [0, 1, 2, 3, 3, 3] },
-        { id: "E6", label: "Forme Mi", rootString: 0, offsets: [0, 2, 1, 1, 2, null], fingers: [1, 3, 1, 1, 4, 0] }
+        { id: "E6", label: "Forme Mi", rootString: 0, offsets: [0, 2, 2, 1, 2, 0], fingers: [1, 3, 3, 2, 4, 1], barre: true }
       ],
       sus4: [
         { id: "Asus4", label: "Forme La", rootString: 1, offsets: [null, 0, 2, 2, 3, 0], fingers: [0, 1, 2, 3, 4, 1], barre: true },
@@ -2365,10 +2506,10 @@ var init_chordShapes = __esm({
       add9: [
         { id: "Cadd9", label: "Forme Do", rootString: 1, offsets: [null, 0, -1, -3, 0, -3] },
         { id: "Aadd9", label: "Forme La", rootString: 1, offsets: [null, 0, 2, 4, 2, 0] },
-        { id: "Eadd9", label: "Forme Mi", rootString: 0, offsets: [0, 2, 1, 1, 0, 2] }
+        { id: "Eadd9", label: "Forme Mi", rootString: 0, offsets: [0, 2, 2, 1, 0, 2] }
       ],
       dom9: [
-        { id: "A9", label: "Forme La", rootString: 1, offsets: [null, 0, 1, 0, 2, 0], fingers: [0, 2, 3, 1, 4, 1] },
+        { id: "A9", label: "Forme La", rootString: 1, offsets: [null, 0, -1, 0, 0, 0], fingers: [0, 2, 1, 3, 3, 3] },
         { id: "E9", label: "Forme Mi", rootString: 0, offsets: [0, 2, 0, 1, 0, 2], fingers: [1, 3, 1, 2, 1, 4] }
       ]
     };
@@ -4896,6 +5037,16 @@ var init_ChordPlayer = __esm({
 function stripLabel(line) {
   return line.replace(/^\s*[A-Ga-g](#|b)?\s*[|:]?\s?/, "");
 }
+function couperAnnotation(line) {
+  const i = line.lastIndexOf("|");
+  if (i < 0) return line;
+  const reste = line.slice(i + 1);
+  return reste.trim() && !reste.includes("-") ? line.slice(0, i + 1) : line;
+}
+function estLigneDeTab(line) {
+  const corps = stripLabel(couperAnnotation(line));
+  return CARACTERES_TAB.test(corps) && corps.includes("-") && /[-0-9]{2,}/.test(corps);
+}
 function parseStringLine(line) {
   const events = [];
   let i = 0;
@@ -4905,6 +5056,12 @@ function parseStringLine(line) {
     while (j < n && line[j] >= "0" && line[j] <= "9") j++;
     if (j === pos) return null;
     return { valeur: parseInt(line.slice(pos, j), 10), fin: j };
+  };
+  const vibratoApres = (ev, pos) => {
+    if (line[pos] !== "~") return pos;
+    ev.vibrato = true;
+    while (line[pos] === "~") pos++;
+    return pos;
   };
   while (i < n) {
     const c = line[i];
@@ -4920,46 +5077,107 @@ function parseStringLine(line) {
       if (symbole2 && TECH_SYMBOLS.has(symbole2)) {
         const cible = lireNombre(apres + 1);
         const toFret = cible ? cible.valeur : symbole2 === "b" ? nombre.valeur + 2 : nombre.valeur;
-        events.push({
+        const ev2 = {
           type: TECH_TYPE[symbole2],
           fromFret: nombre.valeur,
           toFret,
           col: i
-        });
+        };
         i = cible ? cible.fin : apres + 1;
+        if (symbole2 === "b" && line[i] === "r") {
+          const retour = lireNombre(i + 1);
+          ev2.releaseFret = retour ? retour.valeur : ev2.fromFret;
+          ev2.releaseCol = i;
+          i = retour ? retour.fin : i + 1;
+        }
+        i = vibratoApres(ev2, i);
+        events.push(ev2);
         continue;
       }
-      events.push({ type: "note", fret: nombre.valeur, col: i });
-      i = nombre.fin;
+      const ev = { type: "note", fret: nombre.valeur, col: i };
+      i = vibratoApres(ev, nombre.fin);
+      events.push(ev);
       continue;
     }
     i++;
   }
   return events;
 }
-function parseTab(texte) {
-  if (typeof texte !== "string" || !texte.trim()) {
-    return { evenements: [], erreur: "Aucun texte \xE0 analyser." };
-  }
-  const lignesBrutes = texte.split("\n").filter((l) => /[-0-9]{2,}/.test(l));
-  if (lignesBrutes.length < 6) {
-    return {
-      evenements: [],
-      erreur: `${lignesBrutes.length} ligne(s) exploitable(s) d\xE9tect\xE9e(s), 6 attendues (une par corde). V\xE9rifie qu'aucune ligne ne s'est perdue au collage.`
-    };
-  }
-  const lignes = lignesBrutes.slice(0, 6).map(stripLabel);
-  const evenements = [];
-  lignes.forEach((ligne, idx) => {
-    const stringNum = idx + 1;
-    for (const ev of parseStringLine(ligne)) {
-      evenements.push({ ...ev, string: stringNum });
+function blocsDeTab(texte) {
+  const blocs = [];
+  let courant = null;
+  texte.split(/\r?\n/).forEach((ligne, idx) => {
+    if (estLigneDeTab(ligne)) {
+      if (!courant) {
+        courant = { lignes: [], debut: idx + 1 };
+        blocs.push(courant);
+      }
+      courant.lignes.push(ligne);
+    } else {
+      courant = null;
     }
   });
-  evenements.sort((a, b) => a.col - b.col || a.string - b.string);
-  return { evenements, erreur: null };
+  return blocs;
 }
-var TECH_SYMBOLS, TECH_TYPE;
+function preparerSysteme(lignes6) {
+  let barreFinale = false;
+  const lignes = lignes6.map((l) => {
+    let t = stripLabel(couperAnnotation(l)).replace(/^[|:]+/, "");
+    const sansFin = t.replace(/[\s|:]+$/, "");
+    if (/[|:]/.test(t.slice(sansFin.length))) barreFinale = true;
+    t = sansFin;
+    return t;
+  });
+  const largeur = lignes.reduce((m, l) => Math.max(m, l.length), 0);
+  return { lignes, largeur, barreFinale };
+}
+function decaler(ev, offset) {
+  const out = { ...ev, col: ev.col + offset };
+  if (ev.releaseCol != null) out.releaseCol = ev.releaseCol + offset;
+  return out;
+}
+function parseTab(texte) {
+  if (typeof texte !== "string" || !texte.trim()) {
+    return { evenements: [], erreur: "Aucun texte \xE0 analyser.", avertissements: [], systemes: 0 };
+  }
+  const avertissements = [];
+  const systemes = [];
+  let lignesDeTab = 0;
+  for (const bloc of blocsDeTab(texte)) {
+    const nb = bloc.lignes.length;
+    lignesDeTab += nb;
+    if (nb % NB_CORDES === 0) {
+      for (let k = 0; k < nb; k += NB_CORDES) systemes.push(bloc.lignes.slice(k, k + NB_CORDES));
+    } else if (nb >= 3) {
+      avertissements.push(
+        `Bloc de ${nb} lignes ignor\xE9 (ligne ${bloc.debut}) : 6 attendues, une par corde. Tablature de basse ou de guitare 7 cordes, ou ligne perdue au collage ?`
+      );
+    }
+  }
+  if (!systemes.length) {
+    return {
+      evenements: [],
+      erreur: `${lignesDeTab} ligne(s) exploitable(s) d\xE9tect\xE9e(s), mais aucun bloc de 6 attendues (une par corde). V\xE9rifie qu'aucune ligne ne s'est perdue au collage.`,
+      avertissements,
+      systemes: 0
+    };
+  }
+  const evenements = [];
+  let offset = 0;
+  for (const brut of systemes) {
+    const { lignes, largeur, barreFinale } = preparerSysteme(brut);
+    lignes.forEach((ligne, idx) => {
+      const stringNum = idx + 1;
+      for (const ev of parseStringLine(ligne)) {
+        evenements.push({ ...decaler(ev, offset), string: stringNum });
+      }
+    });
+    offset += largeur + (barreFinale ? 1 : 0);
+  }
+  evenements.sort((a, b) => a.col - b.col || a.string - b.string);
+  return { evenements, erreur: null, avertissements, systemes: systemes.length };
+}
+var TECH_SYMBOLS, TECH_TYPE, NB_CORDES, CARACTERES_TAB;
 var init_tabParser = __esm({
   "src/tab/tabParser.js"() {
     TECH_SYMBOLS = /* @__PURE__ */ new Set(["h", "p", "/", "\\", "b"]);
@@ -4970,6 +5188,8 @@ var init_tabParser = __esm({
       "\\": "slide_down",
       b: "bend"
     };
+    NB_CORDES = 6;
+    CARACTERES_TAB = /^[-0-9|xXhpbrtsSPHBR/\\~()<>.^*:=\s]+$/;
   }
 });
 
@@ -5025,7 +5245,7 @@ function notesDeLaCorde(grille, corde) {
 }
 function grilleVersEvenements(grille) {
   const evenements = [];
-  for (let corde = 1; corde <= NB_CORDES; corde++) {
+  for (let corde = 1; corde <= NB_CORDES2; corde++) {
     const notes = notesDeLaCorde(grille, corde);
     const consommees = /* @__PURE__ */ new Set();
     notes.forEach((n, i) => {
@@ -5038,18 +5258,21 @@ function grilleVersEvenements(grille) {
       if (typeof cell.fret !== "number") return;
       const suivante = notes[i + 1];
       const suivanteJouable = suivante && !suivante.cell.mute && typeof suivante.cell.fret === "number";
+      const vibNote = cell.vibrato ? { vibrato: true } : {};
       if ((cell.lie || cell.slide) && suivanteJouable) {
         const monte = suivante.cell.fret >= cell.fret;
         const type = cell.slide ? monte ? "slide_up" : "slide_down" : monte ? "hammer" : "pull";
-        evenements.push({ type, fromFret: cell.fret, toFret: suivante.cell.fret, col, toCol: suivante.col, string: corde });
+        const vibArrivee = suivante.cell.vibrato ? { vibrato: true } : {};
+        evenements.push({ type, fromFret: cell.fret, toFret: suivante.cell.fret, col, toCol: suivante.col, string: corde, ...vibArrivee });
         consommees.add(suivante.col);
         return;
       }
       if (cell.bend === 1 || cell.bend === 2) {
-        evenements.push({ type: "bend", fromFret: cell.fret, toFret: cell.fret + cell.bend, col, string: corde });
+        const rel = cell.relache && typeof cell.relache.fret === "number" ? { releaseFret: cell.relache.fret, releaseCol: col + (cell.relache.apres || 0) } : {};
+        evenements.push({ type: "bend", fromFret: cell.fret, toFret: cell.fret + cell.bend, col, string: corde, ...rel, ...vibNote });
         return;
       }
-      evenements.push({ type: "note", fret: cell.fret, col, string: corde });
+      evenements.push({ type: "note", fret: cell.fret, col, string: corde, ...vibNote });
     });
   }
   return evenements.sort((a, b) => a.col - b.col || a.string - b.string);
@@ -5059,14 +5282,15 @@ function evenementsVersGrille(evenements) {
   for (const ev of evenements || []) {
     switch (ev.type) {
       case "note":
-        g = ecrireCase(g, ev.string, ev.col, { fret: ev.fret });
+        g = ecrireCase(g, ev.string, ev.col, { fret: ev.fret, ...vib(ev) });
         break;
       case "mute":
         g = ecrireCase(g, ev.string, ev.col, { mute: true });
         break;
       case "bend": {
         const b = Math.max(1, Math.min(2, ev.toFret - ev.fromFret));
-        g = ecrireCase(g, ev.string, ev.col, { fret: ev.fromFret, bend: b });
+        const relache = ev.releaseFret != null ? { relache: { apres: Math.max(0, (ev.releaseCol ?? ev.col) - ev.col), fret: ev.releaseFret } } : {};
+        g = ecrireCase(g, ev.string, ev.col, { fret: ev.fromFret, bend: b, ...relache, ...vib(ev) });
         break;
       }
       case "hammer":
@@ -5075,7 +5299,7 @@ function evenementsVersGrille(evenements) {
       case "slide_down": {
         const lien = ev.type.startsWith("slide") ? { slide: true } : { lie: true };
         g = ecrireCase(g, ev.string, ev.col, { fret: ev.fromFret, ...lien });
-        g = ecrireCase(g, ev.string, ev.toCol ?? ev.col + 1, { fret: ev.toFret });
+        g = ecrireCase(g, ev.string, ev.toCol ?? ev.col + 1, { fret: ev.toFret, ...vib(ev) });
         break;
       }
       default:
@@ -5114,14 +5338,15 @@ function grilleValide(g) {
     ([k, v]) => /^[1-6]-\d+$/.test(k) && colDeCle(k) < PAS_PAR_MESURE * 256 && v && typeof v === "object"
   );
 }
-var PAS_PAR_MESURE, NB_CORDES, FRET_MAX, cle, colDeCle;
+var PAS_PAR_MESURE, NB_CORDES2, FRET_MAX, cle, colDeCle, vib;
 var init_tabGrid = __esm({
   "src/tab/tabGrid.js"() {
     PAS_PAR_MESURE = 16;
-    NB_CORDES = 6;
+    NB_CORDES2 = 6;
     FRET_MAX = 24;
     cle = (corde, col) => `${corde}-${col}`;
     colDeCle = (k) => Number(k.split("-")[1]);
+    vib = (ev) => ev.vibrato ? { vibrato: true } : {};
   }
 });
 
@@ -5561,7 +5786,7 @@ function TabEditor() {
     return () => document.removeEventListener("pointerdown", fermer);
   }, [menuOuvert]);
   const importer = () => {
-    const { evenements: ev, erreur } = parseTab(texteImport);
+    const { evenements: ev, erreur, avertissements = [] } = parseTab(texteImport);
     if (erreur) {
       setErreurImport(erreur);
       return;
@@ -5571,7 +5796,7 @@ function TabEditor() {
     setErreurImport(null);
     setTexteImport("");
     setImportOuvert(false);
-    annoncer("Tab import\xE9e. \xAB Annuler \xBB revient \xE0 la version pr\xE9c\xE9dente.");
+    annoncer(avertissements.length ? `Tab import\xE9e. ${avertissements.join(" ")}` : "Tab import\xE9e. \xAB Annuler \xBB revient \xE0 la version pr\xE9c\xE9dente.");
   };
   const cle2 = `${selection.corde}-${selection.col}`;
   const nomCorde = CORDES_LABELS[selection.corde - 1];
@@ -10812,13 +11037,88 @@ function createComper(style = "jazz", rng = Math.random) {
     }
   };
 }
-function beatToToneTime(beat) {
-  const whole = Math.floor(beat);
-  const sixteenths = Math.round((beat - whole) * 4);
-  return `0:${whole}:${sixteenths}`;
+
+// src/jam/music/groove.js
+var SYMBOL_VELOCITY = {
+  "X": 1,
+  // accent
+  "x": 0.72,
+  // normal
+  "o": 0.34,
+  // ghost — essentiel au groove, presque toujours oublié
+  "O": 0.85
+  // charleston ouverte
+};
+var OPEN_SYMBOLS = /* @__PURE__ */ new Set(["O"]);
+function parseGrid(grid) {
+  const steps = grid.length;
+  const out = [];
+  for (let i = 0; i < steps; i++) {
+    const sym = grid[i];
+    if (sym === "." || sym === " ") continue;
+    const vel2 = SYMBOL_VELOCITY[sym];
+    if (vel2 === void 0) continue;
+    out.push({ step: i, stepsPerBar: steps, velocity: vel2, open: OPEN_SYMBOLS.has(sym) });
+  }
+  return out;
+}
+function swingRatio(base, bpm) {
+  if (base <= 0) return 0.5;
+  const tempoFactor = Math.max(0.4, Math.min(1, 1 - (bpm - 80) / 240));
+  return 0.5 + base * tempoFactor * (2 / 3 - 0.5);
+}
+function swingBeat(beat, ratio, stepsPerBeat = 2) {
+  if (!(ratio > 0 && ratio < 1) || ratio === 0.5) return beat;
+  if (!(stepsPerBeat >= 2) || stepsPerBeat % 2 !== 0) return beat;
+  const pair = 2 / stepsPerBeat;
+  const unit = pair / 2;
+  const k = Math.floor(beat / pair + 1e-9);
+  const within = Math.max(0, beat - k * pair);
+  const pivot = ratio * pair;
+  const w = within <= unit ? within / unit * pivot : pivot + (within - unit) / unit * (pair - pivot);
+  return k * pair + w;
+}
+function packSwing(pack, bpm, beatsPerBar = 4) {
+  const sub = pack?.feel?.subdivision;
+  const stepsPerBeat = sub ? sub / beatsPerBar : 2;
+  return { ratio: swingRatio(pack?.feel?.swing ?? 0, bpm), stepsPerBeat };
+}
+function companionSwing(pack, bpm, beatsPerBar = 4) {
+  const grille = packSwing(pack, bpm, beatsPerBar);
+  if (Number.isInteger(grille.stepsPerBeat) && grille.stepsPerBeat % 3 === 0) {
+    return { ratio: 2 / 3, stepsPerBeat: 2 };
+  }
+  return grille;
+}
+function stepPosition(step, stepsPerBar, swing, beatsPerBar = 4, swingStepsPerBeat = 2) {
+  const stepsPerBeat = stepsPerBar / beatsPerBar;
+  const beat = step / stepsPerBeat;
+  if (!(stepsPerBeat % swingStepsPerBeat === 0)) return beat / beatsPerBar;
+  return swingBeat(beat, swing, swingStepsPerBeat) / beatsPerBar;
+}
+function gaussian(sigma = 1, clamp = 2.5) {
+  let u = 0, v = 0;
+  while (u === 0) u = Math.random();
+  while (v === 0) v = Math.random();
+  const z = Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  return Math.max(-clamp, Math.min(clamp, z)) * sigma;
+}
+function humanize(ev, feel, phasePos = 0, energy = 3) {
+  const offsets = feel.offsets || {};
+  const offsetMs = offsets[ev.instrument] ?? 0;
+  const jitterMs = gaussian((feel.jitterMs ?? 6) / 2);
+  const breath = 1 + Math.sin(phasePos * Math.PI) * 0.06;
+  const energyGain = 0.62 + (energy - 1) * 0.095;
+  const velJitter = gaussian(feel.velSigma ?? 0.055);
+  return {
+    ...ev,
+    time: ev.time + (offsetMs + jitterMs) / 1e3,
+    velocity: Math.max(0.05, Math.min(1, ev.velocity * energyGain * breath + velJitter))
+  };
 }
 
 // src/screens/JamSession.jsx
+init_audioEngine();
 init_tone_stub();
 
 // src/screens/jam/contextes.js
@@ -11118,6 +11418,9 @@ function getBassPattern(rootNote, quality, style, nextRoot, barIdx, energy = 3) 
   return notes.map((n) => ({
     note: toToneNote2(n.midi),
     time: toToneTime(n.beat),
+    // Position en temps, droite : le lecteur y applique le swing du style
+    // (swingBeat) — `time`, arrondi à la double-croche, ne le pourrait pas.
+    beat: n.beat,
     dur: n.dur,
     velocity: n.velocity
   }));
@@ -11467,73 +11770,12 @@ function createDirector(pack, { phraseBars = 4 } = {}) {
   };
 }
 
-// src/jam/music/groove.js
-var SYMBOL_VELOCITY = {
-  "X": 1,
-  // accent
-  "x": 0.72,
-  // normal
-  "o": 0.34,
-  // ghost — essentiel au groove, presque toujours oublié
-  "O": 0.85
-  // charleston ouverte
-};
-var OPEN_SYMBOLS = /* @__PURE__ */ new Set(["O"]);
-function parseGrid(grid) {
-  const steps = grid.length;
-  const out = [];
-  for (let i = 0; i < steps; i++) {
-    const sym = grid[i];
-    if (sym === "." || sym === " ") continue;
-    const vel2 = SYMBOL_VELOCITY[sym];
-    if (vel2 === void 0) continue;
-    out.push({ step: i, stepsPerBar: steps, velocity: vel2, open: OPEN_SYMBOLS.has(sym) });
-  }
-  return out;
-}
-function swingRatio(base, bpm) {
-  if (base <= 0) return 0.5;
-  const tempoFactor = Math.max(0.4, Math.min(1, 1 - (bpm - 80) / 240));
-  return 0.5 + base * tempoFactor * (2 / 3 - 0.5);
-}
-function stepPosition(step, stepsPerBar, swing, beatsPerBar = 4) {
-  const stepsPerBeat = stepsPerBar / beatsPerBar;
-  const beat = Math.floor(step / stepsPerBeat);
-  const within = step % stepsPerBeat;
-  let frac = within / stepsPerBeat;
-  if (stepsPerBeat >= 2) {
-    const halfway = stepsPerBeat / 2;
-    if (within === halfway) frac = swing;
-  }
-  return (beat + frac) / beatsPerBar;
-}
-function gaussian(sigma = 1, clamp = 2.5) {
-  let u = 0, v = 0;
-  while (u === 0) u = Math.random();
-  while (v === 0) v = Math.random();
-  const z = Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
-  return Math.max(-clamp, Math.min(clamp, z)) * sigma;
-}
-function humanize(ev, feel, phasePos = 0, energy = 3) {
-  const offsets = feel.offsets || {};
-  const offsetMs = offsets[ev.instrument] ?? 0;
-  const jitterMs = gaussian((feel.jitterMs ?? 6) / 2);
-  const breath = 1 + Math.sin(phasePos * Math.PI) * 0.06;
-  const energyGain = 0.62 + (energy - 1) * 0.095;
-  const velJitter = gaussian(feel.velSigma ?? 0.055);
-  return {
-    ...ev,
-    time: ev.time + (offsetMs + jitterMs) / 1e3,
-    velocity: Math.max(0.05, Math.min(1, ev.velocity * energyGain * breath + velJitter))
-  };
-}
-
 // src/jam/generators/drums.js
 function generateDrumBar(pack, decision, opts) {
   const { barStartTime, secPerBeat, beatsPerBar = 4, bpm, energy = 3 } = opts;
   const barDuration = secPerBeat * beatsPerBar;
   const feel = pack.humanize || {};
-  const swing = swingRatio(pack.feel?.swing ?? 0, bpm);
+  const { ratio: swing, stepsPerBeat: swingSteps } = packSwing(pack, bpm, beatsPerBar);
   const pattern = (pack.drumPatterns || []).find((p) => p.id === decision.patternId) || (pack.drumPatterns || [])[0];
   if (!pattern) return [];
   const events = [];
@@ -11544,7 +11786,7 @@ function generateDrumBar(pack, decision, opts) {
       let inst = instrument;
       if (instrument === "hihat" && decision.useRide) inst = "ride";
       if (hit.open && !decision.openHats) continue;
-      const frac = stepPosition(hit.step, hit.stepsPerBar, swing, beatsPerBar);
+      const frac = stepPosition(hit.step, hit.stepsPerBar, swing, beatsPerBar, swingSteps);
       events.push({
         instrument: hit.open ? inst === "hihat" ? "hihatOpen" : inst : inst,
         time: barStartTime + frac * barDuration,
@@ -11561,7 +11803,7 @@ function generateDrumBar(pack, decision, opts) {
     }
     for (const [instrument, grid] of Object.entries(decision.fill.grid)) {
       for (const hit of parseGrid(grid)) {
-        const frac = hit.step / hit.stepsPerBar;
+        const frac = stepPosition(hit.step, hit.stepsPerBar, swing, beatsPerBar, swingSteps);
         if (frac < fillStart) continue;
         events.push({
           instrument,
@@ -11788,6 +12030,67 @@ function shade2(hex, amount) {
   b = Math.max(0, Math.min(255, b));
   return "#" + (r << 16 | g << 8 | b).toString(16).padStart(6, "0");
 }
+var cacheEchantillons = /* @__PURE__ */ new Map();
+function chargerEchantillons(cle2, urls, baseUrl, delaiMs) {
+  const ctx = getContext();
+  const enCache = cacheEchantillons.get(cle2);
+  if (enCache && enCache.ctx === ctx) return enCache.promesse;
+  const promesse = new Promise((resolve, reject) => {
+    let buffers = null, fini = false, minuteur = null;
+    const echec = (e) => {
+      if (fini) return;
+      fini = true;
+      clearTimeout(minuteur);
+      try {
+        buffers?.dispose();
+      } catch {
+      }
+      reject(e instanceof Error ? e : new Error(String(e)));
+    };
+    minuteur = setTimeout(() => echec(new Error("d\xE9lai d\xE9pass\xE9")), delaiMs);
+    buffers = new (void 0)({
+      urls,
+      baseUrl,
+      onload: () => {
+        if (fini) return;
+        fini = true;
+        clearTimeout(minuteur);
+        resolve(buffers);
+      },
+      onerror: echec
+    });
+  });
+  const entree = { ctx, promesse };
+  cacheEchantillons.set(cle2, entree);
+  promesse.catch(() => {
+    if (cacheEchantillons.get(cle2) === entree) cacheEchantillons.delete(cle2);
+  });
+  return promesse;
+}
+var urlsDepuisBuffers = (buffers, urls) => Object.fromEntries(Object.keys(urls).map((n) => [n, buffers.get(n)]));
+function creerKitBatterie(buffers, sortie, sortieCharleston) {
+  const voix = /* @__PURE__ */ new Set();
+  return {
+    jouer(cle2, time, db) {
+      const src = new (void 0)(buffers.get(cle2));
+      src.connect(sortieCharleston && cle2.startsWith("hihat") ? sortieCharleston : sortie);
+      voix.add(src);
+      src.onended = () => voix.delete(src);
+      src.start(time, 0, void 0, (void 0)(db));
+    },
+    // Les frappes déjà planifiées pour la mesure en cours sont coupées.
+    dispose() {
+      for (const s of voix) {
+        try {
+          s.stop();
+          s.disconnect();
+        } catch {
+        }
+      }
+      voix.clear();
+    }
+  };
+}
 function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord, onSecondeJouee, onLecture }) {
   const C = useC();
   const [playing, setPlaying] = useState12(false);
@@ -11801,6 +12104,7 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
   const [currentChord, setCurrentChord] = useState12(0);
   const [loading, setLoading] = useState12(false);
   const [playError, setPlayError] = useState12(null);
+  const [interrompu, setInterrompu] = useState12(false);
   const samplerRef = useRef8(null);
   const bassRef = useRef8(null);
   const kickRef = useRef8(null);
@@ -11871,6 +12175,24 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
     relancerSiJoue();
   }, [context2.id]);
   useEffect10(() => () => arreterAuDemontage(), []);
+  const surCoupureSysteme = useEffectEvent3(() => {
+    if (!playingRef.current) return;
+    stopBacking();
+    setInterrompu(true);
+    setPlayError("Le son a \xE9t\xE9 coup\xE9 par le syst\xE8me (appel, autre application\u2026).");
+  });
+  useEffect10(() => {
+    if (!playing) return;
+    const ctx = getContext();
+    const surChangement = () => {
+      const etat = ctx.state;
+      if (etat === "interrupted" || etat === "suspended") surCoupureSysteme();
+    };
+    ctx.on("statechange", surChangement);
+    return () => {
+      ctx.off("statechange", surChangement);
+    };
+  }, [playing]);
   function playDrum(type, time, velocity = 0.8) {
     const COUNTS = { kick: 3, snare: 2, hihat: 3, hihatOpen: 2, ride: 2, crash: 2, tomLow: 1, tomMid: 1 };
     if (drumsLoadedRef.current && drumsRef.current) {
@@ -11880,9 +12202,7 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
       if (n > 1 && idx2 === last) idx2 = (idx2 + 1) % n;
       drumRRRef.current[type] = idx2;
       try {
-        const player = drumsRef.current.player(`${type}${idx2}`);
-        player.volume.value = -6 + (velocity - 0.8) * 12;
-        player.start(time);
+        drumsRef.current.jouer(`${type}${idx2}`, time, -6 + (velocity - 0.8) * 12);
       } catch {
       }
       return;
@@ -11892,6 +12212,13 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
     if (type === "hihat") hihatRef.current?.triggerAttackRelease("32n", time);
   }
   function startBacking() {
+    activerSessionAudio();
+    try {
+      if (getContext().state !== "running") getContext().resume().catch(() => {
+      });
+    } catch {
+    }
+    setInterrompu(false);
     const moi = ++generationRef.current;
     const precedent = demarrageRef.current;
     const lancement = (async () => {
@@ -11990,34 +12317,47 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
         "C5": "C5.mp3"
       };
       try {
-        samplerRef.current = await new Promise((resolve, reject) => {
-          const s = new Sampler({
-            urls: RHODES_SAMPLES,
-            baseUrl: "/audio/piano/",
-            release: 1.4,
-            // L'accompagnement se tient DERRIÈRE. Il pose l'harmonie et le rythme,
-            // il ne doit jamais attirer l'oreille : c'est le guitariste le soliste.
-            volume: context2.id === "jazz_251" ? -22 : -25,
-            onload: () => resolve(s),
-            onerror: (e) => reject(e)
-          });
-          setTimeout(() => reject(new Error("d\xE9lai d\xE9pass\xE9")), 6e3);
+        const buffers = await chargerEchantillons("piano", RHODES_SAMPLES, "/audio/piano/", 6e3);
+        if (perime()) {
+          libererAudio();
+          return;
+        }
+        samplerRef.current = new Sampler({
+          urls: urlsDepuisBuffers(buffers, RHODES_SAMPLES),
+          release: 1.4,
+          // L'accompagnement se tient DERRIÈRE. Il pose l'harmonie et le rythme,
+          // il ne doit jamais attirer l'oreille : c'est le guitariste le soliste.
+          volume: context2.id === "jazz_251" ? -22 : -25
         });
       } catch {
-        samplerRef.current = new Sampler({
-          urls: SAMPLE_URLS_LOCAL,
-          baseUrl: "/audio/guitar/",
-          release: 2,
-          volume: context2.id === "jazz_251" ? -8 : -10
-        });
+        if (perime()) {
+          libererAudio();
+          return;
+        }
+        try {
+          const buffers = await chargerEchantillons("guitare", SAMPLE_URLS_LOCAL, "/audio/guitar/", 8e3);
+          if (perime()) {
+            libererAudio();
+            return;
+          }
+          samplerRef.current = new Sampler({
+            urls: urlsDepuisBuffers(buffers, SAMPLE_URLS_LOCAL),
+            release: 2,
+            volume: context2.id === "jazz_251" ? -8 : -10
+          });
+        } catch {
+          samplerRef.current = null;
+        }
       }
-      const pianoPasseHaut = new Filter({ type: "highpass", frequency: MIXAGE.pianoPasseHaut, rolloff: -12 });
-      const pianoPan = new Panner(MIXAGE.pianoPan);
-      mixRef.current.push(pianoPasseHaut, pianoPan);
-      samplerRef.current.chain(pianoPasseHaut, pianoPan, masterOut);
       if (perime()) {
         libererAudio();
         return;
+      }
+      if (samplerRef.current) {
+        const pianoPasseHaut = new Filter({ type: "highpass", frequency: MIXAGE.pianoPasseHaut, rolloff: -12 });
+        const pianoPan = new Panner(MIXAGE.pianoPan);
+        mixRef.current.push(pianoPasseHaut, pianoPan);
+        samplerRef.current.chain(pianoPasseHaut, pianoPan, masterOut);
       }
       const BASS_SAMPLES = {
         "C1": "C1.mp3",
@@ -12032,19 +12372,22 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
       };
       let bassLoaded = false;
       try {
-        bassRef.current = await new Promise((resolve, reject) => {
-          const s = new Sampler({
-            urls: BASS_SAMPLES,
-            baseUrl: "/audio/bass/",
-            release: 0.9,
-            volume: -9,
-            onload: () => resolve(s),
-            onerror: (e) => reject(e)
-          });
-          setTimeout(() => reject(new Error("d\xE9lai d\xE9pass\xE9")), 6e3);
+        const buffers = await chargerEchantillons("basse", BASS_SAMPLES, "/audio/bass/", 6e3);
+        if (perime()) {
+          libererAudio();
+          return;
+        }
+        bassRef.current = new Sampler({
+          urls: urlsDepuisBuffers(buffers, BASS_SAMPLES),
+          release: 0.9,
+          volume: -9
         });
         bassLoaded = true;
       } catch {
+        if (perime()) {
+          libererAudio();
+          return;
+        }
         bassRef.current = new Synth({
           oscillator: { type: "triangle" },
           envelope: { attack: 0.012, decay: 0.2, sustain: 0.55, release: 0.5 },
@@ -12083,17 +12426,9 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
         });
       }
       let drumsLoaded = false;
+      let drumBuffers = null;
       try {
-        drumsRef.current = await new Promise((resolve, reject) => {
-          const p = new Players({
-            urls: drumUrls,
-            baseUrl: "/audio/drums/",
-            onload: () => resolve(p),
-            onerror: (e) => reject(e)
-          });
-          setTimeout(() => reject(new Error("d\xE9lai d\xE9pass\xE9")), 8e3);
-        });
-        drumsRef.current.connect(compRef.current);
+        drumBuffers = await chargerEchantillons("batterie", drumUrls, "/audio/drums/", 8e3);
         drumsLoaded = true;
       } catch {
         drumsRef.current = null;
@@ -12103,23 +12438,23 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
         return;
       }
       if (drumsLoaded) {
+        const busBatterie = new Gain(1).connect(compRef.current);
+        mixRef.current.push(busBatterie);
         try {
           const envoiBatterie = new Gain(MIXAGE.batterieReverb);
-          drumsRef.current.connect(envoiBatterie);
+          busBatterie.connect(envoiBatterie);
           envoiBatterie.connect(reverbRef.current);
           mixRef.current.push(envoiBatterie);
         } catch {
         }
+        let panCharleston = null;
         try {
-          const panCharleston = new Panner(MIXAGE.charlestonPan).connect(compRef.current);
+          panCharleston = new Panner(MIXAGE.charlestonPan).connect(compRef.current);
           mixRef.current.push(panCharleston);
-          for (const cle2 of Object.keys(drumUrls).filter((k) => k.startsWith("hihat"))) {
-            const pl = drumsRef.current.player(cle2);
-            pl.disconnect();
-            pl.connect(panCharleston);
-          }
         } catch {
+          panCharleston = null;
         }
+        drumsRef.current = creerKitBatterie(drumBuffers, busBatterie, panCharleston);
       }
       drumsLoadedRef.current = drumsLoaded;
       if (!drumsLoaded) {
@@ -12179,20 +12514,24 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
         const bassPattern = getBassPattern(chordRoot, chord.quality, style, nextRoot, barIdx, energieMesure);
         const compHits = coupe.accords ? [] : comperRef.current?.nextBar(barIdx, energieMesure) || [];
         const nextVoiced = getVoicedChord(nextRoot, nextChord.quality, style);
+        const bpmMesure = getTransport().bpm.value;
+        const secParTemps = 60 / bpmMesure;
+        const sw = pack ? companionSwing(pack, bpmMesure) : { ratio: 0.5, stepsPerBeat: 2 };
+        const instant = (beatPos) => time + swingBeat(beatPos, sw.ratio, sw.stepsPerBeat) * secParTemps;
         for (const hit of compHits) {
           const humanize2 = (Math.random() - 0.5) * 8e-3;
           samplerRef.current?.triggerAttackRelease(
             hit.anticipate ? nextVoiced : voiced,
             hit.dur,
-            Time(time) + Time(beatToToneTime(hit.beat)) + humanize2,
+            instant(hit.beat) + humanize2,
             hit.velocity
           );
         }
-        if (!coupe.basse) bassPattern.forEach(({ note, time: t, dur, velocity }) => {
+        if (!coupe.basse) bassPattern.forEach(({ note, beat: b, dur, velocity }) => {
           bassRef.current?.triggerAttackRelease(
             note,
             dur,
-            Time(time) + Time(t),
+            instant(b),
             velocity ?? 0.8
           );
         });
@@ -12407,7 +12746,7 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
         cursor: "pointer",
         flexShrink: 0,
         textDecoration: "underline"
-      }, children: "R\xE9essayer" })
+      }, children: interrompu ? "Reprendre" : "R\xE9essayer" })
     ] }),
     /* @__PURE__ */ jsx15("div", { style: { display: "flex", gap: 3, margin: "14px 0 8px" }, "aria-hidden": "true", children: Array.from({ length: totalBars }).map((_, i) => /* @__PURE__ */ jsx15("div", { style: {
       flex: 1,

@@ -1,6 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // GuitarPath — content.js
-// Contenu pédagogique complet : 4 modules, 108 leçons, 283 quiz, 50+ exercices
+// Contenu pédagogique complet (5 modules, 96 leçons, 272 quiz, 36 exercices au
+// 14/10/2026 — `node scripts/verifier-contenu.mjs` donne les chiffres à jour)
 // Intégration : import { COURSES, QUIZ, EXERCISES } from "./content.js"
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -2090,7 +2091,7 @@ export const COURSES = [
           { type: "h", text: "4. Accord m7b5 — le demi-diminué" },
           { type: "p", text: "Formule : 1-♭3-♭5-♭7 (mineur + quinte diminuée + 7e mineure). Bm7b5 = Si-Ré-Fa-La. Couleur : instable, sophistiqué, 'jazzy sombre'. Aussi appelé 'half-diminished'. Utilisation : sur le ii d'une cadence en tonalité mineure (ii-V-i). Très présent dans les standards de jazz." },
           { type: "h", text: "5. Accord dim7 — le passeur" },
-          { type: "p", text: "Formule : 1-♭3-♭5-bb7 (triades diminuée + 7e doublement bémolisée = 6e). Cdim7 = Do-Mib-Solb-La (enharmonique de Sib). Couleur : ultra-tendu, dramatique, 'qui passe'. Utilisation : comme accord de transition, jamais comme point de repos. Sa symétrie (toutes les notes à 3 demi-tons d'écart) le rend transposable à lui-même tous les 3 demi-tons." },
+          { type: "p", text: "Formule : 1-♭3-♭5-𝄫7 (triade diminuée + 7e doublement bémolisée, qui sonne comme une 6te). Cdim7 = Do-Mib-Solb-Si𝄫 (enharmonique de La : on le joue sur la case du La). Couleur : ultra-tendu, dramatique, 'qui passe'. Utilisation : comme accord de transition, jamais comme point de repos. Sa symétrie (toutes les notes à 3 demi-tons d'écart) le rend transposable à lui-même tous les 3 demi-tons." },
           { type: "h", text: "Tableau récapitulatif" },
           { type: "p", text: "Maj7 (1-3-5-7) : lumineux, tonique/IV en majeur. m7 (1-♭3-5-♭7) : doux, ii/vi en majeur ou I modal. 7 dom (1-3-5-♭7) : tendu, V partout. m7b5 (1-♭3-♭5-♭7) : instable, ii en mineur. dim7 (1-♭3-♭5-bb7) : ultra-tendu, transition. Ces 5 types couvrent toute l'harmonie tonale classique et jazz." },
           { type: "h", text: "Le triton dans la dominante" },
@@ -2111,7 +2112,7 @@ export const COURSES = [
             data: { name: "D7", frets: [-1,-1,0,2,1,2], fingers: [0,0,0,2,1,3], startFret: 1 },
           },
           { type: "ref", text: "Pour entendre les 5 types dans un standard : 'All The Things You Are' (Jerome Kern, 1939) contient les 5 types d'accords de 7e dans ses 36 premières mesures. C'est pourquoi ce morceau est considéré comme l'un des meilleurs 'exercices' d'harmonie pour les jazzmen. Écoute une version piano solo pour entendre clairement chaque couleur." },
-          { type: "tip", text: "Drill 'reconnaissance' : joue successivement Cmaj7 (Do-Mi-Sol-Si), Cm7 (Do-Mib-Sol-Sib), C7 (Do-Mi-Sol-Sib), Cm7b5 (Do-Mib-Solb-Sib), Cdim7 (Do-Mib-Solb-La). Nomme chaque type à voix haute en le jouant. Puis joue-les les yeux fermés et identifie-les par l'oreille. En 2 semaines, tu les distingues à l'écoute." },
+          { type: "tip", text: "Drill 'reconnaissance' : joue successivement Cmaj7 (Do-Mi-Sol-Si), Cm7 (Do-Mib-Sol-Sib), C7 (Do-Mi-Sol-Sib), Cm7b5 (Do-Mib-Solb-Sib), Cdim7 (Do-Mib-Solb-Si𝄫, qui sonne La). Nomme chaque type à voix haute en le jouant. Puis joue-les les yeux fermés et identifie-les par l'oreille. En 2 semaines, tu les distingues à l'écoute." },
         ],
         quiz: ["q-harm-05","q-harm-06","q-harm-08","q-logic-09","q-fret-harm-03","q-fret-harm-04","q-fret-harm-05","q-logic-04","q-harm-02"],
       },
@@ -2124,7 +2125,7 @@ export const COURSES = [
           { type: "h", text: "Pourquoi la 3e et la 7e ?" },
           { type: "p", text: "Parce qu'elles portent le maximum d'information harmonique avec le minimum de notes. Joue uniquement Do et Sol (fondamentale + quinte) : tu ne sais pas si c'est Do majeur, Do mineur, Do7, ou Do diminué. Ajoute Mi (3e) : maintenant tu sais que c'est un accord de Do majeur (Mi = tierce majeure). Ajoute Si (7e) : tu sais que c'est Cmaj7. Les guide tones 'racontent' l'accord." },
           { type: "h", text: "Les guide tones des 5 types d'accords de 7e" },
-          { type: "p", text: "Cmaj7 : guide tones = Mi (3e maj) + Si (7e maj). Cm7 : Do-guide tones = Mib (3e min) + Sib (7e min). C7 : guide tones = Mi (3e maj) + Sib (7e min). Cm7b5 : guide tones = Mib (3e min) + Sib (7e min) — même que Cm7, mais la quinte diminuée change la couleur. Cdim7 : guide tones = Mib (3e min) + La (7e dim)." },
+          { type: "p", text: "Cmaj7 : guide tones = Mi (3e maj) + Si (7e maj). Cm7 : Do-guide tones = Mib (3e min) + Sib (7e min). C7 : guide tones = Mi (3e maj) + Sib (7e min). Cm7b5 : guide tones = Mib (3e min) + Sib (7e min) — même que Cm7, mais la quinte diminuée change la couleur. Cdim7 : guide tones = Mib (3e min) + Si𝄫 (7e dim, enharmonique de La)." },
           { type: "h", text: "Les guide tones en improvisation" },
           { type: "p", text: "Voici le secret du jazz : quand tu improvises sur une progression d'accords, si tu fais tomber tes phrases sur les guide tones aux moments importants (temps forts, fins de phrases), tu sonnes 'sur l'accord' immédiatement. Même si le reste de ta phrase est 'neutre', les guide tones ancrent l'oreille de l'auditeur sur l'harmonie." },
           {
@@ -2312,13 +2313,13 @@ export const COURSES = [
             },
           },
           { type: "h", text: "Le système Nashville (NNS)" },
-          { type: "p", text: "À Nashville dans les années 1950, les musiciens de session devaient jouer des dizaines de chansons par jour dans des tonalités différentes. Au lieu d'écrire les noms d'accords, ils ont développé un système de chiffres arabes. 1 = tonique. 2m = sous-tonique mineur. 4 = sous-dominante. 5 = dominante. 6m = relatif mineur. Ex : I-V-vi-IV en chiffrage romain = 1-5-6m-4 en Nashville." },
+          { type: "p", text: "À Nashville dans les années 1950, les musiciens de session devaient jouer des dizaines de chansons par jour dans des tonalités différentes. Au lieu d'écrire les noms d'accords, ils ont développé un système de chiffres arabes. 1 = tonique. 2m = sus-tonique (mineur). 4 = sous-dominante. 5 = dominante. 6m = relatif mineur. Ex : I-V-vi-IV en chiffrage romain = 1-5-6m-4 en Nashville." },
           { type: "h", text: "Avantages du système Nashville" },
           { type: "p", text: "Transposition instantanée : si le chanteur monte d'un ton, tu joues les mêmes chiffres dans une nouvelle tonalité sans réapprendre la chanson. Communication ultra-rapide : 'on joue un 1-4-5-1' est compris en 1 seconde. Lecture en live : une 'Nashville chart' (feuille de chiffres) permet de jouer une chanson sans répétition." },
           { type: "h", text: "Exemples de progressions en chiffrage" },
           { type: "p", text: "I-V-vi-IV (1-5-6m-4) : 'Let It Be', 'No Woman No Cry', 'With Or Without You'. I-IV-V (1-4-5) : blues classique, rock'n'roll, country. ii-V-I (2m-5-1) : standard jazz. I-vi-IV-V (1-6m-4-5) : doo-wop, années 50. Ces 4 progressions couvrent une immense partie du répertoire pop." },
           { type: "h", text: "Tonalités majeures vs mineures en chiffrage" },
-          { type: "p", text: "En tonalité mineure, le chiffrage change légèrement. Le 'i' (mineur) est la tonique. Le '♭III' est le relatif majeur (ex : Do dans Am). Le 'iv' est la sous-dominante mineure. Le 'v' ou 'V' est la dominante. Ex : la progression Am-F-C-G s'analyse comme i-♭VI-♭III-♭VII en La mineur. Les majuscules avec 'b' indiquent des degrés 'empruntés' au relatif majeur." },
+          { type: "p", text: "En tonalité mineure, le chiffrage change légèrement. Le 'i' (mineur) est la tonique. Le '♭III' est le relatif majeur (ex : Do dans Am). Le 'iv' est la sous-dominante mineure. Le 'v' ou 'V' est la dominante. Ex : la progression Am-F-C-G s'analyse comme i-♭VI-♭III-♭VII en La mineur. Le '♭' se mesure par rapport à la gamme majeure de même tonique (La majeur ici) : ♭III, ♭VI et ♭VII sont simplement les degrés naturels de la gamme mineure, un demi-ton plus bas qu'en majeur. Rien n'est emprunté." },
           { type: "ref", text: "Anecdote : à Nashville, les musiciens de session (bassiste, guitariste, pianiste) peuvent jouer une session d'enregistrement entière à la vue d'une 'Nashville chart' qu'ils n'ont jamais vue avant. Une feuille A4 avec des chiffres leur suffit pour jouer un arrangement complet. C'est la preuve ultime de l'efficacité de ce système." },
           { type: "tip", text: "Adopte le chiffrage romain dès aujourd'hui. À chaque chanson que tu joues, traduis les accords en chiffres. En 1 mois, tu penseras directement en degrés — et tu pourras transposer n'importe quelle chanson instantanément." },
         ],
@@ -2448,7 +2449,7 @@ export const COURSES = [
           { type: "h", text: "Le cycle de quartes : enchaîner les ii-V-I" },
           { type: "p", text: "En jazz, les morceaux modulent souvent par cycle de quartes. Après ii-V-I en Do, on passe à ii-V-I en Fa (Gm7-C7-Fmaj7), puis en Si♭ (Cm7-F7-B♭maj7), etc. Chaque I devient le point de départ du ii suivant. Maîtriser ii-V-I dans les 12 tonalités = pouvoir jouer n'importe quel standard jazz." },
           { type: "h", text: "La substitution tritonique" },
-          { type: "p", text: "Une technique harmonique avancée : remplacer le V7 par l'accord 7 situé un triton (6 demi-tons) plus haut. G7 → Db7. Pourquoi ? G7 (Sol-Si-Ré-Fa) et Db7 (Réb-Fa-Lab-Do) partagent les mêmes guide tones : Si/Fa et Fa/Do (enharmoniques). Cette substitution crée une descente chromatique élégante dans la basse : Ré (ii) → Réb (V substitué) → Do (I)." },
+          { type: "p", text: "Une technique harmonique avancée : remplacer le V7 par l'accord 7 situé un triton (6 demi-tons) plus haut. G7 → Db7. Pourquoi ? G7 (Sol-Si-Ré-Fa) et Db7 (Réb-Fa-Lab-Dob) partagent les mêmes guide tones, inversés : la 3e de G7 (Si) est la 7e de Db7 (Dob, enharmonique de Si), et la 7e de G7 (Fa) est la 3e de Db7. Cette substitution crée une descente chromatique élégante dans la basse : Ré (ii) → Réb (V substitué) → Do (I)." },
           { type: "h", text: "Improviser sur ii-V-I" },
           { type: "p", text: "Approche simple : sur ii (Dm7) → Ré dorien. Sur V (G7) → Sol mixolydien. Sur I (Cmaj7) → Do ionien. Mais comme ces 3 modes ont exactement les mêmes notes (Do majeur), tu peux jouer Do majeur tout du long en visant simplement les guide tones de chaque accord (vu dans la leçon Guide Tones)." },
           {

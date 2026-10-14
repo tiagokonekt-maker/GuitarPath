@@ -122,3 +122,22 @@ test("grilleValide : accepte l'ancien format, rejette une grille corrompue", () 
     assert.equal(grilleValide(mauvais), false, JSON.stringify(mauvais));
   }
 });
+
+test("import : vibrato et bend relâché survivent au passage par la grille", () => {
+  const texte = [
+    "e|--5~---7b9r7---3h5~---|",
+    "B|-----------------------|", "G|-----------------------|",
+    "D|-----------------------|", "A|-----------------------|",
+    "E|-----------------------|",
+  ].join("\n");
+  const direct = parseTab(texte).evenements;
+  assert.ok(direct.some(e => e.releaseFret === 7) && direct.filter(e => e.vibrato).length === 2);
+  const viaGrille = grilleVersEvenements(evenementsVersGrille(direct));
+  assert.deepEqual(viaGrille, normaliser(direct));
+});
+
+test("import multi-systèmes : les notes du 2e système arrivent dans la grille à la suite", () => {
+  const sys = (f) => [`e|-${f}-|`, "B|---|", "G|---|", "D|---|", "A|---|", "E|---|"];
+  const g = evenementsVersGrille(parseTab([...sys(1), "", ...sys(2)].join("\n")).evenements);
+  assert.deepEqual(lireCase(g, 1, 5), { fret: 2 });
+});

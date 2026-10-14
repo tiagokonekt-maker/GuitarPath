@@ -98,3 +98,58 @@ test("réglages ajustables à l'oreille, sans toucher au code", () => {
 test("entrée vide : aucun plantage", () => {
   assert.deepEqual(planifierTab([]), { voix: [], duree: 0 });
 });
+
+test("bend relâché : monte, reste en haut jusqu'à la colonne du « r », redescend en continu, une seule attaque", () => {
+  const { voix } = plan([{ type: "bend", fromFret: 7, toFret: 9, releaseFret: 7, releaseCol: 4, col: 0, string: 2 }]);
+  assert.equal(voix.length, 1);
+  const h = voix[0].hauteurs;
+  const base = CORDE_MIDI[2];
+  const haut = h.findIndex(p => p.midi === base + 9);
+  assert.equal(h[haut].forme, "rampe", "montée continue");
+  const tenue = h[haut + 1];
+  assert.equal(tenue.midi, base + 9, "tenu en haut");
+  assert.ok(Math.abs(tenue.t - 4 * 0.25) < 1e-9, "redescente à partir de la colonne du r (4 × 0,25 s)");
+  assert.deepEqual([h.at(-1).midi, h.at(-1).forme], [base + 7, "rampe"], "retour continu à la case 7");
+  assert.ok(voix[0].fin - voix[0].debut > h.at(-1).t, "la voix sonne jusqu'au bout du relâché");
+});
+
+test("bend relâché sur une colonne trop proche : jamais relâché avant d'être arrivé en haut", () => {
+  const { voix } = plan([{ type: "bend", fromFret: 7, toFret: 9, releaseFret: 7, releaseCol: 0, col: 0, string: 2 }]);
+  const h = voix[0].hauteurs;
+  const ts = h.map(p => p.t);
+  assert.deepEqual(ts, [...ts].sort((a, b) => a - b), "points de hauteur dans l'ordre du temps");
+  assert.ok(h[3].t > h[2].t, "la tenue suit l'arrivée en haut");
+});
+
+test("vibrato : oscillation régulière ± amplitude autour de la note, jusqu'à la fin de la voix", () => {
+  const { voix } = plan([{ type: "note", fret: 5, col: 0, string: 1, vibrato: true }]);
+  const v = voix[0];
+  const base = CORDE_MIDI[1] + 5;
+  const pts = v.hauteurs.slice(1);
+  assert.ok(pts.length > 20, `${pts.length} points : une vraie oscillation, pas un seul écart`);
+  const ecarts = pts.map(p => p.midi - base);
+  assert.ok(Math.abs(Math.max(...ecarts) - REGLAGES.vibratoAmplitude) < 1e-9);
+  assert.ok(Math.abs(Math.min(...ecarts) + REGLAGES.vibratoAmplitude) < 1e-9);
+  assert.ok(pts[0].t >= REGLAGES.vibratoDelaiS - 1e-9, "la note est d'abord tenue droite");
+  assert.ok(pts.at(-1).t <= v.fin - v.debut + 1e-9, "pas de point après la fin de la voix");
+  // Fréquence : d'un sommet +A au suivant = une période.
+  const sommets = pts.filter(p => p.midi - base > REGLAGES.vibratoAmplitude - 1e-9).map(p => p.t);
+  assert.ok(Math.abs((sommets[1] - sommets[0]) - 1 / REGLAGES.vibratoFrequence) < 1e-9);
+  // La durée de la voix n'est pas allongée par le vibrato.
+  assert.ok(Math.abs((v.fin - v.debut) - REGLAGES.resonanceFinale) < 1e-9);
+});
+
+test("vibrato sur un bend : oscille autour de la hauteur d'ARRIVÉE", () => {
+  const { voix } = plan([{ type: "bend", fromFret: 7, toFret: 9, col: 0, string: 3, vibrato: true }]);
+  const h = voix[0].hauteurs;
+  const haut = CORDE_MIDI[3] + 9;
+  const apres = h.slice(3);
+  assert.ok(apres.length > 10);
+  assert.ok(apres.every(p => Math.abs(p.midi - haut) <= REGLAGES.vibratoAmplitude + 1e-9));
+});
+
+test("vibrato coupé net quand la corde rejoue", () => {
+  const { voix } = plan([{ type: "note", fret: 5, col: 0, string: 1, vibrato: true }, { type: "note", fret: 7, col: 2, string: 1 }]);
+  const v = voix[0];
+  assert.ok(v.hauteurs.at(-1).t <= v.fin - v.debut + 1e-9);
+});

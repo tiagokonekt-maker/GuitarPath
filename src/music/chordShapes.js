@@ -58,11 +58,11 @@ const SHAPES = {
   ],
   dim7: [
     { id: "Ddim7", label: "Forme Ré", rootString: 2, offsets: [null, null, 0, 1, 0, 1], fingers: [0, 0, 1, 3, 2, 4] },
-    { id: "Adim7", label: "Forme La", rootString: 1, offsets: [null, 0, 1, 2, 1, null], fingers: [0, 1, 2, 4, 3, 0] },
+    { id: "Adim7", label: "Forme La", rootString: 1, offsets: [null, 0, 1, -1, 1, null], fingers: [0, 2, 3, 1, 4, 0] },
   ],
   maj6: [
     { id: "A6", label: "Forme La", rootString: 1, offsets: [null, 0, 2, 2, 2, 2], fingers: [0, 1, 2, 3, 3, 3] },
-    { id: "E6", label: "Forme Mi", rootString: 0, offsets: [0, 2, 1, 1, 2, null], fingers: [1, 3, 1, 1, 4, 0] },
+    { id: "E6", label: "Forme Mi", rootString: 0, offsets: [0, 2, 2, 1, 2, 0], fingers: [1, 3, 3, 2, 4, 1], barre: true },
   ],
   sus4: [
     { id: "Asus4", label: "Forme La", rootString: 1, offsets: [null, 0, 2, 2, 3, 0], fingers: [0, 1, 2, 3, 4, 1], barre: true },
@@ -71,10 +71,10 @@ const SHAPES = {
   add9: [
     { id: "Cadd9", label: "Forme Do", rootString: 1, offsets: [null, 0, -1, -3, 0, -3] },
     { id: "Aadd9", label: "Forme La", rootString: 1, offsets: [null, 0, 2, 4, 2, 0] },
-    { id: "Eadd9", label: "Forme Mi", rootString: 0, offsets: [0, 2, 1, 1, 0, 2] },
+    { id: "Eadd9", label: "Forme Mi", rootString: 0, offsets: [0, 2, 2, 1, 0, 2] },
   ],
   dom9: [
-    { id: "A9", label: "Forme La", rootString: 1, offsets: [null, 0, 1, 0, 2, 0], fingers: [0, 2, 3, 1, 4, 1] },
+    { id: "A9", label: "Forme La", rootString: 1, offsets: [null, 0, -1, 0, 0, 0], fingers: [0, 2, 1, 3, 3, 3] },
     { id: "E9", label: "Forme Mi", rootString: 0, offsets: [0, 2, 0, 1, 0, 2],    fingers: [1, 3, 1, 2, 1, 4] },
   ],
 };

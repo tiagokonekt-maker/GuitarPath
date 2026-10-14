@@ -11,6 +11,10 @@
 //     qu'elle s'éteigne d'elle-même) — elle n'est pas coupée au bout d'une
 //     double-croche, ce qui donnait un son haché, « robotique » ;
 //   • un bend fait MONTER la hauteur en continu, sans nouvelle attaque ;
+//     relâché (7b9r7), il redescend ensuite, toujours sans attaque ;
+//   • un vibrato (5~) fait osciller légèrement la hauteur autour de la
+//     note (± vibratoAmplitude demi-ton, vibratoFrequence Hz), jusqu'à la
+//     fin de la voix ;
 //   • un slide fait GLISSER la hauteur d'une case à l'autre, sans attaque ;
 //   • un hammer-on / pull-off change de hauteur d'un coup, sans médiator ;
 //   • une note étouffée (x) donne un « tchk » court et sourd, pas un silence ;
@@ -38,7 +42,10 @@ export const REGLAGES = {
   grattageMs: 12,           // écart entre deux cordes d'un accord
   bendDelaiS: 0.03,         // le bend commence juste après l'attaque
   bendDureeMax: 0.18,       // s — durée max de la montée d'un bend
-  slidePart: 0.85,          // part du temps disponible occupée par le glissé
+  slidePart: 0.85,
+  vibratoAmplitude: 0.3,    // demi-ton — écart max de part et d'autre de la note
+  vibratoFrequence: 5.5,    // Hz — oscillations par seconde
+  vibratoDelaiS: 0.06,      // s — la note est d'abord tenue droite, puis vibre          // part du temps disponible occupée par le glissé
   etouffeeDuree: 0.05,      // s — le « tchk » d'une note étouffée
   velociteEtouffee: 0.55,
 };
@@ -95,12 +102,22 @@ export function planifierTab(evenements, opts = {}) {
     }
     if (ev.type === "bend") {
       const depart = ouverte + ev.fromFret, arrivee = ouverte + ev.toFret;
-      voix.push({ corde: ev.string, debut, fin: null, velocite: v, etouffee: false, ev,
-        hauteurs: [
-          { t: 0, midi: depart, forme: "saut" },
-          { t: R.bendDelaiS, midi: depart, forme: "saut" },
-          { t: R.bendDelaiS + Math.min(R.bendDureeMax, spc * 2), midi: arrivee, forme: "rampe" },
-        ] });
+      const montee = Math.min(R.bendDureeMax, spc * 2);
+      const tHaut = R.bendDelaiS + montee;
+      const hauteurs = [
+        { t: 0, midi: depart, forme: "saut" },
+        { t: R.bendDelaiS, midi: depart, forme: "saut" },
+        { t: tHaut, midi: arrivee, forme: "rampe" },
+      ];
+      if (ev.releaseFret != null) {
+        // Relâché : tenu en haut jusqu'à la colonne du « r » (jamais avant
+        // d'être arrivé en haut), puis redescente continue, aussi rapide
+        // que la montée.
+        const tRelache = Math.max(tHaut + 0.02, ev.releaseCol != null ? (ev.releaseCol - ev.col) * spc : tHaut + spc);
+        hauteurs.push({ t: tRelache, midi: arrivee, forme: "saut" });
+        hauteurs.push({ t: tRelache + montee, midi: ouverte + ev.releaseFret, forme: "rampe" });
+      }
+      voix.push({ corde: ev.string, debut, fin: null, velocite: v, etouffee: false, ev, hauteurs });
       continue;
     }
     if (ev.type === "hammer" || ev.type === "pull") {
@@ -135,6 +152,23 @@ export function planifierTab(evenements, opts = {}) {
       const naturelle = x.debut + Math.max(derniereHauteur + 0.05, suivante ? R.resonanceMax : R.resonanceFinale);
       x.fin = suivante ? Math.min(suivante.debut, naturelle) : naturelle;
     });
+  }
+
+  // Vibrato : ajouté une fois la durée de la voix connue. Points alternés
+  // note / +A / note / −A / … reliés par des rampes, un quart de période
+  // d'écart : une oscillation régulière jusqu'à la fin de la voix.
+  for (const x of voix) {
+    if (!x.ev?.vibrato || x.etouffee) continue;
+    const dernier = x.hauteurs[x.hauteurs.length - 1];
+    const tDebut = dernier.t + R.vibratoDelaiS;
+    const tFin = x.fin - x.debut;
+    if (tFin <= tDebut) continue;
+    const pas = 1 / (4 * R.vibratoFrequence);
+    x.hauteurs.push({ t: tDebut, midi: dernier.midi, forme: "saut" });
+    for (let k = 1; tDebut + k * pas <= tFin; k++) {
+      const ecart = [0, 1, 0, -1][k % 4] * R.vibratoAmplitude;
+      x.hauteurs.push({ t: tDebut + k * pas, midi: dernier.midi + ecart, forme: "rampe" });
+    }
   }
 
   voix.sort((a, b) => a.debut - b.debut);

@@ -76,7 +76,9 @@ function approachNote(targetMidi, style, rng) {
  * @param opts.barIndex   pour alterner le contour
  * @param opts.energy     1..5 — densité et ornements
  * @param opts.rng        générateur aléatoire injectable (tests reproductibles)
- * @returns [{ beat, midi, dur, velocity, ghost }]
+ * @returns [{ beat, midi, dur, velocity, ghost }] — `beat` est DROIT (1.5 =
+ *          croche faible) ; le rendu y applique le swing du style avec
+ *          swingBeat() (jam/music/groove.js), comme pour la batterie.
  */
 export function generateWalkingBar(opts) {
   const {

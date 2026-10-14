@@ -14,7 +14,9 @@
 // JavaScript pur, testable en Node.
 
 /**
- * Vocabulaire rythmique, en temps fractionnaires (0 = temps 1).
+ * Vocabulaire rythmique, en temps fractionnaires (0 = temps 1), écrits
+ * DROITS : le swing du style (blues, funk…) est appliqué au rendu par
+ * swingBeat() (jam/music/groove.js), le même calcul que la batterie.
  * `anticipate: true` signifie que l'accord joué est celui de la mesure
  * SUIVANTE — l'anticipation est le geste le plus caractéristique du
  * comping jazz et funk.

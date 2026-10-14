@@ -9,7 +9,9 @@ import { Gropi } from "../design/Gropi.jsx";
 import { BackButton } from "../design/ui.jsx";
 import { Fretboard } from "../Fretboard.jsx";
 import { getScaleNotes, noteToFr, normalizeNote } from "../fretboardUtils.js";
-import { createComper, beatToToneTime } from "../music/compRhythm.js";
+import { createComper } from "../music/compRhythm.js";
+import { companionSwing, swingBeat } from "../jam/music/groove.js";
+import { activerSessionAudio } from "../audioEngine.js";
 import * as Tone from "tone";
 // Sous-modules de l'écran (src/screens/jam) : données et fonctions pures,
 // et les blocs qui suivent le temps de jeu chaque seconde.
@@ -71,6 +73,75 @@ function shade(hex, amount) {
   return "#" + ((r << 16) | (g << 8) | b).toString(16).padStart(6, "0");
 }
 
+// ── Échantillons décodés, gardés d'un lancement à l'autre ─────────────────
+// Chaque lecture, et chaque changement de style, recréait Sampler et Players :
+// toutes les mp3 étaient re-décodées (plusieurs secondes sur mobile, et autant
+// de mémoire tant que l'ancien décodage n'était pas libéré). Les buffers
+// décodés sont gardés ici, par instrument ; seuls les nœuds légers qui les
+// lisent sont recréés. Un chargement qui échoue ou dépasse son délai est
+// libéré et retiré du cache : le suivant repart de zéro.
+const cacheEchantillons = new Map();   // clé → { ctx, promesse }
+
+function chargerEchantillons(cle, urls, baseUrl, delaiMs) {
+  const ctx = Tone.getContext();
+  const enCache = cacheEchantillons.get(cle);
+  // Des buffers décodés pour un autre contexte audio ne sont pas réutilisés.
+  if (enCache && enCache.ctx === ctx) return enCache.promesse;
+  const promesse = new Promise((resolve, reject) => {
+    let buffers = null, fini = false, minuteur = null;
+    const echec = (e) => {
+      if (fini) return;
+      fini = true;
+      clearTimeout(minuteur);
+      try { buffers?.dispose(); } catch { /* déjà libéré */ }
+      reject(e instanceof Error ? e : new Error(String(e)));
+    };
+    minuteur = setTimeout(() => echec(new Error("délai dépassé")), delaiMs);
+    buffers = new Tone.ToneAudioBuffers({
+      urls, baseUrl,
+      onload: () => {
+        if (fini) return;
+        fini = true;
+        clearTimeout(minuteur);
+        resolve(buffers);
+      },
+      onerror: echec,
+    });
+  });
+  const entree = { ctx, promesse };
+  cacheEchantillons.set(cle, entree);
+  promesse.catch(() => { if (cacheEchantillons.get(cle) === entree) cacheEchantillons.delete(cle); });
+  return promesse;
+}
+
+/** { "C2": "C2.mp3"… } + buffers chargés → { "C2": ToneAudioBuffer… } pour un Sampler. */
+const urlsDepuisBuffers = (buffers, urls) =>
+  Object.fromEntries(Object.keys(urls).map(n => [n, buffers.get(n)]));
+
+/**
+ * Batterie lue depuis les buffers partagés : une source par frappe, avec
+ * SA dynamique (gain de la source). Les charlestons passent par leur propre
+ * sortie (panoramique).
+ */
+function creerKitBatterie(buffers, sortie, sortieCharleston) {
+  const voix = new Set();
+  return {
+    jouer(cle, time, db) {
+      const src = new Tone.ToneBufferSource(buffers.get(cle));
+      src.connect(sortieCharleston && cle.startsWith("hihat") ? sortieCharleston : sortie);
+      voix.add(src);
+      // Tone libère lui-même la source une fois `onended` appelé.
+      src.onended = () => voix.delete(src);
+      src.start(time, 0, undefined, Tone.dbToGain(db));
+    },
+    // Les frappes déjà planifiées pour la mesure en cours sont coupées.
+    dispose() {
+      for (const s of voix) { try { s.stop(); s.disconnect(); } catch { /* déjà terminée */ } }
+      voix.clear();
+    },
+  };
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 // BACKING TRACK PLAYER — Version Pro
 // Samples FatBoy guitare steel + basse compressée + batterie procédurale
@@ -95,6 +166,10 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
   const [currentChord, setCurrentChord] = useState(0);
   const [loading, setLoading]       = useState(false);
   const [playError, setPlayError]   = useState(null);
+  // Vrai quand le système a coupé le son en pleine lecture (appel entrant,
+  // autre app, écran verrouillé sur iOS) : la lecture est arrêtée et le
+  // bandeau propose de reprendre.
+  const [interrompu, setInterrompu] = useState(false);
 
   // Refs instruments
   const samplerRef  = useRef(null); // guitare steel samples
@@ -168,6 +243,30 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
   }, [context.id]);
   useEffect(() => () => arreterAuDemontage(), []);
 
+  // ── Coupure par le système ──────────────────────────────────────────────
+  // iOS suspend (« interrupted ») le contexte audio lors d'un appel, d'une
+  // alarme, du passage d'une autre app au premier plan. Le Transport se fige
+  // alors en silence, et l'écran affichait toujours « en cours » — avec un
+  // bouton pause qui ne correspondait plus à rien. On arrête proprement et
+  // on propose de reprendre : la reprise passe par un toucher, seul geste
+  // qui permette à iOS de relancer l'audio.
+  const surCoupureSysteme = useEffectEvent(() => {
+    if (!playingRef.current) return;
+    stopBacking();
+    setInterrompu(true);
+    setPlayError("Le son a été coupé par le système (appel, autre application…).");
+  });
+  useEffect(() => {
+    if (!playing) return;
+    const ctx = Tone.getContext();
+    const surChangement = () => {
+      const etat = ctx.state;
+      if (etat === "interrupted" || etat === "suspended") surCoupureSysteme();
+    };
+    ctx.on("statechange", surChangement);
+    return () => { ctx.off("statechange", surChangement); };
+  }, [playing]);
+
   /**
    * Joue un élément de batterie.
    * Choisit l'échantillon selon la dynamique, en évitant de rejouer le même
@@ -184,11 +283,10 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
       const last = drumRRRef.current[type];
       if (n > 1 && idx === last) idx = (idx + 1) % n;
       drumRRRef.current[type] = idx;
-      try {
-        const player = drumsRef.current.player(`${type}${idx}`);
-        player.volume.value = -6 + (velocity - 0.8) * 12;
-        player.start(time);
-      } catch { /* échantillon absent : on saute */ }
+      // Dynamique PAR FRAPPE : changer le volume du lecteur partagé, comme
+      // avant, modifiait aussi les cymbales qui résonnaient encore.
+      try { drumsRef.current.jouer(`${type}${idx}`, time, -6 + (velocity - 0.8) * 12); }
+      catch { /* échantillon absent : on saute */ }
       return;
     }
     // Repli synthétique
@@ -201,6 +299,12 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
   // Un nouveau lancement attend que le précédent se soit retiré avant de
   // toucher aux instruments : deux lancements ne se disputent jamais les mêmes.
   function startBacking() {
+    // Dans le geste lui-même, AVANT tout await : iOS n'autorise la reprise
+    // du contexte audio que dans la pile d'appel du toucher. Et le son passe
+    // en catégorie « lecture » : le bouton silencieux ne le coupe plus.
+    activerSessionAudio();
+    try { if (Tone.getContext().state !== "running") Tone.getContext().resume().catch(() => {}); } catch { /* noop */ }
+    setInterrompu(false);
     const moi = ++generationRef.current;
     const precedent = demarrageRef.current;
     const lancement = (async () => {
@@ -288,35 +392,43 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
         "Gb4": "Gb4.mp3", "C5": "C5.mp3",
       };
 
+      // Les buffers décodés viennent du cache (chargerEchantillons) : seul
+      // le Sampler, léger, est recréé à chaque lancement.
       try {
-        samplerRef.current = await new Promise((resolve, reject) => {
-          const s = new Tone.Sampler({
-            urls: RHODES_SAMPLES,
-            baseUrl: "/audio/piano/",
-            release: 1.4,
-            // L'accompagnement se tient DERRIÈRE. Il pose l'harmonie et le rythme,
-            // il ne doit jamais attirer l'oreille : c'est le guitariste le soliste.
-            volume: context.id === "jazz_251" ? -22 : -25,
-            onload: () => resolve(s),
-            onerror: (e) => reject(e),
-          });
-          setTimeout(() => reject(new Error("délai dépassé")), 6000);
+        const buffers = await chargerEchantillons("piano", RHODES_SAMPLES, "/audio/piano/", 6000);
+        if (perime()) { libererAudio(); return; }
+        samplerRef.current = new Tone.Sampler({
+          urls: urlsDepuisBuffers(buffers, RHODES_SAMPLES),
+          release: 1.4,
+          // L'accompagnement se tient DERRIÈRE. Il pose l'harmonie et le rythme,
+          // il ne doit jamais attirer l'oreille : c'est le guitariste le soliste.
+          volume: context.id === "jazz_251" ? -22 : -25,
         });
       } catch {
-        // Repli sur la guitare existante si le Rhodes n'est pas installé.
-        samplerRef.current = new Tone.Sampler({
-          urls: SAMPLE_URLS_LOCAL,
-          baseUrl: "/audio/guitar/",
-          release: 2.0,
-          volume: context.id === "jazz_251" ? -8 : -10,
-        });
+        if (perime()) { libererAudio(); return; }
+        // Repli sur la guitare si le piano n'est pas disponible — en
+        // attendant VRAIMENT son chargement : un Sampler pas encore chargé
+        // ignore les notes, l'accompagnement restait muet sans erreur.
+        try {
+          const buffers = await chargerEchantillons("guitare", SAMPLE_URLS_LOCAL, "/audio/guitar/", 8000);
+          if (perime()) { libererAudio(); return; }
+          samplerRef.current = new Tone.Sampler({
+            urls: urlsDepuisBuffers(buffers, SAMPLE_URLS_LOCAL),
+            release: 2.0,
+            volume: context.id === "jazz_251" ? -8 : -10,
+          });
+        } catch {
+          // Ni piano ni guitare : on joue sans accompagnement plutôt que pas du tout.
+          samplerRef.current = null;
+        }
       }
-      const pianoPasseHaut = new Tone.Filter({ type: "highpass", frequency: MIXAGE.pianoPasseHaut, rolloff: -12 });
-      const pianoPan = new Tone.Panner(MIXAGE.pianoPan);
-      mixRef.current.push(pianoPasseHaut, pianoPan);
-      samplerRef.current.chain(pianoPasseHaut, pianoPan, masterOut);
-
       if (perime()) { libererAudio(); return; }
+      if (samplerRef.current) {
+        const pianoPasseHaut = new Tone.Filter({ type: "highpass", frequency: MIXAGE.pianoPasseHaut, rolloff: -12 });
+        const pianoPan = new Tone.Panner(MIXAGE.pianoPan);
+        mixRef.current.push(pianoPasseHaut, pianoPan);
+        samplerRef.current.chain(pianoPasseHaut, pianoPan, masterOut);
+      }
 
       // ── Basse échantillonnée ──────────────────────────────────────────
       // La version précédente était un Tone.Synth en dents de scie : c'est
@@ -344,21 +456,18 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
 
       let bassLoaded = false;
       try {
-        bassRef.current = await new Promise((resolve, reject) => {
-          const s = new Tone.Sampler({
-            urls: BASS_SAMPLES,
-            baseUrl: "/audio/bass/",
-            release: 0.9,
-            volume: -9,
-            onload: () => resolve(s),
-            onerror: (e) => reject(e),
-          });
-          // Filet de sécurité : si le chargement ne répond pas, on n'attend
-          // pas indéfiniment, on bascule sur le repli.
-          setTimeout(() => reject(new Error("délai dépassé")), 6000);
+        // Filet de sécurité (délai de 6 s) : si le chargement ne répond pas,
+        // on n'attend pas indéfiniment, on bascule sur le repli.
+        const buffers = await chargerEchantillons("basse", BASS_SAMPLES, "/audio/bass/", 6000);
+        if (perime()) { libererAudio(); return; }
+        bassRef.current = new Tone.Sampler({
+          urls: urlsDepuisBuffers(buffers, BASS_SAMPLES),
+          release: 0.9,
+          volume: -9,
         });
         bassLoaded = true;
       } catch {
+        if (perime()) { libererAudio(); return; }
         // Repli : synthé, mais réglé pour être le moins désagréable possible
         // (onde triangulaire plutôt que dents de scie — beaucoup moins de
         // harmoniques agressives, plus proche d'une basse assourdie).
@@ -413,41 +522,35 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
       }
 
       let drumsLoaded = false;
+      let drumBuffers = null;
       try {
-        drumsRef.current = await new Promise((resolve, reject) => {
-          const p = new Tone.Players({
-            urls: drumUrls,
-            baseUrl: "/audio/drums/",
-            onload: () => resolve(p),
-            onerror: (e) => reject(e),
-          });
-          setTimeout(() => reject(new Error("délai dépassé")), 8000);
-        });
-        drumsRef.current.connect(compRef.current);
+        drumBuffers = await chargerEchantillons("batterie", drumUrls, "/audio/drums/", 8000);
         drumsLoaded = true;
       } catch {
         drumsRef.current = null;
       }
       if (perime()) { libererAudio(); return; }
-      // Mixage de la batterie, HORS du bloc de chargement : un souci de
-      // mixage ne doit jamais faire basculer la vraie batterie sur le synthé
-      // de secours. Au pire, elle reste simplement sèche et centrée.
       if (drumsLoaded) {
+        // Bus de la batterie : compresseur master + envoi de réverbération.
+        const busBatterie = new Tone.Gain(1).connect(compRef.current);
+        mixRef.current.push(busBatterie);
+        // Mixage HORS du chargement : un souci de mixage ne doit jamais faire
+        // basculer la vraie batterie sur le synthé de secours. Au pire, elle
+        // reste simplement sèche et centrée.
         try {
           const envoiBatterie = new Tone.Gain(MIXAGE.batterieReverb);
-          drumsRef.current.connect(envoiBatterie);
+          busBatterie.connect(envoiBatterie);
           envoiBatterie.connect(reverbRef.current);
           mixRef.current.push(envoiBatterie);
         } catch { /* batterie sans réverbération */ }
+        // Charlestons (fermée et ouverte) : panoramique propre, sans envoi
+        // de réverbération — comme avant.
+        let panCharleston = null;
         try {
-          const panCharleston = new Tone.Panner(MIXAGE.charlestonPan).connect(compRef.current);
+          panCharleston = new Tone.Panner(MIXAGE.charlestonPan).connect(compRef.current);
           mixRef.current.push(panCharleston);
-          for (const cle of Object.keys(drumUrls).filter(k => k.startsWith("hihat"))) {
-            const pl = drumsRef.current.player(cle);
-            pl.disconnect();
-            pl.connect(panCharleston);
-          }
-        } catch { /* le charleston reste au centre */ }
+        } catch { panCharleston = null; /* le charleston reste au centre */ }
+        drumsRef.current = creerKitBatterie(drumBuffers, busBatterie, panCharleston);
       }
       drumsLoadedRef.current = drumsLoaded;
 
@@ -531,12 +634,20 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
         // L'anticipation joue l'accord de la mesure SUIVANTE une croche
         // avant : le geste le plus caractéristique du comping.
         const nextVoiced = getVoicedChord(nextRoot, nextChord.quality, style);
+        // Même swing que la batterie (src/jam/music/groove.js) : sans lui,
+        // le Transport étant à swing 0 avec un pack, les croches faibles de
+        // l'accompagnement et de la basse tombaient droites pendant que la
+        // charleston swinguait — un « flam » audible sur chaque contretemps.
+        const bpmMesure = Tone.getTransport().bpm.value;
+        const secParTemps = 60 / bpmMesure;
+        const sw = pack ? companionSwing(pack, bpmMesure) : { ratio: 0.5, stepsPerBeat: 2 };
+        const instant = (beatPos) => time + swingBeat(beatPos, sw.ratio, sw.stepsPerBeat) * secParTemps;
         for (const hit of compHits) {
           const humanize = (Math.random() - 0.5) * 0.008;
           samplerRef.current?.triggerAttackRelease(
             hit.anticipate ? nextVoiced : voiced,
             hit.dur,
-            Tone.Time(time) + Tone.Time(beatToToneTime(hit.beat)) + humanize,
+            instant(hit.beat) + humanize,
             hit.velocity
           );
         }
@@ -545,10 +656,10 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
         // fondamentale s'appuie, une note d'approche reste discrète, une
         // ghost note est presque inaudible. Sans ça, toutes les notes
         // sortent au même niveau et la ligne redevient mécanique.
-        if (!coupe.basse) bassPattern.forEach(({ note, time: t, dur, velocity }) => {
+        if (!coupe.basse) bassPattern.forEach(({ note, beat: b, dur, velocity }) => {
           bassRef.current?.triggerAttackRelease(
             note, dur,
-            Tone.Time(time) + Tone.Time(t),
+            instant(b),
             velocity ?? 0.8
           );
         });
@@ -766,7 +877,7 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
             background: "none", border: "none", color: C.coralD, fontWeight: 700, padding: "6px 4px",
             fontSize: 12, fontFamily: FONTS.ui, cursor: "pointer", flexShrink: 0, textDecoration: "underline",
           }}>
-            Réessayer
+            {interrompu ? "Reprendre" : "Réessayer"}
           </button>
         </div>
       )}
