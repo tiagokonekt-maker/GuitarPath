@@ -53,7 +53,7 @@
 //    remplacement de tout cache existant chez les utilisateurs qui ont
 //    encore une version antérieure installée.
 
-const VERSION     = 'v10';
+const VERSION     = 'v11';
 const APP_CACHE   = `groply-app-${VERSION}`;
 const MEDIA_CACHE = 'groply-media-v2';
 const AUDIO_CACHE = 'groply-audio-v1';
@@ -67,8 +67,8 @@ const PRECACHE = [
   '/logo.svg',
   '/icon-192.png',
   '/apple-touch-icon.png',
-  '/mascotte-think.svg',
-  '/mascotte-wave.svg',
+  '/mascotte-think.webp',
+  '/mascotte-wave.webp',
 ];
 
 const isAudio       = (url) => url.pathname.startsWith('/audio/');

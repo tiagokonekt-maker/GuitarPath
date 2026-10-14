@@ -12,24 +12,14 @@ import { generateWalkingBar, toToneNote as toToneNoteFromMidi, toToneTime } from
 import { createComper, beatToToneTime } from "../music/compRhythm.js";
 import * as Tone from "tone";
 
-// ── jamEngine, enfin branché — mais pas tel quel ──────────────────────────
-// jamEngine.js fait tourner sa PROPRE horloge sur son PROPRE AudioContext
-// (`createClock`, `new AudioContext()`) — entièrement indépendante de
-// `Tone.getTransport()`, que cet écran utilise déjà pour les accords et la
-// basse. Faire tourner les deux côte à côte aurait introduit deux horloges
-// distinctes, susceptibles de dériver l'une par rapport à l'autre au fil
-// d'une session longue — exactement le genre de bug qui ne se voit pas en
-// test rapide et qui devient audible après plusieurs minutes.
-//
-// La vraie valeur de jamEngine n'est pas son horloge (Tone.Transport fait
-// déjà ce travail très bien ici) : c'est son algorithme de génération —
+// ── Moteur de groove (src/jam) ─────────────────────────────────────────
+// L'horloge reste Tone.Transport, partagée avec les accords et la basse :
+// une seule horloge, donc aucune dérive possible entre instruments. De
+// src/jam on n'utilise que la partie générative, en JavaScript pur :
 // planner (forme longue) + director (décisions de phrase) + generateDrumBar
-// (grille → évènements). Ces trois morceaux sont du JavaScript pur, sans
-// audio, conçus pour être importés indépendamment. On les branche donc
-// directement DANS la boucle par mesure qui existe déjà (le
-// `Tone.Sequence` plus bas), à la place de l'ancien motif statique qui
-// bouclait à l'identique — sans toucher au chargement des échantillons ni
-// à leur lecture (`playDrum`), qui restent celles de cet écran.
+// (grille → évènements). Elle est appelée dans la boucle par mesure (le
+// `Tone.Sequence` plus bas) ; le chargement et la lecture des échantillons
+// (`playDrum`) restent ceux de cet écran.
 import { createPlanner, createDirector } from "../jam/arrangement/arranger.js";
 import { generateDrumBar } from "../jam/generators/drums.js";
 
@@ -169,7 +159,6 @@ const ROOTS_FR = [
 const CHROMATIC = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
 const SHARP_TO_FLAT = { "C#":"Db","D#":"Eb","F#":"Gb","G#":"Ab","A#":"Bb" };
 
-function toFlat(note) { return SHARP_TO_FLAT[note] || note; }
 function transposeNote(root, semitones) {
   const idx = CHROMATIC.indexOf(root);
   return CHROMATIC[(idx + semitones) % 12];
@@ -283,8 +272,8 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
   const drumsRef       = useRef(null);
   const drumsLoadedRef = useRef(false);
   const drumRRRef      = useRef({});   // dernier échantillon joué par élément
-  const plannerRef     = useRef(null); // forme longue (jamEngine) — actif uniquement si un pack existe pour ce style
-  const directorRef    = useRef(null); // décisions de phrase (jamEngine)
+  const plannerRef     = useRef(null); // forme longue (src/jam) — actif uniquement si un pack existe pour ce style
+  const directorRef    = useRef(null); // décisions de phrase (src/jam)
   // Refs master chain
   const reverbRef   = useRef(null);
   const delayRef    = useRef(null);
@@ -843,7 +832,7 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
           );
         });
 
-        // ── Batterie vivante (jamEngine), uniquement si un pack existe ──
+        // ── Batterie vivante (src/jam), uniquement si un pack existe ──
         // Remplace le motif statique : forme longue (planner) + décision
         // de phrase (director) + grille → évènements (generateDrumBar),
         // rejoués par la MÊME fonction playDrum() qu'avant — mêmes
@@ -957,15 +946,15 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
   // périmé l'appelle aussi, alors qu'un autre lancement peut être en cours.
   function libererAudio() {
     [seqRef, beatSeqRef].forEach(r => {
-      try { r.current?.stop(); r.current?.dispose(); r.current = null; } catch {}
+      try { r.current?.stop(); r.current?.dispose(); r.current = null; } catch { /* déjà arrêté ou libéré */ }
     });
     [samplerRef, bassRef, kickRef, snareRef, hihatRef, drumsRef, reverbRef, delayRef, compRef,
      bassFilterRef, bassCompRef, kickCompRef, snareFilterRef].forEach(r => {
-      try { r.current?.releaseAll?.(); r.current?.dispose(); r.current = null; } catch {}
+      try { r.current?.releaseAll?.(); r.current?.dispose(); r.current = null; } catch { /* déjà libéré */ }
     });
-    for (const n of mixRef.current) { try { n.dispose(); } catch {} }
+    for (const n of mixRef.current) { try { n.dispose(); } catch { /* déjà libéré */ } }
     mixRef.current = [];
-    try { Tone.getTransport().stop(); Tone.getTransport().cancel(); } catch {}
+    try { Tone.getTransport().stop(); Tone.getTransport().cancel(); } catch { /* transport déjà arrêté */ }
     plannerRef.current = null;
     directorRef.current = null;
   }

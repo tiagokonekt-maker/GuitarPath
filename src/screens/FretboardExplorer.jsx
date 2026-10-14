@@ -8,7 +8,7 @@ import { Fretboard } from "../Fretboard.jsx";
 import { SCALES, CHORD_TYPES, getScaleNotes, getChordNotes, noteToFr, normalizeNote } from "../fretboardUtils.js";
 import { getChordShapes } from "../music/chordShapes.js";
 import { ChordDiagram } from "../diagrams.jsx";
-import { playScaleFromRoot, playChordFromRoot, playArpeggioFromRoot, isAudioLoaded, stopAll, unlockAudio } from "../audioEngine.js";
+import { playScaleFromRoot, playChordFromRoot, playArpeggioFromRoot, stopAll, unlockAudio } from "../audioEngine.js";
 
 const ROOTS_FR = [
   { en: "C",  fr: "Do"   }, { en: "C#", fr: "Do#"  }, { en: "D",  fr: "Re"   },
@@ -168,7 +168,7 @@ export function FretboardExplorer({ onBack, embedded = false }) {
 
   // Quitter l'écran doit couper le son : sans ça une gamme lancée juste avant
   // continuait de jouer par-dessus l'écran suivant.
-  useEffect(() => () => { annulerFin(); try { stopAll(); } catch {} }, []);
+  useEffect(() => () => { annulerFin(); try { stopAll(); } catch { /* déjà arrêté */ } }, []);
 
   const activeNotes = useMemo(() => {
     if (tab === "scale") return getScaleNotes(root, scaleKey);

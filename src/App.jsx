@@ -479,7 +479,6 @@ function AppInner({ onThemeChange }) {
       if (ECRANS_VALIDES.has(depart)) setScreen(depart);
     } catch { /* noop */ }
     return () => window.removeEventListener("popstate", auRetour);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showSettings]);
 
   // Raccourcis du manifeste (?shortcut=session|jam). L'ancienne version
@@ -554,8 +553,7 @@ function AppInner({ onThemeChange }) {
   const rendreEcran = () => {
     if (showSettings) return (
       <SettingsScreen {...props}
-        onClose={() => { setShowSettings(false); try { history.back(); } catch {} }}
-        onImported={rechargerContenu}
+        onClose={() => { setShowSettings(false); try { history.back(); } catch { /* contexte sans history */ } }}
         user={user} onSignOut={deconnecter} onDeleteAccount={deleteAccount} />
     );
     switch (screen) {
@@ -564,6 +562,7 @@ function AppInner({ onThemeChange }) {
       // y naviguer (retour depuis une révision, un exercice...). Elle mène
       // exactement au même endroit que l'Accueil — ce n'est plus qu'un
       // synonyme, pas un écran différent.
+      // falls through
       case "courses":   return <HomeScreen {...props} />;
       // Anciennes routes conservées : « Exercices » et « Quiz » ont fusionné
       // en « Pratique », mais l'app mémorise le dernier écran visité.

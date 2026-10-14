@@ -13,22 +13,40 @@ import { useState } from "react";
 import { FONTS, R } from "./tokens.js";
 import { useC } from "./ThemeContext.jsx";
 
-// ── Fichiers SVG (dans le dossier public) ────────────────────────────────────
+// ── Images WebP (dans le dossier public), exportées à 2× la plus grande taille affichée ──
 const POSE_SRC = {
-  happy:     "/mascotte-happy.svg",
-  wave:      "/mascotte-wave.svg",
-  celebrate: "/mascotte-celebrate.svg",
-  think:     "/mascotte-think.svg",
-  rocker:    "/mascotte-rocker.svg",
-  idea:      "/mascotte-idea.svg",
-  pride:     "/mascotte-pride.svg",
-  listen:    "/mascotte-listen.svg",
-  zen:       "/mascotte-zen.svg",
-  mystere:   "/mascotte-mystere.svg",
-  choix:     "/mascotte-choix.svg",
-  histoire:  "/mascotte-histoire.svg",
+  happy:     "/mascotte-happy.webp",
+  wave:      "/mascotte-wave.webp",
+  celebrate: "/mascotte-celebrate.webp",
+  think:     "/mascotte-think.webp",
+  rocker:    "/mascotte-rocker.webp",
+  idea:      "/mascotte-idea.webp",
+  pride:     "/mascotte-pride.webp",
+  listen:    "/mascotte-listen.webp",
+  zen:       "/mascotte-zen.webp",
+  mystere:   "/mascotte-mystere.webp",
+  choix:     "/mascotte-choix.webp",
+  histoire:  "/mascotte-histoire.webp",
   // alias de repli
-  plead:     "/mascotte-think.svg",
+  plead:     "/mascotte-think.webp",
+};
+
+// Dimensions intrinsèques : elles permettent de réserver la place de l'image
+// avant son chargement (pas de saut de mise en page).
+const POSE_DIMS = {
+  happy: [320, 388],
+  wave: [320, 361],
+  celebrate: [320, 391],
+  think: [320, 374],
+  rocker: [320, 390],
+  idea: [320, 452],
+  pride: [320, 387],
+  listen: [320, 391],
+  zen: [307, 420],
+  mystere: [239, 420],
+  choix: [316, 420],
+  histoire: [320, 333],
+  plead: [320, 374],
 };
 
 // ── Injection unique des keyframes (idempotent, respecte reduce-motion) ───────
@@ -59,10 +77,14 @@ const ANIM = {
 export function Gropi({ pose = "happy", size = 80, anim = "none", style, onClick }) {
   const C = useC();
   const src = POSE_SRC[pose] || POSE_SRC.happy;
+  const [w, h] = POSE_DIMS[pose] || POSE_DIMS.happy;
   return (
     <img
       src={src}
       alt=""
+      width={w}
+      height={h}
+      decoding="async"
       draggable={false}
       onClick={onClick}
       className={anim !== "none" ? "gropi-anim" : undefined}
@@ -169,7 +191,7 @@ export function GropiBubble({
 }) {
   const C = useC();
   const [open, setOpen] = useState(defaultOpen);
-  const { light, border, deep } = useTintColors(tint);
+  const { border, deep } = useTintColors(tint);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: side === "right" ? "flex-start" : "flex-end" }}>

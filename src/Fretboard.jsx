@@ -149,7 +149,7 @@ function NoteMarker({ label, color, size = 28, style = {} }) {
 }
 
 // ── Repère visuel (point incrusté) ──────────────────────────────────────────
-function FretMarker({ fret, isDouble }) {
+function FretMarker({ isDouble }) {
   const C = useC();
   return (
     <div style={{
@@ -361,7 +361,7 @@ export function Fretboard({
           )}
 
           {/* ── Corps du manche ─────────────────────────────────────── */}
-          {strings.map((s, sIdx) => (
+          {strings.map((s) => (
             <div key={s} style={{ display: "flex", alignItems: "center", position: "relative" }}>
 
               {/* Label de corde */}
@@ -414,7 +414,6 @@ export function Fretboard({
               {/* Cases du manche */}
               {fretRange.filter(f => f > 0).map((f, fIdx) => {
                 const isFirstFret = fIdx === 0;
-                const isLastFret = f === endFret;
                 return (
                   <div
                     key={f}
@@ -887,7 +886,6 @@ export function FretboardQuizQuestion({ question, onComplete, answered, forceRev
     const fretMode = question.fretMode || question.concept?.type;
     const target   = question.target   || question.concept?.root;
     const root     = question.root     || question.concept?.root;
-    const { scale, chord } = question;
 
     if ((fretMode === "find_note" || fretMode === "find_root" ||
          fretMode === "find_chord" || fretMode === "find_scale_root") && (target || root)) {
@@ -901,7 +899,7 @@ export function FretboardQuizQuestion({ question, onComplete, answered, forceRev
       return question.concept.positions.filter(p => p && p.fret > 0);
     }
     return [];
-  }, [question.id]);
+  }, [question]);
 
   // Positions de contexte à afficher (pour find_chord, find_scale_root)
   const contextPositions = useMemo(() => {
@@ -915,7 +913,7 @@ export function FretboardQuizQuestion({ question, onComplete, answered, forceRev
       return getScalePositions(root, scale, 12);
     }
     return [];
-  }, [question.id]);
+  }, [question]);
 
   const handleCellClick = (string, fret) => {
     if (revealed || answered) return;
@@ -1035,7 +1033,7 @@ export function FretboardQuizQuestion({ question, onComplete, answered, forceRev
 }
 
 // ── Canvas interne du quiz fretboard ────────────────────────────────────────
-function FretboardQuizCanvas({ targetPositions, contextPositions, selected, revealed, onCellClick, compact, question }) {
+function FretboardQuizCanvas({ targetPositions, contextPositions, selected, revealed, onCellClick }) {
   const C = useC();
   const NOTE_COLORS = useMemo(() => getNoteColors(C), [C]);
   // En mode quiz, on ne compacte JAMAIS : c'est le moment où une erreur de
@@ -1197,7 +1195,7 @@ export function FretboardExercise({ ex, onComplete, dispatch }) {
       fretRange: stage.fretRange || [0, 12],
       stringRange: stage.stringRange || [1, 6],
     });
-  }, [stageIdx, ex.id]);
+  }, [stage]);
 
   // Map pour lookup rapide
   const targetMap = useMemo(() => {
@@ -1389,7 +1387,7 @@ export function FretboardExercise({ ex, onComplete, dispatch }) {
 }
 
 // ── Canvas du manche pour FretboardExercise ──────────────────────────────────
-function ExerciseCanvas({ stage, targetPositions, targetMap, selected, revealed, onCellClick }) {
+function ExerciseCanvas({ stage, targetMap, selected, revealed, onCellClick }) {
   const C = useC();
   const NOTE_COLORS = useMemo(() => getNoteColors(C), [C]);
   const CW = TAP.fretW, CH = TAP.fret, OW = 34, LW = 26, DOT = 26;

@@ -5,7 +5,9 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 import { defineConfig, globalIgnores } from 'eslint/config';
 
 export default defineConfig([
-  globalIgnores(['dist', 'coverage', '*.bak']),
+  // smoke/_entry.jsx est régénéré par smoke/build.mjs à chaque `npm run smoke`
+  // (une suite de `export * as …`) : rien à vérifier dedans.
+  globalIgnores(['dist', 'coverage', '*.bak', 'smoke/_entry.jsx']),
   {
     files: ['**/*.{js,jsx}'],
     extends: [
@@ -36,11 +38,15 @@ export default defineConfig([
       // cette base de code : on veut un avertissement visible, pas le silence.
       'react-hooks/exhaustive-deps': 'warn',
       'no-console': ['warn', { allow: ['warn', 'error'] }],
+      // Plusieurs modules de composants exportent aussi des constantes, un
+      // contexte ou un hook (ThemeContext, diagrams, JamSession) : on tolère
+      // ce mélange (simple perte du Fast Refresh) plutôt que de découper.
+      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     },
   },
   {
     // Les tests tournent sous Node, pas dans un navigateur.
-    files: ['test/**/*.mjs', 'scripts/**/*.mjs'],
+    files: ['test/**/*.mjs', 'scripts/**/*.mjs', 'smoke/**/*.mjs'],
     languageOptions: { globals: globals.node },
     rules: { 'no-console': 'off' },
   },

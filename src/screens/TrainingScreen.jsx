@@ -61,7 +61,7 @@ export function TrainingScreen({ state, dispatch, content, navigate }) {
     return st.toReview + st.neverSeen;
   }, [content.quiz, state.reviewHistory, state.completedLessons]);
   const seance = useMemo(() => planSeance({ duree, objectif, state, content, today, revisionDisponible }), [duree, objectif, state, content, today, revisionDisponible]);
-  const progression = useMemo(() => progressionFamilles(state), [state.completedLessons, state.reviewHistory]);
+  const progression = useMemo(() => progressionFamilles(state), [state]);
   const gMastery = useMemo(() => masteryStats(content, state), [content, state]);
   const uniteEnAttente = useMemo(() => buildPath(content, state).find(u => u.needsCheck) || null, [content, state]);
 

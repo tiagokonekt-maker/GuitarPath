@@ -55,10 +55,10 @@ export const UNIT_BONUS_XP = 40;
  * cible fixe de 15 : le nombre réel de leçons ne dit rien de si l'utilisateur
  * a vraiment compris ou juste eu de la chance sur un petit échantillon.
  *
- * `lessonCount` reste dans la signature pour ne rien casser côté appelants,
+ * `_lessonCount` reste dans la signature pour ne rien casser côté appelants,
  * mais n'est plus utilisé — la cible ne dépend plus de la taille de l'unité.
  */
-export const unitCheckSize = (lessonCount) => 15;
+export const unitCheckSize = (_lessonCount) => 15;
 export const UNIT_CHECK_MAX_QUESTIONS = 15;   // cible par défaut si unit.checkSize est absent
 
 /** Nombre de paliers ouverts d'emblée selon le résultat du placement. */
@@ -169,7 +169,7 @@ export function buildUnits(courses = [], state = null) {
  *     a établi un niveau élevé (`headstart`). Elles ne sont PAS marquées
  *     comme faites : l'utilisateur peut les survoler ou les travailler.
  */
-export function buildPath(content, state, priorityModules = null) {
+export function buildPath(content, state) {
   const completed = state?.completedLessons || {};
   const claimed   = state?.claimedUnits || {};
   const checks    = state?.unitChecks || {};

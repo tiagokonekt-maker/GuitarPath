@@ -1088,7 +1088,6 @@ export function StrumPattern({ data, caption }) {
   const svgW = LEFT_PAD * 2 + pattern.length * CELL_W;
   const svgH = TOP_PAD + CELL_H + 24;
   const accent = STYLE_COLORS[style] || DC.primary;
-  const beatsPerCell = beats / pattern.length;
 
   return (
     <DiagramCard caption={caption || `Pattern ${style}${bpm ? ` · ${bpm} BPM` : ""}`} accent={accent}>

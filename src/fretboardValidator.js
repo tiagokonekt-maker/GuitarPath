@@ -223,7 +223,7 @@ export function validate(concept, selected, selectionRules = {}, opts = {}) {
   }
 
   // 3. Générer le feedback
-  result.feedback = generateFeedback(result, concept, mode);
+  result.feedback = generateFeedback(result);
   result.correctPositions = correct;
 
   return result;
@@ -262,7 +262,7 @@ export function checkLastClick(string, fret, concept, opts = {}) {
 // ───────────────────────────────────────────────────────────────────────────
 // GÉNÉRATION DE FEEDBACK
 // ───────────────────────────────────────────────────────────────────────────
-function generateFeedback(result, concept, mode) {
+function generateFeedback(result) {
   if (result.complete) {
     return "Parfait — toutes les positions trouvées !";
   }

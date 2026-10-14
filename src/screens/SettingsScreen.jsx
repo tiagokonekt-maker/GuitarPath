@@ -54,7 +54,7 @@ function SettingsRow({ label, value, last }) {
   );
 }
 
-function SettingsScreen({ state, dispatch, content, onClose, onImported, user, onSignOut, onDeleteAccount }) {
+function SettingsScreen({ state, dispatch, content, onClose, user, onSignOut, onDeleteAccount }) {
   const C = useC();
   const [importStatus, setImportStatus] = useState(null);
   // `null` | "resetProgress" | "deleteAccount"
@@ -294,25 +294,6 @@ function SettingsScreen({ state, dispatch, content, onClose, onImported, user, o
       )}
     </div>
   );
-}
-
-// Helpers merge (inchangés)
-function mergeCourses(existing, incoming) {
-  const map = Object.fromEntries((existing||[]).filter(c=>c?.id).map(c=>[c.id,c]));
-  (incoming||[]).filter(c=>c?.id).forEach(c => {
-    if (!map[c.id]) { map[c.id]=c; return; }
-    const merged = { ...map[c.id], ...c };
-    const lessonMap = Object.fromEntries((map[c.id].lessons||[]).filter(l=>l?.id).map(l=>[l.id,l]));
-    (c.lessons||[]).filter(l=>l?.id).forEach(l=>{ lessonMap[l.id]=l; });
-    merged.lessons = Object.values(lessonMap);
-    map[c.id] = merged;
-  });
-  return Object.values(map);
-}
-function mergeById(existing, incoming) {
-  const map = Object.fromEntries((existing||[]).filter(x=>x?.id).map(x=>[x.id,x]));
-  (incoming||[]).filter(x=>x?.id).forEach(x=>{ map[x.id]=x; });
-  return Object.values(map);
 }
 
 export { SettingsScreen };

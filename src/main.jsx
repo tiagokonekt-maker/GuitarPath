@@ -48,7 +48,7 @@ class ErrorBoundary extends React.Component {
         background: '#FFE8CF', color: '#18130F', padding: 24, textAlign: 'center',
         fontFamily: '-apple-system, system-ui, sans-serif',
       }}>
-        <img src="/mascotte-think.svg" alt="" width="76" height="88" style={{ display: 'block' }} />
+        <img src="/mascotte-think.webp" alt="" width="76" height="88" style={{ display: 'block' }} />
         <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-.2px' }}>
           Oups, une fausse note.
         </div>

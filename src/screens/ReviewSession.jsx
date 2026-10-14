@@ -1,6 +1,6 @@
 // Groply — screens/ReviewSession.jsx
 // Session de révision espacée — mélange QCM et manche interactif
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { FONTS, R } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
@@ -23,7 +23,7 @@ import { useRenderers } from "../renderers.jsx";
  * leçons prend ~110 px de haut chacun.
  */
 function MiniGrille({ grille, C, active }) {
-  const n = 4 * grille.pas, sonne = new Set(grille.attaques);
+  const sonne = new Set(grille.attaques);
   return (
     <div aria-hidden="true" style={{ display: "flex", gap: 3, flex: 1 }}>
       {Array.from({ length: 4 }, (_, t) => (

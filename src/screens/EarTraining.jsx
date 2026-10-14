@@ -1,11 +1,11 @@
 // Groply -- screens/EarTraining.jsx
 // Quiz d'oreille : intervalles et qualité d'accords
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { FONTS, R } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { Gropi } from "../design/Gropi.jsx";
-import { loadAudio, isAudioLoaded, generateEarTrainingQuestion, playInterval, playChord, stopProgression, stopAll, unlockAudio } from "../audioEngine.js";
+import { loadAudio, isAudioLoaded, generateEarTrainingQuestion, stopAll, unlockAudio } from "../audioEngine.js";
 import { updateReviewHistory } from "../store/reviewEngine.js";
 
 const MODES = [
@@ -51,9 +51,11 @@ export function EarTraining({ onBack, dispatch, state }) {
   const finTimerRef = useRef(null);
   const SESSION_LENGTH = 8;
 
-  const annulerFinTimer = () => {
+  // Stable (ne lit qu'une ref) : utilisable dans les callbacks et effets
+  // sans les recréer à chaque rendu.
+  const annulerFinTimer = useCallback(() => {
     if (finTimerRef.current) { clearTimeout(finTimerRef.current); finTimerRef.current = null; }
-  };
+  }, []);
 
   // Charger l'audio au montage
   useEffect(() => {
@@ -64,25 +66,31 @@ export function EarTraining({ onBack, dispatch, state }) {
     }
   }, []);
 
-  // Generer la premiere question quand l'audio est pret
-  useEffect(() => {
-    if (audioReady && !question) nextQuestion();
-  }, [audioReady, mode]);
-
-  // Quitter l'écran doit couper le son : sans ça, une suite d'accords lancée
-  // juste avant continuait de jouer par-dessus l'écran suivant.
-  useEffect(() => () => { annulerFinTimer(); try { stopAll(); } catch {} }, []);
-
-  const nextQuestion = () => {
+  // Déclarée AVANT l'effet qui l'appelle. Ne change qu'avec `mode`.
+  const nextQuestion = useCallback(() => {
     // Couper le son en cours avant de generer la suivante : une suite
     // d'accords lancee juste avant continuerait sinon de jouer par-dessus
     // la nouvelle question.
     annulerFinTimer();
-    try { stopAll(); } catch {}
+    try { stopAll(); } catch { /* rien ne jouait */ }
     setIsPlaying(false);
     setSelected(null);
     setQuestion(generateEarTrainingQuestion(mode));
-  };
+  }, [mode, annulerFinTimer]);
+
+  // Generer la premiere question quand l'audio est pret, et apres un
+  // changement de mode (changeMode remet `question` a null). Pas de boucle :
+  // l'effet ne fait rien tant qu'une question existe.
+  useEffect(() => {
+    // setState voulu ici : la question dépend de la fin du chargement audio
+    // (asynchrone) ; un seul rendu supplémentaire, borné par `!question`.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (audioReady && !question) nextQuestion();
+  }, [audioReady, question, nextQuestion]);
+
+  // Quitter l'écran doit couper le son : sans ça, une suite d'accords lancée
+  // juste avant continuait de jouer par-dessus l'écran suivant.
+  useEffect(() => () => { annulerFinTimer(); try { stopAll(); } catch { /* déjà arrêté */ } }, [annulerFinTimer]);
 
   const playQuestion = async () => {
     if (!question || isPlaying) return;
@@ -94,8 +102,8 @@ export function EarTraining({ onBack, dispatch, state }) {
     // geste utilisateur direct. Placé après le téléchargement des samples, il
     // arrive trop tard — la chaîne du geste est rompue, et il faut appuyer
     // deux fois pour avoir du son.
-    try { await unlockAudio(); } catch {}
-    try { await question.play(); } catch {}
+    try { await unlockAudio(); } catch { /* le son peut rester verrouillé : on tente quand même */ }
+    try { await question.play(); } catch { /* échec de lecture : le minuteur remet le bouton */ }
 
     // La durée vient du moteur audio (question.durationMs), qui la calcule
     // depuis le vrai calendrier de lecture, queue de relâchement comprise.
@@ -118,15 +126,15 @@ export function EarTraining({ onBack, dispatch, state }) {
   // en raccourcissant temporairement ce relâchement.
   const stopPlayback = () => {
     annulerFinTimer();
-    try { stopAll(); } catch {}
+    try { stopAll(); } catch { /* déjà arrêté */ }
     setIsPlaying(false);
   };
 
   // Note de reference (mode accord complet) : aide optionnelle, sur demande.
   const playRef = async () => {
     if (!question?.playReference) return;
-    try { await unlockAudio(); } catch {}
-    try { await question.playReference(); } catch {}
+    try { await unlockAudio(); } catch { /* le son peut rester verrouillé : on tente quand même */ }
+    try { await question.playReference(); } catch { /* aide facultative */ }
   };
 
   const handleAnswer = (option) => {
@@ -156,7 +164,7 @@ export function EarTraining({ onBack, dispatch, state }) {
     // Couper le son en cours : sans ca, une suite d'accords continuait de
     // jouer par-dessus la nouvelle question apres un changement de mode.
     annulerFinTimer();
-    try { stopAll(); } catch {}
+    try { stopAll(); } catch { /* déjà arrêté */ }
     setIsPlaying(false);
     setMode(m);
     setQuestion(null);

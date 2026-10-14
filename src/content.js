@@ -732,7 +732,7 @@ export const COURSES = [
         title: "L'alphabet musical : les 7 notes naturelles",
         duration: 8,
         content: [
-          { type: "p", text: "Avant d'aborder les gammes, les modes ou l'harmonie, il faut faire connaissance avec la matière première de la musique : les notes. Et bonne nouvelle, il n'y en a pas autant qu'on le croit. La musique occidentale repose sur seulement 7 notes naturelles, qui se répètent à l'infini sur ton instrument.", img: "/illus-escalier-notes.svg", imgAlt: "Escalier avec les 7 notes Do Ré Mi Fa Sol La Si sur chaque marche", imgSide: "right" },
+          { type: "p", text: "Avant d'aborder les gammes, les modes ou l'harmonie, il faut faire connaissance avec la matière première de la musique : les notes. Et bonne nouvelle, il n'y en a pas autant qu'on le croit. La musique occidentale repose sur seulement 7 notes naturelles, qui se répètent à l'infini sur ton instrument.", img: "/illus-escalier-notes.webp", imgAlt: "Escalier avec les 7 notes Do Ré Mi Fa Sol La Si sur chaque marche", imgSide: "right" },
           { type: "h", text: "Les 7 notes" },
           { type: "p", text: "Do, Ré, Mi, Fa, Sol, La, Si. Voilà. C'est tout. Tu les connais peut-être aussi en notation anglo-saxonne : C, D, E, F, G, A, B. Les deux notations désignent exactement les mêmes notes. Sur les partitions et tablatures internationales, c'est la notation anglaise qui domine. Sur la guitare, en France, on mélange souvent les deux." },
           { type: "h", text: "Pourquoi Do = C et pas A ?" },
@@ -826,7 +826,7 @@ export const COURSES = [
         title: "Les enharmonies : pourquoi Do# = Réb ?",
         duration: 7,
         content: [
-          { type: "p", text: "Petite leçon courte mais utile. Tu as peut-être remarqué quelque chose de bizarre : la note entre Do et Ré peut s'appeler 'Do#' (Do dièse) OU 'Ré♭' (Ré bémol). C'est exactement le même son, la même touche du piano, la même case de ta guitare. Pourquoi deux noms ?", img: "/illus-prisme-lumiere.svg", imgAlt: "Un prisme qui décompose un rayon de lumière blanche en plusieurs couleurs", imgSide: "left" },
+          { type: "p", text: "Petite leçon courte mais utile. Tu as peut-être remarqué quelque chose de bizarre : la note entre Do et Ré peut s'appeler 'Do#' (Do dièse) OU 'Ré♭' (Ré bémol). C'est exactement le même son, la même touche du piano, la même case de ta guitare. Pourquoi deux noms ?", img: "/illus-prisme-lumiere.webp", imgAlt: "Un prisme qui décompose un rayon de lumière blanche en plusieurs couleurs", imgSide: "left" },
           { type: "h", text: "Le concept d'enharmonie" },
           { type: "p", text: "Deux notes qui sonnent pareil mais s'écrivent différemment sont dites 'enharmoniques'. Do# et Ré♭ sont enharmoniques. Mi# et Fa sont enharmoniques. La# et Si♭ sont enharmoniques. Ce n'est pas une coquetterie : le choix entre les deux dépend du contexte musical." },
           { type: "h", text: "Quand utiliser un dièse vs un bémol" },
@@ -895,7 +895,7 @@ export const COURSES = [
         title: "Qu'est-ce qu'une gamme (vraiment) ?",
         duration: 8,
         content: [
-          { type: "p", text: "Tu entends parler de gammes depuis que tu joues : gamme majeure, mineure, blues, pentatonique... Mais qu'est-ce qu'une gamme, au fond ? La réponse est simple, et une fois que tu l'as comprise, tout devient lumineux.", img: "/illus-escalier-notes.svg", imgAlt: "Escalier avec les 7 notes Do Ré Mi Fa Sol La Si sur chaque marche", imgSide: "right" },
+          { type: "p", text: "Tu entends parler de gammes depuis que tu joues : gamme majeure, mineure, blues, pentatonique... Mais qu'est-ce qu'une gamme, au fond ? La réponse est simple, et une fois que tu l'as comprise, tout devient lumineux.", img: "/illus-escalier-notes.webp", imgAlt: "Escalier avec les 7 notes Do Ré Mi Fa Sol La Si sur chaque marche", imgSide: "right" },
           { type: "h", text: "Définition" },
           { type: "p", text: "Une gamme est une SÉLECTION ORDONNÉE de notes choisies parmi les 12 sons disponibles. C'est un menu. Au lieu d'avoir accès aux 12 notes (la gamme chromatique complète), une gamme te donne 5, 6, 7 ou 8 notes spécifiques qui sonnent bien ensemble dans un certain contexte." },
           { type: "h", text: "Pourquoi limiter le choix ?" },
@@ -1352,7 +1352,7 @@ export const COURSES = [
         content: [
           { type: "p", text: "Voilà. Tu y es. Tu as toutes les briques nécessaires pour comprendre les modes — ce concept qui terrorise tant de guitaristes intermédiaires. Mais en réalité, après ce que tu viens d'apprendre dans la leçon précédente, les modes vont te paraître évidents. Promis." },
           { type: "h", text: "La définition simple" },
-          { type: "p", text: "Un mode = la gamme majeure jouée en partant d'un degré différent de la tonique. C'est tout. Si tu prends Do majeur (Do-Ré-Mi-Fa-Sol-La-Si) et que tu commences la gamme sur Ré au lieu de Do, tu obtiens : Ré-Mi-Fa-Sol-La-Si-Do-Ré. Ce sont les MÊMES notes que Do majeur, mais avec Ré comme fondamentale. Ce 'mode' s'appelle le mode dorien.", img: "/illus-prisme-lumiere.svg", imgAlt: "Un prisme qui décompose un rayon de lumière blanche en plusieurs couleurs", imgSide: "left" },
+          { type: "p", text: "Un mode = la gamme majeure jouée en partant d'un degré différent de la tonique. C'est tout. Si tu prends Do majeur (Do-Ré-Mi-Fa-Sol-La-Si) et que tu commences la gamme sur Ré au lieu de Do, tu obtiens : Ré-Mi-Fa-Sol-La-Si-Do-Ré. Ce sont les MÊMES notes que Do majeur, mais avec Ré comme fondamentale. Ce 'mode' s'appelle le mode dorien.", img: "/illus-prisme-lumiere.webp", imgAlt: "Un prisme qui décompose un rayon de lumière blanche en plusieurs couleurs", imgSide: "left" },
           { type: "h", text: "7 modes pour 7 degrés" },
           { type: "p", text: "Comme la gamme majeure a 7 degrés, on peut commencer la gamme sur 7 fondamentales différentes. Donc 7 modes existent. Voici leurs noms et leurs degrés de départ : I = Ionien (= majeur). II = Dorien. III = Phrygien. IV = Lydien. V = Mixolydien. VI = Éolien (= mineur naturel). VII = Locrien. Dans l'ordre, on a IDPLMEL. Mnémonique anglais : 'I Don't Particularly Like Modes A Lot' (I D P L M A L)." },
           { type: "h", text: "Pourquoi des noms grecs ?" },
@@ -1373,7 +1373,7 @@ export const COURSES = [
         title: "Comment l'oreille perçoit un mode (le rôle du drone)",
         duration: 8,
         content: [
-          { type: "p", text: "Un mode existe seulement si l'oreille perçoit une fondamentale stable. Sans cette ancre, ton cerveau retombe sur la fondamentale par défaut (la tonique de la gamme majeure parente). Comprendre ce phénomène, c'est comprendre comment 'faire sonner' un mode quand on improvise.", img: "/mascotte-zen.svg", imgAlt: "Gropi les yeux fermés, à l'écoute", imgSide: "right" },
+          { type: "p", text: "Un mode existe seulement si l'oreille perçoit une fondamentale stable. Sans cette ancre, ton cerveau retombe sur la fondamentale par défaut (la tonique de la gamme majeure parente). Comprendre ce phénomène, c'est comprendre comment 'faire sonner' un mode quand on improvise.", img: "/mascotte-zen.webp", imgAlt: "Gropi les yeux fermés, à l'écoute", imgSide: "right" },
           { type: "h", text: "Le piège : sans ancre, pas de mode" },
           { type: "p", text: "Si tu joues simplement les notes de Ré dorien (Ré-Mi-Fa-Sol-La-Si-Do) sans rien d'autre, ton oreille va naturellement entendre 'Do majeur' parce que c'est le pattern qu'elle reconnaît le mieux. Le mode dorien va s'évanouir. Pour qu'un mode 'sonne' vraiment, il faut un dispositif qui ancre l'oreille sur la nouvelle fondamentale." },
           { type: "h", text: "Le drone : ton meilleur ami" },
@@ -1394,7 +1394,7 @@ export const COURSES = [
         title: "Ionien — la lumière pure (= majeur)",
         duration: 8,
         content: [
-          { type: "p", text: "Le mode ionien, c'est tout simplement... la gamme majeure que tu connais déjà. Pas de surprise, pas de note caractéristique exotique. Mais l'aborder en tant que 'mode' permet de bien le situer dans la famille des 7 modes, et de comprendre ce qui le rend unique.", img: "/illus-lever-soleil.svg", imgAlt: "Un lever de soleil stylisé", imgSide: "left" },
+          { type: "p", text: "Le mode ionien, c'est tout simplement... la gamme majeure que tu connais déjà. Pas de surprise, pas de note caractéristique exotique. Mais l'aborder en tant que 'mode' permet de bien le situer dans la famille des 7 modes, et de comprendre ce qui le rend unique.", img: "/illus-lever-soleil.webp", imgAlt: "Un lever de soleil stylisé", imgSide: "left" },
           { type: "h", text: "Formule" },
           { type: "p", text: "1 - 2 - 3 - 4 - 5 - 6 - 7. Aucune altération par rapport à la 'gamme parente' (puisque c'est elle-même). En Do : Do-Ré-Mi-Fa-Sol-La-Si." },
           { type: "h", text: "Couleur sonore" },
@@ -1653,7 +1653,7 @@ export const COURSES = [
         title: "Locrien — le mode interdit",
         duration: 9,
         content: [
-          { type: "p", text: "Voici le 7e mode, et le plus mystérieux : le locrien. C'est le seul mode dont la fondamentale est diminuée (la quinte est diminuée). Conséquence : il sonne extrêmement instable. Pendant des siècles, il a été considéré comme 'inutilisable'. Aujourd'hui, il existe — mais reste rarement employé. À connaître par culture, à utiliser avec parcimonie.", img: "/mascotte-mystere.svg", imgAlt: "Gropi qui jette un œil, curieux et espiègle", imgSide: "right" },
+          { type: "p", text: "Voici le 7e mode, et le plus mystérieux : le locrien. C'est le seul mode dont la fondamentale est diminuée (la quinte est diminuée). Conséquence : il sonne extrêmement instable. Pendant des siècles, il a été considéré comme 'inutilisable'. Aujourd'hui, il existe — mais reste rarement employé. À connaître par culture, à utiliser avec parcimonie.", img: "/mascotte-mystere.webp", imgAlt: "Gropi qui jette un œil, curieux et espiègle", imgSide: "right" },
           { type: "h", text: "Construction" },
           { type: "p", text: "Le locrien est le 7e mode de la gamme majeure. Si tu joues Do majeur en commençant sur Si, tu obtiens Si locrien : Si-Do-Ré-Mi-Fa-Sol-La. Mêmes notes que Do majeur, fondamentale = Si." },
           { type: "h", text: "Formule" },
@@ -1769,7 +1769,7 @@ export const COURSES = [
         title: "Comment choisir une gamme en improvisation",
         duration: 12,
         content: [
-          { type: "p", text: "Tu connais maintenant beaucoup de gammes. La question pratique : quelle gamme choisir face à une chanson, une grille d'accords, une situation d'improvisation ? C'est le sujet de cette leçon de synthèse, et c'est là que tu transformes la théorie en pratique.", img: "/mascotte-choix.svg", imgAlt: "Gropi qui réfléchit, boussole à la main", imgSide: "left" },
+          { type: "p", text: "Tu connais maintenant beaucoup de gammes. La question pratique : quelle gamme choisir face à une chanson, une grille d'accords, une situation d'improvisation ? C'est le sujet de cette leçon de synthèse, et c'est là que tu transformes la théorie en pratique.", img: "/mascotte-choix.webp", imgAlt: "Gropi qui réfléchit, boussole à la main", imgSide: "left" },
           { type: "h", text: "Étape 1 : identifier la tonalité" },
           { type: "p", text: "Avant tout, repère la tonalité de la chanson. Comment ? Regarde l'accord le plus présent et le dernier accord (généralement la tonalité). Si la chanson revient toujours sur Do et finit sur Do, elle est probablement en Do majeur. Si elle revient sur Am et finit sur Am, elle est en La mineur (éolien). Avec ça, tu as déjà ta 'gamme par défaut' : la majeure ou la mineure naturelle correspondante." },
           { type: "h", text: "Étape 2 : analyser le contexte" },
@@ -2478,7 +2478,7 @@ export const COURSES = [
         title: "Les progressions modales",
         duration: 9,
         content: [
-          { type: "p", text: "Toutes les progressions d'accords ne suivent pas la logique tonale classique (I-IV-V, ii-V-I). Il existe aussi les progressions 'modales' : des suites d'accords qui gravitent autour d'un mode plutôt que d'une tonalité. Ces progressions sont la base du jazz modal, du rock psychédélique, et d'une grande partie de la musique folk et celtique.", img: "/illus-palette-couleurs.svg", imgAlt: "Une palette de peintre avec plusieurs touches de couleurs", imgSide: "right" },
+          { type: "p", text: "Toutes les progressions d'accords ne suivent pas la logique tonale classique (I-IV-V, ii-V-I). Il existe aussi les progressions 'modales' : des suites d'accords qui gravitent autour d'un mode plutôt que d'une tonalité. Ces progressions sont la base du jazz modal, du rock psychédélique, et d'une grande partie de la musique folk et celtique.", img: "/illus-palette-couleurs.webp", imgAlt: "Une palette de peintre avec plusieurs touches de couleurs", imgSide: "right" },
           { type: "h", text: "Qu'est-ce qu'une progression modale ?" },
           { type: "p", text: "Une progression modale se construit sur les accords diatoniques d'un mode spécifique, en ancrant l'oreille sur la tonique du mode (et non de la gamme parente). Au lieu de I-IV-V-I (qui confirme la tonalité), une progression modale tourne autour d'un accord central sans jamais 'résoudre' définitivement. Ça crée une ambiance statique, hypnotique." },
           { type: "h", text: "La vamp dorien" },
@@ -2588,7 +2588,7 @@ export const COURSES = [
         title: "Cibler les notes d'accord en temps réel",
         duration: 11,
         content: [
-          { type: "p", text: "On arrive au cœur de l'application pratique de l'harmonie : improviser en 'suivant' les accords. Cette technique, appelée 'ciblage harmonique', transforme un solo générique en solo musical, connecté à l'harmonie. C'est la différence entre un guitariste qui 'joue des notes' et un musicien qui 'parle avec son instrument'.", img: "/mascotte-choix.svg", imgAlt: "Gropi qui réfléchit, boussole à la main", imgSide: "left" },
+          { type: "p", text: "On arrive au cœur de l'application pratique de l'harmonie : improviser en 'suivant' les accords. Cette technique, appelée 'ciblage harmonique', transforme un solo générique en solo musical, connecté à l'harmonie. C'est la différence entre un guitariste qui 'joue des notes' et un musicien qui 'parle avec son instrument'.", img: "/mascotte-choix.webp", imgAlt: "Gropi qui réfléchit, boussole à la main", imgSide: "left" },
           { type: "h", text: "Le problème du solo générique" },
           { type: "p", text: "Quand tu improvises uniquement avec la gamme de la tonalité sans cibler les notes d'accord, ton solo 'flotte' au-dessus de la progression — ça sonne correct mais peu musical. Tes phrases ne semblent pas réagir aux changements d'accords. Un solo musical, lui, 'tombe' sur les bonnes notes aux bons moments." },
           { type: "h", text: "Le principe du ciblage" },
@@ -2613,7 +2613,7 @@ export const COURSES = [
         title: "Construire un solo qui suit les accords",
         duration: 11,
         content: [
-          { type: "p", text: "Cette leçon de synthèse réunit tout ce que tu as appris en harmonie et l'applique à l'improvisation. Construire un solo qui 'suit les accords', ce n'est pas jouer toutes les notes d'accord à la suite — c'est faire des choix mélodiques qui reflètent l'harmonie de façon naturelle et musicale.", img: "/mascotte-choix.svg", imgAlt: "Gropi qui réfléchit, boussole à la main", imgSide: "right" },
+          { type: "p", text: "Cette leçon de synthèse réunit tout ce que tu as appris en harmonie et l'applique à l'improvisation. Construire un solo qui 'suit les accords', ce n'est pas jouer toutes les notes d'accord à la suite — c'est faire des choix mélodiques qui reflètent l'harmonie de façon naturelle et musicale.", img: "/mascotte-choix.webp", imgAlt: "Gropi qui réfléchit, boussole à la main", imgSide: "right" },
           { type: "h", text: "Les 3 niveaux d'un bon solo" },
           { type: "p", text: "Niveau 1 (débutant) : jouer dans la gamme de la tonalité sans cibler. Ça sonne 'correct' mais générique. Niveau 2 (intermédiaire) : cibler les guide tones aux moments clés. Ça sonne 'musical' et 'sur les accords'. Niveau 3 (avancé) : avoir un discours mélodique cohérent (motifs, développement, arc narratif) ET suivre l'harmonie. Ça sonne 'musical ET expressif'." },
           { type: "h", text: "L'arpège comme structure de base" },
@@ -2995,7 +2995,7 @@ export const COURSES = [
         title: "Le groove : qu'est-ce qui fait qu'un rythme 'sent bon' ?",
         duration: 11,
         content: [
-          { type: "p", text: "Le groove, c'est ce qui fait qu'une musique te donne envie de bouger. C'est difficile à définir avec des mots, mais immédiatement reconnaissable à l'oreille. Il n'existe pas de recette magique pour créer du groove, mais plusieurs composantes y contribuent systématiquement. Cette leçon les analyse.", img: "/mascotte-zen.svg", imgAlt: "Gropi les yeux fermés, à l'écoute", imgSide: "right" },
+          { type: "p", text: "Le groove, c'est ce qui fait qu'une musique te donne envie de bouger. C'est difficile à définir avec des mots, mais immédiatement reconnaissable à l'oreille. Il n'existe pas de recette magique pour créer du groove, mais plusieurs composantes y contribuent systématiquement. Cette leçon les analyse.", img: "/mascotte-zen.webp", imgAlt: "Gropi les yeux fermés, à l'écoute", imgSide: "right" },
           { type: "h", text: "Définition" },
           { type: "p", text: "Le groove = la sensation physique de mouvement créée par un motif rythmique récurrent et précis. Quand tu entends du funk et que ton pied tape tout seul, c'est le groove qui parle à ton corps. Il combine 3 ingrédients : précision rythmique (les notes sont placées exactement où il faut), syncope (les accents sont déplacés stratégiquement), et régularité (le motif se répète de façon prévisible)." },
           { type: "h", text: "La précision : sans elle, pas de groove" },
@@ -3276,7 +3276,7 @@ export const COURSES = [
         title: "Jouer laid-back, on-top, in-the-pocket",
         duration: 10,
         content: [
-          { type: "p", text: "Le micro-timing est la dimension la plus subtile de la rythmique. Deux musiciens peuvent jouer exactement les mêmes notes au même tempo, et pourtant sonner complètement différemment. La raison : l'un joue laid-back, l'autre on-top, le troisième in-the-pocket. Ces nuances de placement infinitésimal par rapport au temps définissent le 'feel' d'un musicien.", img: "/mascotte-zen.svg", imgAlt: "Gropi les yeux fermés, à l'écoute", imgSide: "left" },
+          { type: "p", text: "Le micro-timing est la dimension la plus subtile de la rythmique. Deux musiciens peuvent jouer exactement les mêmes notes au même tempo, et pourtant sonner complètement différemment. La raison : l'un joue laid-back, l'autre on-top, le troisième in-the-pocket. Ces nuances de placement infinitésimal par rapport au temps définissent le 'feel' d'un musicien.", img: "/mascotte-zen.webp", imgAlt: "Gropi les yeux fermés, à l'écoute", imgSide: "left" },
           { type: "h", text: "In-the-pocket : le 'temps parfait'" },
           { type: "p", text: "Jouer 'in-the-pocket' = jouer exactement sur le temps, ni avant ni après. Son : solide, ancré, confortable. L'auditeur se sent en sécurité rythmiquement. C'est le feel idéal pour l'accompagnement funk, le R&B, et tout ce qui doit créer un groove stable. La caisse claire de John Bonham (Led Zeppelin) est 'in-the-pocket' avec une précision quasi métronomique." },
           { type: "h", text: "Laid-back : derrière le temps" },
@@ -3299,7 +3299,7 @@ export const COURSES = [
         title: "Construire un riff rythmique personnel",
         duration: 11,
         content: [
-          { type: "p", text: "Cette leçon de synthèse te donne les outils pour créer tes propres riffs rythmiques. Un riff rythmique personnel, c'est ta signature musicale — quelques notes ou accords organisés dans un pattern distinctif que tu as inventé. Tous les grands guitaristes ont leurs riffs caractéristiques.", img: "/mascotte-histoire.svg", imgAlt: "Gropi qui raconte une histoire, livre ouvert devant lui", imgSide: "right" },
+          { type: "p", text: "Cette leçon de synthèse te donne les outils pour créer tes propres riffs rythmiques. Un riff rythmique personnel, c'est ta signature musicale — quelques notes ou accords organisés dans un pattern distinctif que tu as inventé. Tous les grands guitaristes ont leurs riffs caractéristiques.", img: "/mascotte-histoire.webp", imgAlt: "Gropi qui raconte une histoire, livre ouvert devant lui", imgSide: "right" },
           { type: "h", text: "Les ingrédients d'un bon riff" },
           { type: "p", text: "Un riff efficace combine 4 éléments : (1) Un motif rythmique fort (pas trop complexe, mémorisable). (2) Une idée harmonique simple (1-3 accords ou notes). (3) Une 'signature' distinctive (élément qui le rend reconnaissable : un bend, un mute spécifique, une note de passage). (4) La répétabilité (pouvoir le jouer 20 fois parfaitement identique)." },
           { type: "h", text: "Étape 1 : choisir le feel" },

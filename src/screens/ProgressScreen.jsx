@@ -1,5 +1,5 @@
 // Groply — screens/ProgressScreen.jsx
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { FONTS, R } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
@@ -16,18 +16,18 @@ function ProgressScreen({ state, content, onOpenSettings }) {
   const MODULE_THEME = buildModuleTheme(C);
   const BADGE_TINTS = buildBadgeTints(C);
   const BADGE_RARITIES = buildBadgeRarities(C);
-  const { xpInLevel, xpNeeded, xpToNext, pct: lvlPct, totalForNext } = levelProgress(state.xp);
+  const { xpToNext, pct: lvlPct, totalForNext } = levelProgress(state.xp);
   const grade = gradeForLevel(state.level);
 
   // Recalculés seulement quand la progression bouge : masteryStats parcourt
   // les 108 leçons et toutes leurs questions.
   const maitrise = useMemo(
     () => masteryStats(content, state),
-    [content, state.completedLessons, state.quizResults, state.reviewHistory]
+    [content, state]
   );
   const aAncrer = useMemo(
     () => prochainesAAncrer(content, state, 3),
-    [content, state.completedLessons, state.quizResults, state.reviewHistory]
+    [content, state]
   );
 
   const skills = useMemo(() => [
@@ -36,7 +36,7 @@ function ProgressScreen({ state, content, onOpenSettings }) {
     { label:"Harmonie", id:"harmony", color:C.purple,  colorD:C.purpleD },
     { label:"Rythme",   id:"rhythm",  color:C.blue,    colorD:C.blueD },
     { label:"Impro",    id:"impro",   color:C.pink,    colorD:C.pinkD },
-  ].map(s => ({ ...s, pct: skillMastery(state, content, s.id) })), [state, content]);
+  ].map(s => ({ ...s, pct: skillMastery(state, content, s.id) })), [state, content, C]);
 
   const badgesByCategory = useMemo(() => {
     const map = {};

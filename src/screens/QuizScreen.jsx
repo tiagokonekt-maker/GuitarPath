@@ -1,5 +1,5 @@
 // Groply — screens/QuizScreen.jsx
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { FONTS, R } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";

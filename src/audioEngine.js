@@ -49,6 +49,11 @@ const SAMPLE_URLS = {
   "Db2": "Db2.mp3", "Db3": "Db3.mp3", "Db4": "Db4.mp3",
   "Eb2": "Eb2.mp3", "Eb3": "Eb3.mp3", "Eb4": "Eb4.mp3",
   "Gb2": "Gb2.mp3", "Gb3": "Gb3.mp3", "Gb4": "Gb4.mp3",
+  // Octave 5 : la corde de Mi aigu au-delà de la case 7. Sans elle, ces
+  // notes étaient obtenues en accélérant B4, d'où un timbre « chipmunk ».
+  "C5":  "C5.mp3",  "Db5": "Db5.mp3", "D5":  "D5.mp3",  "Eb5": "Eb5.mp3",
+  "E5":  "E5.mp3",  "F5":  "F5.mp3",  "Gb5": "Gb5.mp3", "G5":  "G5.mp3",
+  "Ab5": "Ab5.mp3", "A5":  "A5.mp3",  "Bb5": "Bb5.mp3", "B5":  "B5.mp3",
 };
 
 // ── Moteur de cordes (lecteur de tablatures) ─────────────────────────────
@@ -68,7 +73,7 @@ const voixCordes = new Set();      // voix actives, pour que stopAll() les coupe
 // à rien — la tab se jouait quand même une fois le chargement fini.
 let generationTab = 0;
 const NOMS_ECHANTILLONS = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
-const MIDI_MIN_ECH = 36, MIDI_MAX_ECH = 71;   // C2 → B4 : un échantillon par demi-ton
+const MIDI_MIN_ECH = 36, MIDI_MAX_ECH = 83;   // C2 → B5 : un échantillon par demi-ton
 
 const BASE_URL = "/audio/guitar/";
 
@@ -150,7 +155,7 @@ function fromMidi(midi) {
 // notes : réduits à une octave, une onzième (17) serait indistinguable d'un
 // sus4 (5), et une treizième (21) d'une sixte (9). L'information d'octave
 // des extensions est ce qui fait toute leur couleur.
-function buildVoicingFromIntervals(rootName, intervals, voices) {
+function buildVoicingFromIntervals(rootName, intervals) {
   if (!intervals?.length) return [];
   let degrees = [...new Set(intervals)].sort((a, b) => a - b);
   // Une guitare a 6 cordes : un accord étendu ne peut pas tout faire sonner.
@@ -629,7 +634,7 @@ async function chargerBuffersCordes() {
   return buffersCordes;
 }
 
-/** Échantillon le plus proche d'une hauteur MIDI (un par demi-ton, C2 → B4). */
+/** Échantillon le plus proche d'une hauteur MIDI (un par demi-ton, C2 → B5). */
 function echantillonPour(midi) {
   const m = Math.max(MIDI_MIN_ECH, Math.min(MIDI_MAX_ECH, Math.round(midi)));
   return { nom: NOMS_ECHANTILLONS[m % 12] + (Math.floor(m / 12) - 1), base: m };
@@ -1100,7 +1105,6 @@ export function generateEarTrainingQuestion(type = "interval") {
       { key: "min7", label: "Minor 7",  intervals: [0,3,7,10] },
     ];
     const rootIdx = Math.floor(Math.random() * 12);
-    const root    = NOTES[rootIdx];
     const quality = qualities[Math.floor(Math.random() * qualities.length)];
     const notes   = quality.intervals.map((i, idx) => {
       return toToneNote(NOTES[(rootIdx + i) % 12], idx === 0 ? 2 : 3);

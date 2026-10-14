@@ -161,7 +161,7 @@ function Metronome() {
     }, "4n").start(0);
     transport.start();
     setPlaying(true);
-  }, [bpm, beats, ensureClick]);
+  }, [bpm, ensureClick]);
 
   // BPM live
   useEffect(() => { Tone.getTransport().bpm.value = bpm; }, [bpm]);
@@ -777,7 +777,7 @@ function Tuner() {
         rafRef.current = requestAnimationFrame(tick);
       };
       tick();
-    } catch (e) {
+    } catch {
       setError("Micro inaccessible. Autorise l'accès au microphone dans ton navigateur.");
       setActive(false);
     }

@@ -901,7 +901,7 @@ var TARGET_UNIT_SIZE = 6;
 var UNIT_BONUS_PER_LESSON = 10;
 var unitBonusXp = (lessonCount) => Math.max(20, Math.min(150, Math.round((lessonCount || 0) * UNIT_BONUS_PER_LESSON)));
 var UNIT_BONUS_XP = 40;
-var unitCheckSize = (lessonCount) => 15;
+var unitCheckSize = (_lessonCount) => 15;
 var UNIT_CHECK_MAX_QUESTIONS = 15;
 var TIER_HEADSTART = { A1: 0, A2: 1, B1: 2, B2: 3 };
 function moduleOrderFor(state) {
@@ -958,7 +958,7 @@ function buildUnits(courses = [], state = null) {
   }
   return units;
 }
-function buildPath(content, state, priorityModules = null) {
+function buildPath(content, state) {
   const completed = state?.completedLessons || {};
   const claimed = state?.claimedUnits || {};
   const checks = state?.unitChecks || {};
@@ -1135,20 +1135,35 @@ import { useState as useState3, useRef as useRef2 } from "react";
 import { useState as useState2 } from "react";
 import { jsx as jsx4, jsxs as jsxs2 } from "react/jsx-runtime";
 var POSE_SRC = {
-  happy: "/mascotte-happy.svg",
-  wave: "/mascotte-wave.svg",
-  celebrate: "/mascotte-celebrate.svg",
-  think: "/mascotte-think.svg",
-  rocker: "/mascotte-rocker.svg",
-  idea: "/mascotte-idea.svg",
-  pride: "/mascotte-pride.svg",
-  listen: "/mascotte-listen.svg",
-  zen: "/mascotte-zen.svg",
-  mystere: "/mascotte-mystere.svg",
-  choix: "/mascotte-choix.svg",
-  histoire: "/mascotte-histoire.svg",
+  happy: "/mascotte-happy.webp",
+  wave: "/mascotte-wave.webp",
+  celebrate: "/mascotte-celebrate.webp",
+  think: "/mascotte-think.webp",
+  rocker: "/mascotte-rocker.webp",
+  idea: "/mascotte-idea.webp",
+  pride: "/mascotte-pride.webp",
+  listen: "/mascotte-listen.webp",
+  zen: "/mascotte-zen.webp",
+  mystere: "/mascotte-mystere.webp",
+  choix: "/mascotte-choix.webp",
+  histoire: "/mascotte-histoire.webp",
   // alias de repli
-  plead: "/mascotte-think.svg"
+  plead: "/mascotte-think.webp"
+};
+var POSE_DIMS = {
+  happy: [320, 388],
+  wave: [320, 361],
+  celebrate: [320, 391],
+  think: [320, 374],
+  rocker: [320, 390],
+  idea: [320, 452],
+  pride: [320, 387],
+  listen: [320, 391],
+  zen: [307, 420],
+  mystere: [239, 420],
+  choix: [316, 420],
+  histoire: [320, 333],
+  plead: [320, 374]
 };
 if (typeof document !== "undefined" && !document.getElementById("gropi-anim-styles")) {
   const s = document.createElement("style");
@@ -1174,11 +1189,15 @@ var ANIM = {
 function Gropi({ pose = "happy", size = 80, anim = "none", style, onClick }) {
   const C = useC();
   const src = POSE_SRC[pose] || POSE_SRC.happy;
+  const [w, h] = POSE_DIMS[pose] || POSE_DIMS.happy;
   return /* @__PURE__ */ jsx4(
     "img",
     {
       src,
       alt: "",
+      width: w,
+      height: h,
+      decoding: "async",
       draggable: false,
       onClick,
       className: anim !== "none" ? "gropi-anim" : void 0,
@@ -1302,7 +1321,7 @@ function GropiBubble({
 }) {
   const C = useC();
   const [open, setOpen] = useState2(defaultOpen);
-  const { light, border, deep } = useTintColors(tint);
+  const { border, deep } = useTintColors(tint);
   return /* @__PURE__ */ jsxs2("div", { style: { display: "flex", flexDirection: "column", alignItems: side === "right" ? "flex-start" : "flex-end" }, children: [
     /* @__PURE__ */ jsx4(
       "button",
@@ -2037,7 +2056,21 @@ var SAMPLE_URLS = {
   "Eb4": "Eb4.mp3",
   "Gb2": "Gb2.mp3",
   "Gb3": "Gb3.mp3",
-  "Gb4": "Gb4.mp3"
+  "Gb4": "Gb4.mp3",
+  // Octave 5 : la corde de Mi aigu au-delà de la case 7. Sans elle, ces
+  // notes étaient obtenues en accélérant B4, d'où un timbre « chipmunk ».
+  "C5": "C5.mp3",
+  "Db5": "Db5.mp3",
+  "D5": "D5.mp3",
+  "Eb5": "Eb5.mp3",
+  "E5": "E5.mp3",
+  "F5": "F5.mp3",
+  "Gb5": "Gb5.mp3",
+  "G5": "G5.mp3",
+  "Ab5": "Ab5.mp3",
+  "A5": "A5.mp3",
+  "Bb5": "Bb5.mp3",
+  "B5": "B5.mp3"
 };
 var busGuitare = null;
 var buffersCordes = null;
@@ -2045,7 +2078,7 @@ var voixCordes = /* @__PURE__ */ new Set();
 var generationTab = 0;
 var NOMS_ECHANTILLONS = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
 var MIDI_MIN_ECH = 36;
-var MIDI_MAX_ECH = 71;
+var MIDI_MAX_ECH = 83;
 var BASE_URL = "/audio/guitar/";
 var RELEASE = 1.6;
 var QUEUE_AUDIBLE_MS = Math.round(RELEASE * 1e3);
@@ -2072,7 +2105,7 @@ function midiOf(name, octave) {
 function fromMidi(midi) {
   return toToneNote(CHROMATIC[(midi % 12 + 12) % 12], Math.floor(midi / 12) - 1);
 }
-function buildVoicingFromIntervals(rootName, intervals, voices) {
+function buildVoicingFromIntervals(rootName, intervals) {
   if (!intervals?.length) return [];
   let degrees = [...new Set(intervals)].sort((a, b) => a - b);
   if (degrees.length > 5) degrees = degrees.filter((d) => d !== 7);
@@ -2717,7 +2750,6 @@ function generateEarTrainingQuestion(type = "interval") {
       { key: "min7", label: "Minor 7", intervals: [0, 3, 7, 10] }
     ];
     const rootIdx = Math.floor(Math.random() * 12);
-    const root = NOTES[rootIdx];
     const quality = qualities[Math.floor(Math.random() * qualities.length)];
     const notes = quality.intervals.map((i, idx) => {
       return toToneNote(NOTES[(rootIdx + i) % 12], idx === 0 ? 2 : 3);
@@ -3166,7 +3198,7 @@ function AnneauMaitrise({ niveau, size, couleur, C }) {
   const centre = diametreSvg / 2;
   const decalage = -(diametreSvg - size) / 2;
   const circonference = 2 * Math.PI * rayon;
-  const segDeg = 104, gapDeg = 360 / 3 - 104;
+  const segDeg = 104;
   const segLen = circonference * (segDeg / 360);
   const dash = `${segLen} ${circonference - segLen}`;
   return /* @__PURE__ */ jsx6(
@@ -3194,7 +3226,7 @@ function AnneauMaitrise({ niveau, size, couleur, C }) {
     }
   );
 }
-function PathNode({ lesson, index, state, th, onSelect, isCurrent, isLocked, gropiTip, layout }) {
+function PathNode({ lesson, state, th, onSelect, isCurrent, isLocked, gropiTip, layout }) {
   const C = useC();
   const done = !!state.completedLessons[lesson.id];
   const { side, inset } = layout;
@@ -3334,9 +3366,9 @@ function PathNode({ lesson, index, state, th, onSelect, isCurrent, isLocked, gro
     )
   ] });
 }
-function UnitChest({ unit, th, onClaim, onCheck }) {
+function UnitChest({ unit, onClaim, onCheck }) {
   const C = useC();
-  const { complete, bonusClaimable, bonusClaimed, needsCheck, check, done, total, unlocked } = unit;
+  const { bonusClaimable, bonusClaimed, needsCheck, check, done, total, unlocked } = unit;
   let bg, border, icon, iconColor, label, anim = "none", clickable = false, action = null;
   if (bonusClaimed) {
     bg = C.greenL;
@@ -3688,23 +3720,10 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
     setTipDismissed(true);
     dispatch({ type: "DISMISS_GROPI_TIP" });
   };
-  const tip = useMemo(() => pickTip(state), [
-    state.xp,
-    state.streak,
-    state.level,
-    Object.keys(state.completedLessons || {}).length,
-    (state.unlockedBadges || []).length,
-    state.dailyChallengeCount
-  ]);
+  const tip = useMemo(() => pickTip(state), [state]);
   const scrolledTo = useRef4(null);
-  const path = useMemo(
-    () => buildPath(content, state),
-    [content, state.completedLessons, state.claimedUnits, state.unitChecks]
-  );
-  const stats = useMemo(
-    () => getPathStats(content, state),
-    [content, state.completedLessons, state.claimedUnits, state.unitChecks]
-  );
+  const path = useMemo(() => buildPath(content, state), [content, state]);
+  const stats = useMemo(() => getPathStats(content, state), [content, state]);
   const unitLayouts = useMemo(() => {
     const out = {};
     for (const unit of path) {
@@ -3943,7 +3962,7 @@ function LessonView({ lesson, state, dispatch, onBack }) {
         if (diagram) return diagram;
         if (b.type === "fretboard_interactive" && FretboardLesson2) return /* @__PURE__ */ jsx6("div", { children: /* @__PURE__ */ jsx6(FretboardLesson2, { block: b }) }, i);
         if (b.img) return /* @__PURE__ */ jsxs4("div", { style: { overflow: "hidden" }, children: [
-          /* @__PURE__ */ jsx6("img", { src: b.img, alt: b.imgAlt || "", style: {
+          /* @__PURE__ */ jsx6("img", { src: b.img, alt: b.imgAlt || "", loading: "lazy", decoding: "async", style: {
             float: b.imgSide === "left" ? "left" : "right",
             width: "34%",
             maxWidth: 124,
@@ -3998,7 +4017,7 @@ __export(QuizScreen_exports, {
   QuizPlayer: () => QuizPlayer,
   QuizScreen: () => QuizScreen
 });
-import { useState as useState5, useMemo as useMemo2 } from "react";
+import { useState as useState5 } from "react";
 
 // src/music/chordShapes.js
 var CHROMATIC2 = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
@@ -4779,7 +4798,7 @@ var ReviewSession_exports = {};
 __export(ReviewSession_exports, {
   ReviewSession: () => ReviewSession
 });
-import { useState as useState6, useCallback, useEffect as useEffect5 } from "react";
+import { useState as useState6, useEffect as useEffect5 } from "react";
 
 // src/store/generateurs.js
 var LETTRES_FR = ["Do", "R\xE9", "Mi", "Fa", "Sol", "La", "Si"];
@@ -5521,7 +5540,7 @@ function progressionFamilles(state) {
 // src/screens/ReviewSession.jsx
 import { Fragment as Fragment4, jsx as jsx8, jsxs as jsxs6 } from "react/jsx-runtime";
 function MiniGrille({ grille, C, active }) {
-  const n = 4 * grille.pas, sonne = new Set(grille.attaques);
+  const sonne = new Set(grille.attaques);
   return /* @__PURE__ */ jsx8("div", { "aria-hidden": "true", style: { display: "flex", gap: 3, flex: 1 }, children: Array.from({ length: 4 }, (_, t) => /* @__PURE__ */ jsx8("div", { style: { display: "flex", gap: 2, flex: 1, paddingLeft: t ? 4 : 0, borderLeft: t ? `1.5px solid ${C.border}` : "none" }, children: Array.from({ length: grille.pas }, (_2, k) => {
     const i = t * grille.pas + k;
     return /* @__PURE__ */ jsx8("div", { style: { flex: 1, height: 20, borderRadius: 4, background: sonne.has(i) ? active || C.primary : C.surface2, border: `1px solid ${sonne.has(i) ? "transparent" : C.border}` } }, k);
@@ -5923,7 +5942,7 @@ __export(ExercisesScreen_exports, {
   ExerciseDetail: () => ExerciseDetail,
   ExercisesScreen: () => ExercisesScreen
 });
-import { useState as useState7, useEffect as useEffect6, useRef as useRef5, useMemo as useMemo3 } from "react";
+import { useState as useState7, useEffect as useEffect6, useRef as useRef5, useMemo as useMemo2 } from "react";
 import { Fragment as Fragment5, jsx as jsx9, jsxs as jsxs7 } from "react/jsx-runtime";
 var LEVEL_LABELS = { 1: "Fondamentaux", 2: "Interm\xE9diaire", 3: "Avanc\xE9" };
 var makeLevelColors = (C) => ({ 1: { bg: C.greenL, border: C.greenBorder, text: C.greenD, dot: C.green }, 2: { bg: C.amberL, border: C.amberBorder, text: C.amberD, dot: C.amber }, 3: { bg: C.pinkL, border: C.pinkBorder, text: C.pinkD, dot: C.pink } });
@@ -5944,14 +5963,14 @@ function ExercisesScreen({ state, dispatch, content, embedded = false }) {
     { id: "impro", label: "Impro" }
   ];
   const allEx = content.exercises;
-  const totalDone = useMemo3(() => allEx.filter((e) => state.completedExercises[e.id]).length, [state.completedExercises, allEx]);
-  const totalXP = useMemo3(() => allEx.reduce((s, e) => s + (state.completedExercises[e.id] ? e.xp : 0), 0), [state.completedExercises, allEx]);
+  const totalDone = useMemo2(() => allEx.filter((e) => state.completedExercises[e.id]).length, [state.completedExercises, allEx]);
+  const totalXP = useMemo2(() => allEx.reduce((s, e) => s + (state.completedExercises[e.id] ? e.xp : 0), 0), [state.completedExercises, allEx]);
   const pctGlobal = allEx.length ? Math.round(totalDone / allEx.length * 100) : 0;
-  const recommended = useMemo3(() => {
+  const recommended = useMemo2(() => {
     const sorted = [...allEx].sort((a, b) => (a.lvl || 1) - (b.lvl || 1));
     return sorted.find((e) => !state.completedExercises[e.id] && (filter === "all" || e.mod === filter));
   }, [allEx, state.completedExercises, filter]);
-  const byLevel = useMemo3(() => {
+  const byLevel = useMemo2(() => {
     const filtered = allEx.filter((e) => filter === "all" || e.mod === filter);
     const groups = {};
     filtered.forEach((e) => {
@@ -6350,7 +6369,7 @@ var EarTraining_exports = {};
 __export(EarTraining_exports, {
   EarTraining: () => EarTraining
 });
-import { useState as useState8, useEffect as useEffect7, useRef as useRef6 } from "react";
+import { useState as useState8, useEffect as useEffect7, useRef as useRef6, useCallback } from "react";
 import { Fragment as Fragment6, jsx as jsx10, jsxs as jsxs8 } from "react/jsx-runtime";
 var MODES = [
   { key: "interval", label: "Intervalles", icon: "arrows-up-down", desc: "Identifie l'\xE9cart entre deux notes" },
@@ -6380,28 +6399,18 @@ function EarTraining({ onBack, dispatch, state }) {
   const [answers, setAnswers] = useState8([]);
   const finTimerRef = useRef6(null);
   const SESSION_LENGTH = 8;
-  const annulerFinTimer = () => {
+  const annulerFinTimer = useCallback(() => {
     if (finTimerRef.current) {
       clearTimeout(finTimerRef.current);
       finTimerRef.current = null;
     }
-  };
+  }, []);
   useEffect7(() => {
     if (!isAudioLoaded()) {
       loadAudio().then(() => setAudioReady(true)).catch(() => setAudioError(true));
     }
   }, []);
-  useEffect7(() => {
-    if (audioReady && !question) nextQuestion();
-  }, [audioReady, mode]);
-  useEffect7(() => () => {
-    annulerFinTimer();
-    try {
-      stopAll();
-    } catch {
-    }
-  }, []);
-  const nextQuestion = () => {
+  const nextQuestion = useCallback(() => {
     annulerFinTimer();
     try {
       stopAll();
@@ -6410,7 +6419,17 @@ function EarTraining({ onBack, dispatch, state }) {
     setIsPlaying(false);
     setSelected(null);
     setQuestion(generateEarTrainingQuestion(mode));
-  };
+  }, [mode, annulerFinTimer]);
+  useEffect7(() => {
+    if (audioReady && !question) nextQuestion();
+  }, [audioReady, question, nextQuestion]);
+  useEffect7(() => () => {
+    annulerFinTimer();
+    try {
+      stopAll();
+    } catch {
+    }
+  }, [annulerFinTimer]);
   const playQuestion = async () => {
     if (!question || isPlaying) return;
     annulerFinTimer();
@@ -6640,7 +6659,7 @@ __export(JamSession_exports, {
   JamSession: () => JamSession,
   MIXAGE: () => MIXAGE
 });
-import { useState as useState10, useMemo as useMemo5, useEffect as useEffect9, useRef as useRef7, useCallback as useCallback3 } from "react";
+import { useState as useState10, useMemo as useMemo4, useEffect as useEffect9, useRef as useRef7, useCallback as useCallback3 } from "react";
 
 // src/Fretboard.jsx
 var Fretboard_exports = {};
@@ -6650,7 +6669,7 @@ __export(Fretboard_exports, {
   FretboardLesson: () => FretboardLesson,
   FretboardQuizQuestion: () => FretboardQuizQuestion
 });
-import { useState as useState9, useMemo as useMemo4, useCallback as useCallback2, useEffect as useEffect8 } from "react";
+import { useState as useState9, useMemo as useMemo3, useCallback as useCallback2, useEffect as useEffect8 } from "react";
 
 // src/fretboardValidator.js
 var RESOLVERS = {
@@ -6790,7 +6809,7 @@ function validate(concept, selected, selectionRules = {}, opts = {}) {
   } else {
     result = MATCH_STRATEGIES.all(effectiveSelected, correct);
   }
-  result.feedback = generateFeedback(result, concept, mode);
+  result.feedback = generateFeedback(result);
   result.correctPositions = correct;
   return result;
 }
@@ -6802,7 +6821,7 @@ function getTargetPositions(concept, opts = {}) {
   const stringRange = opts.stringRange || [1, 6];
   return resolver(concept, { fretRange, stringRange });
 }
-function generateFeedback(result, concept, mode) {
+function generateFeedback(result) {
   if (result.complete) {
     return "Parfait \u2014 toutes les positions trouv\xE9es !";
   }
@@ -6891,7 +6910,7 @@ function NoteMarker({ label, color, size = 28, style = {} }) {
     ...style
   }, children: label });
 }
-function FretMarker({ fret, isDouble }) {
+function FretMarker({ isDouble }) {
   const C = useC();
   return /* @__PURE__ */ jsx11("div", { style: {
     display: "flex",
@@ -6934,10 +6953,10 @@ function Fretboard({
   flashNotes = null
 }) {
   const C = useC();
-  const NOTE_COLORS = useMemo4(() => getNoteColors(C), [C]);
+  const NOTE_COLORS = useMemo3(() => getNoteColors(C), [C]);
   const [quizSelected, setQuizSelected] = useState9([]);
   const [quizRevealed, setQuizRevealed] = useState9(false);
-  const activePositions = useMemo4(() => {
+  const activePositions = useMemo3(() => {
     if (mode === "scale" && root && scale) {
       return getScalePositions(root, scale, endFret);
     }
@@ -6952,7 +6971,7 @@ function Fretboard({
     }
     return [];
   }, [mode, root, scale, chord, highlightedNotes, quizTarget, endFret]);
-  const positionMap = useMemo4(() => {
+  const positionMap = useMemo3(() => {
     const map = {};
     for (const p of activePositions) {
       map[`${p.string}-${p.fret}`] = p;
@@ -7014,7 +7033,7 @@ function Fretboard({
           flexShrink: 0
         }, children: f }, f))
       ] }),
-      strings.map((s, sIdx) => /* @__PURE__ */ jsxs9("div", { style: { display: "flex", alignItems: "center", position: "relative" }, children: [
+      strings.map((s) => /* @__PURE__ */ jsxs9("div", { style: { display: "flex", alignItems: "center", position: "relative" }, children: [
         showStringNames && /* @__PURE__ */ jsx11("div", { style: stringNameStyle, children: STRING_LABELS2[s] }),
         showOpenStrings && /* @__PURE__ */ jsxs9(
           "div",
@@ -7067,7 +7086,6 @@ function Fretboard({
         ),
         fretRange.filter((f) => f > 0).map((f, fIdx) => {
           const isFirstFret = fIdx === 0;
-          const isLastFret = f === endFret;
           return /* @__PURE__ */ jsxs9(
             "div",
             {
@@ -7415,11 +7433,10 @@ function FretboardQuizQuestion({ question, onComplete, answered, forceReveal }) 
     setShowHint(false);
     setLastKey(questionKey);
   }
-  const targetPositions = useMemo4(() => {
+  const targetPositions = useMemo3(() => {
     const fretMode = question.fretMode || question.concept?.type;
     const target = question.target || question.concept?.root;
     const root = question.root || question.concept?.root;
-    const { scale, chord } = question;
     if ((fretMode === "find_note" || fretMode === "find_root" || fretMode === "find_chord" || fretMode === "find_scale_root") && (target || root)) {
       return getQuizTargetPositions(target || root);
     }
@@ -7427,8 +7444,8 @@ function FretboardQuizQuestion({ question, onComplete, answered, forceReveal }) 
       return question.concept.positions.filter((p) => p && p.fret > 0);
     }
     return [];
-  }, [question.id]);
-  const contextPositions = useMemo4(() => {
+  }, [question]);
+  const contextPositions = useMemo3(() => {
     const fretMode = question.fretMode || question.concept?.type;
     const root = question.root || question.concept?.root;
     const { scale, chord } = question;
@@ -7439,7 +7456,7 @@ function FretboardQuizQuestion({ question, onComplete, answered, forceReveal }) 
       return getScalePositions(root, scale, 12);
     }
     return [];
-  }, [question.id]);
+  }, [question]);
   const handleCellClick = (string, fret) => {
     if (revealed || answered) return;
     setQuizSelected((prev) => {
@@ -7537,22 +7554,22 @@ function FretboardQuizQuestion({ question, onComplete, answered, forceReveal }) 
     ] })
   ] });
 }
-function FretboardQuizCanvas({ targetPositions, contextPositions, selected, revealed, onCellClick, compact, question }) {
+function FretboardQuizCanvas({ targetPositions, contextPositions, selected, revealed, onCellClick }) {
   const C = useC();
-  const NOTE_COLORS = useMemo4(() => getNoteColors(C), [C]);
+  const NOTE_COLORS = useMemo3(() => getNoteColors(C), [C]);
   const CW = TAP.fretW, CH = TAP.fret, OW = 34, LW = 26, DOT = 26;
   const strings = [1, 2, 3, 4, 5, 6];
   const MAX_F = 12;
   const SLABELS = { 6: "E\u2082", 5: "A\u2082", 4: "D\u2083", 3: "G\u2083", 2: "B\u2083", 1: "E\u2084" };
   const MARKERS = [3, 5, 7, 9];
-  const targetMap = useMemo4(() => {
+  const targetMap = useMemo3(() => {
     const m = {};
     targetPositions.forEach((p) => {
       m[`${p.string}-${p.fret}`] = true;
     });
     return m;
   }, [targetPositions]);
-  const contextMap = useMemo4(() => {
+  const contextMap = useMemo3(() => {
     const m = {};
     contextPositions.forEach((p) => {
       m[`${p.string}-${p.fret}`] = p;
@@ -7694,14 +7711,14 @@ function FretboardExercise({ ex, onComplete, dispatch }) {
   const [allDone, setAllDone] = useState9(false);
   const stage = ex.stages[stageIdx];
   const isLast = stageIdx === ex.stages.length - 1;
-  const targetPositions = useMemo4(() => {
+  const targetPositions = useMemo3(() => {
     if (!stage) return [];
     return getTargetPositions(stage.concept, {
       fretRange: stage.fretRange || [0, 12],
       stringRange: stage.stringRange || [1, 6]
     });
-  }, [stageIdx, ex.id]);
-  const targetMap = useMemo4(() => {
+  }, [stage]);
+  const targetMap = useMemo3(() => {
     const m = {};
     targetPositions.forEach((p) => {
       m[`${p.string}-${p.fret}`] = p;
@@ -7907,16 +7924,16 @@ function FretboardExercise({ ex, onComplete, dispatch }) {
     ) })
   ] });
 }
-function ExerciseCanvas({ stage, targetPositions, targetMap, selected, revealed, onCellClick }) {
+function ExerciseCanvas({ stage, targetMap, selected, revealed, onCellClick }) {
   const C = useC();
-  const NOTE_COLORS = useMemo4(() => getNoteColors(C), [C]);
+  const NOTE_COLORS = useMemo3(() => getNoteColors(C), [C]);
   const CW = TAP.fretW, CH = TAP.fret, OW = 34, LW = 26, DOT = 26;
   const strings = [1, 2, 3, 4, 5, 6];
   const MAX_F = (stage.fretRange || [0, 12])[1];
   const MIN_F = (stage.fretRange || [0, 12])[0];
   const SLABELS = { 6: "E\u2082", 5: "A\u2082", 4: "D\u2083", 3: "G\u2083", 2: "B\u2083", 1: "E\u2084" };
   const MARKERS = [3, 5, 7, 9];
-  const contextPositions = useMemo4(() => {
+  const contextPositions = useMemo3(() => {
     if (!stage.display?.showContext) return [];
     const ctx = stage.display.showContext;
     return getTargetPositions(ctx, {
@@ -7924,7 +7941,7 @@ function ExerciseCanvas({ stage, targetPositions, targetMap, selected, revealed,
       stringRange: stage.stringRange || [1, 6]
     });
   }, [stage]);
-  const contextMap = useMemo4(() => {
+  const contextMap = useMemo3(() => {
     const m = {};
     contextPositions.forEach((p) => {
       m[`${p.string}-${p.fret}`] = p;
@@ -9801,9 +9818,9 @@ function JamSession({ onBack, dispatch, state }) {
   const constraintRef = useRef7(null);
   const ctx = CONTEXTS.find((c) => c.id === contextId);
   const rootFr = ROOTS_FR.find((r) => r.en === root)?.fr ?? root;
-  const activeNotes = useMemo5(() => getScaleNotes(root, ctx.scale), [root, ctx.scale]);
+  const activeNotes = useMemo4(() => getScaleNotes(root, ctx.scale), [root, ctx.scale]);
   const accordEnCours = accordIdx != null ? ctx.chords[accordIdx] : null;
-  const notesDeLAccord = useMemo5(
+  const notesDeLAccord = useMemo4(
     () => accordEnCours ? notesAccord2(root, accordEnCours) : [],
     [accordEnCours, root]
   );
@@ -10034,7 +10051,7 @@ var ProgressScreen_exports = {};
 __export(ProgressScreen_exports, {
   ProgressScreen: () => ProgressScreen
 });
-import { useState as useState11, useMemo as useMemo6 } from "react";
+import { useMemo as useMemo5 } from "react";
 
 // src/store/badges.js
 var buildBadgeTints = (C) => ({
@@ -10168,24 +10185,24 @@ function ProgressScreen({ state, content, onOpenSettings }) {
   const MODULE_THEME2 = buildModuleTheme(C);
   const BADGE_TINTS2 = buildBadgeTints(C);
   const BADGE_RARITIES2 = buildBadgeRarities(C);
-  const { xpInLevel, xpNeeded, xpToNext, pct: lvlPct, totalForNext } = levelProgress(state.xp);
+  const { xpToNext, pct: lvlPct, totalForNext } = levelProgress(state.xp);
   const grade = gradeForLevel(state.level);
-  const maitrise = useMemo6(
+  const maitrise = useMemo5(
     () => masteryStats(content, state),
-    [content, state.completedLessons, state.quizResults, state.reviewHistory]
+    [content, state]
   );
-  const aAncrer = useMemo6(
+  const aAncrer = useMemo5(
     () => prochainesAAncrer(content, state, 3),
-    [content, state.completedLessons, state.quizResults, state.reviewHistory]
+    [content, state]
   );
-  const skills = useMemo6(() => [
+  const skills = useMemo5(() => [
     { label: "Manche", id: "neck", color: C.amber, colorD: C.amberD },
     { label: "Gammes", id: "scales", color: C.green, colorD: C.greenD },
     { label: "Harmonie", id: "harmony", color: C.purple, colorD: C.purpleD },
     { label: "Rythme", id: "rhythm", color: C.blue, colorD: C.blueD },
     { label: "Impro", id: "impro", color: C.pink, colorD: C.pinkD }
-  ].map((s) => ({ ...s, pct: skillMastery(state, content, s.id) })), [state, content]);
-  const badgesByCategory = useMemo6(() => {
+  ].map((s) => ({ ...s, pct: skillMastery(state, content, s.id) })), [state, content, C]);
+  const badgesByCategory = useMemo5(() => {
     const map = {};
     BADGES.forEach((b) => {
       if (!map[b.cat]) map[b.cat] = [];
@@ -10480,7 +10497,7 @@ var SettingsScreen_exports = {};
 __export(SettingsScreen_exports, {
   SettingsScreen: () => SettingsScreen
 });
-import { useState as useState12 } from "react";
+import { useState as useState11 } from "react";
 import { jsx as jsx15, jsxs as jsxs12 } from "react/jsx-runtime";
 function SettingsSection({ title, children }) {
   const C = useC();
@@ -10496,12 +10513,12 @@ function SettingsRow({ label, value, last }) {
     /* @__PURE__ */ jsx15("span", { style: { fontSize: T.small, fontWeight: 600, color: C.text2 }, children: value })
   ] });
 }
-function SettingsScreen({ state, dispatch, content, onClose, onImported, user, onSignOut, onDeleteAccount }) {
+function SettingsScreen({ state, dispatch, content, onClose, user, onSignOut, onDeleteAccount }) {
   const C = useC();
-  const [importStatus, setImportStatus] = useState12(null);
-  const [confirmation, setConfirmation] = useState12(null);
-  const [saisie, setSaisie] = useState12("");
-  const [audioOffline, setAudioOffline] = useState12(null);
+  const [importStatus, setImportStatus] = useState11(null);
+  const [confirmation, setConfirmation] = useState11(null);
+  const [saisie, setSaisie] = useState11("");
+  const [audioOffline, setAudioOffline] = useState11(null);
   const fermerConfirmation = () => {
     setConfirmation(null);
     setSaisie("");
@@ -10741,7 +10758,7 @@ var ToolboxScreen_exports = {};
 __export(ToolboxScreen_exports, {
   ToolboxScreen: () => ToolboxScreen
 });
-import { useState as useState14, useRef as useRef9, useEffect as useEffect11, useCallback as useCallback4, useMemo as useMemo9 } from "react";
+import { useState as useState13, useRef as useRef9, useEffect as useEffect11, useCallback as useCallback4, useMemo as useMemo8 } from "react";
 init_tone_stub();
 
 // src/screens/FretboardExplorer.jsx
@@ -10749,10 +10766,10 @@ var FretboardExplorer_exports = {};
 __export(FretboardExplorer_exports, {
   FretboardExplorer: () => FretboardExplorer
 });
-import { useState as useState13, useMemo as useMemo8, useRef as useRef8, useEffect as useEffect10 } from "react";
+import { useState as useState12, useMemo as useMemo7, useRef as useRef8, useEffect as useEffect10 } from "react";
 
 // src/diagrams.jsx
-import { useMemo as useMemo7 } from "react";
+import { useMemo as useMemo6 } from "react";
 import { jsx as jsx16, jsxs as jsxs13 } from "react/jsx-runtime";
 var FONT = '"Josefin Sans", "Roboto", sans-serif';
 function DiagramCard({ caption, children, accent }) {
@@ -11022,16 +11039,16 @@ var CHORD_INFO = {
 };
 function FretboardExplorer({ onBack, embedded = false }) {
   const C = useC();
-  const [tab, setTab] = useState13("scale");
-  const [root, setRoot] = useState13("A");
-  const [scaleKey, setScaleKey] = useState13("pentatonic_minor");
-  const [chordKey, setChordKey] = useState13("min7");
-  const [displayMode, setDisplayMode] = useState13("notes");
-  const [showRootPicker, setShowRootPicker] = useState13(false);
-  const [isPlaying, setIsPlaying] = useState13(false);
-  const [flashNotes, setFlashNotes] = useState13(null);
-  const [arpeggio, setArpeggio] = useState13(true);
-  const shapes = useMemo8(() => {
+  const [tab, setTab] = useState12("scale");
+  const [root, setRoot] = useState12("A");
+  const [scaleKey, setScaleKey] = useState12("pentatonic_minor");
+  const [chordKey, setChordKey] = useState12("min7");
+  const [displayMode, setDisplayMode] = useState12("notes");
+  const [showRootPicker, setShowRootPicker] = useState12(false);
+  const [isPlaying, setIsPlaying] = useState12(false);
+  const [flashNotes, setFlashNotes] = useState12(null);
+  const [arpeggio, setArpeggio] = useState12(true);
+  const shapes = useMemo7(() => {
     if (tab !== "chord") return [];
     return getChordShapes(
       normalizeNote(root),
@@ -11096,7 +11113,7 @@ function FretboardExplorer({ onBack, embedded = false }) {
     } catch {
     }
   }, []);
-  const activeNotes = useMemo8(() => {
+  const activeNotes = useMemo7(() => {
     if (tab === "scale") return getScaleNotes(root, scaleKey);
     return getChordNotes(root, chordKey);
   }, [tab, root, scaleKey, chordKey]);
@@ -11542,11 +11559,11 @@ function Metronome() {
     cursor: "pointer",
     fontFamily: FONTS.ui
   };
-  const [bpm, setBpm] = useState14(90);
-  const [playing, setPlaying] = useState14(false);
-  const [beats, setBeats] = useState14(4);
-  const [current, setCurrent] = useState14(-1);
-  const [timbre, setTimbre] = useState14("bois");
+  const [bpm, setBpm] = useState13(90);
+  const [playing, setPlaying] = useState13(false);
+  const [beats, setBeats] = useState13(4);
+  const [current, setCurrent] = useState13(-1);
+  const [timbre, setTimbre] = useState13("bois");
   const TIMBRES = [
     { id: "bois", label: "Bois" },
     { id: "mecanique", label: "M\xE9canique" },
@@ -11663,7 +11680,7 @@ function Metronome() {
     }, "4n").start(0);
     transport.start();
     setPlaying(true);
-  }, [bpm, beats, ensureClick]);
+  }, [bpm, ensureClick]);
   useEffect11(() => {
     getTransport().bpm.value = bpm;
   }, [bpm]);
@@ -11685,7 +11702,7 @@ function Metronome() {
   const ECART_MAX_MS = 2e3;
   const TAPS_MAX = 8;
   const tapsRef = useRef9([]);
-  const [tapCount, setTapCount] = useState14(0);
+  const [tapCount, setTapCount] = useState13(0);
   const tapTempo = () => {
     const now2 = performance.now();
     const taps = tapsRef.current;
@@ -12089,11 +12106,11 @@ function TuningPicker({ tuningId, setTuningId, compact = false }) {
 }
 function Tuner() {
   const C = useC();
-  const [active, setActive] = useState14(false);
-  const [freq, setFreq] = useState14(0);
-  const [note, setNote] = useState14(null);
-  const [error, setError] = useState14(null);
-  const [tuningId, setTuningId] = useState14("standard");
+  const [active, setActive] = useState13(false);
+  const [freq, setFreq] = useState13(0);
+  const [note, setNote] = useState13(null);
+  const [error, setError] = useState13(null);
+  const [tuningId, setTuningId] = useState13("standard");
   const tuning = TUNINGS.find((t) => t.id === tuningId) || TUNINGS[0];
   const targets = buildTargets(tuning);
   const ctxRef = useRef9(null);
@@ -12215,7 +12232,7 @@ function Tuner() {
         rafRef.current = requestAnimationFrame(tick);
       };
       tick();
-    } catch (e) {
+    } catch {
       setError("Micro inaccessible. Autorise l'acc\xE8s au microphone dans ton navigateur.");
       setActive(false);
     }
@@ -12358,14 +12375,14 @@ var SPEED_PRESETS = [
 var MAX_CHORDS = 12;
 function ChordPlayer() {
   const C = useC();
-  const [root, setRoot] = useState14("C");
-  const [family, setFamily] = useState14("base");
-  const [quality, setQuality] = useState14("maj");
-  const [sequence, setSequence] = useState14([]);
-  const [playing, setPlaying] = useState14(false);
-  const [activeIdx, setActiveIdx] = useState14(-1);
-  const [speed, setSpeed] = useState14("normal");
-  const [suiteVidee, setSuiteVidee] = useState14(null);
+  const [root, setRoot] = useState13("C");
+  const [family, setFamily] = useState13("base");
+  const [quality, setQuality] = useState13("maj");
+  const [sequence, setSequence] = useState13([]);
+  const [playing, setPlaying] = useState13(false);
+  const [activeIdx, setActiveIdx] = useState13(-1);
+  const [speed, setSpeed] = useState13("normal");
+  const [suiteVidee, setSuiteVidee] = useState13(null);
   const timerViderRef = useRef9(null);
   useEffect11(() => () => clearTimeout(timerViderRef.current), []);
   const stop = useCallback4(() => {
@@ -12731,19 +12748,19 @@ function TabEditor() {
   const C = useC();
   const initRef = useRef9(null);
   if (!initRef.current) initRef.current = initialiserEditeur();
-  const [edit, setEdit] = useState14(() => ({ grille: initRef.current, passe: [] }));
+  const [edit, setEdit] = useState13(() => ({ grille: initRef.current, passe: [] }));
   const grille = edit.grille;
-  const [res, setRes] = useState14(() => compatibleCroches(initRef.current) ? 2 : 1);
-  const [selection, setSelection] = useState14({ corde: 3, col: 0 });
-  const [bpm, setBpm] = useState14(80);
-  const [boucle, setBoucle] = useState14(false);
-  const [jouant, setJouant] = useState14(false);
-  const [colLecture, setColLecture] = useState14(null);
-  const [menuOuvert, setMenuOuvert] = useState14(false);
-  const [importOuvert, setImportOuvert] = useState14(false);
-  const [texteImport, setTexteImport] = useState14("");
-  const [erreurImport, setErreurImport] = useState14(null);
-  const [message, setMessage] = useState14(null);
+  const [res, setRes] = useState13(() => compatibleCroches(initRef.current) ? 2 : 1);
+  const [selection, setSelection] = useState13({ corde: 3, col: 0 });
+  const [bpm, setBpm] = useState13(80);
+  const [boucle, setBoucle] = useState13(false);
+  const [jouant, setJouant] = useState13(false);
+  const [colLecture, setColLecture] = useState13(null);
+  const [menuOuvert, setMenuOuvert] = useState13(false);
+  const [importOuvert, setImportOuvert] = useState13(false);
+  const [texteImport, setTexteImport] = useState13("");
+  const [erreurImport, setErreurImport] = useState13(null);
+  const [message, setMessage] = useState13(null);
   const enLectureRef = useRef9(false);
   const timerBoucleRef = useRef9(null);
   const boucleRef = useRef9(boucle);
@@ -12753,8 +12770,8 @@ function TabEditor() {
   const derniereSaisieRef = useRef9(null);
   const menuRef = useRef9(null);
   const timerMessageRef = useRef9(null);
-  const evenements = useMemo9(() => grilleVersEvenements(grille), [grille]);
-  const origines = useMemo9(() => new Set(evenements.filter((e) => e.toCol != null).map((e) => `${e.string}-${e.col}`)), [evenements]);
+  const evenements = useMemo8(() => grilleVersEvenements(grille), [grille]);
+  const origines = useMemo8(() => new Set(evenements.filter((e) => e.toCol != null).map((e) => `${e.string}-${e.col}`)), [evenements]);
   const cellSel = lireCase(grille, selection.corde, selection.col);
   useEffect11(() => {
     try {
@@ -13128,7 +13145,7 @@ var ONGLETS_OUTILS = [
 var OUTILS_INTERNES = new Set(ONGLETS_OUTILS.filter((t) => !t.externe).map((t) => t.id));
 function ToolboxScreen({ onBack, navigate }) {
   const C = useC();
-  const [tab, setTabBrut] = useState14(() => {
+  const [tab, setTabBrut] = useState13(() => {
     try {
       const t = localStorage.getItem("groply:outil-actif");
       if (OUTILS_INTERNES.has(t)) return t;
@@ -13144,7 +13161,7 @@ function ToolboxScreen({ onBack, navigate }) {
     }
   };
   const ongletsRef = useRef9(null);
-  const [finOnglets, setFinOnglets] = useState14(false);
+  const [finOnglets, setFinOnglets] = useState13(false);
   const majFinOnglets = useCallback4(() => {
     const el = ongletsRef.current;
     if (el) setFinOnglets(el.scrollLeft + el.clientWidth >= el.scrollWidth - 4);
@@ -13251,7 +13268,7 @@ var TrainingScreen_exports = {};
 __export(TrainingScreen_exports, {
   TrainingScreen: () => TrainingScreen
 });
-import { useState as useState15, useMemo as useMemo10 } from "react";
+import { useState as useState14, useMemo as useMemo9 } from "react";
 
 // src/store/seance.js
 var DUREES = [5, 15, 30];
@@ -13401,20 +13418,20 @@ var JOURS = ["L", "M", "M", "J", "V", "S", "D"];
 var NOMS_JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"];
 function TrainingScreen({ state, dispatch, content, navigate }) {
   const C = useC();
-  const [domaineOuvert, setDomaineOuvert] = useState15(null);
-  const [exerciceOuvert, setExerciceOuvert] = useState15(null);
-  const [quizOuvert, setQuizOuvert] = useState15(false);
-  const [duree, setDuree] = useState15(() => lireDuree(dureeParDefaut(state.onboarding?.timePerWeek)));
+  const [domaineOuvert, setDomaineOuvert] = useState14(null);
+  const [exerciceOuvert, setExerciceOuvert] = useState14(null);
+  const [quizOuvert, setQuizOuvert] = useState14(false);
+  const [duree, setDuree] = useState14(() => lireDuree(dureeParDefaut(state.onboarding?.timePerWeek)));
   const objectif = state.onboarding?.goal || "global";
   const today = todayStr();
-  const revisionDisponible = useMemo10(() => {
+  const revisionDisponible = useMemo9(() => {
     const st = getReviewStats([...content.quiz, ...itemsGeneres(state.completedLessons)], state.reviewHistory, state.completedLessons);
     return st.toReview + st.neverSeen;
   }, [content.quiz, state.reviewHistory, state.completedLessons]);
-  const seance = useMemo10(() => planSeance({ duree, objectif, state, content, today, revisionDisponible }), [duree, objectif, state, content, today, revisionDisponible]);
-  const progression = useMemo10(() => progressionFamilles(state), [state.completedLessons, state.reviewHistory]);
-  const gMastery = useMemo10(() => masteryStats(content, state), [content, state]);
-  const uniteEnAttente = useMemo10(() => buildPath(content, state).find((u) => u.needsCheck) || null, [content, state]);
+  const seance = useMemo9(() => planSeance({ duree, objectif, state, content, today, revisionDisponible }), [duree, objectif, state, content, today, revisionDisponible]);
+  const progression = useMemo9(() => progressionFamilles(state), [state]);
+  const gMastery = useMemo9(() => masteryStats(content, state), [content, state]);
+  const uniteEnAttente = useMemo9(() => buildPath(content, state).find((u) => u.needsCheck) || null, [content, state]);
   const lancerEtape = (e) => {
     if (e.aJour) return;
     if (e.id === "revision") navigate("review", { cible: e.questions, retour: "training" });
@@ -13678,7 +13695,7 @@ function CarteDomaine({ C, d, state, progression, onOuvrir }) {
 }
 function VueDomaine({ C, d, state, dispatch, content, navigate, progression, quizOuvert, setQuizOuvert, onExercice, onRetour }) {
   const k = couleurs(C, d.couleur);
-  const lecons = useMemo10(() => new Map(content.courses.flatMap((c) => c.lessons).map((l) => [l.id, l.title])), [content.courses]);
+  const lecons = useMemo9(() => new Map(content.courses.flatMap((c) => c.lessons).map((l) => [l.id, l.title])), [content.courses]);
   const debloquees = progression.filter((p) => p.domaine === d.id);
   const verrouillees = FAMILLES.filter((f) => familleDomaine(f) === d.id && !state.completedLessons?.[f.lecon]);
   const exercices = (content.exercises || []).filter((e) => d.modules.includes(e.mod) && (!e.unlockedBy?.length || e.unlockedBy.every((id) => state.completedLessons?.[id])) && (!e.courseLink || state.completedLessons?.[e.courseLink]));
@@ -13786,7 +13803,7 @@ var PracticeScreen_exports = {};
 __export(PracticeScreen_exports, {
   PracticeScreen: () => PracticeScreen
 });
-import { useState as useState16, useEffect as useEffect12, useRef as useRef10, useCallback as useCallback5, useMemo as useMemo11 } from "react";
+import { useState as useState15, useEffect as useEffect12, useRef as useRef10 } from "react";
 
 // src/store/challenges.js
 var KEYS = ["A", "B", "C", "D", "E", "F", "G"];
@@ -13821,11 +13838,11 @@ var DAILY_CHALLENGES = [
 
 // src/screens/PracticeScreen.jsx
 import { jsx as jsx20, jsxs as jsxs17 } from "react/jsx-runtime";
-function PracticeScreen({ state, dispatch }) {
+function PracticeScreen({ dispatch }) {
   const C = useC();
-  const [tab, setTab] = useState16("impro");
-  const [current, setCurrent] = useState16(null);
-  const [pop, setPop] = useState16(false);
+  const [tab, setTab] = useState15("impro");
+  const [current, setCurrent] = useState15(null);
+  const [pop, setPop] = useState15(false);
   const timerRef = useRef10(null);
   useEffect12(() => () => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -13964,13 +13981,13 @@ var ChallengeScreen_exports = {};
 __export(ChallengeScreen_exports, {
   ChallengeScreen: () => ChallengeScreen
 });
-import { useState as useState17, useEffect as useEffect13, useRef as useRef11, useCallback as useCallback6, useMemo as useMemo12 } from "react";
+import { useState as useState16, useEffect as useEffect13, useRef as useRef11 } from "react";
 import { jsx as jsx21, jsxs as jsxs18 } from "react/jsx-runtime";
 function ChallengeScreen({ state, dispatch, navigate }) {
   const C = useC();
   const ch = DAILY_CHALLENGES[state.dailyChallengeIdx % DAILY_CHALLENGES.length];
   const done = state.dailyChallengeDone;
-  const [pop, setPop] = useState17(false);
+  const [pop, setPop] = useState16(false);
   const timerRef = useRef11(null);
   useEffect13(() => () => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -14035,7 +14052,7 @@ var OnboardingScreen_exports = {};
 __export(OnboardingScreen_exports, {
   OnboardingScreen: () => OnboardingScreen
 });
-import { useState as useState18, useEffect as useEffect14, useMemo as useMemo13 } from "react";
+import { useState as useState17, useEffect as useEffect14, useMemo as useMemo10 } from "react";
 
 // src/store/placementEngine.js
 var TESTABLE_MODULES = ["neck", "scales", "harmony", "rhythm", "impro"];
@@ -14135,22 +14152,22 @@ var TIME_OPTIONS = [
 var ALL_PROFILE_MODULES = [.../* @__PURE__ */ new Set([...TESTABLE_MODULES, "impro"])];
 function OnboardingScreen({ content, onComplete, onEvent }) {
   const C = useC();
-  const [phase, setPhase] = useState18("welcome");
-  const [queue, setQueue] = useState18(null);
-  const [qIdx, setQIdx] = useState18(0);
-  const [currentQ, setCurrentQ] = useState18(null);
-  const [selected, setSelected] = useState18(null);
-  const [answered, setAnswered] = useState18(false);
-  const [forceReveal, setForceReveal] = useState18(false);
-  const [usedIds] = useState18(() => /* @__PURE__ */ new Set());
-  const modulesTestes = useMemo13(() => availableModules(content?.quiz || []), [content]);
-  const nbQuestions = useMemo13(() => placementQuestionCount(content?.quiz || []), [content]);
-  const [results, setResults] = useState18(() => Object.fromEntries(TESTABLE_MODULES.map((m) => [m, 0])));
-  const [skillLevels, setSkillLevels] = useState18({ neck: null, scales: null, harmony: null, rhythm: null, impro: null });
-  const [overallTier, setOverallTier] = useState18(null);
-  const [weakest, setWeakest] = useState18(null);
-  const [goal, setGoal] = useState18(null);
-  const [timePerWeek, setTimePerWeek] = useState18(null);
+  const [phase, setPhase] = useState17("welcome");
+  const [queue, setQueue] = useState17(null);
+  const [qIdx, setQIdx] = useState17(0);
+  const [currentQ, setCurrentQ] = useState17(null);
+  const [selected, setSelected] = useState17(null);
+  const [answered, setAnswered] = useState17(false);
+  const [forceReveal, setForceReveal] = useState17(false);
+  const [usedIds] = useState17(() => /* @__PURE__ */ new Set());
+  const modulesTestes = useMemo10(() => availableModules(content?.quiz || []), [content]);
+  const nbQuestions = useMemo10(() => placementQuestionCount(content?.quiz || []), [content]);
+  const [results, setResults] = useState17(() => Object.fromEntries(TESTABLE_MODULES.map((m) => [m, 0])));
+  const [skillLevels, setSkillLevels] = useState17({ neck: null, scales: null, harmony: null, rhythm: null, impro: null });
+  const [overallTier, setOverallTier] = useState17(null);
+  const [weakest, setWeakest] = useState17(null);
+  const [goal, setGoal] = useState17(null);
+  const [timePerWeek, setTimePerWeek] = useState17(null);
   const emit = (name, props) => {
     try {
       onEvent?.(name, props);

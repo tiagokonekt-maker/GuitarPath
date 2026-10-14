@@ -153,7 +153,7 @@ function AnneauMaitrise({ niveau, size, couleur, C }) {
   const centre = diametreSvg / 2;
   const decalage = -(diametreSvg - size) / 2;
   const circonference = 2 * Math.PI * rayon;
-  const segDeg = 104, gapDeg = 360/3 - 104; // 3 segments + 3 espaces = 360°
+  const segDeg = 104; // 3 segments de 104° + 3 espaces de 16° = 360°
   const segLen = circonference * (segDeg / 360);
   const dash = `${segLen} ${circonference - segLen}`;
 
@@ -179,7 +179,7 @@ function AnneauMaitrise({ niveau, size, couleur, C }) {
   );
 }
 
-function PathNode({ lesson, index, state, th, onSelect, isCurrent, isLocked, gropiTip, layout }) {
+function PathNode({ lesson, state, th, onSelect, isCurrent, isLocked, gropiTip, layout }) {
   const C = useC();
   const done = !!state.completedLessons[lesson.id];
   const { side, inset } = layout;
@@ -312,9 +312,9 @@ function PathNode({ lesson, index, state, th, onSelect, isCurrent, isLocked, gro
 // ── Coffre de fin d'unité ─────────────────────────────────────────────────────
 // Remplace l'ancien checkpoint décoratif : celui-ci fait vraiment quelque chose.
 // États : verrouillé (gris) → en cours (x/y) → réclamable (rebond ambré) → ouvert.
-function UnitChest({ unit, th, onClaim, onCheck }) {
+function UnitChest({ unit, onClaim, onCheck }) {
   const C = useC();
-  const { complete, bonusClaimable, bonusClaimed, needsCheck, check, done, total, unlocked } = unit;
+  const { bonusClaimable, bonusClaimed, needsCheck, check, done, total, unlocked } = unit;
 
   let bg, border, icon, iconColor, label, anim = "none", clickable = false, action = null;
   if (bonusClaimed) {
@@ -666,12 +666,10 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
     setTipDismissed(true);
     dispatch({ type: "DISMISS_GROPI_TIP" });   // conservé : sans effet sur l'affichage désormais, mais gardé pour compatibilité avec le reste de l'état
   };
-  const tip = useMemo(() => pickTip(state), [
-    state.xp, state.streak, state.level,
-    Object.keys(state.completedLessons || {}).length,
-    (state.unlockedBadges || []).length,
-    state.dailyChallengeCount,
-  ]);
+  // `pickTip` est déterministe (choix selon le jour) et peu coûteux, mais ses
+  // conditions lisent des champs variés de l'état : dépendre de `state` entier
+  // est la seule liste exacte.
+  const tip = useMemo(() => pickTip(state), [state]);
   // Identifiant de la leçon sur laquelle on a scrollé la dernière fois. Sert à
   // ne pas re-scroller à chaque rendu, tout en re-scrollant bien quand la
   // cible change — c'est-à-dire au retour d'une leçon terminée.
@@ -682,10 +680,10 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
   // React ne recalculait jamais la liste des unites apres un controle
   // reussi — le coffre restait bloque sur "a verifier", et l'unite
   // suivante ne se debloquait jamais, meme apres avoir reclame le coffre.
-  const path  = useMemo(()=>buildPath(content, state),
-    [content, state.completedLessons, state.claimedUnits, state.unitChecks]);
-  const stats = useMemo(()=>getPathStats(content, state),
-    [content, state.completedLessons, state.claimedUnits, state.unitChecks]);
+  // Même piège avec state.onboarding (paliers ouverts d'emblée) : on dépend
+  // désormais de `state` entier, seule liste exacte de ce que lit buildPath.
+  const path  = useMemo(()=>buildPath(content, state), [content, state]);
+  const stats = useMemo(()=>getPathStats(content, state), [content, state]);
 
   // Tracés de chemin, calculés une fois par unité. `useMemo` sur le contenu
   // seulement : le dessin ne doit PAS bouger quand la progression change,
@@ -1009,7 +1007,7 @@ function LessonView({ lesson, state, dispatch, onBack }) {
             // suivant quand le paragraphe est plus court que l'image.
             if(b.img) return (
               <div key={i} style={{overflow:"hidden"}}>
-                <img src={b.img} alt={b.imgAlt||""} style={{
+                <img src={b.img} alt={b.imgAlt||""} loading="lazy" decoding="async" style={{
                   float:b.imgSide==="left"?"left":"right",
                   width:"34%", maxWidth:124, height:"auto",
                   margin:b.imgSide==="left"?"0 14px 4px 0":"0 0 4px 14px",

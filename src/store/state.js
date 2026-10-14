@@ -378,7 +378,7 @@ export const loadContent = (defaults, CONTENT_KEY_PARAM) => {
     if (!raw && key === CONTENT_KEY) {
       for (const legacy of LEGACY_CONTENT_KEYS) {
         const old = localStorage.getItem(legacy);
-        if (old) { raw = old; try { localStorage.setItem(CONTENT_KEY, old); } catch {} break; }
+        if (old) { raw = old; try { localStorage.setItem(CONTENT_KEY, old); } catch { /* stockage plein ou bloqué : on garde la copie en mémoire */ } break; }
       }
     }
     if (!raw) return defaults;
