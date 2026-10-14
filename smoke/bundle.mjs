@@ -13,6 +13,1049 @@ var __export = (target, all) => {
     __defProp(target, name, { get: all[name], enumerable: true });
 };
 
+// src/design/tokens.js
+var shape, LIGHT, DARK, FONTS, R, T, TAP, MODULE;
+var init_tokens = __esm({
+  "src/design/tokens.js"() {
+    shape = {};
+    LIGHT = {
+      ...shape,
+      // ── Fonds ─────────────────────────────────────────────
+      bg: "#FFE8CF",
+      surface: "#FFFFFF",
+      surface2: "#F9DFC0",
+      border: "#E8C9A0",
+      // décor uniquement (1,3:1) — jamais seule sur un contrôle
+      borderStrong: "#9E7238",
+      // 3,60:1 sur bg · 4,27:1 sur surface
+      borderSoft: "#F0D5B0",
+      // ── Textes ────────────────────────────────────────────
+      text: "#18130F",
+      // 15,54:1 sur bg
+      text2: "#6E6760",
+      //  4,69:1 sur bg ·  5,57:1 sur surface
+      text3: "#6B645B",
+      //  4,92:1 sur bg ·  5,83:1 sur surface
+      // (text3 reste plus clair que text2 à l'œil grâce
+      //  à sa taille d'emploi, sans descendre sous AA)
+      // ── Primaire (orange) ─────────────────────────────────
+      primary: "#E85D1A",
+      // décor, aplats, icônes ≥ 24 px
+      primaryBtn: "#C64E12",
+      //  4,67:1 avec du blanc → fond de CTA
+      onPrimaryBtn: "#FFFFFF",
+      //  4,67:1 sur primaryBtn — TEXTE et icônes posés sur un aplat plein
+      //  (primaryBtn, primary, ou une couleur de module). Égal à surface.
+      primaryInk: "#B8430E",
+      //  4,60:1 sur bg · 5,46:1 sur surface → texte/lien
+      primaryBorder: "#F5C4A8",
+      primaryL: "#FFF0E8",
+      primaryD: "#9C360A",
+      //  texte sur primaryL
+      // ── Amber ─────────────────────────────────────────────
+      amber: "#C97B1A",
+      amberInk: "#8A5200",
+      //  6,39:1 sur surface
+      amberBorder: "#F5D4A0",
+      amberL: "#FFF0D9",
+      amberD: "#6B3F00",
+      // ── Green ─────────────────────────────────────────────
+      green: "#1A8C52",
+      greenInk: "#0F7343",
+      //  5,91:1 sur surface
+      greenBorder: "#A8DEC0",
+      greenL: "#DCF5E8",
+      greenD: "#0C3D22",
+      // ── Purple ────────────────────────────────────────────
+      purple: "#6B4FCC",
+      purpleInk: "#5B3FBB",
+      //  7,31:1 sur surface
+      purpleBorder: "#C4B8F0",
+      purpleL: "#EDE8FC",
+      purpleD: "#2D1A7A",
+      // ── Pink / Coral ──────────────────────────────────────
+      pink: "#C430A5",
+      pinkInk: "#A82A8E",
+      pinkBorder: "#F0B0E6",
+      pinkL: "#FCE8F8",
+      pinkD: "#6B0858",
+      coral: "#C4306A",
+      coralInk: "#A82859",
+      coralBorder: "#F0B0CC",
+      coralL: "#FCE8F0",
+      coralD: "#6B0830",
+      // ── Blue ──────────────────────────────────────────────
+      blue: "#1E62C7",
+      blueInk: "#1B58B2",
+      blueBorder: "#A8C8F0",
+      blueL: "#E2EFFE",
+      blueD: "#0A2E6E",
+      // ── Teal ──────────────────────────────────────────────
+      teal: "#1A8276",
+      tealInk: "#0E6E63",
+      //  6,12:1 sur surface
+      tealBorder: "#A0DED8",
+      tealL: "#DFF6F2",
+      tealD: "#0C3D38",
+      // ── États ─────────────────────────────────────────────
+      danger: "#B83030",
+      //  5,99:1 sur surface
+      dangerInk: "#A02828",
+      dangerBorder: "#EBB4B4",
+      dangerL: "#FCEAEA",
+      dangerD: "#7A1414",
+      success: "#0F7343",
+      successL: "#DCF5E8",
+      // ── Focus (WCAG 2.4.7 / 2.4.11) ───────────────────────
+      focus: "#0A4FB0"
+    };
+    DARK = {
+      ...shape,
+      // ── Fonds ─────────────────────────────────────────────
+      bg: "#1A1008",
+      // brun très sombre, chaud (pas gris froid)
+      surface: "#26180A",
+      surface2: "#321F0D",
+      border: "#4A2E14",
+      // décor
+      borderStrong: "#8B6636",
+      // 3,33:1 sur surface — contrôle
+      borderSoft: "#3A2410",
+      // ── Textes ────────────────────────────────────────────
+      text: "#F5E8D8",
+      text2: "#C0A882",
+      //  8,17:1 sur bg
+      text3: "#A08A74",
+      //  5,24:1 sur surface (l'ancien #8A7260 : 3,82 ❌)
+      // ── Primaire ──────────────────────────────────────────
+      // En sombre, l'orange d'origine passe (4,94:1 sur surface) : on le garde
+      // comme accent, et le bouton reste lisible avec un texte foncé.
+      primary: "#F2762F",
+      primaryBtn: "#E85D1A",
+      onPrimaryBtn: "#26180A",
+      //  4,94:1 sur primaryBtn · égal à surface. Le blanc fixe n'y atteint que
+      //  3,49:1 : TOUJOURS passer par ce jeton, jamais "#fff", sur un aplat.
+      primaryInk: "#FFAA78",
+      primaryBorder: "#7A3A12",
+      primaryL: "#3D1E08",
+      primaryD: "#FFAA78",
+      // ── Accents propres au thème sombre ───────────────────
+      // Tous ≥ 6,9:1 sur surface — c'est ce qui manquait totalement avant.
+      amber: "#F0AE55",
+      // 8,95:1
+      amberInk: "#F0AE55",
+      amberBorder: "#5A3D12",
+      amberL: "#3A2508",
+      amberD: "#FFCC88",
+      green: "#5FD494",
+      // 9,31:1
+      greenInk: "#5FD494",
+      greenBorder: "#1E5638",
+      greenL: "#0A2518",
+      greenD: "#6ADBA0",
+      purple: "#B49CF5",
+      // 7,40:1
+      purpleInk: "#B49CF5",
+      purpleBorder: "#3A2A78",
+      purpleL: "#1A1038",
+      purpleD: "#C4B4F8",
+      pink: "#F07ADA",
+      // 6,98:1
+      pinkInk: "#F07ADA",
+      pinkBorder: "#5A1A4E",
+      pinkL: "#2A0826",
+      pinkD: "#F4A0EA",
+      coral: "#F07AA0",
+      // 6,57:1
+      coralInk: "#F07AA0",
+      coralBorder: "#5A1A32",
+      coralL: "#2A0818",
+      coralD: "#F4A0C8",
+      blue: "#6FA8F0",
+      // 7,01:1
+      blueInk: "#6FA8F0",
+      blueBorder: "#1E3C6E",
+      blueL: "#081830",
+      blueD: "#90C4F8",
+      teal: "#5CCBBE",
+      // 8,82:1
+      tealInk: "#5CCBBE",
+      tealBorder: "#154A44",
+      tealL: "#081E1A",
+      tealD: "#80D8D0",
+      // ── États ─────────────────────────────────────────────
+      danger: "#FF8A8A",
+      // 7,60:1 (l'ancien #B83030 : 2,88 ❌)
+      dangerInk: "#FF8A8A",
+      dangerBorder: "#5E1C1C",
+      dangerL: "#280808",
+      dangerD: "#FFB0B0",
+      success: "#5FD494",
+      successL: "#0A2518",
+      focus: "#8CBCF5"
+    };
+    FONTS = {
+      title: '"Poppins", system-ui, -apple-system, "Segoe UI", sans-serif',
+      body: '"Poppins", system-ui, -apple-system, "Segoe UI", sans-serif',
+      ui: '"Poppins", system-ui, -apple-system, "Segoe UI", sans-serif'
+    };
+    R = {
+      sm: 10,
+      md: 14,
+      lg: 18,
+      xl: 20,
+      pill: 999
+    };
+    T = {
+      micro: 11,
+      // labels de navigation, numéros de case, intitulés
+      small: 13,
+      // méta-texte, légendes
+      body: 15,
+      // texte courant, réponses de quiz
+      lead: 17,
+      // chapô
+      h3: 19,
+      h2: 23,
+      h1: 27
+    };
+    TAP = {
+      min: 44,
+      comfy: 48,
+      fret: 44,
+      // hauteur de corde en mode quiz/exercice (était 28)
+      fretW: 42
+      // largeur de case (était 36)
+    };
+    MODULE = {
+      neck: { icon: "map-2", color: "amber", label: "Manche" },
+      scales: { icon: "music", color: "green", label: "Gammes" },
+      harmony: { icon: "stack-2", color: "purple", label: "Harmonie" },
+      impro: { icon: "wand", color: "pink", label: "Impro" },
+      rhythm: { icon: "metronome", color: "blue", label: "Rythme" },
+      ear: { icon: "ear", color: "teal", label: "Oreille" }
+    };
+  }
+});
+
+// src/design/ThemeContext.jsx
+var ThemeContext_exports = {};
+__export(ThemeContext_exports, {
+  ThemeContext: () => ThemeContext,
+  ThemeProvider: () => ThemeProvider,
+  useC: () => useC,
+  useTheme: () => useTheme
+});
+import { createContext, useContext, useEffect, useState } from "react";
+import { jsx } from "react/jsx-runtime";
+function ThemeProvider({ children, theme = "auto" }) {
+  const [sysDark, setSysDark] = useState(
+    () => window.matchMedia("(prefers-color-scheme: dark)").matches
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const handler = (e) => setSysDark(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  const resolvedTheme = theme === "auto" ? sysDark ? "dark" : "light" : theme;
+  const C = resolvedTheme === "dark" ? DARK : LIGHT;
+  useEffect(() => {
+    document.documentElement.style.background = C.bg;
+    document.documentElement.setAttribute("data-theme", resolvedTheme);
+  }, [C.bg, resolvedTheme]);
+  return /* @__PURE__ */ jsx(ThemeContext.Provider, { value: { C, theme, resolvedTheme }, children });
+}
+function useC() {
+  return useContext(ThemeContext).C;
+}
+function useTheme() {
+  return useContext(ThemeContext);
+}
+var ThemeContext;
+var init_ThemeContext = __esm({
+  "src/design/ThemeContext.jsx"() {
+    init_tokens();
+    ThemeContext = createContext({ C: LIGHT, theme: "light", resolvedTheme: "light" });
+  }
+});
+
+// src/design/icons.js
+var ICONS, ICON_COUNT;
+var init_icons = __esm({
+  "src/design/icons.js"() {
+    ICONS = {
+      "tuning-fork": [0, '<path d="M9 3v7a3 3 0 0 0 6 0v-7" /> <path d="M12 13v8" /> <path d="M8 3h2" /> <path d="M14 3h2" />'],
+      "alert-circle": [0, '<path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /> <path d="M12 8v4" /> <path d="M12 16h.01" />'],
+      "alert-triangle": [0, '<path d="M12 9v4" /> <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" /> <path d="M12 16h.01" />'],
+      "arrow-left": [0, '<path d="M5 12l14 0" /> <path d="M5 12l6 6" /> <path d="M5 12l6 -6" />'],
+      "arrow-narrow-right": [0, '<path d="M5 12l14 0" /> <path d="M15 16l4 -4" /> <path d="M15 8l4 4" />'],
+      "arrow-right": [0, '<path d="M5 12l14 0" /> <path d="M13 18l6 -6" /> <path d="M13 6l6 6" />'],
+      "arrows-up-down": [0, '<path d="M7 3l0 18" /> <path d="M10 6l-3 -3l-3 3" /> <path d="M20 18l-3 3l-3 -3" /> <path d="M17 21l0 -18" />'],
+      "baby-carriage": [0, '<path d="M8 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /> <path d="M18 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /> <path d="M2 5h2.5l1.632 4.897a6 6 0 0 0 5.693 4.103h2.675a5.5 5.5 0 0 0 0 -11h-.5v6" /> <path d="M6 9h14" /> <path d="M9 17l1 -3" /> <path d="M16 14l1 3" />'],
+      "bolt": [0, '<path d="M13 3l0 7l6 0l-8 11l0 -7l-6 0l8 -11" />'],
+      "book-2": [0, '<path d="M19 4v16h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12z" /> <path d="M19 16h-12a2 2 0 0 0 -2 2" /> <path d="M9 8h6" />'],
+      "books": [0, '<path d="M5 4m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z" /> <path d="M9 4m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z" /> <path d="M5 8h4" /> <path d="M9 16h4" /> <path d="M13.803 4.56l2.184 -.53c.562 -.135 1.133 .19 1.282 .732l3.695 13.418a1.02 1.02 0 0 1 -.634 1.219l-.133 .041l-2.184 .53c-.562 .135 -1.133 -.19 -1.282 -.732l-3.695 -13.418a1.02 1.02 0 0 1 .634 -1.219l.133 -.041z" /> <path d="M14 9l4 -1" /> <path d="M16 16l3.923 -.98" />'],
+      "bulb": [0, '<path d="M3 12h1m8 -9v1m8 8h1m-15.4 -6.4l.7 .7m12.1 -.7l-.7 .7" /> <path d="M9 16a5 5 0 1 1 6 0a3.5 3.5 0 0 0 -1 3a2 2 0 0 1 -4 0a3.5 3.5 0 0 0 -1 -3" /> <path d="M9.7 17l4.6 0" />'],
+      "calendar-check": [0, '<path d="M11.5 21h-5.5a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v6" /> <path d="M16 3v4" /> <path d="M8 3v4" /> <path d="M4 11h16" /> <path d="M15 19l2 2l4 -4" />'],
+      "campfire": [0, '<path d="M4 21l16 -4" /> <path d="M20 21l-16 -4" /> <path d="M12 15a4 4 0 0 0 4 -4c0 -3 -2 -3 -2 -8c-4 2 -6 5 -6 8a4 4 0 0 0 4 4z" />'],
+      "chart-bar": [0, '<path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /> <path d="M15 9a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /> <path d="M9 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /> <path d="M4 20h14" />'],
+      "check": [0, '<path d="M5 12l5 5l10 -10" />'],
+      "chevron-down": [0, '<path d="M6 9l6 6l6 -6" />'],
+      "chevron-left": [0, '<path d="M15 6l-6 6l6 6" />'],
+      "chevron-right": [0, '<path d="M9 6l6 6l-6 6" />'],
+      "chevron-up": [0, '<path d="M6 15l6 -6l6 6" />'],
+      "circle-check": [0, '<path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /> <path d="M9 12l2 2l4 -4" />'],
+      "circle-check-filled": [1, '<path d="M17 3.34a10 10 0 1 1 -14.995 8.984l-.005 -.324l.005 -.324a10 10 0 0 1 14.995 -8.336zm-1.293 5.953a1 1 0 0 0 -1.32 -.083l-.094 .083l-3.293 3.292l-1.293 -1.292l-.094 -.083a1 1 0 0 0 -1.403 1.403l.083 .094l2 2l.094 .083a1 1 0 0 0 1.226 0l.094 -.083l4 -4l.083 -.094a1 1 0 0 0 -.083 -1.32z" />'],
+      "clipboard-check": [0, '<path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2" /> <path d="M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z" /> <path d="M9 14l2 2l4 -4" />'],
+      "clock": [0, '<path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /> <path d="M12 7v5l3 3" />'],
+      "crown": [0, '<path d="M12 6l4 6l5 -4l-2 10h-14l-2 -10l5 4z" />'],
+      "device-desktop": [0, '<path d="M3 5a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1v-10z" /> <path d="M7 20h10" /> <path d="M9 16v4" /> <path d="M15 16v4" />'],
+      "dice-5": [0, '<path d="M3 3m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z" /> <circle cx="8.5" cy="8.5" r=".5" fill="currentColor" /> <circle cx="15.5" cy="8.5" r=".5" fill="currentColor" /> <circle cx="15.5" cy="15.5" r=".5" fill="currentColor" /> <circle cx="8.5" cy="15.5" r=".5" fill="currentColor" /> <circle cx="12" cy="12" r=".5" fill="currentColor" />'],
+      "download": [0, '<path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /> <path d="M7 11l5 5l5 -5" /> <path d="M12 4l0 12" />'],
+      "ear": [0, '<path d="M6 10a7 7 0 1 1 13 3.6a10 10 0 0 1 -2 2a8 8 0 0 0 -2 3a4.5 4.5 0 0 1 -6.8 1.4" /> <path d="M10 10a3 3 0 1 1 5 2.2" />'],
+      "eye": [0, '<path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /> <path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />'],
+      "eye-off": [0, '<path d="M10.585 10.587a2 2 0 0 0 2.829 2.828" /> <path d="M16.681 16.673a8.717 8.717 0 0 1 -4.681 1.327c-3.6 0 -6.6 -2 -9 -6c1.272 -2.12 2.712 -3.678 4.32 -4.674m2.86 -1.146a9.055 9.055 0 0 1 1.82 -.18c3.6 0 6.6 2 9 6c-.666 1.11 -1.379 2.067 -2.138 2.87" /> <path d="M3 3l18 18" />'],
+      "flag": [0, '<path d="M5 5a5 5 0 0 1 7 0a5 5 0 0 0 7 0v9a5 5 0 0 1 -7 0a5 5 0 0 0 -7 0v-9z" /> <path d="M5 21v-7" />'],
+      "flame": [0, '<path d="M12 12c2 -2.96 0 -7 -1 -8c0 3.038 -1.773 4.741 -3 6c-1.226 1.26 -2 3.24 -2 5a6 6 0 1 0 12 0c0 -1.532 -1.056 -3.94 -2 -5c-1.786 3 -2.791 3 -4 2z" />'],
+      "guitar-pick": [0, '<path d="M16 18.5c2 -2.5 4 -6.5 4 -10.5c0 -2.946 -2.084 -4.157 -4.204 -4.654c-.864 -.23 -2.13 -.346 -3.796 -.346c-1.667 0 -2.932 .115 -3.796 .346c-2.12 .497 -4.204 1.708 -4.204 4.654c0 3.312 2 8 4 10.5c.297 .37 .618 .731 .963 1.081l.354 .347a3.9 3.9 0 0 0 5.364 0a14.05 14.05 0 0 0 1.319 -1.428z" />'],
+      "hand-finger-down": [0, '<path d="M8 12v8.5a1.5 1.5 0 0 0 3 0v-7.5" /> <path d="M11 13.5v2a1.5 1.5 0 0 0 3 0v-2.5" /> <path d="M14 14.5a1.5 1.5 0 0 0 3 0v-1.5" /> <path d="M17 13.5a1.5 1.5 0 0 0 3 0v-4.5a6 6 0 0 0 -6 -6h-2h.208a6 6 0 0 0 -5.012 2.7l-.196 .3q -.468 .718 -3.286 5.728a1.5 1.5 0 0 0 .536 2.022c.734 .44 1.674 .325 2.28 -.28l1.47 -1.47" />'],
+      "headphones": [0, '<path d="M4 13m0 2a2 2 0 0 1 2 -2h1a2 2 0 0 1 2 2v3a2 2 0 0 1 -2 2h-1a2 2 0 0 1 -2 -2z" /> <path d="M15 13m0 2a2 2 0 0 1 2 -2h1a2 2 0 0 1 2 2v3a2 2 0 0 1 -2 2h-1a2 2 0 0 1 -2 -2z" /> <path d="M4 15v-3a8 8 0 0 1 16 0v3" />'],
+      "help-circle": [0, '<path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /> <path d="M12 16v.01" /> <path d="M12 13a2 2 0 0 0 .914 -3.782a1.98 1.98 0 0 0 -2.414 .483" />'],
+      "history": [0, '<path d="M12 8l0 4l2 2" /> <path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5" />'],
+      "home": [0, '<path d="M5 12l-2 0l9 -9l9 9l-2 0" /> <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" /> <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />'],
+      "info-circle": [0, '<path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /> <path d="M12 9h.01" /> <path d="M11 12h1v4h1" />'],
+      "list-numbers": [0, '<path d="M11 6h9" /> <path d="M11 12h9" /> <path d="M12 18h8" /> <path d="M4 16a2 2 0 1 1 4 0c0 .591 -.5 1 -1 1.5l-3 2.5h4" /> <path d="M6 10v-6l-2 2" />'],
+      "loader": [0, '<path d="M12 6l0 -3" /> <path d="M16.25 7.75l2.15 -2.15" /> <path d="M18 12l3 0" /> <path d="M16.25 16.25l2.15 2.15" /> <path d="M12 18l0 3" /> <path d="M7.75 16.25l-2.15 2.15" /> <path d="M6 12l-3 0" /> <path d="M7.75 7.75l-2.15 -2.15" />'],
+      "lock": [0, '<path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6z" /> <path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0" /> <path d="M8 11v-4a4 4 0 1 1 8 0v4" />'],
+      "logout": [0, '<path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" /> <path d="M9 12h12l-3 -3" /> <path d="M18 15l3 -3" />'],
+      "map-2": [0, '<path d="M12 18.5l-3 -1.5l-6 3v-13l6 -3l6 3l6 -3v7.5" /> <path d="M9 4v13" /> <path d="M15 7v5.5" /> <path d="M21.121 20.121a3 3 0 1 0 -4.242 0c.418 .419 1.125 1.045 2.121 1.879c1.051 -.89 1.759 -1.516 2.121 -1.879z" /> <path d="M19 18v.01" />'],
+      "medal": [0, '<path d="M12 4v3m-4 -3v6m8 -6v6" /> <path d="M12 18.5l-3 1.5l.5 -3.5l-2 -2l3 -.5l1.5 -3l1.5 3l3 .5l-2 2l.5 3.5z" />'],
+      "metronome": [0, '<path d="M14.153 8.188l-.72 -3.236a2.493 2.493 0 0 0 -4.867 0l-3.025 13.614a2 2 0 0 0 1.952 2.434h7.014a2 2 0 0 0 1.952 -2.434l-.524 -2.357m-4.935 1.791l9 -13" /> <path d="M20 5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />'],
+      "microphone": [0, '<path d="M9 2m0 3a3 3 0 0 1 3 -3h0a3 3 0 0 1 3 3v5a3 3 0 0 1 -3 3h0a3 3 0 0 1 -3 -3z" /> <path d="M5 10a7 7 0 0 0 14 0" /> <path d="M8 21l8 0" /> <path d="M12 17l0 4" />'],
+      "minus": [0, '<path d="M5 12l14 0" />'],
+      "moon": [0, '<path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />'],
+      "mountain": [0, '<path d="M3 20h18l-6.921 -14.612a2.3 2.3 0 0 0 -4.158 0l-6.921 14.612z" /> <path d="M7.5 11l2 2.5l2.5 -2.5l2 3l2.5 -2" />'],
+      "music": [0, '<path d="M3 17a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /> <path d="M13 17a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /> <path d="M9 17v-13h10v13" /> <path d="M9 8h10" />'],
+      "music-plus": [0, '<path d="M3 17a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /> <path d="M9 17v-13h10v8" /> <path d="M9 8h10" /> <path d="M16 19h6" /> <path d="M19 16v6" />'],
+      "notebook": [0, '<path d="M6 4h11a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-11a1 1 0 0 1 -1 -1v-14a1 1 0 0 1 1 -1m3 0v18" /> <path d="M13 8l2 0" /> <path d="M13 12l2 0" />'],
+      "player-pause": [0, '<path d="M6 5m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v12a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z" /> <path d="M14 5m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v12a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z" />'],
+      "player-pause-filled": [1, '<path d="M9 4h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h2a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2z" /> <path d="M17 4h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h2a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2z" />'],
+      "player-play": [0, '<path d="M7 4v16l13 -8z" />'],
+      "player-play-filled": [1, '<path d="M6 4v16a1 1 0 0 0 1.524 .852l13 -8a1 1 0 0 0 0 -1.704l-13 -8a1 1 0 0 0 -1.524 .852z" />'],
+      "player-stop": [0, '<path d="M5 5m0 2a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2z" />'],
+      "player-stop-filled": [1, '<path d="M17 4h-10a3 3 0 0 0 -3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3 -3v-10a3 3 0 0 0 -3 -3z" />'],
+      "plus": [0, '<path d="M12 5l0 14" /> <path d="M5 12l14 0" />'],
+      "refresh": [0, '<path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" /> <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />'],
+      "route": [0, '<path d="M3 19a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /> <path d="M19 7a2 2 0 1 0 0 -4a2 2 0 0 0 0 4z" /> <path d="M11 19h5.5a3.5 3.5 0 0 0 0 -7h-8a3.5 3.5 0 0 1 0 -7h4.5" />'],
+      "settings": [0, '<path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" /> <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />'],
+      "sparkles": [0, '<path d="M16 18a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2zm0 -12a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2zm-7 12a6 6 0 0 1 6 -6a6 6 0 0 1 -6 -6a6 6 0 0 1 -6 6a6 6 0 0 1 6 6z" />'],
+      "stack-2": [0, '<path d="M12 4l-8 4l8 4l8 -4l-8 -4" /> <path d="M4 12l8 4l8 -4" /> <path d="M4 16l8 4l8 -4" />'],
+      "stairs": [0, '<path d="M22 5h-5v5h-5v5h-5v5h-5" />'],
+      "star": [0, '<path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z" />'],
+      "star-filled": [1, '<path d="M8.243 7.34l-6.38 .925l-.113 .023a1 1 0 0 0 -.44 1.684l4.622 4.499l-1.09 6.355l-.013 .11a1 1 0 0 0 1.464 .944l5.706 -3l5.693 3l.1 .046a1 1 0 0 0 1.352 -1.1l-1.091 -6.355l4.624 -4.5l.078 -.085a1 1 0 0 0 -.633 -1.62l-6.38 -.926l-2.852 -5.78a1 1 0 0 0 -1.794 0l-2.853 5.78z" />'],
+      "sun": [0, '<path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /> <path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" />'],
+      "sword": [0, '<path d="M20 4v5l-9 7l-4 4l-3 -3l4 -4l7 -9z" /> <path d="M6.5 11.5l6 6" />'],
+      "target": [0, '<path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /> <path d="M12 12m-5 0a5 5 0 1 0 10 0a5 5 0 1 0 -10 0" /> <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />'],
+      "target-arrow": [0, '<path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /> <path d="M12 7a5 5 0 1 0 5 5" /> <path d="M13 3.055a9 9 0 1 0 7.941 7.945" /> <path d="M15 6v3h3l3 -3h-3v-3z" /> <path d="M15 9l-3 3" />'],
+      "trash": [0, '<path d="M4 7l16 0" /> <path d="M10 11l0 6" /> <path d="M14 11l0 6" /> <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /> <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />'],
+      "trending-up": [0, '<path d="M3 17l6 -6l4 4l8 -8" /> <path d="M14 7l7 0l0 7" />'],
+      "trophy": [0, '<path d="M8 21l8 0" /> <path d="M12 17l0 4" /> <path d="M7 4l10 0" /> <path d="M17 4v8a5 5 0 0 1 -10 0v-8" /> <path d="M5 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /> <path d="M19 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />'],
+      "upload": [0, '<path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /> <path d="M7 9l5 -5l5 5" /> <path d="M12 4l0 12" />'],
+      "volume": [0, '<path d="M15 8a5 5 0 0 1 0 8" /> <path d="M17.7 5a9 9 0 0 1 0 14" /> <path d="M6 15h-2a1 1 0 0 1 -1 -1v-4a1 1 0 0 1 1 -1h2l3.5 -4.5a.8 .8 0 0 1 1.5 .5v14a.8 .8 0 0 1 -1.5 .5l-3.5 -4.5" />'],
+      "wand": [0, '<path d="M6 21l15 -15l-3 -3l-15 15l3 3" /> <path d="M15 6l3 3" /> <path d="M9 3a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2" /> <path d="M19 13a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2" />'],
+      "x": [0, '<path d="M18 6l-12 12" /> <path d="M6 6l12 12" />']
+    };
+    ICON_COUNT = Object.keys(ICONS).length;
+  }
+});
+
+// src/design/Ti.jsx
+import { jsx as jsx2 } from "react/jsx-runtime";
+function Ti({ name, size = 16, color = "currentColor", style, label, stroke }) {
+  const cle2 = String(name || "").replace(/^ti-/, "");
+  const icone = ICONS[cle2];
+  const commun = {
+    width: size,
+    height: size,
+    viewBox: "0 0 24 24",
+    // `block` évite l'espace fantôme sous les éléments en ligne, qui
+    // désalignait les icônes dans les boutons.
+    style: { display: "block", flexShrink: 0, ...style },
+    "aria-hidden": label ? void 0 : "true",
+    role: label ? "img" : void 0,
+    "aria-label": label || void 0
+  };
+  if (!icone) {
+    if (typeof import.meta !== "undefined" && false) {
+      console.warn(`[Ti] ic\xF4ne inconnue : "${cle2}"`);
+    }
+    return /* @__PURE__ */ jsx2("svg", { ...commun, fill: "none", stroke: color, strokeWidth: 1.5, opacity: 0.45, children: /* @__PURE__ */ jsx2("rect", { x: "4", y: "4", width: "16", height: "16", rx: "3" }) });
+  }
+  const [plein, trac\u00E9s] = icone;
+  const props = plein ? { fill: color, stroke: "none" } : {
+    fill: "none",
+    stroke: color,
+    strokeWidth: stroke ?? (size < 14 ? 1.75 : 2),
+    strokeLinecap: "round",
+    strokeLinejoin: "round"
+  };
+  return /* @__PURE__ */ jsx2(
+    "svg",
+    {
+      ...commun,
+      ...props,
+      dangerouslySetInnerHTML: { __html: trac\u00E9s }
+    }
+  );
+}
+var Ti_default;
+var init_Ti = __esm({
+  "src/design/Ti.jsx"() {
+    init_icons();
+    Ti_default = Ti;
+  }
+});
+
+// src/design/Gropi.jsx
+import { useState as useState2 } from "react";
+import { jsx as jsx4, jsxs as jsxs2 } from "react/jsx-runtime";
+function Gropi({ pose = "happy", size = 80, anim = "none", style, onClick }) {
+  const C = useC();
+  const src = POSE_SRC[pose] || POSE_SRC.happy;
+  const [w, h] = POSE_DIMS[pose] || POSE_DIMS.happy;
+  return /* @__PURE__ */ jsx4(
+    "img",
+    {
+      src,
+      alt: "",
+      width: w,
+      height: h,
+      decoding: "async",
+      draggable: false,
+      onClick,
+      className: anim !== "none" ? "gropi-anim" : void 0,
+      style: {
+        display: "block",
+        width: size,
+        height: "auto",
+        // Garde-fou : si un fichier a un ratio inattendu (trop haut), il
+        // ne peut plus faire déborder la mise en page — object-fit:contain
+        // garantit que l'image se réduit proportionnellement plutôt que
+        // de se déformer si ce plafond se déclenche.
+        maxHeight: size * 1.6,
+        objectFit: "contain",
+        flexShrink: 0,
+        userSelect: "none",
+        cursor: onClick ? "pointer" : void 0,
+        ...ANIM[anim] || {},
+        ...style
+      }
+    }
+  );
+}
+function useTintColors(tint) {
+  const C = useC();
+  return {
+    light: C[tint + "L"] || C.primaryL,
+    border: C[tint + "Border"] || C[tint + "B"] || C.primaryBorder,
+    deep: C[tint + "D"] || C.primaryD
+  };
+}
+function GropiTip({ pose = "wave", tint = "primary", eyebrow = "Conseil de Gropi", onClose, children }) {
+  const C = useC();
+  const { light, border, deep } = useTintColors(tint);
+  return /* @__PURE__ */ jsxs2("div", { style: {
+    display: "flex",
+    gap: 11,
+    alignItems: "flex-start",
+    position: "relative",
+    background: C.surface,
+    border: `1.5px solid ${border}`,
+    borderRadius: R.xl,
+    padding: 12
+  }, children: [
+    /* @__PURE__ */ jsx4(Gropi, { pose, size: 56, anim: "bob" }),
+    /* @__PURE__ */ jsxs2("div", { style: { position: "relative", flex: 1, background: light, borderRadius: R.lg, padding: "9px 11px" }, children: [
+      /* @__PURE__ */ jsx4("span", { style: {
+        position: "absolute",
+        left: -7,
+        top: 16,
+        width: 0,
+        height: 0,
+        borderTop: "7px solid transparent",
+        borderBottom: "7px solid transparent",
+        borderRight: `7px solid ${light}`
+      } }),
+      /* @__PURE__ */ jsx4("div", { style: { fontSize: 11, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: deep, fontFamily: FONTS.ui }, children: eyebrow }),
+      /* @__PURE__ */ jsx4("p", { style: { margin: "3px 0 0", fontSize: 14, lineHeight: 1.55, fontWeight: 500, color: C.text, fontFamily: FONTS.body }, children })
+    ] }),
+    onClose && /* @__PURE__ */ jsx4("button", { onClick: onClose, "aria-label": "Fermer", style: {
+      position: "absolute",
+      top: 2,
+      right: 2,
+      background: "none",
+      border: 0,
+      cursor: "pointer",
+      fontSize: 15,
+      fontWeight: 600,
+      color: C.text2,
+      width: 44,
+      height: 44,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: 12
+    }, className: "gr-focus", children: "\u2715" })
+  ] });
+}
+function GropiCoach({ variant = "tip", eyebrow, children }) {
+  const C = useC();
+  const cfg = COACH[variant] || COACH.tip;
+  const { light, border, deep } = useTintColors(cfg.tint);
+  return /* @__PURE__ */ jsxs2("div", { style: { display: "flex", gap: 9, alignItems: "flex-end", margin: "2px 0" }, children: [
+    /* @__PURE__ */ jsx4(Gropi, { pose: cfg.pose, size: 54, anim: "bob", style: { marginBottom: 2 } }),
+    /* @__PURE__ */ jsxs2("div", { style: {
+      position: "relative",
+      flex: 1,
+      background: light,
+      border: `1.5px solid ${border}`,
+      borderRadius: R.lg,
+      borderBottomLeftRadius: 4,
+      padding: "10px 13px"
+    }, children: [
+      /* @__PURE__ */ jsx4("span", { style: {
+        position: "absolute",
+        left: -7,
+        bottom: 13,
+        width: 0,
+        height: 0,
+        borderTop: "7px solid transparent",
+        borderBottom: "7px solid transparent",
+        borderRight: `7px solid ${light}`
+      } }),
+      /* @__PURE__ */ jsx4("div", { style: { fontSize: 11, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: deep, fontFamily: FONTS.ui, marginBottom: 3 }, children: eyebrow || cfg.eyebrow }),
+      /* @__PURE__ */ jsx4("p", { style: { margin: 0, fontSize: 14, lineHeight: 1.6, color: C.text, fontFamily: FONTS.body }, children })
+    ] })
+  ] });
+}
+function GropiBubble({
+  pose = "wave",
+  size = 74,
+  tint = "primary",
+  eyebrow = "Gropi",
+  side = "right",
+  children,
+  defaultOpen = false
+}) {
+  const C = useC();
+  const [open, setOpen] = useState2(defaultOpen);
+  const { border, deep } = useTintColors(tint);
+  return /* @__PURE__ */ jsxs2("div", { style: { display: "flex", flexDirection: "column", alignItems: side === "right" ? "flex-start" : "flex-end" }, children: [
+    /* @__PURE__ */ jsx4(
+      "button",
+      {
+        onClick: () => setOpen((o) => !o),
+        "aria-label": "Parler \xE0 Gropi",
+        "aria-expanded": open,
+        style: { background: "none", border: 0, padding: 0, cursor: "pointer", lineHeight: 0 },
+        children: /* @__PURE__ */ jsx4(Gropi, { pose, size, anim: open ? "none" : "bob" })
+      }
+    ),
+    open && /* @__PURE__ */ jsxs2("div", { style: {
+      marginTop: 8,
+      maxWidth: 270,
+      background: C.surface,
+      border: `1.5px solid ${border}`,
+      borderRadius: R.lg,
+      padding: "11px 13px",
+      boxShadow: `0 6px 20px ${deep}22`,
+      animation: "gropi-bubble-in .22s ease both"
+    }, children: [
+      /* @__PURE__ */ jsx4("div", { style: { fontSize: 11, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: deep, fontFamily: FONTS.ui, marginBottom: 3 }, children: eyebrow }),
+      /* @__PURE__ */ jsx4("p", { style: { margin: 0, fontSize: 14, lineHeight: 1.6, color: C.text, fontFamily: FONTS.body }, children })
+    ] })
+  ] });
+}
+var POSE_SRC, POSE_DIMS, ANIM, COACH;
+var init_Gropi = __esm({
+  "src/design/Gropi.jsx"() {
+    init_tokens();
+    init_ThemeContext();
+    POSE_SRC = {
+      happy: "/mascotte-happy.webp",
+      wave: "/mascotte-wave.webp",
+      celebrate: "/mascotte-celebrate.webp",
+      think: "/mascotte-think.webp",
+      rocker: "/mascotte-rocker.webp",
+      idea: "/mascotte-idea.webp",
+      pride: "/mascotte-pride.webp",
+      listen: "/mascotte-listen.webp",
+      zen: "/mascotte-zen.webp",
+      mystere: "/mascotte-mystere.webp",
+      choix: "/mascotte-choix.webp",
+      histoire: "/mascotte-histoire.webp",
+      // alias de repli
+      plead: "/mascotte-think.webp"
+    };
+    POSE_DIMS = {
+      happy: [320, 388],
+      wave: [320, 361],
+      celebrate: [320, 391],
+      think: [320, 374],
+      rocker: [320, 390],
+      idea: [320, 452],
+      pride: [320, 387],
+      listen: [320, 391],
+      zen: [307, 420],
+      mystere: [239, 420],
+      choix: [316, 420],
+      histoire: [320, 333],
+      plead: [320, 374]
+    };
+    if (typeof document !== "undefined" && !document.getElementById("gropi-anim-styles")) {
+      const s = document.createElement("style");
+      s.id = "gropi-anim-styles";
+      s.textContent = `
+    @keyframes gropi-bob    { 0%,100%{transform:translateY(0)}      50%{transform:translateY(-6px)} }
+    @keyframes gropi-pop    { 0%{transform:scale(.6);opacity:0} 60%{transform:scale(1.08)} 100%{transform:scale(1);opacity:1} }
+    @keyframes gropi-wiggle { 0%,100%{transform:rotate(0)} 20%{transform:rotate(-8deg)} 60%{transform:rotate(8deg)} }
+    @keyframes gropi-cheer  { 0%{transform:scale(.5) translateY(22px);opacity:0} 50%{transform:scale(1.12) translateY(-8px)} 72%{transform:scale(.97)} 100%{transform:scale(1) translateY(0);opacity:1} }
+    @keyframes gropi-bubble-in { 0%{transform:scale(.92) translateY(4px);opacity:0} 100%{transform:scale(1) translateY(0);opacity:1} }
+    .gropi-anim { will-change: transform; }
+    @media (prefers-reduced-motion: reduce) { .gropi-anim { animation: none !important; } }
+  `;
+      document.head.appendChild(s);
+    }
+    ANIM = {
+      none: {},
+      bob: { animation: "gropi-bob 2.8s ease-in-out infinite" },
+      pop: { animation: "gropi-pop .42s ease-out both" },
+      wiggle: { animation: "gropi-wiggle 2.4s ease-in-out infinite", transformOrigin: "bottom center" },
+      cheer: { animation: "gropi-cheer .62s cubic-bezier(.2,.8,.3,1.2) both" }
+    };
+    COACH = {
+      tip: { pose: "idea", tint: "amber", eyebrow: "Le conseil de Gropi" },
+      ref: { pose: "listen", tint: "primary", eyebrow: "Gropi te fait \xE9couter" },
+      note: { pose: "think", tint: "green", eyebrow: "Gropi pr\xE9cise" }
+    };
+  }
+});
+
+// src/fretboardUtils.js
+function normalizeNote(note) {
+  if (!note) return null;
+  const frToEn = Object.fromEntries(Object.entries(NOTES_FR).map(([en, fr]) => [fr, en]));
+  if (frToEn[note]) return frToEn[note];
+  if (ENHARMONICS[note]) return ENHARMONICS[note];
+  return note;
+}
+function getNoteAtPosition(string, fret) {
+  const openNote = OPEN_STRINGS[string];
+  if (!openNote) return null;
+  const openIdx = CHROMATIC_NOTES.indexOf(openNote);
+  return CHROMATIC_NOTES[(openIdx + fret) % 12];
+}
+function getPositionsOfNote(note, maxFret = 12, strings = [1, 2, 3, 4, 5, 6]) {
+  const target = normalizeNote(note);
+  const positions = [];
+  for (const s of strings) {
+    for (let f = 0; f <= maxFret; f++) {
+      if (getNoteAtPosition(s, f) === target) {
+        positions.push({ string: s, fret: f });
+      }
+    }
+  }
+  return positions;
+}
+function getScaleNotes(root, scaleKey) {
+  const scale = SCALES[scaleKey];
+  if (!scale) return [];
+  const rootNorm = normalizeNote(root);
+  const rootIdx = CHROMATIC_NOTES.indexOf(rootNorm);
+  if (rootIdx === -1) return [];
+  return scale.intervals.map((interval) => CHROMATIC_NOTES[(rootIdx + interval) % 12]);
+}
+function getChordNotes(root, chordType) {
+  const chord = CHORD_TYPES[chordType];
+  if (!chord) return [];
+  const rootNorm = normalizeNote(root);
+  const rootIdx = CHROMATIC_NOTES.indexOf(rootNorm);
+  if (rootIdx === -1) return [];
+  return chord.intervals.map((interval) => CHROMATIC_NOTES[(rootIdx + interval) % 12]);
+}
+function getScalePositions(root, scaleKey, maxFret = 12) {
+  const scale = SCALES[scaleKey];
+  if (!scale) return [];
+  const scaleNotes = getScaleNotes(root, scaleKey);
+  const rootNorm = normalizeNote(root);
+  const rootIdx = CHROMATIC_NOTES.indexOf(rootNorm);
+  const positions = [];
+  for (let s = 1; s <= 6; s++) {
+    for (let f = 0; f <= maxFret; f++) {
+      const note = getNoteAtPosition(s, f);
+      const noteIdx = CHROMATIC_NOTES.indexOf(note);
+      if (scaleNotes.includes(note)) {
+        const semitones = (noteIdx - rootIdx + 12) % 12;
+        let degreeIdx = scale.intervals.indexOf(semitones);
+        let actualInterval = semitones;
+        if (degreeIdx === -1) {
+          degreeIdx = scale.intervals.indexOf(semitones + 12);
+          if (degreeIdx !== -1) actualInterval = semitones + 12;
+        }
+        positions.push({
+          string: s,
+          fret: f,
+          note,
+          interval: actualInterval,
+          // Degré dans la gamme (1-based), ex: 1 = fondamentale, 5 = quinte
+          degree: degreeIdx + 1,
+          isRoot: note === rootNorm
+        });
+      }
+    }
+  }
+  return positions;
+}
+function getChordPositions(root, chordType, maxFret = 12) {
+  const chord = CHORD_TYPES[chordType];
+  if (!chord) return [];
+  const chordNotes = getChordNotes(root, chordType);
+  const rootNorm = normalizeNote(root);
+  const rootIdx = CHROMATIC_NOTES.indexOf(rootNorm);
+  const positions = [];
+  for (let s = 1; s <= 6; s++) {
+    for (let f = 0; f <= maxFret; f++) {
+      const note = getNoteAtPosition(s, f);
+      const noteIdx = CHROMATIC_NOTES.indexOf(note);
+      if (chordNotes.includes(note)) {
+        const semitones = (noteIdx - rootIdx + 12) % 12;
+        let degreeIdx = chord.intervals.indexOf(semitones);
+        let actualInterval = semitones;
+        if (degreeIdx === -1) {
+          degreeIdx = chord.intervals.indexOf(semitones + 12);
+          if (degreeIdx !== -1) actualInterval = semitones + 12;
+        }
+        positions.push({
+          string: s,
+          fret: f,
+          note,
+          interval: actualInterval,
+          degree: degreeIdx + 1,
+          isRoot: note === rootNorm
+        });
+      }
+    }
+  }
+  return positions;
+}
+function getInterval(from, to) {
+  const a = CHROMATIC_NOTES.indexOf(normalizeNote(from));
+  const b = CHROMATIC_NOTES.indexOf(normalizeNote(to));
+  if (a === -1 || b === -1) return null;
+  return (b - a + 12) % 12;
+}
+function noteToFr(note) {
+  return NOTES_FR[normalizeNote(note)] || note;
+}
+function getHighlightPositions(notes, maxFret = 12) {
+  if (!notes || notes.length === 0) return [];
+  const normalized = notes.map(normalizeNote);
+  const positions = [];
+  for (let s = 1; s <= 6; s++) {
+    for (let f = 0; f <= maxFret; f++) {
+      const note = getNoteAtPosition(s, f);
+      if (normalized.includes(note)) {
+        positions.push({
+          string: s,
+          fret: f,
+          note,
+          isRoot: f === 0 ? false : void 0
+          // le caller peut surcharger
+        });
+      }
+    }
+  }
+  return positions;
+}
+function getQuizTargetPositions(targetNote, maxFret = 12) {
+  return getPositionsOfNote(targetNote, maxFret);
+}
+function isCorrectPosition(clickedString, clickedFret, correctPositions) {
+  return correctPositions.some((p) => p.string === clickedString && p.fret === clickedFret);
+}
+function checkQuizCompletion(selected, correct) {
+  const hits = selected.filter((s) => isCorrectPosition(s.string, s.fret, correct));
+  const extras = selected.length - hits.length;
+  return {
+    complete: hits.length === correct.length && extras === 0,
+    found: hits.length,
+    total: correct.length,
+    misses: correct.length - hits.length,
+    extras
+  };
+}
+var CHROMATIC_NOTES, ENHARMONICS, NOTES_FR, OPEN_STRINGS, MARKER_FRETS, DOUBLE_MARKER_FRETS, SCALES, CHORD_TYPES, INTERVAL_NAMES;
+var init_fretboardUtils = __esm({
+  "src/fretboardUtils.js"() {
+    CHROMATIC_NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+    ENHARMONICS = {
+      "Db": "C#",
+      "Eb": "D#",
+      "Fb": "E",
+      "Gb": "F#",
+      "Ab": "G#",
+      "Bb": "A#",
+      "Cb": "B"
+    };
+    NOTES_FR = {
+      "C": "Do",
+      "C#": "Do#",
+      "D": "R\xE9",
+      "D#": "R\xE9#",
+      "E": "Mi",
+      "F": "Fa",
+      "F#": "Fa#",
+      "G": "Sol",
+      "G#": "Sol#",
+      "A": "La",
+      "A#": "La#",
+      "B": "Si"
+    };
+    OPEN_STRINGS = {
+      1: "E",
+      // Mi aigu
+      2: "B",
+      // Si
+      3: "G",
+      // Sol
+      4: "D",
+      // Ré
+      5: "A",
+      // La
+      6: "E"
+      // Mi grave
+    };
+    MARKER_FRETS = [3, 5, 7, 9];
+    DOUBLE_MARKER_FRETS = [12];
+    SCALES = {
+      // Gammes majeures / mineures
+      "major": { name: "Majeure", intervals: [0, 2, 4, 5, 7, 9, 11] },
+      "natural_minor": { name: "Mineure naturelle", intervals: [0, 2, 3, 5, 7, 8, 10] },
+      "harmonic_minor": { name: "Mineure harmonique", intervals: [0, 2, 3, 5, 7, 8, 11] },
+      "melodic_minor": { name: "Mineure m\xE9lodique", intervals: [0, 2, 3, 5, 7, 9, 11] },
+      // Pentatoniques
+      "pentatonic_major": { name: "Pentatonique majeure", intervals: [0, 2, 4, 7, 9] },
+      "pentatonic_minor": { name: "Pentatonique mineure", intervals: [0, 3, 5, 7, 10] },
+      "blues": { name: "Blues", intervals: [0, 3, 5, 6, 7, 10] },
+      // Modes de la gamme majeure
+      "dorian": { name: "Dorien", intervals: [0, 2, 3, 5, 7, 9, 10] },
+      "phrygian": { name: "Phrygien", intervals: [0, 1, 3, 5, 7, 8, 10] },
+      "lydian": { name: "Lydien", intervals: [0, 2, 4, 6, 7, 9, 11] },
+      "mixolydian": { name: "Mixolydien", intervals: [0, 2, 4, 5, 7, 9, 10] },
+      "locrian": { name: "Locrien", intervals: [0, 1, 3, 5, 6, 8, 10] },
+      // Gammes exotiques utiles
+      "whole_tone": { name: "Tons entiers", intervals: [0, 2, 4, 6, 8, 10] },
+      "diminished": { name: "Diminu\xE9e (T-ST)", intervals: [0, 2, 3, 5, 6, 8, 9, 11] }
+    };
+    CHORD_TYPES = {
+      // Triades
+      "maj": { name: "Majeur", sym: "", intervals: [0, 4, 7] },
+      "min": { name: "Mineur", sym: "m", intervals: [0, 3, 7] },
+      "dim": { name: "Diminu\xE9", sym: "dim", intervals: [0, 3, 6] },
+      "aug": { name: "Augment\xE9", sym: "aug", intervals: [0, 4, 8] },
+      "sus2": { name: "Sus2", sym: "sus2", intervals: [0, 2, 7] },
+      "sus4": { name: "Sus4", sym: "sus4", intervals: [0, 5, 7] },
+      // Sixtes
+      "maj6": { name: "Sixte", sym: "6", intervals: [0, 4, 7, 9] },
+      "min6": { name: "Mineur 6", sym: "m6", intervals: [0, 3, 7, 9] },
+      // Tétrades
+      "maj7": { name: "Maj7", sym: "maj7", intervals: [0, 4, 7, 11] },
+      "min7": { name: "Mineur 7", sym: "m7", intervals: [0, 3, 7, 10] },
+      "dom7": { name: "Dominante 7", sym: "7", intervals: [0, 4, 7, 10] },
+      "min7b5": { name: "Mi-diminu\xE9 (\xF8)", sym: "m7\u266D5", intervals: [0, 3, 6, 10] },
+      "dim7": { name: "Diminu\xE9 7", sym: "dim7", intervals: [0, 3, 6, 9] },
+      "minMaj7": { name: "Mineur Maj7", sym: "mMaj7", intervals: [0, 3, 7, 11] },
+      "dom7sus4": { name: "7 sus4", sym: "7sus4", intervals: [0, 5, 7, 10] },
+      // Neuvièmes
+      "dom9": { name: "Neuvi\xE8me", sym: "9", intervals: [0, 4, 7, 10, 14] },
+      "maj9": { name: "Maj9", sym: "maj9", intervals: [0, 4, 7, 11, 14] },
+      "min9": { name: "Mineur 9", sym: "m9", intervals: [0, 3, 7, 10, 14] },
+      "add9": { name: "Add9", sym: "add9", intervals: [0, 4, 7, 14] },
+      // Altérés (dominantes tendues)
+      "dom7b9": { name: "7 \u266D9", sym: "7\u266D9", intervals: [0, 4, 7, 10, 13] },
+      "dom7s9": { name: "7 \u266F9", sym: "7\u266F9", intervals: [0, 4, 7, 10, 15] },
+      "dom7b5": { name: "7 \u266D5", sym: "7\u266D5", intervals: [0, 4, 6, 10] },
+      "dom7s5": { name: "7 \u266F5", sym: "7\u266F5", intervals: [0, 4, 8, 10] },
+      // Onzièmes et treizièmes
+      // Sur un 11 de dominante, la tierce majeure est omise par convention :
+      // elle formerait une neuvième mineure avec la onzième, intervalle très dur.
+      "dom11": { name: "Onzi\xE8me", sym: "11", intervals: [0, 7, 10, 14, 17] },
+      "min11": { name: "Mineur 11", sym: "m11", intervals: [0, 3, 7, 10, 14, 17] },
+      "maj7s11": { name: "Maj7 \u266F11", sym: "maj7\u266F11", intervals: [0, 4, 7, 11, 18] },
+      "dom13": { name: "Treizi\xE8me", sym: "13", intervals: [0, 4, 7, 10, 14, 21] },
+      "min13": { name: "Mineur 13", sym: "m13", intervals: [0, 3, 7, 10, 14, 21] },
+      "maj13": { name: "Maj13", sym: "maj13", intervals: [0, 4, 7, 11, 14, 21] }
+    };
+    INTERVAL_NAMES = {
+      0: { short: "R", name: "Fondamentale", fr: "Fondamentale" },
+      1: { short: "b2", name: "Minor 2nd", fr: "Seconde mineure" },
+      2: { short: "2", name: "Major 2nd", fr: "Seconde majeure" },
+      3: { short: "b3", name: "Minor 3rd", fr: "Tierce mineure" },
+      4: { short: "3", name: "Major 3rd", fr: "Tierce majeure" },
+      5: { short: "4", name: "Perfect 4th", fr: "Quarte juste" },
+      6: { short: "b5", name: "Dim 5th", fr: "Triton" },
+      7: { short: "5", name: "Perfect 5th", fr: "Quinte juste" },
+      8: { short: "b6", name: "Minor 6th", fr: "Sixte mineure" },
+      9: { short: "6", name: "Major 6th", fr: "Sixte majeure" },
+      10: { short: "b7", name: "Minor 7th", fr: "Septi\xE8me mineure" },
+      11: { short: "7", name: "Major 7th", fr: "Septi\xE8me majeure" },
+      12: { short: "8", name: "Octave", fr: "Octave" },
+      14: { short: "9", name: "Major 9th", fr: "Neuvi\xE8me majeure" }
+    };
+  }
+});
+
+// src/tab/tabSon.js
+function planifierTab(evenements, opts = {}) {
+  const { bpm = 90, subdivision = 0.25, rng = Math.random } = opts;
+  const R2 = { ...REGLAGES, ...opts.reglages || {} };
+  const spc = 60 / bpm * subdivision;
+  if (!Array.isArray(evenements) || !evenements.length) return { voix: [], duree: 0 };
+  const parCol = /* @__PURE__ */ new Map();
+  for (const ev of evenements) {
+    if (!parCol.has(ev.col)) parCol.set(ev.col, []);
+    parCol.get(ev.col).push(ev);
+  }
+  const decalageGrattage = /* @__PURE__ */ new Map();
+  for (const [, evs] of parCol) {
+    if (evs.length < 3) continue;
+    [...evs].sort((a, b) => b.string - a.string).forEach((ev, i) => decalageGrattage.set(ev, i * R2.grattageMs / 1e3));
+  }
+  const voix = [];
+  for (const ev of [...evenements].sort((a, b) => a.col - b.col || b.string - a.string)) {
+    const ouverte = CORDE_MIDI[ev.string];
+    if (ouverte == null) continue;
+    const jitter = rng() * R2.decalageMaxMs / 1e3;
+    const debut = ev.col * spc + (decalageGrattage.get(ev) || 0) + jitter;
+    const v = vel(ev.col, rng, R2);
+    if (ev.type === "mute") {
+      voix.push({
+        corde: ev.string,
+        debut,
+        fin: debut + R2.etouffeeDuree,
+        velocite: R2.velociteEtouffee,
+        etouffee: true,
+        hauteurs: [{ t: 0, midi: ouverte, forme: "saut" }],
+        ev
+      });
+      continue;
+    }
+    if (ev.type === "note") {
+      voix.push({ corde: ev.string, debut, fin: null, velocite: v, etouffee: false, hauteurs: [{ t: 0, midi: ouverte + ev.fret, forme: "saut" }], ev });
+      continue;
+    }
+    if (ev.type === "bend") {
+      const depart = ouverte + ev.fromFret, arrivee = ouverte + ev.toFret;
+      voix.push({
+        corde: ev.string,
+        debut,
+        fin: null,
+        velocite: v,
+        etouffee: false,
+        ev,
+        hauteurs: [
+          { t: 0, midi: depart, forme: "saut" },
+          { t: R2.bendDelaiS, midi: depart, forme: "saut" },
+          { t: R2.bendDelaiS + Math.min(R2.bendDureeMax, spc * 2), midi: arrivee, forme: "rampe" }
+        ]
+      });
+      continue;
+    }
+    if (ev.type === "hammer" || ev.type === "pull") {
+      const ecart = ev.toCol != null ? (ev.toCol - ev.col) * spc : 0.075;
+      voix.push({
+        corde: ev.string,
+        debut,
+        fin: null,
+        velocite: v,
+        etouffee: false,
+        ev,
+        hauteurs: [{ t: 0, midi: ouverte + ev.fromFret, forme: "saut" }, { t: ecart, midi: ouverte + ev.toFret, forme: "saut" }]
+      });
+      continue;
+    }
+    if (ev.type === "slide_up" || ev.type === "slide_down") {
+      const dispo = ev.toCol != null ? (ev.toCol - ev.col) * spc : Math.min(0.16, spc);
+      voix.push({
+        corde: ev.string,
+        debut,
+        fin: null,
+        velocite: v,
+        etouffee: false,
+        ev,
+        hauteurs: [{ t: 0, midi: ouverte + ev.fromFret, forme: "saut" }, { t: Math.max(0.03, dispo * R2.slidePart), midi: ouverte + ev.toFret, forme: "rampe" }]
+      });
+      continue;
+    }
+  }
+  const parCorde = /* @__PURE__ */ new Map();
+  for (const x of voix) {
+    if (!parCorde.has(x.corde)) parCorde.set(x.corde, []);
+    parCorde.get(x.corde).push(x);
+  }
+  for (const [, liste2] of parCorde) {
+    liste2.sort((a, b) => a.debut - b.debut);
+    liste2.forEach((x, i) => {
+      if (x.etouffee) return;
+      const derniereHauteur = x.hauteurs[x.hauteurs.length - 1].t;
+      const suivante = liste2[i + 1];
+      const naturelle = x.debut + Math.max(derniereHauteur + 0.05, suivante ? R2.resonanceMax : R2.resonanceFinale);
+      x.fin = suivante ? Math.min(suivante.debut, naturelle) : naturelle;
+    });
+  }
+  voix.sort((a, b) => a.debut - b.debut);
+  return { voix, duree: voix.reduce((m, x) => Math.max(m, x.fin), 0) };
+}
+var CORDE_MIDI, REGLAGES, vel;
+var init_tabSon = __esm({
+  "src/tab/tabSon.js"() {
+    CORDE_MIDI = { 6: 40, 5: 45, 4: 50, 3: 55, 2: 59, 1: 64 };
+    REGLAGES = {
+      resonanceMax: 2.2,
+      // s — une note seule ne sonne pas plus longtemps
+      resonanceFinale: 1.6,
+      // s — dernière note d'une corde, si rien ne la coupe
+      velociteTemps: 0.86,
+      // sur le temps
+      velociteCroche: 0.74,
+      // sur le « et »
+      velociteDouble: 0.64,
+      // sur les doubles-croches intermédiaires
+      variationVelocite: 0.05,
+      // ± aléatoire, pour ne jamais jouer deux fois pareil
+      decalageMaxMs: 7,
+      // retard aléatoire max (jamais en avance sur la grille)
+      grattageMs: 12,
+      // écart entre deux cordes d'un accord
+      bendDelaiS: 0.03,
+      // le bend commence juste après l'attaque
+      bendDureeMax: 0.18,
+      // s — durée max de la montée d'un bend
+      slidePart: 0.85,
+      // part du temps disponible occupée par le glissé
+      etouffeeDuree: 0.05,
+      // s — le « tchk » d'une note étouffée
+      velociteEtouffee: 0.55
+    };
+    vel = (col, rng, R2) => {
+      const base = col % 4 === 0 ? R2.velociteTemps : col % 2 === 0 ? R2.velociteCroche : R2.velociteDouble;
+      const v = base + (rng() * 2 - 1) * R2.variationVelocite;
+      return Math.max(0.2, Math.min(1, v));
+    };
+  }
+});
+
 // stub:tone-stub
 var tone_stub_exports = {};
 __export(tone_stub_exports, {
@@ -302,397 +1345,4979 @@ var init_tone_stub = __esm({
   }
 });
 
+// src/audioEngine.js
+async function chargerTone() {
+  if (Tone) return Tone;
+  if (!tonePromise) tonePromise = Promise.resolve().then(() => (init_tone_stub(), tone_stub_exports)).then((m) => {
+    Tone = m;
+    return m;
+  });
+  return tonePromise;
+}
+function toToneNote(note, octave) {
+  const flat = SHARP_TO_FLAT[note];
+  return `${flat || note}${octave}`;
+}
+function midiOf(name, octave) {
+  return CHROMATIC.indexOf(name) + 12 * (octave + 1);
+}
+function fromMidi(midi) {
+  return toToneNote(CHROMATIC[(midi % 12 + 12) % 12], Math.floor(midi / 12) - 1);
+}
+function buildVoicingFromIntervals(rootName, intervals) {
+  if (!intervals?.length) return [];
+  let degrees = [...new Set(intervals)].sort((a, b) => a - b);
+  if (degrees.length > 5) degrees = degrees.filter((d) => d !== 7);
+  const target = Math.min(6, Math.max(5, degrees.length + 1));
+  const LOW = midiOf("C", 2), HIGH = midiOf("B", 4);
+  const bass = midiOf(rootName, 2);
+  const span = Math.max(...degrees);
+  const bump = bass + span + 12 <= HIGH ? 12 : 0;
+  const rel = /* @__PURE__ */ new Set([0]);
+  let i = 0, guard = 0;
+  while (rel.size < target && guard < 60) {
+    const off = degrees[i % degrees.length];
+    const val = off + bump + 12 * Math.floor(i / degrees.length);
+    if (bass + val <= HIGH) rel.add(val);
+    i++;
+    guard++;
+  }
+  return [...rel].sort((a, b) => a - b).map((r) => bass + r).filter((m) => m >= LOW && m <= HIGH).map(fromMidi);
+}
+function strumInto(notes, duration, when, direction = "down", spread = 0.026) {
+  const ordered = direction === "down" ? notes : [...notes].reverse();
+  const n = ordered.length;
+  ordered.forEach((note, i) => {
+    const curve = Math.sin((i + 0.6) / n * Math.PI);
+    const velocity = Math.max(0.35, Math.min(1, 0.55 + curve * 0.35 + (Math.random() - 0.5) * 0.07));
+    const jitter = (Math.random() - 0.5) * spread * 0.35;
+    const t = when + i * spread + jitter;
+    try {
+      sampler.triggerAttackRelease(note, duration, t, velocity);
+    } catch {
+    }
+  });
+}
+function getToneNoteAtPosition(string, fret) {
+  const open = OPEN_STRINGS2[string];
+  const openNote = open.slice(0, -1);
+  const openOct = parseInt(open.slice(-1));
+  const openIdx = CHROMATIC.indexOf(openNote);
+  const total = openIdx + fret;
+  return toToneNote(CHROMATIC[total % 12], openOct + Math.floor(total / 12));
+}
+function differer(fn, ms) {
+  if (ms <= 0) {
+    fn();
+    return;
+  }
+  const id = setTimeout(() => {
+    enAttente = enAttente.filter((x) => x !== id);
+    fn();
+  }, ms);
+  enAttente.push(id);
+  return id;
+}
+function annulerEnAttente() {
+  for (const id of enAttente) clearTimeout(id);
+  enAttente = [];
+}
+function reveillerSortie() {
+  if (restaurationTimer) {
+    clearTimeout(restaurationTimer);
+    restaurationTimer = null;
+  }
+  if (!sortieMaitre || !Tone) return;
+  try {
+    sortieMaitre.gain.cancelScheduledValues(Tone.now());
+    sortieMaitre.gain.value = 1;
+  } catch {
+  }
+  try {
+    if (sampler) sampler.release = RELEASE;
+  } catch {
+  }
+}
+function isAudioLoaded() {
+  return isLoaded;
+}
+function loadAudio() {
+  if (loadPromise) return loadPromise;
+  loadPromise = (async () => {
+    await chargerTone();
+    return new Promise((resolve, reject) => {
+      try {
+        sortieMaitre = new Tone.Gain(1).toDestination();
+        const reverb = new Tone.Reverb({ decay: 1.9, wet: 0.19 });
+        reverb.connect(sortieMaitre);
+        busGuitare = reverb;
+        sampler = new Tone.Sampler({
+          urls: SAMPLE_URLS,
+          baseUrl: BASE_URL,
+          release: 1.6,
+          onload: () => {
+            isLoaded = true;
+            resolve(true);
+          },
+          onerror: (err) => {
+            loadError = err;
+            warn("Erreur samples:", err);
+            reject(err);
+          }
+        }).connect(reverb);
+      } catch (err) {
+        loadError = err;
+        reject(err);
+      }
+    });
+  })();
+  loadPromise.catch(() => {
+    loadPromise = null;
+    isLoaded = false;
+  });
+  return loadPromise;
+}
+async function unlockAudio() {
+  try {
+    await chargerTone();
+    if (Tone.context.state !== "running") await Tone.start();
+    return Tone.context.state === "running";
+  } catch {
+    return false;
+  }
+}
+async function ensureLoaded() {
+  try {
+    await chargerTone();
+  } catch {
+    return false;
+  }
+  const etat = Tone.context.state;
+  if (etat !== "running") {
+    try {
+      await Tone.start();
+      if (Tone.context.state !== "running") await Tone.context.rawContext?.resume?.();
+    } catch {
+    }
+  }
+  if (!isLoaded) {
+    try {
+      await loadAudio();
+    } catch {
+      return false;
+    }
+  }
+  return isLoaded;
+}
+async function playNote(note, duration = "4n") {
+  if (!await ensureLoaded()) return;
+  stopAll();
+  reveillerSortie();
+  try {
+    sampler.triggerAttackRelease(note, duration, Tone.now());
+  } catch (e) {
+    warn("playNote:", e);
+  }
+}
+async function playChord(notes, duration = "2n", opts = {}) {
+  if (!await ensureLoaded()) return;
+  stopAll();
+  reveillerSortie();
+  const { strum = true, direction = "down", spread = 0.026 } = opts;
+  try {
+    if (!strum) {
+      sampler.triggerAttackRelease(notes, duration);
+      return;
+    }
+    strumInto(notes, duration, Tone.now(), direction, spread);
+  } catch (e) {
+    warn("playChord:", e);
+  }
+}
+async function playScale(notes, bpm = 80, onStep) {
+  if (!await ensureLoaded()) return;
+  stopAll();
+  reveillerSortie();
+  const spb = 60 / bpm;
+  try {
+    notes.forEach((note, i) => {
+      differer(() => {
+        try {
+          sampler.triggerAttackRelease(note, spb * 0.85, Tone.now());
+        } catch {
+        }
+        onStep?.(i, note);
+      }, i * spb * 1e3);
+    });
+    differer(() => onStep?.(-1, null), notes.length * spb * 1e3);
+  } catch (e) {
+    warn("playScale:", e);
+  }
+}
+async function playRythme(spec) {
+  if (!await ensureLoaded()) return 0;
+  stopAll();
+  reveillerSortie();
+  const { bpm = 70, pas = 2, attaques = [], swing = false, note = "A3", clic = "E5" } = spec || {};
+  const spb = 60 / bpm, t0 = 4 * spb;
+  const quand = (i) => {
+    const temps = Math.floor(i / pas), sous = i % pas;
+    const frac = swing && pas === 2 ? sous === 0 ? 0 : 2 / 3 : sous / pas;
+    return (t0 + (temps + frac) * spb) * 1e3;
+  };
+  try {
+    for (let b = 0; b < 8; b++) {
+      differer(() => {
+        try {
+          sampler.triggerAttackRelease(clic, 0.05, Tone.now(), b === 0 || b === 4 ? 0.5 : 0.3);
+        } catch {
+        }
+      }, b * spb * 1e3);
+    }
+    const duree = Math.max(0.08, spb / pas * (swing ? 0.6 : 0.8));
+    for (const i of attaques) {
+      differer(() => {
+        try {
+          sampler.triggerAttackRelease(note, duree, Tone.now(), 0.85);
+        } catch {
+        }
+      }, quand(i));
+    }
+  } catch (e) {
+    warn("playRythme:", e);
+  }
+  return 8 * spb * 1e3;
+}
+async function playSuite(accords, secondesParAccord = 1.6) {
+  if (!await ensureLoaded()) return;
+  stopAll();
+  reveillerSortie();
+  try {
+    accords.forEach((notes, i) => {
+      differer(() => {
+        try {
+          strumInto(notes, secondesParAccord * 0.9, Tone.now(), i % 2 ? "up" : "down");
+        } catch {
+        }
+      }, i * secondesParAccord * 1e3);
+    });
+  } catch (e) {
+    warn("playSuite:", e);
+  }
+}
+async function jouerEcoute(spec) {
+  if (!spec) return;
+  if (spec.type === "suite") return playSuite(spec.accords);
+  if (spec.type === "intervalle") return playInterval(spec.notes[0], spec.notes[1], spec.mode || "ascending");
+  if (spec.type === "accord") return spec.arpege ? playScale(spec.notes, 150) : playChord(spec.notes, "2n");
+  if (spec.type === "rythme") return playRythme(spec);
+}
+async function playInterval(note1, note2, mode = "ascending") {
+  if (!await ensureLoaded()) return;
+  stopAll();
+  reveillerSortie();
+  try {
+    if (mode === "harmonic") {
+      sampler.triggerAttackRelease([note1, note2], "2n", Tone.now());
+      return;
+    }
+    const [premiere, seconde] = mode === "descending" ? [note2, note1] : [note1, note2];
+    sampler.triggerAttackRelease(premiere, "4n", Tone.now());
+    differer(() => {
+      try {
+        sampler.triggerAttackRelease(seconde, "4n", Tone.now());
+      } catch {
+      }
+    }, ECART_INTERVALLE_MS);
+  } catch (e) {
+    warn("playInterval:", e);
+  }
+}
+async function playScaleFromRoot(root, scaleKey, bpm = 80, onStep) {
+  const notes = getScaleNotes(root, scaleKey);
+  if (!notes.length) return;
+  const toneNotes = notes.map((note, i) => toToneNote(note, i < 5 ? 3 : 4));
+  await playScale(toneNotes, bpm, onStep ? (i) => onStep(i, notes[i] ?? null) : void 0);
+  return notes;
+}
+async function playArpeggioFromRoot(root, chordType, bpm = 132, onStep) {
+  const names = getChordNotes(root, chordType);
+  if (!names.length) return;
+  const toneNotes = names.map((n, i) => toToneNote(n, i < 3 ? 3 : 4));
+  await playScale(toneNotes, bpm, onStep ? (i) => onStep(i, names[i] ?? null) : void 0);
+  return names;
+}
+async function chargerBuffersCordes() {
+  if (buffersCordes?.loaded) return buffersCordes;
+  await new Promise((resolve, reject) => {
+    const minuteur = setTimeout(() => reject(new Error("d\xE9lai d\xE9pass\xE9")), 8e3);
+    buffersCordes = new Tone.ToneAudioBuffers({
+      urls: SAMPLE_URLS,
+      baseUrl: BASE_URL,
+      onload: () => {
+        clearTimeout(minuteur);
+        resolve();
+      },
+      onerror: (e) => {
+        clearTimeout(minuteur);
+        reject(e);
+      }
+    });
+  });
+  return buffersCordes;
+}
+function echantillonPour(midi) {
+  const m = Math.max(MIDI_MIN_ECH, Math.min(MIDI_MAX_ECH, Math.round(midi)));
+  return { nom: NOMS_ECHANTILLONS[m % 12] + (Math.floor(m / 12) - 1), base: m };
+}
+function jouerVoix(v, t0) {
+  const depart = v.hauteurs[0].midi;
+  const { nom: nom2, base } = echantillonPour(depart);
+  const T2 = t0 + v.debut, Tfin = t0 + v.fin;
+  const src = new Tone.ToneBufferSource(buffersCordes.get(nom2));
+  const gain = new Tone.Gain(0);
+  let filtre = null;
+  if (v.etouffee) {
+    filtre = new Tone.Filter({ frequency: 1100, type: "lowpass", rolloff: -24 });
+    src.chain(filtre, gain, busGuitare);
+  } else {
+    src.chain(gain, busGuitare);
+  }
+  src.playbackRate.setValueAtTime(vitessePour(depart, base), T2);
+  for (const p of v.hauteurs.slice(1)) {
+    const r = vitessePour(p.midi, base);
+    if (p.forme === "rampe") src.playbackRate.exponentialRampToValueAtTime(r, T2 + p.t);
+    else src.playbackRate.setValueAtTime(r, T2 + p.t);
+  }
+  gain.gain.setValueAtTime(0, T2);
+  gain.gain.linearRampToValueAtTime(v.velocite, T2 + 4e-3);
+  gain.gain.setTargetAtTime(0, Tfin, v.etouffee ? 0.01 : 0.03);
+  src.start(T2);
+  src.stop(Tfin + 0.3);
+  const voix = { src, gain };
+  voixCordes.add(voix);
+  src.onended = () => {
+    voixCordes.delete(voix);
+    try {
+      src.dispose();
+      gain.dispose();
+      filtre?.dispose();
+    } catch {
+    }
+  };
+}
+async function playTab(evenements, opts = {}) {
+  if (!await ensureLoaded()) return;
+  stopAll();
+  reveillerSortie();
+  const { bpm = 90, subdivision = 0.25, onEvent, onDone } = opts;
+  if (!Array.isArray(evenements) || evenements.length === 0) {
+    onDone?.();
+    return;
+  }
+  const maLecture = ++generationTab;
+  try {
+    await chargerBuffersCordes();
+    if (!busGuitare) throw new Error("bus guitare absent");
+  } catch (e) {
+    warn("moteur de cordes indisponible, repli sur le sampler :", e);
+    return playTabSampler(evenements, opts);
+  }
+  if (maLecture !== generationTab) return;
+  const { voix } = planifierTab(evenements, { bpm, subdivision, reglages: opts.reglages });
+  const AVANCE_MS = 80;
+  const t0 = Tone.now() + AVANCE_MS / 1e3;
+  try {
+    for (const v of voix) jouerVoix(v, t0);
+  } catch (e) {
+    warn("playTab:", e);
+  }
+  const spc = 60 / bpm * subdivision;
+  for (const ev of evenements) differer(() => onEvent?.(ev), AVANCE_MS + ev.col * spc * 1e3);
+  const dernierCol = Math.max(...evenements.map((e) => e.toCol ?? e.col));
+  differer(() => onDone?.(), AVANCE_MS + (dernierCol + 2) * spc * 1e3);
+}
+async function playTabSampler(evenements, opts = {}) {
+  if (!await ensureLoaded()) return;
+  stopAll();
+  reveillerSortie();
+  const { bpm = 90, subdivision = 0.25, onEvent, onDone } = opts;
+  if (!Array.isArray(evenements) || evenements.length === 0) {
+    onDone?.();
+    return;
+  }
+  const secParColonne = 60 / bpm * subdivision;
+  const dureeNote = secParColonne;
+  const dernierCol = Math.max(...evenements.map((e) => e.toCol ?? e.col));
+  try {
+    for (const ev of evenements) {
+      const tMs = ev.col * secParColonne * 1e3;
+      if (ev.type === "mute") {
+        differer(() => {
+          onEvent?.(ev);
+        }, tMs);
+        continue;
+      }
+      if (ev.type === "note") {
+        const note = getToneNoteAtPosition(ev.string, ev.fret);
+        differer(() => {
+          onEvent?.(ev);
+          try {
+            sampler.triggerAttackRelease(note, dureeNote, Tone.now(), 0.75);
+          } catch (e) {
+            warn("playTab note:", e);
+          }
+        }, tMs);
+        continue;
+      }
+      if (ev.type === "bend") {
+        const note = getToneNoteAtPosition(ev.string, ev.toFret);
+        differer(() => {
+          onEvent?.(ev);
+          try {
+            sampler.triggerAttackRelease(note, dureeNote, Tone.now(), 0.75);
+          } catch (e) {
+            warn("playTab bend:", e);
+          }
+        }, tMs);
+        continue;
+      }
+      if (ev.type === "hammer" || ev.type === "pull") {
+        const noteDepart = getToneNoteAtPosition(ev.string, ev.fromFret);
+        const noteArrivee = getToneNoteAtPosition(ev.string, ev.toFret);
+        const ecart = ev.toCol != null ? (ev.toCol - ev.col) * secParColonne : 0.075;
+        differer(() => {
+          onEvent?.(ev);
+          try {
+            sampler.triggerAttackRelease(noteDepart, Math.max(0.04, ecart), Tone.now(), 0.75);
+            sampler.triggerAttackRelease(noteArrivee, dureeNote * 0.9, Tone.now() + ecart, 0.45);
+          } catch (e) {
+            warn("playTab hammer/pull:", e);
+          }
+        }, tMs);
+        continue;
+      }
+      if (ev.type === "slide_up" || ev.type === "slide_down") {
+        const pas = ev.fromFret <= ev.toFret ? 1 : -1;
+        const cases = [];
+        for (let f = ev.fromFret; pas > 0 ? f <= ev.toFret : f >= ev.toFret; f += pas) cases.push(f);
+        const dureeGlissando = ev.toCol != null ? (ev.toCol - ev.col) * secParColonne : Math.min(0.16, dureeNote * 0.5);
+        differer(() => {
+          onEvent?.(ev);
+          cases.forEach((f, i) => {
+            const note = getToneNoteAtPosition(ev.string, f);
+            const estArrivee = i === cases.length - 1;
+            const t = Tone.now() + (cases.length > 1 ? i / (cases.length - 1) * dureeGlissando : 0);
+            try {
+              sampler.triggerAttackRelease(
+                note,
+                estArrivee ? dureeNote : 0.045,
+                t,
+                estArrivee ? 0.75 : 0.4
+              );
+            } catch (e) {
+              warn("playTab slide:", e);
+            }
+          });
+        }, tMs);
+        continue;
+      }
+    }
+    differer(() => onDone?.(), (dernierCol + 2) * secParColonne * 1e3);
+  } catch (e) {
+    warn("playTab:", e);
+  }
+}
+async function playChordFromRoot(root, chordType, onStep) {
+  const intervals = CHORD_TYPES[chordType]?.intervals;
+  if (!intervals) return;
+  const voiced = buildVoicingFromIntervals(normalizeNote(root), intervals);
+  await playChord(voiced, "2n");
+  if (onStep) {
+    const names = getChordNotes(root, chordType);
+    onStep(0, names);
+    setTimeout(() => onStep(-1, null), 1400);
+  }
+}
+async function playProgression(chords, secondsPerChord = 1.5, onStep) {
+  if (!await ensureLoaded()) return;
+  stopAll();
+  reveillerSortie();
+  const voicedChords = chords.map(
+    ({ root, type }) => buildVoicingFromIntervals(normalizeNote(root), CHORD_TYPES[type]?.intervals || [])
+  );
+  voicedChords.forEach((voiced, idx) => {
+    const jouer = () => {
+      const direction = idx % 2 === 0 ? "down" : "up";
+      const humanize2 = (Math.random() - 0.5) * 0.012;
+      strumInto(voiced, secondsPerChord * 0.9, Tone.now() + 0.02 + humanize2, direction);
+      onStep?.(idx);
+    };
+    if (idx === 0) jouer();
+    else progressionTimers.push(setTimeout(jouer, idx * secondsPerChord * 1e3));
+  });
+  const totalMs = voicedChords.length * secondsPerChord * 1e3 + 200;
+  progressionTimer = setTimeout(() => {
+    progressionTimer = null;
+    onStep?.(-1);
+  }, totalMs);
+}
+function stopProgression() {
+  for (const t of progressionTimers) clearTimeout(t);
+  progressionTimers = [];
+  if (progressionTimer) {
+    clearTimeout(progressionTimer);
+    progressionTimer = null;
+  }
+}
+function fioriture(notes, { gap = 0.055, duration = "8n", from = 0.62, to = 0.3 } = {}) {
+  if (!isLoaded || !sampler || !Tone) return false;
+  const now2 = Tone.now() + 0.01;
+  notes.forEach((note, i) => {
+    const t = notes.length === 1 ? 0 : i / (notes.length - 1);
+    const velocity = from + (to - from) * t;
+    try {
+      sampler.triggerAttackRelease(note, duration, now2 + i * gap, velocity);
+    } catch {
+    }
+  });
+  return true;
+}
+function playLessonComplete() {
+  return fioriture(["C4", "E4", "G4", "D4"], { gap: 0.052, duration: "8n" });
+}
+function playChestOpen() {
+  return fioriture(["G3", "D4"], { gap: 0.1, duration: "2n", from: 0.55, to: 0.45 });
+}
+function couperVoixCordes() {
+  if (!Tone || !voixCordes.size) return;
+  const t = Tone.now();
+  for (const v of voixCordes) {
+    try {
+      v.gain.gain.cancelScheduledValues(t);
+      v.gain.gain.setTargetAtTime(0, t, 0.01);
+      v.src.stop(t + 0.1);
+    } catch {
+    }
+  }
+  voixCordes.clear();
+}
+function stopAll() {
+  generationTab++;
+  couperVoixCordes();
+  annulerEnAttente();
+  progressionTimers.forEach(clearTimeout);
+  progressionTimers = [];
+  if (progressionTimer) {
+    clearTimeout(progressionTimer);
+    progressionTimer = null;
+  }
+  if (!Tone || !sampler) return;
+  try {
+    const maintenant = Tone.now();
+    if (sortieMaitre) {
+      sortieMaitre.gain.cancelScheduledValues(maintenant);
+      sortieMaitre.gain.setValueAtTime(sortieMaitre.gain.value, maintenant);
+      sortieMaitre.gain.linearRampToValueAtTime(0, maintenant + 8e-3);
+    }
+    sampler.release = 0.02;
+    sampler.releaseAll();
+    if (restaurationTimer) clearTimeout(restaurationTimer);
+    restaurationTimer = setTimeout(() => {
+      restaurationTimer = null;
+      try {
+        sampler.releaseAll();
+        sampler.release = RELEASE;
+        if (sortieMaitre) {
+          const t = Tone.now();
+          sortieMaitre.gain.cancelScheduledValues(t);
+          sortieMaitre.gain.setValueAtTime(0, t);
+          sortieMaitre.gain.linearRampToValueAtTime(1, t + 0.01);
+        }
+      } catch {
+      }
+    }, 380);
+  } catch {
+  }
+}
+function generateEarTrainingQuestion(type = "interval") {
+  const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+  const INTERVAL_NAMES2 = {
+    3: "Tierce mineure",
+    4: "Tierce majeure",
+    5: "Quarte juste",
+    7: "Quinte juste",
+    9: "Sixte majeure",
+    10: "Septi\xE8me mineure",
+    12: "Octave"
+  };
+  if (type === "interval") {
+    const intervals = [3, 4, 5, 7, 9, 10, 12];
+    const semitones = intervals[Math.floor(Math.random() * intervals.length)];
+    const rootIdx = Math.floor(Math.random() * 12);
+    const root = NOTES[rootIdx];
+    const topIdx = (rootIdx + semitones) % 12;
+    const top = NOTES[topIdx];
+    const octaveTop = rootIdx + semitones >= 12 ? 4 : 3;
+    const note1 = toToneNote(root, 3);
+    const note2 = toToneNote(top, octaveTop);
+    const distractors = intervals.filter((i) => i !== semitones).sort(() => Math.random() - 0.5).slice(0, 3);
+    const options = [semitones, ...distractors].sort(() => Math.random() - 0.5).map((i) => ({ semitones: i, label: INTERVAL_NAMES2[i] }));
+    return {
+      type: "interval",
+      note1,
+      note2,
+      answer: semitones,
+      options,
+      play: () => playInterval(note1, note2, "ascending"),
+      // La 2e note attaque à 0,65 s, elle dure "4n" (0,5 s au tempo par défaut).
+      durationMs: dureeMs(0.65, "4n")
+    };
+  }
+  if (type === "chord_quality") {
+    const qualities = [
+      { key: "maj", label: "Major", intervals: [0, 4, 7] },
+      { key: "min", label: "Minor", intervals: [0, 3, 7] },
+      { key: "dom7", label: "Dom7", intervals: [0, 4, 7, 10] },
+      { key: "min7", label: "Minor 7", intervals: [0, 3, 7, 10] }
+    ];
+    const rootIdx = Math.floor(Math.random() * 12);
+    const quality = qualities[Math.floor(Math.random() * qualities.length)];
+    const notes = quality.intervals.map((i, idx) => {
+      return toToneNote(NOTES[(rootIdx + i) % 12], idx === 0 ? 2 : 3);
+    });
+    return {
+      type: "chord_quality",
+      notes,
+      answer: quality.key,
+      options: qualities.map((q) => ({ key: q.key, label: q.label })),
+      play: () => playChord(notes, "2n", { spread: 0.065 }),
+      // Grattage étalé : la dernière corde attaque à (n-1) × 0,065 s.
+      durationMs: dureeMs((notes.length - 1) * 0.065, "2n")
+    };
+  }
+  if (type === "chord_full") {
+    const qualities = [
+      { key: "maj", suffix: "", intervals: [0, 4, 7] },
+      { key: "min", suffix: "m", intervals: [0, 3, 7] },
+      { key: "dom7", suffix: "7", intervals: [0, 4, 7, 10] },
+      { key: "min7", suffix: "m7", intervals: [0, 3, 7, 10] }
+    ];
+    const rootIdx = Math.floor(Math.random() * 12);
+    const root = NOTES[rootIdx];
+    const quality = qualities[Math.floor(Math.random() * qualities.length)];
+    const notes = quality.intervals.map(
+      (i, idx) => toToneNote(NOTES[(rootIdx + i) % 12], idx === 0 ? 2 : 3)
+    );
+    const answerKey = root + "|" + quality.key;
+    const candidates = [];
+    for (const q of qualities) {
+      if (q.key !== quality.key) candidates.push({ root, quality: q });
+    }
+    for (const shift of [2, 5, 7, 9]) {
+      const r = NOTES[(rootIdx + shift) % 12];
+      candidates.push({ root: r, quality });
+    }
+    const distractors = candidates.sort(() => Math.random() - 0.5).slice(0, 3);
+    const options = [{ root, quality }, ...distractors].sort(() => Math.random() - 0.5).map((c) => ({
+      key: c.root + "|" + c.quality.key,
+      label: c.root + c.quality.suffix || c.root
+    }));
+    const referenceNote = toToneNote("C", 3);
+    return {
+      type: "chord_full",
+      notes,
+      root,
+      answer: answerKey,
+      options,
+      // Action principale : l'accord, directement.
+      play: () => playChord(notes, "2n", { spread: 0.065 }),
+      durationMs: dureeMs((notes.length - 1) * 0.065, "2n"),
+      // Aide optionnelle, declenchee par un bouton distinct.
+      playReference: () => playNote(referenceNote, "2n"),
+      referenceDurationMs: dureeMs(0, "2n"),
+      referenceLabel: "C"
+    };
+  }
+  if (type === "progression") {
+    const SEC_PAR_ACCORD = 1.6;
+    const progressions = [
+      { key: "I-V-vi-IV", label: "I - V - vi - IV", degrees: [[0, "maj"], [7, "maj"], [9, "min"], [5, "maj"]] },
+      { key: "ii-V-I", label: "ii - V - I", degrees: [[2, "min7"], [7, "dom7"], [0, "maj7"]] },
+      { key: "I-IV-V", label: "I - IV - V", degrees: [[0, "maj"], [5, "maj"], [7, "maj"]] },
+      { key: "i-iv-v", label: "i - iv - v (mineur)", degrees: [[0, "min"], [5, "min"], [7, "min"]] },
+      { key: "I-vi-IV-V", label: "I - vi - IV - V", degrees: [[0, "maj"], [9, "min"], [5, "maj"], [7, "maj"]] },
+      // i - VI - III - VII : la suite "epique" (Zeppelin, metal, folk nordique).
+      // En contexte mineur ces degres s'ecrivent en bemols (Abm, Eb, Bb en
+      // Do mineur), mais l'affichage se fait en chiffres romains — donc
+      // aucune ambiguite d'ecriture pour l'utilisateur.
+      { key: "i-VI-III-VII", label: "i - VI - III - VII", degrees: [[0, "min"], [8, "maj"], [3, "maj"], [10, "maj"]] },
+      // Deux suites ajoutees pour equilibrer les groupes : il faut au moins
+      // 4 suites de MEME longueur pour pouvoir proposer 4 options qui ont
+      // toutes le meme nombre d'accords que ce qui a ete joue.
+      { key: "I-vi-ii-V", label: "I - vi - ii - V", degrees: [[0, "maj"], [9, "min"], [2, "min7"], [7, "dom7"]] },
+      { key: "vi-IV-I", label: "vi - IV - I", degrees: [[9, "min"], [5, "maj"], [0, "maj"]] }
+    ];
+    const rootIdx = Math.floor(Math.random() * 12);
+    const chosen = progressions[Math.floor(Math.random() * progressions.length)];
+    const chords = chosen.degrees.map(([semi, type2]) => ({
+      root: NOTES[(rootIdx + semi) % 12],
+      type: type2
+    }));
+    const sameLength = progressions.filter(
+      (p) => p.key !== chosen.key && p.degrees.length === chosen.degrees.length
+    );
+    const distractors = sameLength.sort(() => Math.random() - 0.5).slice(0, 3);
+    const SUFFIX = { maj: "", min: "m", dom7: "7", maj7: "maj7", min7: "m7" };
+    const nameProg = (p) => p.degrees.map(([semi, t]) => NOTES[(rootIdx + semi) % 12] + SUFFIX[t]).join(" - ");
+    const options = [chosen, ...distractors].sort(() => Math.random() - 0.5).map((p) => ({ key: p.key, label: nameProg(p), roman: p.label }));
+    return {
+      type: "progression",
+      chords,
+      tonic: NOTES[rootIdx],
+      tonicFr: NOTES[rootIdx],
+      roman: chosen.label,
+      answer: chosen.key,
+      options,
+      // 1,6 s par accord : assez pour entendre chaque couleur sans perdre
+      // le fil de la suite. Plus lent, la coherence harmonique se dissout.
+      play: (onStep) => playProgression(chords, SEC_PAR_ACCORD, onStep),
+      // Le dernier accord attaque à (n-1) × 1,6 s et sonne 90 % de l'intervalle.
+      // L'ancien calcul de l'écran (n × 1600 + 400) ignorait la queue de
+      // relâchement : le bouton repassait en « play » avec du son encore
+      // audible, et on ne pouvait plus l'arrêter.
+      durationMs: dureeMs(
+        (chords.length - 1) * SEC_PAR_ACCORD + SEC_PAR_ACCORD * 0.9,
+        0
+      )
+    };
+  }
+  return null;
+}
+function makeEarQuizQuestion(mode = "interval") {
+  const ear = generateEarTrainingQuestion(mode);
+  if (!ear) return null;
+  if (mode === "interval") {
+    const labels2 = ear.options.map((o) => String(o.label));
+    const answerIdx2 = ear.options.findIndex((o) => o.semitones === ear.answer);
+    if (answerIdx2 < 0) return null;
+    return {
+      id: `ear-int-${Date.now()}-${Math.floor(Math.random() * 1e3)}`,
+      type: "ear",
+      courseId: "scales",
+      lvl: 2,
+      q: "Quel intervalle entends-tu ?",
+      o: labels2,
+      a: answerIdx2,
+      exp: "\xC9coute la distance entre les deux notes : c'est elle qui d\xE9finit l'intervalle.",
+      play: ear.play
+    };
+  }
+  const labels = ear.options.map((o) => o.label);
+  const answerIdx = ear.options.findIndex((o) => o.key === ear.answer);
+  if (answerIdx < 0) return null;
+  return {
+    id: `ear-chord-${Date.now()}-${Math.floor(Math.random() * 1e3)}`,
+    type: "ear",
+    courseId: "harmony",
+    lvl: 2,
+    q: "Quelle est la couleur de cet accord ?",
+    o: labels,
+    a: answerIdx,
+    exp: "La tierce d\xE9cide du caract\xE8re majeur ou mineur ; la septi\xE8me ajoute la tension.",
+    play: ear.play
+  };
+}
+var Tone, tonePromise, SAMPLE_URLS, busGuitare, buffersCordes, voixCordes, generationTab, NOMS_ECHANTILLONS, MIDI_MIN_ECH, MIDI_MAX_ECH, BASE_URL, RELEASE, QUEUE_AUDIBLE_MS, DUREE_NOTE, secondes, listSampleUrls, SAMPLE_COUNT, SHARP_TO_FLAT, CHROMATIC, OPEN_STRINGS2, DEV, warn, sortieMaitre, enAttente, restaurationTimer, sampler, loadPromise, isLoaded, loadError, ECART_INTERVALLE_MS, vitessePour, progressionTimers, progressionTimer, dureeMs;
+var init_audioEngine = __esm({
+  "src/audioEngine.js"() {
+    init_fretboardUtils();
+    init_tabSon();
+    Tone = null;
+    tonePromise = null;
+    SAMPLE_URLS = {
+      "A2": "A2.mp3",
+      "A3": "A3.mp3",
+      "A4": "A4.mp3",
+      "B2": "B2.mp3",
+      "B3": "B3.mp3",
+      "B4": "B4.mp3",
+      "C2": "C2.mp3",
+      "C3": "C3.mp3",
+      "C4": "C4.mp3",
+      "D2": "D2.mp3",
+      "D3": "D3.mp3",
+      "D4": "D4.mp3",
+      "E2": "E2.mp3",
+      "E3": "E3.mp3",
+      "E4": "E4.mp3",
+      "F2": "F2.mp3",
+      "F3": "F3.mp3",
+      "F4": "F4.mp3",
+      "G2": "G2.mp3",
+      "G3": "G3.mp3",
+      "G4": "G4.mp3",
+      "Ab2": "Ab2.mp3",
+      "Ab3": "Ab3.mp3",
+      "Ab4": "Ab4.mp3",
+      "Bb2": "Bb2.mp3",
+      "Bb3": "Bb3.mp3",
+      "Bb4": "Bb4.mp3",
+      "Db2": "Db2.mp3",
+      "Db3": "Db3.mp3",
+      "Db4": "Db4.mp3",
+      "Eb2": "Eb2.mp3",
+      "Eb3": "Eb3.mp3",
+      "Eb4": "Eb4.mp3",
+      "Gb2": "Gb2.mp3",
+      "Gb3": "Gb3.mp3",
+      "Gb4": "Gb4.mp3",
+      // Octave 5 : la corde de Mi aigu au-delà de la case 7. Sans elle, ces
+      // notes étaient obtenues en accélérant B4, d'où un timbre « chipmunk ».
+      "C5": "C5.mp3",
+      "Db5": "Db5.mp3",
+      "D5": "D5.mp3",
+      "Eb5": "Eb5.mp3",
+      "E5": "E5.mp3",
+      "F5": "F5.mp3",
+      "Gb5": "Gb5.mp3",
+      "G5": "G5.mp3",
+      "Ab5": "Ab5.mp3",
+      "A5": "A5.mp3",
+      "Bb5": "Bb5.mp3",
+      "B5": "B5.mp3"
+    };
+    busGuitare = null;
+    buffersCordes = null;
+    voixCordes = /* @__PURE__ */ new Set();
+    generationTab = 0;
+    NOMS_ECHANTILLONS = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
+    MIDI_MIN_ECH = 36;
+    MIDI_MAX_ECH = 83;
+    BASE_URL = "/audio/guitar/";
+    RELEASE = 1.6;
+    QUEUE_AUDIBLE_MS = Math.round(RELEASE * 1e3);
+    DUREE_NOTE = { "1n": 2, "2n": 1, "4n": 0.5, "8n": 0.25, "16n": 0.125 };
+    secondes = (v) => typeof v === "number" ? v : DUREE_NOTE[v] ?? 1;
+    listSampleUrls = () => Object.values(SAMPLE_URLS).map((f) => BASE_URL + f);
+    SAMPLE_COUNT = Object.keys(SAMPLE_URLS).length;
+    SHARP_TO_FLAT = {
+      "C#": "Db",
+      "D#": "Eb",
+      "F#": "Gb",
+      "G#": "Ab",
+      "A#": "Bb"
+    };
+    CHROMATIC = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+    OPEN_STRINGS2 = { 1: "E4", 2: "B3", 3: "G3", 4: "D3", 5: "A2", 6: "E2" };
+    DEV = typeof import.meta !== "undefined" && false;
+    warn = (...a) => {
+      if (DEV) console.warn("[audioEngine]", ...a);
+    };
+    sortieMaitre = null;
+    enAttente = [];
+    restaurationTimer = null;
+    sampler = null;
+    loadPromise = null;
+    isLoaded = false;
+    loadError = null;
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", () => {
+        if (!Tone) return;
+        if (document.visibilityState !== "hidden") return;
+        try {
+          stopProgression();
+          sampler?.releaseAll?.();
+        } catch {
+        }
+      });
+    }
+    ECART_INTERVALLE_MS = 650;
+    vitessePour = (midi, base) => Math.pow(2, (midi - base) / 12);
+    progressionTimers = [];
+    progressionTimer = null;
+    dureeMs = (finDerniereAttaque, dureeNote) => Math.round((finDerniereAttaque + secondes(dureeNote)) * 1e3) + QUEUE_AUDIBLE_MS;
+  }
+});
+
+// src/music/chordShapes.js
+function computeFingers(frets, isBarre) {
+  const fingers = [0, 0, 0, 0, 0, 0];
+  const fretted = frets.map((f, s) => ({ f, s })).filter((x) => x.f > 0).sort((a, b) => a.f - b.f || a.s - b.s);
+  if (!fretted.length) return fingers;
+  const minFret = fretted[0].f;
+  const atMin = fretted.filter((x) => x.f === minFret);
+  let next = 1;
+  if (isBarre && atMin.length >= 2) {
+    for (const x of atMin) fingers[x.s] = 1;
+    next = 2;
+  }
+  for (const x of fretted) {
+    if (fingers[x.s] !== 0) continue;
+    fingers[x.s] = Math.min(4, next);
+    next++;
+  }
+  return fingers;
+}
+function fretForNote(stringIdx, noteName) {
+  const open = CHROMATIC2.indexOf(OPEN_STRINGS3[stringIdx]);
+  const target = CHROMATIC2.indexOf(noteName);
+  if (open < 0 || target < 0) return -1;
+  return (target - open + 12) % 12;
+}
+function getChordShapes(rootName, quality, maxFret = 10, chordIntervals = null) {
+  const shapes = SHAPES[quality];
+  if (!shapes) return [];
+  const rootIdx = CHROMATIC2.indexOf(rootName);
+  const allowed = chordIntervals ? new Set(chordIntervals.map((i) => CHROMATIC2[(rootIdx + i) % 12])) : null;
+  const out = [];
+  for (const shape2 of shapes) {
+    let rootFret = fretForNote(shape2.rootString, rootName);
+    if (rootFret < 0) continue;
+    const frets = shape2.offsets.map((o) => o === null ? null : rootFret + o);
+    const played = frets.filter((f) => f !== null);
+    if (!played.length) continue;
+    const highest = Math.max(...played);
+    if (highest > maxFret) continue;
+    if (played.some((f) => f < 0)) continue;
+    if (allowed) {
+      const notes = frets.map((f, s) => f === null || f < 0 ? null : CHROMATIC2[(CHROMATIC2.indexOf(OPEN_STRINGS3[s]) + f) % 12]);
+      if (notes.some((n) => n && !allowed.has(n))) continue;
+    }
+    const fretted = played.filter((f) => f > 0);
+    if (fretted.length && Math.max(...fretted) - Math.min(...fretted) > 3) continue;
+    const startFret = fretted.length ? Math.min(...fretted) : 1;
+    const isOpen = frets.some((f) => f === 0);
+    out.push({
+      name: rootName,
+      label: shape2.label,
+      // <ChordDiagram> attend -1 pour une corde étouffée, 0 pour une corde
+      // à vide, et des cases absolues sinon.
+      frets: frets.map((f) => f === null ? -1 : f),
+      // Doigté DÉRIVÉ des cases, jamais celui écrit dans la forme : ce
+      // dernier ne vaut que pour la position barrée.
+      fingers: computeFingers(frets.map((f) => f === null ? -1 : f), !!shape2.barre && !isOpen),
+      // Un accord ouvert s'affiche depuis le SILLET (startFret 1), avec les
+      // cordes à vide en cercles au-dessus — c'est la représentation
+      // classique, celle de tous les recueils d'accords. Prendre la plus
+      // basse case frettée décalerait la grille et rendrait le doigté
+      // méconnaissable.
+      startFret: isOpen ? 1 : startFret,
+      // Pas d'indicateur de barré sur un accord ouvert : le sillet joue ce
+      // rôle, et afficher un barré case 0 serait trompeur.
+      barre: shape2.barre && !isOpen ? startFret : void 0,
+      rootFret,
+      isOpen
+    });
+  }
+  out.sort((a, b) => b.isOpen - a.isOpen || a.rootFret - b.rootFret);
+  return out;
+}
+var CHROMATIC2, OPEN_STRINGS3, SHAPES;
+var init_chordShapes = __esm({
+  "src/music/chordShapes.js"() {
+    CHROMATIC2 = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+    OPEN_STRINGS3 = ["E", "A", "D", "G", "B", "E"];
+    SHAPES = {
+      maj: [
+        { id: "E", label: "Forme Mi", rootString: 0, offsets: [0, 2, 2, 1, 0, 0], fingers: [1, 3, 4, 2, 1, 1], barre: true },
+        { id: "A", label: "Forme La", rootString: 1, offsets: [null, 0, 2, 2, 2, 0], fingers: [0, 1, 3, 4, 2, 1], barre: true },
+        { id: "C", label: "Forme Do", rootString: 1, offsets: [null, 0, -1, -3, -2, -3], fingers: [0, 3, 2, 0, 1, 0] },
+        { id: "D", label: "Forme R\xE9", rootString: 2, offsets: [null, null, 0, 2, 3, 2], fingers: [0, 0, 1, 2, 4, 3] },
+        { id: "G", label: "Forme Sol", rootString: 0, offsets: [0, -1, -3, -3, -3, 0], fingers: [2, 1, 0, 0, 0, 3] }
+      ],
+      min: [
+        { id: "Em", label: "Forme Mim", rootString: 0, offsets: [0, 2, 2, 0, 0, 0], fingers: [1, 3, 4, 1, 1, 1], barre: true },
+        { id: "Am", label: "Forme Lam", rootString: 1, offsets: [null, 0, 2, 2, 1, 0], fingers: [0, 1, 3, 4, 2, 1], barre: true },
+        { id: "Dm", label: "Forme R\xE9m", rootString: 2, offsets: [null, null, 0, 2, 3, 1], fingers: [0, 0, 1, 3, 4, 2] }
+      ],
+      dom7: [
+        { id: "E7", label: "Forme Mi7", rootString: 0, offsets: [0, 2, 0, 1, 0, 0], fingers: [1, 3, 1, 2, 1, 1], barre: true },
+        { id: "A7", label: "Forme La7", rootString: 1, offsets: [null, 0, 2, 0, 2, 0], fingers: [0, 1, 3, 1, 4, 1], barre: true },
+        { id: "D7", label: "Forme R\xE97", rootString: 2, offsets: [null, null, 0, 2, 1, 2], fingers: [0, 0, 1, 3, 2, 4] }
+      ],
+      maj7: [
+        { id: "Emaj7", label: "Forme Mi", rootString: 0, offsets: [0, null, 1, 1, 0, null], fingers: [1, 0, 3, 4, 2, 0] },
+        { id: "Amaj7", label: "Forme La", rootString: 1, offsets: [null, 0, 2, 1, 2, 0], fingers: [0, 1, 3, 2, 4, 1] },
+        { id: "Dmaj7", label: "Forme R\xE9", rootString: 2, offsets: [null, null, 0, 2, 2, 2], fingers: [0, 0, 1, 2, 3, 4] }
+      ],
+      min7: [
+        { id: "Em7", label: "Forme Mim7", rootString: 0, offsets: [0, 2, 0, 0, 0, 0], fingers: [1, 3, 1, 1, 1, 1], barre: true },
+        { id: "Am7", label: "Forme Lam7", rootString: 1, offsets: [null, 0, 2, 0, 1, 0], fingers: [0, 1, 3, 1, 2, 1], barre: true },
+        { id: "Dm7", label: "Forme R\xE9m7", rootString: 2, offsets: [null, null, 0, 2, 1, 1], fingers: [0, 0, 1, 3, 2, 2] }
+      ],
+      min7b5: [
+        { id: "Am7b5", label: "Forme La", rootString: 1, offsets: [null, 0, 1, 0, 1, null], fingers: [0, 2, 3, 1, 4, 0] },
+        { id: "Em7b5", label: "Forme Mi", rootString: 0, offsets: [0, 1, 0, 0, null, null], fingers: [1, 3, 2, 2, 0, 0] }
+      ],
+      dim7: [
+        { id: "Ddim7", label: "Forme R\xE9", rootString: 2, offsets: [null, null, 0, 1, 0, 1], fingers: [0, 0, 1, 3, 2, 4] },
+        { id: "Adim7", label: "Forme La", rootString: 1, offsets: [null, 0, 1, 2, 1, null], fingers: [0, 1, 2, 4, 3, 0] }
+      ],
+      maj6: [
+        { id: "A6", label: "Forme La", rootString: 1, offsets: [null, 0, 2, 2, 2, 2], fingers: [0, 1, 2, 3, 3, 3] },
+        { id: "E6", label: "Forme Mi", rootString: 0, offsets: [0, 2, 1, 1, 2, null], fingers: [1, 3, 1, 1, 4, 0] }
+      ],
+      sus4: [
+        { id: "Asus4", label: "Forme La", rootString: 1, offsets: [null, 0, 2, 2, 3, 0], fingers: [0, 1, 2, 3, 4, 1], barre: true },
+        { id: "Esus4", label: "Forme Mi", rootString: 0, offsets: [0, 2, 2, 2, 0, 0], fingers: [1, 2, 3, 4, 1, 1], barre: true }
+      ],
+      add9: [
+        { id: "Cadd9", label: "Forme Do", rootString: 1, offsets: [null, 0, -1, -3, 0, -3] },
+        { id: "Aadd9", label: "Forme La", rootString: 1, offsets: [null, 0, 2, 4, 2, 0] },
+        { id: "Eadd9", label: "Forme Mi", rootString: 0, offsets: [0, 2, 1, 1, 0, 2] }
+      ],
+      dom9: [
+        { id: "A9", label: "Forme La", rootString: 1, offsets: [null, 0, 1, 0, 2, 0], fingers: [0, 2, 3, 1, 4, 1] },
+        { id: "E9", label: "Forme Mi", rootString: 0, offsets: [0, 2, 0, 1, 0, 2], fingers: [1, 3, 1, 2, 1, 4] }
+      ]
+    };
+  }
+});
+
+// src/fretboard/FretGrid.jsx
+import { useRef as useRef6, useState as useState9 } from "react";
+import { Fragment as Fragment7, jsx as jsx11, jsxs as jsxs9 } from "react/jsx-runtime";
+function RepereStandard({ isDouble }) {
+  const C = useC();
+  const point = /* @__PURE__ */ jsx11("div", { style: { width: 6, height: 6, borderRadius: "50%", background: C.border } });
+  return /* @__PURE__ */ jsxs9("div", { style: { display: "flex", justifyContent: "center", alignItems: "center", gap: isDouble ? 6 : 0, height: 10, marginTop: 2 }, children: [
+    point,
+    isDouble && /* @__PURE__ */ jsx11("div", { style: { width: 6, height: 6, borderRadius: "50%", background: C.border } })
+  ] });
+}
+function RepereDense({ isDouble }) {
+  const C = useC();
+  if (!isDouble) return /* @__PURE__ */ jsx11("div", { style: { width: 5, height: 5, borderRadius: "50%", background: C.border, margin: "2px auto 0" } });
+  return /* @__PURE__ */ jsxs9("div", { style: { display: "flex", gap: 4, justifyContent: "center", marginTop: 2 }, children: [
+    /* @__PURE__ */ jsx11("div", { style: { width: 5, height: 5, borderRadius: "50%", background: C.border } }),
+    /* @__PURE__ */ jsx11("div", { style: { width: 5, height: 5, borderRadius: "50%", background: C.border } })
+  ] });
+}
+function FretGrid({
+  frets,
+  showOpen = true,
+  showStringNames = true,
+  showFretNumbers = true,
+  cellW,
+  cellH,
+  openW,
+  labelW,
+  variant = "standard",
+  epaisseurs = EPAISSEURS_CORDES,
+  renderCell,
+  interactive = false,
+  onCellClick,
+  isCellSelected,
+  ariaLabel = "Manche de guitare"
+}) {
+  const C = useC();
+  const V = VARIANTES[variant] ?? VARIANTES.standard;
+  const colonnes = showOpen ? [0, ...frets] : frets;
+  const [actif, setActif] = useState9(null);
+  const actifValide = actif && CORDES.includes(actif.s) && colonnes.includes(actif.f) ? actif : { s: CORDES[0], f: colonnes[0] };
+  const refs = useRef6(/* @__PURE__ */ new Map());
+  const focaliser = (s, f) => {
+    setActif({ s, f });
+    refs.current.get(`${s}-${f}`)?.focus();
+  };
+  const activer = (s, f) => {
+    vibrer();
+    onCellClick?.(s, f);
+  };
+  const onKeyDown = (e, s, f) => {
+    const ri = CORDES.indexOf(s);
+    const ci = colonnes.indexOf(f);
+    const dernier = colonnes.length - 1;
+    let r = ri, c = ci;
+    switch (e.key) {
+      case "ArrowUp":
+        r = Math.max(0, ri - 1);
+        break;
+      case "ArrowDown":
+        r = Math.min(CORDES.length - 1, ri + 1);
+        break;
+      case "ArrowLeft":
+        c = Math.max(0, ci - 1);
+        break;
+      case "ArrowRight":
+        c = Math.min(dernier, ci + 1);
+        break;
+      case "Home":
+        c = 0;
+        if (e.ctrlKey) r = 0;
+        break;
+      case "End":
+        c = dernier;
+        if (e.ctrlKey) r = CORDES.length - 1;
+        break;
+      case "Enter":
+      case " ":
+        e.preventDefault();
+        activer(s, f);
+        return;
+      default:
+        return;
+    }
+    e.preventDefault();
+    focaliser(CORDES[r], colonnes[c]);
+  };
+  const propsCase = (s, f) => {
+    if (!interactive) return {};
+    const k = `${s}-${f}`;
+    const estActif = actifValide.s === s && actifValide.f === f;
+    return {
+      ref: (el) => {
+        if (el) refs.current.set(k, el);
+        else refs.current.delete(k);
+      },
+      role: "gridcell",
+      tabIndex: estActif ? 0 : -1,
+      "aria-label": labelCase(s, f, getNoteAtPosition(s, f)),
+      ...isCellSelected ? { "aria-selected": !!isCellSelected(s, f) } : {},
+      "data-interactive": "",
+      onClick: () => {
+        setActif({ s, f });
+        activer(s, f);
+      },
+      onFocus: () => {
+        if (!estActif) setActif({ s, f });
+      },
+      onKeyDown: (e) => onKeyDown(e, s, f)
+    };
+  };
+  const cursor = interactive ? "pointer" : "default";
+  const ligneCorde = (s, extra) => /* @__PURE__ */ jsx11("div", { style: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: "50%",
+    height: epaisseurs[s] || 1.5,
+    background: C.border,
+    transform: "translateY(-50%)",
+    ...extra
+  } });
+  const espaceurs = /* @__PURE__ */ jsxs9(Fragment7, { children: [
+    showStringNames && /* @__PURE__ */ jsx11("div", { style: { width: labelW, flexShrink: 0 } }),
+    showOpen && /* @__PURE__ */ jsx11("div", { style: { width: openW, flexShrink: 0 } })
+  ] });
+  return /* @__PURE__ */ jsxs9(
+    "div",
+    {
+      role: interactive ? "grid" : "img",
+      "aria-label": ariaLabel,
+      ...interactive && isCellSelected ? { "aria-multiselectable": true } : {},
+      style: { ...V.conteneur, "--gr-fret-survol": `${C.primary}${V.survol}` },
+      children: [
+        showFretNumbers && /* @__PURE__ */ jsxs9("div", { "aria-hidden": "true", style: { display: "flex", marginBottom: V.margeNumeros }, children: [
+          espaceurs,
+          frets.map((f) => /* @__PURE__ */ jsx11("div", { style: {
+            width: cellW,
+            flexShrink: 0,
+            color: C.text3,
+            fontFamily: FONT_UI,
+            fontWeight: f % 12 === 0 ? 700 : 400,
+            ...V.numero
+          }, children: f }, f))
+        ] }),
+        CORDES.map((s) => /* @__PURE__ */ jsxs9("div", { role: interactive ? "row" : void 0, style: { display: "flex", alignItems: "center", position: "relative" }, children: [
+          showStringNames && /* @__PURE__ */ jsx11("div", { "aria-hidden": "true", style: {
+            width: labelW,
+            height: cellH,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: T.micro,
+            fontWeight: 700,
+            color: C.text3,
+            fontFamily: FONT_UI,
+            flexShrink: 0
+          }, children: STRING_LABELS[s] }),
+          showOpen && /* @__PURE__ */ jsxs9(
+            "div",
+            {
+              className: "gr-fret-cell",
+              ...propsCase(s, 0),
+              style: {
+                width: openW,
+                height: cellH,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+                position: "relative",
+                cursor
+              },
+              children: [
+                ligneCorde(s),
+                /* @__PURE__ */ jsx11("div", { style: { position: "relative", zIndex: 2 }, children: renderCell(s, 0) })
+              ]
+            }
+          ),
+          frets.map((f, fi) => /* @__PURE__ */ jsxs9(
+            "div",
+            {
+              className: "gr-fret-cell",
+              ...propsCase(s, f),
+              style: {
+                width: cellW,
+                height: cellH,
+                position: "relative",
+                flexShrink: 0,
+                cursor,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center"
+              },
+              children: [
+                /* @__PURE__ */ jsx11("div", { style: {
+                  position: "absolute",
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: fi === 0 ? V.sillet : V.filet,
+                  background: fi === 0 ? C.text : C.border
+                } }),
+                ligneCorde(s, { zIndex: 0 }),
+                /* @__PURE__ */ jsx11("div", { style: { position: "relative", zIndex: 2 }, children: renderCell(s, f) })
+              ]
+            },
+            f
+          ))
+        ] }, s)),
+        /* @__PURE__ */ jsxs9("div", { "aria-hidden": "true", style: { display: "flex", marginTop: V.margeReperes }, children: [
+          espaceurs,
+          frets.map((f) => /* @__PURE__ */ jsxs9("div", { style: { width: cellW, flexShrink: 0 }, children: [
+            MARKER_FRETS.includes(f) && /* @__PURE__ */ jsx11(V.Repere, { isDouble: false }),
+            DOUBLE_MARKER_FRETS.includes(f) && /* @__PURE__ */ jsx11(V.Repere, { isDouble: true })
+          ] }, f))
+        ] })
+      ]
+    }
+  );
+}
+var FONT_UI, vibrer, NOMS_CORDES, labelCase, EPAISSEURS_CORDES, STRING_LABELS, CORDES, VARIANTES;
+var init_FretGrid = __esm({
+  "src/fretboard/FretGrid.jsx"() {
+    init_ThemeContext();
+    init_tokens();
+    init_fretboardUtils();
+    FONT_UI = '"Inter", "Helvetica Neue", -apple-system, sans-serif';
+    if (typeof document !== "undefined" && !document.getElementById("gr-fretgrid-styles")) {
+      const s = document.createElement("style");
+      s.id = "gr-fretgrid-styles";
+      s.textContent = `
+    @media (hover: hover) {
+      .gr-fret-cell[data-interactive]:hover { background: var(--gr-fret-survol); }
+    }
+    .gr-fret-cell:focus-visible { outline-offset: -3px; }
+  `;
+      document.head.appendChild(s);
+    }
+    vibrer = (ms = 8) => {
+      try {
+        navigator.vibrate?.(ms);
+      } catch {
+      }
+    };
+    NOMS_CORDES = { 6: "Mi grave", 5: "La", 4: "R\xE9", 3: "Sol", 2: "Si", 1: "Mi aigu" };
+    labelCase = (corde, fret, note) => {
+      const nom2 = `Corde de ${NOMS_CORDES[corde] ?? corde}`;
+      const n = note ? noteToFr(note) : "";
+      return fret === 0 ? `${nom2} \xE0 vide${n ? `, ${n}` : ""}` : `${nom2}, case ${fret}${n ? `, ${n}` : ""}`;
+    };
+    EPAISSEURS_CORDES = { 6: 3, 5: 2.5, 4: 2, 3: 1.5, 2: 1.5, 1: 1 };
+    STRING_LABELS = { 6: "E\u2082", 5: "A\u2082", 4: "D\u2083", 3: "G\u2083", 2: "B\u2083", 1: "E\u2084" };
+    CORDES = [1, 2, 3, 4, 5, 6];
+    VARIANTES = {
+      standard: {
+        conteneur: { minWidth: "fit-content", paddingBottom: 2 },
+        margeNumeros: 2,
+        margeReperes: 0,
+        numero: { height: 18, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9 },
+        sillet: 3,
+        filet: 1,
+        survol: "08",
+        Repere: RepereStandard
+      },
+      dense: {
+        conteneur: { display: "flex", flexDirection: "column", minWidth: "fit-content" },
+        margeNumeros: 1,
+        margeReperes: 1,
+        numero: { textAlign: "center", fontSize: T.micro, height: 16, lineHeight: "16px" },
+        sillet: 2,
+        filet: 0.5,
+        survol: "0A",
+        Repere: RepereDense
+      }
+    };
+  }
+});
+
+// src/fretboardValidator.js
+function validate(concept, selected, selectionRules = {}, opts = {}) {
+  const { type } = concept;
+  const { mode = "all", minSelections = 1 } = selectionRules;
+  const resolver = RESOLVERS[type];
+  if (!resolver) {
+    console.warn(`[fretboardValidator] Type inconnu : "${type}"`);
+    return { complete: false, hits: 0, total: 0, extras: 0, missed: 0, score: 0, feedback: "Type de challenge inconnu." };
+  }
+  const fretRange = opts.fretRange || [0, 12];
+  const stringRange = opts.stringRange || [1, 6];
+  const correct = resolver(concept, { fretRange, stringRange });
+  const neutral = concept.neutralPositions || [];
+  const effectiveSelected = selected.filter(
+    (s) => !neutral.some((n) => n.string === s.string && n.fret === s.fret)
+  );
+  let result;
+  if (mode === "chord_build") {
+    result = MATCH_STRATEGIES.chord_build(effectiveSelected, correct);
+  } else if (mode === "any_n") {
+    result = MATCH_STRATEGIES.any_n(effectiveSelected, correct, minSelections);
+  } else {
+    result = MATCH_STRATEGIES.all(effectiveSelected, correct);
+  }
+  result.feedback = generateFeedback(result);
+  result.correctPositions = correct;
+  return result;
+}
+function getTargetPositions(concept, opts = {}) {
+  const { type } = concept;
+  const resolver = RESOLVERS[type];
+  if (!resolver) return [];
+  const fretRange = opts.fretRange || [0, 12];
+  const stringRange = opts.stringRange || [1, 6];
+  return resolver(concept, { fretRange, stringRange });
+}
+function generateFeedback(result) {
+  if (result.complete) {
+    return "Parfait \u2014 toutes les positions trouv\xE9es !";
+  }
+  const parts = [];
+  if (result.missed > 0) {
+    parts.push(`${result.missed} position${result.missed > 1 ? "s" : ""} manquante${result.missed > 1 ? "s" : ""}`);
+  }
+  if (result.extras > 0) {
+    parts.push(`${result.extras} erreur${result.extras > 1 ? "s" : ""}`);
+  }
+  return `${parts.join(" \xB7 ")} \u2014 en orange = manqu\xE9, en rouge = erreur.`;
+}
+var RESOLVERS, MATCH_STRATEGIES;
+var init_fretboardValidator = __esm({
+  "src/fretboardValidator.js"() {
+    init_fretboardUtils();
+    RESOLVERS = {
+      find_note: (concept, opts) => {
+        const { root, fretRange = [0, 12], stringRange = [1, 6] } = { ...concept, ...opts };
+        const [minFret, maxFret] = fretRange;
+        const [minStr, maxStr] = stringRange;
+        const strings = Array.from({ length: maxStr - minStr + 1 }, (_, i) => minStr + i);
+        return getPositionsOfNote(root, maxFret, strings).filter((p) => p.fret >= minFret);
+      },
+      find_roots: (concept, opts) => {
+        return RESOLVERS.find_note(concept, opts);
+      },
+      /**
+       * Forme d'accord précise.
+       *
+       * Contrairement aux autres types, qui demandent TOUTES les occurrences
+       * d'une note ou d'un accord, celui-ci attend un doigté exact : la forme Mi
+       * de La majeur, c'est 5-7-7-6-5-5, pas « tous les La, Do# et Mi du
+       * manche ». Les positions viennent donc directement du concept.
+       *
+       * concept.positions : [{ string, fret }] — les cases à presser.
+       *   Les cordes à vide (case 0) et les cordes étouffées ne sont PAS
+       *   attendues : on ne peut pas « sélectionner » l'absence de doigt, et
+       *   demander de cliquer une corde à vide n'aurait pas de sens sur un
+       *   manche tactile.
+       */
+      find_shape: (concept) => {
+        const { positions = [] } = concept;
+        return positions.filter((p) => p && Number.isInteger(p.string) && Number.isInteger(p.fret) && p.fret > 0).map((p) => ({ string: p.string, fret: p.fret }));
+      },
+      find_chord: (concept, opts) => {
+        const { root, quality, fretRange = [0, 12], stringRange = [1, 6] } = { ...concept, ...opts };
+        const [minFret, maxFret] = fretRange;
+        const [minStr, maxStr] = stringRange;
+        const all = getChordPositions(root, quality, maxFret);
+        return all.filter(
+          (p) => p.fret >= minFret && p.string >= minStr && p.string <= maxStr
+        );
+      },
+      find_scale: (concept, opts) => {
+        const { root, quality, fretRange = [0, 12], stringRange = [1, 6] } = { ...concept, ...opts };
+        const [minFret, maxFret] = fretRange;
+        const [minStr, maxStr] = stringRange;
+        const all = getScalePositions(root, quality, maxFret);
+        return all.filter(
+          (p) => p.fret >= minFret && p.string >= minStr && p.string <= maxStr
+        );
+      },
+      find_interval: (concept, opts) => {
+        const { root, interval, fretRange = [0, 12], stringRange = [1, 6] } = { ...concept, ...opts };
+        const [minFret, maxFret] = fretRange;
+        const [minStr, maxStr] = stringRange;
+        const rootNorm = normalizeNote(root);
+        const positions = [];
+        for (let s = minStr; s <= maxStr; s++) {
+          for (let f = minFret; f <= maxFret; f++) {
+            const note = getNoteAtPosition(s, f);
+            const iv = getInterval(rootNorm, note);
+            if (iv === interval) {
+              positions.push({ string: s, fret: f, note, interval: iv });
+            }
+          }
+        }
+        return positions;
+      }
+    };
+    MATCH_STRATEGIES = {
+      // L'utilisateur doit trouver TOUTES les positions correctes
+      all: (selected, correct) => {
+        const hits = selected.filter((s) => correct.some((c) => c.string === s.string && c.fret === s.fret));
+        const extras = selected.filter((s) => !correct.some((c) => c.string === s.string && c.fret === s.fret));
+        const missed = correct.filter((c) => !selected.some((s) => s.string === c.string && s.fret === c.fret));
+        return {
+          complete: hits.length === correct.length && extras.length === 0,
+          hits: hits.length,
+          total: correct.length,
+          extras: extras.length,
+          missed: missed.length,
+          missedPositions: missed,
+          score: Math.max(0, hits.length - extras.length)
+        };
+      },
+      // L'utilisateur doit trouver au moins N positions correctes
+      any_n: (selected, correct, n = 1) => {
+        const hits = selected.filter((s) => correct.some((c) => c.string === s.string && c.fret === s.fret));
+        const extras = selected.filter((s) => !correct.some((c) => c.string === s.string && c.fret === s.fret));
+        return {
+          complete: hits.length >= n && extras.length === 0,
+          hits: hits.length,
+          total: n,
+          extras: extras.length,
+          missed: Math.max(0, n - hits.length),
+          missedPositions: [],
+          score: Math.min(hits.length, n)
+        };
+      },
+      // L'utilisateur doit sélectionner exactement les notes d'un accord (positions libres)
+      chord_build: (selected, correct) => {
+        const correctNotes = [...new Set(correct.map((p) => p.note))];
+        const selectedNotes = [...new Set(selected.map((s) => getNoteAtPosition(s.string, s.fret)))];
+        const foundNotes = correctNotes.filter((n) => selectedNotes.includes(n));
+        const extraNotes = selectedNotes.filter((n) => !correctNotes.includes(n));
+        return {
+          complete: foundNotes.length === correctNotes.length && extraNotes.length === 0,
+          hits: foundNotes.length,
+          total: correctNotes.length,
+          extras: extraNotes.length,
+          missed: correctNotes.length - foundNotes.length,
+          missedPositions: [],
+          foundNotes,
+          missingNotes: correctNotes.filter((n) => !selectedNotes.includes(n)),
+          score: Math.max(0, foundNotes.length - extraNotes.length)
+        };
+      }
+    };
+  }
+});
+
+// src/Fretboard.jsx
+var Fretboard_exports = {};
+__export(Fretboard_exports, {
+  Fretboard: () => Fretboard,
+  FretboardExercise: () => FretboardExercise,
+  FretboardLesson: () => FretboardLesson,
+  FretboardQuizQuestion: () => FretboardQuizQuestion
+});
+import { useState as useState10, useMemo as useMemo3, useCallback as useCallback2, useEffect as useEffect8 } from "react";
+import { Fragment as Fragment8, jsx as jsx12, jsxs as jsxs10 } from "react/jsx-runtime";
+function getNoteColors(C) {
+  return {
+    root: { bg: C.amber, text: "#fff", border: C.amberD },
+    third: { bg: C.primary, text: "#fff", border: C.primaryD },
+    fifth: { bg: C.green, text: "#fff", border: C.greenD },
+    seventh: { bg: C.coral, text: "#fff", border: C.coralD },
+    other: { bg: C.blue, text: "#fff", border: C.blueD },
+    selected: { bg: C.primary, text: "#fff", border: C.primaryD },
+    correct: { bg: C.green, text: "#fff", border: C.greenD },
+    wrong: { bg: C.coral, text: "#fff", border: C.coralD },
+    missed: { bg: C.amber, text: "#fff", border: C.amberD }
+  };
+}
+function colorForDegree(degree, isRoot, NOTE_COLORS) {
+  if (isRoot) return NOTE_COLORS.root;
+  const map = {
+    2: NOTE_COLORS.other,
+    3: NOTE_COLORS.third,
+    4: NOTE_COLORS.other,
+    5: NOTE_COLORS.fifth,
+    6: NOTE_COLORS.other,
+    7: NOTE_COLORS.seventh
+  };
+  return map[degree] || NOTE_COLORS.other;
+}
+function getNoteLabel(note, interval, degree, displayMode, lang = "fr") {
+  switch (displayMode) {
+    case "notes":
+      return lang === "fr" ? noteToFr(note) : note;
+    case "intervals":
+      return INTERVAL_NAMES[interval]?.short ?? "?";
+    case "degrees":
+      if (degree != null && degree > 0) return String(degree);
+      if (interval != null) return INTERVAL_NAMES[interval]?.short ?? "?";
+      return "?";
+    default:
+      return lang === "fr" ? noteToFr(note) : note;
+  }
+}
+function NoteMarker({ label, color, size = 28, style = {} }) {
+  return /* @__PURE__ */ jsx12("div", { style: {
+    width: size,
+    height: size,
+    borderRadius: "50%",
+    background: color.bg,
+    border: `2px solid ${color.border}`,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: size <= 24 ? 8 : size <= 30 ? 9 : 11,
+    fontWeight: 700,
+    color: color.text,
+    fontFamily: FONTS2.ui,
+    letterSpacing: "-0.02em",
+    flexShrink: 0,
+    userSelect: "none",
+    boxShadow: `0 2px 4px ${color.border}40`,
+    transition: "transform 0.1s ease",
+    ...style
+  }, children: label });
+}
+function PastilleDense({ label, color, size = 26, opacity = 1 }) {
+  return /* @__PURE__ */ jsx12("div", { style: {
+    width: size,
+    height: size,
+    borderRadius: "50%",
+    background: color.bg,
+    border: `1.5px solid ${color.border}`,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 7,
+    fontWeight: 700,
+    color: color.text,
+    fontFamily: FONTS2.ui,
+    position: "relative",
+    zIndex: 2,
+    userSelect: "none",
+    opacity
+  }, children: label });
+}
+function Fretboard({
+  // Données
+  mode = "blank",
+  root,
+  scale,
+  chord,
+  highlightedNotes,
+  // Affichage
+  displayMode = "notes",
+  lang = "fr",
+  startFret = 0,
+  endFret = 12,
+  showOpenStrings = true,
+  showStringNames = true,
+  showFretNumbers = true,
+  compact = false,
+  // Quiz
+  quizTarget,
+  onQuizComplete,
+  onQuizProgress,
+  // Callbacks libres
+  onNoteClick,
+  selectedPositions: externalSelected,
+  // Illumination pendant la lecture : nom de note ("Do") ou tableau de noms
+  // pour un accord. Toutes les positions de ces notes s'allument, ce qui
+  // rend audible ET visible le lien entre le son et le manche.
+  flashNotes = null
+}) {
+  const C = useC();
+  const NOTE_COLORS = useMemo3(() => getNoteColors(C), [C]);
+  const [quizSelected, setQuizSelected] = useState10([]);
+  const [quizRevealed, setQuizRevealed] = useState10(false);
+  const activePositions = useMemo3(() => {
+    if (mode === "scale" && root && scale) {
+      return getScalePositions(root, scale, endFret);
+    }
+    if (mode === "chord" && root && chord) {
+      return getChordPositions(root, chord, endFret);
+    }
+    if (mode === "highlight" && highlightedNotes?.length) {
+      return getHighlightPositions(highlightedNotes, endFret);
+    }
+    if (mode === "quiz" && quizTarget) {
+      return getQuizTargetPositions(quizTarget, endFret);
+    }
+    return [];
+  }, [mode, root, scale, chord, highlightedNotes, quizTarget, endFret]);
+  const positionMap = useMemo3(() => {
+    const map = {};
+    for (const p of activePositions) {
+      map[`${p.string}-${p.fret}`] = p;
+    }
+    return map;
+  }, [activePositions]);
+  const handleCellClick = useCallback2((string, fret) => {
+    const note = getNoteAtPosition(string, fret);
+    if (mode === "quiz" && !quizRevealed) {
+      setQuizSelected((prev) => {
+        const already = prev.some((p) => p.string === string && p.fret === fret);
+        const next = already ? prev.filter((p) => !(p.string === string && p.fret === fret)) : [...prev, { string, fret }];
+        onQuizProgress?.({ selected: next, correct: activePositions });
+        const result = checkQuizCompletion(next, activePositions);
+        if (result.complete) onQuizComplete?.(result);
+        return next;
+      });
+      return;
+    }
+    onNoteClick?.({ string, fret, note });
+  }, [mode, quizRevealed, activePositions, onNoteClick, onQuizProgress, onQuizComplete]);
+  const frets = [];
+  for (let f = Math.max(1, startFret); f <= endFret; f++) frets.push(f);
+  const cellW = compact ? TAP.fretW : 48;
+  const cellH = compact ? TAP.fret : TAP.comfy;
+  const dotSz = compact ? 26 : 30;
+  const openW = compact ? 34 : 38;
+  const labelW = compact ? 26 : 30;
+  const interactive = mode === "quiz" || !!onNoteClick;
+  const rootFr = root ? noteToFr(root) : "";
+  const resume = (mode === "scale" && root && scale ? `Manche : gamme ${SCALES[scale]?.name ?? scale} de ${rootFr}` : mode === "chord" && root && chord ? `Manche : accord ${rootFr} ${CHORD_TYPES[chord]?.name ?? chord}` : mode === "highlight" && highlightedNotes?.length ? `Manche : notes ${highlightedNotes.map(noteToFr).join(", ")}` : mode === "quiz" && quizTarget ? `Manche : trouve tous les ${noteToFr(quizTarget)}` : "Manche de guitare") + `, cases ${startFret} \xE0 ${endFret}`;
+  return /* @__PURE__ */ jsxs10("div", { style: { width: "100%", userSelect: "none" }, children: [
+    /* @__PURE__ */ jsx12("div", { className: "gr-hscroll-wrap", children: /* @__PURE__ */ jsx12("div", { className: "gr-hscroll", role: "group", "aria-label": "Manche de guitare, d\xE9file horizontalement", children: /* @__PURE__ */ jsx12(
+      FretGrid,
+      {
+        frets,
+        showOpen: showOpenStrings,
+        showStringNames,
+        showFretNumbers,
+        cellW,
+        cellH,
+        openW,
+        labelW,
+        variant: "standard",
+        renderCell,
+        interactive,
+        onCellClick: handleCellClick,
+        isCellSelected: mode === "quiz" && !quizRevealed ? (s, f) => quizSelected.some((p) => p.string === s && p.fret === f) : void 0,
+        ariaLabel: resume
+      }
+    ) }) }),
+    mode === "quiz" && /* @__PURE__ */ jsx12(
+      QuizControls,
+      {
+        selected: quizSelected,
+        correct: activePositions,
+        revealed: quizRevealed,
+        target: quizTarget,
+        lang,
+        onReveal: () => setQuizRevealed(true),
+        onReset: () => {
+          setQuizSelected([]);
+          setQuizRevealed(false);
+        }
+      }
+    )
+  ] });
+  function renderCell(s, f) {
+    const key = `${s}-${f}`;
+    const pos = positionMap[key];
+    if (mode === "quiz") {
+      const isSelected = quizSelected.some((p) => p.string === s && p.fret === f);
+      const isCorrect = isCorrectPosition(s, f, activePositions);
+      if (quizRevealed) {
+        if (isCorrect && isSelected) {
+          const note = getNoteAtPosition(s, f);
+          return /* @__PURE__ */ jsx12(NoteMarker, { label: lang === "fr" ? noteToFr(note) : note, color: NOTE_COLORS.correct, size: dotSz });
+        }
+        if (isCorrect && !isSelected) {
+          const note = getNoteAtPosition(s, f);
+          return /* @__PURE__ */ jsx12(NoteMarker, { label: lang === "fr" ? noteToFr(note) : note, color: NOTE_COLORS.missed, size: dotSz });
+        }
+        if (!isCorrect && isSelected) {
+          const note = getNoteAtPosition(s, f);
+          return /* @__PURE__ */ jsx12(NoteMarker, { label: lang === "fr" ? noteToFr(note) : note, color: NOTE_COLORS.wrong, size: dotSz });
+        }
+        return null;
+      }
+      if (isSelected) {
+        const note = getNoteAtPosition(s, f);
+        return /* @__PURE__ */ jsx12(NoteMarker, { label: lang === "fr" ? noteToFr(note) : note, color: NOTE_COLORS.selected, size: dotSz });
+      }
+      return null;
+    }
+    if (externalSelected) {
+      const isExt = externalSelected.some((p) => p.string === s && p.fret === f);
+      if (isExt) {
+        const note = getNoteAtPosition(s, f);
+        return /* @__PURE__ */ jsx12(NoteMarker, { label: lang === "fr" ? noteToFr(note) : note, color: NOTE_COLORS.selected, size: dotSz });
+      }
+    }
+    if (!pos) return null;
+    const label = getNoteLabel(pos.note, pos.interval, pos.degree, displayMode, lang);
+    const baseColor = pos.isRoot ? NOTE_COLORS.root : colorForDegree(pos.degree, false, NOTE_COLORS);
+    const flashList = flashNotes == null ? [] : Array.isArray(flashNotes) ? flashNotes : [flashNotes];
+    const isFlashing = flashList.some((n) => n && normalizeNote(n) === normalizeNote(pos.note));
+    return /* @__PURE__ */ jsx12(
+      NoteMarker,
+      {
+        label,
+        color: baseColor,
+        size: isFlashing ? Math.round(dotSz * 1.32) : dotSz,
+        style: {
+          ...onNoteClick ? { cursor: "pointer" } : {},
+          ...isFlashing ? {
+            boxShadow: `0 0 0 3px ${C.bg}, 0 0 14px 4px ${baseColor.bg}`,
+            zIndex: 5
+          } : {},
+          transition: "width .12s, height .12s, box-shadow .12s"
+        }
+      }
+    );
+  }
+}
+function QuizControls({ selected, correct, revealed, target, lang, onReveal, onReset }) {
+  const C = useC();
+  const result = checkQuizCompletion(selected, correct);
+  const label = lang === "fr" ? noteToFr(target) : target;
+  return /* @__PURE__ */ jsxs10("div", { style: {
+    marginTop: 12,
+    padding: "12px 14px",
+    background: C.surface2,
+    borderRadius: 12,
+    border: `1px solid ${C.border}`
+  }, children: [
+    /* @__PURE__ */ jsxs10("div", { style: {
+      fontSize: 13,
+      fontWeight: 600,
+      color: C.text,
+      fontFamily: FONTS2.ui,
+      marginBottom: 8
+    }, children: [
+      "\u{1F3AF} Trouve tous les ",
+      /* @__PURE__ */ jsx12("strong", { children: label })
+    ] }),
+    /* @__PURE__ */ jsxs10("div", { style: { display: "flex", alignItems: "center", gap: 10 }, children: [
+      /* @__PURE__ */ jsx12("div", { style: {
+        fontSize: 12,
+        color: C.text3,
+        fontFamily: FONTS2.ui,
+        flex: 1
+      }, children: revealed ? `${result.found}/${result.total} trouv\xE9${result.found > 1 ? "s" : ""} \xB7 ${result.extras} fausse${result.extras > 1 ? "s" : ""} note${result.extras > 1 ? "s" : ""}` : `${selected.length} s\xE9lectionn\xE9${selected.length > 1 ? "s" : ""}` }),
+      !revealed && /* @__PURE__ */ jsx12(
+        "button",
+        {
+          onClick: onReveal,
+          style: {
+            padding: "7px 14px",
+            borderRadius: 8,
+            border: "none",
+            background: C.primary,
+            color: "#fff",
+            fontSize: 12,
+            fontWeight: 700,
+            cursor: "pointer",
+            fontFamily: FONTS2.ui
+          },
+          children: "V\xE9rifier"
+        }
+      ),
+      /* @__PURE__ */ jsx12(
+        "button",
+        {
+          onClick: onReset,
+          style: {
+            padding: "7px 14px",
+            borderRadius: 8,
+            border: `1px solid ${C.border}`,
+            background: C.bg,
+            color: C.text3,
+            fontSize: 12,
+            fontWeight: 600,
+            cursor: "pointer",
+            fontFamily: FONTS2.ui
+          },
+          children: "Reset"
+        }
+      )
+    ] }),
+    revealed && /* @__PURE__ */ jsx12("div", { style: {
+      marginTop: 10,
+      padding: "8px 10px",
+      borderRadius: 8,
+      background: result.complete ? C.greenL : C.amberL,
+      fontSize: 12,
+      color: result.complete ? C.greenD : C.amberD,
+      fontFamily: FONTS2.body,
+      lineHeight: 1.5
+    }, children: result.complete ? "\u2705 Parfait ! Tu as trouv\xE9 toutes les positions." : `\u{1F7E1} ${result.misses} position${result.misses > 1 ? "s" : ""} manquante${result.misses > 1 ? "s" : ""} (en orange). ${result.extras > 0 ? `${result.extras} erreur${result.extras > 1 ? "s" : ""} (en rouge).` : ""}` })
+  ] });
+}
+function FretboardLesson({ block }) {
+  const C = useC();
+  const defaultDisplay = block.mode === "highlight" || block.mode === "quiz" ? "notes" : block.displayMode || "notes";
+  const [displayMode, setDisplayMode] = useState10(defaultDisplay);
+  const [quizDone, setQuizDone] = useState10(false);
+  const modeMap = {
+    "scale": { mode: "scale", root: block.root, scale: block.scale },
+    "chord": { mode: "chord", root: block.root, chord: block.chord },
+    "highlight": { mode: "highlight", highlightedNotes: block.notes },
+    "quiz": { mode: "quiz", quizTarget: block.quizTarget }
+  };
+  const props = modeMap[block.mode] || { mode: "blank" };
+  const modeLabel = {
+    "scale": block.scale ? SCALES[block.scale]?.name ?? block.scale : "",
+    "chord": block.chord ? CHORD_TYPES[block.chord]?.name ?? block.chord : "",
+    "highlight": "",
+    "quiz": ""
+  }[block.mode] ?? "";
+  const rootLabel = block.root ? block.lang === "en" ? block.root : noteToFr(block.root) : "";
+  return /* @__PURE__ */ jsxs10("div", { style: {
+    background: C.surface2,
+    borderRadius: 14,
+    border: `1px solid ${C.border}`,
+    overflow: "hidden",
+    marginBottom: 0
+  }, children: [
+    /* @__PURE__ */ jsxs10("div", { style: {
+      padding: "10px 14px 8px",
+      borderBottom: `1px solid ${C.border}`,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 8,
+      flexWrap: "wrap"
+    }, children: [
+      /* @__PURE__ */ jsxs10("div", { children: [
+        /* @__PURE__ */ jsxs10("div", { style: {
+          fontSize: 11,
+          fontWeight: 700,
+          color: C.text3,
+          fontFamily: FONTS2.ui,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase"
+        }, children: [
+          "\u{1F3B8} ",
+          rootLabel,
+          " ",
+          modeLabel
+        ] }),
+        block.caption && /* @__PURE__ */ jsx12("div", { style: {
+          fontSize: 13,
+          fontWeight: 600,
+          color: C.text,
+          fontFamily: FONTS2.ui,
+          marginTop: 2
+        }, children: block.caption })
+      ] }),
+      block.mode !== "quiz" && block.mode !== "highlight" && /* @__PURE__ */ jsx12("div", { style: { display: "flex", gap: 4 }, children: [
+        { key: "notes", label: "Notes" },
+        { key: "intervals", label: "Intervalles" },
+        { key: "degrees", label: "Degr\xE9s" }
+      ].map((m) => /* @__PURE__ */ jsx12(
+        "button",
+        {
+          onClick: () => setDisplayMode(m.key),
+          style: {
+            padding: "4px 8px",
+            borderRadius: 6,
+            border: `1px solid ${displayMode === m.key ? C.primary : C.border}`,
+            background: displayMode === m.key ? C.primaryL : C.bg,
+            color: displayMode === m.key ? C.primaryD : C.text3,
+            fontSize: 10,
+            fontWeight: 600,
+            cursor: "pointer",
+            fontFamily: FONTS2.ui
+          },
+          children: m.label
+        },
+        m.key
+      )) })
+    ] }),
+    /* @__PURE__ */ jsx12("div", { style: { padding: "10px 8px" }, children: /* @__PURE__ */ jsx12(
+      Fretboard,
+      {
+        ...props,
+        displayMode,
+        lang: block.lang || "fr",
+        compact: block.compact ?? true,
+        onQuizComplete: block.mode === "quiz" ? () => setQuizDone(true) : void 0
+      }
+    ) }),
+    quizDone && /* @__PURE__ */ jsx12("div", { style: {
+      padding: "8px 14px 12px",
+      textAlign: "center",
+      fontSize: 13,
+      color: C.greenD,
+      fontFamily: FONTS2.body
+    }, children: "\u{1F3C6} Toutes les positions trouv\xE9es ! +XP" })
+  ] });
+}
+function FretboardQuizQuestion({ question, onComplete, answered, forceReveal }) {
+  const C = useC();
+  const [quizSelected, setQuizSelected] = useState10([]);
+  const [revealed, setRevealed] = useState10(false);
+  const [showHint, setShowHint] = useState10(false);
+  const questionKey = question.id;
+  const [lastKey, setLastKey] = useState10(questionKey);
+  if (lastKey !== questionKey) {
+    setQuizSelected([]);
+    setRevealed(false);
+    setShowHint(false);
+    setLastKey(questionKey);
+  }
+  const targetPositions = useMemo3(() => {
+    const fretMode = question.fretMode || question.concept?.type;
+    const target = question.target || question.concept?.root;
+    const root = question.root || question.concept?.root;
+    if ((fretMode === "find_note" || fretMode === "find_root" || fretMode === "find_chord" || fretMode === "find_scale_root") && (target || root)) {
+      return getQuizTargetPositions(target || root);
+    }
+    if (fretMode === "find_shape" && Array.isArray(question.concept?.positions)) {
+      return question.concept.positions.filter((p) => p && p.fret > 0);
+    }
+    return [];
+  }, [question]);
+  const contextPositions = useMemo3(() => {
+    const fretMode = question.fretMode || question.concept?.type;
+    const root = question.root || question.concept?.root;
+    const { scale, chord } = question;
+    if (fretMode === "find_chord" && root && chord) {
+      return getChordPositions(root, chord, 12);
+    }
+    if (fretMode === "find_scale_root" && root && scale) {
+      return getScalePositions(root, scale, 12);
+    }
+    return [];
+  }, [question]);
+  const handleCellClick = (string, fret) => {
+    if (revealed || answered) return;
+    setQuizSelected((prev) => {
+      const already = prev.some((p) => p.string === string && p.fret === fret);
+      return already ? prev.filter((p) => !(p.string === string && p.fret === fret)) : [...prev, { string, fret }];
+    });
+  };
+  const neutralPositions = question.concept?.neutralPositions || [];
+  const stripNeutral = (sel) => sel.filter(
+    (s) => !neutralPositions.some((n) => n.string === s.string && n.fret === s.fret)
+  );
+  const verify = () => {
+    if (revealed) return;
+    setRevealed(true);
+    const result2 = checkQuizCompletion(stripNeutral(quizSelected), targetPositions);
+    onComplete(result2);
+  };
+  useEffect8(() => {
+    if (forceReveal && !revealed) verify();
+  }, [forceReveal]);
+  const result = revealed ? checkQuizCompletion(stripNeutral(quizSelected), targetPositions) : null;
+  return /* @__PURE__ */ jsxs10("div", { style: { background: C.surface2, borderRadius: 14, border: `1px solid ${C.border}`, overflow: "hidden" }, children: [
+    /* @__PURE__ */ jsxs10("div", { style: { padding: "8px 14px 6px", borderBottom: `1px solid ${C.border}` }, children: [
+      /* @__PURE__ */ jsx12("div", { style: { fontSize: 10, fontWeight: 700, color: C.amber, fontFamily: FONTS2.ui, letterSpacing: "0.1em", textTransform: "uppercase" }, children: "Manche interactif" }),
+      question.hint && (revealed || showHint) && /* @__PURE__ */ jsx12("div", { style: { fontSize: 11, color: C.text3, marginTop: 2, fontFamily: FONTS2.ui }, children: question.hint }),
+      question.hint && !revealed && !showHint && /* @__PURE__ */ jsx12(
+        "button",
+        {
+          onClick: () => setShowHint(true),
+          style: {
+            marginTop: 3,
+            padding: 0,
+            border: "none",
+            background: "none",
+            fontSize: 11,
+            color: C.primary,
+            fontWeight: 600,
+            fontFamily: FONTS2.ui,
+            cursor: "pointer",
+            textDecoration: "underline"
+          },
+          children: "Afficher un indice"
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsx12("div", { style: { padding: "8px 8px 4px", overflowX: "auto", WebkitOverflowScrolling: "touch" }, children: /* @__PURE__ */ jsx12(
+      FretboardQuizCanvas,
+      {
+        targetPositions,
+        contextPositions,
+        selected: quizSelected,
+        revealed,
+        locked: answered,
+        onCellClick: handleCellClick,
+        question
+      }
+    ) }),
+    !answered && /* @__PURE__ */ jsxs10("div", { style: { padding: "6px 12px 10px", display: "flex", alignItems: "center", gap: 8 }, children: [
+      /* @__PURE__ */ jsx12("div", { style: { flex: 1, fontSize: 11, color: C.text3, fontFamily: FONTS2.ui }, children: revealed ? `${result.found}/${result.total} correct${result.extras > 0 ? ` \xB7 ${result.extras} erreur${result.extras > 1 ? "s" : ""}` : ""}` : `${quizSelected.length} s\xE9lectionn\xE9${quizSelected.length > 1 ? "s" : ""}` }),
+      !revealed && /* @__PURE__ */ jsx12(
+        "button",
+        {
+          onClick: verify,
+          style: {
+            padding: "7px 14px",
+            borderRadius: 8,
+            border: "none",
+            background: quizSelected.length > 0 ? C.primary : C.surface2,
+            color: quizSelected.length > 0 ? "#fff" : C.text3,
+            fontSize: 11,
+            fontWeight: 700,
+            cursor: quizSelected.length > 0 ? "pointer" : "default",
+            fontFamily: FONTS2.ui
+          },
+          children: "V\xE9rifier"
+        }
+      ),
+      !revealed && /* @__PURE__ */ jsx12(
+        "button",
+        {
+          onClick: () => setQuizSelected([]),
+          style: {
+            padding: "7px 10px",
+            borderRadius: 8,
+            border: `1px solid ${C.border}`,
+            background: C.bg,
+            color: C.text3,
+            fontSize: 11,
+            cursor: "pointer",
+            fontFamily: FONTS2.ui
+          },
+          children: "Reset"
+        }
+      )
+    ] })
+  ] });
+}
+function FretboardQuizCanvas({ targetPositions, contextPositions, selected, revealed, locked, onCellClick, question }) {
+  const C = useC();
+  const NOTE_COLORS = useMemo3(() => getNoteColors(C), [C]);
+  const DOT = 26;
+  const targetMap = useMemo3(() => {
+    const m = {};
+    targetPositions.forEach((p) => {
+      m[`${p.string}-${p.fret}`] = true;
+    });
+    return m;
+  }, [targetPositions]);
+  const contextMap = useMemo3(() => {
+    const m = {};
+    contextPositions.forEach((p) => {
+      m[`${p.string}-${p.fret}`] = p;
+    });
+    return m;
+  }, [contextPositions]);
+  const isSel = (s, f) => selected.some((p) => p.string === s && p.fret === f);
+  function renderDot(s, f) {
+    const key = `${s}-${f}`;
+    const isSelected = isSel(s, f);
+    const isTarget = targetMap[key];
+    const ctx = contextMap[key];
+    const dot = (col) => /* @__PURE__ */ jsx12(PastilleDense, { label: noteToFr(getNoteAtPosition(s, f)), color: col, size: DOT });
+    if (revealed) {
+      if (isTarget && isSelected) return dot(NOTE_COLORS.correct);
+      if (isTarget && !isSelected) return dot(NOTE_COLORS.missed);
+      if (!isTarget && isSelected) return dot(NOTE_COLORS.wrong);
+      if (ctx && !isTarget) return dot(NOTE_COLORS.other);
+      return null;
+    }
+    if (isSelected) return dot(NOTE_COLORS.selected);
+    if (ctx && !isTarget) return dot(NOTE_COLORS.other);
+    return null;
+  }
+  const interactive = !revealed && !locked;
+  const consigne = question?.q ? ` : ${question.q}` : "";
+  return /* @__PURE__ */ jsx12(
+    FretGrid,
+    {
+      frets: Array.from({ length: 12 }, (_, i) => i + 1),
+      cellW: TAP.fretW,
+      cellH: TAP.fret,
+      openW: 34,
+      labelW: 26,
+      variant: "dense",
+      renderCell: renderDot,
+      interactive,
+      onCellClick,
+      isCellSelected: isSel,
+      ariaLabel: interactive ? `Manche interactif${consigne}` : `Manche, correction affich\xE9e${consigne}`
+    }
+  );
+}
+function FretboardExercise({ ex, onComplete, dispatch }) {
+  const C = useC();
+  const [stageIdx, setStageIdx] = useState10(0);
+  const [stageSelected, setStageSelected] = useState10([]);
+  const [stageRevealed, setStageRevealed] = useState10(false);
+  const [stageResult, setStageResult] = useState10(null);
+  const [totalXp, setTotalXp] = useState10(0);
+  const [completedStages, setCompletedStages] = useState10([]);
+  const [allDone, setAllDone] = useState10(false);
+  const stage = ex.stages[stageIdx];
+  const isLast = stageIdx === ex.stages.length - 1;
+  const targetPositions = useMemo3(() => {
+    if (!stage) return [];
+    return getTargetPositions(stage.concept, {
+      fretRange: stage.fretRange || [0, 12],
+      stringRange: stage.stringRange || [1, 6]
+    });
+  }, [stage]);
+  const targetMap = useMemo3(() => {
+    const m = {};
+    targetPositions.forEach((p) => {
+      m[`${p.string}-${p.fret}`] = p;
+    });
+    return m;
+  }, [targetPositions]);
+  const handleCellClick = useCallback2((string, fret) => {
+    if (stageRevealed) return;
+    const already = stageSelected.some((p) => p.string === string && p.fret === fret);
+    setStageSelected(
+      (prev) => already ? prev.filter((p) => !(p.string === string && p.fret === fret)) : [...prev, { string, fret }]
+    );
+  }, [stageRevealed, stageSelected]);
+  const handleVerify = () => {
+    const result = validate(
+      stage.concept,
+      stageSelected,
+      stage.selectionRules || { mode: "all" },
+      {
+        fretRange: stage.fretRange || [0, 12],
+        stringRange: stage.stringRange || [1, 6]
+      }
+    );
+    setStageResult(result);
+    setStageRevealed(true);
+    if (result.complete) {
+      const xp = stage.xp || 15;
+      setTotalXp((prev) => prev + xp);
+      dispatch?.({ type: "ADD_XP", amount: xp });
+    }
+  };
+  const handleNext = () => {
+    const updatedStages = [...completedStages, { stageIdx, result: stageResult }];
+    setCompletedStages(updatedStages);
+    if (isLast) {
+      setAllDone(true);
+      onComplete?.({ totalXp, stages: updatedStages });
+    } else {
+      setStageIdx((i) => i + 1);
+      setStageSelected([]);
+      setStageRevealed(false);
+      setStageResult(null);
+    }
+  };
+  const handleSkip = () => {
+    const updatedStages = [...completedStages, { stageIdx, result: null, skipped: true }];
+    setCompletedStages(updatedStages);
+    if (isLast) {
+      setAllDone(true);
+      onComplete?.({ totalXp, stages: updatedStages });
+    } else {
+      setStageIdx((i) => i + 1);
+      setStageSelected([]);
+      setStageRevealed(false);
+      setStageResult(null);
+    }
+  };
+  if (allDone) {
+    return /* @__PURE__ */ jsxs10("div", { style: { textAlign: "center", padding: "24px 16px", background: C.greenL, borderRadius: 14, border: `1px solid ${C.border}` }, children: [
+      /* @__PURE__ */ jsx12(Ti, { name: "trophy", size: 32, color: C.green, style: { marginBottom: 8 } }),
+      /* @__PURE__ */ jsx12("div", { style: { fontSize: 18, fontWeight: 700, color: C.greenD, fontFamily: FONTS2.ui }, children: "Exercice termin\xE9 !" }),
+      /* @__PURE__ */ jsxs10("div", { style: { fontSize: 13, color: C.green, marginTop: 4, fontFamily: FONTS2.ui }, children: [
+        "+",
+        totalXp,
+        " XP gagn\xE9s"
+      ] }),
+      /* @__PURE__ */ jsxs10("div", { style: { fontSize: 12, color: C.text3, marginTop: 8, fontFamily: FONTS2.ui }, children: [
+        completedStages.filter((s) => s.result?.complete).length,
+        "/",
+        ex.stages.length,
+        " stages r\xE9ussis"
+      ] })
+    ] });
+  }
+  return /* @__PURE__ */ jsxs10("div", { style: { display: "flex", flexDirection: "column", gap: 12 }, children: [
+    /* @__PURE__ */ jsx12("div", { style: { display: "flex", gap: 4 }, children: ex.stages.map((_, i) => /* @__PURE__ */ jsx12("div", { style: {
+      flex: 1,
+      height: 4,
+      borderRadius: 2,
+      background: i < stageIdx ? C.green : i === stageIdx ? C.primary : C.border,
+      transition: "background 0.3s"
+    } }, i)) }),
+    /* @__PURE__ */ jsxs10("div", { style: { background: C.surface2, borderRadius: 12, border: `1px solid ${C.border}`, padding: "10px 14px" }, children: [
+      /* @__PURE__ */ jsxs10("div", { style: { fontSize: 10, fontWeight: 700, color: C.amber, fontFamily: FONTS2.ui, letterSpacing: "0.08em", textTransform: "uppercase" }, children: [
+        "\u{1F3B8} \xC9tape ",
+        stageIdx + 1,
+        " / ",
+        ex.stages.length
+      ] }),
+      /* @__PURE__ */ jsx12("div", { style: { fontSize: 14, fontWeight: 600, color: C.text, fontFamily: FONTS2.ui, marginTop: 4, lineHeight: 1.4 }, children: stage.instruction }),
+      stage.hint && !stageRevealed && /* @__PURE__ */ jsxs10("div", { style: { fontSize: 11, color: C.text3, fontFamily: FONTS2.ui, marginTop: 4, fontStyle: "italic" }, children: [
+        "\u{1F4A1} ",
+        stage.hint
+      ] }),
+      /* @__PURE__ */ jsxs10("div", { style: { fontSize: 11, color: C.primary, fontFamily: FONTS2.ui, marginTop: 4, fontWeight: 600 }, children: [
+        "+",
+        stage.xp || 15,
+        " XP"
+      ] })
+    ] }),
+    /* @__PURE__ */ jsx12("div", { style: { background: C.surface2, borderRadius: 12, border: `1px solid ${C.border}`, overflow: "hidden" }, children: /* @__PURE__ */ jsx12("div", { style: { padding: "8px 8px 4px", overflowX: "auto", WebkitOverflowScrolling: "touch" }, children: /* @__PURE__ */ jsx12(
+      ExerciseCanvas,
+      {
+        stage,
+        targetPositions,
+        targetMap,
+        selected: stageSelected,
+        revealed: stageRevealed,
+        onCellClick: handleCellClick
+      }
+    ) }) }),
+    stageRevealed && stageResult && /* @__PURE__ */ jsxs10("div", { style: {
+      padding: "10px 14px",
+      borderRadius: 10,
+      background: stageResult.complete ? C.greenL : C.amberL,
+      border: `1px solid ${stageResult.complete ? C.border : C.border}`,
+      fontSize: 12,
+      color: stageResult.complete ? C.greenD : C.amberD,
+      fontFamily: FONTS2.ui,
+      lineHeight: 1.5
+    }, children: [
+      stageResult.feedback,
+      stage.exp && /* @__PURE__ */ jsx12("div", { style: { marginTop: 4, opacity: 0.85 }, children: stage.exp })
+    ] }),
+    /* @__PURE__ */ jsx12("div", { style: { display: "flex", gap: 8 }, children: !stageRevealed ? /* @__PURE__ */ jsxs10(Fragment8, { children: [
+      /* @__PURE__ */ jsxs10(
+        "button",
+        {
+          onClick: handleVerify,
+          disabled: stageSelected.length === 0,
+          style: {
+            flex: 1,
+            padding: "12px",
+            borderRadius: 10,
+            border: "none",
+            background: stageSelected.length > 0 ? C.primary : C.surface2,
+            color: stageSelected.length > 0 ? "#fff" : C.text3,
+            fontSize: 13,
+            fontWeight: 700,
+            cursor: stageSelected.length > 0 ? "pointer" : "default",
+            fontFamily: FONTS2.ui
+          },
+          children: [
+            "V\xE9rifier \xB7 ",
+            stageSelected.length,
+            " s\xE9lectionn\xE9",
+            stageSelected.length > 1 ? "s" : ""
+          ]
+        }
+      ),
+      /* @__PURE__ */ jsx12(
+        "button",
+        {
+          onClick: () => setStageSelected([]),
+          style: {
+            padding: "12px 14px",
+            borderRadius: 10,
+            border: `1px solid ${C.border}`,
+            background: C.bg,
+            color: C.text3,
+            fontSize: 12,
+            cursor: "pointer",
+            fontFamily: FONTS2.ui
+          },
+          children: "Reset"
+        }
+      ),
+      /* @__PURE__ */ jsx12(
+        "button",
+        {
+          onClick: handleSkip,
+          style: {
+            padding: "12px 14px",
+            borderRadius: 10,
+            border: `1px solid ${C.border}`,
+            background: C.bg,
+            color: C.text3,
+            fontSize: 11,
+            cursor: "pointer",
+            fontFamily: FONTS2.ui
+          },
+          children: "Passer"
+        }
+      )
+    ] }) : /* @__PURE__ */ jsx12(
+      "button",
+      {
+        onClick: handleNext,
+        style: {
+          flex: 1,
+          padding: "12px",
+          borderRadius: 10,
+          border: "none",
+          background: C.primary,
+          color: "#fff",
+          fontSize: 13,
+          fontWeight: 700,
+          cursor: "pointer",
+          fontFamily: FONTS2.ui
+        },
+        children: isLast ? "Terminer l'exercice" : "\xC9tape suivante \u2192"
+      }
+    ) })
+  ] });
+}
+function ExerciseCanvas({ stage, targetMap, selected, revealed, onCellClick }) {
+  const C = useC();
+  const NOTE_COLORS = useMemo3(() => getNoteColors(C), [C]);
+  const DOT = 26;
+  const MAX_F = (stage.fretRange || [0, 12])[1];
+  const MIN_F = (stage.fretRange || [0, 12])[0];
+  const contextPositions = useMemo3(() => {
+    if (!stage.display?.showContext) return [];
+    const ctx = stage.display.showContext;
+    return getTargetPositions(ctx, {
+      fretRange: stage.fretRange || [0, 12],
+      stringRange: stage.stringRange || [1, 6]
+    });
+  }, [stage]);
+  const contextMap = useMemo3(() => {
+    const m = {};
+    contextPositions.forEach((p) => {
+      m[`${p.string}-${p.fret}`] = p;
+    });
+    return m;
+  }, [contextPositions]);
+  const isSel = (s, f) => selected.some((p) => p.string === s && p.fret === f);
+  function renderDot(s, f) {
+    const key = `${s}-${f}`;
+    const note = getNoteAtPosition(s, f);
+    const isSelected = isSel(s, f);
+    const isTarget = !!targetMap[key];
+    const isContext = !!contextMap[key];
+    const { showNotes, showIntervals, showDegrees } = stage.display || {};
+    const dot = (lbl, col, opacity) => /* @__PURE__ */ jsx12(PastilleDense, { label: lbl, color: col, size: DOT, opacity });
+    const getLabel = (pos) => {
+      if (showNotes) return noteToFr(note);
+      if (showIntervals && pos?.interval != null) return INTERVAL_NAMES[pos.interval]?.short ?? "";
+      if (showDegrees && pos?.degree) return String(pos.degree);
+      return noteToFr(note);
+    };
+    if (revealed) {
+      const tPos = targetMap[key];
+      if (isTarget && isSelected) return dot(getLabel(tPos), NOTE_COLORS.correct);
+      if (isTarget && !isSelected) return dot(getLabel(tPos), NOTE_COLORS.missed);
+      if (!isTarget && isSelected) return dot(noteToFr(note), NOTE_COLORS.wrong);
+      if (isContext) return dot(getLabel(contextMap[key]), NOTE_COLORS.other, 0.4);
+      return null;
+    }
+    if (isSelected) return dot(noteToFr(note), NOTE_COLORS.selected);
+    if (isContext && !isTarget) return dot(getLabel(contextMap[key]), NOTE_COLORS.other, 0.5);
+    if (showNotes) {
+      return dot(noteToFr(note), { bg: C.surface2, text: C.text3, border: C.border });
+    }
+    return null;
+  }
+  const frets = Array.from({ length: MAX_F - MIN_F }, (_, i) => MIN_F + i + 1);
+  const consigne = stage.instruction ? ` : ${stage.instruction}` : "";
+  return /* @__PURE__ */ jsx12(
+    FretGrid,
+    {
+      frets,
+      showOpen: MIN_F === 0,
+      cellW: TAP.fretW,
+      cellH: TAP.fret,
+      openW: 34,
+      labelW: 26,
+      variant: "dense",
+      epaisseurs: EPAISSEURS_EXERCICE,
+      renderCell: renderDot,
+      interactive: !revealed,
+      onCellClick,
+      isCellSelected: isSel,
+      ariaLabel: !revealed ? `Manche interactif${consigne}` : `Manche, correction affich\xE9e${consigne}`
+    }
+  );
+}
+var FONTS2, EPAISSEURS_EXERCICE;
+var init_Fretboard = __esm({
+  "src/Fretboard.jsx"() {
+    init_ThemeContext();
+    init_Ti();
+    init_tokens();
+    init_FretGrid();
+    init_fretboardUtils();
+    init_fretboardValidator();
+    FONTS2 = {
+      title: '"Clarendon LT", "Clarendon", "Playfair Display", Georgia, serif',
+      ui: '"Inter", "Helvetica Neue", -apple-system, sans-serif',
+      body: 'Georgia, "Times New Roman", serif'
+    };
+    EPAISSEURS_EXERCICE = { 1: 1, 2: 1.5, 3: 2, 4: 2.5, 5: 2.5, 6: 3 };
+  }
+});
+
+// src/screens/toolbox/Metronome.jsx
+var Metronome_exports = {};
+__export(Metronome_exports, {
+  Metronome: () => Metronome
+});
+import { useState as useState14, useRef as useRef9, useEffect as useEffect11, useCallback as useCallback4 } from "react";
+import { jsx as jsx19, jsxs as jsxs16 } from "react/jsx-runtime";
+function Metronome() {
+  const C = useC();
+  const pillBtn = {
+    minWidth: 42,
+    height: 42,
+    borderRadius: 12,
+    border: `1.5px solid ${C.border}`,
+    background: C.surface,
+    color: C.text2,
+    fontWeight: 700,
+    fontSize: 13,
+    cursor: "pointer",
+    fontFamily: FONTS.ui
+  };
+  const [bpm, setBpm] = useState14(90);
+  const [playing, setPlaying] = useState14(false);
+  const [beats, setBeats] = useState14(4);
+  const [current, setCurrent] = useState14(-1);
+  const [timbre, setTimbre] = useState14("bois");
+  const TIMBRES = [
+    { id: "bois", label: "Bois" },
+    { id: "mecanique", label: "M\xE9canique" },
+    { id: "batterie", label: "Batterie" }
+  ];
+  const voixRef = useRef9(null);
+  const loopRef = useRef9(null);
+  const beatRef = useRef9(0);
+  const beatsRef = useRef9(beats);
+  const libererVoix = useCallback4(() => {
+    try {
+      voixRef.current?.dispose?.();
+    } catch {
+    }
+    voixRef.current = null;
+  }, []);
+  const construireVoix = useCallback4((id) => {
+    if (id === "bois") {
+      const filtre = new Filter({ type: "bandpass", frequency: 1800, Q: 2.2 }).toDestination();
+      const corps = new NoiseSynth({
+        noise: { type: "white" },
+        envelope: { attack: 5e-4, decay: 0.028, sustain: 0 }
+      }).connect(filtre);
+      corps.volume.value = -8;
+      return {
+        fort: (t) => {
+          filtre.frequency.setValueAtTime(2600, t);
+          corps.triggerAttackRelease(0.02, t, 1);
+        },
+        faible: (t) => {
+          filtre.frequency.setValueAtTime(1500, t);
+          corps.triggerAttackRelease(0.02, t, 0.55);
+        },
+        dispose: () => {
+          corps.dispose();
+          filtre.dispose();
+        }
+      };
+    }
+    if (id === "mecanique") {
+      const filtre = new Filter({ type: "bandpass", frequency: 1400, Q: 3 }).toDestination();
+      const tic = new NoiseSynth({
+        noise: { type: "white" },
+        envelope: { attack: 5e-4, decay: 0.022, sustain: 0 }
+      }).connect(filtre);
+      tic.volume.value = -11;
+      const cloche = new MetalSynth({
+        harmonicity: 5.1,
+        modulationIndex: 16,
+        resonance: 3e3,
+        octaves: 1.2,
+        envelope: { attack: 1e-3, decay: 0.42, release: 0.12 }
+      }).toDestination();
+      cloche.volume.value = -22;
+      return {
+        fort: (t) => cloche.triggerAttackRelease("C6", 0.12, t),
+        faible: (t) => tic.triggerAttackRelease(0.02, t, 0.7),
+        dispose: () => {
+          tic.dispose();
+          filtre.dispose();
+          cloche.dispose();
+        }
+      };
+    }
+    const grosse = new MembraneSynth({
+      pitchDecay: 0.035,
+      octaves: 5,
+      envelope: { attack: 1e-3, decay: 0.22, sustain: 0 }
+    }).toDestination();
+    grosse.volume.value = -7;
+    const passeHaut = new Filter({ type: "highpass", frequency: 7500 }).toDestination();
+    const charley = new NoiseSynth({
+      noise: { type: "white" },
+      envelope: { attack: 1e-3, decay: 0.026, sustain: 0 }
+    }).connect(passeHaut);
+    charley.volume.value = -17;
+    return {
+      fort: (t) => grosse.triggerAttackRelease("C1", "8n", t),
+      faible: (t) => charley.triggerAttackRelease(0.02, t, 0.6),
+      dispose: () => {
+        grosse.dispose();
+        charley.dispose();
+        passeHaut.dispose();
+      }
+    };
+  }, []);
+  const ensureClick = useCallback4(async () => {
+    await start();
+    if (!voixRef.current) voixRef.current = construireVoix(timbre);
+  }, [timbre, construireVoix]);
+  const stop = useCallback4(() => {
+    if (loopRef.current) {
+      loopRef.current.stop();
+      loopRef.current.dispose();
+      loopRef.current = null;
+    }
+    getTransport().stop();
+    setPlaying(false);
+    setCurrent(-1);
+    beatRef.current = 0;
+  }, []);
+  const start2 = useCallback4(async () => {
+    await ensureClick();
+    beatRef.current = 0;
+    const transport = getTransport();
+    transport.bpm.value = bpm;
+    loopRef.current = new Loop((time) => {
+      const b = beatRef.current % beatsRef.current;
+      const strong = b === 0;
+      const voix = voixRef.current;
+      if (voix) (strong ? voix.fort : voix.faible)(time);
+      getDraw().schedule(() => setCurrent(b), time);
+      beatRef.current += 1;
+    }, "4n").start(0);
+    transport.start();
+    setPlaying(true);
+  }, [bpm, ensureClick]);
+  useEffect11(() => {
+    getTransport().bpm.value = bpm;
+  }, [bpm]);
+  useEffect11(() => {
+    if (!voixRef.current) return;
+    libererVoix();
+    voixRef.current = construireVoix(timbre);
+  }, [timbre, construireVoix, libererVoix]);
+  useEffect11(() => {
+    beatsRef.current = beats;
+  }, [beats]);
+  useEffect11(() => () => {
+    stop();
+    libererVoix();
+  }, [stop, libererVoix]);
+  const toggle = () => playing ? stop() : start2();
+  const nudge = (d) => setBpm((v) => Math.min(240, Math.max(40, v + d)));
+  const ECART_MIN_MS = 200;
+  const ECART_MAX_MS = 2e3;
+  const TAPS_MAX = 8;
+  const tapsRef = useRef9([]);
+  const [tapCount, setTapCount] = useState14(0);
+  const tapTempo = () => {
+    const now2 = performance.now();
+    const taps = tapsRef.current;
+    const dernier = taps[taps.length - 1];
+    if (dernier !== void 0) {
+      const ecart = now2 - dernier;
+      if (ecart < ECART_MIN_MS) return;
+      if (ecart > ECART_MAX_MS) {
+        tapsRef.current = [now2];
+        setTapCount(1);
+        return;
+      }
+    }
+    tapsRef.current = [...taps, now2].slice(-TAPS_MAX);
+    setTapCount(tapsRef.current.length);
+    if (tapsRef.current.length < 2) return;
+    const ecarts = [];
+    for (let i = 1; i < tapsRef.current.length; i++) {
+      ecarts.push(tapsRef.current[i] - tapsRef.current[i - 1]);
+    }
+    ecarts.sort((a, b) => a - b);
+    const milieu = Math.floor(ecarts.length / 2);
+    const median = ecarts.length % 2 ? ecarts[milieu] : (ecarts[milieu - 1] + ecarts[milieu]) / 2;
+    setBpm(Math.min(240, Math.max(40, Math.round(6e4 / median))));
+  };
+  const aideTap = tapCount === 0 ? "Tape le tempo au doigt, au moins deux fois." : tapCount === 1 ? "Continue : il faut un second appui pour mesurer." : `Tempo mesur\xE9 sur ${tapCount - 1} intervalle${tapCount > 2 ? "s" : ""}.`;
+  const tempoLabel = bpm < 60 ? "Largo" : bpm < 76 ? "Adagio" : bpm < 108 ? "Andante" : bpm < 120 ? "Moderato" : bpm < 156 ? "Allegro" : bpm < 176 ? "Vivace" : "Presto";
+  return /* @__PURE__ */ jsxs16("div", { children: [
+    /* @__PURE__ */ jsx19("div", { style: {
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      gap: 10,
+      margin: "8px 0 22px",
+      height: 24
+      // hauteur figée : plus de décalage vertical
+    }, children: Array.from({ length: beats }).map((_, i) => {
+      const on = current === i;
+      const strong = i === 0;
+      const teinte = strong ? C.primary : C.amber;
+      return /* @__PURE__ */ jsx19("div", { style: {
+        width: 24,
+        height: 24,
+        // taille de boîte constante
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexShrink: 0
+      }, children: /* @__PURE__ */ jsx19("div", { style: {
+        width: 16,
+        height: 16,
+        borderRadius: "50%",
+        background: on ? teinte : C.border,
+        transform: on ? "scale(1.35)" : "scale(1)",
+        boxShadow: on ? `0 0 0 4px ${teinte}22` : "none",
+        // On ne transitionne QUE transform et les couleurs — jamais
+        // `all`, qui embarquerait aussi les propriétés de mise en page.
+        transition: "transform .08s ease, background-color .08s ease, box-shadow .08s ease",
+        willChange: "transform"
+      } }) }, i);
+    }) }),
+    /* @__PURE__ */ jsxs16("div", { style: { textAlign: "center", marginBottom: 6 }, children: [
+      /* @__PURE__ */ jsx19("div", { style: { fontSize: 64, fontWeight: 800, color: C.text, letterSpacing: "-2px", lineHeight: 1, fontFamily: FONTS.title }, children: bpm }),
+      /* @__PURE__ */ jsxs16("div", { style: { fontSize: 12, fontWeight: 700, color: C.primary, textTransform: "uppercase", letterSpacing: ".1em", marginTop: 2 }, children: [
+        "BPM \xB7 ",
+        tempoLabel
+      ] })
+    ] }),
+    /* @__PURE__ */ jsx19(
+      "input",
+      {
+        type: "range",
+        min: "40",
+        max: "240",
+        value: bpm,
+        "aria-label": "Tempo",
+        "aria-valuetext": `${bpm} battements par minute, ${tempoLabel}`,
+        onChange: (e) => setBpm(+e.target.value),
+        style: { width: "100%", margin: "16px 0 6px", accentColor: C.primary }
+      }
+    ),
+    /* @__PURE__ */ jsxs16("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", gap: 14, marginBottom: 20 }, children: [
+      [-5, -1].map((d) => /* @__PURE__ */ jsx19("button", { onClick: () => nudge(d), "aria-label": `Ralentir de ${-d}`, className: "gr-focus", style: pillBtn, children: d }, d)),
+      /* @__PURE__ */ jsx19("button", { onClick: toggle, "aria-label": playing ? "Arr\xEAter le m\xE9tronome" : "D\xE9marrer le m\xE9tronome", className: "gr-focus", style: {
+        width: 72,
+        height: 72,
+        borderRadius: "50%",
+        border: "none",
+        cursor: "pointer",
+        background: `linear-gradient(135deg,#FF9155,${C.primary})`,
+        color: C.onPrimaryBtn,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        boxShadow: `0 6px 20px ${C.primary}55`
+      }, children: /* @__PURE__ */ jsx19(Ti, { name: playing ? "player-pause" : "player-play", size: 30, color: C.onPrimaryBtn }) }),
+      [1, 5].map((d) => /* @__PURE__ */ jsxs16("button", { onClick: () => nudge(d), "aria-label": `Acc\xE9l\xE9rer de ${d}`, className: "gr-focus", style: pillBtn, children: [
+        "+",
+        d
+      ] }, d))
+    ] }),
+    /* @__PURE__ */ jsxs16("div", { style: {
+      background: C.surface,
+      border: `1.5px solid ${C.border}`,
+      borderRadius: R.lg,
+      padding: "10px 12px",
+      marginBottom: 10
+    }, children: [
+      /* @__PURE__ */ jsx19("div", { style: { fontSize: 11, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: C.text2, marginBottom: 8 }, children: "Son" }),
+      /* @__PURE__ */ jsx19("div", { role: "radiogroup", "aria-label": "Timbre du m\xE9tronome", style: { display: "flex", gap: 6 }, children: TIMBRES.map((t) => {
+        const actif = timbre === t.id;
+        return /* @__PURE__ */ jsx19(
+          "button",
+          {
+            role: "radio",
+            "aria-checked": actif,
+            onClick: () => setTimbre(t.id),
+            className: "gr-focus",
+            style: {
+              flex: 1,
+              padding: "11px 6px",
+              borderRadius: R.md,
+              minHeight: 44,
+              border: `1.5px solid ${actif ? C.primary : C.border}`,
+              background: actif ? C.primaryL : C.surface,
+              color: actif ? C.primaryD : C.text2,
+              fontWeight: 700,
+              fontSize: 12.5,
+              cursor: "pointer",
+              fontFamily: FONTS.ui
+            },
+            children: t.label
+          },
+          t.id
+        );
+      }) })
+    ] }),
+    /* @__PURE__ */ jsxs16("div", { style: { display: "flex", gap: 10 }, children: [
+      /* @__PURE__ */ jsxs16("div", { style: { flex: 1, background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: "10px 12px" }, children: [
+        /* @__PURE__ */ jsx19("div", { style: { fontSize: 9.5, fontWeight: 700, color: C.text3, textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 7 }, children: "Mesure" }),
+        /* @__PURE__ */ jsx19("div", { style: { display: "flex", gap: 6 }, children: [2, 3, 4, 6].map((n) => /* @__PURE__ */ jsx19("button", { onClick: () => setBeats(n), "aria-pressed": beats === n, "aria-label": `${n} temps par mesure`, className: "gr-focus", style: {
+          flex: 1,
+          minHeight: 40,
+          padding: "7px 0",
+          borderRadius: 8,
+          cursor: "pointer",
+          border: `1.5px solid ${beats === n ? C.primary : C.border}`,
+          background: beats === n ? C.primaryL : C.surface,
+          color: beats === n ? C.primaryD : C.text2,
+          fontWeight: 700,
+          fontSize: 13,
+          fontFamily: FONTS.ui
+        }, children: n }, n)) })
+      ] }),
+      /* @__PURE__ */ jsxs16(
+        "button",
+        {
+          onClick: tapTempo,
+          className: "gr-focus",
+          "aria-label": tapCount > 0 ? `Tap tempo, ${tapCount} appuis compt\xE9s` : "Tap tempo",
+          style: {
+            width: 96,
+            background: C.amberL,
+            border: `1.5px solid ${C.amberBorder}`,
+            borderRadius: R.lg,
+            color: C.amberD,
+            fontWeight: 700,
+            fontSize: 13,
+            fontFamily: FONTS.ui,
+            cursor: "pointer",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 3
+          },
+          children: [
+            /* @__PURE__ */ jsx19(Ti, { name: "hand-finger-down", size: 18, color: C.amber }),
+            /* @__PURE__ */ jsx19("span", { style: { whiteSpace: "nowrap" }, children: "Tap tempo" }),
+            /* @__PURE__ */ jsx19("div", { "aria-hidden": "true", style: {
+              height: 6,
+              display: "flex",
+              gap: 3,
+              alignItems: "center",
+              justifyContent: "center"
+            }, children: Array.from({ length: TAPS_MAX }).map((_, i) => /* @__PURE__ */ jsx19("div", { style: {
+              width: 4,
+              height: 4,
+              borderRadius: "50%",
+              background: i < tapCount ? C.amber : "transparent",
+              transition: "background-color .1s ease"
+            } }, i)) })
+          ]
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsx19("div", { role: "status", "aria-live": "polite", style: {
+      minHeight: 18,
+      marginTop: 8,
+      textAlign: "center",
+      fontSize: 11,
+      color: C.text2,
+      fontFamily: FONTS.ui,
+      lineHeight: 1.5
+    }, children: aideTap })
+  ] });
+}
+var init_Metronome = __esm({
+  "src/screens/toolbox/Metronome.jsx"() {
+    init_tone_stub();
+    init_tokens();
+    init_ThemeContext();
+    init_Ti();
+  }
+});
+
+// src/music/pitch.js
+function nsdfAt(x, N2, lag) {
+  let acf = 0, energy = 0;
+  const n = N2 - lag;
+  for (let i = 0; i < n; i++) {
+    const a = x[i], b = x[i + lag];
+    acf += a * b;
+    energy += a * a + b * b;
+  }
+  return energy > 0 ? 2 * acf / energy : 0;
+}
+function detectPitch(buf, sampleRate) {
+  const R2 = 2;
+  const rate = sampleRate / R2;
+  const minLag = Math.max(2, Math.floor(rate / PITCH_MAX_HZ));
+  const maxLag = Math.ceil(rate / PITCH_MIN_HZ);
+  const N2 = Math.min(Math.floor(buf.length / R2), maxLag * 3);
+  if (N2 < maxLag + 2) return -1;
+  const x = new Float32Array(N2);
+  for (let i = 0; i < N2; i++) x[i] = buf[i * R2];
+  let e0 = 0;
+  for (let i = 0; i < N2; i++) e0 += x[i] * x[i];
+  if (Math.sqrt(e0 / N2) < 12e-4) return -1;
+  const nsdf = new Float32Array(maxLag + 2);
+  let best = 0;
+  for (let lag = minLag; lag <= maxLag; lag++) {
+    const v = nsdfAt(x, N2, lag);
+    nsdf[lag] = v;
+    if (v > best) best = v;
+  }
+  if (best < 0.35) return -1;
+  const thresh = best * 0.85;
+  let coarse = -1;
+  for (let i = minLag + 1; i < maxLag; i++) {
+    if (nsdf[i] >= thresh && nsdf[i] >= nsdf[i - 1] && nsdf[i] >= nsdf[i + 1]) {
+      coarse = i;
+      break;
+    }
+  }
+  if (coarse < 0) return -1;
+  const center = coarse * R2;
+  const lo = Math.max(2, center - R2 - 1);
+  const hi = Math.min(Math.floor(buf.length / 3) - 1, center + R2 + 1);
+  const NF = Math.min(buf.length, hi * 3);
+  let bestLag = center, bestVal = -Infinity;
+  const vals = {};
+  for (let l = lo; l <= hi; l++) {
+    const v = nsdfAt(buf, NF, l);
+    vals[l] = v;
+    if (v > bestVal) {
+      bestVal = v;
+      bestLag = l;
+    }
+  }
+  let T0 = bestLag;
+  const y1 = vals[bestLag - 1], y2 = vals[bestLag], y3 = vals[bestLag + 1];
+  if (y1 !== void 0 && y3 !== void 0) {
+    const a = (y1 + y3 - 2 * y2) / 2, b = (y3 - y1) / 2;
+    if (a !== 0) {
+      const shift = -b / (2 * a);
+      if (Math.abs(shift) <= 1) T0 = bestLag + shift;
+    }
+  }
+  const freq = sampleRate / T0;
+  if (freq < PITCH_MIN_HZ || freq > PITCH_MAX_HZ) return -1;
+  return freq;
+}
+var PITCH_MIN_HZ, PITCH_MAX_HZ;
+var init_pitch = __esm({
+  "src/music/pitch.js"() {
+    PITCH_MIN_HZ = 60;
+    PITCH_MAX_HZ = 700;
+  }
+});
+
+// src/screens/toolbox/Tuner.jsx
+var Tuner_exports = {};
+__export(Tuner_exports, {
+  Tuner: () => Tuner
+});
+import { useState as useState15, useRef as useRef10, useEffect as useEffect12, useCallback as useCallback5 } from "react";
+import { jsx as jsx20, jsxs as jsxs17 } from "react/jsx-runtime";
+function noteToHz(name, oct) {
+  const idx = NOTE_NAMES.indexOf(name);
+  const midi = (oct + 1) * 12 + idx;
+  return 440 * Math.pow(2, (midi - 69) / 12);
+}
+function buildTargets(tuning) {
+  const targets = [];
+  tuning.courses.forEach((course, ci) => {
+    course.forEach(([name, oct]) => {
+      targets.push({ name, oct, hz: noteToHz(name, oct), course: ci });
+    });
+  });
+  return targets;
+}
+function freqToNote(freq) {
+  const midi = Math.round(69 + 12 * Math.log2(freq / 440));
+  const refFreq = 440 * Math.pow(2, (midi - 69) / 12);
+  const cents = Math.round(1200 * Math.log2(freq / refFreq));
+  return { name: NOTE_NAMES[(midi % 12 + 12) % 12], octave: Math.floor(midi / 12) - 1, cents };
+}
+function TuningPicker({ tuningId, setTuningId, compact = false }) {
+  const C = useC();
+  const groups = [...new Set(TUNINGS.map((t) => t.group))];
+  return /* @__PURE__ */ jsx20(
+    "select",
+    {
+      value: tuningId,
+      onChange: (e) => setTuningId(e.target.value),
+      style: {
+        width: compact ? "100%" : "auto",
+        maxWidth: "100%",
+        appearance: "none",
+        WebkitAppearance: "none",
+        background: C.surface,
+        border: `1.5px solid ${C.border}`,
+        borderRadius: R.lg,
+        padding: compact ? "10px 14px" : "11px 38px 11px 16px",
+        fontSize: 13.5,
+        fontWeight: 700,
+        color: C.text,
+        fontFamily: FONTS.ui,
+        cursor: "pointer",
+        textAlign: "center",
+        textAlignLast: "center",
+        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23${C.text3.replace("#", "")}' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "right 14px center"
+      },
+      children: groups.map((g) => /* @__PURE__ */ jsx20("optgroup", { label: g, children: TUNINGS.filter((t) => t.group === g).map((t) => /* @__PURE__ */ jsx20("option", { value: t.id, children: t.label }, t.id)) }, g))
+    }
+  );
+}
+function Tuner() {
+  const C = useC();
+  const [active, setActive] = useState15(false);
+  const [freq, setFreq] = useState15(0);
+  const [note, setNote] = useState15(null);
+  const [error, setError] = useState15(null);
+  const [tuningId, setTuningId] = useState15("standard");
+  const tuning = TUNINGS.find((t) => t.id === tuningId) || TUNINGS[0];
+  const targets = buildTargets(tuning);
+  const ctxRef = useRef10(null);
+  const analyser = useRef10(null);
+  const streamRef = useRef10(null);
+  const rafRef = useRef10(null);
+  const bufRef = useRef10(null);
+  const freqHistRef = useRef10([]);
+  const holdTimer = useRef10(null);
+  const lastNoteRef = useRef10(null);
+  const needleRef = useRef10(null);
+  const needleLabelRef = useRef10(null);
+  const centsTargetRef = useRef10(0);
+  const centsShownRef = useRef10(0);
+  const hasSignalRef = useRef10(false);
+  const generationRef = useRef10(0);
+  const demarrageRef = useRef10(false);
+  const [demarrage, setDemarrage] = useState15(false);
+  const stop = useCallback5(() => {
+    generationRef.current += 1;
+    demarrageRef.current = false;
+    if (holdTimer.current) {
+      clearTimeout(holdTimer.current);
+      holdTimer.current = null;
+    }
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    if (streamRef.current) streamRef.current.getTracks().forEach((t) => t.stop());
+    if (ctxRef.current && ctxRef.current.state !== "closed") ctxRef.current.close();
+    ctxRef.current = analyser.current = streamRef.current = null;
+    centsTargetRef.current = 0;
+    centsShownRef.current = 0;
+    hasSignalRef.current = false;
+    freqHistRef.current = [];
+    setActive(false);
+    setFreq(0);
+    setNote(null);
+    setDemarrage(false);
+  }, []);
+  const start2 = useCallback5(async () => {
+    if (demarrageRef.current) return;
+    demarrageRef.current = true;
+    setDemarrage(true);
+    const gen = ++generationRef.current;
+    const annule = () => gen !== generationRef.current;
+    let stream = null, ctx = null;
+    const abandonner = () => {
+      stream?.getTracks().forEach((t) => t.stop());
+      if (ctx && ctx.state !== "closed") ctx.close().catch(() => {
+      });
+    };
+    try {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: false, autoGainControl: false, noiseSuppression: false, latency: 0 }
+        });
+      } catch {
+        if (annule()) return;
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      }
+      if (annule()) {
+        abandonner();
+        return;
+      }
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      if (ctx.state === "suspended") await ctx.resume();
+      if (annule()) {
+        abandonner();
+        return;
+      }
+      streamRef.current = stream;
+      ctxRef.current = ctx;
+      const src = ctx.createMediaStreamSource(stream);
+      const hp = ctx.createBiquadFilter();
+      hp.type = "highpass";
+      hp.frequency.value = 70;
+      hp.Q.value = 0.5;
+      const lp = ctx.createBiquadFilter();
+      lp.type = "lowpass";
+      lp.frequency.value = 1400;
+      lp.Q.value = 0.5;
+      const gain = ctx.createGain();
+      gain.gain.value = 4;
+      const an = ctx.createAnalyser();
+      an.fftSize = 8192;
+      an.smoothingTimeConstant = 0;
+      src.connect(hp);
+      hp.connect(lp);
+      lp.connect(gain);
+      gain.connect(an);
+      analyser.current = an;
+      bufRef.current = new Float32Array(an.fftSize);
+      freqHistRef.current = [];
+      setActive(true);
+      setError(null);
+      let frame = 0;
+      const tick = () => {
+        frame++;
+        if (frame % 2 === 0) {
+          an.getFloatTimeDomainData(bufRef.current);
+          const f = detectPitch(bufRef.current, ctx.sampleRate);
+          if (f > 0) {
+            const hist = freqHistRef.current;
+            hist.push(f);
+            if (hist.length > 5) hist.shift();
+            const sorted = [...hist].sort((a, b) => a - b);
+            const median = sorted[Math.floor(sorted.length / 2)];
+            if (holdTimer.current) {
+              clearTimeout(holdTimer.current);
+              holdTimer.current = null;
+            }
+            lastNoteRef.current = median;
+            const n = freqToNote(median);
+            centsTargetRef.current = Math.max(-50, Math.min(50, n.cents));
+            hasSignalRef.current = true;
+            setNote(
+              (prev) => prev && prev.name === n.name && prev.octave === n.octave && Math.abs(prev.cents - n.cents) < 3 ? prev : n
+            );
+            if (frame % 12 === 0) setFreq(median);
+          } else {
+            const hist = freqHistRef.current;
+            if (hist.length > 0) hist.shift();
+            if (hist.length === 0 && !holdTimer.current) {
+              holdTimer.current = setTimeout(() => {
+                setFreq(0);
+                setNote(null);
+                lastNoteRef.current = null;
+                holdTimer.current = null;
+                hasSignalRef.current = false;
+                centsTargetRef.current = 0;
+              }, 1500);
+            }
+          }
+        }
+        const target = centsTargetRef.current;
+        const next = centsShownRef.current + (target - centsShownRef.current) * 0.16;
+        centsShownRef.current = next;
+        if (needleRef.current) {
+          needleRef.current.style.transform = `translateX(${next}%)`;
+        }
+        if (needleLabelRef.current) {
+          const shown = Math.round(next);
+          needleLabelRef.current.textContent = hasSignalRef.current ? shown > 0 ? `+${shown}` : `${shown}` : "";
+        }
+        rafRef.current = requestAnimationFrame(tick);
+      };
+      tick();
+    } catch {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      abandonner();
+      if (streamRef.current === stream) streamRef.current = null;
+      if (ctxRef.current === ctx) ctxRef.current = analyser.current = null;
+      if (annule()) return;
+      setError("Micro inaccessible. Autorise l'acc\xE8s au microphone dans ton navigateur.");
+      setActive(false);
+    } finally {
+      if (!annule()) {
+        demarrageRef.current = false;
+        setDemarrage(false);
+      }
+    }
+  }, []);
+  useEffect12(() => () => stop(), [stop]);
+  const cents = note?.cents ?? 0;
+  const inTune = active && note && Math.abs(cents) <= 5;
+  const needleColor = inTune ? C.green : Math.abs(cents) < 20 ? C.amber : C.pink;
+  const nearestCourse = freq > 0 ? targets.reduce((best, t) => {
+    const d = Math.abs(1200 * Math.log2(freq / t.hz));
+    return d < best.d ? { course: t.course, d } : best;
+  }, { course: -1, d: Infinity }).course : -1;
+  return /* @__PURE__ */ jsx20("div", { children: !active ? /* @__PURE__ */ jsxs17("div", { style: { textAlign: "center", padding: "10px 0 4px" }, children: [
+    /* @__PURE__ */ jsx20(Gropi, { pose: "listen", size: 120, anim: "bob", style: { margin: "0 auto 6px" } }),
+    /* @__PURE__ */ jsx20("p", { style: { fontSize: 13, color: C.text2, lineHeight: 1.55, maxWidth: 260, margin: "0 auto 16px" }, children: "Joue une corde \xE0 vide, Gropi \xE9coute et te dit si tu es juste." }),
+    /* @__PURE__ */ jsx20(TuningPicker, { tuningId, setTuningId }),
+    /* @__PURE__ */ jsxs17("button", { onClick: start2, disabled: demarrage, "aria-busy": demarrage, className: "gr-focus", style: {
+      background: `linear-gradient(135deg,#FF9155,${C.primary})`,
+      color: C.onPrimaryBtn,
+      border: "none",
+      borderRadius: R.lg,
+      padding: "13px 28px",
+      fontSize: 14,
+      fontWeight: 700,
+      fontFamily: FONTS.ui,
+      cursor: demarrage ? "progress" : "pointer",
+      opacity: demarrage ? 0.7 : 1,
+      boxShadow: `0 4px 16px ${C.primary}44`,
+      marginTop: 18,
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 8
+    }, children: [
+      /* @__PURE__ */ jsx20(Ti, { name: "microphone", size: 16, color: C.onPrimaryBtn }),
+      " ",
+      demarrage ? "Activation\u2026" : "Activer l'accordeur"
+    ] }),
+    error && /* @__PURE__ */ jsx20("p", { style: { fontSize: 12, color: C.pink, marginTop: 14, lineHeight: 1.5 }, children: error })
+  ] }) : /* @__PURE__ */ jsxs17("div", { children: [
+    /* @__PURE__ */ jsxs17("div", { style: { textAlign: "center", marginBottom: 6 }, children: [
+      /* @__PURE__ */ jsxs17("div", { style: {
+        fontSize: 72,
+        fontWeight: 800,
+        lineHeight: 1,
+        letterSpacing: "-2px",
+        fontFamily: FONTS.title,
+        color: inTune ? C.green : C.text,
+        transition: "color .15s"
+      }, children: [
+        note ? note.name : "\u2014",
+        note && /* @__PURE__ */ jsx20("span", { style: { fontSize: 28, fontWeight: 700, color: C.text3 }, children: note.octave })
+      ] }),
+      /* @__PURE__ */ jsx20("div", { style: { fontSize: 13, fontWeight: 600, color: C.text3, marginTop: 2 }, children: freq > 0 ? `${freq.toFixed(1)} Hz` : "Joue une corde\u2026" })
+    ] }),
+    /* @__PURE__ */ jsxs17("div", { style: { position: "relative", height: 64, margin: "14px 0 8px", overflow: "hidden" }, children: [
+      /* @__PURE__ */ jsx20("div", { style: { position: "absolute", left: 0, right: 0, top: 30, height: 3, background: C.border, borderRadius: 2 } }),
+      /* @__PURE__ */ jsx20("div", { style: { position: "absolute", left: "45%", width: "10%", top: 26, height: 11, background: `${C.green}33`, borderRadius: 6 } }),
+      /* @__PURE__ */ jsx20("div", { style: { position: "absolute", left: "50%", top: 18, width: 2, height: 27, background: C.green, transform: "translateX(-50%)" } }),
+      /* @__PURE__ */ jsx20("div", { style: { position: "absolute", left: 0, right: 0, top: 8, pointerEvents: "none" }, children: /* @__PURE__ */ jsxs17("div", { ref: needleRef, style: { width: "100%", transform: "translateX(0%)", willChange: "transform" }, children: [
+        /* @__PURE__ */ jsx20("div", { style: {
+          width: 0,
+          height: 0,
+          margin: "0 auto",
+          borderLeft: "7px solid transparent",
+          borderRight: "7px solid transparent",
+          borderTop: `14px solid ${needleColor}`,
+          transition: "border-top-color .18s"
+        } }),
+        /* @__PURE__ */ jsx20("div", { ref: needleLabelRef, style: {
+          fontSize: 11,
+          fontWeight: 700,
+          textAlign: "center",
+          marginTop: 2,
+          color: needleColor,
+          transition: "color .18s"
+        } })
+      ] }) }),
+      /* @__PURE__ */ jsx20("div", { style: { position: "absolute", left: 0, top: 46, fontSize: 9.5, color: C.text3, fontWeight: 600 }, children: "\u266D trop bas" }),
+      /* @__PURE__ */ jsx20("div", { style: { position: "absolute", right: 0, top: 46, fontSize: 9.5, color: C.text3, fontWeight: 600 }, children: "trop haut \u266F" })
+    ] }),
+    /* @__PURE__ */ jsxs17("div", { "aria-hidden": !inTune, style: { height: 22, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontSize: 13, fontWeight: 700, color: C.green, marginBottom: 8, visibility: inTune ? "visible" : "hidden" }, children: [
+      /* @__PURE__ */ jsx20(Ti, { name: "check", size: 15, color: C.green }),
+      " Juste !"
+    ] }),
+    /* @__PURE__ */ jsx20("div", { style: { fontSize: 10, fontWeight: 700, color: C.text3, textTransform: "uppercase", letterSpacing: ".07em", textAlign: "center", marginTop: 8 }, children: tuning.label }),
+    /* @__PURE__ */ jsx20("div", { style: { display: "flex", justifyContent: "center", gap: 6, margin: "8px 0 18px", flexWrap: "wrap" }, children: tuning.courses.map((course, ci) => {
+      const on = nearestCourse === ci;
+      return /* @__PURE__ */ jsx20("div", { style: {
+        minWidth: 42,
+        textAlign: "center",
+        padding: "7px 8px",
+        borderRadius: 10,
+        border: `1.5px solid ${on ? C.primary : C.border}`,
+        background: on ? C.primaryL : C.surface,
+        transition: "all .12s"
+      }, children: course.map(([name, oct], k) => /* @__PURE__ */ jsxs17("div", { style: { lineHeight: 1.15 }, children: [
+        /* @__PURE__ */ jsx20("span", { style: { fontSize: 13, fontWeight: 800, color: on ? C.primaryD : C.text }, children: name }),
+        /* @__PURE__ */ jsx20("span", { style: { fontSize: 9, color: C.text3, fontWeight: 600 }, children: oct })
+      ] }, k)) }, ci);
+    }) }),
+    /* @__PURE__ */ jsx20("div", { style: { marginBottom: 14 }, children: /* @__PURE__ */ jsx20(TuningPicker, { tuningId, setTuningId, compact: true }) }),
+    /* @__PURE__ */ jsx20("button", { onClick: stop, className: "gr-focus", style: {
+      width: "100%",
+      padding: 12,
+      borderRadius: R.lg,
+      border: `1.5px solid ${C.border}`,
+      background: C.surface,
+      color: C.text2,
+      fontWeight: 700,
+      fontSize: 13,
+      fontFamily: FONTS.ui,
+      cursor: "pointer"
+    }, children: "Arr\xEAter l'accordeur" })
+  ] }) });
+}
+var NOTE_NAMES, TUNINGS;
+var init_Tuner = __esm({
+  "src/screens/toolbox/Tuner.jsx"() {
+    init_tokens();
+    init_ThemeContext();
+    init_Ti();
+    init_Gropi();
+    init_pitch();
+    NOTE_NAMES = ["Do", "Do#", "R\xE9", "R\xE9#", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "La#", "Si"];
+    TUNINGS = [
+      // ── 6 cordes ──────────────────────────────────────────────
+      {
+        id: "standard",
+        group: "6 cordes",
+        label: "Standard (Mi)",
+        courses: [[["Mi", 2]], [["La", 2]], [["R\xE9", 3]], [["Sol", 3]], [["Si", 3]], [["Mi", 4]]]
+      },
+      {
+        id: "dropd",
+        group: "6 cordes",
+        label: "Drop D",
+        courses: [[["R\xE9", 2]], [["La", 2]], [["R\xE9", 3]], [["Sol", 3]], [["Si", 3]], [["Mi", 4]]]
+      },
+      {
+        id: "halfstep",
+        group: "6 cordes",
+        label: "Demi-ton plus bas (Mi\u266D)",
+        courses: [[["R\xE9#", 2]], [["Sol#", 2]], [["Do#", 3]], [["Fa#", 3]], [["La#", 3]], [["R\xE9#", 4]]]
+      },
+      {
+        id: "dadgad",
+        group: "6 cordes",
+        label: "DADGAD",
+        courses: [[["R\xE9", 2]], [["La", 2]], [["R\xE9", 3]], [["Sol", 3]], [["La", 3]], [["R\xE9", 4]]]
+      },
+      {
+        id: "openg",
+        group: "6 cordes",
+        label: "Open G",
+        courses: [[["R\xE9", 2]], [["Sol", 2]], [["R\xE9", 3]], [["Sol", 3]], [["Si", 3]], [["R\xE9", 4]]]
+      },
+      {
+        id: "opend",
+        group: "6 cordes",
+        label: "Open D",
+        courses: [[["R\xE9", 2]], [["La", 2]], [["R\xE9", 3]], [["Fa#", 3]], [["La", 3]], [["R\xE9", 4]]]
+      },
+      {
+        id: "opene",
+        group: "6 cordes",
+        label: "Open E",
+        courses: [[["Mi", 2]], [["Si", 2]], [["Mi", 3]], [["Sol#", 3]], [["Si", 3]], [["Mi", 4]]]
+      },
+      // ── 12 cordes ─────────────────────────────────────────────
+      {
+        id: "twelve",
+        group: "12 cordes",
+        label: "12 cordes (standard)",
+        courses: [
+          [["Mi", 2], ["Mi", 3]],
+          [["La", 2], ["La", 3]],
+          [["R\xE9", 3], ["R\xE9", 4]],
+          [["Sol", 3], ["Sol", 4]],
+          [["Si", 3], ["Si", 3]],
+          [["Mi", 4], ["Mi", 4]]
+        ]
+      },
+      // ── Guitare portugaise (fado) — notes fournies par l'utilisateur ──
+      {
+        id: "fado",
+        group: "Guitare portugaise",
+        label: "Guitare portugaise (fado)",
+        courses: [
+          [["R\xE9", 4], ["R\xE9", 3]],
+          [["La", 4], ["La", 3]],
+          [["Si", 4], ["Si", 3]],
+          [["Mi", 4], ["Mi", 4]],
+          [["La", 4], ["La", 4]],
+          [["Si", 4], ["Si", 4]]
+        ]
+      }
+    ];
+  }
+});
+
+// src/screens/toolbox/ChordPlayer.jsx
+var ChordPlayer_exports = {};
+__export(ChordPlayer_exports, {
+  ChordPlayer: () => ChordPlayer
+});
+import { useState as useState16, useRef as useRef11, useEffect as useEffect13, useCallback as useCallback6 } from "react";
+import { Fragment as Fragment12, jsx as jsx21, jsxs as jsxs18 } from "react/jsx-runtime";
+function ChordPlayer() {
+  const C = useC();
+  const [root, setRoot] = useState16("C");
+  const [family, setFamily] = useState16("base");
+  const [quality, setQuality] = useState16("maj");
+  const [sequence, setSequence] = useState16([]);
+  const [playing, setPlaying] = useState16(false);
+  const [activeIdx, setActiveIdx] = useState16(-1);
+  const [speed, setSpeed] = useState16("normal");
+  const [suiteVidee, setSuiteVidee] = useState16(null);
+  const timerViderRef = useRef11(null);
+  useEffect13(() => () => clearTimeout(timerViderRef.current), []);
+  const stop = useCallback6(() => {
+    stopAll();
+    setPlaying(false);
+    setActiveIdx(-1);
+  }, []);
+  useEffect13(() => () => stopAll(), []);
+  const addChord = () => {
+    if (sequence.length >= MAX_CHORDS) return;
+    const rootFr = CHORD_ROOTS.find((r) => r[0] === root)?.[1] || root;
+    const label = `${rootFr}${CHORD_TYPES[quality]?.sym ?? ""}`;
+    setSequence((s) => [...s, { root, type: quality, label }]);
+  };
+  const removeChord = (i) => {
+    setSequence((s) => s.filter((_, idx) => idx !== i));
+  };
+  const clearAll = () => {
+    stop();
+    setSuiteVidee(sequence);
+    setSequence([]);
+    clearTimeout(timerViderRef.current);
+    timerViderRef.current = setTimeout(() => setSuiteVidee(null), 6e3);
+  };
+  const annulerVider = () => {
+    if (suiteVidee) setSequence(suiteVidee);
+    setSuiteVidee(null);
+    clearTimeout(timerViderRef.current);
+  };
+  const play = async () => {
+    if (sequence.length === 0) return;
+    const secs = SPEED_PRESETS.find((p) => p.id === speed)?.secs || 1.4;
+    setPlaying(true);
+    await playProgression(sequence, secs, (idx) => {
+      setActiveIdx(idx);
+      if (idx === -1) setPlaying(false);
+    });
+  };
+  const toggle = () => playing ? stop() : play();
+  const chip = {
+    padding: "8px 10px",
+    borderRadius: 10,
+    border: `1.5px solid ${C.border}`,
+    background: C.surface,
+    color: C.text2,
+    fontWeight: 700,
+    fontSize: 12.5,
+    cursor: "pointer",
+    fontFamily: FONTS.ui
+  };
+  return /* @__PURE__ */ jsxs18("div", { children: [
+    /* @__PURE__ */ jsxs18("div", { style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: 16 }, children: [
+      /* @__PURE__ */ jsx21("div", { style: { fontSize: 12, fontWeight: 700, color: C.text3, marginBottom: 9, fontFamily: FONTS.ui }, children: "Fondamentale" }),
+      /* @__PURE__ */ jsx21("div", { style: { display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6, marginBottom: 14 }, children: CHORD_ROOTS.map(([code, fr]) => /* @__PURE__ */ jsx21("button", { onClick: () => setRoot(code), "aria-pressed": root === code, className: "gr-focus", style: {
+        ...chip,
+        padding: "9px 0",
+        border: `1.5px solid ${root === code ? C.primary : C.border}`,
+        background: root === code ? C.primaryL : C.surface,
+        color: root === code ? C.primaryD : C.text2
+      }, children: fr }, code)) }),
+      /* @__PURE__ */ jsx21("div", { style: { fontSize: 12, fontWeight: 700, color: C.text3, marginBottom: 9, fontFamily: FONTS.ui }, children: "Famille" }),
+      /* @__PURE__ */ jsx21("div", { style: { display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }, children: CHORD_FAMILIES.map((f) => /* @__PURE__ */ jsx21("button", { "aria-pressed": family === f.id, className: "gr-focus", onClick: () => {
+        setFamily(f.id);
+        setQuality(f.keys[0]);
+      }, style: {
+        ...chip,
+        padding: "7px 10px",
+        fontSize: 12,
+        border: `1.5px solid ${family === f.id ? C.primary : C.border}`,
+        background: family === f.id ? C.primaryL : C.surface,
+        color: family === f.id ? C.primaryD : C.text2
+      }, children: f.label }, f.id)) }),
+      /* @__PURE__ */ jsx21("div", { style: { fontSize: 12, fontWeight: 700, color: C.text3, marginBottom: 9, fontFamily: FONTS.ui }, children: "Qualit\xE9" }),
+      /* @__PURE__ */ jsx21("div", { style: { display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 14 }, children: (CHORD_FAMILIES.find((f) => f.id === family)?.keys || []).map((key) => /* @__PURE__ */ jsx21("button", { onClick: () => setQuality(key), "aria-pressed": quality === key, "aria-label": CHORD_TYPES[key]?.name || key, className: "gr-focus", style: {
+        ...chip,
+        border: `1.5px solid ${quality === key ? C.primary : C.border}`,
+        background: quality === key ? C.primaryL : C.surface,
+        color: quality === key ? C.primaryD : C.text2
+      }, children: CHORD_TYPES[key]?.sym || CHORD_TYPES[key]?.name || key }, key)) }),
+      /* @__PURE__ */ jsx21("div", { style: { fontSize: 11.5, color: C.text3, marginBottom: 12, fontFamily: FONTS.ui, minHeight: 16 }, children: CHORD_TYPES[quality]?.name }),
+      /* @__PURE__ */ jsxs18("button", { onClick: addChord, disabled: sequence.length >= MAX_CHORDS, className: "gr-focus", style: {
+        width: "100%",
+        padding: "11px 0",
+        borderRadius: R.md,
+        border: "none",
+        background: sequence.length >= MAX_CHORDS ? C.border : C.primary,
+        color: C.onPrimaryBtn,
+        fontWeight: 700,
+        fontSize: 13.5,
+        fontFamily: FONTS.ui,
+        cursor: sequence.length >= MAX_CHORDS ? "default" : "pointer",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 6
+      }, children: [
+        /* @__PURE__ */ jsx21(Ti, { name: "plus", size: 15, color: C.onPrimaryBtn }),
+        "Ajouter \xE0 la suite"
+      ] })
+    ] }),
+    /* @__PURE__ */ jsxs18("div", { style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: 16, marginTop: 12 }, children: [
+      /* @__PURE__ */ jsxs18("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }, children: [
+        /* @__PURE__ */ jsxs18("div", { style: { fontSize: 12, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui }, children: [
+          "Ta suite (",
+          sequence.length,
+          "/",
+          MAX_CHORDS,
+          ")"
+        ] }),
+        sequence.length > 0 && /* @__PURE__ */ jsx21("button", { onClick: clearAll, className: "gr-focus", style: {
+          background: "none",
+          border: "none",
+          color: C.coral,
+          fontSize: 12.5,
+          fontWeight: 700,
+          fontFamily: FONTS.ui,
+          cursor: "pointer",
+          padding: "8px 10px",
+          margin: "-8px -10px",
+          minHeight: 36
+        }, children: "Vider" })
+      ] }),
+      sequence.length === 0 ? /* @__PURE__ */ jsx21("div", { role: "status", style: { textAlign: "center", padding: "18px 0", color: C.text3, fontSize: 13, fontFamily: FONTS.ui }, children: suiteVidee ? /* @__PURE__ */ jsxs18(Fragment12, { children: [
+        "Suite vid\xE9e.",
+        " ",
+        /* @__PURE__ */ jsx21("button", { onClick: annulerVider, className: "gr-focus", style: { background: "none", border: "none", padding: "6px 4px", color: C.primaryD, fontWeight: 800, fontSize: 13, fontFamily: FONTS.ui, cursor: "pointer", textDecoration: "underline" }, children: "Annuler" })
+      ] }) : "Ajoute des accords ci-dessus pour construire ta suite." }) : /* @__PURE__ */ jsx21("div", { style: { display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }, children: sequence.map((c, i) => /* @__PURE__ */ jsxs18("div", { style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        padding: "8px 6px 8px 12px",
+        borderRadius: 10,
+        fontFamily: FONTS.ui,
+        fontWeight: 700,
+        fontSize: 13,
+        border: `1.5px solid ${activeIdx === i && playing ? C.primary : C.border}`,
+        background: activeIdx === i && playing ? C.primaryL : C.surface2,
+        color: activeIdx === i && playing ? C.primaryD : C.text,
+        transition: "all 0.15s"
+      }, children: [
+        c.label,
+        /* @__PURE__ */ jsx21("button", { onClick: () => removeChord(i), "aria-label": `Retirer ${c.label}`, className: "gr-focus", style: {
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          padding: 0,
+          width: 32,
+          height: 32,
+          margin: "-8px -4px -8px 0",
+          borderRadius: 8,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: C.text3
+        }, children: /* @__PURE__ */ jsx21(Ti, { name: "x", size: 13, color: C.text3 }) })
+      ] }, i)) }),
+      /* @__PURE__ */ jsx21("div", { style: { display: "flex", gap: 6, marginBottom: 14 }, children: SPEED_PRESETS.map((p) => /* @__PURE__ */ jsx21("button", { onClick: () => setSpeed(p.id), disabled: playing, "aria-pressed": speed === p.id, className: "gr-focus", style: {
+        flex: 1,
+        padding: "8px 0",
+        borderRadius: R.sm,
+        fontFamily: FONTS.ui,
+        border: `1.5px solid ${speed === p.id ? C.primary : C.border}`,
+        background: speed === p.id ? C.primaryL : C.surface,
+        color: speed === p.id ? C.primaryD : C.text2,
+        fontWeight: 700,
+        fontSize: 12.5,
+        cursor: playing ? "default" : "pointer",
+        opacity: playing ? 0.6 : 1
+      }, children: p.label }, p.id)) }),
+      /* @__PURE__ */ jsxs18("button", { onClick: toggle, disabled: sequence.length === 0, className: "gr-focus", style: {
+        width: "100%",
+        padding: "13px 0",
+        borderRadius: R.md,
+        border: "none",
+        background: sequence.length === 0 ? C.border : playing ? C.coral : C.primary,
+        color: C.onPrimaryBtn,
+        fontWeight: 800,
+        fontSize: 14,
+        fontFamily: FONTS.ui,
+        cursor: sequence.length === 0 ? "default" : "pointer",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 7
+      }, children: [
+        /* @__PURE__ */ jsx21(Ti, { name: playing ? "player-pause" : "player-play", size: 16, color: C.onPrimaryBtn }),
+        playing ? "Arr\xEAter" : "\xC9couter la suite"
+      ] })
+    ] })
+  ] });
+}
+var CHORD_ROOTS, CHORD_FAMILIES, SPEED_PRESETS, MAX_CHORDS;
+var init_ChordPlayer = __esm({
+  "src/screens/toolbox/ChordPlayer.jsx"() {
+    init_tokens();
+    init_ThemeContext();
+    init_Ti();
+    init_audioEngine();
+    init_fretboardUtils();
+    CHORD_ROOTS = [
+      ["C", "Do"],
+      ["C#", "Do#"],
+      ["D", "R\xE9"],
+      ["D#", "R\xE9#"],
+      ["E", "Mi"],
+      ["F", "Fa"],
+      ["F#", "Fa#"],
+      ["G", "Sol"],
+      ["G#", "Sol#"],
+      ["A", "La"],
+      ["A#", "La#"],
+      ["B", "Si"]
+    ];
+    CHORD_FAMILIES = [
+      { id: "base", label: "Base", keys: ["maj", "min", "dim", "aug", "sus2", "sus4"] },
+      { id: "sept", label: "7e / 6e", keys: ["dom7", "maj7", "min7", "min7b5", "dim7", "minMaj7", "dom7sus4", "maj6", "min6"] },
+      { id: "neuf", label: "9e", keys: ["dom9", "maj9", "min9", "add9"] },
+      { id: "ext", label: "11e / 13e", keys: ["dom11", "min11", "maj7s11", "dom13", "min13", "maj13"] },
+      { id: "alt", label: "Alt\xE9r\xE9s", keys: ["dom7b9", "dom7s9", "dom7b5", "dom7s5"] }
+    ];
+    SPEED_PRESETS = [
+      { id: "lent", label: "Lent", secs: 2.2 },
+      { id: "normal", label: "Normal", secs: 1.4 },
+      { id: "rapide", label: "Rapide", secs: 0.8 }
+    ];
+    MAX_CHORDS = 12;
+  }
+});
+
+// src/tab/tabParser.js
+function stripLabel(line) {
+  return line.replace(/^\s*[A-Ga-g](#|b)?\s*[|:]?\s?/, "");
+}
+function parseStringLine(line) {
+  const events = [];
+  let i = 0;
+  const n = line.length;
+  const lireNombre = (pos) => {
+    let j = pos;
+    while (j < n && line[j] >= "0" && line[j] <= "9") j++;
+    if (j === pos) return null;
+    return { valeur: parseInt(line.slice(pos, j), 10), fin: j };
+  };
+  while (i < n) {
+    const c = line[i];
+    if (c === "x" || c === "X") {
+      events.push({ type: "mute", col: i });
+      i++;
+      continue;
+    }
+    const nombre = lireNombre(i);
+    if (nombre) {
+      const apres = nombre.fin;
+      const symbole2 = line[apres];
+      if (symbole2 && TECH_SYMBOLS.has(symbole2)) {
+        const cible = lireNombre(apres + 1);
+        const toFret = cible ? cible.valeur : symbole2 === "b" ? nombre.valeur + 2 : nombre.valeur;
+        events.push({
+          type: TECH_TYPE[symbole2],
+          fromFret: nombre.valeur,
+          toFret,
+          col: i
+        });
+        i = cible ? cible.fin : apres + 1;
+        continue;
+      }
+      events.push({ type: "note", fret: nombre.valeur, col: i });
+      i = nombre.fin;
+      continue;
+    }
+    i++;
+  }
+  return events;
+}
+function parseTab(texte) {
+  if (typeof texte !== "string" || !texte.trim()) {
+    return { evenements: [], erreur: "Aucun texte \xE0 analyser." };
+  }
+  const lignesBrutes = texte.split("\n").filter((l) => /[-0-9]{2,}/.test(l));
+  if (lignesBrutes.length < 6) {
+    return {
+      evenements: [],
+      erreur: `${lignesBrutes.length} ligne(s) exploitable(s) d\xE9tect\xE9e(s), 6 attendues (une par corde). V\xE9rifie qu'aucune ligne ne s'est perdue au collage.`
+    };
+  }
+  const lignes = lignesBrutes.slice(0, 6).map(stripLabel);
+  const evenements = [];
+  lignes.forEach((ligne, idx) => {
+    const stringNum = idx + 1;
+    for (const ev of parseStringLine(ligne)) {
+      evenements.push({ ...ev, string: stringNum });
+    }
+  });
+  evenements.sort((a, b) => a.col - b.col || a.string - b.string);
+  return { evenements, erreur: null };
+}
+var TECH_SYMBOLS, TECH_TYPE;
+var init_tabParser = __esm({
+  "src/tab/tabParser.js"() {
+    TECH_SYMBOLS = /* @__PURE__ */ new Set(["h", "p", "/", "\\", "b"]);
+    TECH_TYPE = {
+      h: "hammer",
+      p: "pull",
+      "/": "slide_up",
+      "\\": "slide_down",
+      b: "bend"
+    };
+  }
+});
+
+// src/tab/tabGrid.js
+function grilleVide() {
+  return { notes: {} };
+}
+function lireCase(grille, corde, col) {
+  return grille?.notes?.[cle(corde, col)] || null;
+}
+function ecrireCase(grille, corde, col, cell) {
+  const notes = { ...grille.notes };
+  if (cell == null) delete notes[cle(corde, col)];
+  else notes[cle(corde, col)] = cell;
+  return { notes };
+}
+function derniereColonne(grille) {
+  let max = -1;
+  for (const k of Object.keys(grille?.notes || {})) max = Math.max(max, colDeCle(k));
+  return max;
+}
+function nbColsVisibles(grille) {
+  const der = derniereColonne(grille);
+  const mesures = der < 0 ? 2 : Math.max(2, Math.floor(der / PAS_PAR_MESURE) + 2);
+  return mesures * PAS_PAR_MESURE;
+}
+function nbMesuresUtilisees(grille) {
+  const der = derniereColonne(grille);
+  return der < 0 ? 0 : Math.floor(der / PAS_PAR_MESURE) + 1;
+}
+function compatibleCroches(grille) {
+  return Object.keys(grille?.notes || {}).every((k) => colDeCle(k) % 2 === 0);
+}
+function saisirChiffre(cellActuelle, chiffre, enchainer) {
+  const base = cellActuelle && !cellActuelle.mute ? cellActuelle : {};
+  if (enchainer && typeof base.fret === "number") {
+    const combine = base.fret * 10 + chiffre;
+    if (combine <= FRET_MAX) return { ...base, fret: combine };
+  }
+  return { ...base, fret: chiffre, mute: void 0 };
+}
+function poserFret(cellActuelle, fret) {
+  const base = cellActuelle && !cellActuelle.mute ? cellActuelle : {};
+  return { ...base, fret: Math.max(0, Math.min(FRET_MAX, fret)), mute: void 0 };
+}
+function notesDeLaCorde(grille, corde) {
+  const out = [];
+  for (const [k, cell] of Object.entries(grille.notes)) {
+    const [s, c] = k.split("-").map(Number);
+    if (s === corde) out.push({ col: c, cell });
+  }
+  return out.sort((a, b) => a.col - b.col);
+}
+function grilleVersEvenements(grille) {
+  const evenements = [];
+  for (let corde = 1; corde <= NB_CORDES; corde++) {
+    const notes = notesDeLaCorde(grille, corde);
+    const consommees = /* @__PURE__ */ new Set();
+    notes.forEach((n, i) => {
+      if (consommees.has(n.col)) return;
+      const { cell, col } = n;
+      if (cell.mute) {
+        evenements.push({ type: "mute", col, string: corde });
+        return;
+      }
+      if (typeof cell.fret !== "number") return;
+      const suivante = notes[i + 1];
+      const suivanteJouable = suivante && !suivante.cell.mute && typeof suivante.cell.fret === "number";
+      if ((cell.lie || cell.slide) && suivanteJouable) {
+        const monte = suivante.cell.fret >= cell.fret;
+        const type = cell.slide ? monte ? "slide_up" : "slide_down" : monte ? "hammer" : "pull";
+        evenements.push({ type, fromFret: cell.fret, toFret: suivante.cell.fret, col, toCol: suivante.col, string: corde });
+        consommees.add(suivante.col);
+        return;
+      }
+      if (cell.bend === 1 || cell.bend === 2) {
+        evenements.push({ type: "bend", fromFret: cell.fret, toFret: cell.fret + cell.bend, col, string: corde });
+        return;
+      }
+      evenements.push({ type: "note", fret: cell.fret, col, string: corde });
+    });
+  }
+  return evenements.sort((a, b) => a.col - b.col || a.string - b.string);
+}
+function evenementsVersGrille(evenements) {
+  let g = grilleVide();
+  for (const ev of evenements || []) {
+    switch (ev.type) {
+      case "note":
+        g = ecrireCase(g, ev.string, ev.col, { fret: ev.fret });
+        break;
+      case "mute":
+        g = ecrireCase(g, ev.string, ev.col, { mute: true });
+        break;
+      case "bend": {
+        const b = Math.max(1, Math.min(2, ev.toFret - ev.fromFret));
+        g = ecrireCase(g, ev.string, ev.col, { fret: ev.fromFret, bend: b });
+        break;
+      }
+      case "hammer":
+      case "pull":
+      case "slide_up":
+      case "slide_down": {
+        const lien = ev.type.startsWith("slide") ? { slide: true } : { lie: true };
+        g = ecrireCase(g, ev.string, ev.col, { fret: ev.fromFret, ...lien });
+        g = ecrireCase(g, ev.string, ev.toCol ?? ev.col + 1, { fret: ev.toFret });
+        break;
+      }
+      default:
+        break;
+    }
+  }
+  return g;
+}
+function grilleExemple() {
+  const notes = [
+    [3, 0, { fret: 5, lie: true }],
+    [3, 2, { fret: 7 }],
+    // hammer 5→7
+    [2, 4, { fret: 5 }],
+    [2, 6, { fret: 8, lie: true }],
+    [2, 8, { fret: 5 }],
+    // pull-off 8→5
+    [3, 10, { fret: 7, bend: 2 }],
+    // bend d'un ton
+    [3, 14, { fret: 5 }],
+    [4, 16, { fret: 7 }],
+    [4, 18, { fret: 5 }],
+    [5, 20, { fret: 5, slide: true }],
+    [5, 24, { fret: 7 }],
+    // slide 5→7
+    [4, 28, { fret: 7 }]
+    // retour sur La
+  ];
+  let g = grilleVide();
+  for (const [s, c, cell] of notes) g = ecrireCase(g, s, c, cell);
+  return g;
+}
+function grilleValide(g) {
+  if (!g || typeof g !== "object" || !g.notes || typeof g.notes !== "object" || Array.isArray(g.notes)) return false;
+  return Object.entries(g.notes).every(
+    ([k, v]) => /^[1-6]-\d+$/.test(k) && colDeCle(k) < PAS_PAR_MESURE * 256 && v && typeof v === "object"
+  );
+}
+var PAS_PAR_MESURE, NB_CORDES, FRET_MAX, cle, colDeCle;
+var init_tabGrid = __esm({
+  "src/tab/tabGrid.js"() {
+    PAS_PAR_MESURE = 16;
+    NB_CORDES = 6;
+    FRET_MAX = 24;
+    cle = (corde, col) => `${corde}-${col}`;
+    colDeCle = (k) => Number(k.split("-")[1]);
+  }
+});
+
+// src/screens/toolbox/TabEditor.jsx
+var TabEditor_exports = {};
+__export(TabEditor_exports, {
+  TabEditor: () => TabEditor
+});
+import { useState as useState17, useRef as useRef12, useEffect as useEffect14, useCallback as useCallback7, useMemo as useMemo6, useId } from "react";
+import { jsx as jsx22, jsxs as jsxs19 } from "react/jsx-runtime";
+function styleTouche(C, actif, extra = {}) {
+  return {
+    height: 40,
+    borderRadius: R.sm,
+    cursor: "pointer",
+    fontFamily: FONTS.ui,
+    border: `1.5px solid ${actif ? C.primary : C.border}`,
+    background: actif ? C.primaryL : C.surface,
+    color: actif ? C.primaryD : C.text,
+    fontWeight: 800,
+    fontSize: 14,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 2,
+    padding: 0,
+    ...extra
+  };
+}
+function GrilleTab({ grille, evenements, res, selection, onSelect, onKeyDown, colLecture, C }) {
+  const grilleRef = useRef12(null);
+  const scrollRef = useRef12(null);
+  const prefixeId = useId();
+  const idCase = (corde, col) => `${prefixeId}-case-${corde}-${col}`;
+  const nbCols = nbColsVisibles(grille);
+  const cellW = LARGEUR_CASE[res];
+  const nbCases = nbCols / res;
+  const casesParMesure = PAS_PAR_MESURE / res;
+  const casesParTemps = 4 / res;
+  const vide = derniereColonne(grille) < 0;
+  const liaisons = evenements.filter((e) => e.toCol != null);
+  const origines = new Set(liaisons.map((e) => `${e.string}-${e.col}`));
+  useEffect14(() => {
+    const el = scrollRef.current;
+    if (!el || !el.contains(document.activeElement)) return;
+    el.querySelector(`[data-case="${selection.corde}-${selection.col}"]`)?.focus({ preventScroll: true });
+  }, [selection]);
+  const colSuivie = colLecture ?? selection.col;
+  useEffect14(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const x = colSuivie / res * cellW;
+    const horsVue = x < el.scrollLeft + 8 || x + cellW > el.scrollLeft + el.clientWidth - 8;
+    if (colLecture != null || horsVue) {
+      const reduit = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      el.scrollTo({ left: Math.max(0, x - el.clientWidth * 0.3), behavior: reduit ? "auto" : "smooth" });
+    }
+  }, [colSuivie, colLecture, res, cellW]);
+  return /* @__PURE__ */ jsxs19(
+    "div",
+    {
+      ref: grilleRef,
+      role: "grid",
+      tabIndex: 0,
+      className: "gr-focus",
+      onKeyDown,
+      "aria-label": "Tablature. Fl\xE8ches pour se d\xE9placer, chiffres pour la case, x \xE9touff\xE9e, h liaison, s slide, b bend, Retour arri\xE8re pour effacer, Espace pour \xE9couter.",
+      "aria-activedescendant": idCase(selection.corde, selection.col),
+      style: { position: "relative", display: "flex", border: `1.5px solid ${C.border}`, borderRadius: R.md, background: C.surface, overflow: "hidden" },
+      children: [
+        /* @__PURE__ */ jsx22("div", { "aria-hidden": "true", style: { flexShrink: 0, width: 24, background: C.surface2, borderRight: `1.5px solid ${C.border}`, paddingTop: HAUT_ENTETE }, children: CORDES_LABELS.map((l, i) => /* @__PURE__ */ jsx22("div", { style: { height: CELL_H, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11.5, fontWeight: 800, color: selection.corde === i + 1 ? C.primary : C.text3 }, children: l }, l + i)) }),
+        /* @__PURE__ */ jsx22("div", { ref: scrollRef, style: { overflowX: "auto", WebkitOverflowScrolling: "touch", flex: 1 }, children: /* @__PURE__ */ jsxs19("div", { style: { position: "relative", width: nbCases * cellW, height: HAUT_ENTETE + CELL_H * 6 }, children: [
+          Array.from({ length: nbCols / 4 }, (_, t) => t % 2 === 1 ? /* @__PURE__ */ jsx22("div", { "aria-hidden": "true", style: { position: "absolute", top: HAUT_ENTETE, bottom: 0, left: t * casesParTemps * cellW, width: casesParTemps * cellW, background: C.surface2, opacity: 0.55 } }, "t" + t) : null),
+          /* @__PURE__ */ jsx22("div", { "aria-hidden": "true", style: { position: "absolute", top: HAUT_ENTETE, bottom: 0, left: selection.col / res * cellW, width: cellW, background: C.primaryL, opacity: 0.6 } }),
+          colLecture != null && /* @__PURE__ */ jsx22("div", { "aria-hidden": "true", style: { position: "absolute", top: HAUT_ENTETE, bottom: 0, left: colLecture / res * cellW, width: cellW, background: C.primary, opacity: 0.22 } }),
+          Array.from({ length: nbCols / PAS_PAR_MESURE }, (_, m) => /* @__PURE__ */ jsx22("div", { "aria-hidden": "true", style: { position: "absolute", top: 1, left: m * casesParMesure * cellW + 5, fontSize: 10, fontWeight: 700, color: C.text3 }, children: m + 1 }, "n" + m)),
+          Array.from({ length: nbCols / PAS_PAR_MESURE }, (_, m) => m > 0 ? /* @__PURE__ */ jsx22("div", { "aria-hidden": "true", style: { position: "absolute", top: HAUT_ENTETE + CELL_H / 2, height: CELL_H * 5, left: m * casesParMesure * cellW - 1, width: 2, background: C.text3 } }, "b" + m) : null),
+          CORDES_LABELS.map((label, idx) => {
+            const corde = idx + 1;
+            return /* @__PURE__ */ jsxs19("div", { role: "row", style: { position: "absolute", top: HAUT_ENTETE + idx * CELL_H, left: 0, height: CELL_H, width: "100%", display: "flex" }, children: [
+              /* @__PURE__ */ jsx22("div", { "aria-hidden": "true", style: { position: "absolute", left: 0, right: 0, top: CELL_H / 2, height: 1.5, background: C.border } }),
+              Array.from({ length: nbCases }, (_, d) => {
+                const col = d * res;
+                const cell = lireCase(grille, corde, col);
+                const sel = selection.corde === corde && selection.col === col;
+                const enAttente2 = cell && (cell.lie || cell.slide) && !origines.has(`${corde}-${col}`);
+                const repere = cell?.bend === 2 ? "full" : cell?.bend === 1 ? "\xBD" : enAttente2 ? cell.slide ? "sl\u2026" : "h/p\u2026" : "";
+                return /* @__PURE__ */ jsxs19(
+                  "button",
+                  {
+                    onClick: () => onSelect({ corde, col }),
+                    className: "gr-focus",
+                    role: "gridcell",
+                    id: idCase(corde, col),
+                    "data-case": `${corde}-${col}`,
+                    tabIndex: -1,
+                    "aria-selected": sel,
+                    "aria-label": `Corde ${label}, mesure ${Math.floor(col / PAS_PAR_MESURE) + 1}, temps ${Math.floor(col % PAS_PAR_MESURE / 4) + 1}${cell ? cell.mute ? ", note \xE9touff\xE9e" : `, case ${cell.fret}` : ", vide"}`,
+                    style: { position: "relative", width: cellW, height: CELL_H, flexShrink: 0, padding: 0, background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" },
+                    children: [
+                      cell ? /* @__PURE__ */ jsx22("span", { style: {
+                        position: "relative",
+                        zIndex: 1,
+                        minWidth: 18,
+                        padding: "1px 3px",
+                        borderRadius: 4,
+                        fontFamily: "monospace",
+                        fontWeight: 800,
+                        fontSize: 13.5,
+                        lineHeight: "18px",
+                        background: sel ? C.primary : C.surface,
+                        color: sel ? C.onPrimaryBtn : C.text
+                      }, children: cell.mute ? "x" : cell.fret }) : sel ? /* @__PURE__ */ jsx22("span", { style: { position: "relative", zIndex: 1, width: 20, height: 20, borderRadius: 5, border: `2px solid ${C.primary}`, background: C.surface } }) : null,
+                      repere && /* @__PURE__ */ jsx22("span", { style: { position: "absolute", top: -1, right: 1, zIndex: 2, fontSize: 9.5, fontWeight: 800, color: enAttente2 ? C.text3 : C.primary }, children: repere })
+                    ]
+                  },
+                  col
+                );
+              })
+            ] }, corde);
+          }),
+          liaisons.map((e, i) => {
+            const x1 = e.col / res * cellW + cellW / 2;
+            const x2 = e.toCol / res * cellW + cellW / 2;
+            const y = HAUT_ENTETE + (e.string - 1) * CELL_H;
+            if (e.type === "hammer" || e.type === "pull") {
+              return /* @__PURE__ */ jsxs19("div", { "aria-hidden": "true", style: { pointerEvents: "none" }, children: [
+                /* @__PURE__ */ jsx22("div", { style: { position: "absolute", zIndex: 3, left: x1 + 5, width: Math.max(6, x2 - x1 - 10), top: y + 3, height: 8, border: `1.5px solid ${C.primary}`, borderBottom: "none", borderRadius: "50% 50% 0 0 / 100% 100% 0 0" } }),
+                /* @__PURE__ */ jsx22("div", { style: { position: "absolute", zIndex: 4, left: (x1 + x2) / 2 - 4, top: y - 3, fontSize: 9, fontWeight: 800, lineHeight: "10px", color: C.primary, background: C.surface, padding: "0 1px" }, children: e.type === "hammer" ? "h" : "p" })
+              ] }, "l" + i);
+            }
+            return /* @__PURE__ */ jsx22("div", { "aria-hidden": "true", style: { position: "absolute", zIndex: 3, pointerEvents: "none", left: (x1 + x2) / 2 - 5, top: y + CELL_H / 2 - 9, fontSize: 14, fontWeight: 800, color: C.primary, lineHeight: "16px" }, children: e.type === "slide_up" ? "/" : "\\" }, "l" + i);
+          })
+        ] }) }),
+        vide && /* @__PURE__ */ jsx22("div", { "aria-hidden": "true", style: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }, children: /* @__PURE__ */ jsx22("div", { style: { fontSize: 12.5, fontWeight: 600, color: C.text2, background: C.surface, padding: "6px 10px", borderRadius: R.sm, border: `1px solid ${C.border}` }, children: "Touche une case pour placer ta premi\xE8re note" }) })
+      ]
+    }
+  );
+}
+function ClavierManche({ cell, onFret, onMute, onEffacer, C }) {
+  const fretActif = cell && !cell.mute ? cell.fret : null;
+  const point = (k) => /* @__PURE__ */ jsx22("span", { style: { width: 4, height: 4, borderRadius: 2, background: C.text3 } }, k);
+  return /* @__PURE__ */ jsxs19("div", { role: "group", "aria-label": "Case du manche", style: { display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 5 }, children: [
+    Array.from({ length: 25 }, (_, f) => /* @__PURE__ */ jsxs19("button", { onClick: () => onFret(f), "aria-pressed": fretActif === f, className: "gr-focus", style: styleTouche(C, fretActif === f), children: [
+      /* @__PURE__ */ jsx22("span", { style: { lineHeight: "16px" }, children: f }),
+      /* @__PURE__ */ jsx22("span", { "aria-hidden": "true", style: { display: "flex", gap: 3, height: 4 }, children: REPERES_DOUBLES.has(f) ? [point(1), point(2)] : REPERES_SIMPLES.has(f) ? [point(1)] : null })
+    ] }, f)),
+    /* @__PURE__ */ jsx22("button", { onClick: onMute, "aria-pressed": !!cell?.mute, "aria-label": "Note \xE9touff\xE9e", className: "gr-focus", style: styleTouche(C, !!cell?.mute), children: "x" }),
+    /* @__PURE__ */ jsx22(
+      "button",
+      {
+        onClick: onEffacer,
+        disabled: !cell,
+        className: "gr-focus",
+        style: styleTouche(C, false, { gridColumn: "span 2", fontSize: 12.5, opacity: cell ? 1 : 0.4, cursor: cell ? "pointer" : "default" }),
+        children: "Effacer"
+      }
+    )
+  ] });
+}
+function TechniquesNote({ cell, onLie, onSlide, onBend, C }) {
+  const aNote = !!cell && !cell.mute && typeof cell.fret === "number";
+  const bouton = (label, actif, onClick) => /* @__PURE__ */ jsx22(
+    "button",
+    {
+      onClick,
+      disabled: !aNote,
+      "aria-pressed": actif,
+      className: "gr-focus",
+      style: styleTouche(C, actif, { flex: 1, fontSize: 12.5, opacity: aNote ? 1 : 0.4, cursor: aNote ? "pointer" : "default" }),
+      children: label
+    }
+  );
+  return /* @__PURE__ */ jsxs19("div", { role: "group", "aria-label": "Technique de la note", style: { display: "flex", gap: 5, marginTop: 5 }, children: [
+    bouton("Liaison h/p", !!cell?.lie, onLie),
+    bouton("Slide", !!cell?.slide, onSlide),
+    bouton(cell?.bend === 2 ? "Bend \xB7 1 ton" : cell?.bend === 1 ? "Bend \xB7 \xBD ton" : "Bend", !!cell?.bend, onBend)
+  ] });
+}
+function ItemMenu({ icon, label, onClick, onFermer, danger, C }) {
+  return /* @__PURE__ */ jsxs19("button", { role: "menuitem", onClick: () => {
+    onFermer();
+    onClick();
+  }, className: "gr-focus", style: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    width: "100%",
+    padding: "11px 12px",
+    border: "none",
+    background: "transparent",
+    cursor: "pointer",
+    fontSize: 13,
+    fontWeight: 700,
+    textAlign: "left",
+    color: danger ? C.primaryD : C.text,
+    fontFamily: FONTS.ui
+  }, children: [
+    /* @__PURE__ */ jsx22(Ti, { name: icon, size: 16, color: danger ? C.primary : C.text2 }),
+    label
+  ] });
+}
+function initialiserEditeur() {
+  let grille = null;
+  try {
+    const brut = localStorage.getItem(STOCKAGE_TAB);
+    if (brut) {
+      const g = JSON.parse(brut);
+      if (grilleValide(g)) grille = { notes: g.notes };
+    }
+  } catch {
+  }
+  return grille || grilleExemple();
+}
+function TabEditor() {
+  const C = useC();
+  const [edit, setEdit] = useState17(() => ({ grille: initialiserEditeur(), passe: [] }));
+  const grille = edit.grille;
+  const [res, setRes] = useState17(() => compatibleCroches(grille) ? 2 : 1);
+  const [selection, setSelection] = useState17({ corde: 3, col: 0 });
+  const [bpm, setBpm] = useState17(80);
+  const [boucle, setBoucle] = useState17(false);
+  const [jouant, setJouant] = useState17(false);
+  const [colLecture, setColLecture] = useState17(null);
+  const [menuOuvert, setMenuOuvert] = useState17(false);
+  const [importOuvert, setImportOuvert] = useState17(false);
+  const [texteImport, setTexteImport] = useState17("");
+  const [erreurImport, setErreurImport] = useState17(null);
+  const [message, setMessage] = useState17(null);
+  const enLectureRef = useRef12(false);
+  const timerBoucleRef = useRef12(null);
+  const boucleRef = useRef12(boucle);
+  const bpmRef = useRef12(bpm);
+  const derniereSaisieRef = useRef12(null);
+  const menuRef = useRef12(null);
+  const timerMessageRef = useRef12(null);
+  const evenements = useMemo6(() => grilleVersEvenements(grille), [grille]);
+  const origines = useMemo6(() => new Set(evenements.filter((e) => e.toCol != null).map((e) => `${e.string}-${e.col}`)), [evenements]);
+  const cellSel = lireCase(grille, selection.corde, selection.col);
+  useEffect14(() => {
+    try {
+      localStorage.setItem(STOCKAGE_TAB, JSON.stringify(grille));
+    } catch {
+    }
+  }, [grille]);
+  if (res === 2 && !compatibleCroches(grille)) setRes(1);
+  const colMax = nbColsVisibles(grille) - res;
+  if (selection.col > colMax) setSelection({ ...selection, col: colMax });
+  const annoncer = useCallback7((txt) => {
+    setMessage(txt);
+    clearTimeout(timerMessageRef.current);
+    timerMessageRef.current = setTimeout(() => setMessage(null), 3500);
+  }, []);
+  const effacerMessage = useCallback7(() => {
+    setMessage(null);
+    clearTimeout(timerMessageRef.current);
+  }, []);
+  const modifier = useCallback7((fn) => {
+    setEdit((e) => {
+      const n = fn(e.grille);
+      if (n === e.grille) return e;
+      return { grille: n, passe: [...e.passe.slice(-(HISTORIQUE_MAX - 1)), e.grille] };
+    });
+  }, []);
+  const modifierSelection = useCallback7((fn) => {
+    const { corde, col } = selection;
+    effacerMessage();
+    modifier((g) => {
+      const avant = lireCase(g, corde, col);
+      const apres = fn(avant);
+      return apres === avant ? g : ecrireCase(g, corde, col, apres);
+    });
+  }, [selection, modifier, effacerMessage]);
+  const annuler = useCallback7(() => {
+    effacerMessage();
+    setEdit((e) => e.passe.length ? { grille: e.passe[e.passe.length - 1], passe: e.passe.slice(0, -1) } : e);
+  }, [effacerMessage]);
+  const onFret = useCallback7((f) => {
+    derniereSaisieRef.current = null;
+    modifierSelection((c) => poserFret(c, f));
+  }, [modifierSelection]);
+  const onMute = useCallback7(() => modifierSelection((c) => c?.mute ? null : { mute: true }), [modifierSelection]);
+  const onEffacer = useCallback7(() => {
+    derniereSaisieRef.current = null;
+    modifierSelection(() => null);
+  }, [modifierSelection]);
+  const basculer = useCallback7((champ) => modifierSelection((c) => {
+    if (!c || c.mute || typeof c.fret !== "number") return c;
+    return { fret: c.fret, [champ]: c[champ] ? void 0 : true };
+  }), [modifierSelection]);
+  const onLie = useCallback7(() => basculer("lie"), [basculer]);
+  const onSlide = useCallback7(() => basculer("slide"), [basculer]);
+  const onBend = useCallback7(() => modifierSelection((c) => {
+    if (!c || c.mute || typeof c.fret !== "number") return c;
+    return { fret: c.fret, bend: c.bend === 2 ? 1 : c.bend === 1 ? void 0 : 2 };
+  }), [modifierSelection]);
+  const deplacer = useCallback7((dCase, dCorde) => {
+    derniereSaisieRef.current = null;
+    effacerMessage();
+    setSelection((s) => ({
+      corde: Math.max(1, Math.min(6, s.corde + dCorde)),
+      col: Math.max(0, Math.min(nbColsVisibles(grille) - res, s.col + dCase * res))
+    }));
+  }, [grille, res, effacerMessage]);
+  const choisirResolution = (r) => {
+    if (r === 2 && !compatibleCroches(grille)) {
+      annoncer("Cette tab contient des doubles-croches : la vue croches en cacherait certaines.");
+      return;
+    }
+    setRes(r);
+    setSelection((s) => ({ ...s, col: s.col - s.col % r }));
+  };
+  const arreter = useCallback7(() => {
+    enLectureRef.current = false;
+    clearTimeout(timerBoucleRef.current);
+    timerBoucleRef.current = null;
+    stopAll();
+    setJouant(false);
+    setColLecture(null);
+  }, []);
+  const lancerRef = useRef12(null);
+  const lancer = useCallback7(async (bpmLecture) => {
+    const evs = grilleVersEvenements(grille);
+    if (evs.length === 0) return;
+    await unlockAudio();
+    enLectureRef.current = true;
+    setJouant(true);
+    clearTimeout(timerBoucleRef.current);
+    timerBoucleRef.current = null;
+    await playTab(evs, {
+      bpm: bpmLecture,
+      onEvent: (ev) => {
+        if (enLectureRef.current) setColLecture(ev.col);
+      },
+      onDone: () => {
+        if (!enLectureRef.current) return;
+        if (boucleRef.current) {
+          if (!timerBoucleRef.current) lancerRef.current?.(bpmRef.current);
+          return;
+        }
+        arreter();
+      }
+    });
+    if (!enLectureRef.current) return;
+    if (boucleRef.current) {
+      const secParPas = 60 / bpmLecture / 4;
+      const dureeMs2 = nbMesuresUtilisees(grille) * PAS_PAR_MESURE * secParPas * 1e3;
+      timerBoucleRef.current = setTimeout(() => {
+        timerBoucleRef.current = null;
+        if (enLectureRef.current) lancerRef.current?.(bpmRef.current);
+      }, dureeMs2);
+    }
+  }, [grille, arreter]);
+  useEffect14(() => {
+    lancerRef.current = lancer;
+  }, [lancer]);
+  const basculerLecture = useCallback7(() => {
+    if (jouant) arreter();
+    else lancer(bpm);
+  }, [jouant, arreter, lancer, bpm]);
+  const changerTempo = (delta) => {
+    const nb = Math.max(30, Math.min(240, bpm + delta));
+    setBpm(nb);
+    bpmRef.current = nb;
+    if (jouant) lancer(nb);
+  };
+  const basculerBoucle = () => {
+    const suivant = !boucle;
+    setBoucle(suivant);
+    boucleRef.current = suivant;
+    if (!suivant) {
+      clearTimeout(timerBoucleRef.current);
+      timerBoucleRef.current = null;
+    }
+  };
+  useEffect14(() => () => {
+    enLectureRef.current = false;
+    clearTimeout(timerBoucleRef.current);
+    clearTimeout(timerMessageRef.current);
+    stopAll();
+  }, []);
+  const onKeyDownGrille = (e) => {
+    const tag = e.target?.tagName;
+    if ((e.key === " " || e.key === "Enter") && tag === "BUTTON") return;
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
+      annuler();
+      e.preventDefault();
+      return;
+    }
+    if (/^[0-9]$/.test(e.key)) {
+      const now2 = Date.now(), d = Number(e.key), der = derniereSaisieRef.current;
+      const enchainer = !!der && der.corde === selection.corde && der.col === selection.col && now2 - der.t < DELAI_DEUX_CHIFFRES;
+      const c = lireCase(grille, selection.corde, selection.col);
+      const combine = enchainer && c && !c.mute && typeof c.fret === "number" && c.fret * 10 + d <= 24;
+      modifierSelection((cell) => saisirChiffre(cell, d, enchainer));
+      derniereSaisieRef.current = combine ? null : { corde: selection.corde, col: selection.col, t: now2 };
+      e.preventDefault();
+      return;
+    }
+    const actions = {
+      ArrowLeft: () => deplacer(-1, 0),
+      ArrowRight: () => deplacer(1, 0),
+      ArrowUp: () => deplacer(0, -1),
+      ArrowDown: () => deplacer(0, 1),
+      Backspace: onEffacer,
+      Delete: onEffacer,
+      " ": basculerLecture,
+      x: onMute,
+      h: onLie,
+      s: onSlide,
+      b: onBend
+    };
+    const a = actions[e.key];
+    if (a) {
+      a();
+      e.preventDefault();
+    }
+  };
+  useEffect14(() => {
+    if (!menuOuvert && !importOuvert) return;
+    const onEchap = (e) => {
+      if (e.key === "Escape") {
+        setMenuOuvert(false);
+        setImportOuvert(false);
+      }
+    };
+    document.addEventListener("keydown", onEchap);
+    return () => document.removeEventListener("keydown", onEchap);
+  }, [menuOuvert, importOuvert]);
+  useEffect14(() => {
+    if (!menuOuvert) return;
+    const fermer = (e) => {
+      if (!menuRef.current?.contains(e.target)) setMenuOuvert(false);
+    };
+    document.addEventListener("pointerdown", fermer);
+    return () => document.removeEventListener("pointerdown", fermer);
+  }, [menuOuvert]);
+  const importer = () => {
+    const { evenements: ev, erreur } = parseTab(texteImport);
+    if (erreur) {
+      setErreurImport(erreur);
+      return;
+    }
+    modifier(() => evenementsVersGrille(ev));
+    setSelection({ corde: 1, col: 0 });
+    setErreurImport(null);
+    setTexteImport("");
+    setImportOuvert(false);
+    annoncer("Tab import\xE9e. \xAB Annuler \xBB revient \xE0 la version pr\xE9c\xE9dente.");
+  };
+  const cle2 = `${selection.corde}-${selection.col}`;
+  const nomCorde = CORDES_LABELS[selection.corde - 1];
+  const aide = message || (!cellSel ? `Choisis la case du manche pour la corde ${nomCorde}.` : cellSel.mute ? "Note \xE9touff\xE9e : jou\xE9e sans hauteur, pour le rythme." : (cellSel.lie || cellSel.slide) && !origines.has(cle2) ? cellSel.slide ? "Place une note plus loin sur cette corde pour terminer le slide." : "Place une note plus loin sur cette corde : hammer-on si elle monte, pull-off si elle descend." : cellSel.bend ? `Case ${cellSel.fret}, tir\xE9e d'${cellSel.bend === 2 ? "un ton" : "un demi-ton"}.` : `Corde ${nomCorde}, case ${cellSel.fret}.`);
+  const importerTexte = () => setImportOuvert(true);
+  const repartirExemple = () => {
+    modifier(() => grilleExemple());
+    annoncer("Exemple recharg\xE9. \xAB Annuler \xBB pour revenir.");
+  };
+  const toutEffacer = () => {
+    modifier(() => grilleVide());
+    annoncer("Tab effac\xE9e. \xAB Annuler \xBB la fait revenir.");
+  };
+  const fermerMenu = () => setMenuOuvert(false);
+  const boutonCarre = { width: 40, height: 40, borderRadius: R.sm, border: `1.5px solid ${C.border}`, background: C.surface, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: C.text2, fontWeight: 800, fontFamily: FONTS.ui, padding: 0 };
+  return /* @__PURE__ */ jsxs19("div", { children: [
+    /* @__PURE__ */ jsxs19("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }, children: [
+      /* @__PURE__ */ jsx22("div", { role: "group", "aria-label": "Densit\xE9 de la grille", style: { display: "flex", background: C.surface2, borderRadius: R.sm, padding: 3 }, children: [[2, "Croches"], [1, "Doubles"]].map(([r, label]) => /* @__PURE__ */ jsx22("button", { onClick: () => choisirResolution(r), "aria-pressed": res === r, className: "gr-focus", style: {
+        padding: "7px 11px",
+        borderRadius: R.sm - 2,
+        border: "none",
+        cursor: "pointer",
+        fontFamily: FONTS.ui,
+        fontSize: 12,
+        fontWeight: 800,
+        background: res === r ? C.surface : "transparent",
+        color: res === r ? C.text : C.text3,
+        boxShadow: res === r ? `0 0 0 1.5px ${C.border}` : "none"
+      }, children: label }, r)) }),
+      /* @__PURE__ */ jsx22("div", { style: { flex: 1 } }),
+      /* @__PURE__ */ jsx22("button", { onClick: annuler, disabled: edit.passe.length === 0, className: "gr-focus", style: {
+        ...boutonCarre,
+        width: "auto",
+        padding: "0 12px",
+        fontSize: 12.5,
+        opacity: edit.passe.length ? 1 : 0.4,
+        cursor: edit.passe.length ? "pointer" : "default"
+      }, children: "Annuler" }),
+      /* @__PURE__ */ jsxs19("div", { ref: menuRef, style: { position: "relative" }, children: [
+        /* @__PURE__ */ jsx22("button", { onClick: () => setMenuOuvert((o) => !o), "aria-haspopup": "menu", "aria-expanded": menuOuvert, "aria-label": "Plus d'actions", className: "gr-focus", style: { ...boutonCarre, fontSize: 18 }, children: "\u22EF" }),
+        menuOuvert && /* @__PURE__ */ jsxs19("div", { role: "menu", style: { position: "absolute", right: 0, top: 44, zIndex: 20, minWidth: 220, background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.md, boxShadow: "0 8px 24px rgba(0,0,0,.18)", overflow: "hidden" }, children: [
+          /* @__PURE__ */ jsx22(ItemMenu, { icon: "clipboard-check", label: "Importer une tab texte", onClick: importerTexte, onFermer: fermerMenu, C }),
+          /* @__PURE__ */ jsx22(ItemMenu, { icon: "sparkles", label: "Repartir de l'exemple", onClick: repartirExemple, onFermer: fermerMenu, C }),
+          /* @__PURE__ */ jsx22(ItemMenu, { icon: "trash", label: "Tout effacer", onClick: toutEffacer, onFermer: fermerMenu, danger: true, C })
+        ] })
+      ] })
+    ] }),
+    importOuvert && /* @__PURE__ */ jsxs19("div", { style: { marginBottom: 10, padding: 10, borderRadius: R.md, background: C.surface2 }, children: [
+      /* @__PURE__ */ jsx22("div", { style: { fontSize: 12, fontWeight: 700, color: C.text2, marginBottom: 6 }, children: "Colle une tab au format texte (6 lignes, une par corde)" }),
+      /* @__PURE__ */ jsx22(
+        "textarea",
+        {
+          value: texteImport,
+          onChange: (e) => setTexteImport(e.target.value),
+          spellCheck: false,
+          rows: 6,
+          placeholder: "e|--0---2---3h5---|\nB|----------------|\n\u2026",
+          style: { width: "100%", fontFamily: "monospace", fontSize: 12.5, lineHeight: 1.5, padding: "10px 12px", borderRadius: R.md, border: `1.5px solid ${erreurImport ? C.primary : C.border}`, background: C.surface, color: C.text, resize: "vertical" }
+        }
+      ),
+      erreurImport && /* @__PURE__ */ jsx22("div", { style: { fontSize: 12, color: C.primaryD, marginTop: 4 }, children: erreurImport }),
+      /* @__PURE__ */ jsxs19("div", { style: { display: "flex", gap: 6, marginTop: 8 }, children: [
+        /* @__PURE__ */ jsx22("button", { onClick: importer, className: "gr-focus", style: { flex: 1, height: 40, borderRadius: R.sm, border: "none", background: C.primaryBtn, color: C.onPrimaryBtn, fontWeight: 800, cursor: "pointer", fontFamily: FONTS.ui }, children: "Importer" }),
+        /* @__PURE__ */ jsx22("button", { onClick: () => {
+          setImportOuvert(false);
+          setErreurImport(null);
+        }, className: "gr-focus", style: { ...boutonCarre, width: "auto", padding: "0 14px", fontSize: 12.5 }, children: "Fermer" })
+      ] })
+    ] }),
+    /* @__PURE__ */ jsx22(
+      GrilleTab,
+      {
+        grille,
+        evenements,
+        res,
+        selection,
+        onSelect: (s) => {
+          setSelection(s);
+          derniereSaisieRef.current = null;
+          effacerMessage();
+        },
+        onKeyDown: onKeyDownGrille,
+        colLecture,
+        C
+      }
+    ),
+    /* @__PURE__ */ jsx22("div", { role: "status", "aria-live": "polite", style: { minHeight: 34, display: "flex", alignItems: "center", fontSize: 12, lineHeight: 1.35, color: message ? C.primaryD : C.text2, fontWeight: message ? 700 : 500, padding: "4px 2px" }, children: aide }),
+    /* @__PURE__ */ jsx22(ClavierManche, { cell: cellSel, onFret, onMute, onEffacer, C }),
+    /* @__PURE__ */ jsx22(TechniquesNote, { cell: cellSel, onLie, onSlide, onBend, C }),
+    /* @__PURE__ */ jsxs19("div", { style: { display: "flex", alignItems: "center", gap: 8, marginTop: 14 }, children: [
+      /* @__PURE__ */ jsxs19("button", { onClick: basculerLecture, disabled: !jouant && evenements.length === 0, className: "gr-focus", style: {
+        flex: 1,
+        height: 44,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+        borderRadius: R.lg,
+        border: "none",
+        background: jouant ? C.surface2 : C.primaryBtn,
+        color: jouant ? C.text : C.onPrimaryBtn,
+        fontWeight: 800,
+        fontSize: 14,
+        cursor: "pointer",
+        fontFamily: FONTS.ui,
+        opacity: !jouant && evenements.length === 0 ? 0.5 : 1
+      }, children: [
+        /* @__PURE__ */ jsx22(Ti, { name: jouant ? "player-pause" : "player-play", size: 17, color: jouant ? C.text : C.onPrimaryBtn }),
+        jouant ? "Arr\xEAter" : "\xC9couter"
+      ] }),
+      /* @__PURE__ */ jsxs19("div", { role: "group", "aria-label": "Tempo", style: { display: "flex", alignItems: "center", gap: 4 }, children: [
+        /* @__PURE__ */ jsx22("button", { onClick: () => changerTempo(-5), "aria-label": "Ralentir", className: "gr-focus", style: { ...boutonCarre, width: 36 }, children: "\u2212" }),
+        /* @__PURE__ */ jsxs19("div", { style: { minWidth: 44, textAlign: "center" }, children: [
+          /* @__PURE__ */ jsx22("div", { style: { fontSize: 15, fontWeight: 800, color: C.text, lineHeight: 1 }, children: bpm }),
+          /* @__PURE__ */ jsx22("div", { style: { fontSize: 9, color: C.text3, marginTop: 2 }, children: "BPM" })
+        ] }),
+        /* @__PURE__ */ jsx22("button", { onClick: () => changerTempo(5), "aria-label": "Acc\xE9l\xE9rer", className: "gr-focus", style: { ...boutonCarre, width: 36 }, children: "+" })
+      ] }),
+      /* @__PURE__ */ jsxs19("button", { onClick: basculerBoucle, "aria-pressed": boucle, "aria-label": "Lecture en boucle", className: "gr-focus", style: {
+        ...boutonCarre,
+        width: 52,
+        height: 44,
+        flexDirection: "column",
+        gap: 1,
+        border: `1.5px solid ${boucle ? C.primary : C.border}`,
+        background: boucle ? C.primaryL : C.surface
+      }, children: [
+        /* @__PURE__ */ jsx22(Ti, { name: "refresh", size: 15, color: boucle ? C.primary : C.text2 }),
+        /* @__PURE__ */ jsx22("span", { style: { fontSize: 9.5, fontWeight: 800, color: boucle ? C.primaryD : C.text3 }, children: "Boucle" })
+      ] })
+    ] })
+  ] });
+}
+var CORDES_LABELS, CELL_H, HAUT_ENTETE, LARGEUR_CASE, STOCKAGE_TAB, HISTORIQUE_MAX, DELAI_DEUX_CHIFFRES, REPERES_SIMPLES, REPERES_DOUBLES;
+var init_TabEditor = __esm({
+  "src/screens/toolbox/TabEditor.jsx"() {
+    init_tokens();
+    init_ThemeContext();
+    init_Ti();
+    init_audioEngine();
+    init_tabParser();
+    init_tabGrid();
+    CORDES_LABELS = ["e", "B", "G", "D", "A", "E"];
+    CELL_H = 34;
+    HAUT_ENTETE = 16;
+    LARGEUR_CASE = { 2: 38, 1: 32 };
+    STOCKAGE_TAB = "groply:tab-brouillon";
+    HISTORIQUE_MAX = 60;
+    DELAI_DEUX_CHIFFRES = 900;
+    REPERES_SIMPLES = /* @__PURE__ */ new Set([3, 5, 7, 9, 15, 17, 19, 21]);
+    REPERES_DOUBLES = /* @__PURE__ */ new Set([12, 24]);
+  }
+});
+
+// src/diagrams.jsx
+import { useMemo as useMemo7 } from "react";
+import { jsx as jsx23, jsxs as jsxs20 } from "react/jsx-runtime";
+function DiagramCard({ caption, children, accent }) {
+  const DC = useC();
+  const dotColor = accent || DC.primary;
+  return /* @__PURE__ */ jsxs20("div", { style: {
+    background: DC.surface,
+    borderRadius: 14,
+    border: `1px solid ${DC.border}`,
+    overflow: "hidden",
+    marginBottom: 0
+  }, children: [
+    /* @__PURE__ */ jsx23("div", { style: { overflowX: "auto", WebkitOverflowScrolling: "touch" }, children }),
+    caption && /* @__PURE__ */ jsxs20("div", { style: {
+      padding: "8px 14px 10px",
+      fontSize: 11,
+      color: DC.text2,
+      fontFamily: FONT,
+      fontWeight: 500,
+      letterSpacing: "0.02em",
+      borderTop: `1px solid ${DC.border}`,
+      display: "flex",
+      alignItems: "center",
+      gap: 6
+    }, children: [
+      /* @__PURE__ */ jsx23("span", { style: { width: 6, height: 6, borderRadius: "50%", background: dotColor, flexShrink: 0 } }),
+      caption
+    ] })
+  ] });
+}
+function ChordDiagram({ data, caption }) {
+  const DC = useC();
+  const { name = "", frets = [], fingers = [], startFret = 1, barre } = data;
+  const STRINGS = 6;
+  const FRET_ROWS = 4;
+  const COL_W = 32;
+  const ROW_H = 30;
+  const LEFT_PAD = 16;
+  const TOP_PAD = 38;
+  const BOT_PAD = 24;
+  const NOTE_R = 10;
+  const svgW = LEFT_PAD + (STRINGS - 1) * COL_W + 16;
+  const svgH = TOP_PAD + FRET_ROWS * ROW_H + BOT_PAD;
+  const sx = (i) => LEFT_PAD + i * COL_W;
+  const fy = (f) => TOP_PAD + (f - startFret + 0.5) * ROW_H;
+  return /* @__PURE__ */ jsx23(DiagramCard, { caption: caption || name, accent: DC.primary, children: /* @__PURE__ */ jsxs20(
+    "svg",
+    {
+      width: "100%",
+      viewBox: `0 0 ${svgW} ${svgH}`,
+      style: { display: "block", maxWidth: 200, margin: "0 auto" },
+      "aria-label": `Accord ${name}`,
+      children: [
+        /* @__PURE__ */ jsx23(
+          "text",
+          {
+            x: svgW / 2,
+            y: 14,
+            textAnchor: "middle",
+            fontSize: 13,
+            fill: DC.primary,
+            fontFamily: FONT,
+            fontWeight: 700,
+            children: name
+          }
+        ),
+        startFret === 1 ? /* @__PURE__ */ jsx23(
+          "rect",
+          {
+            x: LEFT_PAD - 2,
+            y: TOP_PAD - 4,
+            width: (STRINGS - 1) * COL_W + 4,
+            height: 5,
+            fill: DC.text,
+            rx: 2
+          }
+        ) : /* @__PURE__ */ jsxs20(
+          "text",
+          {
+            x: LEFT_PAD - 6,
+            y: TOP_PAD + ROW_H / 2 + 4,
+            textAnchor: "end",
+            fontSize: 9,
+            fill: DC.text3,
+            fontFamily: FONT,
+            children: [
+              startFret,
+              "fr"
+            ]
+          }
+        ),
+        Array.from({ length: FRET_ROWS + 1 }, (_, i) => /* @__PURE__ */ jsx23(
+          "line",
+          {
+            x1: LEFT_PAD,
+            y1: TOP_PAD + i * ROW_H,
+            x2: LEFT_PAD + (STRINGS - 1) * COL_W,
+            y2: TOP_PAD + i * ROW_H,
+            stroke: DC.border,
+            strokeWidth: 1.5
+          },
+          i
+        )),
+        Array.from({ length: STRINGS }, (_, i) => /* @__PURE__ */ jsx23(
+          "line",
+          {
+            x1: sx(i),
+            y1: TOP_PAD,
+            x2: sx(i),
+            y2: TOP_PAD + FRET_ROWS * ROW_H,
+            stroke: DC.text3,
+            strokeWidth: i === 0 ? 2.2 : i === 1 ? 1.9 : i === 2 ? 1.6 : i === 3 ? 1.3 : i === 4 ? 1.1 : 0.9
+          },
+          i
+        )),
+        STRING_LABELS2.map((label, i) => /* @__PURE__ */ jsx23(
+          "text",
+          {
+            x: sx(i),
+            y: svgH - 6,
+            textAnchor: "middle",
+            fontSize: 8,
+            fill: DC.text3,
+            fontFamily: FONT,
+            children: label
+          },
+          i
+        )),
+        barre && /* @__PURE__ */ jsx23(
+          "rect",
+          {
+            x: sx(barre.from) - NOTE_R + 2,
+            y: fy(barre.fret) - NOTE_R + 1,
+            width: sx(barre.to) - sx(barre.from) + NOTE_R * 2 - 4,
+            height: NOTE_R * 2 - 2,
+            fill: DC.primary,
+            rx: NOTE_R - 1
+          }
+        ),
+        frets.map((f, i) => {
+          const x = sx(i);
+          if (f === -1) {
+            return /* @__PURE__ */ jsx23(
+              "text",
+              {
+                x,
+                y: TOP_PAD - 10,
+                textAnchor: "middle",
+                fontSize: 11,
+                fill: DC.coral,
+                fontFamily: FONT,
+                fontWeight: 700,
+                children: "\xD7"
+              },
+              i
+            );
+          }
+          if (f === 0) {
+            return /* @__PURE__ */ jsx23(
+              "circle",
+              {
+                cx: x,
+                cy: TOP_PAD - 12,
+                r: 6,
+                fill: "none",
+                stroke: DC.green,
+                strokeWidth: 1.5
+              },
+              i
+            );
+          }
+          const rowIdx = f - startFret;
+          if (rowIdx < 0 || rowIdx >= FRET_ROWS) {
+            console.warn(`[ChordDiagram] Note hors zone visible ignor\xE9e : corde ${i}, case ${f} (startFret=${startFret})`);
+            return null;
+          }
+          const y = fy(f);
+          const finger = fingers[i] || 0;
+          return /* @__PURE__ */ jsxs20("g", { children: [
+            /* @__PURE__ */ jsx23("circle", { cx: x, cy: y, r: NOTE_R, fill: DC.primary }),
+            finger > 0 && /* @__PURE__ */ jsx23(
+              "text",
+              {
+                x,
+                y: y + 4,
+                textAnchor: "middle",
+                fontSize: 9,
+                fill: "#fff",
+                fontFamily: FONT,
+                fontWeight: 700,
+                children: finger === 5 ? "T" : finger
+              }
+            )
+          ] }, i);
+        })
+      ]
+    }
+  ) });
+}
+var FONT, STRING_LABELS2;
+var init_diagrams = __esm({
+  "src/diagrams.jsx"() {
+    init_ThemeContext();
+    FONT = '"Josefin Sans", "Roboto", sans-serif';
+    STRING_LABELS2 = ["Mi", "La", "R\xE9", "Sol", "Si", "Mi"];
+  }
+});
+
+// src/screens/FretboardExplorer.jsx
+var FretboardExplorer_exports = {};
+__export(FretboardExplorer_exports, {
+  FretboardExplorer: () => FretboardExplorer
+});
+import { useState as useState18, useMemo as useMemo8, useRef as useRef13, useEffect as useEffect15 } from "react";
+import { jsx as jsx24, jsxs as jsxs21 } from "react/jsx-runtime";
+function FretboardExplorer({ onBack, embedded = false }) {
+  const C = useC();
+  const [tab, setTab] = useState18("scale");
+  const [root, setRoot] = useState18("A");
+  const [scaleKey, setScaleKey] = useState18("pentatonic_minor");
+  const [chordKey, setChordKey] = useState18("min7");
+  const [displayMode, setDisplayMode] = useState18("notes");
+  const [showRootPicker, setShowRootPicker] = useState18(false);
+  const [isPlaying, setIsPlaying] = useState18(false);
+  const [flashNotes, setFlashNotes] = useState18(null);
+  const [arpeggio, setArpeggio] = useState18(true);
+  const shapes = useMemo8(() => {
+    if (tab !== "chord") return [];
+    return getChordShapes(
+      normalizeNote(root),
+      chordKey,
+      12,
+      CHORD_TYPES[chordKey]?.intervals || null
+    );
+  }, [tab, root, chordKey]);
+  const finTimerRef = useRef13(null);
+  const annulerFin = () => {
+    if (finTimerRef.current) {
+      clearTimeout(finTimerRef.current);
+      finTimerRef.current = null;
+    }
+  };
+  const handleStop = () => {
+    annulerFin();
+    try {
+      stopAll();
+    } catch {
+    }
+    setIsPlaying(false);
+    setFlashNotes(null);
+  };
+  const handlePlay = async () => {
+    annulerFin();
+    try {
+      stopAll();
+    } catch {
+    }
+    setIsPlaying(true);
+    setFlashNotes(null);
+    try {
+      await unlockAudio();
+    } catch {
+    }
+    const onStep = (i, note) => setFlashNotes(i < 0 ? null : note);
+    let dureeMs2 = 2600;
+    try {
+      if (tab === "scale") {
+        const notes = await playScaleFromRoot(root, scaleKey, 90, onStep);
+        dureeMs2 = (notes?.length ?? 8) * (60 / 90) * 1e3 + 1600;
+      } else if (arpeggio) {
+        const notes = await playArpeggioFromRoot(root, chordKey, 132, onStep);
+        dureeMs2 = (notes?.length ?? 4) * (60 / 132) * 1e3 + 1600;
+      } else {
+        await playChordFromRoot(root, chordKey);
+        dureeMs2 = 2600;
+      }
+    } catch {
+    }
+    finTimerRef.current = setTimeout(() => {
+      finTimerRef.current = null;
+      setIsPlaying(false);
+      setFlashNotes(null);
+    }, dureeMs2);
+  };
+  useEffect15(() => () => {
+    annulerFin();
+    try {
+      stopAll();
+    } catch {
+    }
+  }, []);
+  const activeNotes = useMemo8(() => {
+    if (tab === "scale") return getScaleNotes(root, scaleKey);
+    return getChordNotes(root, chordKey);
+  }, [tab, root, scaleKey, chordKey]);
+  const info = tab === "scale" ? SCALE_INFO[scaleKey] : CHORD_INFO[chordKey];
+  const activeLabel = tab === "scale" ? SCALE_OPTIONS.find((s) => s.key === scaleKey)?.label ?? scaleKey : CHORD_OPTIONS.find((c) => c.key === chordKey)?.label ?? chordKey;
+  const rootFr = ROOTS_FR2.find((r) => r.en === root)?.fr ?? root;
+  const transposeSemitone = (dir) => {
+    const idx = ROOTS_FR2.findIndex((r) => r.en === root);
+    const next = (idx + dir + 12) % 12;
+    setRoot(ROOTS_FR2[next].en);
+  };
+  return /* @__PURE__ */ jsxs21("div", { style: embedded ? { display: "flex", flexDirection: "column", background: "transparent" } : { display: "flex", flexDirection: "column", minHeight: "100dvh", background: C.bg }, children: [
+    /* @__PURE__ */ jsxs21("div", { style: embedded ? { padding: "0 0 12px", display: "flex", alignItems: "center", gap: 10 } : { padding: "14px 16px 12px", display: "flex", alignItems: "center", gap: 10, borderBottom: `1px solid ${C.border}`, background: C.surface, position: "sticky", top: 0, zIndex: 10 }, children: [
+      !embedded && /* @__PURE__ */ jsx24("button", { onClick: onBack, style: { background: "none", border: "none", cursor: "pointer", color: C.text2, padding: 0, display: "flex", alignItems: "center" }, children: /* @__PURE__ */ jsx24(Ti, { name: "chevron-left", size: 22 }) }),
+      /* @__PURE__ */ jsxs21("div", { style: { flex: 1 }, children: [
+        !embedded && /* @__PURE__ */ jsx24("div", { style: { fontSize: 16, fontWeight: 700, color: C.text, fontFamily: FONTS.title }, children: "Explorateur du manche" }),
+        /* @__PURE__ */ jsxs21("div", { style: { fontSize: 11, color: C.text3, fontFamily: FONTS.ui }, children: [
+          rootFr,
+          " - ",
+          activeLabel
+        ] })
+      ] }),
+      /* @__PURE__ */ jsx24(
+        "button",
+        {
+          onClick: isPlaying ? handleStop : handlePlay,
+          "aria-label": isPlaying ? "Arr\xEAter la lecture" : "\xC9couter",
+          className: "gr-focus",
+          style: {
+            width: 36,
+            height: 36,
+            borderRadius: "50%",
+            border: "none",
+            background: C.primary,
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 2px 8px rgba(232,93,26,0.3)"
+          },
+          children: /* @__PURE__ */ jsx24(Ti, { name: isPlaying ? "player-stop-filled" : "volume", size: 16, color: "#fff" })
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsxs21("div", { style: { padding: "14px 16px", display: "flex", flexDirection: "column", gap: 12, overflowY: "auto", paddingBottom: 32 }, children: [
+      /* @__PURE__ */ jsx24("div", { style: { display: "flex", background: C.surface2, borderRadius: R.lg, padding: 3, gap: 2 }, children: [{ key: "scale", label: "Gammes", icon: "music" }, { key: "chord", label: "Accords", icon: "guitar-pick" }].map((t) => /* @__PURE__ */ jsxs21("button", { onClick: () => setTab(t.key), style: {
+        flex: 1,
+        padding: "9px 12px",
+        borderRadius: R.md,
+        border: "none",
+        cursor: "pointer",
+        fontFamily: FONTS.ui,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 6,
+        background: tab === t.key ? C.surface : "transparent",
+        boxShadow: tab === t.key ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
+        color: tab === t.key ? C.text : C.text3,
+        fontSize: 13,
+        fontWeight: tab === t.key ? 600 : 400,
+        transition: "all 0.15s"
+      }, children: [
+        /* @__PURE__ */ jsx24(Ti, { name: t.icon, size: 14 }),
+        t.label
+      ] }, t.key)) }),
+      /* @__PURE__ */ jsxs21("div", { style: { display: "flex", alignItems: "center", gap: 8 }, children: [
+        /* @__PURE__ */ jsx24("div", { style: { fontSize: 11, fontWeight: 600, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", width: 60 }, children: "Tonique" }),
+        /* @__PURE__ */ jsx24("button", { onClick: () => transposeSemitone(-1), style: { width: 34, height: 34, borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }, children: /* @__PURE__ */ jsx24(Ti, { name: "chevron-left", size: 16, color: C.text2 }) }),
+        /* @__PURE__ */ jsx24("button", { onClick: () => setShowRootPicker(!showRootPicker), style: { flex: 1, height: 34, borderRadius: 10, border: `1.5px solid ${C.primary}`, background: C.primaryL, cursor: "pointer", fontSize: 16, fontWeight: 700, color: C.primaryD, fontFamily: FONTS.ui }, children: rootFr }),
+        /* @__PURE__ */ jsx24("button", { onClick: () => transposeSemitone(1), style: { width: 34, height: 34, borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }, children: /* @__PURE__ */ jsx24(Ti, { name: "chevron-right", size: 16, color: C.text2 }) })
+      ] }),
+      showRootPicker && /* @__PURE__ */ jsx24("div", { style: { display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6, background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: 10 }, children: ROOTS_FR2.map((r) => /* @__PURE__ */ jsx24("button", { onClick: () => {
+        setRoot(r.en);
+        setShowRootPicker(false);
+      }, style: {
+        padding: "8px 4px",
+        borderRadius: 8,
+        border: `1px solid ${root === r.en ? C.primary : C.border}`,
+        background: root === r.en ? C.primaryL : C.bg,
+        color: root === r.en ? C.primaryD : C.text,
+        fontSize: 12,
+        fontWeight: root === r.en ? 700 : 400,
+        cursor: "pointer",
+        fontFamily: FONTS.ui
+      }, children: r.fr }, r.en)) }),
+      /* @__PURE__ */ jsxs21("div", { style: { display: "flex", alignItems: "center", gap: 8 }, children: [
+        /* @__PURE__ */ jsx24("div", { style: { fontSize: 11, fontWeight: 600, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", width: 60 }, children: tab === "scale" ? "Gamme" : "Accord" }),
+        /* @__PURE__ */ jsx24("div", { style: { flex: 1, overflowX: "auto", WebkitOverflowScrolling: "touch" }, children: /* @__PURE__ */ jsx24("div", { style: { display: "flex", gap: 6, paddingBottom: 4 }, children: (tab === "scale" ? SCALE_OPTIONS : CHORD_OPTIONS).map((opt) => {
+          const active = tab === "scale" ? scaleKey === opt.key : chordKey === opt.key;
+          return /* @__PURE__ */ jsx24("button", { onClick: () => tab === "scale" ? setScaleKey(opt.key) : setChordKey(opt.key), style: {
+            flexShrink: 0,
+            padding: "7px 12px",
+            borderRadius: R.pill,
+            border: `1.5px solid ${active ? C.primary : C.border}`,
+            background: active ? C.primaryL : C.surface,
+            color: active ? C.primaryD : C.text2,
+            fontSize: 12,
+            fontWeight: active ? 600 : 400,
+            cursor: "pointer",
+            fontFamily: FONTS.ui,
+            whiteSpace: "nowrap"
+          }, children: opt.label }, opt.key);
+        }) }) })
+      ] }),
+      /* @__PURE__ */ jsx24("div", { style: { display: "flex", gap: 6 }, children: [{ key: "notes", label: "Notes" }, { key: "intervals", label: "Intervalles" }, { key: "degrees", label: "Degres" }].map((m) => /* @__PURE__ */ jsx24("button", { onClick: () => setDisplayMode(m.key), style: {
+        flex: 1,
+        padding: "7px 0",
+        borderRadius: 8,
+        border: `1px solid ${displayMode === m.key ? C.primary : C.border}`,
+        background: displayMode === m.key ? C.primaryL : C.surface,
+        color: displayMode === m.key ? C.primaryD : C.text3,
+        fontSize: 11,
+        fontWeight: displayMode === m.key ? 600 : 400,
+        cursor: "pointer",
+        fontFamily: FONTS.ui
+      }, children: m.label }, m.key)) }),
+      /* @__PURE__ */ jsx24("div", { style: { background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, overflow: "hidden" }, children: /* @__PURE__ */ jsx24("div", { style: { padding: "10px 8px 6px", overflowX: "auto", WebkitOverflowScrolling: "touch" }, children: /* @__PURE__ */ jsx24(
+        Fretboard,
+        {
+          mode: tab === "scale" ? "scale" : "chord",
+          root,
+          scale: tab === "scale" ? scaleKey : void 0,
+          chord: tab === "chord" ? chordKey : void 0,
+          displayMode,
+          lang: "fr",
+          compact: true,
+          flashNotes
+        }
+      ) }) }),
+      tab === "chord" && /* @__PURE__ */ jsx24("div", { style: { display: "flex", gap: 6, marginBottom: 12 }, children: [
+        { id: true, label: "Arp\xE9g\xE9", hint: "note \xE0 note" },
+        { id: false, label: "Plaqu\xE9", hint: "d'un bloc" }
+      ].map((m) => /* @__PURE__ */ jsxs21(
+        "button",
+        {
+          onClick: () => setArpeggio(m.id),
+          style: {
+            flex: 1,
+            padding: "8px 0",
+            borderRadius: R.md,
+            cursor: "pointer",
+            border: `1.5px solid ${arpeggio === m.id ? C.primary : C.border}`,
+            background: arpeggio === m.id ? C.primaryL : C.surface,
+            color: arpeggio === m.id ? C.primaryD : C.text2,
+            fontFamily: FONTS.ui
+          },
+          children: [
+            /* @__PURE__ */ jsx24("div", { style: { fontSize: 12.5, fontWeight: 700 }, children: m.label }),
+            /* @__PURE__ */ jsx24("div", { style: { fontSize: 11, opacity: 0.75, marginTop: 1 }, children: m.hint })
+          ]
+        },
+        String(m.id)
+      )) }),
+      tab === "chord" && shapes.length > 0 && /* @__PURE__ */ jsxs21("div", { style: { marginBottom: 12 }, children: [
+        /* @__PURE__ */ jsxs21("div", { style: { fontSize: 11, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }, children: [
+          shapes.length,
+          " fa\xE7on",
+          shapes.length > 1 ? "s" : "",
+          " de le jouer"
+        ] }),
+        /* @__PURE__ */ jsx24("div", { style: { display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch" }, children: shapes.map((sh, i) => /* @__PURE__ */ jsx24("div", { style: { flexShrink: 0, width: 150 }, children: /* @__PURE__ */ jsx24(
+          ChordDiagram,
+          {
+            data: { name: rootFr, frets: sh.frets, fingers: sh.fingers, startFret: sh.startFret, barre: sh.barre },
+            caption: `${sh.label} \xB7 case ${sh.startFret}`
+          }
+        ) }, i)) })
+      ] }),
+      /* @__PURE__ */ jsxs21("div", { style: { background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: "12px 14px" }, children: [
+        /* @__PURE__ */ jsxs21("div", { style: { fontSize: 11, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }, children: [
+          "Notes - ",
+          rootFr,
+          " ",
+          activeLabel
+        ] }),
+        /* @__PURE__ */ jsx24("div", { style: { display: "flex", flexWrap: "wrap", gap: 6 }, children: activeNotes.map((note, i) => /* @__PURE__ */ jsxs21("div", { style: {
+          padding: "5px 10px",
+          borderRadius: R.pill,
+          background: i === 0 ? C.amberL : C.primaryL,
+          border: `1px solid ${i === 0 ? C.amberBorder : C.primaryBorder}`,
+          fontSize: 13,
+          fontWeight: i === 0 ? 700 : 500,
+          color: i === 0 ? C.amberD : C.primaryD,
+          fontFamily: FONTS.ui
+        }, children: [
+          noteToFr(note),
+          i === 0 ? " R" : ""
+        ] }, note)) }),
+        tab === "chord" && CHORD_INFO[chordKey] && /* @__PURE__ */ jsxs21("div", { style: { marginTop: 8, fontSize: 12, color: C.text3, fontFamily: FONTS.ui }, children: [
+          "Formule : ",
+          /* @__PURE__ */ jsx24("strong", { style: { color: C.text2 }, children: CHORD_INFO[chordKey].formula })
+        ] })
+      ] }),
+      info && /* @__PURE__ */ jsxs21("div", { style: { background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: "12px 14px" }, children: [
+        /* @__PURE__ */ jsx24("div", { style: { fontSize: 11, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }, children: "Contexte" }),
+        /* @__PURE__ */ jsx24("p", { style: { margin: "0 0 6px", fontSize: 13, color: C.text, fontFamily: FONTS.title, lineHeight: 1.55 }, children: info.desc }),
+        "usage" in info && /* @__PURE__ */ jsxs21("div", { style: { display: "flex", alignItems: "center", gap: 6 }, children: [
+          /* @__PURE__ */ jsx24(Ti, { name: "music", size: 12, color: C.text3 }),
+          /* @__PURE__ */ jsx24("span", { style: { fontSize: 11, color: C.text3, fontFamily: FONTS.ui }, children: info.usage })
+        ] })
+      ] })
+    ] })
+  ] });
+}
+var ROOTS_FR2, SCALE_OPTIONS, CHORD_OPTIONS, SCALE_INFO, CHORD_INFO;
+var init_FretboardExplorer = __esm({
+  "src/screens/FretboardExplorer.jsx"() {
+    init_tokens();
+    init_ThemeContext();
+    init_Ti();
+    init_Fretboard();
+    init_fretboardUtils();
+    init_chordShapes();
+    init_diagrams();
+    init_audioEngine();
+    ROOTS_FR2 = [
+      { en: "C", fr: "Do" },
+      { en: "C#", fr: "Do#" },
+      { en: "D", fr: "Re" },
+      { en: "D#", fr: "Re#" },
+      { en: "E", fr: "Mi" },
+      { en: "F", fr: "Fa" },
+      { en: "F#", fr: "Fa#" },
+      { en: "G", fr: "Sol" },
+      { en: "G#", fr: "Sol#" },
+      { en: "A", fr: "La" },
+      { en: "A#", fr: "La#" },
+      { en: "B", fr: "Si" }
+    ];
+    SCALE_OPTIONS = [
+      { key: "pentatonic_minor", label: "Pentatonique mineure" },
+      { key: "pentatonic_major", label: "Pentatonique majeure" },
+      { key: "blues", label: "Blues" },
+      { key: "major", label: "Majeure" },
+      { key: "natural_minor", label: "Mineure naturelle" },
+      { key: "harmonic_minor", label: "Mineure harmonique" },
+      { key: "dorian", label: "Dorien" },
+      { key: "phrygian", label: "Phrygien" },
+      { key: "mixolydian", label: "Mixolydien" },
+      { key: "lydian", label: "Lydien" },
+      { key: "whole_tone", label: "Tons entiers" }
+    ];
+    CHORD_OPTIONS = [
+      { key: "maj", label: "Majeur" },
+      { key: "min", label: "Mineur" },
+      { key: "dom7", label: "Dom7" },
+      { key: "maj7", label: "Maj7" },
+      { key: "min7", label: "Mineur 7" },
+      { key: "min7b5", label: "Mi-diminue" },
+      { key: "dim7", label: "Diminue 7" },
+      { key: "sus2", label: "Sus2" },
+      { key: "sus4", label: "Sus4" },
+      { key: "add9", label: "Add9" }
+    ];
+    SCALE_INFO = {
+      pentatonic_minor: { desc: "5 notes. La gamme du rock et du blues. Aucune fausse note sur un accord mineur.", usage: "Rock, Blues, Metal, Soul" },
+      pentatonic_major: { desc: "5 notes. Version joyeuse. Parfaite pour le country et le pop.", usage: "Country, Pop, Folk" },
+      blues: { desc: "Pentatonique mineure + la note bleue (b5). La note bleue = la couleur blues.", usage: "Blues, Jazz, Rock" },
+      major: { desc: "7 notes. La gamme de reference. Toutes les autres gammes en decoulent.", usage: "Pop, Rock, Classique" },
+      natural_minor: { desc: "7 notes. Sons sombres et melancoliques. Base du rock et du metal.", usage: "Rock, Metal, Classique" },
+      harmonic_minor: { desc: "Mineure avec une 7e majeure. Son oriental et dramatique.", usage: "Metal, Flamenco, Classique" },
+      dorian: { desc: "Mineur avec une 6te majeure. Son jazz-funk caracteristique.", usage: "Jazz, Fusion, Funk" },
+      phrygian: { desc: "Mineur avec une 2de mineure. Son espagnol, flamenco et metal.", usage: "Metal, Flamenco, Fusion" },
+      mixolydian: { desc: "Majeure avec une 7e mineure. Son rock-blues des grands solos.", usage: "Rock, Blues, Funk" },
+      lydian: { desc: "Majeure avec un #4. Son flottant, cinematique et moderne.", usage: "Fusion, Prog, Cinema" },
+      whole_tone: { desc: "6 notes, toutes espacees d'un ton. Son flou et onirique.", usage: "Jazz, Impressionnisme" }
+    };
+    CHORD_INFO = {
+      maj: { desc: "Fondamentale + tierce majeure + quinte. Son stable et joyeux.", formula: "1 - 3 - 5" },
+      min: { desc: "Fondamentale + tierce mineure + quinte. Son melancolique.", formula: "1 - b3 - 5" },
+      dom7: { desc: "Accord de tension. Veut se resoudre vers le I.", formula: "1 - 3 - 5 - b7" },
+      maj7: { desc: "Son doux et jazzy. Guide tones : 3e et 7e majeure.", formula: "1 - 3 - 5 - 7" },
+      min7: { desc: "Son jazz-funk. Le ii du ii-V-I.", formula: "1 - b3 - 5 - b7" },
+      min7b5: { desc: "Mi-diminue (demi-diminue). Le vii de la gamme majeure.", formula: "1 - b3 - b5 - b7" },
+      dim7: { desc: "Symetrique, tres tendu. Toutes les notes a 3 demi-tons.", formula: "1 - b3 - b5 - bb7" },
+      sus2: { desc: "Pas de tierce -- son ouvert et suspendu.", formula: "1 - 2 - 5" },
+      sus4: { desc: "Pas de tierce -- tension vers la quarte.", formula: "1 - 4 - 5" },
+      add9: { desc: "Majeur avec une 9e ajoutee. Son moderne et riche.", formula: "1 - 3 - 5 - 9" }
+    };
+  }
+});
+
 // src/screens/CoursesScreen.jsx
 var CoursesScreen_exports = {};
 __export(CoursesScreen_exports, {
   CoursesScreen: () => CoursesScreen,
   LessonView: () => LessonView
 });
-import { useState as useState4, useMemo, useEffect as useEffect4, useRef as useRef4 } from "react";
-
-// src/design/tokens.js
-var shape = {};
-var LIGHT = {
-  ...shape,
-  // ── Fonds ─────────────────────────────────────────────
-  bg: "#FFE8CF",
-  surface: "#FFFFFF",
-  surface2: "#F9DFC0",
-  border: "#E8C9A0",
-  // décor uniquement (1,3:1) — jamais seule sur un contrôle
-  borderStrong: "#9E7238",
-  // 3,60:1 sur bg · 4,27:1 sur surface
-  borderSoft: "#F0D5B0",
-  // ── Textes ────────────────────────────────────────────
-  text: "#18130F",
-  // 15,54:1 sur bg
-  text2: "#6E6760",
-  //  4,69:1 sur bg ·  5,57:1 sur surface
-  text3: "#6B645B",
-  //  4,92:1 sur bg ·  5,83:1 sur surface
-  // (text3 reste plus clair que text2 à l'œil grâce
-  //  à sa taille d'emploi, sans descendre sous AA)
-  // ── Primaire (orange) ─────────────────────────────────
-  primary: "#E85D1A",
-  // décor, aplats, icônes ≥ 24 px
-  primaryBtn: "#C64E12",
-  //  4,67:1 avec du blanc → fond de CTA
-  onPrimaryBtn: "#FFFFFF",
-  //  4,67:1 sur primaryBtn — TEXTE et icônes posés sur un aplat plein
-  //  (primaryBtn, primary, ou une couleur de module). Égal à surface.
-  primaryInk: "#B8430E",
-  //  4,60:1 sur bg · 5,46:1 sur surface → texte/lien
-  primaryBorder: "#F5C4A8",
-  primaryL: "#FFF0E8",
-  primaryD: "#9C360A",
-  //  texte sur primaryL
-  // ── Amber ─────────────────────────────────────────────
-  amber: "#C97B1A",
-  amberInk: "#8A5200",
-  //  6,39:1 sur surface
-  amberBorder: "#F5D4A0",
-  amberL: "#FFF0D9",
-  amberD: "#6B3F00",
-  // ── Green ─────────────────────────────────────────────
-  green: "#1A8C52",
-  greenInk: "#0F7343",
-  //  5,91:1 sur surface
-  greenBorder: "#A8DEC0",
-  greenL: "#DCF5E8",
-  greenD: "#0C3D22",
-  // ── Purple ────────────────────────────────────────────
-  purple: "#6B4FCC",
-  purpleInk: "#5B3FBB",
-  //  7,31:1 sur surface
-  purpleBorder: "#C4B8F0",
-  purpleL: "#EDE8FC",
-  purpleD: "#2D1A7A",
-  // ── Pink / Coral ──────────────────────────────────────
-  pink: "#C430A5",
-  pinkInk: "#A82A8E",
-  pinkBorder: "#F0B0E6",
-  pinkL: "#FCE8F8",
-  pinkD: "#6B0858",
-  coral: "#C4306A",
-  coralInk: "#A82859",
-  coralBorder: "#F0B0CC",
-  coralL: "#FCE8F0",
-  coralD: "#6B0830",
-  // ── Blue ──────────────────────────────────────────────
-  blue: "#1E62C7",
-  blueInk: "#1B58B2",
-  blueBorder: "#A8C8F0",
-  blueL: "#E2EFFE",
-  blueD: "#0A2E6E",
-  // ── Teal ──────────────────────────────────────────────
-  teal: "#1A8276",
-  tealInk: "#0E6E63",
-  //  6,12:1 sur surface
-  tealBorder: "#A0DED8",
-  tealL: "#DFF6F2",
-  tealD: "#0C3D38",
-  // ── États ─────────────────────────────────────────────
-  danger: "#B83030",
-  //  5,99:1 sur surface
-  dangerInk: "#A02828",
-  dangerBorder: "#EBB4B4",
-  dangerL: "#FCEAEA",
-  dangerD: "#7A1414",
-  success: "#0F7343",
-  successL: "#DCF5E8",
-  // ── Focus (WCAG 2.4.7 / 2.4.11) ───────────────────────
-  focus: "#0A4FB0"
-};
-var DARK = {
-  ...shape,
-  // ── Fonds ─────────────────────────────────────────────
-  bg: "#1A1008",
-  // brun très sombre, chaud (pas gris froid)
-  surface: "#26180A",
-  surface2: "#321F0D",
-  border: "#4A2E14",
-  // décor
-  borderStrong: "#8B6636",
-  // 3,33:1 sur surface — contrôle
-  borderSoft: "#3A2410",
-  // ── Textes ────────────────────────────────────────────
-  text: "#F5E8D8",
-  text2: "#C0A882",
-  //  8,17:1 sur bg
-  text3: "#A08A74",
-  //  5,24:1 sur surface (l'ancien #8A7260 : 3,82 ❌)
-  // ── Primaire ──────────────────────────────────────────
-  // En sombre, l'orange d'origine passe (4,94:1 sur surface) : on le garde
-  // comme accent, et le bouton reste lisible avec un texte foncé.
-  primary: "#F2762F",
-  primaryBtn: "#E85D1A",
-  onPrimaryBtn: "#26180A",
-  //  4,94:1 sur primaryBtn · égal à surface. Le blanc fixe n'y atteint que
-  //  3,49:1 : TOUJOURS passer par ce jeton, jamais "#fff", sur un aplat.
-  primaryInk: "#FFAA78",
-  primaryBorder: "#7A3A12",
-  primaryL: "#3D1E08",
-  primaryD: "#FFAA78",
-  // ── Accents propres au thème sombre ───────────────────
-  // Tous ≥ 6,9:1 sur surface — c'est ce qui manquait totalement avant.
-  amber: "#F0AE55",
-  // 8,95:1
-  amberInk: "#F0AE55",
-  amberBorder: "#5A3D12",
-  amberL: "#3A2508",
-  amberD: "#FFCC88",
-  green: "#5FD494",
-  // 9,31:1
-  greenInk: "#5FD494",
-  greenBorder: "#1E5638",
-  greenL: "#0A2518",
-  greenD: "#6ADBA0",
-  purple: "#B49CF5",
-  // 7,40:1
-  purpleInk: "#B49CF5",
-  purpleBorder: "#3A2A78",
-  purpleL: "#1A1038",
-  purpleD: "#C4B4F8",
-  pink: "#F07ADA",
-  // 6,98:1
-  pinkInk: "#F07ADA",
-  pinkBorder: "#5A1A4E",
-  pinkL: "#2A0826",
-  pinkD: "#F4A0EA",
-  coral: "#F07AA0",
-  // 6,57:1
-  coralInk: "#F07AA0",
-  coralBorder: "#5A1A32",
-  coralL: "#2A0818",
-  coralD: "#F4A0C8",
-  blue: "#6FA8F0",
-  // 7,01:1
-  blueInk: "#6FA8F0",
-  blueBorder: "#1E3C6E",
-  blueL: "#081830",
-  blueD: "#90C4F8",
-  teal: "#5CCBBE",
-  // 8,82:1
-  tealInk: "#5CCBBE",
-  tealBorder: "#154A44",
-  tealL: "#081E1A",
-  tealD: "#80D8D0",
-  // ── États ─────────────────────────────────────────────
-  danger: "#FF8A8A",
-  // 7,60:1 (l'ancien #B83030 : 2,88 ❌)
-  dangerInk: "#FF8A8A",
-  dangerBorder: "#5E1C1C",
-  dangerL: "#280808",
-  dangerD: "#FFB0B0",
-  success: "#5FD494",
-  successL: "#0A2518",
-  focus: "#8CBCF5"
-};
-var FONTS = {
-  title: '"Poppins", system-ui, -apple-system, "Segoe UI", sans-serif',
-  body: '"Poppins", system-ui, -apple-system, "Segoe UI", sans-serif',
-  ui: '"Poppins", system-ui, -apple-system, "Segoe UI", sans-serif'
-};
-var R = {
-  sm: 10,
-  md: 14,
-  lg: 18,
-  xl: 20,
-  pill: 999
-};
-var T = {
-  micro: 11,
-  // labels de navigation, numéros de case, intitulés
-  small: 13,
-  // méta-texte, légendes
-  body: 15,
-  // texte courant, réponses de quiz
-  lead: 17,
-  // chapô
-  h3: 19,
-  h2: 23,
-  h1: 27
-};
-var TAP = {
-  min: 44,
-  comfy: 48,
-  fret: 44,
-  // hauteur de corde en mode quiz/exercice (était 28)
-  fretW: 42
-  // largeur de case (était 36)
-};
-var MODULE = {
-  neck: { icon: "map-2", color: "amber", label: "Manche" },
-  scales: { icon: "music", color: "green", label: "Gammes" },
-  harmony: { icon: "stack-2", color: "purple", label: "Harmonie" },
-  impro: { icon: "wand", color: "pink", label: "Impro" },
-  rhythm: { icon: "metronome", color: "blue", label: "Rythme" },
-  ear: { icon: "ear", color: "teal", label: "Oreille" }
-};
-
-// src/design/ThemeContext.jsx
-var ThemeContext_exports = {};
-__export(ThemeContext_exports, {
-  ThemeContext: () => ThemeContext,
-  ThemeProvider: () => ThemeProvider,
-  useC: () => useC,
-  useTheme: () => useTheme
-});
-import { createContext, useContext, useEffect, useState } from "react";
-import { jsx } from "react/jsx-runtime";
-var ThemeContext = createContext({ C: LIGHT, theme: "light", resolvedTheme: "light" });
-function ThemeProvider({ children, theme = "auto" }) {
-  const [sysDark, setSysDark] = useState(
-    () => window.matchMedia("(prefers-color-scheme: dark)").matches
-  );
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const handler = (e) => setSysDark(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
-  const resolvedTheme = theme === "auto" ? sysDark ? "dark" : "light" : theme;
-  const C = resolvedTheme === "dark" ? DARK : LIGHT;
-  useEffect(() => {
-    document.documentElement.style.background = C.bg;
-    document.documentElement.setAttribute("data-theme", resolvedTheme);
-  }, [C.bg, resolvedTheme]);
-  return /* @__PURE__ */ jsx(ThemeContext.Provider, { value: { C, theme, resolvedTheme }, children });
-}
-function useC() {
-  return useContext(ThemeContext).C;
-}
-function useTheme() {
-  return useContext(ThemeContext);
-}
-
-// src/design/icons.js
-var ICONS = {
-  "tuning-fork": [0, '<path d="M9 3v7a3 3 0 0 0 6 0v-7" /> <path d="M12 13v8" /> <path d="M8 3h2" /> <path d="M14 3h2" />'],
-  "alert-circle": [0, '<path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /> <path d="M12 8v4" /> <path d="M12 16h.01" />'],
-  "alert-triangle": [0, '<path d="M12 9v4" /> <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" /> <path d="M12 16h.01" />'],
-  "arrow-left": [0, '<path d="M5 12l14 0" /> <path d="M5 12l6 6" /> <path d="M5 12l6 -6" />'],
-  "arrow-narrow-right": [0, '<path d="M5 12l14 0" /> <path d="M15 16l4 -4" /> <path d="M15 8l4 4" />'],
-  "arrow-right": [0, '<path d="M5 12l14 0" /> <path d="M13 18l6 -6" /> <path d="M13 6l6 6" />'],
-  "arrows-up-down": [0, '<path d="M7 3l0 18" /> <path d="M10 6l-3 -3l-3 3" /> <path d="M20 18l-3 3l-3 -3" /> <path d="M17 21l0 -18" />'],
-  "baby-carriage": [0, '<path d="M8 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /> <path d="M18 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /> <path d="M2 5h2.5l1.632 4.897a6 6 0 0 0 5.693 4.103h2.675a5.5 5.5 0 0 0 0 -11h-.5v6" /> <path d="M6 9h14" /> <path d="M9 17l1 -3" /> <path d="M16 14l1 3" />'],
-  "bolt": [0, '<path d="M13 3l0 7l6 0l-8 11l0 -7l-6 0l8 -11" />'],
-  "book-2": [0, '<path d="M19 4v16h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12z" /> <path d="M19 16h-12a2 2 0 0 0 -2 2" /> <path d="M9 8h6" />'],
-  "books": [0, '<path d="M5 4m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z" /> <path d="M9 4m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z" /> <path d="M5 8h4" /> <path d="M9 16h4" /> <path d="M13.803 4.56l2.184 -.53c.562 -.135 1.133 .19 1.282 .732l3.695 13.418a1.02 1.02 0 0 1 -.634 1.219l-.133 .041l-2.184 .53c-.562 .135 -1.133 -.19 -1.282 -.732l-3.695 -13.418a1.02 1.02 0 0 1 .634 -1.219l.133 -.041z" /> <path d="M14 9l4 -1" /> <path d="M16 16l3.923 -.98" />'],
-  "bulb": [0, '<path d="M3 12h1m8 -9v1m8 8h1m-15.4 -6.4l.7 .7m12.1 -.7l-.7 .7" /> <path d="M9 16a5 5 0 1 1 6 0a3.5 3.5 0 0 0 -1 3a2 2 0 0 1 -4 0a3.5 3.5 0 0 0 -1 -3" /> <path d="M9.7 17l4.6 0" />'],
-  "calendar-check": [0, '<path d="M11.5 21h-5.5a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v6" /> <path d="M16 3v4" /> <path d="M8 3v4" /> <path d="M4 11h16" /> <path d="M15 19l2 2l4 -4" />'],
-  "campfire": [0, '<path d="M4 21l16 -4" /> <path d="M20 21l-16 -4" /> <path d="M12 15a4 4 0 0 0 4 -4c0 -3 -2 -3 -2 -8c-4 2 -6 5 -6 8a4 4 0 0 0 4 4z" />'],
-  "chart-bar": [0, '<path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /> <path d="M15 9a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /> <path d="M9 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /> <path d="M4 20h14" />'],
-  "check": [0, '<path d="M5 12l5 5l10 -10" />'],
-  "chevron-down": [0, '<path d="M6 9l6 6l6 -6" />'],
-  "chevron-left": [0, '<path d="M15 6l-6 6l6 6" />'],
-  "chevron-right": [0, '<path d="M9 6l6 6l-6 6" />'],
-  "chevron-up": [0, '<path d="M6 15l6 -6l6 6" />'],
-  "circle-check": [0, '<path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /> <path d="M9 12l2 2l4 -4" />'],
-  "circle-check-filled": [1, '<path d="M17 3.34a10 10 0 1 1 -14.995 8.984l-.005 -.324l.005 -.324a10 10 0 0 1 14.995 -8.336zm-1.293 5.953a1 1 0 0 0 -1.32 -.083l-.094 .083l-3.293 3.292l-1.293 -1.292l-.094 -.083a1 1 0 0 0 -1.403 1.403l.083 .094l2 2l.094 .083a1 1 0 0 0 1.226 0l.094 -.083l4 -4l.083 -.094a1 1 0 0 0 -.083 -1.32z" />'],
-  "clipboard-check": [0, '<path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2" /> <path d="M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z" /> <path d="M9 14l2 2l4 -4" />'],
-  "clock": [0, '<path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /> <path d="M12 7v5l3 3" />'],
-  "crown": [0, '<path d="M12 6l4 6l5 -4l-2 10h-14l-2 -10l5 4z" />'],
-  "device-desktop": [0, '<path d="M3 5a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1v-10z" /> <path d="M7 20h10" /> <path d="M9 16v4" /> <path d="M15 16v4" />'],
-  "dice-5": [0, '<path d="M3 3m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z" /> <circle cx="8.5" cy="8.5" r=".5" fill="currentColor" /> <circle cx="15.5" cy="8.5" r=".5" fill="currentColor" /> <circle cx="15.5" cy="15.5" r=".5" fill="currentColor" /> <circle cx="8.5" cy="15.5" r=".5" fill="currentColor" /> <circle cx="12" cy="12" r=".5" fill="currentColor" />'],
-  "download": [0, '<path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /> <path d="M7 11l5 5l5 -5" /> <path d="M12 4l0 12" />'],
-  "ear": [0, '<path d="M6 10a7 7 0 1 1 13 3.6a10 10 0 0 1 -2 2a8 8 0 0 0 -2 3a4.5 4.5 0 0 1 -6.8 1.4" /> <path d="M10 10a3 3 0 1 1 5 2.2" />'],
-  "eye": [0, '<path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /> <path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />'],
-  "eye-off": [0, '<path d="M10.585 10.587a2 2 0 0 0 2.829 2.828" /> <path d="M16.681 16.673a8.717 8.717 0 0 1 -4.681 1.327c-3.6 0 -6.6 -2 -9 -6c1.272 -2.12 2.712 -3.678 4.32 -4.674m2.86 -1.146a9.055 9.055 0 0 1 1.82 -.18c3.6 0 6.6 2 9 6c-.666 1.11 -1.379 2.067 -2.138 2.87" /> <path d="M3 3l18 18" />'],
-  "flag": [0, '<path d="M5 5a5 5 0 0 1 7 0a5 5 0 0 0 7 0v9a5 5 0 0 1 -7 0a5 5 0 0 0 -7 0v-9z" /> <path d="M5 21v-7" />'],
-  "flame": [0, '<path d="M12 12c2 -2.96 0 -7 -1 -8c0 3.038 -1.773 4.741 -3 6c-1.226 1.26 -2 3.24 -2 5a6 6 0 1 0 12 0c0 -1.532 -1.056 -3.94 -2 -5c-1.786 3 -2.791 3 -4 2z" />'],
-  "guitar-pick": [0, '<path d="M16 18.5c2 -2.5 4 -6.5 4 -10.5c0 -2.946 -2.084 -4.157 -4.204 -4.654c-.864 -.23 -2.13 -.346 -3.796 -.346c-1.667 0 -2.932 .115 -3.796 .346c-2.12 .497 -4.204 1.708 -4.204 4.654c0 3.312 2 8 4 10.5c.297 .37 .618 .731 .963 1.081l.354 .347a3.9 3.9 0 0 0 5.364 0a14.05 14.05 0 0 0 1.319 -1.428z" />'],
-  "hand-finger-down": [0, '<path d="M8 12v8.5a1.5 1.5 0 0 0 3 0v-7.5" /> <path d="M11 13.5v2a1.5 1.5 0 0 0 3 0v-2.5" /> <path d="M14 14.5a1.5 1.5 0 0 0 3 0v-1.5" /> <path d="M17 13.5a1.5 1.5 0 0 0 3 0v-4.5a6 6 0 0 0 -6 -6h-2h.208a6 6 0 0 0 -5.012 2.7l-.196 .3q -.468 .718 -3.286 5.728a1.5 1.5 0 0 0 .536 2.022c.734 .44 1.674 .325 2.28 -.28l1.47 -1.47" />'],
-  "headphones": [0, '<path d="M4 13m0 2a2 2 0 0 1 2 -2h1a2 2 0 0 1 2 2v3a2 2 0 0 1 -2 2h-1a2 2 0 0 1 -2 -2z" /> <path d="M15 13m0 2a2 2 0 0 1 2 -2h1a2 2 0 0 1 2 2v3a2 2 0 0 1 -2 2h-1a2 2 0 0 1 -2 -2z" /> <path d="M4 15v-3a8 8 0 0 1 16 0v3" />'],
-  "help-circle": [0, '<path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /> <path d="M12 16v.01" /> <path d="M12 13a2 2 0 0 0 .914 -3.782a1.98 1.98 0 0 0 -2.414 .483" />'],
-  "history": [0, '<path d="M12 8l0 4l2 2" /> <path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5" />'],
-  "home": [0, '<path d="M5 12l-2 0l9 -9l9 9l-2 0" /> <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" /> <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />'],
-  "info-circle": [0, '<path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /> <path d="M12 9h.01" /> <path d="M11 12h1v4h1" />'],
-  "list-numbers": [0, '<path d="M11 6h9" /> <path d="M11 12h9" /> <path d="M12 18h8" /> <path d="M4 16a2 2 0 1 1 4 0c0 .591 -.5 1 -1 1.5l-3 2.5h4" /> <path d="M6 10v-6l-2 2" />'],
-  "loader": [0, '<path d="M12 6l0 -3" /> <path d="M16.25 7.75l2.15 -2.15" /> <path d="M18 12l3 0" /> <path d="M16.25 16.25l2.15 2.15" /> <path d="M12 18l0 3" /> <path d="M7.75 16.25l-2.15 2.15" /> <path d="M6 12l-3 0" /> <path d="M7.75 7.75l-2.15 -2.15" />'],
-  "lock": [0, '<path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6z" /> <path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0" /> <path d="M8 11v-4a4 4 0 1 1 8 0v4" />'],
-  "logout": [0, '<path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" /> <path d="M9 12h12l-3 -3" /> <path d="M18 15l3 -3" />'],
-  "map-2": [0, '<path d="M12 18.5l-3 -1.5l-6 3v-13l6 -3l6 3l6 -3v7.5" /> <path d="M9 4v13" /> <path d="M15 7v5.5" /> <path d="M21.121 20.121a3 3 0 1 0 -4.242 0c.418 .419 1.125 1.045 2.121 1.879c1.051 -.89 1.759 -1.516 2.121 -1.879z" /> <path d="M19 18v.01" />'],
-  "medal": [0, '<path d="M12 4v3m-4 -3v6m8 -6v6" /> <path d="M12 18.5l-3 1.5l.5 -3.5l-2 -2l3 -.5l1.5 -3l1.5 3l3 .5l-2 2l.5 3.5z" />'],
-  "metronome": [0, '<path d="M14.153 8.188l-.72 -3.236a2.493 2.493 0 0 0 -4.867 0l-3.025 13.614a2 2 0 0 0 1.952 2.434h7.014a2 2 0 0 0 1.952 -2.434l-.524 -2.357m-4.935 1.791l9 -13" /> <path d="M20 5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />'],
-  "microphone": [0, '<path d="M9 2m0 3a3 3 0 0 1 3 -3h0a3 3 0 0 1 3 3v5a3 3 0 0 1 -3 3h0a3 3 0 0 1 -3 -3z" /> <path d="M5 10a7 7 0 0 0 14 0" /> <path d="M8 21l8 0" /> <path d="M12 17l0 4" />'],
-  "minus": [0, '<path d="M5 12l14 0" />'],
-  "moon": [0, '<path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />'],
-  "mountain": [0, '<path d="M3 20h18l-6.921 -14.612a2.3 2.3 0 0 0 -4.158 0l-6.921 14.612z" /> <path d="M7.5 11l2 2.5l2.5 -2.5l2 3l2.5 -2" />'],
-  "music": [0, '<path d="M3 17a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /> <path d="M13 17a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /> <path d="M9 17v-13h10v13" /> <path d="M9 8h10" />'],
-  "music-plus": [0, '<path d="M3 17a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /> <path d="M9 17v-13h10v8" /> <path d="M9 8h10" /> <path d="M16 19h6" /> <path d="M19 16v6" />'],
-  "notebook": [0, '<path d="M6 4h11a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-11a1 1 0 0 1 -1 -1v-14a1 1 0 0 1 1 -1m3 0v18" /> <path d="M13 8l2 0" /> <path d="M13 12l2 0" />'],
-  "player-pause": [0, '<path d="M6 5m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v12a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z" /> <path d="M14 5m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v12a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z" />'],
-  "player-pause-filled": [1, '<path d="M9 4h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h2a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2z" /> <path d="M17 4h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h2a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2z" />'],
-  "player-play": [0, '<path d="M7 4v16l13 -8z" />'],
-  "player-play-filled": [1, '<path d="M6 4v16a1 1 0 0 0 1.524 .852l13 -8a1 1 0 0 0 0 -1.704l-13 -8a1 1 0 0 0 -1.524 .852z" />'],
-  "player-stop": [0, '<path d="M5 5m0 2a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2z" />'],
-  "player-stop-filled": [1, '<path d="M17 4h-10a3 3 0 0 0 -3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3 -3v-10a3 3 0 0 0 -3 -3z" />'],
-  "plus": [0, '<path d="M12 5l0 14" /> <path d="M5 12l14 0" />'],
-  "refresh": [0, '<path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" /> <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />'],
-  "route": [0, '<path d="M3 19a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /> <path d="M19 7a2 2 0 1 0 0 -4a2 2 0 0 0 0 4z" /> <path d="M11 19h5.5a3.5 3.5 0 0 0 0 -7h-8a3.5 3.5 0 0 1 0 -7h4.5" />'],
-  "settings": [0, '<path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" /> <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />'],
-  "sparkles": [0, '<path d="M16 18a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2zm0 -12a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2zm-7 12a6 6 0 0 1 6 -6a6 6 0 0 1 -6 -6a6 6 0 0 1 -6 6a6 6 0 0 1 6 6z" />'],
-  "stack-2": [0, '<path d="M12 4l-8 4l8 4l8 -4l-8 -4" /> <path d="M4 12l8 4l8 -4" /> <path d="M4 16l8 4l8 -4" />'],
-  "stairs": [0, '<path d="M22 5h-5v5h-5v5h-5v5h-5" />'],
-  "star": [0, '<path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z" />'],
-  "star-filled": [1, '<path d="M8.243 7.34l-6.38 .925l-.113 .023a1 1 0 0 0 -.44 1.684l4.622 4.499l-1.09 6.355l-.013 .11a1 1 0 0 0 1.464 .944l5.706 -3l5.693 3l.1 .046a1 1 0 0 0 1.352 -1.1l-1.091 -6.355l4.624 -4.5l.078 -.085a1 1 0 0 0 -.633 -1.62l-6.38 -.926l-2.852 -5.78a1 1 0 0 0 -1.794 0l-2.853 5.78z" />'],
-  "sun": [0, '<path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /> <path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" />'],
-  "sword": [0, '<path d="M20 4v5l-9 7l-4 4l-3 -3l4 -4l7 -9z" /> <path d="M6.5 11.5l6 6" />'],
-  "target": [0, '<path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /> <path d="M12 12m-5 0a5 5 0 1 0 10 0a5 5 0 1 0 -10 0" /> <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />'],
-  "target-arrow": [0, '<path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /> <path d="M12 7a5 5 0 1 0 5 5" /> <path d="M13 3.055a9 9 0 1 0 7.941 7.945" /> <path d="M15 6v3h3l3 -3h-3v-3z" /> <path d="M15 9l-3 3" />'],
-  "trash": [0, '<path d="M4 7l16 0" /> <path d="M10 11l0 6" /> <path d="M14 11l0 6" /> <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /> <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />'],
-  "trending-up": [0, '<path d="M3 17l6 -6l4 4l8 -8" /> <path d="M14 7l7 0l0 7" />'],
-  "trophy": [0, '<path d="M8 21l8 0" /> <path d="M12 17l0 4" /> <path d="M7 4l10 0" /> <path d="M17 4v8a5 5 0 0 1 -10 0v-8" /> <path d="M5 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /> <path d="M19 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />'],
-  "upload": [0, '<path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /> <path d="M7 9l5 -5l5 5" /> <path d="M12 4l0 12" />'],
-  "volume": [0, '<path d="M15 8a5 5 0 0 1 0 8" /> <path d="M17.7 5a9 9 0 0 1 0 14" /> <path d="M6 15h-2a1 1 0 0 1 -1 -1v-4a1 1 0 0 1 1 -1h2l3.5 -4.5a.8 .8 0 0 1 1.5 .5v14a.8 .8 0 0 1 -1.5 .5l-3.5 -4.5" />'],
-  "wand": [0, '<path d="M6 21l15 -15l-3 -3l-15 15l3 3" /> <path d="M15 6l3 3" /> <path d="M9 3a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2" /> <path d="M19 13a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2" />'],
-  "x": [0, '<path d="M18 6l-12 12" /> <path d="M6 6l12 12" />']
-};
-var ICON_COUNT = Object.keys(ICONS).length;
-
-// src/design/Ti.jsx
-import { jsx as jsx2 } from "react/jsx-runtime";
-function Ti({ name, size = 16, color = "currentColor", style, label, stroke }) {
-  const cle2 = String(name || "").replace(/^ti-/, "");
-  const icone = ICONS[cle2];
-  const commun = {
-    width: size,
-    height: size,
-    viewBox: "0 0 24 24",
-    // `block` évite l'espace fantôme sous les éléments en ligne, qui
-    // désalignait les icônes dans les boutons.
-    style: { display: "block", flexShrink: 0, ...style },
-    "aria-hidden": label ? void 0 : "true",
-    role: label ? "img" : void 0,
-    "aria-label": label || void 0
-  };
-  if (!icone) {
-    if (typeof import.meta !== "undefined" && false) {
-      console.warn(`[Ti] ic\xF4ne inconnue : "${cle2}"`);
-    }
-    return /* @__PURE__ */ jsx2("svg", { ...commun, fill: "none", stroke: color, strokeWidth: 1.5, opacity: 0.45, children: /* @__PURE__ */ jsx2("rect", { x: "4", y: "4", width: "16", height: "16", rx: "3" }) });
-  }
-  const [plein, trac\u00E9s] = icone;
-  const props = plein ? { fill: color, stroke: "none" } : {
-    fill: "none",
-    stroke: color,
-    strokeWidth: stroke ?? (size < 14 ? 1.75 : 2),
-    strokeLinecap: "round",
-    strokeLinejoin: "round"
-  };
-  return /* @__PURE__ */ jsx2(
-    "svg",
-    {
-      ...commun,
-      ...props,
-      dangerouslySetInnerHTML: { __html: trac\u00E9s }
-    }
-  );
-}
+init_tokens();
+init_ThemeContext();
+init_Ti();
+import { useState as useState4, useMemo, useEffect as useEffect4, useRef as useRef3 } from "react";
 
 // src/design/ui.jsx
-import { useEffect as useEffect2, useRef } from "react";
+init_tokens();
+init_ThemeContext();
+init_Ti();
+import { useEffect as useEffect2, useEffectEvent } from "react";
 import { Fragment, jsx as jsx3, jsxs } from "react/jsx-runtime";
 function ProgressBar({ pct, color, h = 6, label }) {
   const C = useC();
@@ -718,10 +6343,9 @@ function ProgressBar({ pct, color, h = 6, label }) {
 }
 function XPPop({ amount, onDone }) {
   const C = useC();
-  const doneRef = useRef(onDone);
-  doneRef.current = onDone;
+  const terminer = useEffectEvent(() => onDone?.());
   useEffect2(() => {
-    const t = setTimeout(() => doneRef.current?.(), 1400);
+    const t = setTimeout(terminer, 1400);
     return () => clearTimeout(t);
   }, []);
   if (!amount || amount <= 0) return null;
@@ -876,8 +6500,36 @@ function ConfirmDialog({
     }
   );
 }
+function BackButton({ onClick, label = "Retour", tint, style }) {
+  const C = useC();
+  return /* @__PURE__ */ jsx3(
+    "button",
+    {
+      type: "button",
+      onClick,
+      "aria-label": label,
+      className: "gr-focus",
+      style: {
+        width: 44,
+        height: 44,
+        flexShrink: 0,
+        borderRadius: 12,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: tint?.bg ?? C.surface,
+        border: `1.5px solid ${tint?.border ?? C.border}`,
+        cursor: "pointer",
+        padding: 0,
+        ...style
+      },
+      children: /* @__PURE__ */ jsx3(Ti_default, { name: "arrow-left", size: 18, color: tint?.icon ?? C.text })
+    }
+  );
+}
 
 // src/store/moduleTheme.js
+init_tokens();
 function buildModuleTheme(C) {
   return {
     neck: { icon: "ti-map-2", color: C.amber, colorL: C.amberL, colorD: C.amberD, colorBorder: C.amberBorder },
@@ -1129,225 +6781,11 @@ var UnitCheckScreen_exports = {};
 __export(UnitCheckScreen_exports, {
   UnitCheckScreen: () => UnitCheckScreen
 });
-import { useState as useState3, useRef as useRef2 } from "react";
-
-// src/design/Gropi.jsx
-import { useState as useState2 } from "react";
-import { jsx as jsx4, jsxs as jsxs2 } from "react/jsx-runtime";
-var POSE_SRC = {
-  happy: "/mascotte-happy.webp",
-  wave: "/mascotte-wave.webp",
-  celebrate: "/mascotte-celebrate.webp",
-  think: "/mascotte-think.webp",
-  rocker: "/mascotte-rocker.webp",
-  idea: "/mascotte-idea.webp",
-  pride: "/mascotte-pride.webp",
-  listen: "/mascotte-listen.webp",
-  zen: "/mascotte-zen.webp",
-  mystere: "/mascotte-mystere.webp",
-  choix: "/mascotte-choix.webp",
-  histoire: "/mascotte-histoire.webp",
-  // alias de repli
-  plead: "/mascotte-think.webp"
-};
-var POSE_DIMS = {
-  happy: [320, 388],
-  wave: [320, 361],
-  celebrate: [320, 391],
-  think: [320, 374],
-  rocker: [320, 390],
-  idea: [320, 452],
-  pride: [320, 387],
-  listen: [320, 391],
-  zen: [307, 420],
-  mystere: [239, 420],
-  choix: [316, 420],
-  histoire: [320, 333],
-  plead: [320, 374]
-};
-if (typeof document !== "undefined" && !document.getElementById("gropi-anim-styles")) {
-  const s = document.createElement("style");
-  s.id = "gropi-anim-styles";
-  s.textContent = `
-    @keyframes gropi-bob    { 0%,100%{transform:translateY(0)}      50%{transform:translateY(-6px)} }
-    @keyframes gropi-pop    { 0%{transform:scale(.6);opacity:0} 60%{transform:scale(1.08)} 100%{transform:scale(1);opacity:1} }
-    @keyframes gropi-wiggle { 0%,100%{transform:rotate(0)} 20%{transform:rotate(-8deg)} 60%{transform:rotate(8deg)} }
-    @keyframes gropi-cheer  { 0%{transform:scale(.5) translateY(22px);opacity:0} 50%{transform:scale(1.12) translateY(-8px)} 72%{transform:scale(.97)} 100%{transform:scale(1) translateY(0);opacity:1} }
-    @keyframes gropi-bubble-in { 0%{transform:scale(.92) translateY(4px);opacity:0} 100%{transform:scale(1) translateY(0);opacity:1} }
-    .gropi-anim { will-change: transform; }
-    @media (prefers-reduced-motion: reduce) { .gropi-anim { animation: none !important; } }
-  `;
-  document.head.appendChild(s);
-}
-var ANIM = {
-  none: {},
-  bob: { animation: "gropi-bob 2.8s ease-in-out infinite" },
-  pop: { animation: "gropi-pop .42s ease-out both" },
-  wiggle: { animation: "gropi-wiggle 2.4s ease-in-out infinite", transformOrigin: "bottom center" },
-  cheer: { animation: "gropi-cheer .62s cubic-bezier(.2,.8,.3,1.2) both" }
-};
-function Gropi({ pose = "happy", size = 80, anim = "none", style, onClick }) {
-  const C = useC();
-  const src = POSE_SRC[pose] || POSE_SRC.happy;
-  const [w, h] = POSE_DIMS[pose] || POSE_DIMS.happy;
-  return /* @__PURE__ */ jsx4(
-    "img",
-    {
-      src,
-      alt: "",
-      width: w,
-      height: h,
-      decoding: "async",
-      draggable: false,
-      onClick,
-      className: anim !== "none" ? "gropi-anim" : void 0,
-      style: {
-        display: "block",
-        width: size,
-        height: "auto",
-        // Garde-fou : si un fichier a un ratio inattendu (trop haut), il
-        // ne peut plus faire déborder la mise en page — object-fit:contain
-        // garantit que l'image se réduit proportionnellement plutôt que
-        // de se déformer si ce plafond se déclenche.
-        maxHeight: size * 1.6,
-        objectFit: "contain",
-        flexShrink: 0,
-        userSelect: "none",
-        cursor: onClick ? "pointer" : void 0,
-        ...ANIM[anim] || {},
-        ...style
-      }
-    }
-  );
-}
-function useTintColors(tint) {
-  const C = useC();
-  return {
-    light: C[tint + "L"] || C.primaryL,
-    border: C[tint + "Border"] || C[tint + "B"] || C.primaryBorder,
-    deep: C[tint + "D"] || C.primaryD
-  };
-}
-function GropiTip({ pose = "wave", tint = "primary", eyebrow = "Conseil de Gropi", onClose, children }) {
-  const C = useC();
-  const { light, border, deep } = useTintColors(tint);
-  return /* @__PURE__ */ jsxs2("div", { style: {
-    display: "flex",
-    gap: 11,
-    alignItems: "flex-start",
-    position: "relative",
-    background: C.surface,
-    border: `1.5px solid ${border}`,
-    borderRadius: R.xl,
-    padding: 12
-  }, children: [
-    /* @__PURE__ */ jsx4(Gropi, { pose, size: 56, anim: "bob" }),
-    /* @__PURE__ */ jsxs2("div", { style: { position: "relative", flex: 1, background: light, borderRadius: R.lg, padding: "9px 11px" }, children: [
-      /* @__PURE__ */ jsx4("span", { style: {
-        position: "absolute",
-        left: -7,
-        top: 16,
-        width: 0,
-        height: 0,
-        borderTop: "7px solid transparent",
-        borderBottom: "7px solid transparent",
-        borderRight: `7px solid ${light}`
-      } }),
-      /* @__PURE__ */ jsx4("div", { style: { fontSize: 11, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: deep, fontFamily: FONTS.ui }, children: eyebrow }),
-      /* @__PURE__ */ jsx4("p", { style: { margin: "3px 0 0", fontSize: 14, lineHeight: 1.55, fontWeight: 500, color: C.text, fontFamily: FONTS.body }, children })
-    ] }),
-    onClose && /* @__PURE__ */ jsx4("button", { onClick: onClose, "aria-label": "Fermer", style: {
-      position: "absolute",
-      top: 2,
-      right: 2,
-      background: "none",
-      border: 0,
-      cursor: "pointer",
-      fontSize: 15,
-      fontWeight: 600,
-      color: C.text2,
-      width: 44,
-      height: 44,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      borderRadius: 12
-    }, className: "gr-focus", children: "\u2715" })
-  ] });
-}
-var COACH = {
-  tip: { pose: "idea", tint: "amber", eyebrow: "Le conseil de Gropi" },
-  ref: { pose: "listen", tint: "primary", eyebrow: "Gropi te fait \xE9couter" },
-  note: { pose: "think", tint: "green", eyebrow: "Gropi pr\xE9cise" }
-};
-function GropiCoach({ variant = "tip", eyebrow, children }) {
-  const C = useC();
-  const cfg = COACH[variant] || COACH.tip;
-  const { light, border, deep } = useTintColors(cfg.tint);
-  return /* @__PURE__ */ jsxs2("div", { style: { display: "flex", gap: 9, alignItems: "flex-end", margin: "2px 0" }, children: [
-    /* @__PURE__ */ jsx4(Gropi, { pose: cfg.pose, size: 54, anim: "bob", style: { marginBottom: 2 } }),
-    /* @__PURE__ */ jsxs2("div", { style: {
-      position: "relative",
-      flex: 1,
-      background: light,
-      border: `1.5px solid ${border}`,
-      borderRadius: R.lg,
-      borderBottomLeftRadius: 4,
-      padding: "10px 13px"
-    }, children: [
-      /* @__PURE__ */ jsx4("span", { style: {
-        position: "absolute",
-        left: -7,
-        bottom: 13,
-        width: 0,
-        height: 0,
-        borderTop: "7px solid transparent",
-        borderBottom: "7px solid transparent",
-        borderRight: `7px solid ${light}`
-      } }),
-      /* @__PURE__ */ jsx4("div", { style: { fontSize: 11, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: deep, fontFamily: FONTS.ui, marginBottom: 3 }, children: eyebrow || cfg.eyebrow }),
-      /* @__PURE__ */ jsx4("p", { style: { margin: 0, fontSize: 14, lineHeight: 1.6, color: C.text, fontFamily: FONTS.body }, children })
-    ] })
-  ] });
-}
-function GropiBubble({
-  pose = "wave",
-  size = 74,
-  tint = "primary",
-  eyebrow = "Gropi",
-  side = "right",
-  children,
-  defaultOpen = false
-}) {
-  const C = useC();
-  const [open, setOpen] = useState2(defaultOpen);
-  const { border, deep } = useTintColors(tint);
-  return /* @__PURE__ */ jsxs2("div", { style: { display: "flex", flexDirection: "column", alignItems: side === "right" ? "flex-start" : "flex-end" }, children: [
-    /* @__PURE__ */ jsx4(
-      "button",
-      {
-        onClick: () => setOpen((o) => !o),
-        "aria-label": "Parler \xE0 Gropi",
-        "aria-expanded": open,
-        style: { background: "none", border: 0, padding: 0, cursor: "pointer", lineHeight: 0 },
-        children: /* @__PURE__ */ jsx4(Gropi, { pose, size, anim: open ? "none" : "bob" })
-      }
-    ),
-    open && /* @__PURE__ */ jsxs2("div", { style: {
-      marginTop: 8,
-      maxWidth: 270,
-      background: C.surface,
-      border: `1.5px solid ${border}`,
-      borderRadius: R.lg,
-      padding: "11px 13px",
-      boxShadow: `0 6px 20px ${deep}22`,
-      animation: "gropi-bubble-in .22s ease both"
-    }, children: [
-      /* @__PURE__ */ jsx4("div", { style: { fontSize: 11, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: deep, fontFamily: FONTS.ui, marginBottom: 3 }, children: eyebrow }),
-      /* @__PURE__ */ jsx4("p", { style: { margin: 0, fontSize: 14, lineHeight: 1.6, color: C.text, fontFamily: FONTS.body }, children })
-    ] })
-  ] });
-}
+init_tokens();
+init_ThemeContext();
+init_Ti();
+init_Gropi();
+import { useState as useState3, useRef } from "react";
 
 // src/store/unitCheckSampler.js
 function shuffle(arr) {
@@ -1424,7 +6862,7 @@ import { Fragment as Fragment2, jsx as jsx5, jsxs as jsxs3 } from "react/jsx-run
 function UnitCheckScreen({ unit, content, dispatch, onDone, state }) {
   const C = useC();
   const completedLessons = state?.completedLessons ?? {};
-  const derniereTentative = useRef2([]);
+  const derniereTentative = useRef([]);
   const [questions, setQuestions] = useState3(() => buildSample(unit, content, completedLessons).map(melangerOptions));
   const [idx, setIdx] = useState3(0);
   const [sel, setSel] = useState3(null);
@@ -1488,7 +6926,7 @@ function UnitCheckScreen({ unit, content, dispatch, onDone, state }) {
         /* @__PURE__ */ jsx5("div", { style: { height: 7, background: C.border, borderRadius: 99, overflow: "hidden" }, children: /* @__PURE__ */ jsx5("div", { style: { width: `${pct}%`, height: "100%", borderRadius: 99, background: passed ? C.green : C.coral, transition: "width .5s ease" } }) })
       ] }),
       !passed && lessonsToReview.length > 0 && /* @__PURE__ */ jsxs3("div", { style: { width: "100%", maxWidth: 280, marginTop: 18, textAlign: "left" }, children: [
-        /* @__PURE__ */ jsx5("div", { style: { fontSize: 10, fontWeight: 700, color: C.text3, textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 8 }, children: "\xC0 revoir en priorit\xE9" }),
+        /* @__PURE__ */ jsx5("div", { style: { fontSize: 11, fontWeight: 700, color: C.text3, textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 8 }, children: "\xC0 revoir en priorit\xE9" }),
         lessonsToReview.map((l) => /* @__PURE__ */ jsxs3("div", { style: { display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.md, marginBottom: 6 }, children: [
           /* @__PURE__ */ jsx5(Ti, { name: "book-2", size: 14, color: C.text3 }),
           /* @__PURE__ */ jsx5("span", { style: { fontSize: 12.5, color: C.text, fontWeight: 600 }, children: l.title })
@@ -1534,7 +6972,7 @@ function UnitCheckScreen({ unit, content, dispatch, onDone, state }) {
         questions.length
       ] })
     ] }),
-    /* @__PURE__ */ jsxs3("div", { style: { fontSize: 10, color: C.text3, marginBottom: 8, textTransform: "uppercase", letterSpacing: ".1em", fontWeight: 600 }, children: [
+    /* @__PURE__ */ jsxs3("div", { style: { fontSize: 11, color: C.text3, marginBottom: 8, textTransform: "uppercase", letterSpacing: ".1em", fontWeight: 600 }, children: [
       "V\xE9rification \xB7 ",
       unit.title
     ] }),
@@ -1559,7 +6997,7 @@ function UnitCheckScreen({ unit, content, dispatch, onDone, state }) {
         }
       }
       return /* @__PURE__ */ jsxs3("button", { onClick: () => choose(i), disabled: answered, style: { display: "flex", alignItems: "center", gap: 10, background: bg, border, borderRadius: R.md, padding: "12px 14px", cursor: answered ? "default" : "pointer", textAlign: "left", width: "100%", marginBottom: 7, fontFamily: FONTS.title }, children: [
-        /* @__PURE__ */ jsx5("div", { style: { width: 26, height: 26, borderRadius: 8, background: badgeBg, color: badgeFg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, flexShrink: 0 }, children: ic }),
+        /* @__PURE__ */ jsx5("div", { style: { width: 26, height: 26, borderRadius: 8, background: badgeBg, color: badgeFg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0 }, children: ic }),
         /* @__PURE__ */ jsx5("span", { style: { fontSize: 13, color: col, lineHeight: 1.45, fontWeight: answered && i === q.a ? 700 : 500 }, children: opt })
       ] }, i);
     }),
@@ -1588,6 +7026,9 @@ function UnitCheckScreen({ unit, content, dispatch, onDone, state }) {
   ] });
 }
 
+// src/screens/CoursesScreen.jsx
+init_Gropi();
+
 // src/renderers.jsx
 var renderers_exports = {};
 __export(renderers_exports, {
@@ -1605,1302 +7046,13 @@ var RenderersContext = createContext2({
 var useRenderers = () => useContext2(RenderersContext);
 var RenderersProvider = RenderersContext.Provider;
 
-// src/fretboardUtils.js
-var CHROMATIC_NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-var ENHARMONICS = {
-  "Db": "C#",
-  "Eb": "D#",
-  "Fb": "E",
-  "Gb": "F#",
-  "Ab": "G#",
-  "Bb": "A#",
-  "Cb": "B"
-};
-var NOTES_FR = {
-  "C": "Do",
-  "C#": "Do#",
-  "D": "R\xE9",
-  "D#": "R\xE9#",
-  "E": "Mi",
-  "F": "Fa",
-  "F#": "Fa#",
-  "G": "Sol",
-  "G#": "Sol#",
-  "A": "La",
-  "A#": "La#",
-  "B": "Si"
-};
-var OPEN_STRINGS = {
-  1: "E",
-  // Mi aigu
-  2: "B",
-  // Si
-  3: "G",
-  // Sol
-  4: "D",
-  // Ré
-  5: "A",
-  // La
-  6: "E"
-  // Mi grave
-};
-var MARKER_FRETS = [3, 5, 7, 9];
-var DOUBLE_MARKER_FRETS = [12];
-var SCALES = {
-  // Gammes majeures / mineures
-  "major": { name: "Majeure", intervals: [0, 2, 4, 5, 7, 9, 11] },
-  "natural_minor": { name: "Mineure naturelle", intervals: [0, 2, 3, 5, 7, 8, 10] },
-  "harmonic_minor": { name: "Mineure harmonique", intervals: [0, 2, 3, 5, 7, 8, 11] },
-  "melodic_minor": { name: "Mineure m\xE9lodique", intervals: [0, 2, 3, 5, 7, 9, 11] },
-  // Pentatoniques
-  "pentatonic_major": { name: "Pentatonique majeure", intervals: [0, 2, 4, 7, 9] },
-  "pentatonic_minor": { name: "Pentatonique mineure", intervals: [0, 3, 5, 7, 10] },
-  "blues": { name: "Blues", intervals: [0, 3, 5, 6, 7, 10] },
-  // Modes de la gamme majeure
-  "dorian": { name: "Dorien", intervals: [0, 2, 3, 5, 7, 9, 10] },
-  "phrygian": { name: "Phrygien", intervals: [0, 1, 3, 5, 7, 8, 10] },
-  "lydian": { name: "Lydien", intervals: [0, 2, 4, 6, 7, 9, 11] },
-  "mixolydian": { name: "Mixolydien", intervals: [0, 2, 4, 5, 7, 9, 10] },
-  "locrian": { name: "Locrien", intervals: [0, 1, 3, 5, 6, 8, 10] },
-  // Gammes exotiques utiles
-  "whole_tone": { name: "Tons entiers", intervals: [0, 2, 4, 6, 8, 10] },
-  "diminished": { name: "Diminu\xE9e (T-ST)", intervals: [0, 2, 3, 5, 6, 8, 9, 11] }
-};
-var CHORD_TYPES = {
-  // Triades
-  "maj": { name: "Majeur", sym: "", intervals: [0, 4, 7] },
-  "min": { name: "Mineur", sym: "m", intervals: [0, 3, 7] },
-  "dim": { name: "Diminu\xE9", sym: "dim", intervals: [0, 3, 6] },
-  "aug": { name: "Augment\xE9", sym: "aug", intervals: [0, 4, 8] },
-  "sus2": { name: "Sus2", sym: "sus2", intervals: [0, 2, 7] },
-  "sus4": { name: "Sus4", sym: "sus4", intervals: [0, 5, 7] },
-  // Sixtes
-  "maj6": { name: "Sixte", sym: "6", intervals: [0, 4, 7, 9] },
-  "min6": { name: "Mineur 6", sym: "m6", intervals: [0, 3, 7, 9] },
-  // Tétrades
-  "maj7": { name: "Maj7", sym: "maj7", intervals: [0, 4, 7, 11] },
-  "min7": { name: "Mineur 7", sym: "m7", intervals: [0, 3, 7, 10] },
-  "dom7": { name: "Dominante 7", sym: "7", intervals: [0, 4, 7, 10] },
-  "min7b5": { name: "Mi-diminu\xE9 (\xF8)", sym: "m7\u266D5", intervals: [0, 3, 6, 10] },
-  "dim7": { name: "Diminu\xE9 7", sym: "dim7", intervals: [0, 3, 6, 9] },
-  "minMaj7": { name: "Mineur Maj7", sym: "mMaj7", intervals: [0, 3, 7, 11] },
-  "dom7sus4": { name: "7 sus4", sym: "7sus4", intervals: [0, 5, 7, 10] },
-  // Neuvièmes
-  "dom9": { name: "Neuvi\xE8me", sym: "9", intervals: [0, 4, 7, 10, 14] },
-  "maj9": { name: "Maj9", sym: "maj9", intervals: [0, 4, 7, 11, 14] },
-  "min9": { name: "Mineur 9", sym: "m9", intervals: [0, 3, 7, 10, 14] },
-  "add9": { name: "Add9", sym: "add9", intervals: [0, 4, 7, 14] },
-  // Altérés (dominantes tendues)
-  "dom7b9": { name: "7 \u266D9", sym: "7\u266D9", intervals: [0, 4, 7, 10, 13] },
-  "dom7s9": { name: "7 \u266F9", sym: "7\u266F9", intervals: [0, 4, 7, 10, 15] },
-  "dom7b5": { name: "7 \u266D5", sym: "7\u266D5", intervals: [0, 4, 6, 10] },
-  "dom7s5": { name: "7 \u266F5", sym: "7\u266F5", intervals: [0, 4, 8, 10] },
-  // Onzièmes et treizièmes
-  // Sur un 11 de dominante, la tierce majeure est omise par convention :
-  // elle formerait une neuvième mineure avec la onzième, intervalle très dur.
-  "dom11": { name: "Onzi\xE8me", sym: "11", intervals: [0, 7, 10, 14, 17] },
-  "min11": { name: "Mineur 11", sym: "m11", intervals: [0, 3, 7, 10, 14, 17] },
-  "maj7s11": { name: "Maj7 \u266F11", sym: "maj7\u266F11", intervals: [0, 4, 7, 11, 18] },
-  "dom13": { name: "Treizi\xE8me", sym: "13", intervals: [0, 4, 7, 10, 14, 21] },
-  "min13": { name: "Mineur 13", sym: "m13", intervals: [0, 3, 7, 10, 14, 21] },
-  "maj13": { name: "Maj13", sym: "maj13", intervals: [0, 4, 7, 11, 14, 21] }
-};
-var INTERVAL_NAMES = {
-  0: { short: "R", name: "Fondamentale", fr: "Fondamentale" },
-  1: { short: "b2", name: "Minor 2nd", fr: "Seconde mineure" },
-  2: { short: "2", name: "Major 2nd", fr: "Seconde majeure" },
-  3: { short: "b3", name: "Minor 3rd", fr: "Tierce mineure" },
-  4: { short: "3", name: "Major 3rd", fr: "Tierce majeure" },
-  5: { short: "4", name: "Perfect 4th", fr: "Quarte juste" },
-  6: { short: "b5", name: "Dim 5th", fr: "Triton" },
-  7: { short: "5", name: "Perfect 5th", fr: "Quinte juste" },
-  8: { short: "b6", name: "Minor 6th", fr: "Sixte mineure" },
-  9: { short: "6", name: "Major 6th", fr: "Sixte majeure" },
-  10: { short: "b7", name: "Minor 7th", fr: "Septi\xE8me mineure" },
-  11: { short: "7", name: "Major 7th", fr: "Septi\xE8me majeure" },
-  12: { short: "8", name: "Octave", fr: "Octave" },
-  14: { short: "9", name: "Major 9th", fr: "Neuvi\xE8me majeure" }
-};
-function normalizeNote(note) {
-  if (!note) return null;
-  const frToEn = Object.fromEntries(Object.entries(NOTES_FR).map(([en, fr]) => [fr, en]));
-  if (frToEn[note]) return frToEn[note];
-  if (ENHARMONICS[note]) return ENHARMONICS[note];
-  return note;
-}
-function getNoteAtPosition(string, fret) {
-  const openNote = OPEN_STRINGS[string];
-  if (!openNote) return null;
-  const openIdx = CHROMATIC_NOTES.indexOf(openNote);
-  return CHROMATIC_NOTES[(openIdx + fret) % 12];
-}
-function getPositionsOfNote(note, maxFret = 12, strings = [1, 2, 3, 4, 5, 6]) {
-  const target = normalizeNote(note);
-  const positions = [];
-  for (const s of strings) {
-    for (let f = 0; f <= maxFret; f++) {
-      if (getNoteAtPosition(s, f) === target) {
-        positions.push({ string: s, fret: f });
-      }
-    }
-  }
-  return positions;
-}
-function getScaleNotes(root, scaleKey) {
-  const scale = SCALES[scaleKey];
-  if (!scale) return [];
-  const rootNorm = normalizeNote(root);
-  const rootIdx = CHROMATIC_NOTES.indexOf(rootNorm);
-  if (rootIdx === -1) return [];
-  return scale.intervals.map((interval) => CHROMATIC_NOTES[(rootIdx + interval) % 12]);
-}
-function getChordNotes(root, chordType) {
-  const chord = CHORD_TYPES[chordType];
-  if (!chord) return [];
-  const rootNorm = normalizeNote(root);
-  const rootIdx = CHROMATIC_NOTES.indexOf(rootNorm);
-  if (rootIdx === -1) return [];
-  return chord.intervals.map((interval) => CHROMATIC_NOTES[(rootIdx + interval) % 12]);
-}
-function getScalePositions(root, scaleKey, maxFret = 12) {
-  const scale = SCALES[scaleKey];
-  if (!scale) return [];
-  const scaleNotes = getScaleNotes(root, scaleKey);
-  const rootNorm = normalizeNote(root);
-  const rootIdx = CHROMATIC_NOTES.indexOf(rootNorm);
-  const positions = [];
-  for (let s = 1; s <= 6; s++) {
-    for (let f = 0; f <= maxFret; f++) {
-      const note = getNoteAtPosition(s, f);
-      const noteIdx = CHROMATIC_NOTES.indexOf(note);
-      if (scaleNotes.includes(note)) {
-        const semitones = (noteIdx - rootIdx + 12) % 12;
-        let degreeIdx = scale.intervals.indexOf(semitones);
-        let actualInterval = semitones;
-        if (degreeIdx === -1) {
-          degreeIdx = scale.intervals.indexOf(semitones + 12);
-          if (degreeIdx !== -1) actualInterval = semitones + 12;
-        }
-        positions.push({
-          string: s,
-          fret: f,
-          note,
-          interval: actualInterval,
-          // Degré dans la gamme (1-based), ex: 1 = fondamentale, 5 = quinte
-          degree: degreeIdx + 1,
-          isRoot: note === rootNorm
-        });
-      }
-    }
-  }
-  return positions;
-}
-function getChordPositions(root, chordType, maxFret = 12) {
-  const chord = CHORD_TYPES[chordType];
-  if (!chord) return [];
-  const chordNotes = getChordNotes(root, chordType);
-  const rootNorm = normalizeNote(root);
-  const rootIdx = CHROMATIC_NOTES.indexOf(rootNorm);
-  const positions = [];
-  for (let s = 1; s <= 6; s++) {
-    for (let f = 0; f <= maxFret; f++) {
-      const note = getNoteAtPosition(s, f);
-      const noteIdx = CHROMATIC_NOTES.indexOf(note);
-      if (chordNotes.includes(note)) {
-        const semitones = (noteIdx - rootIdx + 12) % 12;
-        let degreeIdx = chord.intervals.indexOf(semitones);
-        let actualInterval = semitones;
-        if (degreeIdx === -1) {
-          degreeIdx = chord.intervals.indexOf(semitones + 12);
-          if (degreeIdx !== -1) actualInterval = semitones + 12;
-        }
-        positions.push({
-          string: s,
-          fret: f,
-          note,
-          interval: actualInterval,
-          degree: degreeIdx + 1,
-          isRoot: note === rootNorm
-        });
-      }
-    }
-  }
-  return positions;
-}
-function getInterval(from, to) {
-  const a = CHROMATIC_NOTES.indexOf(normalizeNote(from));
-  const b = CHROMATIC_NOTES.indexOf(normalizeNote(to));
-  if (a === -1 || b === -1) return null;
-  return (b - a + 12) % 12;
-}
-function noteToFr(note) {
-  return NOTES_FR[normalizeNote(note)] || note;
-}
-function getHighlightPositions(notes, maxFret = 12) {
-  if (!notes || notes.length === 0) return [];
-  const normalized = notes.map(normalizeNote);
-  const positions = [];
-  for (let s = 1; s <= 6; s++) {
-    for (let f = 0; f <= maxFret; f++) {
-      const note = getNoteAtPosition(s, f);
-      if (normalized.includes(note)) {
-        positions.push({
-          string: s,
-          fret: f,
-          note,
-          isRoot: f === 0 ? false : void 0
-          // le caller peut surcharger
-        });
-      }
-    }
-  }
-  return positions;
-}
-function getQuizTargetPositions(targetNote, maxFret = 12) {
-  return getPositionsOfNote(targetNote, maxFret);
-}
-function isCorrectPosition(clickedString, clickedFret, correctPositions) {
-  return correctPositions.some((p) => p.string === clickedString && p.fret === clickedFret);
-}
-function checkQuizCompletion(selected, correct) {
-  const hits = selected.filter((s) => isCorrectPosition(s.string, s.fret, correct));
-  const extras = selected.length - hits.length;
-  return {
-    complete: hits.length === correct.length && extras === 0,
-    found: hits.length,
-    total: correct.length,
-    misses: correct.length - hits.length,
-    extras
-  };
-}
-
-// src/tab/tabSon.js
-var CORDE_MIDI = { 6: 40, 5: 45, 4: 50, 3: 55, 2: 59, 1: 64 };
-var REGLAGES = {
-  resonanceMax: 2.2,
-  // s — une note seule ne sonne pas plus longtemps
-  resonanceFinale: 1.6,
-  // s — dernière note d'une corde, si rien ne la coupe
-  velociteTemps: 0.86,
-  // sur le temps
-  velociteCroche: 0.74,
-  // sur le « et »
-  velociteDouble: 0.64,
-  // sur les doubles-croches intermédiaires
-  variationVelocite: 0.05,
-  // ± aléatoire, pour ne jamais jouer deux fois pareil
-  decalageMaxMs: 7,
-  // retard aléatoire max (jamais en avance sur la grille)
-  grattageMs: 12,
-  // écart entre deux cordes d'un accord
-  bendDelaiS: 0.03,
-  // le bend commence juste après l'attaque
-  bendDureeMax: 0.18,
-  // s — durée max de la montée d'un bend
-  slidePart: 0.85,
-  // part du temps disponible occupée par le glissé
-  etouffeeDuree: 0.05,
-  // s — le « tchk » d'une note étouffée
-  velociteEtouffee: 0.55
-};
-var vel = (col, rng, R2) => {
-  const base = col % 4 === 0 ? R2.velociteTemps : col % 2 === 0 ? R2.velociteCroche : R2.velociteDouble;
-  const v = base + (rng() * 2 - 1) * R2.variationVelocite;
-  return Math.max(0.2, Math.min(1, v));
-};
-function planifierTab(evenements, opts = {}) {
-  const { bpm = 90, subdivision = 0.25, rng = Math.random } = opts;
-  const R2 = { ...REGLAGES, ...opts.reglages || {} };
-  const spc = 60 / bpm * subdivision;
-  if (!Array.isArray(evenements) || !evenements.length) return { voix: [], duree: 0 };
-  const parCol = /* @__PURE__ */ new Map();
-  for (const ev of evenements) {
-    if (!parCol.has(ev.col)) parCol.set(ev.col, []);
-    parCol.get(ev.col).push(ev);
-  }
-  const decalageGrattage = /* @__PURE__ */ new Map();
-  for (const [, evs] of parCol) {
-    if (evs.length < 3) continue;
-    [...evs].sort((a, b) => b.string - a.string).forEach((ev, i) => decalageGrattage.set(ev, i * R2.grattageMs / 1e3));
-  }
-  const voix = [];
-  for (const ev of [...evenements].sort((a, b) => a.col - b.col || b.string - a.string)) {
-    const ouverte = CORDE_MIDI[ev.string];
-    if (ouverte == null) continue;
-    const jitter = rng() * R2.decalageMaxMs / 1e3;
-    const debut = ev.col * spc + (decalageGrattage.get(ev) || 0) + jitter;
-    const v = vel(ev.col, rng, R2);
-    if (ev.type === "mute") {
-      voix.push({
-        corde: ev.string,
-        debut,
-        fin: debut + R2.etouffeeDuree,
-        velocite: R2.velociteEtouffee,
-        etouffee: true,
-        hauteurs: [{ t: 0, midi: ouverte, forme: "saut" }],
-        ev
-      });
-      continue;
-    }
-    if (ev.type === "note") {
-      voix.push({ corde: ev.string, debut, fin: null, velocite: v, etouffee: false, hauteurs: [{ t: 0, midi: ouverte + ev.fret, forme: "saut" }], ev });
-      continue;
-    }
-    if (ev.type === "bend") {
-      const depart = ouverte + ev.fromFret, arrivee = ouverte + ev.toFret;
-      voix.push({
-        corde: ev.string,
-        debut,
-        fin: null,
-        velocite: v,
-        etouffee: false,
-        ev,
-        hauteurs: [
-          { t: 0, midi: depart, forme: "saut" },
-          { t: R2.bendDelaiS, midi: depart, forme: "saut" },
-          { t: R2.bendDelaiS + Math.min(R2.bendDureeMax, spc * 2), midi: arrivee, forme: "rampe" }
-        ]
-      });
-      continue;
-    }
-    if (ev.type === "hammer" || ev.type === "pull") {
-      const ecart = ev.toCol != null ? (ev.toCol - ev.col) * spc : 0.075;
-      voix.push({
-        corde: ev.string,
-        debut,
-        fin: null,
-        velocite: v,
-        etouffee: false,
-        ev,
-        hauteurs: [{ t: 0, midi: ouverte + ev.fromFret, forme: "saut" }, { t: ecart, midi: ouverte + ev.toFret, forme: "saut" }]
-      });
-      continue;
-    }
-    if (ev.type === "slide_up" || ev.type === "slide_down") {
-      const dispo = ev.toCol != null ? (ev.toCol - ev.col) * spc : Math.min(0.16, spc);
-      voix.push({
-        corde: ev.string,
-        debut,
-        fin: null,
-        velocite: v,
-        etouffee: false,
-        ev,
-        hauteurs: [{ t: 0, midi: ouverte + ev.fromFret, forme: "saut" }, { t: Math.max(0.03, dispo * R2.slidePart), midi: ouverte + ev.toFret, forme: "rampe" }]
-      });
-      continue;
-    }
-  }
-  const parCorde = /* @__PURE__ */ new Map();
-  for (const x of voix) {
-    if (!parCorde.has(x.corde)) parCorde.set(x.corde, []);
-    parCorde.get(x.corde).push(x);
-  }
-  for (const [, liste2] of parCorde) {
-    liste2.sort((a, b) => a.debut - b.debut);
-    liste2.forEach((x, i) => {
-      if (x.etouffee) return;
-      const derniereHauteur = x.hauteurs[x.hauteurs.length - 1].t;
-      const suivante = liste2[i + 1];
-      const naturelle = x.debut + Math.max(derniereHauteur + 0.05, suivante ? R2.resonanceMax : R2.resonanceFinale);
-      x.fin = suivante ? Math.min(suivante.debut, naturelle) : naturelle;
-    });
-  }
-  voix.sort((a, b) => a.debut - b.debut);
-  return { voix, duree: voix.reduce((m, x) => Math.max(m, x.fin), 0) };
-}
-
-// src/audioEngine.js
-var Tone = null;
-var tonePromise = null;
-async function chargerTone() {
-  if (Tone) return Tone;
-  if (!tonePromise) tonePromise = Promise.resolve().then(() => (init_tone_stub(), tone_stub_exports)).then((m) => {
-    Tone = m;
-    return m;
-  });
-  return tonePromise;
-}
-var SAMPLE_URLS = {
-  "A2": "A2.mp3",
-  "A3": "A3.mp3",
-  "A4": "A4.mp3",
-  "B2": "B2.mp3",
-  "B3": "B3.mp3",
-  "B4": "B4.mp3",
-  "C2": "C2.mp3",
-  "C3": "C3.mp3",
-  "C4": "C4.mp3",
-  "D2": "D2.mp3",
-  "D3": "D3.mp3",
-  "D4": "D4.mp3",
-  "E2": "E2.mp3",
-  "E3": "E3.mp3",
-  "E4": "E4.mp3",
-  "F2": "F2.mp3",
-  "F3": "F3.mp3",
-  "F4": "F4.mp3",
-  "G2": "G2.mp3",
-  "G3": "G3.mp3",
-  "G4": "G4.mp3",
-  "Ab2": "Ab2.mp3",
-  "Ab3": "Ab3.mp3",
-  "Ab4": "Ab4.mp3",
-  "Bb2": "Bb2.mp3",
-  "Bb3": "Bb3.mp3",
-  "Bb4": "Bb4.mp3",
-  "Db2": "Db2.mp3",
-  "Db3": "Db3.mp3",
-  "Db4": "Db4.mp3",
-  "Eb2": "Eb2.mp3",
-  "Eb3": "Eb3.mp3",
-  "Eb4": "Eb4.mp3",
-  "Gb2": "Gb2.mp3",
-  "Gb3": "Gb3.mp3",
-  "Gb4": "Gb4.mp3",
-  // Octave 5 : la corde de Mi aigu au-delà de la case 7. Sans elle, ces
-  // notes étaient obtenues en accélérant B4, d'où un timbre « chipmunk ».
-  "C5": "C5.mp3",
-  "Db5": "Db5.mp3",
-  "D5": "D5.mp3",
-  "Eb5": "Eb5.mp3",
-  "E5": "E5.mp3",
-  "F5": "F5.mp3",
-  "Gb5": "Gb5.mp3",
-  "G5": "G5.mp3",
-  "Ab5": "Ab5.mp3",
-  "A5": "A5.mp3",
-  "Bb5": "Bb5.mp3",
-  "B5": "B5.mp3"
-};
-var busGuitare = null;
-var buffersCordes = null;
-var voixCordes = /* @__PURE__ */ new Set();
-var generationTab = 0;
-var NOMS_ECHANTILLONS = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
-var MIDI_MIN_ECH = 36;
-var MIDI_MAX_ECH = 83;
-var BASE_URL = "/audio/guitar/";
-var RELEASE = 1.6;
-var QUEUE_AUDIBLE_MS = Math.round(RELEASE * 1e3);
-var DUREE_NOTE = { "1n": 2, "2n": 1, "4n": 0.5, "8n": 0.25, "16n": 0.125 };
-var secondes = (v) => typeof v === "number" ? v : DUREE_NOTE[v] ?? 1;
-var listSampleUrls = () => Object.values(SAMPLE_URLS).map((f) => BASE_URL + f);
-var SAMPLE_COUNT = Object.keys(SAMPLE_URLS).length;
-var SHARP_TO_FLAT = {
-  "C#": "Db",
-  "D#": "Eb",
-  "F#": "Gb",
-  "G#": "Ab",
-  "A#": "Bb"
-};
-function toToneNote(note, octave) {
-  const flat = SHARP_TO_FLAT[note];
-  return `${flat || note}${octave}`;
-}
-var CHROMATIC = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-var OPEN_STRINGS2 = { 1: "E4", 2: "B3", 3: "G3", 4: "D3", 5: "A2", 6: "E2" };
-function midiOf(name, octave) {
-  return CHROMATIC.indexOf(name) + 12 * (octave + 1);
-}
-function fromMidi(midi) {
-  return toToneNote(CHROMATIC[(midi % 12 + 12) % 12], Math.floor(midi / 12) - 1);
-}
-function buildVoicingFromIntervals(rootName, intervals) {
-  if (!intervals?.length) return [];
-  let degrees = [...new Set(intervals)].sort((a, b) => a - b);
-  if (degrees.length > 5) degrees = degrees.filter((d) => d !== 7);
-  const target = Math.min(6, Math.max(5, degrees.length + 1));
-  const LOW = midiOf("C", 2), HIGH = midiOf("B", 4);
-  const bass = midiOf(rootName, 2);
-  const span = Math.max(...degrees);
-  const bump = bass + span + 12 <= HIGH ? 12 : 0;
-  const rel = /* @__PURE__ */ new Set([0]);
-  let i = 0, guard = 0;
-  while (rel.size < target && guard < 60) {
-    const off = degrees[i % degrees.length];
-    const val = off + bump + 12 * Math.floor(i / degrees.length);
-    if (bass + val <= HIGH) rel.add(val);
-    i++;
-    guard++;
-  }
-  return [...rel].sort((a, b) => a - b).map((r) => bass + r).filter((m) => m >= LOW && m <= HIGH).map(fromMidi);
-}
-function strumInto(notes, duration, when, direction = "down", spread = 0.026) {
-  const ordered = direction === "down" ? notes : [...notes].reverse();
-  const n = ordered.length;
-  ordered.forEach((note, i) => {
-    const curve = Math.sin((i + 0.6) / n * Math.PI);
-    const velocity = Math.max(0.35, Math.min(1, 0.55 + curve * 0.35 + (Math.random() - 0.5) * 0.07));
-    const jitter = (Math.random() - 0.5) * spread * 0.35;
-    const t = when + i * spread + jitter;
-    try {
-      sampler.triggerAttackRelease(note, duration, t, velocity);
-    } catch {
-    }
-  });
-}
-function getToneNoteAtPosition(string, fret) {
-  const open = OPEN_STRINGS2[string];
-  const openNote = open.slice(0, -1);
-  const openOct = parseInt(open.slice(-1));
-  const openIdx = CHROMATIC.indexOf(openNote);
-  const total = openIdx + fret;
-  return toToneNote(CHROMATIC[total % 12], openOct + Math.floor(total / 12));
-}
-var DEV = typeof import.meta !== "undefined" && false;
-var warn = (...a) => {
-  if (DEV) console.warn("[audioEngine]", ...a);
-};
-var sortieMaitre = null;
-var enAttente = [];
-function differer(fn, ms) {
-  if (ms <= 0) {
-    fn();
-    return;
-  }
-  const id = setTimeout(() => {
-    enAttente = enAttente.filter((x) => x !== id);
-    fn();
-  }, ms);
-  enAttente.push(id);
-  return id;
-}
-function annulerEnAttente() {
-  for (const id of enAttente) clearTimeout(id);
-  enAttente = [];
-}
-var restaurationTimer = null;
-function reveillerSortie() {
-  if (restaurationTimer) {
-    clearTimeout(restaurationTimer);
-    restaurationTimer = null;
-  }
-  if (!sortieMaitre || !Tone) return;
-  try {
-    sortieMaitre.gain.cancelScheduledValues(Tone.now());
-    sortieMaitre.gain.value = 1;
-  } catch {
-  }
-  try {
-    if (sampler) sampler.release = RELEASE;
-  } catch {
-  }
-}
-var sampler = null;
-var loadPromise = null;
-var isLoaded = false;
-var loadError = null;
-function isAudioLoaded() {
-  return isLoaded;
-}
-function loadAudio() {
-  if (loadPromise) return loadPromise;
-  loadPromise = (async () => {
-    await chargerTone();
-    return new Promise((resolve, reject) => {
-      try {
-        sortieMaitre = new Tone.Gain(1).toDestination();
-        const reverb = new Tone.Reverb({ decay: 1.9, wet: 0.19 });
-        reverb.connect(sortieMaitre);
-        busGuitare = reverb;
-        sampler = new Tone.Sampler({
-          urls: SAMPLE_URLS,
-          baseUrl: BASE_URL,
-          release: 1.6,
-          onload: () => {
-            isLoaded = true;
-            resolve(true);
-          },
-          onerror: (err) => {
-            loadError = err;
-            warn("Erreur samples:", err);
-            reject(err);
-          }
-        }).connect(reverb);
-      } catch (err) {
-        loadError = err;
-        reject(err);
-      }
-    });
-  })();
-  loadPromise.catch(() => {
-    loadPromise = null;
-    isLoaded = false;
-  });
-  return loadPromise;
-}
-async function unlockAudio() {
-  try {
-    await chargerTone();
-    if (Tone.context.state !== "running") await Tone.start();
-    return Tone.context.state === "running";
-  } catch {
-    return false;
-  }
-}
-async function ensureLoaded() {
-  try {
-    await chargerTone();
-  } catch {
-    return false;
-  }
-  const etat = Tone.context.state;
-  if (etat !== "running") {
-    try {
-      await Tone.start();
-      if (Tone.context.state !== "running") await Tone.context.rawContext?.resume?.();
-    } catch {
-    }
-  }
-  if (!isLoaded) {
-    try {
-      await loadAudio();
-    } catch {
-      return false;
-    }
-  }
-  return isLoaded;
-}
-if (typeof document !== "undefined") {
-  document.addEventListener("visibilitychange", () => {
-    if (!Tone) return;
-    if (document.visibilityState !== "hidden") return;
-    try {
-      stopProgression();
-      sampler?.releaseAll?.();
-    } catch {
-    }
-  });
-}
-async function playNote(note, duration = "4n") {
-  if (!await ensureLoaded()) return;
-  stopAll();
-  reveillerSortie();
-  try {
-    sampler.triggerAttackRelease(note, duration, Tone.now());
-  } catch (e) {
-    warn("playNote:", e);
-  }
-}
-async function playChord(notes, duration = "2n", opts = {}) {
-  if (!await ensureLoaded()) return;
-  stopAll();
-  reveillerSortie();
-  const { strum = true, direction = "down", spread = 0.026 } = opts;
-  try {
-    if (!strum) {
-      sampler.triggerAttackRelease(notes, duration);
-      return;
-    }
-    strumInto(notes, duration, Tone.now(), direction, spread);
-  } catch (e) {
-    warn("playChord:", e);
-  }
-}
-async function playScale(notes, bpm = 80, onStep) {
-  if (!await ensureLoaded()) return;
-  stopAll();
-  reveillerSortie();
-  const spb = 60 / bpm;
-  try {
-    notes.forEach((note, i) => {
-      differer(() => {
-        try {
-          sampler.triggerAttackRelease(note, spb * 0.85, Tone.now());
-        } catch {
-        }
-        onStep?.(i, note);
-      }, i * spb * 1e3);
-    });
-    differer(() => onStep?.(-1, null), notes.length * spb * 1e3);
-  } catch (e) {
-    warn("playScale:", e);
-  }
-}
-async function playRythme(spec) {
-  if (!await ensureLoaded()) return 0;
-  stopAll();
-  reveillerSortie();
-  const { bpm = 70, pas = 2, attaques = [], swing = false, note = "A3", clic = "E5" } = spec || {};
-  const spb = 60 / bpm, t0 = 4 * spb;
-  const quand = (i) => {
-    const temps = Math.floor(i / pas), sous = i % pas;
-    const frac = swing && pas === 2 ? sous === 0 ? 0 : 2 / 3 : sous / pas;
-    return (t0 + (temps + frac) * spb) * 1e3;
-  };
-  try {
-    for (let b = 0; b < 8; b++) {
-      differer(() => {
-        try {
-          sampler.triggerAttackRelease(clic, 0.05, Tone.now(), b === 0 || b === 4 ? 0.5 : 0.3);
-        } catch {
-        }
-      }, b * spb * 1e3);
-    }
-    const duree = Math.max(0.08, spb / pas * (swing ? 0.6 : 0.8));
-    for (const i of attaques) {
-      differer(() => {
-        try {
-          sampler.triggerAttackRelease(note, duree, Tone.now(), 0.85);
-        } catch {
-        }
-      }, quand(i));
-    }
-  } catch (e) {
-    warn("playRythme:", e);
-  }
-  return 8 * spb * 1e3;
-}
-async function playSuite(accords, secondesParAccord = 1.6) {
-  if (!await ensureLoaded()) return;
-  stopAll();
-  reveillerSortie();
-  try {
-    accords.forEach((notes, i) => {
-      differer(() => {
-        try {
-          strumInto(notes, secondesParAccord * 0.9, Tone.now(), i % 2 ? "up" : "down");
-        } catch {
-        }
-      }, i * secondesParAccord * 1e3);
-    });
-  } catch (e) {
-    warn("playSuite:", e);
-  }
-}
-async function jouerEcoute(spec) {
-  if (!spec) return;
-  if (spec.type === "suite") return playSuite(spec.accords);
-  if (spec.type === "intervalle") return playInterval(spec.notes[0], spec.notes[1], spec.mode || "ascending");
-  if (spec.type === "accord") return spec.arpege ? playScale(spec.notes, 150) : playChord(spec.notes, "2n");
-  if (spec.type === "rythme") return playRythme(spec);
-}
-var ECART_INTERVALLE_MS = 650;
-async function playInterval(note1, note2, mode = "ascending") {
-  if (!await ensureLoaded()) return;
-  stopAll();
-  reveillerSortie();
-  try {
-    if (mode === "harmonic") {
-      sampler.triggerAttackRelease([note1, note2], "2n", Tone.now());
-      return;
-    }
-    const [premiere, seconde] = mode === "descending" ? [note2, note1] : [note1, note2];
-    sampler.triggerAttackRelease(premiere, "4n", Tone.now());
-    differer(() => {
-      try {
-        sampler.triggerAttackRelease(seconde, "4n", Tone.now());
-      } catch {
-      }
-    }, ECART_INTERVALLE_MS);
-  } catch (e) {
-    warn("playInterval:", e);
-  }
-}
-async function playScaleFromRoot(root, scaleKey, bpm = 80, onStep) {
-  const notes = getScaleNotes(root, scaleKey);
-  if (!notes.length) return;
-  const toneNotes = notes.map((note, i) => toToneNote(note, i < 5 ? 3 : 4));
-  await playScale(toneNotes, bpm, onStep ? (i) => onStep(i, notes[i] ?? null) : void 0);
-  return notes;
-}
-async function playArpeggioFromRoot(root, chordType, bpm = 132, onStep) {
-  const names = getChordNotes(root, chordType);
-  if (!names.length) return;
-  const toneNotes = names.map((n, i) => toToneNote(n, i < 3 ? 3 : 4));
-  await playScale(toneNotes, bpm, onStep ? (i) => onStep(i, names[i] ?? null) : void 0);
-  return names;
-}
-async function chargerBuffersCordes() {
-  if (buffersCordes?.loaded) return buffersCordes;
-  await new Promise((resolve, reject) => {
-    const minuteur = setTimeout(() => reject(new Error("d\xE9lai d\xE9pass\xE9")), 8e3);
-    buffersCordes = new Tone.ToneAudioBuffers({
-      urls: SAMPLE_URLS,
-      baseUrl: BASE_URL,
-      onload: () => {
-        clearTimeout(minuteur);
-        resolve();
-      },
-      onerror: (e) => {
-        clearTimeout(minuteur);
-        reject(e);
-      }
-    });
-  });
-  return buffersCordes;
-}
-function echantillonPour(midi) {
-  const m = Math.max(MIDI_MIN_ECH, Math.min(MIDI_MAX_ECH, Math.round(midi)));
-  return { nom: NOMS_ECHANTILLONS[m % 12] + (Math.floor(m / 12) - 1), base: m };
-}
-var vitessePour = (midi, base) => Math.pow(2, (midi - base) / 12);
-function jouerVoix(v, t0) {
-  const depart = v.hauteurs[0].midi;
-  const { nom: nom2, base } = echantillonPour(depart);
-  const T2 = t0 + v.debut, Tfin = t0 + v.fin;
-  const src = new Tone.ToneBufferSource(buffersCordes.get(nom2));
-  const gain = new Tone.Gain(0);
-  let filtre = null;
-  if (v.etouffee) {
-    filtre = new Tone.Filter({ frequency: 1100, type: "lowpass", rolloff: -24 });
-    src.chain(filtre, gain, busGuitare);
-  } else {
-    src.chain(gain, busGuitare);
-  }
-  src.playbackRate.setValueAtTime(vitessePour(depart, base), T2);
-  for (const p of v.hauteurs.slice(1)) {
-    const r = vitessePour(p.midi, base);
-    if (p.forme === "rampe") src.playbackRate.exponentialRampToValueAtTime(r, T2 + p.t);
-    else src.playbackRate.setValueAtTime(r, T2 + p.t);
-  }
-  gain.gain.setValueAtTime(0, T2);
-  gain.gain.linearRampToValueAtTime(v.velocite, T2 + 4e-3);
-  gain.gain.setTargetAtTime(0, Tfin, v.etouffee ? 0.01 : 0.03);
-  src.start(T2);
-  src.stop(Tfin + 0.3);
-  const voix = { src, gain };
-  voixCordes.add(voix);
-  src.onended = () => {
-    voixCordes.delete(voix);
-    try {
-      src.dispose();
-      gain.dispose();
-      filtre?.dispose();
-    } catch {
-    }
-  };
-}
-async function playTab(evenements, opts = {}) {
-  if (!await ensureLoaded()) return;
-  stopAll();
-  reveillerSortie();
-  const { bpm = 90, subdivision = 0.25, onEvent, onDone } = opts;
-  if (!Array.isArray(evenements) || evenements.length === 0) {
-    onDone?.();
-    return;
-  }
-  const maLecture = ++generationTab;
-  try {
-    await chargerBuffersCordes();
-    if (!busGuitare) throw new Error("bus guitare absent");
-  } catch (e) {
-    warn("moteur de cordes indisponible, repli sur le sampler :", e);
-    return playTabSampler(evenements, opts);
-  }
-  if (maLecture !== generationTab) return;
-  const { voix } = planifierTab(evenements, { bpm, subdivision, reglages: opts.reglages });
-  const AVANCE_MS = 80;
-  const t0 = Tone.now() + AVANCE_MS / 1e3;
-  try {
-    for (const v of voix) jouerVoix(v, t0);
-  } catch (e) {
-    warn("playTab:", e);
-  }
-  const spc = 60 / bpm * subdivision;
-  for (const ev of evenements) differer(() => onEvent?.(ev), AVANCE_MS + ev.col * spc * 1e3);
-  const dernierCol = Math.max(...evenements.map((e) => e.toCol ?? e.col));
-  differer(() => onDone?.(), AVANCE_MS + (dernierCol + 2) * spc * 1e3);
-}
-async function playTabSampler(evenements, opts = {}) {
-  if (!await ensureLoaded()) return;
-  stopAll();
-  reveillerSortie();
-  const { bpm = 90, subdivision = 0.25, onEvent, onDone } = opts;
-  if (!Array.isArray(evenements) || evenements.length === 0) {
-    onDone?.();
-    return;
-  }
-  const secParColonne = 60 / bpm * subdivision;
-  const dureeNote = secParColonne;
-  const dernierCol = Math.max(...evenements.map((e) => e.toCol ?? e.col));
-  try {
-    for (const ev of evenements) {
-      const tMs = ev.col * secParColonne * 1e3;
-      if (ev.type === "mute") {
-        differer(() => {
-          onEvent?.(ev);
-        }, tMs);
-        continue;
-      }
-      if (ev.type === "note") {
-        const note = getToneNoteAtPosition(ev.string, ev.fret);
-        differer(() => {
-          onEvent?.(ev);
-          try {
-            sampler.triggerAttackRelease(note, dureeNote, Tone.now(), 0.75);
-          } catch (e) {
-            warn("playTab note:", e);
-          }
-        }, tMs);
-        continue;
-      }
-      if (ev.type === "bend") {
-        const note = getToneNoteAtPosition(ev.string, ev.toFret);
-        differer(() => {
-          onEvent?.(ev);
-          try {
-            sampler.triggerAttackRelease(note, dureeNote, Tone.now(), 0.75);
-          } catch (e) {
-            warn("playTab bend:", e);
-          }
-        }, tMs);
-        continue;
-      }
-      if (ev.type === "hammer" || ev.type === "pull") {
-        const noteDepart = getToneNoteAtPosition(ev.string, ev.fromFret);
-        const noteArrivee = getToneNoteAtPosition(ev.string, ev.toFret);
-        const ecart = ev.toCol != null ? (ev.toCol - ev.col) * secParColonne : 0.075;
-        differer(() => {
-          onEvent?.(ev);
-          try {
-            sampler.triggerAttackRelease(noteDepart, Math.max(0.04, ecart), Tone.now(), 0.75);
-            sampler.triggerAttackRelease(noteArrivee, dureeNote * 0.9, Tone.now() + ecart, 0.45);
-          } catch (e) {
-            warn("playTab hammer/pull:", e);
-          }
-        }, tMs);
-        continue;
-      }
-      if (ev.type === "slide_up" || ev.type === "slide_down") {
-        const pas = ev.fromFret <= ev.toFret ? 1 : -1;
-        const cases = [];
-        for (let f = ev.fromFret; pas > 0 ? f <= ev.toFret : f >= ev.toFret; f += pas) cases.push(f);
-        const dureeGlissando = ev.toCol != null ? (ev.toCol - ev.col) * secParColonne : Math.min(0.16, dureeNote * 0.5);
-        differer(() => {
-          onEvent?.(ev);
-          cases.forEach((f, i) => {
-            const note = getToneNoteAtPosition(ev.string, f);
-            const estArrivee = i === cases.length - 1;
-            const t = Tone.now() + (cases.length > 1 ? i / (cases.length - 1) * dureeGlissando : 0);
-            try {
-              sampler.triggerAttackRelease(
-                note,
-                estArrivee ? dureeNote : 0.045,
-                t,
-                estArrivee ? 0.75 : 0.4
-              );
-            } catch (e) {
-              warn("playTab slide:", e);
-            }
-          });
-        }, tMs);
-        continue;
-      }
-    }
-    differer(() => onDone?.(), (dernierCol + 2) * secParColonne * 1e3);
-  } catch (e) {
-    warn("playTab:", e);
-  }
-}
-async function playChordFromRoot(root, chordType, onStep) {
-  const intervals = CHORD_TYPES[chordType]?.intervals;
-  if (!intervals) return;
-  const voiced = buildVoicingFromIntervals(normalizeNote(root), intervals);
-  await playChord(voiced, "2n");
-  if (onStep) {
-    const names = getChordNotes(root, chordType);
-    onStep(0, names);
-    setTimeout(() => onStep(-1, null), 1400);
-  }
-}
-var progressionTimers = [];
-var progressionTimer = null;
-async function playProgression(chords, secondsPerChord = 1.5, onStep) {
-  if (!await ensureLoaded()) return;
-  stopAll();
-  reveillerSortie();
-  const voicedChords = chords.map(
-    ({ root, type }) => buildVoicingFromIntervals(normalizeNote(root), CHORD_TYPES[type]?.intervals || [])
-  );
-  voicedChords.forEach((voiced, idx) => {
-    const jouer = () => {
-      const direction = idx % 2 === 0 ? "down" : "up";
-      const humanize2 = (Math.random() - 0.5) * 0.012;
-      strumInto(voiced, secondsPerChord * 0.9, Tone.now() + 0.02 + humanize2, direction);
-      onStep?.(idx);
-    };
-    if (idx === 0) jouer();
-    else progressionTimers.push(setTimeout(jouer, idx * secondsPerChord * 1e3));
-  });
-  const totalMs = voicedChords.length * secondsPerChord * 1e3 + 200;
-  progressionTimer = setTimeout(() => {
-    progressionTimer = null;
-    onStep?.(-1);
-  }, totalMs);
-}
-function stopProgression() {
-  for (const t of progressionTimers) clearTimeout(t);
-  progressionTimers = [];
-  if (progressionTimer) {
-    clearTimeout(progressionTimer);
-    progressionTimer = null;
-  }
-}
-function fioriture(notes, { gap = 0.055, duration = "8n", from = 0.62, to = 0.3 } = {}) {
-  if (!isLoaded || !sampler || !Tone) return false;
-  const now2 = Tone.now() + 0.01;
-  notes.forEach((note, i) => {
-    const t = notes.length === 1 ? 0 : i / (notes.length - 1);
-    const velocity = from + (to - from) * t;
-    try {
-      sampler.triggerAttackRelease(note, duration, now2 + i * gap, velocity);
-    } catch {
-    }
-  });
-  return true;
-}
-function playLessonComplete() {
-  return fioriture(["C4", "E4", "G4", "D4"], { gap: 0.052, duration: "8n" });
-}
-function playChestOpen() {
-  return fioriture(["G3", "D4"], { gap: 0.1, duration: "2n", from: 0.55, to: 0.45 });
-}
-function couperVoixCordes() {
-  if (!Tone || !voixCordes.size) return;
-  const t = Tone.now();
-  for (const v of voixCordes) {
-    try {
-      v.gain.gain.cancelScheduledValues(t);
-      v.gain.gain.setTargetAtTime(0, t, 0.01);
-      v.src.stop(t + 0.1);
-    } catch {
-    }
-  }
-  voixCordes.clear();
-}
-function stopAll() {
-  generationTab++;
-  couperVoixCordes();
-  annulerEnAttente();
-  progressionTimers.forEach(clearTimeout);
-  progressionTimers = [];
-  if (progressionTimer) {
-    clearTimeout(progressionTimer);
-    progressionTimer = null;
-  }
-  if (!Tone || !sampler) return;
-  try {
-    const maintenant = Tone.now();
-    if (sortieMaitre) {
-      sortieMaitre.gain.cancelScheduledValues(maintenant);
-      sortieMaitre.gain.setValueAtTime(sortieMaitre.gain.value, maintenant);
-      sortieMaitre.gain.linearRampToValueAtTime(0, maintenant + 8e-3);
-    }
-    sampler.release = 0.02;
-    sampler.releaseAll();
-    if (restaurationTimer) clearTimeout(restaurationTimer);
-    restaurationTimer = setTimeout(() => {
-      restaurationTimer = null;
-      try {
-        sampler.releaseAll();
-        sampler.release = RELEASE;
-        if (sortieMaitre) {
-          const t = Tone.now();
-          sortieMaitre.gain.cancelScheduledValues(t);
-          sortieMaitre.gain.setValueAtTime(0, t);
-          sortieMaitre.gain.linearRampToValueAtTime(1, t + 0.01);
-        }
-      } catch {
-      }
-    }, 380);
-  } catch {
-  }
-}
-var dureeMs = (finDerniereAttaque, dureeNote) => Math.round((finDerniereAttaque + secondes(dureeNote)) * 1e3) + QUEUE_AUDIBLE_MS;
-function generateEarTrainingQuestion(type = "interval") {
-  const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-  const INTERVAL_NAMES2 = {
-    3: "Tierce mineure",
-    4: "Tierce majeure",
-    5: "Quarte juste",
-    7: "Quinte juste",
-    9: "Sixte majeure",
-    10: "Septi\xE8me mineure",
-    12: "Octave"
-  };
-  if (type === "interval") {
-    const intervals = [3, 4, 5, 7, 9, 10, 12];
-    const semitones = intervals[Math.floor(Math.random() * intervals.length)];
-    const rootIdx = Math.floor(Math.random() * 12);
-    const root = NOTES[rootIdx];
-    const topIdx = (rootIdx + semitones) % 12;
-    const top = NOTES[topIdx];
-    const octaveTop = rootIdx + semitones >= 12 ? 4 : 3;
-    const note1 = toToneNote(root, 3);
-    const note2 = toToneNote(top, octaveTop);
-    const distractors = intervals.filter((i) => i !== semitones).sort(() => Math.random() - 0.5).slice(0, 3);
-    const options = [semitones, ...distractors].sort(() => Math.random() - 0.5).map((i) => ({ semitones: i, label: INTERVAL_NAMES2[i] }));
-    return {
-      type: "interval",
-      note1,
-      note2,
-      answer: semitones,
-      options,
-      play: () => playInterval(note1, note2, "ascending"),
-      // La 2e note attaque à 0,65 s, elle dure "4n" (0,5 s au tempo par défaut).
-      durationMs: dureeMs(0.65, "4n")
-    };
-  }
-  if (type === "chord_quality") {
-    const qualities = [
-      { key: "maj", label: "Major", intervals: [0, 4, 7] },
-      { key: "min", label: "Minor", intervals: [0, 3, 7] },
-      { key: "dom7", label: "Dom7", intervals: [0, 4, 7, 10] },
-      { key: "min7", label: "Minor 7", intervals: [0, 3, 7, 10] }
-    ];
-    const rootIdx = Math.floor(Math.random() * 12);
-    const quality = qualities[Math.floor(Math.random() * qualities.length)];
-    const notes = quality.intervals.map((i, idx) => {
-      return toToneNote(NOTES[(rootIdx + i) % 12], idx === 0 ? 2 : 3);
-    });
-    return {
-      type: "chord_quality",
-      notes,
-      answer: quality.key,
-      options: qualities.map((q) => ({ key: q.key, label: q.label })),
-      play: () => playChord(notes, "2n", { spread: 0.065 }),
-      // Grattage étalé : la dernière corde attaque à (n-1) × 0,065 s.
-      durationMs: dureeMs((notes.length - 1) * 0.065, "2n")
-    };
-  }
-  if (type === "chord_full") {
-    const qualities = [
-      { key: "maj", suffix: "", intervals: [0, 4, 7] },
-      { key: "min", suffix: "m", intervals: [0, 3, 7] },
-      { key: "dom7", suffix: "7", intervals: [0, 4, 7, 10] },
-      { key: "min7", suffix: "m7", intervals: [0, 3, 7, 10] }
-    ];
-    const rootIdx = Math.floor(Math.random() * 12);
-    const root = NOTES[rootIdx];
-    const quality = qualities[Math.floor(Math.random() * qualities.length)];
-    const notes = quality.intervals.map(
-      (i, idx) => toToneNote(NOTES[(rootIdx + i) % 12], idx === 0 ? 2 : 3)
-    );
-    const answerKey = root + "|" + quality.key;
-    const candidates = [];
-    for (const q of qualities) {
-      if (q.key !== quality.key) candidates.push({ root, quality: q });
-    }
-    for (const shift of [2, 5, 7, 9]) {
-      const r = NOTES[(rootIdx + shift) % 12];
-      candidates.push({ root: r, quality });
-    }
-    const distractors = candidates.sort(() => Math.random() - 0.5).slice(0, 3);
-    const options = [{ root, quality }, ...distractors].sort(() => Math.random() - 0.5).map((c) => ({
-      key: c.root + "|" + c.quality.key,
-      label: c.root + c.quality.suffix || c.root
-    }));
-    const referenceNote = toToneNote("C", 3);
-    return {
-      type: "chord_full",
-      notes,
-      root,
-      answer: answerKey,
-      options,
-      // Action principale : l'accord, directement.
-      play: () => playChord(notes, "2n", { spread: 0.065 }),
-      durationMs: dureeMs((notes.length - 1) * 0.065, "2n"),
-      // Aide optionnelle, declenchee par un bouton distinct.
-      playReference: () => playNote(referenceNote, "2n"),
-      referenceDurationMs: dureeMs(0, "2n"),
-      referenceLabel: "C"
-    };
-  }
-  if (type === "progression") {
-    const SEC_PAR_ACCORD = 1.6;
-    const progressions = [
-      { key: "I-V-vi-IV", label: "I - V - vi - IV", degrees: [[0, "maj"], [7, "maj"], [9, "min"], [5, "maj"]] },
-      { key: "ii-V-I", label: "ii - V - I", degrees: [[2, "min7"], [7, "dom7"], [0, "maj7"]] },
-      { key: "I-IV-V", label: "I - IV - V", degrees: [[0, "maj"], [5, "maj"], [7, "maj"]] },
-      { key: "i-iv-v", label: "i - iv - v (mineur)", degrees: [[0, "min"], [5, "min"], [7, "min"]] },
-      { key: "I-vi-IV-V", label: "I - vi - IV - V", degrees: [[0, "maj"], [9, "min"], [5, "maj"], [7, "maj"]] },
-      // i - VI - III - VII : la suite "epique" (Zeppelin, metal, folk nordique).
-      // En contexte mineur ces degres s'ecrivent en bemols (Abm, Eb, Bb en
-      // Do mineur), mais l'affichage se fait en chiffres romains — donc
-      // aucune ambiguite d'ecriture pour l'utilisateur.
-      { key: "i-VI-III-VII", label: "i - VI - III - VII", degrees: [[0, "min"], [8, "maj"], [3, "maj"], [10, "maj"]] },
-      // Deux suites ajoutees pour equilibrer les groupes : il faut au moins
-      // 4 suites de MEME longueur pour pouvoir proposer 4 options qui ont
-      // toutes le meme nombre d'accords que ce qui a ete joue.
-      { key: "I-vi-ii-V", label: "I - vi - ii - V", degrees: [[0, "maj"], [9, "min"], [2, "min7"], [7, "dom7"]] },
-      { key: "vi-IV-I", label: "vi - IV - I", degrees: [[9, "min"], [5, "maj"], [0, "maj"]] }
-    ];
-    const rootIdx = Math.floor(Math.random() * 12);
-    const chosen = progressions[Math.floor(Math.random() * progressions.length)];
-    const chords = chosen.degrees.map(([semi, type2]) => ({
-      root: NOTES[(rootIdx + semi) % 12],
-      type: type2
-    }));
-    const sameLength = progressions.filter(
-      (p) => p.key !== chosen.key && p.degrees.length === chosen.degrees.length
-    );
-    const distractors = sameLength.sort(() => Math.random() - 0.5).slice(0, 3);
-    const SUFFIX = { maj: "", min: "m", dom7: "7", maj7: "maj7", min7: "m7" };
-    const nameProg = (p) => p.degrees.map(([semi, t]) => NOTES[(rootIdx + semi) % 12] + SUFFIX[t]).join(" - ");
-    const options = [chosen, ...distractors].sort(() => Math.random() - 0.5).map((p) => ({ key: p.key, label: nameProg(p), roman: p.label }));
-    return {
-      type: "progression",
-      chords,
-      tonic: NOTES[rootIdx],
-      tonicFr: NOTES[rootIdx],
-      roman: chosen.label,
-      answer: chosen.key,
-      options,
-      // 1,6 s par accord : assez pour entendre chaque couleur sans perdre
-      // le fil de la suite. Plus lent, la coherence harmonique se dissout.
-      play: (onStep) => playProgression(chords, SEC_PAR_ACCORD, onStep),
-      // Le dernier accord attaque à (n-1) × 1,6 s et sonne 90 % de l'intervalle.
-      // L'ancien calcul de l'écran (n × 1600 + 400) ignorait la queue de
-      // relâchement : le bouton repassait en « play » avec du son encore
-      // audible, et on ne pouvait plus l'arrêter.
-      durationMs: dureeMs(
-        (chords.length - 1) * SEC_PAR_ACCORD + SEC_PAR_ACCORD * 0.9,
-        0
-      )
-    };
-  }
-  return null;
-}
-function makeEarQuizQuestion(mode = "interval") {
-  const ear = generateEarTrainingQuestion(mode);
-  if (!ear) return null;
-  if (mode === "interval") {
-    const labels2 = ear.options.map((o) => String(o.label));
-    const answerIdx2 = ear.options.findIndex((o) => o.semitones === ear.answer);
-    if (answerIdx2 < 0) return null;
-    return {
-      id: `ear-int-${Date.now()}-${Math.floor(Math.random() * 1e3)}`,
-      type: "ear",
-      courseId: "scales",
-      lvl: 2,
-      q: "Quel intervalle entends-tu ?",
-      o: labels2,
-      a: answerIdx2,
-      exp: "\xC9coute la distance entre les deux notes : c'est elle qui d\xE9finit l'intervalle.",
-      play: ear.play
-    };
-  }
-  const labels = ear.options.map((o) => o.label);
-  const answerIdx = ear.options.findIndex((o) => o.key === ear.answer);
-  if (answerIdx < 0) return null;
-  return {
-    id: `ear-chord-${Date.now()}-${Math.floor(Math.random() * 1e3)}`,
-    type: "ear",
-    courseId: "harmony",
-    lvl: 2,
-    q: "Quelle est la couleur de cet accord ?",
-    o: labels,
-    a: answerIdx,
-    exp: "La tierce d\xE9cide du caract\xE8re majeur ou mineur ; la septi\xE8me ajoute la tension.",
-    play: ear.play
-  };
-}
+// src/screens/CoursesScreen.jsx
+init_audioEngine();
 
 // src/hooks/useWakeLock.js
-import { useEffect as useEffect3, useRef as useRef3 } from "react";
+import { useEffect as useEffect3, useRef as useRef2 } from "react";
 function useWakeLock(actif) {
-  const sentinelRef = useRef3(null);
+  const sentinelRef = useRef2(null);
   useEffect3(() => {
     if (!actif) return;
     if (typeof navigator === "undefined" || !("wakeLock" in navigator)) return;
@@ -3324,9 +7476,9 @@ function PathNode({ lesson, state, th, onSelect, isCurrent, isLocked, gropiTip, 
           cursor: isCurrent ? "pointer" : "default"
         },
         children: [
-          isCurrent && /* @__PURE__ */ jsx6("div", { style: { fontSize: 8.5, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: C.primary, marginBottom: 3 }, children: "En cours" }),
+          isCurrent && /* @__PURE__ */ jsx6("div", { style: { fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: C.primary, marginBottom: 3 }, children: "En cours" }),
           /* @__PURE__ */ jsx6("div", { style: { fontSize: 12.5, fontWeight: 700, color: done ? th.colorD : isCurrent ? C.primaryD : C.text, lineHeight: 1.3 }, children: lesson.title }),
-          /* @__PURE__ */ jsxs4("div", { style: { fontSize: 10, color: C.text3, marginTop: 3 }, children: [
+          /* @__PURE__ */ jsxs4("div", { style: { fontSize: 11, color: C.text3, marginTop: 3 }, children: [
             lesson.duration,
             " min"
           ] }),
@@ -3337,7 +7489,7 @@ function PathNode({ lesson, state, th, onSelect, isCurrent, isLocked, gropiTip, 
             color: C.onPrimaryBtn,
             borderRadius: 999,
             padding: "5px 14px",
-            fontSize: 10,
+            fontSize: 11,
             fontWeight: 700,
             letterSpacing: ".06em",
             textTransform: "uppercase",
@@ -3432,7 +7584,7 @@ function UnitChest({ unit, onClaim, onCheck }) {
       }
     ),
     /* @__PURE__ */ jsx6("div", { style: {
-      fontSize: 9,
+      fontSize: 11,
       fontWeight: 700,
       letterSpacing: ".1em",
       textTransform: "uppercase",
@@ -3498,7 +7650,7 @@ function CurrentUnitBanner({ stats, MODULE_THEME: MODULE_THEME2 }) {
       border: `1.5px solid ${th ? `${th.color}44` : C.greenBorder}`
     }, children: /* @__PURE__ */ jsx6(Ti, { name: th ? th.icon.replace("ti-", "") : "trophy", size: 20, color: th ? th.color : C.green }) }),
     /* @__PURE__ */ jsxs4("div", { style: { flex: 1 }, children: [
-      /* @__PURE__ */ jsx6("div", { style: { fontSize: 9, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: th ? th.colorD : C.greenD, fontFamily: FONTS.ui }, children: u ? `Unit\xE9 ${u.index + 1} sur ${stats.units}` : "Parcours" }),
+      /* @__PURE__ */ jsx6("div", { style: { fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: th ? th.colorD : C.greenD, fontFamily: FONTS.ui }, children: u ? `Unit\xE9 ${u.index + 1} sur ${stats.units}` : "Parcours" }),
       /* @__PURE__ */ jsx6("div", { style: { fontSize: 15, fontWeight: 800, color: th ? th.colorD : C.greenD, letterSpacing: "-.2px", marginTop: 2 }, children: u ? `${u.title} \xB7 ${u.done}/${u.total} le\xE7ons` : "Parcours termin\xE9 ! \u{1F389}" }),
       /* @__PURE__ */ jsxs4("div", { style: { display: "flex", alignItems: "center", gap: 9, marginTop: 7 }, children: [
         /* @__PURE__ */ jsx6("div", { style: { flex: 1, height: 5, background: "rgba(0,0,0,.08)", borderRadius: 99, overflow: "hidden" }, children: /* @__PURE__ */ jsx6("div", { style: { width: `${stats.pct}%`, height: "100%", background: th ? th.color : C.green, borderRadius: 99, transition: "width .4s ease" } }) }),
@@ -3531,7 +7683,7 @@ function UnitHeader({ unit, th }) {
     }, children: [
       /* @__PURE__ */ jsx6(Ti, { name: unit.unlocked ? th.icon.replace("ti-", "") : "lock", size: 13, color: unit.unlocked ? th.color : C.text3 }),
       /* @__PURE__ */ jsx6("span", { style: {
-        fontSize: 10,
+        fontSize: 11,
         fontWeight: 700,
         letterSpacing: ".08em",
         textTransform: "uppercase",
@@ -3618,7 +7770,7 @@ function WelcomeModal({ state, tip, navigate, onClose }) {
                     /* @__PURE__ */ jsx6(Ti, { name: "flame", size: 16, color: state.streak > 0 ? C.primary : C.text3 }),
                     /* @__PURE__ */ jsxs4("div", { children: [
                       /* @__PURE__ */ jsx6("div", { style: { fontSize: 15, fontWeight: 800, color: C.text, lineHeight: 1.1 }, children: state.streak }),
-                      /* @__PURE__ */ jsx6("div", { style: { fontSize: 9.5, fontWeight: 700, color: C.text3, textTransform: "uppercase", letterSpacing: ".05em" }, children: state.streak > 1 ? "jours de s\xE9rie" : "jour de s\xE9rie" })
+                      /* @__PURE__ */ jsx6("div", { style: { fontSize: 11, fontWeight: 700, color: C.text3, textTransform: "uppercase", letterSpacing: ".05em" }, children: state.streak > 1 ? "jours de s\xE9rie" : "jour de s\xE9rie" })
                     ] })
                   ] }),
                   /* @__PURE__ */ jsxs4("div", { style: {
@@ -3634,7 +7786,7 @@ function WelcomeModal({ state, tip, navigate, onClose }) {
                     /* @__PURE__ */ jsx6(Ti, { name: "medal", size: 16, color: C.primary }),
                     /* @__PURE__ */ jsxs4("div", { style: { minWidth: 0 }, children: [
                       /* @__PURE__ */ jsx6("div", { style: { fontSize: 12.5, fontWeight: 800, color: C.text, lineHeight: 1.25, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, children: grade.label }),
-                      /* @__PURE__ */ jsxs4("div", { style: { fontSize: 9.5, fontWeight: 700, color: C.text3, textTransform: "uppercase", letterSpacing: ".05em" }, children: [
+                      /* @__PURE__ */ jsxs4("div", { style: { fontSize: 11, fontWeight: 700, color: C.text3, textTransform: "uppercase", letterSpacing: ".05em" }, children: [
                         "Niveau ",
                         state.level
                       ] })
@@ -3669,7 +7821,7 @@ function WelcomeModal({ state, tip, navigate, onClose }) {
                   /* @__PURE__ */ jsx6(Gropi, { pose: "wave", size: 38, anim: "wiggle" }),
                   /* @__PURE__ */ jsxs4("div", { style: { flex: 1, minWidth: 0 }, children: [
                     /* @__PURE__ */ jsx6("div", { style: {
-                      fontSize: 9,
+                      fontSize: 11,
                       fontWeight: 700,
                       letterSpacing: ".1em",
                       textTransform: "uppercase",
@@ -3713,7 +7865,7 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
   const [activeLesson, setActiveLesson] = useState4(null);
   const [checkingUnit, setCheckingUnit] = useState4(null);
   const [chestPop, setChestPop] = useState4(false);
-  const currentRef = useRef4(null);
+  const currentRef = useRef3(null);
   const [tipDismissed, setTipDismissed] = useState4(() => popupDejaAffiche);
   const fermerPopup = () => {
     popupDejaAffiche = true;
@@ -3721,7 +7873,7 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
     dispatch({ type: "DISMISS_GROPI_TIP" });
   };
   const tip = useMemo(() => pickTip(state), [state]);
-  const scrolledTo = useRef4(null);
+  const scrolledTo = useRef3(null);
   const path = useMemo(() => buildPath(content, state), [content, state]);
   const stats = useMemo(() => getPathStats(content, state), [content, state]);
   const unitLayouts = useMemo(() => {
@@ -3746,7 +7898,7 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
     if (scrolledTo.current === focus.key) return;
     const t = setTimeout(() => {
       currentRef.current?.scrollIntoView({
-        behavior: scrolledTo.current === null ? "auto" : "smooth",
+        behavior: scrolledTo.current === null || matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
         block: "start"
       });
       scrolledTo.current = focus.key;
@@ -3909,7 +8061,7 @@ function LessonView({ lesson, state, dispatch, onBack }) {
   const C = useC();
   const [done, setDone] = useState4(!!state.completedLessons[lesson.id]);
   const [pop, setPop] = useState4(false);
-  const popTimerRef = useRef4(null);
+  const popTimerRef = useRef3(null);
   useWakeLock(true);
   useEffect4(() => {
     window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
@@ -3939,7 +8091,7 @@ function LessonView({ lesson, state, dispatch, onBack }) {
     pop && /* @__PURE__ */ jsx6(XPPop, { amount: 30, onDone: () => {
     } }),
     /* @__PURE__ */ jsxs4("div", { style: { padding: "14px 20px 0", display: "flex", alignItems: "center", gap: 10 }, children: [
-      /* @__PURE__ */ jsx6("button", { onClick: onBack, style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.sm, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }, children: /* @__PURE__ */ jsx6(Ti, { name: "arrow-left", size: 17, color: C.text }) }),
+      /* @__PURE__ */ jsx6(BackButton, { onClick: onBack, label: "Retour au parcours", style: { borderRadius: R.sm } }),
       /* @__PURE__ */ jsx6("span", { style: { fontSize: 13, fontWeight: 600, color: C.text2, fontFamily: FONTS.ui }, children: "Retour au parcours" })
     ] }),
     /* @__PURE__ */ jsxs4("div", { style: { padding: "16px 20px 0" }, children: [
@@ -4017,139 +8169,16 @@ __export(QuizScreen_exports, {
   QuizPlayer: () => QuizPlayer,
   QuizScreen: () => QuizScreen
 });
+init_tokens();
+init_ThemeContext();
+init_Ti();
 import { useState as useState5 } from "react";
-
-// src/music/chordShapes.js
-var CHROMATIC2 = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-var OPEN_STRINGS3 = ["E", "A", "D", "G", "B", "E"];
-var SHAPES = {
-  maj: [
-    { id: "E", label: "Forme Mi", rootString: 0, offsets: [0, 2, 2, 1, 0, 0], fingers: [1, 3, 4, 2, 1, 1], barre: true },
-    { id: "A", label: "Forme La", rootString: 1, offsets: [null, 0, 2, 2, 2, 0], fingers: [0, 1, 3, 4, 2, 1], barre: true },
-    { id: "C", label: "Forme Do", rootString: 1, offsets: [null, 0, -1, -3, -2, -3], fingers: [0, 3, 2, 0, 1, 0] },
-    { id: "D", label: "Forme R\xE9", rootString: 2, offsets: [null, null, 0, 2, 3, 2], fingers: [0, 0, 1, 2, 4, 3] },
-    { id: "G", label: "Forme Sol", rootString: 0, offsets: [0, -1, -3, -3, -3, 0], fingers: [2, 1, 0, 0, 0, 3] }
-  ],
-  min: [
-    { id: "Em", label: "Forme Mim", rootString: 0, offsets: [0, 2, 2, 0, 0, 0], fingers: [1, 3, 4, 1, 1, 1], barre: true },
-    { id: "Am", label: "Forme Lam", rootString: 1, offsets: [null, 0, 2, 2, 1, 0], fingers: [0, 1, 3, 4, 2, 1], barre: true },
-    { id: "Dm", label: "Forme R\xE9m", rootString: 2, offsets: [null, null, 0, 2, 3, 1], fingers: [0, 0, 1, 3, 4, 2] }
-  ],
-  dom7: [
-    { id: "E7", label: "Forme Mi7", rootString: 0, offsets: [0, 2, 0, 1, 0, 0], fingers: [1, 3, 1, 2, 1, 1], barre: true },
-    { id: "A7", label: "Forme La7", rootString: 1, offsets: [null, 0, 2, 0, 2, 0], fingers: [0, 1, 3, 1, 4, 1], barre: true },
-    { id: "D7", label: "Forme R\xE97", rootString: 2, offsets: [null, null, 0, 2, 1, 2], fingers: [0, 0, 1, 3, 2, 4] }
-  ],
-  maj7: [
-    { id: "Emaj7", label: "Forme Mi", rootString: 0, offsets: [0, null, 1, 1, 0, null], fingers: [1, 0, 3, 4, 2, 0] },
-    { id: "Amaj7", label: "Forme La", rootString: 1, offsets: [null, 0, 2, 1, 2, 0], fingers: [0, 1, 3, 2, 4, 1] },
-    { id: "Dmaj7", label: "Forme R\xE9", rootString: 2, offsets: [null, null, 0, 2, 2, 2], fingers: [0, 0, 1, 2, 3, 4] }
-  ],
-  min7: [
-    { id: "Em7", label: "Forme Mim7", rootString: 0, offsets: [0, 2, 0, 0, 0, 0], fingers: [1, 3, 1, 1, 1, 1], barre: true },
-    { id: "Am7", label: "Forme Lam7", rootString: 1, offsets: [null, 0, 2, 0, 1, 0], fingers: [0, 1, 3, 1, 2, 1], barre: true },
-    { id: "Dm7", label: "Forme R\xE9m7", rootString: 2, offsets: [null, null, 0, 2, 1, 1], fingers: [0, 0, 1, 3, 2, 2] }
-  ],
-  min7b5: [
-    { id: "Am7b5", label: "Forme La", rootString: 1, offsets: [null, 0, 1, 0, 1, null], fingers: [0, 2, 3, 1, 4, 0] },
-    { id: "Em7b5", label: "Forme Mi", rootString: 0, offsets: [0, 1, 0, 0, null, null], fingers: [1, 3, 2, 2, 0, 0] }
-  ],
-  dim7: [
-    { id: "Ddim7", label: "Forme R\xE9", rootString: 2, offsets: [null, null, 0, 1, 0, 1], fingers: [0, 0, 1, 3, 2, 4] },
-    { id: "Adim7", label: "Forme La", rootString: 1, offsets: [null, 0, 1, 2, 1, null], fingers: [0, 1, 2, 4, 3, 0] }
-  ],
-  maj6: [
-    { id: "A6", label: "Forme La", rootString: 1, offsets: [null, 0, 2, 2, 2, 2], fingers: [0, 1, 2, 3, 3, 3] },
-    { id: "E6", label: "Forme Mi", rootString: 0, offsets: [0, 2, 1, 1, 2, null], fingers: [1, 3, 1, 1, 4, 0] }
-  ],
-  sus4: [
-    { id: "Asus4", label: "Forme La", rootString: 1, offsets: [null, 0, 2, 2, 3, 0], fingers: [0, 1, 2, 3, 4, 1], barre: true },
-    { id: "Esus4", label: "Forme Mi", rootString: 0, offsets: [0, 2, 2, 2, 0, 0], fingers: [1, 2, 3, 4, 1, 1], barre: true }
-  ],
-  add9: [
-    { id: "Cadd9", label: "Forme Do", rootString: 1, offsets: [null, 0, -1, -3, 0, -3] },
-    { id: "Aadd9", label: "Forme La", rootString: 1, offsets: [null, 0, 2, 4, 2, 0] },
-    { id: "Eadd9", label: "Forme Mi", rootString: 0, offsets: [0, 2, 1, 1, 0, 2] }
-  ],
-  dom9: [
-    { id: "A9", label: "Forme La", rootString: 1, offsets: [null, 0, 1, 0, 2, 0], fingers: [0, 2, 3, 1, 4, 1] },
-    { id: "E9", label: "Forme Mi", rootString: 0, offsets: [0, 2, 0, 1, 0, 2], fingers: [1, 3, 1, 2, 1, 4] }
-  ]
-};
-function computeFingers(frets, isBarre) {
-  const fingers = [0, 0, 0, 0, 0, 0];
-  const fretted = frets.map((f, s) => ({ f, s })).filter((x) => x.f > 0).sort((a, b) => a.f - b.f || a.s - b.s);
-  if (!fretted.length) return fingers;
-  const minFret = fretted[0].f;
-  const atMin = fretted.filter((x) => x.f === minFret);
-  let next = 1;
-  if (isBarre && atMin.length >= 2) {
-    for (const x of atMin) fingers[x.s] = 1;
-    next = 2;
-  }
-  for (const x of fretted) {
-    if (fingers[x.s] !== 0) continue;
-    fingers[x.s] = Math.min(4, next);
-    next++;
-  }
-  return fingers;
-}
-function fretForNote(stringIdx, noteName) {
-  const open = CHROMATIC2.indexOf(OPEN_STRINGS3[stringIdx]);
-  const target = CHROMATIC2.indexOf(noteName);
-  if (open < 0 || target < 0) return -1;
-  return (target - open + 12) % 12;
-}
-function getChordShapes(rootName, quality, maxFret = 10, chordIntervals = null) {
-  const shapes = SHAPES[quality];
-  if (!shapes) return [];
-  const rootIdx = CHROMATIC2.indexOf(rootName);
-  const allowed = chordIntervals ? new Set(chordIntervals.map((i) => CHROMATIC2[(rootIdx + i) % 12])) : null;
-  const out = [];
-  for (const shape2 of shapes) {
-    let rootFret = fretForNote(shape2.rootString, rootName);
-    if (rootFret < 0) continue;
-    const frets = shape2.offsets.map((o) => o === null ? null : rootFret + o);
-    const played = frets.filter((f) => f !== null);
-    if (!played.length) continue;
-    const highest = Math.max(...played);
-    if (highest > maxFret) continue;
-    if (played.some((f) => f < 0)) continue;
-    if (allowed) {
-      const notes = frets.map((f, s) => f === null || f < 0 ? null : CHROMATIC2[(CHROMATIC2.indexOf(OPEN_STRINGS3[s]) + f) % 12]);
-      if (notes.some((n) => n && !allowed.has(n))) continue;
-    }
-    const fretted = played.filter((f) => f > 0);
-    if (fretted.length && Math.max(...fretted) - Math.min(...fretted) > 3) continue;
-    const startFret = fretted.length ? Math.min(...fretted) : 1;
-    const isOpen = frets.some((f) => f === 0);
-    out.push({
-      name: rootName,
-      label: shape2.label,
-      // <ChordDiagram> attend -1 pour une corde étouffée, 0 pour une corde
-      // à vide, et des cases absolues sinon.
-      frets: frets.map((f) => f === null ? -1 : f),
-      // Doigté DÉRIVÉ des cases, jamais celui écrit dans la forme : ce
-      // dernier ne vaut que pour la position barrée.
-      fingers: computeFingers(frets.map((f) => f === null ? -1 : f), !!shape2.barre && !isOpen),
-      // Un accord ouvert s'affiche depuis le SILLET (startFret 1), avec les
-      // cordes à vide en cercles au-dessus — c'est la représentation
-      // classique, celle de tous les recueils d'accords. Prendre la plus
-      // basse case frettée décalerait la grille et rendrait le doigté
-      // méconnaissable.
-      startFret: isOpen ? 1 : startFret,
-      // Pas d'indicateur de barré sur un accord ouvert : le sillet joue ce
-      // rôle, et afficher un barré case 0 serait trompeur.
-      barre: shape2.barre && !isOpen ? startFret : void 0,
-      rootFret,
-      isOpen
-    });
-  }
-  out.sort((a, b) => b.isOpen - a.isOpen || a.rootFret - b.rootFret);
-  return out;
-}
+init_Gropi();
+init_audioEngine();
 
 // src/music/shapeQuestions.js
+init_chordShapes();
+init_fretboardUtils();
 var COMMON_ROOTS = ["E", "A", "D", "G", "C"];
 var EXTENDED_ROOTS = ["E", "A", "D", "G", "C", "F", "B", "F#"];
 var LEVEL_SPEC = {
@@ -4497,7 +8526,7 @@ function QuizScreen({ state, dispatch, content, embedded = false }) {
       }, children: [
         /* @__PURE__ */ jsx7("div", { style: { width: 52, height: 52, borderRadius: R.lg, background: C.primary, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: `0 4px 12px ${C.primaryBorder}` }, children: /* @__PURE__ */ jsx7(Ti, { name: "star", size: 24, color: "#fff" }) }),
         /* @__PURE__ */ jsxs5("div", { style: { flex: 1 }, children: [
-          /* @__PURE__ */ jsx7("div", { style: { fontSize: 10, fontWeight: 700, color: C.primary, letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 3 }, children: "Recommand\xE9 \xB7 7 questions" }),
+          /* @__PURE__ */ jsx7("div", { style: { fontSize: 11, fontWeight: 700, color: C.primary, letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 3 }, children: "Recommand\xE9 \xB7 7 questions" }),
           /* @__PURE__ */ jsx7("div", { style: { fontSize: 15, fontWeight: 800, color: C.text, letterSpacing: "-.2px" }, children: "Quiz du jour" }),
           /* @__PURE__ */ jsx7("div", { style: { fontSize: 12, color: C.text3, marginTop: 2 }, children: "Adapt\xE9 \xE0 ta progression \xB7 ~5 min" })
         ] }),
@@ -4638,12 +8667,12 @@ function QuizPlayer({ pool, title, state, dispatch, content, onDone }) {
       }, children: [
         /* @__PURE__ */ jsxs5("div", { style: { textAlign: "center" }, children: [
           /* @__PURE__ */ jsx7("div", { style: { fontSize: 26, fontWeight: 800, color: C.green }, children: score }),
-          /* @__PURE__ */ jsx7("div", { style: { fontSize: 10, fontWeight: 700, color: C.text3, textTransform: "uppercase", letterSpacing: ".06em" }, children: "Correctes" })
+          /* @__PURE__ */ jsx7("div", { style: { fontSize: 11, fontWeight: 700, color: C.text3, textTransform: "uppercase", letterSpacing: ".06em" }, children: "Correctes" })
         ] }),
         /* @__PURE__ */ jsx7("div", { style: { width: 1, background: C.border } }),
         /* @__PURE__ */ jsxs5("div", { style: { textAlign: "center" }, children: [
           /* @__PURE__ */ jsx7("div", { style: { fontSize: 26, fontWeight: 800, color: C.text2 }, children: questions.length - score }),
-          /* @__PURE__ */ jsx7("div", { style: { fontSize: 10, fontWeight: 700, color: C.text3, textTransform: "uppercase", letterSpacing: ".06em" }, children: "\xC0 revoir" })
+          /* @__PURE__ */ jsx7("div", { style: { fontSize: 11, fontWeight: 700, color: C.text3, textTransform: "uppercase", letterSpacing: ".06em" }, children: "\xC0 revoir" })
         ] }),
         /* @__PURE__ */ jsx7("div", { style: { width: 1, background: C.border } }),
         /* @__PURE__ */ jsxs5("div", { style: { textAlign: "center" }, children: [
@@ -4651,7 +8680,7 @@ function QuizPlayer({ pool, title, state, dispatch, content, onDone }) {
             "+",
             xpEarned
           ] }),
-          /* @__PURE__ */ jsx7("div", { style: { fontSize: 10, fontWeight: 700, color: C.text3, textTransform: "uppercase", letterSpacing: ".06em" }, children: "XP" })
+          /* @__PURE__ */ jsx7("div", { style: { fontSize: 11, fontWeight: 700, color: C.text3, textTransform: "uppercase", letterSpacing: ".06em" }, children: "XP" })
         ] })
       ] }),
       /* @__PURE__ */ jsxs5("div", { style: { width: "100%", marginTop: 14 }, children: [
@@ -4698,7 +8727,7 @@ function QuizPlayer({ pool, title, state, dispatch, content, onDone }) {
         questions.length
       ] })
     ] }),
-    /* @__PURE__ */ jsxs5("div", { style: { fontSize: 10, color: C.text3, marginBottom: 8, textTransform: "uppercase", letterSpacing: ".1em", fontWeight: 600 }, children: [
+    /* @__PURE__ */ jsxs5("div", { style: { fontSize: 11, color: C.text3, marginBottom: 8, textTransform: "uppercase", letterSpacing: ".1em", fontWeight: 600 }, children: [
       linkedCourse?.title,
       " \xB7 Niv. ",
       q.lvl,
@@ -4762,7 +8791,7 @@ function QuizPlayer({ pool, title, state, dispatch, content, onDone }) {
           }
         }
         return /* @__PURE__ */ jsxs5("button", { onClick: () => choose(i), disabled: answered, style: { display: "flex", alignItems: "center", gap: 10, background: bg, border, borderRadius: R.md, padding: "12px 14px", cursor: answered ? "default" : "pointer", textAlign: "left", width: "100%", marginBottom: 7, fontFamily: FONTS.title }, children: [
-          /* @__PURE__ */ jsx7("div", { style: { width: 26, height: 26, borderRadius: 8, background: badgeBg, color: badgeFg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, flexShrink: 0 }, children: ic }),
+          /* @__PURE__ */ jsx7("div", { style: { width: 26, height: 26, borderRadius: 8, background: badgeBg, color: badgeFg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0 }, children: ic }),
           /* @__PURE__ */ jsx7("span", { style: { fontSize: 13, color: col, lineHeight: 1.45, fontWeight: answered && i === q.a ? 700 : 500 }, children: opt })
         ] }, i);
       }),
@@ -4798,6 +8827,10 @@ var ReviewSession_exports = {};
 __export(ReviewSession_exports, {
   ReviewSession: () => ReviewSession
 });
+init_tokens();
+init_ThemeContext();
+init_Ti();
+init_Gropi();
 import { useState as useState6, useEffect as useEffect5 } from "react";
 
 // src/store/generateurs.js
@@ -5538,6 +9571,7 @@ function progressionFamilles(state) {
 }
 
 // src/screens/ReviewSession.jsx
+init_audioEngine();
 import { Fragment as Fragment4, jsx as jsx8, jsxs as jsxs6 } from "react/jsx-runtime";
 function MiniGrille({ grille, C, active }) {
   const sonne = new Set(grille.attaques);
@@ -5765,7 +9799,7 @@ function ReviewSession({ questions, state, dispatch, onDone }) {
       /* @__PURE__ */ jsx8("div", { style: {
         padding: "3px 8px",
         borderRadius: R.pill,
-        fontSize: 10,
+        fontSize: 11,
         fontWeight: 700,
         fontFamily: FONTS.ui,
         letterSpacing: "0.06em",
@@ -5773,7 +9807,7 @@ function ReviewSession({ questions, state, dispatch, onDone }) {
         background: isFret ? C.amberL : C.primaryL,
         color: isFret ? C.amberD : C.primaryD
       }, children: q.genere ? `${q.famille} \xB7 niveau ${q.niveauFamille}/3` : `${isFret ? "Manche" : "QCM"} \xB7 Niv. ${q.lvl}` }),
-      q.genere && /* @__PURE__ */ jsx8("div", { style: { fontSize: 10.5, color: C.text3, fontFamily: FONTS.ui }, children: q.libelleNiveau })
+      q.genere && /* @__PURE__ */ jsx8("div", { style: { fontSize: 11, color: C.text3, fontFamily: FONTS.ui }, children: q.libelleNiveau })
     ] }),
     /* @__PURE__ */ jsx8("div", { style: {
       background: C.surface,
@@ -5872,7 +9906,7 @@ function ReviewSession({ questions, state, dispatch, onDone }) {
             marginBottom: 7,
             fontFamily: FONTS.title
           }, children: [
-            /* @__PURE__ */ jsx8("div", { style: { width: 24, height: 24, borderRadius: 7, background: badgeBg, color: badgeFg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 500, flexShrink: 0, fontFamily: FONTS.ui }, children: ic }),
+            /* @__PURE__ */ jsx8("div", { style: { width: 24, height: 24, borderRadius: 7, background: badgeBg, color: badgeFg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 500, flexShrink: 0, fontFamily: FONTS.ui }, children: ic }),
             q.grilles ? /* @__PURE__ */ jsx8(MiniGrille, { grille: q.grilles[i], C, active: answered && i === q.a ? C.green : answered && i === sel ? C.coral : null }) : /* @__PURE__ */ jsx8("span", { style: { fontSize: 13, color: col, lineHeight: 1.4, fontFamily: FONTS.title, fontWeight: answered && i === q.a ? 500 : 400 }, children: opt })
           ] }, i);
         }),
@@ -5942,7 +9976,11 @@ __export(ExercisesScreen_exports, {
   ExerciseDetail: () => ExerciseDetail,
   ExercisesScreen: () => ExercisesScreen
 });
-import { useState as useState7, useEffect as useEffect6, useRef as useRef5, useMemo as useMemo2 } from "react";
+init_tokens();
+init_ThemeContext();
+init_Ti();
+import { useState as useState7, useEffect as useEffect6, useRef as useRef4, useMemo as useMemo2 } from "react";
+init_Gropi();
 import { Fragment as Fragment5, jsx as jsx9, jsxs as jsxs7 } from "react/jsx-runtime";
 var LEVEL_LABELS = { 1: "Fondamentaux", 2: "Interm\xE9diaire", 3: "Avanc\xE9" };
 var makeLevelColors = (C) => ({ 1: { bg: C.greenL, border: C.greenBorder, text: C.greenD, dot: C.green }, 2: { bg: C.amberL, border: C.amberBorder, text: C.amberD, dot: C.amber }, 3: { bg: C.pinkL, border: C.pinkBorder, text: C.pinkD, dot: C.pink } });
@@ -6069,7 +10107,7 @@ function ExercisesScreen({ state, dispatch, content, embedded = false }) {
         }, children: [
           /* @__PURE__ */ jsx9("div", { style: { width: 52, height: 52, borderRadius: R.lg, background: C.primary, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: `0 4px 12px ${C.primaryBorder}` }, children: /* @__PURE__ */ jsx9(Ti, { name: "player-play", size: 24, color: "#fff" }) }),
           /* @__PURE__ */ jsxs7("div", { style: { flex: 1 }, children: [
-            /* @__PURE__ */ jsxs7("div", { style: { fontSize: 10, fontWeight: 700, color: C.primary, letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 3 }, children: [
+            /* @__PURE__ */ jsxs7("div", { style: { fontSize: 11, fontWeight: 700, color: C.primary, letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 3 }, children: [
               LEVEL_LABELS[recommended.lvl || 1],
               " \xB7 ",
               DIFF_STARS[recommended.lvl || 1]
@@ -6153,7 +10191,7 @@ function ExercisesScreen({ state, dispatch, content, embedded = false }) {
                 position: "relative"
               }, children: [
                 done ? /* @__PURE__ */ jsx9(Ti, { name: "check", size: 20, color: C.green }) : inProgress ? /* @__PURE__ */ jsx9(Ti, { name: "player-pause", size: 20, color: C.amber }) : /* @__PURE__ */ jsx9(Ti, { name: "guitar-pick", size: 20, color: th.color }),
-                count > 1 && /* @__PURE__ */ jsx9("div", { style: { position: "absolute", top: -4, right: -4, width: 16, height: 16, borderRadius: "50%", background: C.green, display: "flex", alignItems: "center", justifyContent: "center" }, children: /* @__PURE__ */ jsx9("span", { style: { fontSize: 8, fontWeight: 800, color: "#fff" }, children: count }) })
+                count > 1 && /* @__PURE__ */ jsx9("div", { style: { position: "absolute", top: -4, right: -4, width: 16, height: 16, borderRadius: "50%", background: C.green, display: "flex", alignItems: "center", justifyContent: "center" }, children: /* @__PURE__ */ jsx9("span", { style: { fontSize: 10, fontWeight: 800, color: "#fff" }, children: count }) })
               ] }),
               /* @__PURE__ */ jsxs7("div", { style: { flex: 1 }, children: [
                 /* @__PURE__ */ jsx9("div", { style: { fontSize: 13.5, fontWeight: 700, color: done ? C.text2 : C.text, letterSpacing: "-.1px", textDecoration: done ? "line-through" : "none" }, children: ex.title }),
@@ -6189,7 +10227,7 @@ function ExercisesScreen({ state, dispatch, content, embedded = false }) {
 function BackBtn({ onBack }) {
   const C = useC();
   return /* @__PURE__ */ jsxs7("div", { style: { padding: "14px 20px 0", display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }, children: [
-    /* @__PURE__ */ jsx9("button", { onClick: onBack, style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.sm, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }, children: /* @__PURE__ */ jsx9(Ti, { name: "arrow-left", size: 17, color: C.text }) }),
+    /* @__PURE__ */ jsx9(BackButton, { onClick: onBack, label: "Retour aux exercices", style: { borderRadius: R.sm } }),
     /* @__PURE__ */ jsx9("span", { style: { fontSize: 13, fontWeight: 600, color: C.text2, fontFamily: FONTS.ui }, children: "Retour" })
   ] });
 }
@@ -6202,7 +10240,7 @@ function ExerciseDetail({ ex, state, dispatch, onBack, content }) {
   const [checked, setChecked] = useState7(saved);
   const [done, setDone] = useState7(false);
   const [pop, setPop] = useState7(false);
-  const popTimerRef = useRef5(null);
+  const popTimerRef = useRef4(null);
   useEffect6(() => () => {
     if (popTimerRef.current) clearTimeout(popTimerRef.current);
   }, []);
@@ -6331,7 +10369,7 @@ function ExHeader({ ex, theme, lc }) {
     /* @__PURE__ */ jsx9("div", { style: { width: 48, height: 48, borderRadius: R.md, background: theme.colorL, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }, children: /* @__PURE__ */ jsx9(Ti, { name: "guitar-pick", size: 22, color: theme.color }) }),
     /* @__PURE__ */ jsxs7("div", { children: [
       /* @__PURE__ */ jsxs7("div", { style: { display: "flex", gap: 6, alignItems: "center", marginBottom: 3 }, children: [
-        /* @__PURE__ */ jsx9("span", { style: { fontSize: 10, fontWeight: 700, color: lc.dot, background: lc.bg, border: `1px solid ${lc.border}`, borderRadius: 99, padding: "1px 7px", textTransform: "uppercase", letterSpacing: ".06em" }, children: LEVEL_LABELS[ex.lvl || 1] }),
+        /* @__PURE__ */ jsx9("span", { style: { fontSize: 11, fontWeight: 700, color: lc.dot, background: lc.bg, border: `1px solid ${lc.border}`, borderRadius: 99, padding: "1px 7px", textTransform: "uppercase", letterSpacing: ".06em" }, children: LEVEL_LABELS[ex.lvl || 1] }),
         /* @__PURE__ */ jsx9("span", { style: { fontSize: 11, color: lc.dot }, children: DIFF_STARS[ex.lvl || 1] })
       ] }),
       /* @__PURE__ */ jsx9("div", { style: { fontSize: 17, fontWeight: 800, color: C.text, letterSpacing: "-.2px" }, children: ex.title }),
@@ -6369,7 +10407,12 @@ var EarTraining_exports = {};
 __export(EarTraining_exports, {
   EarTraining: () => EarTraining
 });
-import { useState as useState8, useEffect as useEffect7, useRef as useRef6, useCallback } from "react";
+init_tokens();
+init_ThemeContext();
+init_Ti();
+init_Gropi();
+init_audioEngine();
+import { useState as useState8, useEffect as useEffect7, useRef as useRef5, useCallback } from "react";
 import { Fragment as Fragment6, jsx as jsx10, jsxs as jsxs8 } from "react/jsx-runtime";
 var MODES = [
   { key: "interval", label: "Intervalles", icon: "arrows-up-down", desc: "Identifie l'\xE9cart entre deux notes" },
@@ -6397,7 +10440,7 @@ function EarTraining({ onBack, dispatch, state }) {
   const [score, setScore] = useState8({ correct: 0, total: 0 });
   const [sessionDone, setSessionDone] = useState8(false);
   const [answers, setAnswers] = useState8([]);
-  const finTimerRef = useRef6(null);
+  const finTimerRef = useRef5(null);
   const SESSION_LENGTH = 8;
   const annulerFinTimer = useCallback(() => {
     if (finTimerRef.current) {
@@ -6656,1526 +10699,15 @@ function EarTraining({ onBack, dispatch, state }) {
 // src/screens/JamSession.jsx
 var JamSession_exports = {};
 __export(JamSession_exports, {
-  JamSession: () => JamSession,
-  MIXAGE: () => MIXAGE
+  JamSession: () => JamSession
 });
-import { useState as useState10, useMemo as useMemo4, useEffect as useEffect9, useRef as useRef7, useCallback as useCallback3 } from "react";
-
-// src/Fretboard.jsx
-var Fretboard_exports = {};
-__export(Fretboard_exports, {
-  Fretboard: () => Fretboard,
-  FretboardExercise: () => FretboardExercise,
-  FretboardLesson: () => FretboardLesson,
-  FretboardQuizQuestion: () => FretboardQuizQuestion
-});
-import { useState as useState9, useMemo as useMemo3, useCallback as useCallback2, useEffect as useEffect8 } from "react";
-
-// src/fretboardValidator.js
-var RESOLVERS = {
-  find_note: (concept, opts) => {
-    const { root, fretRange = [0, 12], stringRange = [1, 6] } = { ...concept, ...opts };
-    const [minFret, maxFret] = fretRange;
-    const [minStr, maxStr] = stringRange;
-    const strings = Array.from({ length: maxStr - minStr + 1 }, (_, i) => minStr + i);
-    return getPositionsOfNote(root, maxFret, strings).filter((p) => p.fret >= minFret);
-  },
-  find_roots: (concept, opts) => {
-    return RESOLVERS.find_note(concept, opts);
-  },
-  /**
-   * Forme d'accord précise.
-   *
-   * Contrairement aux autres types, qui demandent TOUTES les occurrences
-   * d'une note ou d'un accord, celui-ci attend un doigté exact : la forme Mi
-   * de La majeur, c'est 5-7-7-6-5-5, pas « tous les La, Do# et Mi du
-   * manche ». Les positions viennent donc directement du concept.
-   *
-   * concept.positions : [{ string, fret }] — les cases à presser.
-   *   Les cordes à vide (case 0) et les cordes étouffées ne sont PAS
-   *   attendues : on ne peut pas « sélectionner » l'absence de doigt, et
-   *   demander de cliquer une corde à vide n'aurait pas de sens sur un
-   *   manche tactile.
-   */
-  find_shape: (concept) => {
-    const { positions = [] } = concept;
-    return positions.filter((p) => p && Number.isInteger(p.string) && Number.isInteger(p.fret) && p.fret > 0).map((p) => ({ string: p.string, fret: p.fret }));
-  },
-  find_chord: (concept, opts) => {
-    const { root, quality, fretRange = [0, 12], stringRange = [1, 6] } = { ...concept, ...opts };
-    const [minFret, maxFret] = fretRange;
-    const [minStr, maxStr] = stringRange;
-    const all = getChordPositions(root, quality, maxFret);
-    return all.filter(
-      (p) => p.fret >= minFret && p.string >= minStr && p.string <= maxStr
-    );
-  },
-  find_scale: (concept, opts) => {
-    const { root, quality, fretRange = [0, 12], stringRange = [1, 6] } = { ...concept, ...opts };
-    const [minFret, maxFret] = fretRange;
-    const [minStr, maxStr] = stringRange;
-    const all = getScalePositions(root, quality, maxFret);
-    return all.filter(
-      (p) => p.fret >= minFret && p.string >= minStr && p.string <= maxStr
-    );
-  },
-  find_interval: (concept, opts) => {
-    const { root, interval, fretRange = [0, 12], stringRange = [1, 6] } = { ...concept, ...opts };
-    const [minFret, maxFret] = fretRange;
-    const [minStr, maxStr] = stringRange;
-    const rootNorm = normalizeNote(root);
-    const positions = [];
-    for (let s = minStr; s <= maxStr; s++) {
-      for (let f = minFret; f <= maxFret; f++) {
-        const note = getNoteAtPosition(s, f);
-        const iv = getInterval(rootNorm, note);
-        if (iv === interval) {
-          positions.push({ string: s, fret: f, note, interval: iv });
-        }
-      }
-    }
-    return positions;
-  }
-};
-var MATCH_STRATEGIES = {
-  // L'utilisateur doit trouver TOUTES les positions correctes
-  all: (selected, correct) => {
-    const hits = selected.filter((s) => correct.some((c) => c.string === s.string && c.fret === s.fret));
-    const extras = selected.filter((s) => !correct.some((c) => c.string === s.string && c.fret === s.fret));
-    const missed = correct.filter((c) => !selected.some((s) => s.string === c.string && s.fret === c.fret));
-    return {
-      complete: hits.length === correct.length && extras.length === 0,
-      hits: hits.length,
-      total: correct.length,
-      extras: extras.length,
-      missed: missed.length,
-      missedPositions: missed,
-      score: Math.max(0, hits.length - extras.length)
-    };
-  },
-  // L'utilisateur doit trouver au moins N positions correctes
-  any_n: (selected, correct, n = 1) => {
-    const hits = selected.filter((s) => correct.some((c) => c.string === s.string && c.fret === s.fret));
-    const extras = selected.filter((s) => !correct.some((c) => c.string === s.string && c.fret === s.fret));
-    return {
-      complete: hits.length >= n && extras.length === 0,
-      hits: hits.length,
-      total: n,
-      extras: extras.length,
-      missed: Math.max(0, n - hits.length),
-      missedPositions: [],
-      score: Math.min(hits.length, n)
-    };
-  },
-  // L'utilisateur doit sélectionner exactement les notes d'un accord (positions libres)
-  chord_build: (selected, correct) => {
-    const correctNotes = [...new Set(correct.map((p) => p.note))];
-    const selectedNotes = [...new Set(selected.map((s) => getNoteAtPosition(s.string, s.fret)))];
-    const foundNotes = correctNotes.filter((n) => selectedNotes.includes(n));
-    const extraNotes = selectedNotes.filter((n) => !correctNotes.includes(n));
-    return {
-      complete: foundNotes.length === correctNotes.length && extraNotes.length === 0,
-      hits: foundNotes.length,
-      total: correctNotes.length,
-      extras: extraNotes.length,
-      missed: correctNotes.length - foundNotes.length,
-      missedPositions: [],
-      foundNotes,
-      missingNotes: correctNotes.filter((n) => !selectedNotes.includes(n)),
-      score: Math.max(0, foundNotes.length - extraNotes.length)
-    };
-  }
-};
-function validate(concept, selected, selectionRules = {}, opts = {}) {
-  const { type } = concept;
-  const { mode = "all", minSelections = 1 } = selectionRules;
-  const resolver = RESOLVERS[type];
-  if (!resolver) {
-    console.warn(`[fretboardValidator] Type inconnu : "${type}"`);
-    return { complete: false, hits: 0, total: 0, extras: 0, missed: 0, score: 0, feedback: "Type de challenge inconnu." };
-  }
-  const fretRange = opts.fretRange || [0, 12];
-  const stringRange = opts.stringRange || [1, 6];
-  const correct = resolver(concept, { fretRange, stringRange });
-  const neutral = concept.neutralPositions || [];
-  const effectiveSelected = selected.filter(
-    (s) => !neutral.some((n) => n.string === s.string && n.fret === s.fret)
-  );
-  let result;
-  if (mode === "chord_build") {
-    result = MATCH_STRATEGIES.chord_build(effectiveSelected, correct);
-  } else if (mode === "any_n") {
-    result = MATCH_STRATEGIES.any_n(effectiveSelected, correct, minSelections);
-  } else {
-    result = MATCH_STRATEGIES.all(effectiveSelected, correct);
-  }
-  result.feedback = generateFeedback(result);
-  result.correctPositions = correct;
-  return result;
-}
-function getTargetPositions(concept, opts = {}) {
-  const { type } = concept;
-  const resolver = RESOLVERS[type];
-  if (!resolver) return [];
-  const fretRange = opts.fretRange || [0, 12];
-  const stringRange = opts.stringRange || [1, 6];
-  return resolver(concept, { fretRange, stringRange });
-}
-function generateFeedback(result) {
-  if (result.complete) {
-    return "Parfait \u2014 toutes les positions trouv\xE9es !";
-  }
-  const parts = [];
-  if (result.missed > 0) {
-    parts.push(`${result.missed} position${result.missed > 1 ? "s" : ""} manquante${result.missed > 1 ? "s" : ""}`);
-  }
-  if (result.extras > 0) {
-    parts.push(`${result.extras} erreur${result.extras > 1 ? "s" : ""}`);
-  }
-  return `${parts.join(" \xB7 ")} \u2014 en orange = manqu\xE9, en rouge = erreur.`;
-}
-
-// src/Fretboard.jsx
-import { Fragment as Fragment7, jsx as jsx11, jsxs as jsxs9 } from "react/jsx-runtime";
-var vibrer = (ms = 8) => {
-  try {
-    navigator.vibrate?.(ms);
-  } catch {
-  }
-};
-var labelCase = (corde, fret, note) => fret === 0 ? `Corde ${corde} \xE0 vide, ${note || ""}`.trim() : `Corde ${corde}, case ${fret}${note ? `, ${note}` : ""}`;
-var FONTS2 = {
-  title: '"Clarendon LT", "Clarendon", "Playfair Display", Georgia, serif',
-  ui: '"Inter", "Helvetica Neue", -apple-system, sans-serif',
-  body: 'Georgia, "Times New Roman", serif'
-};
-function getNoteColors(C) {
-  return {
-    root: { bg: C.amber, text: "#fff", border: C.amberD },
-    third: { bg: C.primary, text: "#fff", border: C.primaryD },
-    fifth: { bg: C.green, text: "#fff", border: C.greenD },
-    seventh: { bg: C.coral, text: "#fff", border: C.coralD },
-    other: { bg: C.blue, text: "#fff", border: C.blueD },
-    selected: { bg: C.primary, text: "#fff", border: C.primaryD },
-    correct: { bg: C.green, text: "#fff", border: C.greenD },
-    wrong: { bg: C.coral, text: "#fff", border: C.coralD },
-    missed: { bg: C.amber, text: "#fff", border: C.amberD }
-  };
-}
-function colorForDegree(degree, isRoot, NOTE_COLORS) {
-  if (isRoot) return NOTE_COLORS.root;
-  const map = {
-    2: NOTE_COLORS.other,
-    3: NOTE_COLORS.third,
-    4: NOTE_COLORS.other,
-    5: NOTE_COLORS.fifth,
-    6: NOTE_COLORS.other,
-    7: NOTE_COLORS.seventh
-  };
-  return map[degree] || NOTE_COLORS.other;
-}
-function getNoteLabel(note, interval, degree, displayMode, lang = "fr") {
-  switch (displayMode) {
-    case "notes":
-      return lang === "fr" ? noteToFr(note) : note;
-    case "intervals":
-      return INTERVAL_NAMES[interval]?.short ?? "?";
-    case "degrees":
-      if (degree != null && degree > 0) return String(degree);
-      if (interval != null) return INTERVAL_NAMES[interval]?.short ?? "?";
-      return "?";
-    default:
-      return lang === "fr" ? noteToFr(note) : note;
-  }
-}
-function NoteMarker({ label, color, size = 28, style = {} }) {
-  return /* @__PURE__ */ jsx11("div", { style: {
-    width: size,
-    height: size,
-    borderRadius: "50%",
-    background: color.bg,
-    border: `2px solid ${color.border}`,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: size <= 24 ? 8 : size <= 30 ? 9 : 11,
-    fontWeight: 700,
-    color: color.text,
-    fontFamily: FONTS2.ui,
-    letterSpacing: "-0.02em",
-    flexShrink: 0,
-    userSelect: "none",
-    boxShadow: `0 2px 4px ${color.border}40`,
-    transition: "transform 0.1s ease",
-    ...style
-  }, children: label });
-}
-function FretMarker({ isDouble }) {
-  const C = useC();
-  return /* @__PURE__ */ jsx11("div", { style: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: isDouble ? 6 : 0,
-    height: 10,
-    marginTop: 2
-  }, children: isDouble ? /* @__PURE__ */ jsxs9(Fragment7, { children: [
-    /* @__PURE__ */ jsx11("div", { style: { width: 6, height: 6, borderRadius: "50%", background: C.border } }),
-    /* @__PURE__ */ jsx11("div", { style: { width: 6, height: 6, borderRadius: "50%", background: C.border } })
-  ] }) : /* @__PURE__ */ jsx11("div", { style: { width: 6, height: 6, borderRadius: "50%", background: C.border } }) });
-}
-function Fretboard({
-  // Données
-  mode = "blank",
-  root,
-  scale,
-  chord,
-  highlightedNotes,
-  // Affichage
-  displayMode = "notes",
-  lang = "fr",
-  startFret = 0,
-  endFret = 12,
-  showOpenStrings = true,
-  showStringNames = true,
-  showFretNumbers = true,
-  compact = false,
-  // Quiz
-  quizTarget,
-  onQuizComplete,
-  onQuizProgress,
-  // Callbacks libres
-  onNoteClick,
-  selectedPositions: externalSelected,
-  // Illumination pendant la lecture : nom de note ("Do") ou tableau de noms
-  // pour un accord. Toutes les positions de ces notes s'allument, ce qui
-  // rend audible ET visible le lien entre le son et le manche.
-  flashNotes = null
-}) {
-  const C = useC();
-  const NOTE_COLORS = useMemo3(() => getNoteColors(C), [C]);
-  const [quizSelected, setQuizSelected] = useState9([]);
-  const [quizRevealed, setQuizRevealed] = useState9(false);
-  const activePositions = useMemo3(() => {
-    if (mode === "scale" && root && scale) {
-      return getScalePositions(root, scale, endFret);
-    }
-    if (mode === "chord" && root && chord) {
-      return getChordPositions(root, chord, endFret);
-    }
-    if (mode === "highlight" && highlightedNotes?.length) {
-      return getHighlightPositions(highlightedNotes, endFret);
-    }
-    if (mode === "quiz" && quizTarget) {
-      return getQuizTargetPositions(quizTarget, endFret);
-    }
-    return [];
-  }, [mode, root, scale, chord, highlightedNotes, quizTarget, endFret]);
-  const positionMap = useMemo3(() => {
-    const map = {};
-    for (const p of activePositions) {
-      map[`${p.string}-${p.fret}`] = p;
-    }
-    return map;
-  }, [activePositions]);
-  const handleCellClick = useCallback2((string, fret) => {
-    const note = getNoteAtPosition(string, fret);
-    if (mode === "quiz" && !quizRevealed) {
-      setQuizSelected((prev) => {
-        const already = prev.some((p) => p.string === string && p.fret === fret);
-        const next = already ? prev.filter((p) => !(p.string === string && p.fret === fret)) : [...prev, { string, fret }];
-        onQuizProgress?.({ selected: next, correct: activePositions });
-        const result = checkQuizCompletion(next, activePositions);
-        if (result.complete) onQuizComplete?.(result);
-        return next;
-      });
-      return;
-    }
-    onNoteClick?.({ string, fret, note });
-  }, [mode, quizRevealed, activePositions, onNoteClick, onQuizProgress, onQuizComplete]);
-  const fretRange = [];
-  for (let f = startFret; f <= endFret; f++) fretRange.push(f);
-  const strings = [1, 2, 3, 4, 5, 6];
-  const cellW = compact ? TAP.fretW : 48;
-  const cellH = compact ? TAP.fret : TAP.comfy;
-  const dotSz = compact ? 26 : 30;
-  const openW = compact ? 34 : 38;
-  const labelW = compact ? 26 : 30;
-  const stringNameStyle = {
-    width: labelW,
-    height: cellH,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: T.micro,
-    // 11 px : plancher de lisibilité (était 9)
-    fontWeight: 700,
-    color: C.text3,
-    fontFamily: FONTS2.ui,
-    flexShrink: 0
-  };
-  const STRING_LABELS2 = { 6: "E\u2082", 5: "A\u2082", 4: "D\u2083", 3: "G\u2083", 2: "B\u2083", 1: "E\u2084" };
-  return /* @__PURE__ */ jsxs9("div", { style: { width: "100%", userSelect: "none" }, children: [
-    /* @__PURE__ */ jsx11("div", { className: "gr-hscroll-wrap", children: /* @__PURE__ */ jsx11("div", { className: "gr-hscroll", role: "group", "aria-label": "Manche de guitare, d\xE9file horizontalement", children: /* @__PURE__ */ jsxs9("div", { style: { minWidth: "fit-content", paddingBottom: 2 }, children: [
-      showFretNumbers && /* @__PURE__ */ jsxs9("div", { style: { display: "flex", marginBottom: 2 }, children: [
-        showStringNames && /* @__PURE__ */ jsx11("div", { style: { width: labelW, flexShrink: 0 } }),
-        showOpenStrings && /* @__PURE__ */ jsx11("div", { style: { width: openW, flexShrink: 0 } }),
-        fretRange.filter((f) => f > 0).map((f) => /* @__PURE__ */ jsx11("div", { style: {
-          width: cellW,
-          height: 18,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: 9,
-          color: C.text3,
-          fontFamily: FONTS2.ui,
-          fontWeight: f % 12 === 0 ? 700 : 400,
-          flexShrink: 0
-        }, children: f }, f))
-      ] }),
-      strings.map((s) => /* @__PURE__ */ jsxs9("div", { style: { display: "flex", alignItems: "center", position: "relative" }, children: [
-        showStringNames && /* @__PURE__ */ jsx11("div", { style: stringNameStyle, children: STRING_LABELS2[s] }),
-        showOpenStrings && /* @__PURE__ */ jsxs9(
-          "div",
-          {
-            onClick: () => {
-              vibrer();
-              handleCellClick(s, 0);
-            },
-            onKeyDown: (e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                vibrer();
-                handleCellClick(s, 0);
-              }
-            },
-            role: "button",
-            tabIndex: 0,
-            "aria-label": labelCase(s, 0, getNoteAtPosition(s, 0)),
-            style: {
-              width: openW,
-              height: cellH,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-              position: "relative",
-              cursor: mode === "quiz" || onNoteClick ? "pointer" : "default"
-            },
-            onMouseEnter: (e) => {
-              if (mode === "quiz" || onNoteClick) {
-                e.currentTarget.style.background = `${C.primary}08`;
-              }
-            },
-            onMouseLeave: (e) => {
-              e.currentTarget.style.background = "transparent";
-            },
-            children: [
-              /* @__PURE__ */ jsx11("div", { style: {
-                position: "absolute",
-                left: 0,
-                right: 0,
-                top: "50%",
-                height: getStringThickness(s),
-                background: C.border,
-                transform: "translateY(-50%)"
-              } }),
-              /* @__PURE__ */ jsx11("div", { style: { position: "relative", zIndex: 2 }, children: renderCell(s, 0) })
-            ]
-          }
-        ),
-        fretRange.filter((f) => f > 0).map((f, fIdx) => {
-          const isFirstFret = fIdx === 0;
-          return /* @__PURE__ */ jsxs9(
-            "div",
-            {
-              onClick: () => {
-                vibrer();
-                handleCellClick(s, f);
-              },
-              onKeyDown: (e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  vibrer();
-                  handleCellClick(s, f);
-                }
-              },
-              role: "button",
-              tabIndex: 0,
-              "aria-label": labelCase(s, f, getNoteAtPosition(s, f)),
-              style: {
-                width: cellW,
-                height: cellH,
-                position: "relative",
-                flexShrink: 0,
-                cursor: mode === "quiz" || onNoteClick ? "pointer" : "default",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center"
-              },
-              children: [
-                /* @__PURE__ */ jsx11("div", { style: {
-                  position: "absolute",
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  width: isFirstFret ? 3 : 1,
-                  background: isFirstFret ? C.text : C.border
-                } }),
-                /* @__PURE__ */ jsx11("div", { style: {
-                  position: "absolute",
-                  left: 0,
-                  right: 0,
-                  top: "50%",
-                  height: getStringThickness(s),
-                  background: C.border,
-                  transform: "translateY(-50%)",
-                  zIndex: 0
-                } }),
-                /* @__PURE__ */ jsx11(
-                  "div",
-                  {
-                    style: {
-                      position: "absolute",
-                      inset: 0,
-                      zIndex: 1
-                    },
-                    onMouseEnter: (e) => {
-                      if (mode === "quiz" || onNoteClick) {
-                        e.currentTarget.style.background = `${C.primary}08`;
-                      }
-                    },
-                    onMouseLeave: (e) => {
-                      e.currentTarget.style.background = "transparent";
-                    }
-                  }
-                ),
-                /* @__PURE__ */ jsx11("div", { style: { position: "relative", zIndex: 2 }, children: renderCell(s, f) })
-              ]
-            },
-            f
-          );
-        })
-      ] }, s)),
-      /* @__PURE__ */ jsxs9("div", { style: { display: "flex", marginTop: 0 }, children: [
-        showStringNames && /* @__PURE__ */ jsx11("div", { style: { width: labelW, flexShrink: 0 } }),
-        showOpenStrings && /* @__PURE__ */ jsx11("div", { style: { width: openW, flexShrink: 0 } }),
-        fretRange.filter((f) => f > 0).map((f) => /* @__PURE__ */ jsxs9("div", { style: { width: cellW, flexShrink: 0 }, children: [
-          MARKER_FRETS.includes(f) && /* @__PURE__ */ jsx11(FretMarker, { fret: f, isDouble: false }),
-          DOUBLE_MARKER_FRETS.includes(f) && /* @__PURE__ */ jsx11(FretMarker, { fret: f, isDouble: true })
-        ] }, f))
-      ] })
-    ] }) }) }),
-    mode === "quiz" && /* @__PURE__ */ jsx11(
-      QuizControls,
-      {
-        selected: quizSelected,
-        correct: activePositions,
-        revealed: quizRevealed,
-        target: quizTarget,
-        lang,
-        onReveal: () => setQuizRevealed(true),
-        onReset: () => {
-          setQuizSelected([]);
-          setQuizRevealed(false);
-        }
-      }
-    )
-  ] });
-  function renderCell(s, f) {
-    const key = `${s}-${f}`;
-    const pos = positionMap[key];
-    if (mode === "quiz") {
-      const isSelected = quizSelected.some((p) => p.string === s && p.fret === f);
-      const isCorrect = isCorrectPosition(s, f, activePositions);
-      if (quizRevealed) {
-        if (isCorrect && isSelected) {
-          const note = getNoteAtPosition(s, f);
-          return /* @__PURE__ */ jsx11(NoteMarker, { label: lang === "fr" ? noteToFr(note) : note, color: NOTE_COLORS.correct, size: dotSz });
-        }
-        if (isCorrect && !isSelected) {
-          const note = getNoteAtPosition(s, f);
-          return /* @__PURE__ */ jsx11(NoteMarker, { label: lang === "fr" ? noteToFr(note) : note, color: NOTE_COLORS.missed, size: dotSz });
-        }
-        if (!isCorrect && isSelected) {
-          const note = getNoteAtPosition(s, f);
-          return /* @__PURE__ */ jsx11(NoteMarker, { label: lang === "fr" ? noteToFr(note) : note, color: NOTE_COLORS.wrong, size: dotSz });
-        }
-        return null;
-      }
-      if (isSelected) {
-        const note = getNoteAtPosition(s, f);
-        return /* @__PURE__ */ jsx11(NoteMarker, { label: lang === "fr" ? noteToFr(note) : note, color: NOTE_COLORS.selected, size: dotSz });
-      }
-      return null;
-    }
-    if (externalSelected) {
-      const isExt = externalSelected.some((p) => p.string === s && p.fret === f);
-      if (isExt) {
-        const note = getNoteAtPosition(s, f);
-        return /* @__PURE__ */ jsx11(NoteMarker, { label: lang === "fr" ? noteToFr(note) : note, color: NOTE_COLORS.selected, size: dotSz });
-      }
-    }
-    if (!pos) return null;
-    const label = getNoteLabel(pos.note, pos.interval, pos.degree, displayMode, lang);
-    const baseColor = pos.isRoot ? NOTE_COLORS.root : colorForDegree(pos.degree, false, NOTE_COLORS);
-    const flashList = flashNotes == null ? [] : Array.isArray(flashNotes) ? flashNotes : [flashNotes];
-    const isFlashing = flashList.some((n) => n && normalizeNote(n) === normalizeNote(pos.note));
-    return /* @__PURE__ */ jsx11(
-      NoteMarker,
-      {
-        label,
-        color: baseColor,
-        size: isFlashing ? Math.round(dotSz * 1.32) : dotSz,
-        style: {
-          ...onNoteClick ? { cursor: "pointer" } : {},
-          ...isFlashing ? {
-            boxShadow: `0 0 0 3px ${C.bg}, 0 0 14px 4px ${baseColor.bg}`,
-            zIndex: 5
-          } : {},
-          transition: "width .12s, height .12s, box-shadow .12s"
-        }
-      }
-    );
-  }
-}
-function getStringThickness(string) {
-  const thicknesses = { 6: 3, 5: 2.5, 4: 2, 3: 1.5, 2: 1.5, 1: 1 };
-  return thicknesses[string] || 1.5;
-}
-function QuizControls({ selected, correct, revealed, target, lang, onReveal, onReset }) {
-  const C = useC();
-  const result = checkQuizCompletion(selected, correct);
-  const label = lang === "fr" ? noteToFr(target) : target;
-  return /* @__PURE__ */ jsxs9("div", { style: {
-    marginTop: 12,
-    padding: "12px 14px",
-    background: C.surface2,
-    borderRadius: 12,
-    border: `1px solid ${C.border}`
-  }, children: [
-    /* @__PURE__ */ jsxs9("div", { style: {
-      fontSize: 13,
-      fontWeight: 600,
-      color: C.text,
-      fontFamily: FONTS2.ui,
-      marginBottom: 8
-    }, children: [
-      "\u{1F3AF} Trouve tous les ",
-      /* @__PURE__ */ jsx11("strong", { children: label })
-    ] }),
-    /* @__PURE__ */ jsxs9("div", { style: { display: "flex", alignItems: "center", gap: 10 }, children: [
-      /* @__PURE__ */ jsx11("div", { style: {
-        fontSize: 12,
-        color: C.text3,
-        fontFamily: FONTS2.ui,
-        flex: 1
-      }, children: revealed ? `${result.found}/${result.total} trouv\xE9${result.found > 1 ? "s" : ""} \xB7 ${result.extras} fausse${result.extras > 1 ? "s" : ""} note${result.extras > 1 ? "s" : ""}` : `${selected.length} s\xE9lectionn\xE9${selected.length > 1 ? "s" : ""}` }),
-      !revealed && /* @__PURE__ */ jsx11(
-        "button",
-        {
-          onClick: onReveal,
-          style: {
-            padding: "7px 14px",
-            borderRadius: 8,
-            border: "none",
-            background: C.primary,
-            color: "#fff",
-            fontSize: 12,
-            fontWeight: 700,
-            cursor: "pointer",
-            fontFamily: FONTS2.ui
-          },
-          children: "V\xE9rifier"
-        }
-      ),
-      /* @__PURE__ */ jsx11(
-        "button",
-        {
-          onClick: onReset,
-          style: {
-            padding: "7px 14px",
-            borderRadius: 8,
-            border: `1px solid ${C.border}`,
-            background: C.bg,
-            color: C.text3,
-            fontSize: 12,
-            fontWeight: 600,
-            cursor: "pointer",
-            fontFamily: FONTS2.ui
-          },
-          children: "Reset"
-        }
-      )
-    ] }),
-    revealed && /* @__PURE__ */ jsx11("div", { style: {
-      marginTop: 10,
-      padding: "8px 10px",
-      borderRadius: 8,
-      background: result.complete ? C.greenL : C.amberL,
-      fontSize: 12,
-      color: result.complete ? C.greenD : C.amberD,
-      fontFamily: FONTS2.body,
-      lineHeight: 1.5
-    }, children: result.complete ? "\u2705 Parfait ! Tu as trouv\xE9 toutes les positions." : `\u{1F7E1} ${result.misses} position${result.misses > 1 ? "s" : ""} manquante${result.misses > 1 ? "s" : ""} (en orange). ${result.extras > 0 ? `${result.extras} erreur${result.extras > 1 ? "s" : ""} (en rouge).` : ""}` })
-  ] });
-}
-function FretboardLesson({ block }) {
-  const C = useC();
-  const defaultDisplay = block.mode === "highlight" || block.mode === "quiz" ? "notes" : block.displayMode || "notes";
-  const [displayMode, setDisplayMode] = useState9(defaultDisplay);
-  const [quizDone, setQuizDone] = useState9(false);
-  const modeMap = {
-    "scale": { mode: "scale", root: block.root, scale: block.scale },
-    "chord": { mode: "chord", root: block.root, chord: block.chord },
-    "highlight": { mode: "highlight", highlightedNotes: block.notes },
-    "quiz": { mode: "quiz", quizTarget: block.quizTarget }
-  };
-  const props = modeMap[block.mode] || { mode: "blank" };
-  const modeLabel = {
-    "scale": block.scale ? SCALES[block.scale]?.name ?? block.scale : "",
-    "chord": block.chord ? CHORD_TYPES[block.chord]?.name ?? block.chord : "",
-    "highlight": "",
-    "quiz": ""
-  }[block.mode] ?? "";
-  const rootLabel = block.root ? block.lang === "en" ? block.root : noteToFr(block.root) : "";
-  return /* @__PURE__ */ jsxs9("div", { style: {
-    background: C.surface2,
-    borderRadius: 14,
-    border: `1px solid ${C.border}`,
-    overflow: "hidden",
-    marginBottom: 0
-  }, children: [
-    /* @__PURE__ */ jsxs9("div", { style: {
-      padding: "10px 14px 8px",
-      borderBottom: `1px solid ${C.border}`,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: 8,
-      flexWrap: "wrap"
-    }, children: [
-      /* @__PURE__ */ jsxs9("div", { children: [
-        /* @__PURE__ */ jsxs9("div", { style: {
-          fontSize: 11,
-          fontWeight: 700,
-          color: C.text3,
-          fontFamily: FONTS2.ui,
-          letterSpacing: "0.08em",
-          textTransform: "uppercase"
-        }, children: [
-          "\u{1F3B8} ",
-          rootLabel,
-          " ",
-          modeLabel
-        ] }),
-        block.caption && /* @__PURE__ */ jsx11("div", { style: {
-          fontSize: 13,
-          fontWeight: 600,
-          color: C.text,
-          fontFamily: FONTS2.ui,
-          marginTop: 2
-        }, children: block.caption })
-      ] }),
-      block.mode !== "quiz" && block.mode !== "highlight" && /* @__PURE__ */ jsx11("div", { style: { display: "flex", gap: 4 }, children: [
-        { key: "notes", label: "Notes" },
-        { key: "intervals", label: "Intervalles" },
-        { key: "degrees", label: "Degr\xE9s" }
-      ].map((m) => /* @__PURE__ */ jsx11(
-        "button",
-        {
-          onClick: () => setDisplayMode(m.key),
-          style: {
-            padding: "4px 8px",
-            borderRadius: 6,
-            border: `1px solid ${displayMode === m.key ? C.primary : C.border}`,
-            background: displayMode === m.key ? C.primaryL : C.bg,
-            color: displayMode === m.key ? C.primaryD : C.text3,
-            fontSize: 10,
-            fontWeight: 600,
-            cursor: "pointer",
-            fontFamily: FONTS2.ui
-          },
-          children: m.label
-        },
-        m.key
-      )) })
-    ] }),
-    /* @__PURE__ */ jsx11("div", { style: { padding: "10px 8px" }, children: /* @__PURE__ */ jsx11(
-      Fretboard,
-      {
-        ...props,
-        displayMode,
-        lang: block.lang || "fr",
-        compact: block.compact ?? true,
-        onQuizComplete: block.mode === "quiz" ? () => setQuizDone(true) : void 0
-      }
-    ) }),
-    quizDone && /* @__PURE__ */ jsx11("div", { style: {
-      padding: "8px 14px 12px",
-      textAlign: "center",
-      fontSize: 13,
-      color: C.greenD,
-      fontFamily: FONTS2.body
-    }, children: "\u{1F3C6} Toutes les positions trouv\xE9es ! +XP" })
-  ] });
-}
-function FretboardQuizQuestion({ question, onComplete, answered, forceReveal }) {
-  const C = useC();
-  const [quizSelected, setQuizSelected] = useState9([]);
-  const [revealed, setRevealed] = useState9(false);
-  const [showHint, setShowHint] = useState9(false);
-  const questionKey = question.id;
-  const [lastKey, setLastKey] = useState9(questionKey);
-  if (lastKey !== questionKey) {
-    setQuizSelected([]);
-    setRevealed(false);
-    setShowHint(false);
-    setLastKey(questionKey);
-  }
-  const targetPositions = useMemo3(() => {
-    const fretMode = question.fretMode || question.concept?.type;
-    const target = question.target || question.concept?.root;
-    const root = question.root || question.concept?.root;
-    if ((fretMode === "find_note" || fretMode === "find_root" || fretMode === "find_chord" || fretMode === "find_scale_root") && (target || root)) {
-      return getQuizTargetPositions(target || root);
-    }
-    if (fretMode === "find_shape" && Array.isArray(question.concept?.positions)) {
-      return question.concept.positions.filter((p) => p && p.fret > 0);
-    }
-    return [];
-  }, [question]);
-  const contextPositions = useMemo3(() => {
-    const fretMode = question.fretMode || question.concept?.type;
-    const root = question.root || question.concept?.root;
-    const { scale, chord } = question;
-    if (fretMode === "find_chord" && root && chord) {
-      return getChordPositions(root, chord, 12);
-    }
-    if (fretMode === "find_scale_root" && root && scale) {
-      return getScalePositions(root, scale, 12);
-    }
-    return [];
-  }, [question]);
-  const handleCellClick = (string, fret) => {
-    if (revealed || answered) return;
-    setQuizSelected((prev) => {
-      const already = prev.some((p) => p.string === string && p.fret === fret);
-      return already ? prev.filter((p) => !(p.string === string && p.fret === fret)) : [...prev, { string, fret }];
-    });
-  };
-  const neutralPositions = question.concept?.neutralPositions || [];
-  const stripNeutral = (sel) => sel.filter(
-    (s) => !neutralPositions.some((n) => n.string === s.string && n.fret === s.fret)
-  );
-  const verify = () => {
-    if (revealed) return;
-    setRevealed(true);
-    const result2 = checkQuizCompletion(stripNeutral(quizSelected), targetPositions);
-    onComplete(result2);
-  };
-  useEffect8(() => {
-    if (forceReveal && !revealed) verify();
-  }, [forceReveal]);
-  const result = revealed ? checkQuizCompletion(stripNeutral(quizSelected), targetPositions) : null;
-  return /* @__PURE__ */ jsxs9("div", { style: { background: C.surface2, borderRadius: 14, border: `1px solid ${C.border}`, overflow: "hidden" }, children: [
-    /* @__PURE__ */ jsxs9("div", { style: { padding: "8px 14px 6px", borderBottom: `1px solid ${C.border}` }, children: [
-      /* @__PURE__ */ jsx11("div", { style: { fontSize: 10, fontWeight: 700, color: C.amber, fontFamily: FONTS2.ui, letterSpacing: "0.1em", textTransform: "uppercase" }, children: "Manche interactif" }),
-      question.hint && (revealed || showHint) && /* @__PURE__ */ jsx11("div", { style: { fontSize: 11, color: C.text3, marginTop: 2, fontFamily: FONTS2.ui }, children: question.hint }),
-      question.hint && !revealed && !showHint && /* @__PURE__ */ jsx11(
-        "button",
-        {
-          onClick: () => setShowHint(true),
-          style: {
-            marginTop: 3,
-            padding: 0,
-            border: "none",
-            background: "none",
-            fontSize: 11,
-            color: C.primary,
-            fontWeight: 600,
-            fontFamily: FONTS2.ui,
-            cursor: "pointer",
-            textDecoration: "underline"
-          },
-          children: "Afficher un indice"
-        }
-      )
-    ] }),
-    /* @__PURE__ */ jsx11("div", { style: { padding: "8px 8px 4px", overflowX: "auto", WebkitOverflowScrolling: "touch" }, children: /* @__PURE__ */ jsx11(
-      FretboardQuizCanvas,
-      {
-        targetPositions,
-        contextPositions,
-        selected: quizSelected,
-        revealed,
-        onCellClick: handleCellClick,
-        compact: true,
-        question
-      }
-    ) }),
-    !answered && /* @__PURE__ */ jsxs9("div", { style: { padding: "6px 12px 10px", display: "flex", alignItems: "center", gap: 8 }, children: [
-      /* @__PURE__ */ jsx11("div", { style: { flex: 1, fontSize: 11, color: C.text3, fontFamily: FONTS2.ui }, children: revealed ? `${result.found}/${result.total} correct${result.extras > 0 ? ` \xB7 ${result.extras} erreur${result.extras > 1 ? "s" : ""}` : ""}` : `${quizSelected.length} s\xE9lectionn\xE9${quizSelected.length > 1 ? "s" : ""}` }),
-      !revealed && /* @__PURE__ */ jsx11(
-        "button",
-        {
-          onClick: verify,
-          style: {
-            padding: "7px 14px",
-            borderRadius: 8,
-            border: "none",
-            background: quizSelected.length > 0 ? C.primary : C.surface2,
-            color: quizSelected.length > 0 ? "#fff" : C.text3,
-            fontSize: 11,
-            fontWeight: 700,
-            cursor: quizSelected.length > 0 ? "pointer" : "default",
-            fontFamily: FONTS2.ui
-          },
-          children: "V\xE9rifier"
-        }
-      ),
-      !revealed && /* @__PURE__ */ jsx11(
-        "button",
-        {
-          onClick: () => setQuizSelected([]),
-          style: {
-            padding: "7px 10px",
-            borderRadius: 8,
-            border: `1px solid ${C.border}`,
-            background: C.bg,
-            color: C.text3,
-            fontSize: 11,
-            cursor: "pointer",
-            fontFamily: FONTS2.ui
-          },
-          children: "Reset"
-        }
-      )
-    ] })
-  ] });
-}
-function FretboardQuizCanvas({ targetPositions, contextPositions, selected, revealed, onCellClick }) {
-  const C = useC();
-  const NOTE_COLORS = useMemo3(() => getNoteColors(C), [C]);
-  const CW = TAP.fretW, CH = TAP.fret, OW = 34, LW = 26, DOT = 26;
-  const strings = [1, 2, 3, 4, 5, 6];
-  const MAX_F = 12;
-  const SLABELS = { 6: "E\u2082", 5: "A\u2082", 4: "D\u2083", 3: "G\u2083", 2: "B\u2083", 1: "E\u2084" };
-  const MARKERS = [3, 5, 7, 9];
-  const targetMap = useMemo3(() => {
-    const m = {};
-    targetPositions.forEach((p) => {
-      m[`${p.string}-${p.fret}`] = true;
-    });
-    return m;
-  }, [targetPositions]);
-  const contextMap = useMemo3(() => {
-    const m = {};
-    contextPositions.forEach((p) => {
-      m[`${p.string}-${p.fret}`] = p;
-    });
-    return m;
-  }, [contextPositions]);
-  function renderDot(s, f) {
-    const key = `${s}-${f}`;
-    const isSelected = selected.some((p) => p.string === s && p.fret === f);
-    const isTarget = targetMap[key];
-    const ctx = contextMap[key];
-    if (revealed) {
-      if (isTarget && isSelected) return mkDot(noteToFr(getNoteAtPosition(s, f)), NOTE_COLORS.correct, DOT);
-      if (isTarget && !isSelected) return mkDot(noteToFr(getNoteAtPosition(s, f)), NOTE_COLORS.missed, DOT);
-      if (!isTarget && isSelected) return mkDot(noteToFr(getNoteAtPosition(s, f)), NOTE_COLORS.wrong, DOT);
-      if (ctx && !isTarget) {
-        return mkDot(noteToFr(getNoteAtPosition(s, f)), NOTE_COLORS.other, DOT);
-      }
-      return null;
-    }
-    if (isSelected) return mkDot(noteToFr(getNoteAtPosition(s, f)), NOTE_COLORS.selected, DOT);
-    if (ctx && !isTarget) {
-      return mkDot(noteToFr(getNoteAtPosition(s, f)), NOTE_COLORS.other, DOT);
-    }
-    return null;
-  }
-  function mkDot(lbl, col, sz) {
-    return /* @__PURE__ */ jsx11("div", { style: {
-      width: sz,
-      height: sz,
-      borderRadius: "50%",
-      background: col.bg,
-      border: `1.5px solid ${col.border}`,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: 7,
-      fontWeight: 700,
-      color: col.text,
-      fontFamily: FONTS2.ui,
-      position: "relative",
-      zIndex: 2,
-      userSelect: "none"
-    }, children: lbl });
-  }
-  const frets = Array.from({ length: MAX_F }, (_, i) => i + 1);
-  return /* @__PURE__ */ jsxs9("div", { style: { display: "flex", flexDirection: "column", minWidth: "fit-content" }, children: [
-    /* @__PURE__ */ jsxs9("div", { style: { display: "flex", marginBottom: 1 }, children: [
-      /* @__PURE__ */ jsx11("div", { style: { width: LW, flexShrink: 0 } }),
-      /* @__PURE__ */ jsx11("div", { style: { width: OW, flexShrink: 0 } }),
-      frets.map((f) => /* @__PURE__ */ jsx11("div", { style: { width: CW, flexShrink: 0, textAlign: "center", fontSize: T.micro, color: C.text3, height: 16, lineHeight: "16px", fontFamily: FONTS2.ui, fontWeight: f === 12 ? 700 : 400 }, children: f }, f))
-    ] }),
-    strings.map((s) => /* @__PURE__ */ jsxs9("div", { style: { display: "flex", alignItems: "center" }, children: [
-      /* @__PURE__ */ jsx11("div", { style: { width: LW, flexShrink: 0, textAlign: "center", fontSize: T.micro, fontWeight: 700, color: C.text3, fontFamily: FONTS2.ui }, children: SLABELS[s] }),
-      /* @__PURE__ */ jsxs9(
-        "div",
-        {
-          onClick: () => {
-            vibrer();
-            onCellClick(s, 0);
-          },
-          onKeyDown: (e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              vibrer();
-              onCellClick(s, 0);
-            }
-          },
-          role: "button",
-          tabIndex: 0,
-          "aria-label": labelCase(s, 0, getNoteAtPosition(s, 0)),
-          style: { width: OW, height: CH, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", cursor: revealed ? "default" : "pointer" },
-          onMouseEnter: (e) => {
-            if (!revealed) e.currentTarget.style.background = `${C.primary}0A`;
-          },
-          onMouseLeave: (e) => {
-            e.currentTarget.style.background = "transparent";
-          },
-          children: [
-            /* @__PURE__ */ jsx11("div", { style: { position: "absolute", left: 0, right: 0, top: "50%", height: getStringThickness(s), background: C.border, transform: "translateY(-50%)" } }),
-            /* @__PURE__ */ jsx11("div", { style: { position: "relative", zIndex: 2 }, children: renderDot(s, 0) })
-          ]
-        }
-      ),
-      frets.map((f, fi) => /* @__PURE__ */ jsxs9(
-        "div",
-        {
-          onClick: () => {
-            vibrer();
-            onCellClick(s, f);
-          },
-          onKeyDown: (e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              vibrer();
-              onCellClick(s, f);
-            }
-          },
-          role: "button",
-          tabIndex: 0,
-          "aria-label": labelCase(s, f, getNoteAtPosition(s, f)),
-          style: { width: CW, height: CH, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", cursor: revealed ? "default" : "pointer" },
-          onMouseEnter: (e) => {
-            if (!revealed) e.currentTarget.style.background = `${C.primary}0A`;
-          },
-          onMouseLeave: (e) => {
-            e.currentTarget.style.background = "transparent";
-          },
-          children: [
-            /* @__PURE__ */ jsx11("div", { style: { position: "absolute", left: 0, top: 0, bottom: 0, width: fi === 0 ? 2 : 0.5, background: fi === 0 ? C.text : C.border } }),
-            /* @__PURE__ */ jsx11("div", { style: { position: "absolute", left: 0, right: 0, top: "50%", height: getStringThickness(s), background: C.border, transform: "translateY(-50%)", zIndex: 0 } }),
-            /* @__PURE__ */ jsx11("div", { style: { position: "relative", zIndex: 2 }, children: renderDot(s, f) })
-          ]
-        },
-        f
-      ))
-    ] }, s)),
-    /* @__PURE__ */ jsxs9("div", { style: { display: "flex", marginTop: 1 }, children: [
-      /* @__PURE__ */ jsx11("div", { style: { width: LW, flexShrink: 0 } }),
-      /* @__PURE__ */ jsx11("div", { style: { width: OW, flexShrink: 0 } }),
-      frets.map((f) => /* @__PURE__ */ jsxs9("div", { style: { width: CW, flexShrink: 0 }, children: [
-        MARKERS.includes(f) && /* @__PURE__ */ jsx11("div", { style: { width: 5, height: 5, borderRadius: "50%", background: C.border, margin: "2px auto 0" } }),
-        f === 12 && /* @__PURE__ */ jsxs9("div", { style: { display: "flex", gap: 4, justifyContent: "center", marginTop: 2 }, children: [
-          /* @__PURE__ */ jsx11("div", { style: { width: 5, height: 5, borderRadius: "50%", background: C.border } }),
-          /* @__PURE__ */ jsx11("div", { style: { width: 5, height: 5, borderRadius: "50%", background: C.border } })
-        ] })
-      ] }, f))
-    ] })
-  ] });
-}
-function FretboardExercise({ ex, onComplete, dispatch }) {
-  const C = useC();
-  const [stageIdx, setStageIdx] = useState9(0);
-  const [stageSelected, setStageSelected] = useState9([]);
-  const [stageRevealed, setStageRevealed] = useState9(false);
-  const [stageResult, setStageResult] = useState9(null);
-  const [totalXp, setTotalXp] = useState9(0);
-  const [completedStages, setCompletedStages] = useState9([]);
-  const [allDone, setAllDone] = useState9(false);
-  const stage = ex.stages[stageIdx];
-  const isLast = stageIdx === ex.stages.length - 1;
-  const targetPositions = useMemo3(() => {
-    if (!stage) return [];
-    return getTargetPositions(stage.concept, {
-      fretRange: stage.fretRange || [0, 12],
-      stringRange: stage.stringRange || [1, 6]
-    });
-  }, [stage]);
-  const targetMap = useMemo3(() => {
-    const m = {};
-    targetPositions.forEach((p) => {
-      m[`${p.string}-${p.fret}`] = p;
-    });
-    return m;
-  }, [targetPositions]);
-  const handleCellClick = useCallback2((string, fret) => {
-    if (stageRevealed) return;
-    const already = stageSelected.some((p) => p.string === string && p.fret === fret);
-    setStageSelected(
-      (prev) => already ? prev.filter((p) => !(p.string === string && p.fret === fret)) : [...prev, { string, fret }]
-    );
-  }, [stageRevealed, stageSelected]);
-  const handleVerify = () => {
-    const result = validate(
-      stage.concept,
-      stageSelected,
-      stage.selectionRules || { mode: "all" },
-      {
-        fretRange: stage.fretRange || [0, 12],
-        stringRange: stage.stringRange || [1, 6]
-      }
-    );
-    setStageResult(result);
-    setStageRevealed(true);
-    if (result.complete) {
-      const xp = stage.xp || 15;
-      setTotalXp((prev) => prev + xp);
-      dispatch?.({ type: "ADD_XP", amount: xp });
-    }
-  };
-  const handleNext = () => {
-    const updatedStages = [...completedStages, { stageIdx, result: stageResult }];
-    setCompletedStages(updatedStages);
-    if (isLast) {
-      setAllDone(true);
-      onComplete?.({ totalXp, stages: updatedStages });
-    } else {
-      setStageIdx((i) => i + 1);
-      setStageSelected([]);
-      setStageRevealed(false);
-      setStageResult(null);
-    }
-  };
-  const handleSkip = () => {
-    const updatedStages = [...completedStages, { stageIdx, result: null, skipped: true }];
-    setCompletedStages(updatedStages);
-    if (isLast) {
-      setAllDone(true);
-      onComplete?.({ totalXp, stages: updatedStages });
-    } else {
-      setStageIdx((i) => i + 1);
-      setStageSelected([]);
-      setStageRevealed(false);
-      setStageResult(null);
-    }
-  };
-  if (allDone) {
-    return /* @__PURE__ */ jsxs9("div", { style: { textAlign: "center", padding: "24px 16px", background: C.greenL, borderRadius: 14, border: `1px solid ${C.border}` }, children: [
-      /* @__PURE__ */ jsx11(Ti, { name: "trophy", size: 32, color: C.green, style: { marginBottom: 8 } }),
-      /* @__PURE__ */ jsx11("div", { style: { fontSize: 18, fontWeight: 700, color: C.greenD, fontFamily: FONTS2.ui }, children: "Exercice termin\xE9 !" }),
-      /* @__PURE__ */ jsxs9("div", { style: { fontSize: 13, color: C.green, marginTop: 4, fontFamily: FONTS2.ui }, children: [
-        "+",
-        totalXp,
-        " XP gagn\xE9s"
-      ] }),
-      /* @__PURE__ */ jsxs9("div", { style: { fontSize: 12, color: C.text3, marginTop: 8, fontFamily: FONTS2.ui }, children: [
-        completedStages.filter((s) => s.result?.complete).length,
-        "/",
-        ex.stages.length,
-        " stages r\xE9ussis"
-      ] })
-    ] });
-  }
-  return /* @__PURE__ */ jsxs9("div", { style: { display: "flex", flexDirection: "column", gap: 12 }, children: [
-    /* @__PURE__ */ jsx11("div", { style: { display: "flex", gap: 4 }, children: ex.stages.map((_, i) => /* @__PURE__ */ jsx11("div", { style: {
-      flex: 1,
-      height: 4,
-      borderRadius: 2,
-      background: i < stageIdx ? C.green : i === stageIdx ? C.primary : C.border,
-      transition: "background 0.3s"
-    } }, i)) }),
-    /* @__PURE__ */ jsxs9("div", { style: { background: C.surface2, borderRadius: 12, border: `1px solid ${C.border}`, padding: "10px 14px" }, children: [
-      /* @__PURE__ */ jsxs9("div", { style: { fontSize: 10, fontWeight: 700, color: C.amber, fontFamily: FONTS2.ui, letterSpacing: "0.08em", textTransform: "uppercase" }, children: [
-        "\u{1F3B8} \xC9tape ",
-        stageIdx + 1,
-        " / ",
-        ex.stages.length
-      ] }),
-      /* @__PURE__ */ jsx11("div", { style: { fontSize: 14, fontWeight: 600, color: C.text, fontFamily: FONTS2.ui, marginTop: 4, lineHeight: 1.4 }, children: stage.instruction }),
-      stage.hint && !stageRevealed && /* @__PURE__ */ jsxs9("div", { style: { fontSize: 11, color: C.text3, fontFamily: FONTS2.ui, marginTop: 4, fontStyle: "italic" }, children: [
-        "\u{1F4A1} ",
-        stage.hint
-      ] }),
-      /* @__PURE__ */ jsxs9("div", { style: { fontSize: 11, color: C.primary, fontFamily: FONTS2.ui, marginTop: 4, fontWeight: 600 }, children: [
-        "+",
-        stage.xp || 15,
-        " XP"
-      ] })
-    ] }),
-    /* @__PURE__ */ jsx11("div", { style: { background: C.surface2, borderRadius: 12, border: `1px solid ${C.border}`, overflow: "hidden" }, children: /* @__PURE__ */ jsx11("div", { style: { padding: "8px 8px 4px", overflowX: "auto", WebkitOverflowScrolling: "touch" }, children: /* @__PURE__ */ jsx11(
-      ExerciseCanvas,
-      {
-        stage,
-        targetPositions,
-        targetMap,
-        selected: stageSelected,
-        revealed: stageRevealed,
-        onCellClick: handleCellClick
-      }
-    ) }) }),
-    stageRevealed && stageResult && /* @__PURE__ */ jsxs9("div", { style: {
-      padding: "10px 14px",
-      borderRadius: 10,
-      background: stageResult.complete ? C.greenL : C.amberL,
-      border: `1px solid ${stageResult.complete ? C.border : C.border}`,
-      fontSize: 12,
-      color: stageResult.complete ? C.greenD : C.amberD,
-      fontFamily: FONTS2.ui,
-      lineHeight: 1.5
-    }, children: [
-      stageResult.feedback,
-      stage.exp && /* @__PURE__ */ jsx11("div", { style: { marginTop: 4, opacity: 0.85 }, children: stage.exp })
-    ] }),
-    /* @__PURE__ */ jsx11("div", { style: { display: "flex", gap: 8 }, children: !stageRevealed ? /* @__PURE__ */ jsxs9(Fragment7, { children: [
-      /* @__PURE__ */ jsxs9(
-        "button",
-        {
-          onClick: handleVerify,
-          disabled: stageSelected.length === 0,
-          style: {
-            flex: 1,
-            padding: "12px",
-            borderRadius: 10,
-            border: "none",
-            background: stageSelected.length > 0 ? C.primary : C.surface2,
-            color: stageSelected.length > 0 ? "#fff" : C.text3,
-            fontSize: 13,
-            fontWeight: 700,
-            cursor: stageSelected.length > 0 ? "pointer" : "default",
-            fontFamily: FONTS2.ui
-          },
-          children: [
-            "V\xE9rifier \xB7 ",
-            stageSelected.length,
-            " s\xE9lectionn\xE9",
-            stageSelected.length > 1 ? "s" : ""
-          ]
-        }
-      ),
-      /* @__PURE__ */ jsx11(
-        "button",
-        {
-          onClick: () => setStageSelected([]),
-          style: {
-            padding: "12px 14px",
-            borderRadius: 10,
-            border: `1px solid ${C.border}`,
-            background: C.bg,
-            color: C.text3,
-            fontSize: 12,
-            cursor: "pointer",
-            fontFamily: FONTS2.ui
-          },
-          children: "Reset"
-        }
-      ),
-      /* @__PURE__ */ jsx11(
-        "button",
-        {
-          onClick: handleSkip,
-          style: {
-            padding: "12px 14px",
-            borderRadius: 10,
-            border: `1px solid ${C.border}`,
-            background: C.bg,
-            color: C.text3,
-            fontSize: 11,
-            cursor: "pointer",
-            fontFamily: FONTS2.ui
-          },
-          children: "Passer"
-        }
-      )
-    ] }) : /* @__PURE__ */ jsx11(
-      "button",
-      {
-        onClick: handleNext,
-        style: {
-          flex: 1,
-          padding: "12px",
-          borderRadius: 10,
-          border: "none",
-          background: C.primary,
-          color: "#fff",
-          fontSize: 13,
-          fontWeight: 700,
-          cursor: "pointer",
-          fontFamily: FONTS2.ui
-        },
-        children: isLast ? "Terminer l'exercice" : "\xC9tape suivante \u2192"
-      }
-    ) })
-  ] });
-}
-function ExerciseCanvas({ stage, targetMap, selected, revealed, onCellClick }) {
-  const C = useC();
-  const NOTE_COLORS = useMemo3(() => getNoteColors(C), [C]);
-  const CW = TAP.fretW, CH = TAP.fret, OW = 34, LW = 26, DOT = 26;
-  const strings = [1, 2, 3, 4, 5, 6];
-  const MAX_F = (stage.fretRange || [0, 12])[1];
-  const MIN_F = (stage.fretRange || [0, 12])[0];
-  const SLABELS = { 6: "E\u2082", 5: "A\u2082", 4: "D\u2083", 3: "G\u2083", 2: "B\u2083", 1: "E\u2084" };
-  const MARKERS = [3, 5, 7, 9];
-  const contextPositions = useMemo3(() => {
-    if (!stage.display?.showContext) return [];
-    const ctx = stage.display.showContext;
-    return getTargetPositions(ctx, {
-      fretRange: stage.fretRange || [0, 12],
-      stringRange: stage.stringRange || [1, 6]
-    });
-  }, [stage]);
-  const contextMap = useMemo3(() => {
-    const m = {};
-    contextPositions.forEach((p) => {
-      m[`${p.string}-${p.fret}`] = p;
-    });
-    return m;
-  }, [contextPositions]);
-  function getStringThicknessLocal(s) {
-    return [null, 1, 1.5, 2, 2.5, 2.5, 3][s] || 1.5;
-  }
-  function renderDot(s, f) {
-    const key = `${s}-${f}`;
-    const note = getNoteAtPosition(s, f);
-    const isSelected = selected.some((p) => p.string === s && p.fret === f);
-    const isTarget = !!targetMap[key];
-    const isContext = !!contextMap[key];
-    const { showNotes, showIntervals, showDegrees } = stage.display || {};
-    const getLabel = (pos) => {
-      if (showNotes) return noteToFr(note);
-      if (showIntervals && pos?.interval != null) return INTERVAL_NAMES[pos.interval]?.short ?? "";
-      if (showDegrees && pos?.degree) return String(pos.degree);
-      return noteToFr(note);
-    };
-    if (revealed) {
-      const tPos = targetMap[key];
-      if (isTarget && isSelected) return mkDot(getLabel(tPos), NOTE_COLORS.correct, DOT);
-      if (isTarget && !isSelected) return mkDot(getLabel(tPos), NOTE_COLORS.missed, DOT);
-      if (!isTarget && isSelected) return mkDot(noteToFr(note), NOTE_COLORS.wrong, DOT);
-      if (isContext) return mkDot(getLabel(contextMap[key]), NOTE_COLORS.other, DOT, 0.4);
-      return null;
-    }
-    if (isSelected) return mkDot(noteToFr(note), NOTE_COLORS.selected, DOT);
-    if (isContext && !isTarget) return mkDot(getLabel(contextMap[key]), NOTE_COLORS.other, DOT, 0.5);
-    if (showNotes) {
-      return mkDot(noteToFr(note), { bg: C.surface2, text: C.text3, border: C.border }, DOT);
-    }
-    return null;
-  }
-  function mkDot(lbl, col, sz, opacity = 1) {
-    return /* @__PURE__ */ jsx11("div", { style: {
-      width: sz,
-      height: sz,
-      borderRadius: "50%",
-      background: col.bg,
-      border: `1.5px solid ${col.border}`,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: 7,
-      fontWeight: 700,
-      color: col.text,
-      fontFamily: FONTS2.ui,
-      position: "relative",
-      zIndex: 2,
-      userSelect: "none",
-      opacity
-    }, children: lbl });
-  }
-  const frets = Array.from({ length: MAX_F - MIN_F }, (_, i) => MIN_F + i + 1);
-  return /* @__PURE__ */ jsxs9("div", { style: { display: "flex", flexDirection: "column", minWidth: "fit-content" }, children: [
-    /* @__PURE__ */ jsxs9("div", { style: { display: "flex", marginBottom: 1 }, children: [
-      /* @__PURE__ */ jsx11("div", { style: { width: LW, flexShrink: 0 } }),
-      /* @__PURE__ */ jsx11("div", { style: { width: OW, flexShrink: 0 } }),
-      frets.map((f) => /* @__PURE__ */ jsx11("div", { style: { width: CW, flexShrink: 0, textAlign: "center", fontSize: T.micro, color: C.text3, height: 16, lineHeight: "16px", fontFamily: FONTS2.ui, fontWeight: f === 12 ? 700 : 400 }, children: f }, f))
-    ] }),
-    strings.map((s) => /* @__PURE__ */ jsxs9("div", { style: { display: "flex", alignItems: "center" }, children: [
-      /* @__PURE__ */ jsx11("div", { style: { width: LW, flexShrink: 0, textAlign: "center", fontSize: T.micro, fontWeight: 700, color: C.text3, fontFamily: FONTS2.ui }, children: SLABELS[s] }),
-      MIN_F === 0 && /* @__PURE__ */ jsxs9(
-        "div",
-        {
-          onClick: () => {
-            vibrer();
-            onCellClick(s, 0);
-          },
-          onKeyDown: (e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              vibrer();
-              onCellClick(s, 0);
-            }
-          },
-          role: "button",
-          tabIndex: 0,
-          "aria-label": labelCase(s, 0, getNoteAtPosition(s, 0)),
-          style: { width: OW, height: CH, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", cursor: revealed ? "default" : "pointer" },
-          onMouseEnter: (e) => {
-            if (!revealed) e.currentTarget.style.background = `${C.primary}0A`;
-          },
-          onMouseLeave: (e) => {
-            e.currentTarget.style.background = "transparent";
-          },
-          children: [
-            /* @__PURE__ */ jsx11("div", { style: { position: "absolute", left: 0, right: 0, top: "50%", height: getStringThicknessLocal(s), background: C.border, transform: "translateY(-50%)" } }),
-            /* @__PURE__ */ jsx11("div", { style: { position: "relative", zIndex: 2 }, children: renderDot(s, 0) })
-          ]
-        }
-      ),
-      frets.map((f, fi) => /* @__PURE__ */ jsxs9(
-        "div",
-        {
-          onClick: () => {
-            vibrer();
-            onCellClick(s, f);
-          },
-          onKeyDown: (e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              vibrer();
-              onCellClick(s, f);
-            }
-          },
-          role: "button",
-          tabIndex: 0,
-          "aria-label": labelCase(s, f, getNoteAtPosition(s, f)),
-          style: { width: CW, height: CH, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", cursor: revealed ? "default" : "pointer" },
-          onMouseEnter: (e) => {
-            if (!revealed) e.currentTarget.style.background = `${C.primary}0A`;
-          },
-          onMouseLeave: (e) => {
-            e.currentTarget.style.background = "transparent";
-          },
-          children: [
-            /* @__PURE__ */ jsx11("div", { style: { position: "absolute", left: 0, top: 0, bottom: 0, width: MIN_F === 0 && fi === 0 || fi === 0 ? 2 : 0.5, background: fi === 0 ? C.text : C.border } }),
-            /* @__PURE__ */ jsx11("div", { style: { position: "absolute", left: 0, right: 0, top: "50%", height: getStringThicknessLocal(s), background: C.border, transform: "translateY(-50%)", zIndex: 0 } }),
-            /* @__PURE__ */ jsx11("div", { style: { position: "relative", zIndex: 2 }, children: renderDot(s, f) })
-          ]
-        },
-        f
-      ))
-    ] }, s)),
-    /* @__PURE__ */ jsxs9("div", { style: { display: "flex", marginTop: 1 }, children: [
-      /* @__PURE__ */ jsx11("div", { style: { width: LW, flexShrink: 0 } }),
-      MIN_F === 0 && /* @__PURE__ */ jsx11("div", { style: { width: OW, flexShrink: 0 } }),
-      frets.map((f) => /* @__PURE__ */ jsxs9("div", { style: { width: CW, flexShrink: 0 }, children: [
-        MARKERS.includes(f) && /* @__PURE__ */ jsx11("div", { style: { width: 5, height: 5, borderRadius: "50%", background: C.border, margin: "2px auto 0" } }),
-        f === 12 && /* @__PURE__ */ jsxs9("div", { style: { display: "flex", gap: 4, justifyContent: "center", marginTop: 2 }, children: [
-          /* @__PURE__ */ jsx11("div", { style: { width: 5, height: 5, borderRadius: "50%", background: C.border } }),
-          /* @__PURE__ */ jsx11("div", { style: { width: 5, height: 5, borderRadius: "50%", background: C.border } })
-        ] })
-      ] }, f))
-    ] })
-  ] });
-}
-
-// src/music/walkingBass.js
-var CHROMATIC3 = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-var midiOf2 = (name, oct) => CHROMATIC3.indexOf(name) + 12 * (oct + 1);
-var nameOfMidi = (m) => CHROMATIC3[(m % 12 + 12) % 12];
-var octOfMidi = (m) => Math.floor(m / 12) - 1;
-var CHORD_TONES = {
-  maj: [0, 4, 7],
-  min: [0, 3, 7],
-  dom7: [0, 4, 7, 10],
-  maj7: [0, 4, 7, 11],
-  min7: [0, 3, 7, 10],
-  min7b5: [0, 3, 6, 10],
-  dim7: [0, 3, 6, 9]
-};
-var BASS_LOW = 28;
-var BASS_HIGH = 48;
-function clampToBass(midi) {
-  while (midi < BASS_LOW) midi += 12;
-  while (midi > BASS_HIGH) midi -= 12;
-  return midi;
-}
-function approachNote(targetMidi, style, rng) {
-  const r = rng();
-  if (style === "blues") {
-    return r < 0.7 ? targetMidi - 1 : targetMidi + 1;
-  }
-  if (r < 0.45) return targetMidi - 1;
-  if (r < 0.7) return targetMidi + 1;
-  return targetMidi - 5;
-}
-function generateWalkingBar(opts) {
-  const {
-    rootName,
-    quality = "dom7",
-    nextRoot = rootName,
-    style = "jazz",
-    barIndex = 0,
-    energy = 3,
-    rng = Math.random
-  } = opts;
-  const tones = CHORD_TONES[quality] || CHORD_TONES.dom7;
-  const rootIdx = CHROMATIC3.indexOf(rootName);
-  if (rootIdx < 0) return [];
-  const rootMidi = clampToBass(midiOf2(rootName, 1));
-  const nextRootMidi = clampToBass(midiOf2(nextRoot, 1));
-  const ascending = barIndex % 2 === 0 ? rng() < 0.7 : rng() < 0.3;
-  const notes = [];
-  let first = rootMidi;
-  if (rng() < 0.12 && energy >= 3) {
-    first = clampToBass(rootMidi + 7);
-  }
-  notes.push({ beat: 0, midi: first, dur: "4n", velocity: 0.82 });
-  const available = tones.map((t) => clampToBass(rootMidi + t)).filter((m) => m !== first);
-  const sorted = [...new Set(available)].sort((a, b) => ascending ? a - b : b - a);
-  const pick2 = sorted[Math.floor(rng() * Math.min(2, sorted.length))] ?? clampToBass(rootMidi + 7);
-  notes.push({ beat: 1, midi: pick2, dur: "4n", velocity: 0.74 });
-  const rest = sorted.filter((m) => m !== pick2);
-  const pick3 = rest[Math.floor(rng() * Math.min(2, rest.length))] ?? clampToBass(rootMidi + 10);
-  notes.push({ beat: 2, midi: pick3, dur: "4n", velocity: 0.78 });
-  const approach = clampToBass(approachNote(nextRootMidi, style, rng));
-  notes.push({ beat: 3, midi: approach, dur: "4n", velocity: 0.8, approach: true });
-  if (energy >= 3 && rng() < 0.18 + energy * 0.04) {
-    const between = Math.floor(rng() * 3);
-    const from = notes[between].midi, to = notes[between + 1].midi;
-    if (Math.abs(to - from) > 2) {
-      const passing = from + Math.sign(to - from) * (Math.abs(to - from) > 3 ? 2 : 1);
-      notes.push({
-        beat: between + 0.5,
-        midi: clampToBass(passing),
-        dur: "8n",
-        velocity: 0.55,
-        passing: true
-      });
-    }
-  }
-  if (energy >= 4 && rng() < 0.15) {
-    notes.push({ beat: 3.5, midi: clampToBass(rootMidi - 12), dur: "16n", velocity: 0.22, ghost: true });
-  }
-  notes.sort((a, b) => a.beat - b.beat);
-  return notes;
-}
-function toToneNote2(midi) {
-  const SHARP_TO_FLAT2 = { "C#": "Db", "D#": "Eb", "F#": "Gb", "G#": "Ab", "A#": "Bb" };
-  const n = nameOfMidi(midi);
-  return `${SHARP_TO_FLAT2[n] || n}${octOfMidi(midi)}`;
-}
-function toToneTime(beat) {
-  const whole = Math.floor(beat);
-  const sixteenths = Math.round((beat - whole) * 4);
-  return `0:${whole}:${sixteenths}`;
-}
+import { useState as useState12, useMemo as useMemo4, useEffect as useEffect10, useEffectEvent as useEffectEvent3, useRef as useRef8, useCallback as useCallback3 } from "react";
+init_tokens();
+init_ThemeContext();
+init_Ti();
+init_Gropi();
+init_Fretboard();
+init_fretboardUtils();
 
 // src/music/compRhythm.js
 var COMP_PATTERNS = {
@@ -8288,6 +10820,503 @@ function beatToToneTime(beat) {
 
 // src/screens/JamSession.jsx
 init_tone_stub();
+
+// src/screens/jam/contextes.js
+var makeContexts = (C) => [
+  {
+    id: "blues_minor",
+    label: "Blues mineur",
+    color: C.amber,
+    colorL: C.amberL,
+    colorD: C.amberD,
+    colorB: C.amberBorder,
+    scale: "pentatonic_minor",
+    desc: "Le terrain de jeu du rock et du blues. La pentatonique mineure sonne sur tout.",
+    targetDesc: "Fondamentale, tierce mineure, quinte",
+    bpm: 80,
+    // Vraie grille de blues mineur, pas un accord en boucle : le IVm et le
+    // V7 sont ce qui donne des points de résolution à travailler.
+    chords: [
+      { degree: 0, quality: "min7", bars: 4 },
+      { degree: 5, quality: "min7", bars: 2 },
+      { degree: 0, quality: "min7", bars: 2 },
+      { degree: 7, quality: "dom7", bars: 2 },
+      { degree: 0, quality: "min7", bars: 2 }
+    ]
+  },
+  {
+    id: "blues_12",
+    label: "Blues 12 mesures",
+    color: C.primary,
+    colorL: C.primaryL,
+    colorD: C.primaryD,
+    colorB: C.primaryBorder,
+    scale: "blues",
+    desc: "La note bleue (b5) est ta couleur signature.",
+    targetDesc: "Fondamentale, tierce mineure, note bleue",
+    bpm: 80,
+    // Progression blues 12 mesures : I7-I7-I7-I7-IV7-IV7-I7-I7-V7-IV7-I7-V7
+    chords: [
+      { degree: 0, quality: "dom7", bars: 4 },
+      { degree: 5, quality: "dom7", bars: 2 },
+      { degree: 0, quality: "dom7", bars: 2 },
+      { degree: 7, quality: "dom7", bars: 1 },
+      { degree: 5, quality: "dom7", bars: 1 },
+      { degree: 0, quality: "dom7", bars: 1 },
+      { degree: 7, quality: "dom7", bars: 1 }
+    ]
+  },
+  {
+    id: "jazz_251",
+    label: "Jazz ii-V-I",
+    color: C.green,
+    colorL: C.greenL,
+    colorD: C.greenD,
+    colorB: C.greenBorder,
+    scale: "major",
+    desc: "Cible les guide tones (3e et 7e) de chaque accord sur les temps forts.",
+    targetDesc: "3e (couleur), 7e majeure ou mineure (tension)",
+    bpm: 120,
+    // ii-V-I : Dm7 (2 bars) - G7 (2 bars) - Cmaj7 (4 bars)
+    chords: [
+      { degree: 2, quality: "min7", bars: 2 },
+      { degree: 7, quality: "dom7", bars: 2 },
+      { degree: 0, quality: "maj7", bars: 4 }
+    ]
+  },
+  {
+    id: "modal_dorian",
+    label: "Modal Dorien",
+    color: "#185FA5",
+    colorL: "#E6F1FB",
+    colorD: "#042C53",
+    colorB: "#A0BFE0",
+    scale: "dorian",
+    desc: "La sixte majeure est ta note caract\xE9ristique. \xC9vite de r\xE9soudre trop t\xF4t.",
+    targetDesc: "Fondamentale, 6te majeure (couleur dorien), tierce mineure",
+    bpm: 90,
+    // Im7 - IV7 : c'est ce va-et-vient qui FAIT entendre le dorien.
+    // Un Im7 seul en boucle ne révèle rien — la 6te majeure, qui est la
+    // note caractéristique du mode, ne s'entend que par contraste avec le
+    // IV majeur. Un seul accord ne donne rien à travailler.
+    chords: [
+      { degree: 0, quality: "min7", bars: 2 },
+      { degree: 5, quality: "dom7", bars: 2 }
+    ]
+  },
+  {
+    id: "modal_mixo",
+    label: "Modal Mixolydien",
+    color: C.coral,
+    colorL: C.coralL,
+    colorD: C.coralD,
+    colorB: C.coralBorder,
+    scale: "mixolydian",
+    desc: "Son rock/funk. La b7 naturelle donne la couleur dominante.",
+    targetDesc: "Fondamentale, tierce majeure, 7e mineure (couleur)",
+    bpm: 100,
+    // I7 - bVII : la cadence qui signe le mixolydien. Le bVII majeur est ce
+    // qui distingue le mode d'un simple accord de dominante tenu.
+    chords: [
+      { degree: 0, quality: "dom7", bars: 2 },
+      { degree: 10, quality: "maj", bars: 2 }
+    ]
+  }
+];
+
+// src/screens/jam/mixage.js
+var MIXAGE = {
+  pianoPasseHaut: 160,
+  // Hz — sous ce seuil, le piano laisse la place à la basse
+  pianoPan: 0.18,
+  // −1 gauche … +1 droite — légèrement à droite
+  charlestonPan: -0.22,
+  // légèrement à gauche (basse et grosse caisse restent au centre)
+  bassePasseHaut: 45,
+  // Hz — infra-basses : inaudibles au téléphone, elles font pomper le compresseur
+  batterieReverb: 0.14,
+  // part de la batterie envoyée dans la réverbération : même « pièce » que le piano
+  limiteurDb: -1
+  // plafond final : aucun pic ne dépasse −1 dB
+};
+
+// src/screens/jam/harmonie.js
+init_fretboardUtils();
+
+// src/music/walkingBass.js
+var CHROMATIC3 = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+var midiOf2 = (name, oct) => CHROMATIC3.indexOf(name) + 12 * (oct + 1);
+var nameOfMidi = (m) => CHROMATIC3[(m % 12 + 12) % 12];
+var octOfMidi = (m) => Math.floor(m / 12) - 1;
+var CHORD_TONES = {
+  maj: [0, 4, 7],
+  min: [0, 3, 7],
+  dom7: [0, 4, 7, 10],
+  maj7: [0, 4, 7, 11],
+  min7: [0, 3, 7, 10],
+  min7b5: [0, 3, 6, 10],
+  dim7: [0, 3, 6, 9]
+};
+var BASS_LOW = 28;
+var BASS_HIGH = 48;
+function clampToBass(midi) {
+  while (midi < BASS_LOW) midi += 12;
+  while (midi > BASS_HIGH) midi -= 12;
+  return midi;
+}
+function approachNote(targetMidi, style, rng) {
+  const r = rng();
+  if (style === "blues") {
+    return r < 0.7 ? targetMidi - 1 : targetMidi + 1;
+  }
+  if (r < 0.45) return targetMidi - 1;
+  if (r < 0.7) return targetMidi + 1;
+  return targetMidi - 5;
+}
+function generateWalkingBar(opts) {
+  const {
+    rootName,
+    quality = "dom7",
+    nextRoot = rootName,
+    style = "jazz",
+    barIndex = 0,
+    energy = 3,
+    rng = Math.random
+  } = opts;
+  const tones = CHORD_TONES[quality] || CHORD_TONES.dom7;
+  const rootIdx = CHROMATIC3.indexOf(rootName);
+  if (rootIdx < 0) return [];
+  const rootMidi = clampToBass(midiOf2(rootName, 1));
+  const nextRootMidi = clampToBass(midiOf2(nextRoot, 1));
+  const ascending = barIndex % 2 === 0 ? rng() < 0.7 : rng() < 0.3;
+  const notes = [];
+  let first = rootMidi;
+  if (rng() < 0.12 && energy >= 3) {
+    first = clampToBass(rootMidi + 7);
+  }
+  notes.push({ beat: 0, midi: first, dur: "4n", velocity: 0.82 });
+  const available = tones.map((t) => clampToBass(rootMidi + t)).filter((m) => m !== first);
+  const sorted = [...new Set(available)].sort((a, b) => ascending ? a - b : b - a);
+  const pick2 = sorted[Math.floor(rng() * Math.min(2, sorted.length))] ?? clampToBass(rootMidi + 7);
+  notes.push({ beat: 1, midi: pick2, dur: "4n", velocity: 0.74 });
+  const rest = sorted.filter((m) => m !== pick2);
+  const pick3 = rest[Math.floor(rng() * Math.min(2, rest.length))] ?? clampToBass(rootMidi + 10);
+  notes.push({ beat: 2, midi: pick3, dur: "4n", velocity: 0.78 });
+  const approach = clampToBass(approachNote(nextRootMidi, style, rng));
+  notes.push({ beat: 3, midi: approach, dur: "4n", velocity: 0.8, approach: true });
+  if (energy >= 3 && rng() < 0.18 + energy * 0.04) {
+    const between = Math.floor(rng() * 3);
+    const from = notes[between].midi, to = notes[between + 1].midi;
+    if (Math.abs(to - from) > 2) {
+      const passing = from + Math.sign(to - from) * (Math.abs(to - from) > 3 ? 2 : 1);
+      notes.push({
+        beat: between + 0.5,
+        midi: clampToBass(passing),
+        dur: "8n",
+        velocity: 0.55,
+        passing: true
+      });
+    }
+  }
+  if (energy >= 4 && rng() < 0.15) {
+    notes.push({ beat: 3.5, midi: clampToBass(rootMidi - 12), dur: "16n", velocity: 0.22, ghost: true });
+  }
+  notes.sort((a, b) => a.beat - b.beat);
+  return notes;
+}
+function toToneNote2(midi) {
+  const SHARP_TO_FLAT3 = { "C#": "Db", "D#": "Eb", "F#": "Gb", "G#": "Ab", "A#": "Bb" };
+  const n = nameOfMidi(midi);
+  return `${SHARP_TO_FLAT3[n] || n}${octOfMidi(midi)}`;
+}
+function toToneTime(beat) {
+  const whole = Math.floor(beat);
+  const sixteenths = Math.round((beat - whole) * 4);
+  return `0:${whole}:${sixteenths}`;
+}
+
+// src/screens/jam/harmonie.js
+var ROOTS_FR = [
+  { en: "A", fr: "La" },
+  { en: "B", fr: "Si" },
+  { en: "C", fr: "Do" },
+  { en: "D", fr: "R\xE9" },
+  { en: "E", fr: "Mi" },
+  { en: "F", fr: "Fa" },
+  { en: "G", fr: "Sol" },
+  { en: "C#", fr: "Do#" },
+  { en: "D#", fr: "R\xE9#" },
+  { en: "F#", fr: "Fa#" },
+  { en: "G#", fr: "Sol#" },
+  { en: "A#", fr: "La#" }
+];
+var CHROMATIC4 = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+var SHARP_TO_FLAT2 = { "C#": "Db", "D#": "Eb", "F#": "Gb", "G#": "Ab", "A#": "Bb" };
+function transposeNote(root, semitones) {
+  const idx = CHROMATIC4.indexOf(root);
+  return CHROMATIC4[(idx + semitones) % 12];
+}
+var CHORD_INTERVALS = {
+  maj7: [0, 4, 7, 11],
+  min7: [0, 3, 7, 10],
+  dom7: [0, 4, 7, 10],
+  maj: [0, 4, 7],
+  min: [0, 3, 7]
+};
+var QUALITE_LABEL = { maj7: "maj7", min7: "m7", dom7: "7", maj: "", min: "m" };
+function notesAccord2(root, chord) {
+  const r = transposeNote(root, chord.degree);
+  return (CHORD_INTERVALS[chord.quality] || CHORD_INTERVALS.dom7).map((i) => transposeNote(r, i));
+}
+var nomAccord = (root, chord) => {
+  const r = transposeNote(root, chord.degree);
+  return (ROOTS_FR.find((x) => x.en === r)?.fr ?? r) + (QUALITE_LABEL[chord.quality] ?? "");
+};
+var VOICINGS = {
+  // Voicing jazz : root basse, 3e, 5e, 7e en ordre montant
+  min7: { intervals: [0, 10, 15, 19], desc: "x-R-b7-3-5" },
+  maj7: { intervals: [0, 11, 16, 19], desc: "x-R-7-3-5" },
+  dom7: { intervals: [0, 10, 16, 19], desc: "x-R-b7-3-5" },
+  // Pour le blues : accords ouverts plus puissants
+  dom7b: { intervals: [0, 7, 10, 16], desc: "R-5-b7-3" },
+  // Triades. Sans elles, le bVII majeur du mixolydien retombait sur le
+  // voicing m7 par défaut : en La, le Sol affiché « Sol » sonnait Sol m7
+  // (Sol-Si♭-Ré-Fa) — deux notes étrangères au mode (Si♭ et Fa), sur
+  // l'accord même qui doit le faire entendre.
+  maj: { intervals: [0, 4, 7, 16], desc: "R-3-5-3" },
+  min: { intervals: [0, 3, 7, 15], desc: "R-b3-5-b3" }
+};
+function getVoicedChord(rootNote, quality, style = "jazz") {
+  const iBlues = style === "blues" || style === "blues12";
+  const voicing = iBlues && quality === "dom7" ? VOICINGS.dom7b : VOICINGS[quality] || VOICINGS.dom7;
+  const rootIdx = CHROMATIC4.indexOf(rootNote);
+  if (rootIdx < 0) return [];
+  const rootless = voicing.intervals.filter((i) => i % 12 !== 0);
+  const degrees = rootless.length ? rootless : voicing.intervals;
+  const COMP_MIN_MIDI = 52;
+  const lowestDegree = Math.min(...degrees);
+  let base = 36 + rootIdx;
+  while (base + lowestDegree < COMP_MIN_MIDI) base += 12;
+  while (base + lowestDegree >= COMP_MIN_MIDI + 12) base -= 12;
+  return degrees.map((interval) => {
+    const midi = base + interval;
+    const name = CHROMATIC4[(midi % 12 + 12) % 12];
+    const oct = Math.floor(midi / 12) - 1;
+    return `${SHARP_TO_FLAT2[name] || name}${oct}`;
+  });
+}
+function getBassPattern(rootNote, quality, style, nextRoot, barIdx, energy = 3) {
+  const bluesy = style === "blues" || style === "blues12";
+  const notes = generateWalkingBar({
+    rootName: normalizeNote(rootNote),
+    quality: quality || "dom7",
+    nextRoot: normalizeNote(nextRoot || rootNote),
+    style: bluesy ? "blues" : "jazz",
+    barIndex: barIdx || 0,
+    energy
+  });
+  return notes.map((n) => ({
+    note: toToneNote2(n.midi),
+    time: toToneTime(n.beat),
+    dur: n.dur,
+    velocity: n.velocity
+  }));
+}
+function getDrumPattern(style) {
+  if (style === "blues" || style === "blues12") {
+    return {
+      kick: ["0:0:0", "0:2:0"],
+      snare: ["0:1:0", "0:3:0"],
+      hihat: ["0:0:0", "0:0:2", "0:1:0", "0:1:2", "0:2:0", "0:2:2", "0:3:0", "0:3:2"],
+      shuffle: true
+    };
+  }
+  if (style === "jazz") {
+    return {
+      kick: ["0:0:0", "0:2:2"],
+      snare: ["0:1:0", "0:3:0"],
+      hihat: ["0:0:0", "0:0:3", "0:1:2", "0:2:0", "0:2:3", "0:3:2"],
+      shuffle: false
+    };
+  }
+  if (style === "funk") {
+    return {
+      kick: ["0:0:0", "0:0:3", "0:2:0", "0:2:2"],
+      snare: ["0:1:0", "0:3:0", "0:3:2"],
+      hihat: ["0:0:0", "0:0:1", "0:0:2", "0:0:3", "0:1:0", "0:1:1", "0:1:2", "0:1:3", "0:2:0", "0:2:1", "0:2:2", "0:2:3", "0:3:0", "0:3:1", "0:3:2", "0:3:3"],
+      shuffle: false
+    };
+  }
+  return {
+    kick: ["0:0:0", "0:0:2", "0:2:0"],
+    snare: ["0:1:0", "0:3:0"],
+    hihat: ["0:0:0", "0:0:2", "0:1:0", "0:1:2", "0:2:0", "0:2:2", "0:3:0", "0:3:2"],
+    shuffle: false
+  };
+}
+var STYLE_PAR_CONTEXTE = {
+  blues_minor: "blues",
+  blues_12: "blues12",
+  jazz_251: "jazz",
+  modal_dorian: "funk",
+  modal_mixo: "rock"
+};
+var getStyle = (contextId) => STYLE_PAR_CONTEXTE[contextId] || "rock";
+
+// src/screens/jam/chrono.js
+import { useSyncExternalStore } from "react";
+function creerChrono() {
+  let secondes2 = 0;
+  const abonnes = /* @__PURE__ */ new Set();
+  return {
+    lire: () => secondes2,
+    abonner: (fn) => {
+      abonnes.add(fn);
+      return () => {
+        abonnes.delete(fn);
+      };
+    },
+    tic: () => {
+      secondes2 += 1;
+      abonnes.forEach((fn) => fn());
+    }
+  };
+}
+var useSecondesJouees = (chrono) => useSyncExternalStore(chrono.abonner, chrono.lire, chrono.lire);
+
+// src/screens/jam/reglages.js
+var SEUIL_SESSION = 180;
+var BPM_MIN = 40;
+var BPM_MAX = 200;
+var fmtDuree = (sec) => `${Math.floor(sec / 60)}:${String(Math.max(0, sec) % 60).padStart(2, "0")}`;
+
+// src/screens/jam/SuiviSeance.jsx
+init_tokens();
+init_ThemeContext();
+init_Ti();
+import { Fragment as Fragment9, jsx as jsx13, jsxs as jsxs11 } from "react/jsx-runtime";
+function SuiviSeance({ chrono, sessionComptee, couleur }) {
+  const C = useC();
+  const secondesJouees = useSecondesJouees(chrono);
+  if (!(secondesJouees > 0 || sessionComptee)) return null;
+  return /* @__PURE__ */ jsx13("div", { role: "status", style: { display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: R.md, background: sessionComptee ? C.greenL : C.surface, border: `1px solid ${sessionComptee ? C.greenBorder : C.border}` }, children: sessionComptee ? /* @__PURE__ */ jsxs11(Fragment9, { children: [
+    /* @__PURE__ */ jsx13(Ti, { name: "check", size: 16, color: C.greenD }),
+    /* @__PURE__ */ jsxs11("div", { style: { fontSize: 12.5, color: C.greenD, fontFamily: FONTS.ui, lineHeight: 1.4 }, children: [
+      /* @__PURE__ */ jsx13("b", { children: "S\xE9ance compt\xE9e" }),
+      " dans ta s\xE9rie et tes objectifs",
+      sessionComptee.xp > 0 ? ` \xB7 +${sessionComptee.xp} XP` : sessionComptee.xp === 0 ? " \xB7 XP de pratique du jour d\xE9j\xE0 au maximum" : ""
+    ] })
+  ] }) : /* @__PURE__ */ jsxs11("div", { style: { flex: 1 }, children: [
+    /* @__PURE__ */ jsxs11("div", { style: { fontSize: 12, color: C.text2, fontFamily: FONTS.ui }, children: [
+      "Encore ",
+      /* @__PURE__ */ jsx13("b", { children: fmtDuree(SEUIL_SESSION - secondesJouees) }),
+      " de jeu pour que la s\xE9ance compte"
+    ] }),
+    /* @__PURE__ */ jsx13("div", { "aria-hidden": "true", style: { height: 4, borderRadius: 2, background: C.border, marginTop: 6, overflow: "hidden" }, children: /* @__PURE__ */ jsx13("div", { style: { width: `${Math.min(100, secondesJouees / SEUIL_SESSION * 100)}%`, height: "100%", background: couleur, transition: "width 1s linear" } }) })
+  ] }) });
+}
+
+// src/screens/jam/CarteContrainte.jsx
+init_tokens();
+init_ThemeContext();
+init_Ti();
+import { useState as useState11, useEffect as useEffect9, useEffectEvent as useEffectEvent2, useRef as useRef7 } from "react";
+import { Fragment as Fragment10, jsx as jsx14, jsxs as jsxs12 } from "react/jsx-runtime";
+var CONSTRAINTS = [
+  { text: "Joue UNIQUEMENT des notes longues. Z\xE9ro double-croche.", level: "Facile" },
+  { text: "Chaque phrase doit finir sur une note de l'accord.", level: "Facile" },
+  { text: "4 notes maximum par phrase, et un silence entre chaque phrase.", level: "Facile" },
+  { text: "Joue une phrase de 2 mesures, puis 2 mesures de silence : question-r\xE9ponse.", level: "Facile" },
+  { text: "Fais entendre la sixte majeure au moins une fois par phrase : c'est elle qui signe le dorien.", level: "Facile", contextes: ["modal_dorian"] },
+  { text: "Reste uniquement sur les 3 cordes aigu\xEBs.", level: "Moyen" },
+  { text: "Commence chaque phrase sur un temps fort (1 ou 3).", level: "Moyen" },
+  { text: "Utilise le silence pendant au moins 50 % du temps.", level: "Moyen" },
+  { text: "Monte progressivement en intensit\xE9 pendant 2 minutes, puis redescends.", level: "Moyen" },
+  { text: "Glisse la note bleue (quinte diminu\xE9e) dans chaque phrase, en note de passage.", level: "Moyen", contextes: ["blues_12"] },
+  { text: "Termine tes phrases sur la septi\xE8me mineure plut\xF4t que sur la fondamentale.", level: "Moyen", contextes: ["modal_mixo"] },
+  { text: "Sur l'accord IVm7, vise sa tierce mineure : elle sort de ta penta et fait entendre le changement.", level: "Difficile", contextes: ["blues_minor"] },
+  { text: "Chaque phrase contient exactement une note chromatique (hors gamme).", level: "Difficile" },
+  { text: "Cible uniquement les guide tones (3e et 7e) sur les temps 1 et 3.", level: "Difficile" },
+  { text: "Relie les accords : la 7e de chaque accord descend d'un demi-ton vers la 3e du suivant.", level: "Difficile", contextes: ["jazz_251"] },
+  { text: "Construis un solo en 3 actes : calme (1 min), mont\xE9e (2 min), sommet (30 s).", level: "Difficile" },
+  { text: "Joue les yeux ferm\xE9s. Sens le manche, ne le regarde pas.", level: "Difficile" }
+];
+var NIVEAUX_CONTRAINTE = ["Facile", "Moyen", "Difficile"];
+var DUREE_CONTRAINTE = 120;
+var niveauParDefaut = (niveauApp) => niveauApp >= 16 ? "Difficile" : niveauApp >= 6 ? "Moyen" : "Facile";
+var makeLevelColor = (C) => ({ "Facile": C.green, "Moyen": C.amber, "Difficile": C.coral });
+function CarteContrainte({ chrono, enLecture, contextId, niveauApp, dispatch }) {
+  const C = useC();
+  const LEVEL_COLOR = makeLevelColor(C);
+  const [niveauContrainte, setNiveauContrainte] = useState11(() => niveauParDefaut(niveauApp || 1));
+  const [constraint, setConstraint] = useState11(null);
+  const [resteContrainte, setResteContrainte] = useState11(DUREE_CONTRAINTE);
+  const [contraintesTenues, setContraintesTenues] = useState11(0);
+  const tenue = constraint && resteContrainte === 0;
+  const contrainteTenueRef = useRef7(null);
+  const surSeconde = useEffectEvent2(() => {
+    if (!constraint || resteContrainte === 0) return;
+    const reste = resteContrainte - 1;
+    setResteContrainte(reste);
+    if (reste === 0 && contrainteTenueRef.current !== constraint) {
+      contrainteTenueRef.current = constraint;
+      setContraintesTenues((n) => n + 1);
+      dispatch?.({ type: "JAM_PROGRES", contrainte: true });
+    }
+  });
+  useEffect9(() => chrono.abonner(() => surSeconde()), [chrono]);
+  const randomConstraint = (niveau = niveauContrainte) => {
+    const candidates = CONSTRAINTS.filter((c) => c.level === niveau && (!c.contextes || c.contextes.includes(contextId)) && c !== constraint);
+    const pool = candidates.length ? candidates : CONSTRAINTS.filter((c) => c.level === niveau);
+    setConstraint(pool[Math.floor(Math.random() * pool.length)]);
+    setResteContrainte(DUREE_CONTRAINTE);
+  };
+  return /* @__PURE__ */ jsxs12("div", { style: { background: constraint ? C.amberL : C.surface, border: `1px solid ${constraint ? C.amberBorder : C.border}`, borderRadius: R.lg, padding: "12px 14px" }, children: [
+    /* @__PURE__ */ jsxs12("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }, children: [
+      /* @__PURE__ */ jsx14("div", { style: { flex: 1, fontSize: 11, fontWeight: 700, color: constraint ? C.amberD : C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em" }, children: "Contrainte du moment" }),
+      contraintesTenues > 0 && /* @__PURE__ */ jsxs12("span", { style: { fontSize: 11, fontWeight: 700, color: C.amberD, fontFamily: FONTS.ui }, children: [
+        contraintesTenues,
+        " tenue",
+        contraintesTenues > 1 ? "s" : ""
+      ] })
+    ] }),
+    /* @__PURE__ */ jsx14("div", { role: "group", "aria-label": "Difficult\xE9 des contraintes", style: { display: "flex", gap: 4, marginBottom: 10, background: C.surface2, borderRadius: R.sm, padding: 3 }, children: NIVEAUX_CONTRAINTE.map((n) => /* @__PURE__ */ jsx14("button", { onClick: () => {
+      setNiveauContrainte(n);
+      if (constraint) randomConstraint(n);
+    }, "aria-pressed": niveauContrainte === n, className: "gr-focus", style: {
+      flex: 1,
+      minHeight: 34,
+      borderRadius: R.sm - 2,
+      border: "none",
+      cursor: "pointer",
+      fontFamily: FONTS.ui,
+      fontSize: 12,
+      fontWeight: 700,
+      background: niveauContrainte === n ? C.surface : "transparent",
+      color: niveauContrainte === n ? LEVEL_COLOR[n] : C.text3,
+      boxShadow: niveauContrainte === n ? `0 0 0 1.5px ${C.border}` : "none"
+    }, children: n }, n)) }),
+    constraint ? /* @__PURE__ */ jsxs12(Fragment10, { children: [
+      /* @__PURE__ */ jsx14("div", { id: "contrainte-texte", "aria-live": "polite", style: { fontSize: 14, color: C.amberD, fontFamily: FONTS.title, lineHeight: 1.5, fontWeight: 600 }, children: constraint.text }),
+      /* @__PURE__ */ jsxs12("div", { style: { display: "flex", alignItems: "center", gap: 10, marginTop: 10 }, children: [
+        tenue ? /* @__PURE__ */ jsxs12("div", { style: { flex: 1, display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 700, color: C.greenD, fontFamily: FONTS.ui }, children: [
+          /* @__PURE__ */ jsx14(Ti, { name: "check", size: 15, color: C.greenD }),
+          " Tenue 2 minutes, bravo."
+        ] }) : /* @__PURE__ */ jsxs12("div", { style: { flex: 1 }, children: [
+          /* @__PURE__ */ jsx14("div", { style: { fontSize: 12, color: C.amberD, fontFamily: FONTS.ui }, children: !enLecture ? "Lance le backing : le chrono tourne pendant que tu joues." : /* @__PURE__ */ jsxs12(Fragment10, { children: [
+            "Tiens-la encore ",
+            /* @__PURE__ */ jsx14("b", { children: fmtDuree(resteContrainte) })
+          ] }) }),
+          /* @__PURE__ */ jsx14("div", { "aria-hidden": "true", style: { height: 4, borderRadius: 2, background: C.amberBorder, marginTop: 6, overflow: "hidden" }, children: /* @__PURE__ */ jsx14("div", { style: { width: `${(DUREE_CONTRAINTE - resteContrainte) / DUREE_CONTRAINTE * 100}%`, height: "100%", background: C.amber, transition: "width 1s linear" } }) })
+        ] }),
+        /* @__PURE__ */ jsx14("button", { onClick: () => randomConstraint(), className: "gr-focus", style: { minHeight: 36, padding: "0 14px", borderRadius: R.pill, border: `1px solid ${C.amber}`, background: tenue ? C.amber : C.surface, color: tenue ? C.onPrimaryBtn : C.amberD, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }, children: tenue ? "Suivante" : "Changer" })
+      ] })
+    ] }) : /* @__PURE__ */ jsxs12("div", { style: { display: "flex", alignItems: "center", gap: 10 }, children: [
+      /* @__PURE__ */ jsx14("div", { style: { flex: 1, fontSize: 12.5, color: C.text2, fontFamily: FONTS.ui, lineHeight: 1.45 }, children: "Une limite claire, tenue 2 minutes : c'est ce qui fait progresser en impro." }),
+      /* @__PURE__ */ jsx14("button", { onClick: () => randomConstraint(), className: "gr-focus", style: { minHeight: 36, padding: "0 14px", borderRadius: R.pill, border: "none", background: C.amber, color: C.onPrimaryBtn, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }, children: "Tirer" })
+    ] })
+  ] });
+}
 
 // src/jam/arrangement/arranger.js
 var SECTION_TEMPLATES = [
@@ -8744,7 +11773,7 @@ var funk_16_default = {
 };
 
 // src/screens/JamSession.jsx
-import { Fragment as Fragment8, jsx as jsx12, jsxs as jsxs10 } from "react/jsx-runtime";
+import { Fragment as Fragment11, jsx as jsx15, jsxs as jsxs13 } from "react/jsx-runtime";
 var PACK_PAR_STYLE = {
   blues: blues_shuffle_default,
   blues12: blues_shuffle_default,
@@ -8759,355 +11788,89 @@ function shade2(hex, amount) {
   b = Math.max(0, Math.min(255, b));
   return "#" + (r << 16 | g << 8 | b).toString(16).padStart(6, "0");
 }
-var makeContexts = (C) => [
-  {
-    id: "blues_minor",
-    label: "Blues mineur",
-    color: C.amber,
-    colorL: C.amberL,
-    colorD: C.amberD,
-    colorB: C.amberBorder,
-    scale: "pentatonic_minor",
-    desc: "Le terrain de jeu du rock et du blues. La pentatonique mineure sonne sur tout.",
-    targetDesc: "Fondamentale, tierce mineure, quinte",
-    bpm: 80,
-    // Vraie grille de blues mineur, pas un accord en boucle : le IVm et le
-    // V7 sont ce qui donne des points de résolution à travailler.
-    chords: [
-      { degree: 0, quality: "min7", bars: 4 },
-      { degree: 5, quality: "min7", bars: 2 },
-      { degree: 0, quality: "min7", bars: 2 },
-      { degree: 7, quality: "dom7", bars: 2 },
-      { degree: 0, quality: "min7", bars: 2 }
-    ]
-  },
-  {
-    id: "blues_12",
-    label: "Blues 12 mesures",
-    color: C.primary,
-    colorL: C.primaryL,
-    colorD: C.primaryD,
-    colorB: C.primaryBorder,
-    scale: "blues",
-    desc: "La note bleue (b5) est ta couleur signature.",
-    targetDesc: "Fondamentale, tierce mineure, note bleue",
-    bpm: 80,
-    // Progression blues 12 mesures : I7-I7-I7-I7-IV7-IV7-I7-I7-V7-IV7-I7-V7
-    chords: [
-      { degree: 0, quality: "dom7", bars: 4 },
-      { degree: 5, quality: "dom7", bars: 2 },
-      { degree: 0, quality: "dom7", bars: 2 },
-      { degree: 7, quality: "dom7", bars: 1 },
-      { degree: 5, quality: "dom7", bars: 1 },
-      { degree: 0, quality: "dom7", bars: 1 },
-      { degree: 7, quality: "dom7", bars: 1 }
-    ]
-  },
-  {
-    id: "jazz_251",
-    label: "Jazz ii-V-I",
-    color: C.green,
-    colorL: C.greenL,
-    colorD: C.greenD,
-    colorB: C.greenBorder,
-    scale: "major",
-    desc: "Cible les guide tones (3e et 7e) de chaque accord sur les temps forts.",
-    targetDesc: "3e (couleur), 7e majeure ou mineure (tension)",
-    bpm: 120,
-    // ii-V-I : Dm7 (2 bars) - G7 (2 bars) - Cmaj7 (4 bars)
-    chords: [
-      { degree: 2, quality: "min7", bars: 2 },
-      { degree: 7, quality: "dom7", bars: 2 },
-      { degree: 0, quality: "maj7", bars: 4 }
-    ]
-  },
-  {
-    id: "modal_dorian",
-    label: "Modal Dorien",
-    color: "#185FA5",
-    colorL: "#E6F1FB",
-    colorD: "#042C53",
-    colorB: "#A0BFE0",
-    scale: "dorian",
-    desc: "La sixte majeure est ta note caract\xE9ristique. \xC9vite de r\xE9soudre trop t\xF4t.",
-    targetDesc: "Fondamentale, 6te majeure (couleur dorien), tierce mineure",
-    bpm: 90,
-    // Im7 - IV7 : c'est ce va-et-vient qui FAIT entendre le dorien.
-    // Un Im7 seul en boucle ne révèle rien — la 6te majeure, qui est la
-    // note caractéristique du mode, ne s'entend que par contraste avec le
-    // IV majeur. Un seul accord ne donne rien à travailler.
-    chords: [
-      { degree: 0, quality: "min7", bars: 2 },
-      { degree: 5, quality: "dom7", bars: 2 }
-    ]
-  },
-  {
-    id: "modal_mixo",
-    label: "Modal Mixolydien",
-    color: C.coral,
-    colorL: C.coralL,
-    colorD: C.coralD,
-    colorB: C.coralBorder,
-    scale: "mixolydian",
-    desc: "Son rock/funk. La b7 naturelle donne la couleur dominante.",
-    targetDesc: "Fondamentale, tierce majeure, 7e mineure (couleur)",
-    bpm: 100,
-    // I7 - bVII : la cadence qui signe le mixolydien. Le bVII majeur est ce
-    // qui distingue le mode d'un simple accord de dominante tenu.
-    chords: [
-      { degree: 0, quality: "dom7", bars: 2 },
-      { degree: 10, quality: "maj", bars: 2 }
-    ]
-  }
-];
-var ROOTS_FR = [
-  { en: "A", fr: "La" },
-  { en: "B", fr: "Si" },
-  { en: "C", fr: "Do" },
-  { en: "D", fr: "R\xE9" },
-  { en: "E", fr: "Mi" },
-  { en: "F", fr: "Fa" },
-  { en: "G", fr: "Sol" },
-  { en: "C#", fr: "Do#" },
-  { en: "D#", fr: "R\xE9#" },
-  { en: "F#", fr: "Fa#" },
-  { en: "G#", fr: "Sol#" },
-  { en: "A#", fr: "La#" }
-];
-var CHROMATIC4 = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-function transposeNote(root, semitones) {
-  const idx = CHROMATIC4.indexOf(root);
-  return CHROMATIC4[(idx + semitones) % 12];
-}
-var CHORD_INTERVALS = {
-  maj7: [0, 4, 7, 11],
-  min7: [0, 3, 7, 10],
-  dom7: [0, 4, 7, 10],
-  maj: [0, 4, 7],
-  min: [0, 3, 7]
-};
-var QUALITE_LABEL = { maj7: "maj7", min7: "m7", dom7: "7", maj: "", min: "m" };
-function notesAccord2(root, chord) {
-  const r = transposeNote(root, chord.degree);
-  return (CHORD_INTERVALS[chord.quality] || CHORD_INTERVALS.dom7).map((i) => transposeNote(r, i));
-}
-var nomAccord = (root, chord) => {
-  const r = transposeNote(root, chord.degree);
-  return (ROOTS_FR.find((x) => x.en === r)?.fr ?? r) + (QUALITE_LABEL[chord.quality] ?? "");
-};
-var CONSTRAINTS = [
-  { text: "Joue UNIQUEMENT des notes longues. Z\xE9ro double-croche.", level: "Facile" },
-  { text: "Chaque phrase doit finir sur une note de l'accord.", level: "Facile" },
-  { text: "4 notes maximum par phrase, et un silence entre chaque phrase.", level: "Facile" },
-  { text: "Joue une phrase de 2 mesures, puis 2 mesures de silence : question-r\xE9ponse.", level: "Facile" },
-  { text: "Fais entendre la sixte majeure au moins une fois par phrase : c'est elle qui signe le dorien.", level: "Facile", contextes: ["modal_dorian"] },
-  { text: "Reste uniquement sur les 3 cordes aigu\xEBs.", level: "Moyen" },
-  { text: "Commence chaque phrase sur un temps fort (1 ou 3).", level: "Moyen" },
-  { text: "Utilise le silence pendant au moins 50 % du temps.", level: "Moyen" },
-  { text: "Monte progressivement en intensit\xE9 pendant 2 minutes, puis redescends.", level: "Moyen" },
-  { text: "Glisse la note bleue (quinte diminu\xE9e) dans chaque phrase, en note de passage.", level: "Moyen", contextes: ["blues_12"] },
-  { text: "Termine tes phrases sur la septi\xE8me mineure plut\xF4t que sur la fondamentale.", level: "Moyen", contextes: ["modal_mixo"] },
-  { text: "Sur l'accord IVm7, vise sa tierce mineure : elle sort de ta penta et fait entendre le changement.", level: "Difficile", contextes: ["blues_minor"] },
-  { text: "Chaque phrase contient exactement une note chromatique (hors gamme).", level: "Difficile" },
-  { text: "Cible uniquement les guide tones (3e et 7e) sur les temps 1 et 3.", level: "Difficile" },
-  { text: "Relie les accords : la 7e de chaque accord descend d'un demi-ton vers la 3e du suivant.", level: "Difficile", contextes: ["jazz_251"] },
-  { text: "Construis un solo en 3 actes : calme (1 min), mont\xE9e (2 min), sommet (30 s).", level: "Difficile" },
-  { text: "Joue les yeux ferm\xE9s. Sens le manche, ne le regarde pas.", level: "Difficile" }
-];
-var NIVEAUX_CONTRAINTE = ["Facile", "Moyen", "Difficile"];
-var DUREE_CONTRAINTE = 120;
-var SEUIL_SESSION = 180;
-var niveauParDefaut = (niveauApp) => niveauApp >= 16 ? "Difficile" : niveauApp >= 6 ? "Moyen" : "Facile";
-var fmtDuree = (sec) => `${Math.floor(sec / 60)}:${String(Math.max(0, sec) % 60).padStart(2, "0")}`;
-var BPM_MIN = 40;
-var BPM_MAX = 200;
-var MIXAGE = {
-  pianoPasseHaut: 160,
-  // Hz — sous ce seuil, le piano laisse la place à la basse
-  pianoPan: 0.18,
-  // −1 gauche … +1 droite — légèrement à droite
-  charlestonPan: -0.22,
-  // légèrement à gauche (basse et grosse caisse restent au centre)
-  bassePasseHaut: 45,
-  // Hz — infra-basses : inaudibles au téléphone, elles font pomper le compresseur
-  batterieReverb: 0.14,
-  // part de la batterie envoyée dans la réverbération : même « pièce » que le piano
-  limiteurDb: -1
-  // plafond final : aucun pic ne dépasse −1 dB
-};
-var makeLevelColor = (C) => ({ "Facile": C.green, "Moyen": C.amber, "Difficile": C.coral });
 function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord, onSecondeJouee, onLecture }) {
   const C = useC();
-  const [playing, setPlaying] = useState10(false);
-  const [compte, setCompte] = useState10(null);
-  const [rampe, setRampe] = useState10(false);
-  const [energie, setEnergie] = useState10(3);
-  const [coupes, setCoupes] = useState10({ accords: false, basse: false, batterie: false });
-  const [reglagesOuverts, setReglagesOuverts] = useState10(false);
+  const [playing, setPlaying] = useState12(false);
+  const [compte, setCompte] = useState12(null);
+  const [rampe, setRampe] = useState12(false);
+  const [energie, setEnergie] = useState12(3);
+  const [coupes, setCoupes] = useState12({ accords: false, basse: false, batterie: false });
+  const [reglagesOuverts, setReglagesOuverts] = useState12(false);
   useWakeLock(playing);
-  const [beat, setBeat] = useState10(0);
-  const [currentChord, setCurrentChord] = useState10(0);
-  const [loading, setLoading] = useState10(false);
-  const [playError, setPlayError] = useState10(null);
-  const samplerRef = useRef7(null);
-  const bassRef = useRef7(null);
-  const kickRef = useRef7(null);
-  const snareRef = useRef7(null);
-  const hihatRef = useRef7(null);
-  const seqRef = useRef7(null);
-  const beatSeqRef = useRef7(null);
-  const bassFilterRef = useRef7(null);
-  const bassCompRef = useRef7(null);
-  const kickCompRef = useRef7(null);
-  const snareFilterRef = useRef7(null);
-  const comperRef = useRef7(null);
-  const drumsRef = useRef7(null);
-  const drumsLoadedRef = useRef7(false);
-  const drumRRRef = useRef7({});
-  const plannerRef = useRef7(null);
-  const directorRef = useRef7(null);
-  const reverbRef = useRef7(null);
-  const delayRef = useRef7(null);
-  const compRef = useRef7(null);
-  const mixRef = useRef7([]);
-  const generationRef = useRef7(0);
-  const demarrageRef = useRef7(null);
-  const rootRef = useRef7(root);
+  const [beat, setBeat] = useState12(0);
+  const [currentChord, setCurrentChord] = useState12(0);
+  const [loading, setLoading] = useState12(false);
+  const [playError, setPlayError] = useState12(null);
+  const samplerRef = useRef8(null);
+  const bassRef = useRef8(null);
+  const kickRef = useRef8(null);
+  const snareRef = useRef8(null);
+  const hihatRef = useRef8(null);
+  const seqRef = useRef8(null);
+  const beatSeqRef = useRef8(null);
+  const bassFilterRef = useRef8(null);
+  const bassCompRef = useRef8(null);
+  const kickCompRef = useRef8(null);
+  const snareFilterRef = useRef8(null);
+  const comperRef = useRef8(null);
+  const drumsRef = useRef8(null);
+  const drumsLoadedRef = useRef8(false);
+  const drumRRRef = useRef8({});
+  const plannerRef = useRef8(null);
+  const directorRef = useRef8(null);
+  const reverbRef = useRef8(null);
+  const delayRef = useRef8(null);
+  const compRef = useRef8(null);
+  const mixRef = useRef8([]);
+  const generationRef = useRef8(0);
+  const demarrageRef = useRef8(null);
+  const rootRef = useRef8(root);
   rootRef.current = root;
-  const rampeRef = useRef7(rampe);
+  const rampeRef = useRef8(rampe);
   rampeRef.current = rampe;
-  const onChordRef = useRef7(onChord);
+  const onChordRef = useRef8(onChord);
   onChordRef.current = onChord;
-  const onBpmRef = useRef7(onBpmChange);
+  const onBpmRef = useRef8(onBpmChange);
   onBpmRef.current = onBpmChange;
-  const playingRef = useRef7(false);
+  const playingRef = useRef8(false);
   playingRef.current = playing;
-  const energieRef = useRef7(energie);
+  const energieRef = useRef8(energie);
   energieRef.current = energie;
-  const coupesRef = useRef7(coupes);
+  const coupesRef = useRef8(coupes);
   coupesRef.current = coupes;
-  const mesureRef = useRef7(0);
-  const onSecondeRef = useRef7(onSecondeJouee);
+  const mesureRef = useRef8(0);
+  const onSecondeRef = useRef8(onSecondeJouee);
   onSecondeRef.current = onSecondeJouee;
-  const onLectureRef = useRef7(onLecture);
+  const onLectureRef = useRef8(onLecture);
   onLectureRef.current = onLecture;
-  useEffect9(() => {
+  useEffect10(() => {
     onLectureRef.current?.(playing);
   }, [playing]);
-  useEffect9(() => {
+  useEffect10(() => {
     if (!playing || compte != null) return;
     const t = setInterval(() => onSecondeRef.current?.(), 1e3);
     return () => clearInterval(t);
   }, [playing, compte]);
-  useEffect9(() => {
+  useEffect10(() => {
     try {
       getTransport().bpm.value = bpm;
     } catch {
     }
   }, [bpm]);
-  const contexteRef = useRef7(context2.id);
-  useEffect9(() => {
-    if (contexteRef.current === context2.id) return;
-    contexteRef.current = context2.id;
+  const relancerSiJoue = useEffectEvent3(() => {
     if (playingRef.current) {
       stopBacking();
       startBacking();
     }
+  });
+  const arreterAuDemontage = useEffectEvent3(() => stopBacking());
+  const contexteRef = useRef8(context2.id);
+  useEffect10(() => {
+    if (contexteRef.current === context2.id) return;
+    contexteRef.current = context2.id;
+    relancerSiJoue();
   }, [context2.id]);
-  useEffect9(() => () => stopBacking(), []);
-  const VOICINGS = {
-    // Voicing jazz : root basse, 3e, 5e, 7e en ordre montant
-    min7: { intervals: [0, 10, 15, 19], desc: "x-R-b7-3-5" },
-    maj7: { intervals: [0, 11, 16, 19], desc: "x-R-7-3-5" },
-    dom7: { intervals: [0, 10, 16, 19], desc: "x-R-b7-3-5" },
-    // Pour le blues : accords ouverts plus puissants
-    dom7b: { intervals: [0, 7, 10, 16], desc: "R-5-b7-3" },
-    // Triades. Sans elles, le bVII majeur du mixolydien retombait sur le
-    // voicing m7 par défaut : en La, le Sol affiché « Sol » sonnait Sol m7
-    // (Sol-Si♭-Ré-Fa) — deux notes étrangères au mode (Si♭ et Fa), sur
-    // l'accord même qui doit le faire entendre.
-    maj: { intervals: [0, 4, 7, 16], desc: "R-3-5-3" },
-    min: { intervals: [0, 3, 7, 15], desc: "R-b3-5-b3" }
-  };
-  function getVoicedChord(rootNote, quality, style = "jazz") {
-    const iBlues = style === "blues" || style === "blues12";
-    const voicing = iBlues && quality === "dom7" ? VOICINGS.dom7b : VOICINGS[quality] || VOICINGS.dom7;
-    const rootIdx = CHROMATIC4.indexOf(rootNote);
-    if (rootIdx < 0) return [];
-    const rootless = voicing.intervals.filter((i) => i % 12 !== 0);
-    const degrees = rootless.length ? rootless : voicing.intervals;
-    const COMP_MIN_MIDI = 52;
-    const lowestDegree = Math.min(...degrees);
-    let base = 36 + rootIdx;
-    while (base + lowestDegree < COMP_MIN_MIDI) base += 12;
-    while (base + lowestDegree >= COMP_MIN_MIDI + 12) base -= 12;
-    const SHARP_TO_FLAT2 = { "C#": "Db", "D#": "Eb", "F#": "Gb", "G#": "Ab", "A#": "Bb" };
-    return degrees.map((interval) => {
-      const midi = base + interval;
-      const name = CHROMATIC4[(midi % 12 + 12) % 12];
-      const oct = Math.floor(midi / 12) - 1;
-      return `${SHARP_TO_FLAT2[name] || name}${oct}`;
-    });
-  }
-  function getBassPattern(rootNote, quality, style, nextRoot, barIdx, energy = 3) {
-    const bluesy = style === "blues" || style === "blues12";
-    const notes = generateWalkingBar({
-      rootName: normalizeNote(rootNote),
-      quality: quality || "dom7",
-      nextRoot: normalizeNote(nextRoot || rootNote),
-      style: bluesy ? "blues" : "jazz",
-      barIndex: barIdx || 0,
-      energy
-    });
-    return notes.map((n) => ({
-      note: toToneNote2(n.midi),
-      time: toToneTime(n.beat),
-      dur: n.dur,
-      velocity: n.velocity
-    }));
-  }
-  function getDrumPattern(style) {
-    if (style === "blues" || style === "blues12") {
-      return {
-        kick: ["0:0:0", "0:2:0"],
-        snare: ["0:1:0", "0:3:0"],
-        hihat: ["0:0:0", "0:0:2", "0:1:0", "0:1:2", "0:2:0", "0:2:2", "0:3:0", "0:3:2"],
-        shuffle: true
-      };
-    }
-    if (style === "jazz") {
-      return {
-        kick: ["0:0:0", "0:2:2"],
-        snare: ["0:1:0", "0:3:0"],
-        hihat: ["0:0:0", "0:0:3", "0:1:2", "0:2:0", "0:2:3", "0:3:2"],
-        shuffle: false
-      };
-    }
-    if (style === "funk") {
-      return {
-        kick: ["0:0:0", "0:0:3", "0:2:0", "0:2:2"],
-        snare: ["0:1:0", "0:3:0", "0:3:2"],
-        hihat: ["0:0:0", "0:0:1", "0:0:2", "0:0:3", "0:1:0", "0:1:1", "0:1:2", "0:1:3", "0:2:0", "0:2:1", "0:2:2", "0:2:3", "0:3:0", "0:3:1", "0:3:2", "0:3:3"],
-        shuffle: false
-      };
-    }
-    return {
-      kick: ["0:0:0", "0:0:2", "0:2:0"],
-      snare: ["0:1:0", "0:3:0"],
-      hihat: ["0:0:0", "0:0:2", "0:1:0", "0:1:2", "0:2:0", "0:2:2", "0:3:0", "0:3:2"],
-      shuffle: false
-    };
-  }
-  function getStyle(contextId) {
-    const map = {
-      blues_minor: "blues",
-      blues_12: "blues12",
-      jazz_251: "jazz",
-      modal_dorian: "funk",
-      modal_mixo: "rock"
-    };
-    return map[contextId] || "rock";
-  }
+  useEffect10(() => () => arreterAuDemontage(), []);
   function playDrum(type, time, velocity = 0.8) {
     const COUNTS = { kick: 3, snare: 2, hihat: 3, hihatOpen: 2, ride: 2, crash: 2, tomLow: 1, tomMid: 1 };
     if (drumsLoadedRef.current && drumsRef.current) {
@@ -9578,7 +12341,7 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
   };
   const LIBELLE_ENERGIE = ["", "Tr\xE8s calme", "Calme", "Normal", "Soutenu", "Intense"];
   const carre = { width: 40, height: 40, borderRadius: R.sm, border: `1.5px solid ${C.border}`, background: C.surface, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: C.text2, fontWeight: 800, fontSize: 16, fontFamily: FONTS.ui, padding: 0 };
-  return /* @__PURE__ */ jsxs10("div", { style: {
+  return /* @__PURE__ */ jsxs13("div", { style: {
     background: C.surface,
     border: `1.5px solid ${playing ? context2.color : C.border}`,
     borderRadius: R.lg,
@@ -9586,17 +12349,17 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
     transition: "border-color 0.3s, box-shadow 0.3s",
     boxShadow: playing ? `0 0 20px ${context2.color}22` : "none"
   }, children: [
-    /* @__PURE__ */ jsxs10("div", { style: { display: "flex", alignItems: "center", gap: 14 }, children: [
-      /* @__PURE__ */ jsxs10("div", { style: { flex: 1, minWidth: 0 }, "aria-live": "polite", children: [
-        /* @__PURE__ */ jsx12("div", { style: { fontSize: 10.5, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em" }, children: compte != null ? "Pr\xE9pare-toi" : playing ? "Maintenant" : "Premier accord" }),
-        /* @__PURE__ */ jsx12("div", { style: { fontSize: compte != null ? 46 : 40, fontWeight: 800, lineHeight: 1.05, letterSpacing: "-1px", fontFamily: FONTS.title, color: playing ? context2.colorD : C.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, children: compte != null ? `${compte}\u2026` : nomAccord(root, accord) }),
-        /* @__PURE__ */ jsx12("div", { "aria-hidden": "true", style: { display: "flex", gap: 4, marginTop: 6, height: 6 }, children: Array.from({ length: accord.bars }, (_, b) => /* @__PURE__ */ jsx12("div", { style: { width: 18, height: 6, borderRadius: 3, background: b <= mesureDansAccord ? context2.color : C.border, transition: "background .08s" } }, b)) }),
-        /* @__PURE__ */ jsxs10("div", { style: { fontSize: 13, color: C.text2, fontFamily: FONTS.ui, marginTop: 7 }, children: [
+    /* @__PURE__ */ jsxs13("div", { style: { display: "flex", alignItems: "center", gap: 14 }, children: [
+      /* @__PURE__ */ jsxs13("div", { style: { flex: 1, minWidth: 0 }, "aria-live": "polite", children: [
+        /* @__PURE__ */ jsx15("div", { style: { fontSize: 11, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em" }, children: compte != null ? "Pr\xE9pare-toi" : playing ? "Maintenant" : "Premier accord" }),
+        /* @__PURE__ */ jsx15("div", { style: { fontSize: compte != null ? 46 : 40, fontWeight: 800, lineHeight: 1.05, letterSpacing: "-1px", fontFamily: FONTS.title, color: playing ? context2.colorD : C.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, children: compte != null ? `${compte}\u2026` : nomAccord(root, accord) }),
+        /* @__PURE__ */ jsx15("div", { "aria-hidden": "true", style: { display: "flex", gap: 4, marginTop: 6, height: 6 }, children: Array.from({ length: accord.bars }, (_, b) => /* @__PURE__ */ jsx15("div", { style: { width: 18, height: 6, borderRadius: 3, background: b <= mesureDansAccord ? context2.color : C.border, transition: "background .08s" } }, b)) }),
+        /* @__PURE__ */ jsxs13("div", { style: { fontSize: 13, color: C.text2, fontFamily: FONTS.ui, marginTop: 7 }, children: [
           "Ensuite : ",
-          /* @__PURE__ */ jsx12("b", { style: { color: C.text }, children: nomAccord(root, suivant) })
+          /* @__PURE__ */ jsx15("b", { style: { color: C.text }, children: nomAccord(root, suivant) })
         ] })
       ] }),
-      /* @__PURE__ */ jsx12(
+      /* @__PURE__ */ jsx15(
         "button",
         {
           onClick: toggle,
@@ -9617,11 +12380,11 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
             boxShadow: loading ? "none" : `0 4px 16px ${playing ? context2.color : C.primary}55`,
             transition: "background 0.2s, box-shadow 0.2s"
           },
-          children: loading ? /* @__PURE__ */ jsx12(Ti, { name: "loader", size: 24, color: C.text3 }) : /* @__PURE__ */ jsx12(Ti, { name: playing ? "player-pause" : "player-play", size: 26, color: C.onPrimaryBtn })
+          children: loading ? /* @__PURE__ */ jsx15(Ti, { name: "loader", size: 24, color: C.text3 }) : /* @__PURE__ */ jsx15(Ti, { name: playing ? "player-pause" : "player-play", size: 26, color: C.onPrimaryBtn })
         }
       )
     ] }),
-    playError && /* @__PURE__ */ jsxs10("div", { role: "alert", style: {
+    playError && /* @__PURE__ */ jsxs13("div", { role: "alert", style: {
       display: "flex",
       alignItems: "center",
       gap: 8,
@@ -9631,9 +12394,9 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
       background: C.coralL,
       border: `1px solid ${C.coral}`
     }, children: [
-      /* @__PURE__ */ jsx12(Ti, { name: "alert-circle", size: 15, color: C.coralD, style: { flexShrink: 0 } }),
-      /* @__PURE__ */ jsx12("span", { style: { fontSize: 12, color: C.coralD, fontFamily: FONTS.ui, lineHeight: 1.4, flex: 1 }, children: playError }),
-      /* @__PURE__ */ jsx12("button", { onClick: startBacking, className: "gr-focus", style: {
+      /* @__PURE__ */ jsx15(Ti, { name: "alert-circle", size: 15, color: C.coralD, style: { flexShrink: 0 } }),
+      /* @__PURE__ */ jsx15("span", { style: { fontSize: 12, color: C.coralD, fontFamily: FONTS.ui, lineHeight: 1.4, flex: 1 }, children: playError }),
+      /* @__PURE__ */ jsx15("button", { onClick: startBacking, className: "gr-focus", style: {
         background: "none",
         border: "none",
         color: C.coralD,
@@ -9646,16 +12409,16 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
         textDecoration: "underline"
       }, children: "R\xE9essayer" })
     ] }),
-    /* @__PURE__ */ jsx12("div", { style: { display: "flex", gap: 3, margin: "14px 0 8px" }, "aria-hidden": "true", children: Array.from({ length: totalBars }).map((_, i) => /* @__PURE__ */ jsx12("div", { style: {
+    /* @__PURE__ */ jsx15("div", { style: { display: "flex", gap: 3, margin: "14px 0 8px" }, "aria-hidden": "true", children: Array.from({ length: totalBars }).map((_, i) => /* @__PURE__ */ jsx15("div", { style: {
       flex: 1,
       height: 5,
       borderRadius: 3,
       background: playing && compte == null && i === beat ? context2.color : playing && compte == null && i < beat ? `${context2.color}44` : C.border,
       transition: "background 0.08s"
     } }, i)) }),
-    /* @__PURE__ */ jsx12("div", { style: { display: "flex", gap: 5, flexWrap: "wrap" }, children: progression.map((chord, i) => {
+    /* @__PURE__ */ jsx15("div", { style: { display: "flex", gap: 5, flexWrap: "wrap" }, children: progression.map((chord, i) => {
       const isActive = playing && compte == null && i === currentChord;
-      return /* @__PURE__ */ jsxs10("div", { style: {
+      return /* @__PURE__ */ jsxs13("div", { style: {
         padding: "5px 11px",
         borderRadius: R.pill,
         background: isActive ? context2.colorL : C.bg,
@@ -9667,23 +12430,23 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
         transition: "background 0.12s, border-color 0.12s"
       }, children: [
         nomAccord(root, chord),
-        /* @__PURE__ */ jsxs10("span", { style: { fontSize: 10, color: isActive ? context2.color : C.text3, marginLeft: 4 }, children: [
+        /* @__PURE__ */ jsxs13("span", { style: { fontSize: 11, color: isActive ? context2.color : C.text3, marginLeft: 4 }, children: [
           "\xD7",
           chord.bars
         ] })
       ] }, i);
     }) }),
-    /* @__PURE__ */ jsxs10("div", { style: { display: "flex", alignItems: "center", gap: 8, marginTop: 14, paddingTop: 12, borderTop: `1px solid ${C.border}` }, children: [
-      /* @__PURE__ */ jsxs10("div", { role: "group", "aria-label": "Tempo", style: { display: "flex", alignItems: "center", gap: 6 }, children: [
-        /* @__PURE__ */ jsx12("button", { onClick: () => changerTempo(-5), "aria-label": "Ralentir de 5", className: "gr-focus", style: carre, children: "\u2212" }),
-        /* @__PURE__ */ jsxs10("div", { style: { minWidth: 52, textAlign: "center" }, children: [
-          /* @__PURE__ */ jsx12("div", { style: { fontSize: 18, fontWeight: 800, color: C.text, lineHeight: 1, fontFamily: FONTS.ui }, children: bpm }),
-          /* @__PURE__ */ jsx12("div", { style: { fontSize: 9.5, color: C.text3, marginTop: 2, fontFamily: FONTS.ui }, children: "BPM" })
+    /* @__PURE__ */ jsxs13("div", { style: { display: "flex", alignItems: "center", gap: 8, marginTop: 14, paddingTop: 12, borderTop: `1px solid ${C.border}` }, children: [
+      /* @__PURE__ */ jsxs13("div", { role: "group", "aria-label": "Tempo", style: { display: "flex", alignItems: "center", gap: 6 }, children: [
+        /* @__PURE__ */ jsx15("button", { onClick: () => changerTempo(-5), "aria-label": "Ralentir de 5", className: "gr-focus", style: carre, children: "\u2212" }),
+        /* @__PURE__ */ jsxs13("div", { style: { minWidth: 52, textAlign: "center" }, children: [
+          /* @__PURE__ */ jsx15("div", { style: { fontSize: 18, fontWeight: 800, color: C.text, lineHeight: 1, fontFamily: FONTS.ui }, children: bpm }),
+          /* @__PURE__ */ jsx15("div", { style: { fontSize: 11, color: C.text3, marginTop: 2, fontFamily: FONTS.ui }, children: "BPM" })
         ] }),
-        /* @__PURE__ */ jsx12("button", { onClick: () => changerTempo(5), "aria-label": "Acc\xE9l\xE9rer de 5", className: "gr-focus", style: carre, children: "+" })
+        /* @__PURE__ */ jsx15("button", { onClick: () => changerTempo(5), "aria-label": "Acc\xE9l\xE9rer de 5", className: "gr-focus", style: carre, children: "+" })
       ] }),
-      /* @__PURE__ */ jsx12("div", { style: { flex: 1 } }),
-      /* @__PURE__ */ jsxs10("button", { onClick: () => setRampe((r) => !r), "aria-pressed": rampe, className: "gr-focus", style: {
+      /* @__PURE__ */ jsx15("div", { style: { flex: 1 } }),
+      /* @__PURE__ */ jsxs13("button", { onClick: () => setRampe((r) => !r), "aria-pressed": rampe, className: "gr-focus", style: {
         height: 40,
         padding: "0 12px",
         borderRadius: R.sm,
@@ -9698,10 +12461,10 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
         lineHeight: 1.2
       }, children: [
         "Acc\xE9l\xE9ration",
-        /* @__PURE__ */ jsx12("div", { style: { fontSize: 10, fontWeight: 600, color: rampe ? context2.colorD : C.text3 }, children: "+5 toutes les 2 grilles" })
+        /* @__PURE__ */ jsx15("div", { style: { fontSize: 11, fontWeight: 600, color: rampe ? context2.colorD : C.text3 }, children: "+5 toutes les 2 grilles" })
       ] })
     ] }),
-    /* @__PURE__ */ jsxs10("button", { onClick: () => setReglagesOuverts((o) => !o), "aria-expanded": reglagesOuverts, className: "gr-focus", style: {
+    /* @__PURE__ */ jsxs13("button", { onClick: () => setReglagesOuverts((o) => !o), "aria-expanded": reglagesOuverts, className: "gr-focus", style: {
       display: "flex",
       alignItems: "center",
       gap: 6,
@@ -9717,25 +12480,25 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
       color: C.text2,
       textAlign: "left"
     }, children: [
-      /* @__PURE__ */ jsx12("span", { "aria-hidden": "true", style: { display: "inline-block", transform: reglagesOuverts ? "rotate(90deg)" : "none", transition: "transform .15s" }, children: "\u203A" }),
+      /* @__PURE__ */ jsx15("span", { "aria-hidden": "true", style: { display: "inline-block", transform: reglagesOuverts ? "rotate(90deg)" : "none", transition: "transform .15s" }, children: "\u203A" }),
       "R\xE9gler le groupe",
-      /* @__PURE__ */ jsxs10("span", { style: { fontWeight: 500, color: C.text3 }, children: [
+      /* @__PURE__ */ jsxs13("span", { style: { fontWeight: 500, color: C.text3 }, children: [
         "\xB7 ",
         LIBELLE_ENERGIE[energie].toLowerCase(),
         Object.values(coupes).some(Boolean) ? ` \xB7 sans ${Object.entries(coupes).filter(([, v]) => v).map(([k]) => k).join(", ")}` : ""
       ] })
     ] }),
-    reglagesOuverts && /* @__PURE__ */ jsxs10("div", { style: { paddingTop: 4 }, children: [
-      /* @__PURE__ */ jsxs10("div", { role: "group", "aria-label": "Intensit\xE9 du groupe", style: { display: "flex", alignItems: "center", gap: 8 }, children: [
-        /* @__PURE__ */ jsx12("span", { style: { fontSize: 12, color: C.text2, fontFamily: FONTS.ui, width: 64 }, children: "Intensit\xE9" }),
-        /* @__PURE__ */ jsx12("button", { onClick: () => changerEnergie(-1), "aria-label": "Plus calme", disabled: energie === 1, className: "gr-focus", style: { ...carre, opacity: energie === 1 ? 0.4 : 1 }, children: "\u2212" }),
-        /* @__PURE__ */ jsxs10("div", { style: { flex: 1, textAlign: "center" }, children: [
-          /* @__PURE__ */ jsx12("div", { "aria-hidden": "true", style: { display: "flex", gap: 4, justifyContent: "center" }, children: [1, 2, 3, 4, 5].map((n) => /* @__PURE__ */ jsx12("span", { style: { width: 16, height: 8, borderRadius: 4, background: n <= energie ? context2.color : C.border } }, n)) }),
-          /* @__PURE__ */ jsx12("div", { style: { fontSize: 11, color: C.text2, marginTop: 3, fontFamily: FONTS.ui }, children: LIBELLE_ENERGIE[energie] })
+    reglagesOuverts && /* @__PURE__ */ jsxs13("div", { style: { paddingTop: 4 }, children: [
+      /* @__PURE__ */ jsxs13("div", { role: "group", "aria-label": "Intensit\xE9 du groupe", style: { display: "flex", alignItems: "center", gap: 8 }, children: [
+        /* @__PURE__ */ jsx15("span", { style: { fontSize: 12, color: C.text2, fontFamily: FONTS.ui, width: 64 }, children: "Intensit\xE9" }),
+        /* @__PURE__ */ jsx15("button", { onClick: () => changerEnergie(-1), "aria-label": "Plus calme", disabled: energie === 1, className: "gr-focus", style: { ...carre, opacity: energie === 1 ? 0.4 : 1 }, children: "\u2212" }),
+        /* @__PURE__ */ jsxs13("div", { style: { flex: 1, textAlign: "center" }, children: [
+          /* @__PURE__ */ jsx15("div", { "aria-hidden": "true", style: { display: "flex", gap: 4, justifyContent: "center" }, children: [1, 2, 3, 4, 5].map((n) => /* @__PURE__ */ jsx15("span", { style: { width: 16, height: 8, borderRadius: 4, background: n <= energie ? context2.color : C.border } }, n)) }),
+          /* @__PURE__ */ jsx15("div", { style: { fontSize: 11, color: C.text2, marginTop: 3, fontFamily: FONTS.ui }, children: LIBELLE_ENERGIE[energie] })
         ] }),
-        /* @__PURE__ */ jsx12("button", { onClick: () => changerEnergie(1), "aria-label": "Plus intense", disabled: energie === 5, className: "gr-focus", style: { ...carre, opacity: energie === 5 ? 0.4 : 1 }, children: "+" })
+        /* @__PURE__ */ jsx15("button", { onClick: () => changerEnergie(1), "aria-label": "Plus intense", disabled: energie === 5, className: "gr-focus", style: { ...carre, opacity: energie === 5 ? 0.4 : 1 }, children: "+" })
       ] }),
-      /* @__PURE__ */ jsx12("div", { role: "group", "aria-label": "Instruments", style: { display: "flex", gap: 6, marginTop: 10 }, children: [["accords", "Accords"], ["basse", "Basse"], ["batterie", "Batterie"]].map(([k, label]) => /* @__PURE__ */ jsx12("button", { onClick: () => setCoupes((c) => ({ ...c, [k]: !c[k] })), "aria-pressed": !coupes[k], className: "gr-focus", style: {
+      /* @__PURE__ */ jsx15("div", { role: "group", "aria-label": "Instruments", style: { display: "flex", gap: 6, marginTop: 10 }, children: [["accords", "Accords"], ["basse", "Basse"], ["batterie", "Batterie"]].map(([k, label]) => /* @__PURE__ */ jsx15("button", { onClick: () => setCoupes((c) => ({ ...c, [k]: !c[k] })), "aria-pressed": !coupes[k], className: "gr-focus", style: {
         flex: 1,
         height: 40,
         borderRadius: R.sm,
@@ -9748,57 +12511,50 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
         color: coupes[k] ? C.text3 : context2.colorD,
         textDecoration: coupes[k] ? "line-through" : "none"
       }, children: label }, k)) }),
-      /* @__PURE__ */ jsx12("div", { style: { fontSize: 11, color: C.text3, marginTop: 6, fontFamily: FONTS.ui }, children: "Coupe la basse pour faire entendre l'harmonie toi-m\xEAme." })
+      /* @__PURE__ */ jsx15("div", { style: { fontSize: 11, color: C.text3, marginTop: 6, fontFamily: FONTS.ui }, children: "Coupe la basse pour faire entendre l'harmonie toi-m\xEAme." })
     ] })
   ] });
 }
 function JamSession({ onBack, dispatch, state }) {
   const C = useC();
-  const LEVEL_COLOR = makeLevelColor(C);
-  const CONTEXTS = makeContexts(C);
-  const [contextId, setContextId] = useState10("blues_minor");
-  const [root, setRoot] = useState10("A");
-  const [displayMode, setDisplayMode] = useState10("notes");
-  const [constraint, setConstraint] = useState10(null);
-  const [showRootPicker, setShowRootPicker] = useState10(false);
-  const [bpm, setBpm] = useState10(CONTEXTS[0].bpm);
-  const [accordIdx, setAccordIdx] = useState10(null);
-  const [enLecture, setEnLecture] = useState10(false);
-  const surLecture = (joue) => {
-    setEnLecture(joue);
-    if (!joue) enregistrerTempsRef.current?.();
-  };
-  const enregistrerTempsRef = useRef7(null);
-  const [secondesJouees, setSecondesJouees] = useState10(0);
-  const [sessionComptee, setSessionComptee] = useState10(null);
-  const attenteGainRef = useRef7(false);
-  useEffect9(() => {
-    if (sessionComptee || secondesJouees < SEUIL_SESSION || !dispatch) return;
-    attenteGainRef.current = true;
+  const CONTEXTS = useMemo4(() => makeContexts(C), [C]);
+  const [contextId, setContextId] = useState12("blues_minor");
+  const [root, setRoot] = useState12("A");
+  const [displayMode, setDisplayMode] = useState12("notes");
+  const [showRootPicker, setShowRootPicker] = useState12(false);
+  const [bpm, setBpm] = useState12(CONTEXTS[0].bpm);
+  const [accordIdx, setAccordIdx] = useState12(null);
+  const [enLecture, setEnLecture] = useState12(false);
+  const [chrono] = useState12(creerChrono);
+  const [sessionComptee, setSessionComptee] = useState12(null);
+  const sessionCompteeRef = useRef8(false);
+  const unSecondeDePlus = () => {
+    chrono.tic();
+    const secondes2 = chrono.lire();
+    if (sessionCompteeRef.current || secondes2 < SEUIL_SESSION || !dispatch) return;
+    sessionCompteeRef.current = true;
     setSessionComptee({ xp: null });
     dispatch({ type: "MARK_STREAK" });
     dispatch({ type: "UPDATE_WEEKLY", field: "sessions" });
     dispatch({ type: "JAM_PROGRES", seance: true });
-    dispatch({ type: "PRACTICE_DONE", minutes: Math.round(secondesJouees / 60) });
-  }, [secondesJouees, sessionComptee, dispatch]);
-  useEffect9(() => {
-    if (!attenteGainRef.current || state?.lastGain?.kind !== "practice") return;
-    attenteGainRef.current = false;
-    setSessionComptee({ xp: state.lastGain.xp || 0 });
-  }, [state?.lastGain]);
-  const secondesRef = useRef7(0);
-  secondesRef.current = secondesJouees;
-  const dejaEnregistreRef = useRef7(0);
-  const dispatchRef = useRef7(dispatch);
-  dispatchRef.current = dispatch;
+    dispatch({ type: "PRACTICE_DONE", minutes: Math.round(secondes2 / 60) });
+  };
+  const [gainVu, setGainVu] = useState12(state?.lastGain);
+  if (state?.lastGain !== gainVu) {
+    setGainVu(state?.lastGain);
+    if (sessionComptee?.xp === null && state?.lastGain?.kind === "practice") {
+      setSessionComptee({ xp: state.lastGain.xp || 0 });
+    }
+  }
+  const dejaEnregistreRef = useRef8(0);
   const enregistrerTemps = useCallback3(() => {
-    const delta = secondesRef.current - dejaEnregistreRef.current;
-    if (delta <= 0 || !dispatchRef.current) return;
-    dejaEnregistreRef.current = secondesRef.current;
-    dispatchRef.current({ type: "JAM_PROGRES", secondes: delta });
-  }, []);
-  enregistrerTempsRef.current = enregistrerTemps;
-  useEffect9(() => {
+    const total = chrono.lire();
+    const delta = total - dejaEnregistreRef.current;
+    if (delta <= 0 || !dispatch) return;
+    dejaEnregistreRef.current = total;
+    dispatch({ type: "JAM_PROGRES", secondes: delta });
+  }, [chrono, dispatch]);
+  useEffect10(() => {
     const auMasquage = () => {
       if (document.visibilityState === "hidden") enregistrerTemps();
     };
@@ -9808,14 +12564,10 @@ function JamSession({ onBack, dispatch, state }) {
       enregistrerTemps();
     };
   }, [enregistrerTemps]);
-  const [niveauContrainte, setNiveauContrainte] = useState10(() => niveauParDefaut(state?.level || 1));
-  const [resteContrainte, setResteContrainte] = useState10(DUREE_CONTRAINTE);
-  const [contraintesTenues, setContraintesTenues] = useState10(0);
-  const unSecondeDePlus = () => {
-    setSecondesJouees((n) => n + 1);
-    setResteContrainte((r) => constraintRef.current && r > 0 ? r - 1 : r);
+  const surLecture = (joue) => {
+    setEnLecture(joue);
+    if (!joue) enregistrerTemps();
   };
-  const constraintRef = useRef7(null);
   const ctx = CONTEXTS.find((c) => c.id === contextId);
   const rootFr = ROOTS_FR.find((r) => r.en === root)?.fr ?? root;
   const activeNotes = useMemo4(() => getScaleNotes(root, ctx.scale), [root, ctx.scale]);
@@ -9829,41 +12581,25 @@ function JamSession({ onBack, dispatch, state }) {
     setContextId(c.id);
     setBpm(c.bpm);
   };
-  constraintRef.current = constraint;
-  const tenue = constraint && resteContrainte === 0;
-  const contrainteTenueRef = useRef7(null);
-  useEffect9(() => {
-    if (tenue && contrainteTenueRef.current !== constraint) {
-      contrainteTenueRef.current = constraint;
-      setContraintesTenues((n) => n + 1);
-      dispatch?.({ type: "JAM_PROGRES", contrainte: true });
-    }
-  }, [tenue, constraint]);
-  const randomConstraint = (niveau = niveauContrainte) => {
-    const candidates = CONSTRAINTS.filter((c) => c.level === niveau && (!c.contextes || c.contextes.includes(contextId)) && c !== constraint);
-    const pool = candidates.length ? candidates : CONSTRAINTS.filter((c) => c.level === niveau);
-    setConstraint(pool[Math.floor(Math.random() * pool.length)]);
-    setResteContrainte(DUREE_CONTRAINTE);
-  };
   const transposeSemitone = (dir) => {
     const idx = CHROMATIC4.indexOf(root);
     setRoot(CHROMATIC4[(idx + dir + 12) % 12]);
   };
-  return /* @__PURE__ */ jsxs10("div", { style: { display: "flex", flexDirection: "column", minHeight: "100vh", background: C.bg }, children: [
-    /* @__PURE__ */ jsxs10("div", { style: { padding: "14px 16px 12px", display: "flex", alignItems: "center", gap: 10, borderBottom: `1px solid ${C.border}`, background: C.surface, position: "sticky", top: 0, zIndex: 10 }, children: [
-      /* @__PURE__ */ jsx12("button", { onClick: onBack, "aria-label": "Retour aux outils", className: "gr-focus", style: { width: 40, height: 40, margin: "-4px 0 -4px -8px", background: "none", border: "none", borderRadius: R.sm, cursor: "pointer", color: C.text2, padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }, children: /* @__PURE__ */ jsx12(Ti, { name: "chevron-left", size: 22 }) }),
-      /* @__PURE__ */ jsxs10("div", { style: { flex: 1 }, children: [
-        /* @__PURE__ */ jsx12("div", { style: { fontSize: 16, fontWeight: 700, color: C.text, fontFamily: FONTS.title }, children: "Jam Session" }),
-        /* @__PURE__ */ jsxs10("div", { style: { fontSize: 11, color: C.text3, fontFamily: FONTS.ui }, children: [
+  return /* @__PURE__ */ jsxs13("div", { style: { display: "flex", flexDirection: "column", minHeight: "100vh", background: C.bg }, children: [
+    /* @__PURE__ */ jsxs13("div", { style: { padding: "14px 16px 12px", display: "flex", alignItems: "center", gap: 10, borderBottom: `1px solid ${C.border}`, background: C.surface, position: "sticky", top: 0, zIndex: 10 }, children: [
+      /* @__PURE__ */ jsx15(BackButton, { onClick: onBack, label: "Retour aux outils" }),
+      /* @__PURE__ */ jsxs13("div", { style: { flex: 1 }, children: [
+        /* @__PURE__ */ jsx15("div", { style: { fontSize: 16, fontWeight: 700, color: C.text, fontFamily: FONTS.title }, children: "Jam Session" }),
+        /* @__PURE__ */ jsxs13("div", { style: { fontSize: 11, color: C.text3, fontFamily: FONTS.ui }, children: [
           rootFr,
           " - ",
           ctx.label
         ] })
       ] }),
-      /* @__PURE__ */ jsx12(Gropi, { pose: "rocker", size: 46, anim: "wiggle" })
+      /* @__PURE__ */ jsx15(Gropi, { pose: "rocker", size: 46, anim: "wiggle" })
     ] }),
-    /* @__PURE__ */ jsxs10("div", { style: { padding: "14px 16px", display: "flex", flexDirection: "column", gap: 12, overflowY: "auto", paddingBottom: 32 }, children: [
-      /* @__PURE__ */ jsx12("div", { style: { overflowX: "auto", WebkitOverflowScrolling: "touch" }, children: /* @__PURE__ */ jsx12("div", { style: { display: "flex", gap: 8, paddingBottom: 4 }, children: CONTEXTS.map((c) => /* @__PURE__ */ jsx12("button", { onClick: () => choisirContexte(c), "aria-pressed": contextId === c.id, className: "gr-focus", style: {
+    /* @__PURE__ */ jsxs13("div", { style: { padding: "14px 16px", display: "flex", flexDirection: "column", gap: 12, overflowY: "auto", paddingBottom: 32 }, children: [
+      /* @__PURE__ */ jsx15("div", { style: { overflowX: "auto", WebkitOverflowScrolling: "touch" }, children: /* @__PURE__ */ jsx15("div", { style: { display: "flex", gap: 8, paddingBottom: 4 }, children: CONTEXTS.map((c) => /* @__PURE__ */ jsx15("button", { onClick: () => choisirContexte(c), "aria-pressed": contextId === c.id, className: "gr-focus", style: {
         flexShrink: 0,
         padding: "10px 14px",
         borderRadius: R.pill,
@@ -9876,30 +12612,16 @@ function JamSession({ onBack, dispatch, state }) {
         fontFamily: FONTS.ui,
         whiteSpace: "nowrap"
       }, children: c.label }, c.id)) }) }),
-      /* @__PURE__ */ jsx12("div", { style: { background: ctx.colorL, border: `1px solid ${ctx.colorB}`, borderRadius: R.lg, padding: "10px 14px" }, children: /* @__PURE__ */ jsx12("div", { style: { fontSize: 12, color: ctx.colorD, fontFamily: FONTS.title, lineHeight: 1.5 }, children: ctx.desc }) }),
-      /* @__PURE__ */ jsx12(BackingTrackPlayer, { context: ctx, root, bpm, onBpmChange: setBpm, onChord: setAccordIdx, onSecondeJouee: unSecondeDePlus, onLecture: surLecture }),
-      (secondesJouees > 0 || sessionComptee) && /* @__PURE__ */ jsx12("div", { role: "status", style: { display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: R.md, background: sessionComptee ? C.greenL : C.surface, border: `1px solid ${sessionComptee ? C.greenBorder : C.border}` }, children: sessionComptee ? /* @__PURE__ */ jsxs10(Fragment8, { children: [
-        /* @__PURE__ */ jsx12(Ti, { name: "check", size: 16, color: C.greenD }),
-        /* @__PURE__ */ jsxs10("div", { style: { fontSize: 12.5, color: C.greenD, fontFamily: FONTS.ui, lineHeight: 1.4 }, children: [
-          /* @__PURE__ */ jsx12("b", { children: "S\xE9ance compt\xE9e" }),
-          " dans ta s\xE9rie et tes objectifs",
-          sessionComptee.xp > 0 ? ` \xB7 +${sessionComptee.xp} XP` : sessionComptee.xp === 0 ? " \xB7 XP de pratique du jour d\xE9j\xE0 au maximum" : ""
-        ] })
-      ] }) : /* @__PURE__ */ jsx12(Fragment8, { children: /* @__PURE__ */ jsxs10("div", { style: { flex: 1 }, children: [
-        /* @__PURE__ */ jsxs10("div", { style: { fontSize: 12, color: C.text2, fontFamily: FONTS.ui }, children: [
-          "Encore ",
-          /* @__PURE__ */ jsx12("b", { children: fmtDuree(SEUIL_SESSION - secondesJouees) }),
-          " de jeu pour que la s\xE9ance compte"
-        ] }),
-        /* @__PURE__ */ jsx12("div", { "aria-hidden": "true", style: { height: 4, borderRadius: 2, background: C.border, marginTop: 6, overflow: "hidden" }, children: /* @__PURE__ */ jsx12("div", { style: { width: `${Math.min(100, secondesJouees / SEUIL_SESSION * 100)}%`, height: "100%", background: ctx.color, transition: "width 1s linear" } }) })
-      ] }) }) }),
-      /* @__PURE__ */ jsxs10("div", { style: { display: "flex", alignItems: "center", gap: 8 }, children: [
-        /* @__PURE__ */ jsx12("div", { style: { fontSize: 11, fontWeight: 600, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", width: 60 }, children: "Tonique" }),
-        /* @__PURE__ */ jsx12("button", { onClick: () => transposeSemitone(-1), "aria-label": "Un demi-ton plus bas", className: "gr-focus", style: { width: 40, height: 40, borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }, children: /* @__PURE__ */ jsx12(Ti, { name: "chevron-left", size: 16, color: C.text2 }) }),
-        /* @__PURE__ */ jsx12("button", { onClick: () => setShowRootPicker(!showRootPicker), "aria-expanded": showRootPicker, "aria-label": `Tonique : ${rootFr}. Choisir une autre tonique`, className: "gr-focus", style: { flex: 1, height: 40, borderRadius: 10, border: `1.5px solid ${ctx.color}`, background: ctx.colorL, cursor: "pointer", fontSize: 16, fontWeight: 700, color: ctx.colorD, fontFamily: FONTS.ui }, children: rootFr }),
-        /* @__PURE__ */ jsx12("button", { onClick: () => transposeSemitone(1), "aria-label": "Un demi-ton plus haut", className: "gr-focus", style: { width: 40, height: 40, borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }, children: /* @__PURE__ */ jsx12(Ti, { name: "chevron-right", size: 16, color: C.text2 }) })
+      /* @__PURE__ */ jsx15("div", { style: { background: ctx.colorL, border: `1px solid ${ctx.colorB}`, borderRadius: R.lg, padding: "10px 14px" }, children: /* @__PURE__ */ jsx15("div", { style: { fontSize: 12, color: ctx.colorD, fontFamily: FONTS.title, lineHeight: 1.5 }, children: ctx.desc }) }),
+      /* @__PURE__ */ jsx15(BackingTrackPlayer, { context: ctx, root, bpm, onBpmChange: setBpm, onChord: setAccordIdx, onSecondeJouee: unSecondeDePlus, onLecture: surLecture }),
+      /* @__PURE__ */ jsx15(SuiviSeance, { chrono, sessionComptee, couleur: ctx.color }),
+      /* @__PURE__ */ jsxs13("div", { style: { display: "flex", alignItems: "center", gap: 8 }, children: [
+        /* @__PURE__ */ jsx15("div", { style: { fontSize: 11, fontWeight: 600, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", width: 60 }, children: "Tonique" }),
+        /* @__PURE__ */ jsx15("button", { onClick: () => transposeSemitone(-1), "aria-label": "Un demi-ton plus bas", className: "gr-focus", style: { width: 40, height: 40, borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }, children: /* @__PURE__ */ jsx15(Ti, { name: "chevron-left", size: 16, color: C.text2 }) }),
+        /* @__PURE__ */ jsx15("button", { onClick: () => setShowRootPicker(!showRootPicker), "aria-expanded": showRootPicker, "aria-label": `Tonique : ${rootFr}. Choisir une autre tonique`, className: "gr-focus", style: { flex: 1, height: 40, borderRadius: 10, border: `1.5px solid ${ctx.color}`, background: ctx.colorL, cursor: "pointer", fontSize: 16, fontWeight: 700, color: ctx.colorD, fontFamily: FONTS.ui }, children: rootFr }),
+        /* @__PURE__ */ jsx15("button", { onClick: () => transposeSemitone(1), "aria-label": "Un demi-ton plus haut", className: "gr-focus", style: { width: 40, height: 40, borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }, children: /* @__PURE__ */ jsx15(Ti, { name: "chevron-right", size: 16, color: C.text2 }) })
       ] }),
-      showRootPicker && /* @__PURE__ */ jsx12("div", { style: { display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6, background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: 10 }, children: ROOTS_FR.map((r) => /* @__PURE__ */ jsx12("button", { onClick: () => {
+      showRootPicker && /* @__PURE__ */ jsx15("div", { style: { display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6, background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: 10 }, children: ROOTS_FR.map((r) => /* @__PURE__ */ jsx15("button", { onClick: () => {
         setRoot(r.en);
         setShowRootPicker(false);
       }, "aria-pressed": root === r.en, className: "gr-focus", style: {
@@ -9914,7 +12636,7 @@ function JamSession({ onBack, dispatch, state }) {
         cursor: "pointer",
         fontFamily: FONTS.ui
       }, children: r.fr }, r.en)) }),
-      /* @__PURE__ */ jsx12("div", { style: { display: "flex", gap: 6 }, children: [{ key: "notes", label: "Notes" }, { key: "intervals", label: "Intervalles" }, { key: "degrees", label: "Degr\xE9s" }].map((m) => /* @__PURE__ */ jsx12("button", { onClick: () => setDisplayMode(m.key), "aria-pressed": displayMode === m.key, className: "gr-focus", style: {
+      /* @__PURE__ */ jsx15("div", { style: { display: "flex", gap: 6 }, children: [{ key: "notes", label: "Notes" }, { key: "intervals", label: "Intervalles" }, { key: "degrees", label: "Degr\xE9s" }].map((m) => /* @__PURE__ */ jsx15("button", { onClick: () => setDisplayMode(m.key), "aria-pressed": displayMode === m.key, className: "gr-focus", style: {
         flex: 1,
         minHeight: 40,
         padding: "7px 0",
@@ -9927,8 +12649,8 @@ function JamSession({ onBack, dispatch, state }) {
         cursor: "pointer",
         fontFamily: FONTS.ui
       }, children: m.label }, m.key)) }),
-      /* @__PURE__ */ jsxs10("div", { style: { background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, overflow: "hidden" }, children: [
-        /* @__PURE__ */ jsx12("div", { style: { padding: "8px 8px 4px", overflowX: "auto", WebkitOverflowScrolling: "touch" }, children: /* @__PURE__ */ jsx12(
+      /* @__PURE__ */ jsxs13("div", { style: { background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, overflow: "hidden" }, children: [
+        /* @__PURE__ */ jsx15("div", { style: { padding: "8px 8px 4px", overflowX: "auto", WebkitOverflowScrolling: "touch" }, children: /* @__PURE__ */ jsx15(
           Fretboard,
           {
             mode: "scale",
@@ -9940,15 +12662,15 @@ function JamSession({ onBack, dispatch, state }) {
             flashNotes: notesDeLAccord.length ? notesDeLAccord : null
           }
         ) }),
-        /* @__PURE__ */ jsx12("div", { style: { padding: "8px 12px 10px", borderTop: `1px solid ${C.border}`, minHeight: 44, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }, "aria-live": "polite", children: accordEnCours ? /* @__PURE__ */ jsxs10(Fragment8, { children: [
-          /* @__PURE__ */ jsxs10("span", { style: { fontSize: 11, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, marginRight: 2 }, children: [
+        /* @__PURE__ */ jsx15("div", { style: { padding: "8px 12px 10px", borderTop: `1px solid ${C.border}`, minHeight: 44, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }, "aria-live": "polite", children: accordEnCours ? /* @__PURE__ */ jsxs13(Fragment11, { children: [
+          /* @__PURE__ */ jsxs13("span", { style: { fontSize: 11, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, marginRight: 2 }, children: [
             "Notes de ",
             nomAccord(root, accordEnCours),
             " :"
           ] }),
           notesDeLAccord.map((n) => {
             const dedans = dansLaGamme(n);
-            return /* @__PURE__ */ jsxs10("span", { title: dedans ? "Dans ta gamme" : "Hors de ta gamme : c'est la note qui fait entendre le changement", style: {
+            return /* @__PURE__ */ jsxs13("span", { title: dedans ? "Dans ta gamme" : "Hors de ta gamme : c'est la note qui fait entendre le changement", style: {
               padding: "3px 8px",
               borderRadius: R.pill,
               fontSize: 12,
@@ -9962,72 +12684,28 @@ function JamSession({ onBack, dispatch, state }) {
               dedans ? "" : " *"
             ] }, n);
           }),
-          notesDeLAccord.some((n) => !dansLaGamme(n)) && /* @__PURE__ */ jsx12("span", { style: { fontSize: 11, color: C.text3, fontFamily: FONTS.ui, width: "100%" }, children: "* hors de ta gamme : c'est elle qui fait entendre le changement d'accord." })
-        ] }) : /* @__PURE__ */ jsx12("span", { style: { fontSize: 12, color: C.text3, fontFamily: FONTS.ui }, children: "Lance le backing : les notes de chaque accord s'allumeront sur le manche." }) })
+          notesDeLAccord.some((n) => !dansLaGamme(n)) && /* @__PURE__ */ jsx15("span", { style: { fontSize: 11, color: C.text3, fontFamily: FONTS.ui, width: "100%" }, children: "* hors de ta gamme : c'est elle qui fait entendre le changement d'accord." })
+        ] }) : /* @__PURE__ */ jsx15("span", { style: { fontSize: 12, color: C.text3, fontFamily: FONTS.ui }, children: "Lance le backing : les notes de chaque accord s'allumeront sur le manche." }) })
       ] }),
-      /* @__PURE__ */ jsxs10("div", { style: { display: "flex", gap: 10 }, children: [
-        /* @__PURE__ */ jsxs10("div", { style: { flex: 1, background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: "10px 12px" }, children: [
-          /* @__PURE__ */ jsx12("div", { style: { fontSize: 10, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }, children: "Gamme" }),
-          /* @__PURE__ */ jsx12("div", { style: { display: "flex", flexWrap: "wrap", gap: 4 }, children: activeNotes.map((note, i) => /* @__PURE__ */ jsxs10("div", { style: { padding: "4px 8px", borderRadius: R.pill, background: i === 0 ? ctx.colorL : C.bg, border: `1px solid ${i === 0 ? ctx.color : C.border}`, fontSize: 12, fontWeight: i === 0 ? 700 : 400, color: i === 0 ? ctx.colorD : C.text2, fontFamily: FONTS.ui }, children: [
+      /* @__PURE__ */ jsxs13("div", { style: { display: "flex", gap: 10 }, children: [
+        /* @__PURE__ */ jsxs13("div", { style: { flex: 1, background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: "10px 12px" }, children: [
+          /* @__PURE__ */ jsx15("div", { style: { fontSize: 11, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }, children: "Gamme" }),
+          /* @__PURE__ */ jsx15("div", { style: { display: "flex", flexWrap: "wrap", gap: 4 }, children: activeNotes.map((note, i) => /* @__PURE__ */ jsxs13("div", { style: { padding: "4px 8px", borderRadius: R.pill, background: i === 0 ? ctx.colorL : C.bg, border: `1px solid ${i === 0 ? ctx.color : C.border}`, fontSize: 12, fontWeight: i === 0 ? 700 : 400, color: i === 0 ? ctx.colorD : C.text2, fontFamily: FONTS.ui }, children: [
             noteToFr(note),
             i === 0 ? " R" : ""
           ] }, note)) })
         ] }),
-        /* @__PURE__ */ jsxs10("div", { style: { flex: 1, background: ctx.colorL, border: `1px solid ${ctx.colorB}`, borderRadius: R.lg, padding: "10px 12px" }, children: [
-          /* @__PURE__ */ jsx12("div", { style: { fontSize: 10, fontWeight: 700, color: ctx.colorD, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }, children: "Cibles" }),
-          /* @__PURE__ */ jsx12("div", { style: { fontSize: 11, color: ctx.colorD, fontFamily: FONTS.ui, lineHeight: 1.5 }, children: ctx.targetDesc })
+        /* @__PURE__ */ jsxs13("div", { style: { flex: 1, background: ctx.colorL, border: `1px solid ${ctx.colorB}`, borderRadius: R.lg, padding: "10px 12px" }, children: [
+          /* @__PURE__ */ jsx15("div", { style: { fontSize: 11, fontWeight: 700, color: ctx.colorD, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }, children: "Cibles" }),
+          /* @__PURE__ */ jsx15("div", { style: { fontSize: 11, color: ctx.colorD, fontFamily: FONTS.ui, lineHeight: 1.5 }, children: ctx.targetDesc })
         ] })
       ] }),
-      /* @__PURE__ */ jsxs10("div", { style: { background: constraint ? C.amberL : C.surface, border: `1px solid ${constraint ? C.amberBorder : C.border}`, borderRadius: R.lg, padding: "12px 14px" }, children: [
-        /* @__PURE__ */ jsxs10("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }, children: [
-          /* @__PURE__ */ jsx12("div", { style: { flex: 1, fontSize: 10.5, fontWeight: 700, color: constraint ? C.amberD : C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em" }, children: "Contrainte du moment" }),
-          contraintesTenues > 0 && /* @__PURE__ */ jsxs10("span", { style: { fontSize: 11, fontWeight: 700, color: C.amberD, fontFamily: FONTS.ui }, children: [
-            contraintesTenues,
-            " tenue",
-            contraintesTenues > 1 ? "s" : ""
-          ] })
-        ] }),
-        /* @__PURE__ */ jsx12("div", { role: "group", "aria-label": "Difficult\xE9 des contraintes", style: { display: "flex", gap: 4, marginBottom: 10, background: C.surface2, borderRadius: R.sm, padding: 3 }, children: NIVEAUX_CONTRAINTE.map((n) => /* @__PURE__ */ jsx12("button", { onClick: () => {
-          setNiveauContrainte(n);
-          if (constraint) randomConstraint(n);
-        }, "aria-pressed": niveauContrainte === n, className: "gr-focus", style: {
-          flex: 1,
-          minHeight: 34,
-          borderRadius: R.sm - 2,
-          border: "none",
-          cursor: "pointer",
-          fontFamily: FONTS.ui,
-          fontSize: 12,
-          fontWeight: 700,
-          background: niveauContrainte === n ? C.surface : "transparent",
-          color: niveauContrainte === n ? LEVEL_COLOR[n] : C.text3,
-          boxShadow: niveauContrainte === n ? `0 0 0 1.5px ${C.border}` : "none"
-        }, children: n }, n)) }),
-        constraint ? /* @__PURE__ */ jsxs10(Fragment8, { children: [
-          /* @__PURE__ */ jsx12("div", { id: "contrainte-texte", "aria-live": "polite", style: { fontSize: 14, color: C.amberD, fontFamily: FONTS.title, lineHeight: 1.5, fontWeight: 600 }, children: constraint.text }),
-          /* @__PURE__ */ jsxs10("div", { style: { display: "flex", alignItems: "center", gap: 10, marginTop: 10 }, children: [
-            tenue ? /* @__PURE__ */ jsxs10("div", { style: { flex: 1, display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 700, color: C.greenD, fontFamily: FONTS.ui }, children: [
-              /* @__PURE__ */ jsx12(Ti, { name: "check", size: 15, color: C.greenD }),
-              " Tenue 2 minutes, bravo."
-            ] }) : /* @__PURE__ */ jsxs10("div", { style: { flex: 1 }, children: [
-              /* @__PURE__ */ jsx12("div", { style: { fontSize: 12, color: C.amberD, fontFamily: FONTS.ui }, children: !enLecture ? "Lance le backing : le chrono tourne pendant que tu joues." : /* @__PURE__ */ jsxs10(Fragment8, { children: [
-                "Tiens-la encore ",
-                /* @__PURE__ */ jsx12("b", { children: fmtDuree(resteContrainte) })
-              ] }) }),
-              /* @__PURE__ */ jsx12("div", { "aria-hidden": "true", style: { height: 4, borderRadius: 2, background: C.amberBorder, marginTop: 6, overflow: "hidden" }, children: /* @__PURE__ */ jsx12("div", { style: { width: `${(DUREE_CONTRAINTE - resteContrainte) / DUREE_CONTRAINTE * 100}%`, height: "100%", background: C.amber, transition: "width 1s linear" } }) })
-            ] }),
-            /* @__PURE__ */ jsx12("button", { onClick: () => randomConstraint(), className: "gr-focus", style: { minHeight: 36, padding: "0 14px", borderRadius: R.pill, border: `1px solid ${C.amber}`, background: tenue ? C.amber : C.surface, color: tenue ? C.onPrimaryBtn : C.amberD, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }, children: tenue ? "Suivante" : "Changer" })
-          ] })
-        ] }) : /* @__PURE__ */ jsxs10("div", { style: { display: "flex", alignItems: "center", gap: 10 }, children: [
-          /* @__PURE__ */ jsx12("div", { style: { flex: 1, fontSize: 12.5, color: C.text2, fontFamily: FONTS.ui, lineHeight: 1.45 }, children: "Une limite claire, tenue 2 minutes : c'est ce qui fait progresser en impro." }),
-          /* @__PURE__ */ jsx12("button", { onClick: () => randomConstraint(), className: "gr-focus", style: { minHeight: 36, padding: "0 14px", borderRadius: R.pill, border: "none", background: C.amber, color: C.onPrimaryBtn, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }, children: "Tirer" })
-        ] })
-      ] }),
-      /* @__PURE__ */ jsxs10("div", { style: { background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: "12px 14px" }, children: [
-        /* @__PURE__ */ jsx12("div", { style: { fontSize: 10, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }, children: "Rappels" }),
-        ["Silence = note. Utilise-le.", "Arrive sur une note de l'accord sur les temps forts.", "Une bonne phrase monte puis descend.", "Le sommet d'un solo se place vers les deux tiers, pas \xE0 la fin."].map((tip, i) => /* @__PURE__ */ jsxs10("div", { style: { display: "flex", alignItems: "flex-start", gap: 8, marginBottom: i < 3 ? 6 : 0 }, children: [
-          /* @__PURE__ */ jsx12("div", { style: { width: 4, height: 4, borderRadius: "50%", background: ctx.color, marginTop: 6, flexShrink: 0 } }),
-          /* @__PURE__ */ jsx12("div", { style: { fontSize: 12, color: C.text2, fontFamily: FONTS.ui, lineHeight: 1.5 }, children: tip })
+      /* @__PURE__ */ jsx15(CarteContrainte, { chrono, enLecture, contextId, niveauApp: state?.level, dispatch }),
+      /* @__PURE__ */ jsxs13("div", { style: { background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: "12px 14px" }, children: [
+        /* @__PURE__ */ jsx15("div", { style: { fontSize: 11, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }, children: "Rappels" }),
+        ["Silence = note. Utilise-le.", "Arrive sur une note de l'accord sur les temps forts.", "Une bonne phrase monte puis descend.", "Le sommet d'un solo se place vers les deux tiers, pas \xE0 la fin."].map((tip, i) => /* @__PURE__ */ jsxs13("div", { style: { display: "flex", alignItems: "flex-start", gap: 8, marginBottom: i < 3 ? 6 : 0 }, children: [
+          /* @__PURE__ */ jsx15("div", { style: { width: 4, height: 4, borderRadius: "50%", background: ctx.color, marginTop: 6, flexShrink: 0 } }),
+          /* @__PURE__ */ jsx15("div", { style: { fontSize: 12, color: C.text2, fontFamily: FONTS.ui, lineHeight: 1.5 }, children: tip })
         ] }, i))
       ] })
     ] })
@@ -10040,9 +12718,9 @@ __export(HomeScreen_exports, {
   HomeScreen: () => HomeScreen,
   default: () => HomeScreen_default
 });
-import { jsx as jsx13 } from "react/jsx-runtime";
+import { jsx as jsx16 } from "react/jsx-runtime";
 function HomeScreen(props) {
-  return /* @__PURE__ */ jsx13(CoursesScreen, { ...props, variant: "home" });
+  return /* @__PURE__ */ jsx16(CoursesScreen, { ...props, variant: "home" });
 }
 var HomeScreen_default = HomeScreen;
 
@@ -10051,9 +12729,13 @@ var ProgressScreen_exports = {};
 __export(ProgressScreen_exports, {
   ProgressScreen: () => ProgressScreen
 });
+init_tokens();
+init_ThemeContext();
+init_Ti();
 import { useMemo as useMemo5 } from "react";
 
 // src/store/badges.js
+init_tokens();
 var buildBadgeTints = (C) => ({
   primary: { bg: C.primaryL, border: C.primaryBorder, icon: C.primary, text: C.primaryD },
   green: { bg: C.greenL, border: C.greenBorder, icon: C.green, text: C.greenD },
@@ -10179,7 +12861,8 @@ function anchoredCount(state, content) {
 }
 
 // src/screens/ProgressScreen.jsx
-import { jsx as jsx14, jsxs as jsxs11 } from "react/jsx-runtime";
+init_Gropi();
+import { jsx as jsx17, jsxs as jsxs14 } from "react/jsx-runtime";
 function ProgressScreen({ state, content, onOpenSettings }) {
   const C = useC();
   const MODULE_THEME2 = buildModuleTheme(C);
@@ -10210,8 +12893,8 @@ function ProgressScreen({ state, content, onOpenSettings }) {
     });
     return map;
   }, []);
-  return /* @__PURE__ */ jsxs11("div", { children: [
-    /* @__PURE__ */ jsxs11("div", { style: {
+  return /* @__PURE__ */ jsxs14("div", { children: [
+    /* @__PURE__ */ jsxs14("div", { style: {
       backgroundColor: "#b7a0c8",
       backgroundImage: "url('/sunrise.jpg')",
       backgroundSize: "cover",
@@ -10220,11 +12903,11 @@ function ProgressScreen({ state, content, onOpenSettings }) {
       position: "relative",
       overflow: "hidden"
     }, children: [
-      /* @__PURE__ */ jsx14("div", { style: { position: "absolute", inset: 0, background: "rgba(120,50,10,.48)", pointerEvents: "none" } }),
-      /* @__PURE__ */ jsxs11("div", { style: { position: "relative", zIndex: 1 }, children: [
-        /* @__PURE__ */ jsxs11("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }, children: [
-          /* @__PURE__ */ jsx14("h1", { style: { margin: 0, fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: "-.4px" }, children: "Progression" }),
-          /* @__PURE__ */ jsxs11("button", { onClick: onOpenSettings, style: {
+      /* @__PURE__ */ jsx17("div", { style: { position: "absolute", inset: 0, background: "rgba(120,50,10,.48)", pointerEvents: "none" } }),
+      /* @__PURE__ */ jsxs14("div", { style: { position: "relative", zIndex: 1 }, children: [
+        /* @__PURE__ */ jsxs14("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }, children: [
+          /* @__PURE__ */ jsx17("h1", { style: { margin: 0, fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: "-.4px" }, children: "Progression" }),
+          /* @__PURE__ */ jsxs14("button", { onClick: onOpenSettings, style: {
             background: "rgba(255,255,255,.18)",
             border: "1.5px solid rgba(255,255,255,.3)",
             borderRadius: R.sm,
@@ -10239,16 +12922,16 @@ function ProgressScreen({ state, content, onOpenSettings }) {
             gap: 5,
             backdropFilter: "blur(4px)"
           }, children: [
-            /* @__PURE__ */ jsx14(Ti, { name: "settings", size: 13, color: "#fff" }),
+            /* @__PURE__ */ jsx17(Ti, { name: "settings", size: 13, color: "#fff" }),
             " R\xE9glages"
           ] })
         ] }),
-        /* @__PURE__ */ jsxs11("div", { style: { display: "flex", alignItems: "center", gap: 7, marginBottom: 10 }, children: [
-          /* @__PURE__ */ jsx14(Ti, { name: grade.icon.replace("ti-", ""), size: 19, color: "#fff" }),
-          /* @__PURE__ */ jsx14("span", { style: { fontSize: 17, fontWeight: 800, color: "#fff", letterSpacing: "-.2px" }, children: grade.label })
+        /* @__PURE__ */ jsxs14("div", { style: { display: "flex", alignItems: "center", gap: 7, marginBottom: 10 }, children: [
+          /* @__PURE__ */ jsx17(Ti, { name: grade.icon.replace("ti-", ""), size: 19, color: "#fff" }),
+          /* @__PURE__ */ jsx17("span", { style: { fontSize: 17, fontWeight: 800, color: "#fff", letterSpacing: "-.2px" }, children: grade.label })
         ] }),
-        /* @__PURE__ */ jsxs11("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 14, flexWrap: "wrap" }, children: [
-          /* @__PURE__ */ jsxs11("div", { style: {
+        /* @__PURE__ */ jsxs14("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 14, flexWrap: "wrap" }, children: [
+          /* @__PURE__ */ jsxs14("div", { style: {
             display: "inline-flex",
             alignItems: "center",
             gap: 8,
@@ -10258,10 +12941,10 @@ function ProgressScreen({ state, content, onOpenSettings }) {
             padding: "8px 16px",
             backdropFilter: "blur(4px)"
           }, children: [
-            /* @__PURE__ */ jsx14("span", { style: { fontSize: 22, fontWeight: 800, color: "#fff", letterSpacing: "-.5px" }, children: state.level }),
-            /* @__PURE__ */ jsx14("span", { style: { fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,.8)" }, children: "Niveau" })
+            /* @__PURE__ */ jsx17("span", { style: { fontSize: 22, fontWeight: 800, color: "#fff", letterSpacing: "-.5px" }, children: state.level }),
+            /* @__PURE__ */ jsx17("span", { style: { fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,.8)" }, children: "Niveau" })
           ] }),
-          /* @__PURE__ */ jsxs11("div", { style: {
+          /* @__PURE__ */ jsxs14("div", { style: {
             display: "inline-flex",
             alignItems: "center",
             gap: 5,
@@ -10274,10 +12957,10 @@ function ProgressScreen({ state, content, onOpenSettings }) {
             color: "#fff",
             backdropFilter: "blur(4px)"
           }, children: [
-            /* @__PURE__ */ jsx14(Ti, { name: "flame", size: 14, color: "#fff" }),
+            /* @__PURE__ */ jsx17(Ti, { name: "flame", size: 14, color: "#fff" }),
             state.streak,
             " jours",
-            (state.streakFreezes || 0) > 0 && /* @__PURE__ */ jsxs11("span", { style: { fontSize: 11, fontWeight: 700, opacity: 0.85 }, children: [
+            (state.streakFreezes || 0) > 0 && /* @__PURE__ */ jsxs14("span", { style: { fontSize: 11, fontWeight: 700, opacity: 0.85 }, children: [
               "\xB7 ",
               state.streakFreezes,
               " gel",
@@ -10285,12 +12968,12 @@ function ProgressScreen({ state, content, onOpenSettings }) {
             ] })
           ] })
         ] }),
-        /* @__PURE__ */ jsxs11("div", { style: { display: "flex", justifyContent: "space-between", marginBottom: 5 }, children: [
-          /* @__PURE__ */ jsxs11("span", { style: { fontSize: 13, fontWeight: 700, color: "#fff" }, children: [
+        /* @__PURE__ */ jsxs14("div", { style: { display: "flex", justifyContent: "space-between", marginBottom: 5 }, children: [
+          /* @__PURE__ */ jsxs14("span", { style: { fontSize: 13, fontWeight: 700, color: "#fff" }, children: [
             state.xp,
             " XP total"
           ] }),
-          /* @__PURE__ */ jsxs11("span", { style: { fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,.8)" }, children: [
+          /* @__PURE__ */ jsxs14("span", { style: { fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,.8)" }, children: [
             "Niv. ",
             state.level + 1,
             " \u2192 ",
@@ -10298,7 +12981,7 @@ function ProgressScreen({ state, content, onOpenSettings }) {
             " XP"
           ] })
         ] }),
-        /* @__PURE__ */ jsx14(
+        /* @__PURE__ */ jsx17(
           "div",
           {
             role: "progressbar",
@@ -10307,33 +12990,33 @@ function ProgressScreen({ state, content, onOpenSettings }) {
             "aria-valuemax": 100,
             "aria-label": `Progression vers le niveau ${state.level + 1} : ${xpToNext} XP restants`,
             style: { height: 8, background: "rgba(255,255,255,.25)", borderRadius: 99, overflow: "hidden" },
-            children: /* @__PURE__ */ jsx14("div", { style: { width: `${lvlPct}%`, height: "100%", background: `linear-gradient(90deg,#FF9155,${C.primary})`, borderRadius: 99, transition: "width .4s ease" } })
+            children: /* @__PURE__ */ jsx17("div", { style: { width: `${lvlPct}%`, height: "100%", background: `linear-gradient(90deg,#FF9155,${C.primary})`, borderRadius: 99, transition: "width .4s ease" } })
           }
         ),
-        /* @__PURE__ */ jsxs11("div", { style: { fontSize: 11, color: "rgba(255,255,255,.65)", marginTop: 4 }, children: [
+        /* @__PURE__ */ jsxs14("div", { style: { fontSize: 11, color: "rgba(255,255,255,.65)", marginTop: 4 }, children: [
           xpToNext,
           " XP pour le niveau ",
           state.level + 1
         ] })
       ] })
     ] }),
-    /* @__PURE__ */ jsxs11("div", { style: { padding: "16px 20px 0" }, children: [
-      /* @__PURE__ */ jsx14("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 16 }, children: [
+    /* @__PURE__ */ jsxs14("div", { style: { padding: "16px 20px 0" }, children: [
+      /* @__PURE__ */ jsx17("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 16 }, children: [
         { ic: "flame", v: `${state.streak}j`, l: "S\xE9rie", bg: C.amberL, ic_c: C.amber, v_c: C.amberD },
         { ic: "circle-check", v: Object.keys(state.completedExercises).length, l: "Exercices", bg: C.greenL, ic_c: C.green, v_c: C.greenD },
         { ic: "book-2", v: Object.keys(state.completedLessons).length, l: "Le\xE7ons", bg: C.primaryL, ic_c: C.primary, v_c: C.primaryD }
-      ].map((s) => /* @__PURE__ */ jsxs11("div", { style: {
+      ].map((s) => /* @__PURE__ */ jsxs14("div", { style: {
         background: s.bg,
         borderRadius: R.lg,
         padding: "12px 8px",
         textAlign: "center",
         border: `1.5px solid ${s.bg === C.amberL ? C.amberBorder : s.bg === C.greenL ? C.greenBorder : C.primaryBorder}`
       }, children: [
-        /* @__PURE__ */ jsx14(Ti, { name: s.ic, size: 18, color: s.ic_c }),
-        /* @__PURE__ */ jsx14("div", { style: { fontSize: 20, fontWeight: 800, color: s.v_c, letterSpacing: "-.5px", marginTop: 4, lineHeight: 1 }, children: s.v }),
-        /* @__PURE__ */ jsx14("div", { style: { fontSize: 10, color: s.v_c, fontWeight: 600, textTransform: "uppercase", letterSpacing: ".05em", marginTop: 3, opacity: 0.7 }, children: s.l })
+        /* @__PURE__ */ jsx17(Ti, { name: s.ic, size: 18, color: s.ic_c }),
+        /* @__PURE__ */ jsx17("div", { style: { fontSize: 20, fontWeight: 800, color: s.v_c, letterSpacing: "-.5px", marginTop: 4, lineHeight: 1 }, children: s.v }),
+        /* @__PURE__ */ jsx17("div", { style: { fontSize: 11, color: s.v_c, fontWeight: 600, textTransform: "uppercase", letterSpacing: ".05em", marginTop: 3, opacity: 0.7 }, children: s.l })
       ] }, s.l)) }),
-      /* @__PURE__ */ jsx14("div", { style: { marginBottom: 20 }, children: /* @__PURE__ */ jsx14(
+      /* @__PURE__ */ jsx17("div", { style: { marginBottom: 20 }, children: /* @__PURE__ */ jsx17(
         GropiTip,
         {
           pose: state.streak >= 7 ? "rocker" : state.streak >= 3 ? "happy" : state.streak === 0 ? "pride" : "wave",
@@ -10342,24 +13025,24 @@ function ProgressScreen({ state, content, onOpenSettings }) {
           children: state.streak >= 7 ? `${state.streak} jours d'affil\xE9e. Tu tiens une vraie habitude, continue.` : state.streak >= 3 ? `S\xE9rie de ${state.streak} jours. La r\xE9gularit\xE9, c'est 80 % du chemin.` : state.streak === 0 ? "Ta s\xE9rie est retomb\xE9e \xE0 z\xE9ro. Une seule session suffit pour en relancer une." : "Chaque session compte. Reviens demain pour continuer ta progression."
         }
       ) }),
-      /* @__PURE__ */ jsx14("h2", { style: { margin: "0 0 12px", fontSize: 16, fontWeight: 800, color: C.text, letterSpacing: "-.2px" }, children: "Ma\xEEtrise" }),
-      /* @__PURE__ */ jsxs11("div", { style: {
+      /* @__PURE__ */ jsx17("h2", { style: { margin: "0 0 12px", fontSize: 16, fontWeight: 800, color: C.text, letterSpacing: "-.2px" }, children: "Ma\xEEtrise" }),
+      /* @__PURE__ */ jsxs14("div", { style: {
         background: C.surface,
         border: `1.5px solid ${C.border}`,
         borderRadius: R.lg,
         padding: "14px 16px",
         marginBottom: 20
       }, children: [
-        /* @__PURE__ */ jsxs11("div", { style: { display: "flex", alignItems: "baseline", gap: 8, marginBottom: 4 }, children: [
-          /* @__PURE__ */ jsx14("span", { style: { fontSize: 26, fontWeight: 800, color: C.text, letterSpacing: "-.5px", lineHeight: 1 }, children: maitrise.atteints }),
-          /* @__PURE__ */ jsxs11("span", { style: { fontSize: 13, color: C.text2, fontWeight: 600 }, children: [
+        /* @__PURE__ */ jsxs14("div", { style: { display: "flex", alignItems: "baseline", gap: 8, marginBottom: 4 }, children: [
+          /* @__PURE__ */ jsx17("span", { style: { fontSize: 26, fontWeight: 800, color: C.text, letterSpacing: "-.5px", lineHeight: 1 }, children: maitrise.atteints }),
+          /* @__PURE__ */ jsxs14("span", { style: { fontSize: 13, color: C.text2, fontWeight: 600 }, children: [
             "/ ",
             maitrise.objectifs,
             " objectifs"
           ] })
         ] }),
-        /* @__PURE__ */ jsx14("div", { style: { fontSize: 11.5, color: C.text2, marginBottom: 12, lineHeight: 1.5 }, children: "Chaque le\xE7on vaut trois paliers : la voir, la comprendre, l'ancrer." }),
-        /* @__PURE__ */ jsx14(
+        /* @__PURE__ */ jsx17("div", { style: { fontSize: 11.5, color: C.text2, marginBottom: 12, lineHeight: 1.5 }, children: "Chaque le\xE7on vaut trois paliers : la voir, la comprendre, l'ancrer." }),
+        /* @__PURE__ */ jsx17(
           ProgressBar,
           {
             pct: maitrise.objectifs ? Math.round(maitrise.atteints / maitrise.objectifs * 100) : 0,
@@ -10368,38 +13051,38 @@ function ProgressScreen({ state, content, onOpenSettings }) {
             label: "Ma\xEEtrise globale"
           }
         ),
-        /* @__PURE__ */ jsx14("div", { style: { display: "flex", gap: 8, marginTop: 14 }, children: [
+        /* @__PURE__ */ jsx17("div", { style: { display: "flex", gap: 8, marginTop: 14 }, children: [
           { n: maitrise.vues, l: MASTERY_LABELS[1], c: C.text2 },
           { n: maitrise.comprises, l: MASTERY_LABELS[2], c: C.blueInk ?? C.blue },
           { n: maitrise.ancrees, l: MASTERY_LABELS[3], c: C.greenInk ?? C.green }
-        ].map((x) => /* @__PURE__ */ jsxs11("div", { style: {
+        ].map((x) => /* @__PURE__ */ jsxs14("div", { style: {
           flex: 1,
           textAlign: "center",
           padding: "9px 4px",
           background: C.surface2,
           borderRadius: R.md
         }, children: [
-          /* @__PURE__ */ jsx14("div", { style: { fontSize: 19, fontWeight: 800, color: x.c, lineHeight: 1 }, children: x.n }),
-          /* @__PURE__ */ jsx14("div", { style: { fontSize: 10.5, color: C.text2, fontWeight: 600, marginTop: 3 }, children: x.l })
+          /* @__PURE__ */ jsx17("div", { style: { fontSize: 19, fontWeight: 800, color: x.c, lineHeight: 1 }, children: x.n }),
+          /* @__PURE__ */ jsx17("div", { style: { fontSize: 11, color: C.text2, fontWeight: 600, marginTop: 3 }, children: x.l })
         ] }, x.l)) }),
-        aAncrer.length > 0 && /* @__PURE__ */ jsxs11("div", { style: { marginTop: 14, paddingTop: 12, borderTop: `1px solid ${C.border}` }, children: [
-          /* @__PURE__ */ jsx14("div", { style: {
-            fontSize: 10.5,
+        aAncrer.length > 0 && /* @__PURE__ */ jsxs14("div", { style: { marginTop: 14, paddingTop: 12, borderTop: `1px solid ${C.border}` }, children: [
+          /* @__PURE__ */ jsx17("div", { style: {
+            fontSize: 11,
             fontWeight: 700,
             letterSpacing: ".07em",
             textTransform: "uppercase",
             color: C.text2,
             marginBottom: 8
           }, children: "Bient\xF4t ancr\xE9es" }),
-          aAncrer.map(({ lesson, reste }) => /* @__PURE__ */ jsxs11("div", { style: {
+          aAncrer.map(({ lesson, reste }) => /* @__PURE__ */ jsxs14("div", { style: {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
             gap: 10,
             padding: "6px 0"
           }, children: [
-            /* @__PURE__ */ jsx14("span", { style: { fontSize: 12.5, color: C.text, flex: 1, lineHeight: 1.4 }, children: lesson.title }),
-            /* @__PURE__ */ jsxs11("span", { style: { fontSize: 11, color: C.text2, whiteSpace: "nowrap", fontWeight: 600 }, children: [
+            /* @__PURE__ */ jsx17("span", { style: { fontSize: 12.5, color: C.text, flex: 1, lineHeight: 1.4 }, children: lesson.title }),
+            /* @__PURE__ */ jsxs14("span", { style: { fontSize: 11, color: C.text2, whiteSpace: "nowrap", fontWeight: 600 }, children: [
               reste,
               " question",
               reste > 1 ? "s" : ""
@@ -10407,18 +13090,18 @@ function ProgressScreen({ state, content, onOpenSettings }) {
           ] }, lesson.id))
         ] })
       ] }),
-      /* @__PURE__ */ jsx14("h2", { style: { margin: "0 0 12px", fontSize: 16, fontWeight: 800, color: C.text, letterSpacing: "-.2px" }, children: "Comp\xE9tences" }),
+      /* @__PURE__ */ jsx17("h2", { style: { margin: "0 0 12px", fontSize: 16, fontWeight: 800, color: C.text, letterSpacing: "-.2px" }, children: "Comp\xE9tences" }),
       skills.map((sk) => {
         const th = MODULE_THEME2[sk.id] || {};
-        return /* @__PURE__ */ jsxs11("div", { style: {
+        return /* @__PURE__ */ jsxs14("div", { style: {
           background: C.surface,
           border: `1.5px solid ${C.border}`,
           borderRadius: R.lg,
           padding: "13px 16px",
           marginBottom: 8
         }, children: [
-          /* @__PURE__ */ jsxs11("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 9 }, children: [
-            /* @__PURE__ */ jsx14("div", { style: {
+          /* @__PURE__ */ jsxs14("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 9 }, children: [
+            /* @__PURE__ */ jsx17("div", { style: {
               width: 34,
               height: 34,
               borderRadius: R.sm,
@@ -10426,31 +13109,31 @@ function ProgressScreen({ state, content, onOpenSettings }) {
               display: "flex",
               alignItems: "center",
               justifyContent: "center"
-            }, children: /* @__PURE__ */ jsx14(Ti, { name: (th.icon || "music").replace("ti-", ""), size: 15, color: sk.color }) }),
-            /* @__PURE__ */ jsx14("span", { style: { fontSize: 13.5, fontWeight: 700, color: C.text, flex: 1 }, children: sk.label }),
-            /* @__PURE__ */ jsxs11("span", { style: { fontSize: 13, fontWeight: 800, color: sk.pct > 0 ? sk.color : C.text3 }, children: [
+            }, children: /* @__PURE__ */ jsx17(Ti, { name: (th.icon || "music").replace("ti-", ""), size: 15, color: sk.color }) }),
+            /* @__PURE__ */ jsx17("span", { style: { fontSize: 13.5, fontWeight: 700, color: C.text, flex: 1 }, children: sk.label }),
+            /* @__PURE__ */ jsxs14("span", { style: { fontSize: 13, fontWeight: 800, color: sk.pct > 0 ? sk.color : C.text3 }, children: [
               sk.pct,
               "%"
             ] })
           ] }),
-          /* @__PURE__ */ jsx14(ProgressBar, { pct: sk.pct, color: sk.color, h: 5 })
+          /* @__PURE__ */ jsx17(ProgressBar, { pct: sk.pct, color: sk.color, h: 5 })
         ] }, sk.label);
       }),
-      /* @__PURE__ */ jsxs11("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", margin: "20px 0 10px" }, children: [
-        /* @__PURE__ */ jsx14("h2", { style: { margin: 0, fontSize: 16, fontWeight: 800, color: C.text, letterSpacing: "-.2px" }, children: "Badges" }),
-        /* @__PURE__ */ jsxs11("div", { style: { fontSize: 12, fontWeight: 600, color: C.text3 }, children: [
+      /* @__PURE__ */ jsxs14("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", margin: "20px 0 10px" }, children: [
+        /* @__PURE__ */ jsx17("h2", { style: { margin: 0, fontSize: 16, fontWeight: 800, color: C.text, letterSpacing: "-.2px" }, children: "Badges" }),
+        /* @__PURE__ */ jsxs14("div", { style: { fontSize: 12, fontWeight: 600, color: C.text3 }, children: [
           state.unlockedBadges.length,
           " / ",
           BADGES.length
         ] })
       ] }),
-      Object.entries(badgesByCategory).map(([cat, badges]) => /* @__PURE__ */ jsxs11("div", { children: [
-        /* @__PURE__ */ jsx14("h3", { style: { margin: "8px 0 8px", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".07em", color: C.text3 }, children: cat }),
-        /* @__PURE__ */ jsx14("div", { style: { display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 8 }, children: badges.map((b) => {
+      Object.entries(badgesByCategory).map(([cat, badges]) => /* @__PURE__ */ jsxs14("div", { children: [
+        /* @__PURE__ */ jsx17("h3", { style: { margin: "8px 0 8px", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".07em", color: C.text3 }, children: cat }),
+        /* @__PURE__ */ jsx17("div", { style: { display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 8 }, children: badges.map((b) => {
           const ok = state.unlockedBadges.includes(b.id);
           const tint = BADGE_TINTS2[b.tint];
           const rarity = BADGE_RARITIES2[b.rarity];
-          return /* @__PURE__ */ jsxs11(
+          return /* @__PURE__ */ jsxs14(
             "div",
             {
               role: "group",
@@ -10466,11 +13149,11 @@ function ProgressScreen({ state, content, onOpenSettings }) {
                 filter: ok ? "none" : "grayscale(.5)"
               },
               children: [
-                /* @__PURE__ */ jsx14("span", { style: {
+                /* @__PURE__ */ jsx17("span", { style: {
                   position: "absolute",
                   top: 4,
                   right: 4,
-                  fontSize: 7,
+                  fontSize: 9,
                   fontWeight: 700,
                   padding: "1px 4px",
                   borderRadius: 3,
@@ -10479,15 +13162,15 @@ function ProgressScreen({ state, content, onOpenSettings }) {
                   background: rarity.bg,
                   color: rarity.fg
                 }, children: rarity.label }),
-                /* @__PURE__ */ jsx14(Ti, { name: b.icon.replace("ti-", ""), size: 22, color: tint.icon }),
-                /* @__PURE__ */ jsx14("div", { style: { fontSize: 9.5, fontWeight: 600, lineHeight: 1.25, marginTop: 5, color: tint.text }, children: b.label })
+                /* @__PURE__ */ jsx17(Ti, { name: b.icon.replace("ti-", ""), size: 22, color: tint.icon }),
+                /* @__PURE__ */ jsx17("div", { style: { fontSize: 11, fontWeight: 600, lineHeight: 1.25, marginTop: 5, color: tint.text }, children: b.label })
               ]
             },
             b.id
           );
         }) })
       ] }, cat)),
-      /* @__PURE__ */ jsx14("div", { style: { height: 28 } })
+      /* @__PURE__ */ jsx17("div", { style: { height: 28 } })
     ] })
   ] });
 }
@@ -10497,28 +13180,32 @@ var SettingsScreen_exports = {};
 __export(SettingsScreen_exports, {
   SettingsScreen: () => SettingsScreen
 });
-import { useState as useState11 } from "react";
-import { jsx as jsx15, jsxs as jsxs12 } from "react/jsx-runtime";
+init_tokens();
+init_Ti();
+import { useState as useState13 } from "react";
+init_audioEngine();
+init_ThemeContext();
+import { jsx as jsx18, jsxs as jsxs15 } from "react/jsx-runtime";
 function SettingsSection({ title, children }) {
   const C = useC();
-  return /* @__PURE__ */ jsxs12("div", { style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, marginBottom: 10, overflow: "hidden" }, children: [
-    /* @__PURE__ */ jsx15("div", { style: { padding: "12px 16px 0", fontSize: 11, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: C.text2 }, children: title }),
-    /* @__PURE__ */ jsx15("div", { style: { marginTop: 8 }, children })
+  return /* @__PURE__ */ jsxs15("div", { style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, marginBottom: 10, overflow: "hidden" }, children: [
+    /* @__PURE__ */ jsx18("div", { style: { padding: "12px 16px 0", fontSize: 11, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: C.text2 }, children: title }),
+    /* @__PURE__ */ jsx18("div", { style: { marginTop: 8 }, children })
   ] });
 }
 function SettingsRow({ label, value, last }) {
   const C = useC();
-  return /* @__PURE__ */ jsxs12("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 16px", borderBottom: last ? "none" : `1px solid ${C.borderSoft}` }, children: [
-    /* @__PURE__ */ jsx15("span", { style: { fontSize: T.small, fontWeight: 600, color: C.text }, children: label }),
-    /* @__PURE__ */ jsx15("span", { style: { fontSize: T.small, fontWeight: 600, color: C.text2 }, children: value })
+  return /* @__PURE__ */ jsxs15("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 16px", borderBottom: last ? "none" : `1px solid ${C.borderSoft}` }, children: [
+    /* @__PURE__ */ jsx18("span", { style: { fontSize: T.small, fontWeight: 600, color: C.text }, children: label }),
+    /* @__PURE__ */ jsx18("span", { style: { fontSize: T.small, fontWeight: 600, color: C.text2 }, children: value })
   ] });
 }
 function SettingsScreen({ state, dispatch, content, onClose, user, onSignOut, onDeleteAccount }) {
   const C = useC();
-  const [importStatus, setImportStatus] = useState11(null);
-  const [confirmation, setConfirmation] = useState11(null);
-  const [saisie, setSaisie] = useState11("");
-  const [audioOffline, setAudioOffline] = useState11(null);
+  const [importStatus, setImportStatus] = useState13(null);
+  const [confirmation, setConfirmation] = useState13(null);
+  const [saisie, setSaisie] = useState13("");
+  const [audioOffline, setAudioOffline] = useState13(null);
   const fermerConfirmation = () => {
     setConfirmation(null);
     setSaisie("");
@@ -10587,8 +13274,8 @@ function SettingsScreen({ state, dispatch, content, onClose, user, onSignOut, on
     color,
     border: `1.5px solid ${border || color}`
   });
-  return /* @__PURE__ */ jsxs12("div", { children: [
-    /* @__PURE__ */ jsxs12("div", { style: {
+  return /* @__PURE__ */ jsxs15("div", { children: [
+    /* @__PURE__ */ jsxs15("div", { style: {
       backgroundColor: "#4a4a4a",
       backgroundImage: "url('/atelier.jpg')",
       backgroundSize: "cover",
@@ -10597,20 +13284,20 @@ function SettingsScreen({ state, dispatch, content, onClose, user, onSignOut, on
       position: "relative",
       overflow: "hidden"
     }, children: [
-      /* @__PURE__ */ jsx15("div", { style: { position: "absolute", inset: 0, background: "rgba(20,18,16,.6)", pointerEvents: "none" } }),
-      /* @__PURE__ */ jsx15("button", { onClick: onClose, style: { position: "relative", zIndex: 1, background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.sm, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", marginBottom: 14 }, children: /* @__PURE__ */ jsx15(Ti, { name: "arrow-left", size: 17, color: C.text }) }),
-      /* @__PURE__ */ jsx15("div", { style: { position: "relative", zIndex: 1, fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: "-.4px" }, children: "R\xE9glages" })
+      /* @__PURE__ */ jsx18("div", { style: { position: "absolute", inset: 0, background: "rgba(20,18,16,.6)", pointerEvents: "none" } }),
+      /* @__PURE__ */ jsx18(BackButton, { onClick: onClose, label: "Fermer les r\xE9glages", style: { position: "relative", zIndex: 1, borderRadius: R.sm, marginBottom: 14 } }),
+      /* @__PURE__ */ jsx18("div", { style: { position: "relative", zIndex: 1, fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: "-.4px" }, children: "R\xE9glages" })
     ] }),
-    /* @__PURE__ */ jsxs12("div", { style: { padding: "14px 20px 0" }, children: [
-      /* @__PURE__ */ jsx15(SettingsSection, { title: "Apparence", children: /* @__PURE__ */ jsxs12("div", { style: { padding: "12px 16px 14px" }, children: [
-        /* @__PURE__ */ jsx15("div", { style: { fontSize: 12, color: C.text2, marginBottom: 10 }, children: "Th\xE8me de l'application" }),
-        /* @__PURE__ */ jsx15("div", { style: { display: "flex", flexDirection: "column", gap: 8 }, children: [
+    /* @__PURE__ */ jsxs15("div", { style: { padding: "14px 20px 0" }, children: [
+      /* @__PURE__ */ jsx18(SettingsSection, { title: "Apparence", children: /* @__PURE__ */ jsxs15("div", { style: { padding: "12px 16px 14px" }, children: [
+        /* @__PURE__ */ jsx18("div", { style: { fontSize: 12, color: C.text2, marginBottom: 10 }, children: "Th\xE8me de l'application" }),
+        /* @__PURE__ */ jsx18("div", { style: { display: "flex", flexDirection: "column", gap: 8 }, children: [
           { val: "auto", label: "Auto", icon: "device-desktop", desc: "Suit le syst\xE8me" },
           { val: "light", label: "Clair", icon: "sun", desc: "Toujours clair" },
           { val: "dark", label: "Sombre", icon: "moon", desc: "Toujours sombre" }
         ].map((opt) => {
           const active = (state.theme || "auto") === opt.val;
-          return /* @__PURE__ */ jsxs12(
+          return /* @__PURE__ */ jsxs15(
             "button",
             {
               onClick: () => dispatch({ type: "SET_THEME", theme: opt.val }),
@@ -10631,56 +13318,56 @@ function SettingsScreen({ state, dispatch, content, onClose, user, onSignOut, on
                 gap: 12
               },
               children: [
-                /* @__PURE__ */ jsx15(Ti, { name: opt.icon, size: 20, color: active ? C.primaryInk : C.text2 }),
-                /* @__PURE__ */ jsxs12("span", { style: { flex: 1 }, children: [
-                  /* @__PURE__ */ jsx15("span", { style: { display: "block", fontSize: T.small, fontWeight: 700, color: active ? C.primaryD : C.text }, children: opt.label }),
-                  /* @__PURE__ */ jsx15("span", { style: { display: "block", fontSize: T.micro, color: C.text2, lineHeight: 1.4 }, children: opt.desc })
+                /* @__PURE__ */ jsx18(Ti, { name: opt.icon, size: 20, color: active ? C.primaryInk : C.text2 }),
+                /* @__PURE__ */ jsxs15("span", { style: { flex: 1 }, children: [
+                  /* @__PURE__ */ jsx18("span", { style: { display: "block", fontSize: T.small, fontWeight: 700, color: active ? C.primaryD : C.text }, children: opt.label }),
+                  /* @__PURE__ */ jsx18("span", { style: { display: "block", fontSize: T.micro, color: C.text2, lineHeight: 1.4 }, children: opt.desc })
                 ] }),
-                active && /* @__PURE__ */ jsx15(Ti, { name: "check", size: 18, color: C.primaryInk })
+                active && /* @__PURE__ */ jsx18(Ti, { name: "check", size: 18, color: C.primaryInk })
               ]
             },
             opt.val
           );
         }) })
       ] }) }),
-      /* @__PURE__ */ jsx15(SettingsSection, { title: "Compte", children: /* @__PURE__ */ jsx15(SettingsRow, { label: "Email", value: user?.email || "\u2014", last: true }) }),
-      /* @__PURE__ */ jsxs12("button", { onClick: onSignOut, className: "gr-focus", style: btn(C.text2, C.borderStrong), children: [
-        /* @__PURE__ */ jsx15(Ti, { name: "logout", size: 16, color: C.text2 }),
+      /* @__PURE__ */ jsx18(SettingsSection, { title: "Compte", children: /* @__PURE__ */ jsx18(SettingsRow, { label: "Email", value: user?.email || "\u2014", last: true }) }),
+      /* @__PURE__ */ jsxs15("button", { onClick: onSignOut, className: "gr-focus", style: btn(C.text2, C.borderStrong), children: [
+        /* @__PURE__ */ jsx18(Ti, { name: "logout", size: 16, color: C.text2 }),
         " Se d\xE9connecter"
       ] }),
-      /* @__PURE__ */ jsxs12(SettingsSection, { title: "Contenu p\xE9dagogique", children: [
-        /* @__PURE__ */ jsx15(SettingsRow, { label: "Modules", value: content.courses.length }),
-        /* @__PURE__ */ jsx15(SettingsRow, { label: "Quiz", value: `${content.quiz.length} questions` }),
-        /* @__PURE__ */ jsx15(SettingsRow, { label: "Exercices", value: content.exercises.length, last: true })
+      /* @__PURE__ */ jsxs15(SettingsSection, { title: "Contenu p\xE9dagogique", children: [
+        /* @__PURE__ */ jsx18(SettingsRow, { label: "Modules", value: content.courses.length }),
+        /* @__PURE__ */ jsx18(SettingsRow, { label: "Quiz", value: `${content.quiz.length} questions` }),
+        /* @__PURE__ */ jsx18(SettingsRow, { label: "Exercices", value: content.exercises.length, last: true })
       ] }),
-      /* @__PURE__ */ jsxs12(SettingsSection, { title: "Ma progression", children: [
-        /* @__PURE__ */ jsx15(SettingsRow, { label: "XP total", value: `${state.xp ?? 0} XP` }),
-        /* @__PURE__ */ jsx15(SettingsRow, { label: "Grade", value: gradeForLevel(state.level).label }),
-        /* @__PURE__ */ jsx15(SettingsRow, { label: "Niveau actuel", value: state.level }),
-        /* @__PURE__ */ jsx15(SettingsRow, { label: "Badges d\xE9bloqu\xE9s", value: `${state.unlockedBadges.length} / ${BADGES.length}`, last: true })
+      /* @__PURE__ */ jsxs15(SettingsSection, { title: "Ma progression", children: [
+        /* @__PURE__ */ jsx18(SettingsRow, { label: "XP total", value: `${state.xp ?? 0} XP` }),
+        /* @__PURE__ */ jsx18(SettingsRow, { label: "Grade", value: gradeForLevel(state.level).label }),
+        /* @__PURE__ */ jsx18(SettingsRow, { label: "Niveau actuel", value: state.level }),
+        /* @__PURE__ */ jsx18(SettingsRow, { label: "Badges d\xE9bloqu\xE9s", value: `${state.unlockedBadges.length} / ${BADGES.length}`, last: true })
       ] }),
-      /* @__PURE__ */ jsxs12("button", { onClick: exportProgress, className: "gr-focus", style: btn(C.text2, C.borderStrong), children: [
-        /* @__PURE__ */ jsx15(Ti, { name: "download", size: 14, color: C.text2 }),
+      /* @__PURE__ */ jsxs15("button", { onClick: exportProgress, className: "gr-focus", style: btn(C.text2, C.borderStrong), children: [
+        /* @__PURE__ */ jsx18(Ti, { name: "download", size: 14, color: C.text2 }),
         " Exporter ma progression (JSON)"
       ] }),
-      /* @__PURE__ */ jsxs12("button", { onClick: () => setConfirmation("resetProgress"), className: "gr-focus", style: btn(C.danger), children: [
-        /* @__PURE__ */ jsx15(Ti, { name: "refresh", size: 14, color: C.danger }),
+      /* @__PURE__ */ jsxs15("button", { onClick: () => setConfirmation("resetProgress"), className: "gr-focus", style: btn(C.danger), children: [
+        /* @__PURE__ */ jsx18(Ti, { name: "refresh", size: 14, color: C.danger }),
         " R\xE9initialiser ma progression"
       ] }),
-      /* @__PURE__ */ jsx15(SettingsSection, { title: "Audio", children: /* @__PURE__ */ jsxs12("div", { style: { padding: "4px 16px 14px" }, children: [
-        /* @__PURE__ */ jsx15("p", { style: { margin: "0 0 12px", fontSize: T.small, color: C.text2, lineHeight: 1.6 }, children: "Les sons de guitare sont t\xE9l\xE9charg\xE9s \xE0 la premi\xE8re \xE9coute. Tu peux les enregistrer maintenant pour qu'ils fonctionnent sans connexion \u2014 compte quelques m\xE9gaoctets, \xE0 faire de pr\xE9f\xE9rence en Wi-Fi." }),
-        /* @__PURE__ */ jsxs12("button", { onClick: activerAudioOffline, className: "gr-focus", style: { ...btn(C.text2, C.borderStrong), marginBottom: 0 }, children: [
-          /* @__PURE__ */ jsx15(Ti, { name: "download", size: 16, color: C.text2 }),
+      /* @__PURE__ */ jsx18(SettingsSection, { title: "Audio", children: /* @__PURE__ */ jsxs15("div", { style: { padding: "4px 16px 14px" }, children: [
+        /* @__PURE__ */ jsx18("p", { style: { margin: "0 0 12px", fontSize: T.small, color: C.text2, lineHeight: 1.6 }, children: "Les sons de guitare sont t\xE9l\xE9charg\xE9s \xE0 la premi\xE8re \xE9coute. Tu peux les enregistrer maintenant pour qu'ils fonctionnent sans connexion \u2014 compte quelques m\xE9gaoctets, \xE0 faire de pr\xE9f\xE9rence en Wi-Fi." }),
+        /* @__PURE__ */ jsxs15("button", { onClick: activerAudioOffline, className: "gr-focus", style: { ...btn(C.text2, C.borderStrong), marginBottom: 0 }, children: [
+          /* @__PURE__ */ jsx18(Ti, { name: "download", size: 16, color: C.text2 }),
           " Rendre l'audio disponible hors-ligne"
         ] }),
-        audioOffline && /* @__PURE__ */ jsx15("p", { role: "status", style: {
+        audioOffline && /* @__PURE__ */ jsx18("p", { role: "status", style: {
           margin: "10px 0 0",
           fontSize: T.micro,
           lineHeight: 1.5,
           color: audioOffline.ok ? C.greenD : C.dangerInk
         }, children: audioOffline.msg })
       ] }) }),
-      /* @__PURE__ */ jsxs12("div", { style: {
+      /* @__PURE__ */ jsxs15("div", { style: {
         border: `1.5px solid ${C.danger}`,
         borderRadius: R.lg,
         padding: "14px 16px",
@@ -10688,26 +13375,26 @@ function SettingsScreen({ state, dispatch, content, onClose, user, onSignOut, on
         marginBottom: 10,
         background: C.surface
       }, children: [
-        /* @__PURE__ */ jsx15("div", { style: { fontSize: T.micro, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: C.dangerInk, marginBottom: 10 }, children: "Zone irr\xE9versible" }),
-        /* @__PURE__ */ jsx15("p", { style: { margin: "0 0 12px", fontSize: T.small, color: C.text2, lineHeight: 1.6 }, children: "La suppression de compte efface d\xE9finitivement ton email, ta progression et ton historique de nos serveurs. Aucune sauvegarde n'est conserv\xE9e. Pense \xE0 exporter ta progression avant, si tu veux en garder une copie." }),
-        /* @__PURE__ */ jsxs12(
+        /* @__PURE__ */ jsx18("div", { style: { fontSize: T.micro, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: C.dangerInk, marginBottom: 10 }, children: "Zone irr\xE9versible" }),
+        /* @__PURE__ */ jsx18("p", { style: { margin: "0 0 12px", fontSize: T.small, color: C.text2, lineHeight: 1.6 }, children: "La suppression de compte efface d\xE9finitivement ton email, ta progression et ton historique de nos serveurs. Aucune sauvegarde n'est conserv\xE9e. Pense \xE0 exporter ta progression avant, si tu veux en garder une copie." }),
+        /* @__PURE__ */ jsxs15(
           "button",
           {
             onClick: () => setConfirmation("deleteAccount"),
             className: "gr-focus",
             style: { ...btn(C.dangerInk, C.danger), marginBottom: 0 },
             children: [
-              /* @__PURE__ */ jsx15(Ti, { name: "trash", size: 16, color: C.dangerInk }),
+              /* @__PURE__ */ jsx18(Ti, { name: "trash", size: 16, color: C.dangerInk }),
               " Supprimer mon compte et mes donn\xE9es"
             ]
           }
         )
       ] }),
-      /* @__PURE__ */ jsxs12("div", { style: { display: "flex", gap: 14, justifyContent: "center", marginTop: 6, flexWrap: "wrap" }, children: [
-        /* @__PURE__ */ jsx15("a", { href: "/cgu.html", style: { fontSize: T.micro, color: C.text2 }, children: "Conditions d'utilisation" }),
-        /* @__PURE__ */ jsx15("a", { href: "/confidentialite.html", style: { fontSize: T.micro, color: C.text2 }, children: "Confidentialit\xE9" })
+      /* @__PURE__ */ jsxs15("div", { style: { display: "flex", gap: 14, justifyContent: "center", marginTop: 6, flexWrap: "wrap" }, children: [
+        /* @__PURE__ */ jsx18("a", { href: "/cgu.html", style: { fontSize: T.micro, color: C.text2 }, children: "Conditions d'utilisation" }),
+        /* @__PURE__ */ jsx18("a", { href: "/confidentialite.html", style: { fontSize: T.micro, color: C.text2 }, children: "Confidentialit\xE9" })
       ] }),
-      importStatus && /* @__PURE__ */ jsxs12("div", { style: {
+      importStatus && /* @__PURE__ */ jsxs15("div", { style: {
         background: importStatus.ok ? C.greenL : C.dangerL,
         border: `1.5px solid ${importStatus.ok ? C.greenBorder : C.dangerBorder}`,
         borderRadius: R.md,
@@ -10717,12 +13404,12 @@ function SettingsScreen({ state, dispatch, content, onClose, user, onSignOut, on
         gap: 8,
         alignItems: "flex-start"
       }, role: "status", children: [
-        /* @__PURE__ */ jsx15(Ti, { name: importStatus.ok ? "check" : "alert-circle", size: 16, color: importStatus.ok ? C.greenD : C.dangerInk }),
-        /* @__PURE__ */ jsx15("p", { style: { margin: 0, fontSize: T.small, color: importStatus.ok ? C.greenD : C.text, lineHeight: 1.5 }, children: importStatus.msg })
+        /* @__PURE__ */ jsx18(Ti, { name: importStatus.ok ? "check" : "alert-circle", size: 16, color: importStatus.ok ? C.greenD : C.dangerInk }),
+        /* @__PURE__ */ jsx18("p", { style: { margin: 0, fontSize: T.small, color: importStatus.ok ? C.greenD : C.text, lineHeight: 1.5 }, children: importStatus.msg })
       ] }),
-      /* @__PURE__ */ jsx15("div", { style: { height: 28 } })
+      /* @__PURE__ */ jsx18("div", { style: { height: 28 } })
     ] }),
-    confirmation === "resetProgress" && /* @__PURE__ */ jsx15(
+    confirmation === "resetProgress" && /* @__PURE__ */ jsx18(
       ConfirmDialog,
       {
         danger: true,
@@ -10736,7 +13423,7 @@ function SettingsScreen({ state, dispatch, content, onClose, user, onSignOut, on
         onCancel: fermerConfirmation
       }
     ),
-    confirmation === "deleteAccount" && /* @__PURE__ */ jsx15(
+    confirmation === "deleteAccount" && /* @__PURE__ */ jsx18(
       ConfirmDialog,
       {
         danger: true,
@@ -10758,2394 +13445,40 @@ var ToolboxScreen_exports = {};
 __export(ToolboxScreen_exports, {
   ToolboxScreen: () => ToolboxScreen
 });
-import { useState as useState13, useRef as useRef9, useEffect as useEffect11, useCallback as useCallback4, useMemo as useMemo8 } from "react";
-init_tone_stub();
-
-// src/screens/FretboardExplorer.jsx
-var FretboardExplorer_exports = {};
-__export(FretboardExplorer_exports, {
-  FretboardExplorer: () => FretboardExplorer
-});
-import { useState as useState12, useMemo as useMemo7, useRef as useRef8, useEffect as useEffect10 } from "react";
-
-// src/diagrams.jsx
-import { useMemo as useMemo6 } from "react";
-import { jsx as jsx16, jsxs as jsxs13 } from "react/jsx-runtime";
-var FONT = '"Josefin Sans", "Roboto", sans-serif';
-function DiagramCard({ caption, children, accent }) {
-  const DC = useC();
-  const dotColor = accent || DC.primary;
-  return /* @__PURE__ */ jsxs13("div", { style: {
-    background: DC.surface,
-    borderRadius: 14,
-    border: `1px solid ${DC.border}`,
-    overflow: "hidden",
-    marginBottom: 0
-  }, children: [
-    /* @__PURE__ */ jsx16("div", { style: { overflowX: "auto", WebkitOverflowScrolling: "touch" }, children }),
-    caption && /* @__PURE__ */ jsxs13("div", { style: {
-      padding: "8px 14px 10px",
-      fontSize: 11,
-      color: DC.text2,
-      fontFamily: FONT,
-      fontWeight: 500,
-      letterSpacing: "0.02em",
-      borderTop: `1px solid ${DC.border}`,
-      display: "flex",
-      alignItems: "center",
-      gap: 6
-    }, children: [
-      /* @__PURE__ */ jsx16("span", { style: { width: 6, height: 6, borderRadius: "50%", background: dotColor, flexShrink: 0 } }),
-      caption
-    ] })
-  ] });
-}
-var STRING_LABELS = ["Mi", "La", "R\xE9", "Sol", "Si", "Mi"];
-function ChordDiagram({ data, caption }) {
-  const DC = useC();
-  const { name = "", frets = [], fingers = [], startFret = 1, barre } = data;
-  const STRINGS = 6;
-  const FRET_ROWS = 4;
-  const COL_W = 32;
-  const ROW_H = 30;
-  const LEFT_PAD = 16;
-  const TOP_PAD = 38;
-  const BOT_PAD = 24;
-  const NOTE_R = 10;
-  const svgW = LEFT_PAD + (STRINGS - 1) * COL_W + 16;
-  const svgH = TOP_PAD + FRET_ROWS * ROW_H + BOT_PAD;
-  const sx = (i) => LEFT_PAD + i * COL_W;
-  const fy = (f) => TOP_PAD + (f - startFret + 0.5) * ROW_H;
-  return /* @__PURE__ */ jsx16(DiagramCard, { caption: caption || name, accent: DC.primary, children: /* @__PURE__ */ jsxs13(
-    "svg",
-    {
-      width: "100%",
-      viewBox: `0 0 ${svgW} ${svgH}`,
-      style: { display: "block", maxWidth: 200, margin: "0 auto" },
-      "aria-label": `Accord ${name}`,
-      children: [
-        /* @__PURE__ */ jsx16(
-          "text",
-          {
-            x: svgW / 2,
-            y: 14,
-            textAnchor: "middle",
-            fontSize: 13,
-            fill: DC.primary,
-            fontFamily: FONT,
-            fontWeight: 700,
-            children: name
-          }
-        ),
-        startFret === 1 ? /* @__PURE__ */ jsx16(
-          "rect",
-          {
-            x: LEFT_PAD - 2,
-            y: TOP_PAD - 4,
-            width: (STRINGS - 1) * COL_W + 4,
-            height: 5,
-            fill: DC.text,
-            rx: 2
-          }
-        ) : /* @__PURE__ */ jsxs13(
-          "text",
-          {
-            x: LEFT_PAD - 6,
-            y: TOP_PAD + ROW_H / 2 + 4,
-            textAnchor: "end",
-            fontSize: 9,
-            fill: DC.text3,
-            fontFamily: FONT,
-            children: [
-              startFret,
-              "fr"
-            ]
-          }
-        ),
-        Array.from({ length: FRET_ROWS + 1 }, (_, i) => /* @__PURE__ */ jsx16(
-          "line",
-          {
-            x1: LEFT_PAD,
-            y1: TOP_PAD + i * ROW_H,
-            x2: LEFT_PAD + (STRINGS - 1) * COL_W,
-            y2: TOP_PAD + i * ROW_H,
-            stroke: DC.border,
-            strokeWidth: 1.5
-          },
-          i
-        )),
-        Array.from({ length: STRINGS }, (_, i) => /* @__PURE__ */ jsx16(
-          "line",
-          {
-            x1: sx(i),
-            y1: TOP_PAD,
-            x2: sx(i),
-            y2: TOP_PAD + FRET_ROWS * ROW_H,
-            stroke: DC.text3,
-            strokeWidth: i === 0 ? 2.2 : i === 1 ? 1.9 : i === 2 ? 1.6 : i === 3 ? 1.3 : i === 4 ? 1.1 : 0.9
-          },
-          i
-        )),
-        STRING_LABELS.map((label, i) => /* @__PURE__ */ jsx16(
-          "text",
-          {
-            x: sx(i),
-            y: svgH - 6,
-            textAnchor: "middle",
-            fontSize: 8,
-            fill: DC.text3,
-            fontFamily: FONT,
-            children: label
-          },
-          i
-        )),
-        barre && /* @__PURE__ */ jsx16(
-          "rect",
-          {
-            x: sx(barre.from) - NOTE_R + 2,
-            y: fy(barre.fret) - NOTE_R + 1,
-            width: sx(barre.to) - sx(barre.from) + NOTE_R * 2 - 4,
-            height: NOTE_R * 2 - 2,
-            fill: DC.primary,
-            rx: NOTE_R - 1
-          }
-        ),
-        frets.map((f, i) => {
-          const x = sx(i);
-          if (f === -1) {
-            return /* @__PURE__ */ jsx16(
-              "text",
-              {
-                x,
-                y: TOP_PAD - 10,
-                textAnchor: "middle",
-                fontSize: 11,
-                fill: DC.coral,
-                fontFamily: FONT,
-                fontWeight: 700,
-                children: "\xD7"
-              },
-              i
-            );
-          }
-          if (f === 0) {
-            return /* @__PURE__ */ jsx16(
-              "circle",
-              {
-                cx: x,
-                cy: TOP_PAD - 12,
-                r: 6,
-                fill: "none",
-                stroke: DC.green,
-                strokeWidth: 1.5
-              },
-              i
-            );
-          }
-          const rowIdx = f - startFret;
-          if (rowIdx < 0 || rowIdx >= FRET_ROWS) {
-            console.warn(`[ChordDiagram] Note hors zone visible ignor\xE9e : corde ${i}, case ${f} (startFret=${startFret})`);
-            return null;
-          }
-          const y = fy(f);
-          const finger = fingers[i] || 0;
-          return /* @__PURE__ */ jsxs13("g", { children: [
-            /* @__PURE__ */ jsx16("circle", { cx: x, cy: y, r: NOTE_R, fill: DC.primary }),
-            finger > 0 && /* @__PURE__ */ jsx16(
-              "text",
-              {
-                x,
-                y: y + 4,
-                textAnchor: "middle",
-                fontSize: 9,
-                fill: "#fff",
-                fontFamily: FONT,
-                fontWeight: 700,
-                children: finger === 5 ? "T" : finger
-              }
-            )
-          ] }, i);
-        })
-      ]
-    }
-  ) });
-}
-
-// src/screens/FretboardExplorer.jsx
-import { jsx as jsx17, jsxs as jsxs14 } from "react/jsx-runtime";
-var ROOTS_FR2 = [
-  { en: "C", fr: "Do" },
-  { en: "C#", fr: "Do#" },
-  { en: "D", fr: "Re" },
-  { en: "D#", fr: "Re#" },
-  { en: "E", fr: "Mi" },
-  { en: "F", fr: "Fa" },
-  { en: "F#", fr: "Fa#" },
-  { en: "G", fr: "Sol" },
-  { en: "G#", fr: "Sol#" },
-  { en: "A", fr: "La" },
-  { en: "A#", fr: "La#" },
-  { en: "B", fr: "Si" }
-];
-var SCALE_OPTIONS = [
-  { key: "pentatonic_minor", label: "Pentatonique mineure" },
-  { key: "pentatonic_major", label: "Pentatonique majeure" },
-  { key: "blues", label: "Blues" },
-  { key: "major", label: "Majeure" },
-  { key: "natural_minor", label: "Mineure naturelle" },
-  { key: "harmonic_minor", label: "Mineure harmonique" },
-  { key: "dorian", label: "Dorien" },
-  { key: "phrygian", label: "Phrygien" },
-  { key: "mixolydian", label: "Mixolydien" },
-  { key: "lydian", label: "Lydien" },
-  { key: "whole_tone", label: "Tons entiers" }
-];
-var CHORD_OPTIONS = [
-  { key: "maj", label: "Majeur" },
-  { key: "min", label: "Mineur" },
-  { key: "dom7", label: "Dom7" },
-  { key: "maj7", label: "Maj7" },
-  { key: "min7", label: "Mineur 7" },
-  { key: "min7b5", label: "Mi-diminue" },
-  { key: "dim7", label: "Diminue 7" },
-  { key: "sus2", label: "Sus2" },
-  { key: "sus4", label: "Sus4" },
-  { key: "add9", label: "Add9" }
-];
-var SCALE_INFO = {
-  pentatonic_minor: { desc: "5 notes. La gamme du rock et du blues. Aucune fausse note sur un accord mineur.", usage: "Rock, Blues, Metal, Soul" },
-  pentatonic_major: { desc: "5 notes. Version joyeuse. Parfaite pour le country et le pop.", usage: "Country, Pop, Folk" },
-  blues: { desc: "Pentatonique mineure + la note bleue (b5). La note bleue = la couleur blues.", usage: "Blues, Jazz, Rock" },
-  major: { desc: "7 notes. La gamme de reference. Toutes les autres gammes en decoulent.", usage: "Pop, Rock, Classique" },
-  natural_minor: { desc: "7 notes. Sons sombres et melancoliques. Base du rock et du metal.", usage: "Rock, Metal, Classique" },
-  harmonic_minor: { desc: "Mineure avec une 7e majeure. Son oriental et dramatique.", usage: "Metal, Flamenco, Classique" },
-  dorian: { desc: "Mineur avec une 6te majeure. Son jazz-funk caracteristique.", usage: "Jazz, Fusion, Funk" },
-  phrygian: { desc: "Mineur avec une 2de mineure. Son espagnol, flamenco et metal.", usage: "Metal, Flamenco, Fusion" },
-  mixolydian: { desc: "Majeure avec une 7e mineure. Son rock-blues des grands solos.", usage: "Rock, Blues, Funk" },
-  lydian: { desc: "Majeure avec un #4. Son flottant, cinematique et moderne.", usage: "Fusion, Prog, Cinema" },
-  whole_tone: { desc: "6 notes, toutes espacees d'un ton. Son flou et onirique.", usage: "Jazz, Impressionnisme" }
-};
-var CHORD_INFO = {
-  maj: { desc: "Fondamentale + tierce majeure + quinte. Son stable et joyeux.", formula: "1 - 3 - 5" },
-  min: { desc: "Fondamentale + tierce mineure + quinte. Son melancolique.", formula: "1 - b3 - 5" },
-  dom7: { desc: "Accord de tension. Veut se resoudre vers le I.", formula: "1 - 3 - 5 - b7" },
-  maj7: { desc: "Son doux et jazzy. Guide tones : 3e et 7e majeure.", formula: "1 - 3 - 5 - 7" },
-  min7: { desc: "Son jazz-funk. Le ii du ii-V-I.", formula: "1 - b3 - 5 - b7" },
-  min7b5: { desc: "Mi-diminue (demi-diminue). Le vii de la gamme majeure.", formula: "1 - b3 - b5 - b7" },
-  dim7: { desc: "Symetrique, tres tendu. Toutes les notes a 3 demi-tons.", formula: "1 - b3 - b5 - bb7" },
-  sus2: { desc: "Pas de tierce -- son ouvert et suspendu.", formula: "1 - 2 - 5" },
-  sus4: { desc: "Pas de tierce -- tension vers la quarte.", formula: "1 - 4 - 5" },
-  add9: { desc: "Majeur avec une 9e ajoutee. Son moderne et riche.", formula: "1 - 3 - 5 - 9" }
-};
-function FretboardExplorer({ onBack, embedded = false }) {
-  const C = useC();
-  const [tab, setTab] = useState12("scale");
-  const [root, setRoot] = useState12("A");
-  const [scaleKey, setScaleKey] = useState12("pentatonic_minor");
-  const [chordKey, setChordKey] = useState12("min7");
-  const [displayMode, setDisplayMode] = useState12("notes");
-  const [showRootPicker, setShowRootPicker] = useState12(false);
-  const [isPlaying, setIsPlaying] = useState12(false);
-  const [flashNotes, setFlashNotes] = useState12(null);
-  const [arpeggio, setArpeggio] = useState12(true);
-  const shapes = useMemo7(() => {
-    if (tab !== "chord") return [];
-    return getChordShapes(
-      normalizeNote(root),
-      chordKey,
-      12,
-      CHORD_TYPES[chordKey]?.intervals || null
-    );
-  }, [tab, root, chordKey]);
-  const finTimerRef = useRef8(null);
-  const annulerFin = () => {
-    if (finTimerRef.current) {
-      clearTimeout(finTimerRef.current);
-      finTimerRef.current = null;
-    }
-  };
-  const handleStop = () => {
-    annulerFin();
-    try {
-      stopAll();
-    } catch {
-    }
-    setIsPlaying(false);
-    setFlashNotes(null);
-  };
-  const handlePlay = async () => {
-    annulerFin();
-    try {
-      stopAll();
-    } catch {
-    }
-    setIsPlaying(true);
-    setFlashNotes(null);
-    try {
-      await unlockAudio();
-    } catch {
-    }
-    const onStep = (i, note) => setFlashNotes(i < 0 ? null : note);
-    let dureeMs2 = 2600;
-    try {
-      if (tab === "scale") {
-        const notes = await playScaleFromRoot(root, scaleKey, 90, onStep);
-        dureeMs2 = (notes?.length ?? 8) * (60 / 90) * 1e3 + 1600;
-      } else if (arpeggio) {
-        const notes = await playArpeggioFromRoot(root, chordKey, 132, onStep);
-        dureeMs2 = (notes?.length ?? 4) * (60 / 132) * 1e3 + 1600;
-      } else {
-        await playChordFromRoot(root, chordKey);
-        dureeMs2 = 2600;
-      }
-    } catch {
-    }
-    finTimerRef.current = setTimeout(() => {
-      finTimerRef.current = null;
-      setIsPlaying(false);
-      setFlashNotes(null);
-    }, dureeMs2);
-  };
-  useEffect10(() => () => {
-    annulerFin();
-    try {
-      stopAll();
-    } catch {
-    }
-  }, []);
-  const activeNotes = useMemo7(() => {
-    if (tab === "scale") return getScaleNotes(root, scaleKey);
-    return getChordNotes(root, chordKey);
-  }, [tab, root, scaleKey, chordKey]);
-  const info = tab === "scale" ? SCALE_INFO[scaleKey] : CHORD_INFO[chordKey];
-  const activeLabel = tab === "scale" ? SCALE_OPTIONS.find((s) => s.key === scaleKey)?.label ?? scaleKey : CHORD_OPTIONS.find((c) => c.key === chordKey)?.label ?? chordKey;
-  const rootFr = ROOTS_FR2.find((r) => r.en === root)?.fr ?? root;
-  const transposeSemitone = (dir) => {
-    const idx = ROOTS_FR2.findIndex((r) => r.en === root);
-    const next = (idx + dir + 12) % 12;
-    setRoot(ROOTS_FR2[next].en);
-  };
-  return /* @__PURE__ */ jsxs14("div", { style: embedded ? { display: "flex", flexDirection: "column", background: "transparent" } : { display: "flex", flexDirection: "column", minHeight: "100dvh", background: C.bg }, children: [
-    /* @__PURE__ */ jsxs14("div", { style: embedded ? { padding: "0 0 12px", display: "flex", alignItems: "center", gap: 10 } : { padding: "14px 16px 12px", display: "flex", alignItems: "center", gap: 10, borderBottom: `1px solid ${C.border}`, background: C.surface, position: "sticky", top: 0, zIndex: 10 }, children: [
-      !embedded && /* @__PURE__ */ jsx17("button", { onClick: onBack, style: { background: "none", border: "none", cursor: "pointer", color: C.text2, padding: 0, display: "flex", alignItems: "center" }, children: /* @__PURE__ */ jsx17(Ti, { name: "chevron-left", size: 22 }) }),
-      /* @__PURE__ */ jsxs14("div", { style: { flex: 1 }, children: [
-        !embedded && /* @__PURE__ */ jsx17("div", { style: { fontSize: 16, fontWeight: 700, color: C.text, fontFamily: FONTS.title }, children: "Explorateur du manche" }),
-        /* @__PURE__ */ jsxs14("div", { style: { fontSize: 11, color: C.text3, fontFamily: FONTS.ui }, children: [
-          rootFr,
-          " - ",
-          activeLabel
-        ] })
-      ] }),
-      /* @__PURE__ */ jsx17(
-        "button",
-        {
-          onClick: isPlaying ? handleStop : handlePlay,
-          "aria-label": isPlaying ? "Arr\xEAter la lecture" : "\xC9couter",
-          className: "gr-focus",
-          style: {
-            width: 36,
-            height: 36,
-            borderRadius: "50%",
-            border: "none",
-            background: C.primary,
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: "0 2px 8px rgba(232,93,26,0.3)"
-          },
-          children: /* @__PURE__ */ jsx17(Ti, { name: isPlaying ? "player-stop-filled" : "volume", size: 16, color: "#fff" })
-        }
-      )
-    ] }),
-    /* @__PURE__ */ jsxs14("div", { style: { padding: "14px 16px", display: "flex", flexDirection: "column", gap: 12, overflowY: "auto", paddingBottom: 32 }, children: [
-      /* @__PURE__ */ jsx17("div", { style: { display: "flex", background: C.surface2, borderRadius: R.lg, padding: 3, gap: 2 }, children: [{ key: "scale", label: "Gammes", icon: "music" }, { key: "chord", label: "Accords", icon: "guitar-pick" }].map((t) => /* @__PURE__ */ jsxs14("button", { onClick: () => setTab(t.key), style: {
-        flex: 1,
-        padding: "9px 12px",
-        borderRadius: R.md,
-        border: "none",
-        cursor: "pointer",
-        fontFamily: FONTS.ui,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 6,
-        background: tab === t.key ? C.surface : "transparent",
-        boxShadow: tab === t.key ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
-        color: tab === t.key ? C.text : C.text3,
-        fontSize: 13,
-        fontWeight: tab === t.key ? 600 : 400,
-        transition: "all 0.15s"
-      }, children: [
-        /* @__PURE__ */ jsx17(Ti, { name: t.icon, size: 14 }),
-        t.label
-      ] }, t.key)) }),
-      /* @__PURE__ */ jsxs14("div", { style: { display: "flex", alignItems: "center", gap: 8 }, children: [
-        /* @__PURE__ */ jsx17("div", { style: { fontSize: 11, fontWeight: 600, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", width: 60 }, children: "Tonique" }),
-        /* @__PURE__ */ jsx17("button", { onClick: () => transposeSemitone(-1), style: { width: 34, height: 34, borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }, children: /* @__PURE__ */ jsx17(Ti, { name: "chevron-left", size: 16, color: C.text2 }) }),
-        /* @__PURE__ */ jsx17("button", { onClick: () => setShowRootPicker(!showRootPicker), style: { flex: 1, height: 34, borderRadius: 10, border: `1.5px solid ${C.primary}`, background: C.primaryL, cursor: "pointer", fontSize: 16, fontWeight: 700, color: C.primaryD, fontFamily: FONTS.ui }, children: rootFr }),
-        /* @__PURE__ */ jsx17("button", { onClick: () => transposeSemitone(1), style: { width: 34, height: 34, borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }, children: /* @__PURE__ */ jsx17(Ti, { name: "chevron-right", size: 16, color: C.text2 }) })
-      ] }),
-      showRootPicker && /* @__PURE__ */ jsx17("div", { style: { display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6, background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: 10 }, children: ROOTS_FR2.map((r) => /* @__PURE__ */ jsx17("button", { onClick: () => {
-        setRoot(r.en);
-        setShowRootPicker(false);
-      }, style: {
-        padding: "8px 4px",
-        borderRadius: 8,
-        border: `1px solid ${root === r.en ? C.primary : C.border}`,
-        background: root === r.en ? C.primaryL : C.bg,
-        color: root === r.en ? C.primaryD : C.text,
-        fontSize: 12,
-        fontWeight: root === r.en ? 700 : 400,
-        cursor: "pointer",
-        fontFamily: FONTS.ui
-      }, children: r.fr }, r.en)) }),
-      /* @__PURE__ */ jsxs14("div", { style: { display: "flex", alignItems: "center", gap: 8 }, children: [
-        /* @__PURE__ */ jsx17("div", { style: { fontSize: 11, fontWeight: 600, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", width: 60 }, children: tab === "scale" ? "Gamme" : "Accord" }),
-        /* @__PURE__ */ jsx17("div", { style: { flex: 1, overflowX: "auto", WebkitOverflowScrolling: "touch" }, children: /* @__PURE__ */ jsx17("div", { style: { display: "flex", gap: 6, paddingBottom: 4 }, children: (tab === "scale" ? SCALE_OPTIONS : CHORD_OPTIONS).map((opt) => {
-          const active = tab === "scale" ? scaleKey === opt.key : chordKey === opt.key;
-          return /* @__PURE__ */ jsx17("button", { onClick: () => tab === "scale" ? setScaleKey(opt.key) : setChordKey(opt.key), style: {
-            flexShrink: 0,
-            padding: "7px 12px",
-            borderRadius: R.pill,
-            border: `1.5px solid ${active ? C.primary : C.border}`,
-            background: active ? C.primaryL : C.surface,
-            color: active ? C.primaryD : C.text2,
-            fontSize: 12,
-            fontWeight: active ? 600 : 400,
-            cursor: "pointer",
-            fontFamily: FONTS.ui,
-            whiteSpace: "nowrap"
-          }, children: opt.label }, opt.key);
-        }) }) })
-      ] }),
-      /* @__PURE__ */ jsx17("div", { style: { display: "flex", gap: 6 }, children: [{ key: "notes", label: "Notes" }, { key: "intervals", label: "Intervalles" }, { key: "degrees", label: "Degres" }].map((m) => /* @__PURE__ */ jsx17("button", { onClick: () => setDisplayMode(m.key), style: {
-        flex: 1,
-        padding: "7px 0",
-        borderRadius: 8,
-        border: `1px solid ${displayMode === m.key ? C.primary : C.border}`,
-        background: displayMode === m.key ? C.primaryL : C.surface,
-        color: displayMode === m.key ? C.primaryD : C.text3,
-        fontSize: 11,
-        fontWeight: displayMode === m.key ? 600 : 400,
-        cursor: "pointer",
-        fontFamily: FONTS.ui
-      }, children: m.label }, m.key)) }),
-      /* @__PURE__ */ jsx17("div", { style: { background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, overflow: "hidden" }, children: /* @__PURE__ */ jsx17("div", { style: { padding: "10px 8px 6px", overflowX: "auto", WebkitOverflowScrolling: "touch" }, children: /* @__PURE__ */ jsx17(
-        Fretboard,
-        {
-          mode: tab === "scale" ? "scale" : "chord",
-          root,
-          scale: tab === "scale" ? scaleKey : void 0,
-          chord: tab === "chord" ? chordKey : void 0,
-          displayMode,
-          lang: "fr",
-          compact: true,
-          flashNotes
-        }
-      ) }) }),
-      tab === "chord" && /* @__PURE__ */ jsx17("div", { style: { display: "flex", gap: 6, marginBottom: 12 }, children: [
-        { id: true, label: "Arp\xE9g\xE9", hint: "note \xE0 note" },
-        { id: false, label: "Plaqu\xE9", hint: "d'un bloc" }
-      ].map((m) => /* @__PURE__ */ jsxs14(
-        "button",
-        {
-          onClick: () => setArpeggio(m.id),
-          style: {
-            flex: 1,
-            padding: "8px 0",
-            borderRadius: R.md,
-            cursor: "pointer",
-            border: `1.5px solid ${arpeggio === m.id ? C.primary : C.border}`,
-            background: arpeggio === m.id ? C.primaryL : C.surface,
-            color: arpeggio === m.id ? C.primaryD : C.text2,
-            fontFamily: FONTS.ui
-          },
-          children: [
-            /* @__PURE__ */ jsx17("div", { style: { fontSize: 12.5, fontWeight: 700 }, children: m.label }),
-            /* @__PURE__ */ jsx17("div", { style: { fontSize: 10, opacity: 0.75, marginTop: 1 }, children: m.hint })
-          ]
-        },
-        String(m.id)
-      )) }),
-      tab === "chord" && shapes.length > 0 && /* @__PURE__ */ jsxs14("div", { style: { marginBottom: 12 }, children: [
-        /* @__PURE__ */ jsxs14("div", { style: { fontSize: 10, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }, children: [
-          shapes.length,
-          " fa\xE7on",
-          shapes.length > 1 ? "s" : "",
-          " de le jouer"
-        ] }),
-        /* @__PURE__ */ jsx17("div", { style: { display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch" }, children: shapes.map((sh, i) => /* @__PURE__ */ jsx17("div", { style: { flexShrink: 0, width: 150 }, children: /* @__PURE__ */ jsx17(
-          ChordDiagram,
-          {
-            data: { name: rootFr, frets: sh.frets, fingers: sh.fingers, startFret: sh.startFret, barre: sh.barre },
-            caption: `${sh.label} \xB7 case ${sh.startFret}`
-          }
-        ) }, i)) })
-      ] }),
-      /* @__PURE__ */ jsxs14("div", { style: { background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: "12px 14px" }, children: [
-        /* @__PURE__ */ jsxs14("div", { style: { fontSize: 10, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }, children: [
-          "Notes - ",
-          rootFr,
-          " ",
-          activeLabel
-        ] }),
-        /* @__PURE__ */ jsx17("div", { style: { display: "flex", flexWrap: "wrap", gap: 6 }, children: activeNotes.map((note, i) => /* @__PURE__ */ jsxs14("div", { style: {
-          padding: "5px 10px",
-          borderRadius: R.pill,
-          background: i === 0 ? C.amberL : C.primaryL,
-          border: `1px solid ${i === 0 ? C.amberBorder : C.primaryBorder}`,
-          fontSize: 13,
-          fontWeight: i === 0 ? 700 : 500,
-          color: i === 0 ? C.amberD : C.primaryD,
-          fontFamily: FONTS.ui
-        }, children: [
-          noteToFr(note),
-          i === 0 ? " R" : ""
-        ] }, note)) }),
-        tab === "chord" && CHORD_INFO[chordKey] && /* @__PURE__ */ jsxs14("div", { style: { marginTop: 8, fontSize: 12, color: C.text3, fontFamily: FONTS.ui }, children: [
-          "Formule : ",
-          /* @__PURE__ */ jsx17("strong", { style: { color: C.text2 }, children: CHORD_INFO[chordKey].formula })
-        ] })
-      ] }),
-      info && /* @__PURE__ */ jsxs14("div", { style: { background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: "12px 14px" }, children: [
-        /* @__PURE__ */ jsx17("div", { style: { fontSize: 10, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }, children: "Contexte" }),
-        /* @__PURE__ */ jsx17("p", { style: { margin: "0 0 6px", fontSize: 13, color: C.text, fontFamily: FONTS.title, lineHeight: 1.55 }, children: info.desc }),
-        "usage" in info && /* @__PURE__ */ jsxs14("div", { style: { display: "flex", alignItems: "center", gap: 6 }, children: [
-          /* @__PURE__ */ jsx17(Ti, { name: "music", size: 12, color: C.text3 }),
-          /* @__PURE__ */ jsx17("span", { style: { fontSize: 11, color: C.text3, fontFamily: FONTS.ui }, children: info.usage })
-        ] })
-      ] })
-    ] })
-  ] });
-}
-
-// src/tab/tabParser.js
-var TECH_SYMBOLS = /* @__PURE__ */ new Set(["h", "p", "/", "\\", "b"]);
-var TECH_TYPE = {
-  h: "hammer",
-  p: "pull",
-  "/": "slide_up",
-  "\\": "slide_down",
-  b: "bend"
-};
-function stripLabel(line) {
-  return line.replace(/^\s*[A-Ga-g](#|b)?\s*[|:]?\s?/, "");
-}
-function parseStringLine(line) {
-  const events = [];
-  let i = 0;
-  const n = line.length;
-  const lireNombre = (pos) => {
-    let j = pos;
-    while (j < n && line[j] >= "0" && line[j] <= "9") j++;
-    if (j === pos) return null;
-    return { valeur: parseInt(line.slice(pos, j), 10), fin: j };
-  };
-  while (i < n) {
-    const c = line[i];
-    if (c === "x" || c === "X") {
-      events.push({ type: "mute", col: i });
-      i++;
-      continue;
-    }
-    const nombre = lireNombre(i);
-    if (nombre) {
-      const apres = nombre.fin;
-      const symbole2 = line[apres];
-      if (symbole2 && TECH_SYMBOLS.has(symbole2)) {
-        const cible = lireNombre(apres + 1);
-        const toFret = cible ? cible.valeur : symbole2 === "b" ? nombre.valeur + 2 : nombre.valeur;
-        events.push({
-          type: TECH_TYPE[symbole2],
-          fromFret: nombre.valeur,
-          toFret,
-          col: i
-        });
-        i = cible ? cible.fin : apres + 1;
-        continue;
-      }
-      events.push({ type: "note", fret: nombre.valeur, col: i });
-      i = nombre.fin;
-      continue;
-    }
-    i++;
-  }
-  return events;
-}
-function parseTab(texte) {
-  if (typeof texte !== "string" || !texte.trim()) {
-    return { evenements: [], erreur: "Aucun texte \xE0 analyser." };
-  }
-  const lignesBrutes = texte.split("\n").filter((l) => /[-0-9]{2,}/.test(l));
-  if (lignesBrutes.length < 6) {
-    return {
-      evenements: [],
-      erreur: `${lignesBrutes.length} ligne(s) exploitable(s) d\xE9tect\xE9e(s), 6 attendues (une par corde). V\xE9rifie qu'aucune ligne ne s'est perdue au collage.`
-    };
-  }
-  const lignes = lignesBrutes.slice(0, 6).map(stripLabel);
-  const evenements = [];
-  lignes.forEach((ligne, idx) => {
-    const stringNum = idx + 1;
-    for (const ev of parseStringLine(ligne)) {
-      evenements.push({ ...ev, string: stringNum });
-    }
-  });
-  evenements.sort((a, b) => a.col - b.col || a.string - b.string);
-  return { evenements, erreur: null };
-}
-
-// src/tab/tabGrid.js
-var PAS_PAR_MESURE = 16;
-var NB_CORDES = 6;
-var FRET_MAX = 24;
-var cle = (corde, col) => `${corde}-${col}`;
-var colDeCle = (k) => Number(k.split("-")[1]);
-function grilleVide() {
-  return { notes: {} };
-}
-function lireCase(grille, corde, col) {
-  return grille?.notes?.[cle(corde, col)] || null;
-}
-function ecrireCase(grille, corde, col, cell) {
-  const notes = { ...grille.notes };
-  if (cell == null) delete notes[cle(corde, col)];
-  else notes[cle(corde, col)] = cell;
-  return { notes };
-}
-function derniereColonne(grille) {
-  let max = -1;
-  for (const k of Object.keys(grille?.notes || {})) max = Math.max(max, colDeCle(k));
-  return max;
-}
-function nbColsVisibles(grille) {
-  const der = derniereColonne(grille);
-  const mesures = der < 0 ? 2 : Math.max(2, Math.floor(der / PAS_PAR_MESURE) + 2);
-  return mesures * PAS_PAR_MESURE;
-}
-function nbMesuresUtilisees(grille) {
-  const der = derniereColonne(grille);
-  return der < 0 ? 0 : Math.floor(der / PAS_PAR_MESURE) + 1;
-}
-function compatibleCroches(grille) {
-  return Object.keys(grille?.notes || {}).every((k) => colDeCle(k) % 2 === 0);
-}
-function saisirChiffre(cellActuelle, chiffre, enchainer) {
-  const base = cellActuelle && !cellActuelle.mute ? cellActuelle : {};
-  if (enchainer && typeof base.fret === "number") {
-    const combine = base.fret * 10 + chiffre;
-    if (combine <= FRET_MAX) return { ...base, fret: combine };
-  }
-  return { ...base, fret: chiffre, mute: void 0 };
-}
-function poserFret(cellActuelle, fret) {
-  const base = cellActuelle && !cellActuelle.mute ? cellActuelle : {};
-  return { ...base, fret: Math.max(0, Math.min(FRET_MAX, fret)), mute: void 0 };
-}
-function notesDeLaCorde(grille, corde) {
-  const out = [];
-  for (const [k, cell] of Object.entries(grille.notes)) {
-    const [s, c] = k.split("-").map(Number);
-    if (s === corde) out.push({ col: c, cell });
-  }
-  return out.sort((a, b) => a.col - b.col);
-}
-function grilleVersEvenements(grille) {
-  const evenements = [];
-  for (let corde = 1; corde <= NB_CORDES; corde++) {
-    const notes = notesDeLaCorde(grille, corde);
-    const consommees = /* @__PURE__ */ new Set();
-    notes.forEach((n, i) => {
-      if (consommees.has(n.col)) return;
-      const { cell, col } = n;
-      if (cell.mute) {
-        evenements.push({ type: "mute", col, string: corde });
-        return;
-      }
-      if (typeof cell.fret !== "number") return;
-      const suivante = notes[i + 1];
-      const suivanteJouable = suivante && !suivante.cell.mute && typeof suivante.cell.fret === "number";
-      if ((cell.lie || cell.slide) && suivanteJouable) {
-        const monte = suivante.cell.fret >= cell.fret;
-        const type = cell.slide ? monte ? "slide_up" : "slide_down" : monte ? "hammer" : "pull";
-        evenements.push({ type, fromFret: cell.fret, toFret: suivante.cell.fret, col, toCol: suivante.col, string: corde });
-        consommees.add(suivante.col);
-        return;
-      }
-      if (cell.bend === 1 || cell.bend === 2) {
-        evenements.push({ type: "bend", fromFret: cell.fret, toFret: cell.fret + cell.bend, col, string: corde });
-        return;
-      }
-      evenements.push({ type: "note", fret: cell.fret, col, string: corde });
-    });
-  }
-  return evenements.sort((a, b) => a.col - b.col || a.string - b.string);
-}
-function evenementsVersGrille(evenements) {
-  let g = grilleVide();
-  for (const ev of evenements || []) {
-    switch (ev.type) {
-      case "note":
-        g = ecrireCase(g, ev.string, ev.col, { fret: ev.fret });
-        break;
-      case "mute":
-        g = ecrireCase(g, ev.string, ev.col, { mute: true });
-        break;
-      case "bend": {
-        const b = Math.max(1, Math.min(2, ev.toFret - ev.fromFret));
-        g = ecrireCase(g, ev.string, ev.col, { fret: ev.fromFret, bend: b });
-        break;
-      }
-      case "hammer":
-      case "pull":
-      case "slide_up":
-      case "slide_down": {
-        const lien = ev.type.startsWith("slide") ? { slide: true } : { lie: true };
-        g = ecrireCase(g, ev.string, ev.col, { fret: ev.fromFret, ...lien });
-        g = ecrireCase(g, ev.string, ev.toCol ?? ev.col + 1, { fret: ev.toFret });
-        break;
-      }
-      default:
-        break;
-    }
-  }
-  return g;
-}
-function grilleExemple() {
-  const notes = [
-    [3, 0, { fret: 5, lie: true }],
-    [3, 2, { fret: 7 }],
-    // hammer 5→7
-    [2, 4, { fret: 5 }],
-    [2, 6, { fret: 8, lie: true }],
-    [2, 8, { fret: 5 }],
-    // pull-off 8→5
-    [3, 10, { fret: 7, bend: 2 }],
-    // bend d'un ton
-    [3, 14, { fret: 5 }],
-    [4, 16, { fret: 7 }],
-    [4, 18, { fret: 5 }],
-    [5, 20, { fret: 5, slide: true }],
-    [5, 24, { fret: 7 }],
-    // slide 5→7
-    [4, 28, { fret: 7 }]
-    // retour sur La
-  ];
-  let g = grilleVide();
-  for (const [s, c, cell] of notes) g = ecrireCase(g, s, c, cell);
-  return g;
-}
-function grilleValide(g) {
-  if (!g || typeof g !== "object" || !g.notes || typeof g.notes !== "object" || Array.isArray(g.notes)) return false;
-  return Object.entries(g.notes).every(
-    ([k, v]) => /^[1-6]-\d+$/.test(k) && colDeCle(k) < PAS_PAR_MESURE * 256 && v && typeof v === "object"
-  );
-}
-
-// src/screens/ToolboxScreen.jsx
-import { Fragment as Fragment9, jsx as jsx18, jsxs as jsxs15 } from "react/jsx-runtime";
-function Metronome() {
-  const C = useC();
-  const pillBtn = {
-    minWidth: 42,
-    height: 42,
-    borderRadius: 12,
-    border: `1.5px solid ${C.border}`,
-    background: C.surface,
-    color: C.text2,
-    fontWeight: 700,
-    fontSize: 13,
-    cursor: "pointer",
-    fontFamily: FONTS.ui
-  };
-  const [bpm, setBpm] = useState13(90);
-  const [playing, setPlaying] = useState13(false);
-  const [beats, setBeats] = useState13(4);
-  const [current, setCurrent] = useState13(-1);
-  const [timbre, setTimbre] = useState13("bois");
-  const TIMBRES = [
-    { id: "bois", label: "Bois" },
-    { id: "mecanique", label: "M\xE9canique" },
-    { id: "batterie", label: "Batterie" }
-  ];
-  const voixRef = useRef9(null);
-  const loopRef = useRef9(null);
-  const beatRef = useRef9(0);
-  const beatsRef = useRef9(beats);
-  const libererVoix = useCallback4(() => {
-    try {
-      voixRef.current?.dispose?.();
-    } catch {
-    }
-    voixRef.current = null;
-  }, []);
-  const construireVoix = useCallback4((id) => {
-    if (id === "bois") {
-      const filtre = new Filter({ type: "bandpass", frequency: 1800, Q: 2.2 }).toDestination();
-      const corps = new NoiseSynth({
-        noise: { type: "white" },
-        envelope: { attack: 5e-4, decay: 0.028, sustain: 0 }
-      }).connect(filtre);
-      corps.volume.value = -8;
-      return {
-        fort: (t) => {
-          filtre.frequency.setValueAtTime(2600, t);
-          corps.triggerAttackRelease(0.02, t, 1);
-        },
-        faible: (t) => {
-          filtre.frequency.setValueAtTime(1500, t);
-          corps.triggerAttackRelease(0.02, t, 0.55);
-        },
-        dispose: () => {
-          corps.dispose();
-          filtre.dispose();
-        }
-      };
-    }
-    if (id === "mecanique") {
-      const filtre = new Filter({ type: "bandpass", frequency: 1400, Q: 3 }).toDestination();
-      const tic = new NoiseSynth({
-        noise: { type: "white" },
-        envelope: { attack: 5e-4, decay: 0.022, sustain: 0 }
-      }).connect(filtre);
-      tic.volume.value = -11;
-      const cloche = new MetalSynth({
-        harmonicity: 5.1,
-        modulationIndex: 16,
-        resonance: 3e3,
-        octaves: 1.2,
-        envelope: { attack: 1e-3, decay: 0.42, release: 0.12 }
-      }).toDestination();
-      cloche.volume.value = -22;
-      return {
-        fort: (t) => cloche.triggerAttackRelease("C6", 0.12, t),
-        faible: (t) => tic.triggerAttackRelease(0.02, t, 0.7),
-        dispose: () => {
-          tic.dispose();
-          filtre.dispose();
-          cloche.dispose();
-        }
-      };
-    }
-    const grosse = new MembraneSynth({
-      pitchDecay: 0.035,
-      octaves: 5,
-      envelope: { attack: 1e-3, decay: 0.22, sustain: 0 }
-    }).toDestination();
-    grosse.volume.value = -7;
-    const passeHaut = new Filter({ type: "highpass", frequency: 7500 }).toDestination();
-    const charley = new NoiseSynth({
-      noise: { type: "white" },
-      envelope: { attack: 1e-3, decay: 0.026, sustain: 0 }
-    }).connect(passeHaut);
-    charley.volume.value = -17;
-    return {
-      fort: (t) => grosse.triggerAttackRelease("C1", "8n", t),
-      faible: (t) => charley.triggerAttackRelease(0.02, t, 0.6),
-      dispose: () => {
-        grosse.dispose();
-        charley.dispose();
-        passeHaut.dispose();
-      }
-    };
-  }, []);
-  const ensureClick = useCallback4(async () => {
-    await start();
-    if (!voixRef.current) voixRef.current = construireVoix(timbre);
-  }, [timbre, construireVoix]);
-  const stop = useCallback4(() => {
-    if (loopRef.current) {
-      loopRef.current.stop();
-      loopRef.current.dispose();
-      loopRef.current = null;
-    }
-    getTransport().stop();
-    setPlaying(false);
-    setCurrent(-1);
-    beatRef.current = 0;
-  }, []);
-  const start2 = useCallback4(async () => {
-    await ensureClick();
-    beatRef.current = 0;
-    const transport = getTransport();
-    transport.bpm.value = bpm;
-    loopRef.current = new Loop((time) => {
-      const b = beatRef.current % beatsRef.current;
-      const strong = b === 0;
-      const voix = voixRef.current;
-      if (voix) (strong ? voix.fort : voix.faible)(time);
-      getDraw().schedule(() => setCurrent(b), time);
-      beatRef.current += 1;
-    }, "4n").start(0);
-    transport.start();
-    setPlaying(true);
-  }, [bpm, ensureClick]);
-  useEffect11(() => {
-    getTransport().bpm.value = bpm;
-  }, [bpm]);
-  useEffect11(() => {
-    if (!voixRef.current) return;
-    libererVoix();
-    voixRef.current = construireVoix(timbre);
-  }, [timbre, construireVoix, libererVoix]);
-  useEffect11(() => {
-    beatsRef.current = beats;
-  }, [beats]);
-  useEffect11(() => () => {
-    stop();
-    libererVoix();
-  }, [stop, libererVoix]);
-  const toggle = () => playing ? stop() : start2();
-  const nudge = (d) => setBpm((v) => Math.min(240, Math.max(40, v + d)));
-  const ECART_MIN_MS = 200;
-  const ECART_MAX_MS = 2e3;
-  const TAPS_MAX = 8;
-  const tapsRef = useRef9([]);
-  const [tapCount, setTapCount] = useState13(0);
-  const tapTempo = () => {
-    const now2 = performance.now();
-    const taps = tapsRef.current;
-    const dernier = taps[taps.length - 1];
-    if (dernier !== void 0) {
-      const ecart = now2 - dernier;
-      if (ecart < ECART_MIN_MS) return;
-      if (ecart > ECART_MAX_MS) {
-        tapsRef.current = [now2];
-        setTapCount(1);
-        return;
-      }
-    }
-    tapsRef.current = [...taps, now2].slice(-TAPS_MAX);
-    setTapCount(tapsRef.current.length);
-    if (tapsRef.current.length < 2) return;
-    const ecarts = [];
-    for (let i = 1; i < tapsRef.current.length; i++) {
-      ecarts.push(tapsRef.current[i] - tapsRef.current[i - 1]);
-    }
-    ecarts.sort((a, b) => a - b);
-    const milieu = Math.floor(ecarts.length / 2);
-    const median = ecarts.length % 2 ? ecarts[milieu] : (ecarts[milieu - 1] + ecarts[milieu]) / 2;
-    setBpm(Math.min(240, Math.max(40, Math.round(6e4 / median))));
-  };
-  const aideTap = tapCount === 0 ? "Tape le tempo au doigt, au moins deux fois." : tapCount === 1 ? "Continue : il faut un second appui pour mesurer." : `Tempo mesur\xE9 sur ${tapCount - 1} intervalle${tapCount > 2 ? "s" : ""}.`;
-  const tempoLabel = bpm < 60 ? "Largo" : bpm < 76 ? "Adagio" : bpm < 108 ? "Andante" : bpm < 120 ? "Moderato" : bpm < 156 ? "Allegro" : bpm < 176 ? "Vivace" : "Presto";
-  return /* @__PURE__ */ jsxs15("div", { children: [
-    /* @__PURE__ */ jsx18("div", { style: {
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      gap: 10,
-      margin: "8px 0 22px",
-      height: 24
-      // hauteur figée : plus de décalage vertical
-    }, children: Array.from({ length: beats }).map((_, i) => {
-      const on = current === i;
-      const strong = i === 0;
-      const teinte = strong ? C.primary : C.amber;
-      return /* @__PURE__ */ jsx18("div", { style: {
-        width: 24,
-        height: 24,
-        // taille de boîte constante
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexShrink: 0
-      }, children: /* @__PURE__ */ jsx18("div", { style: {
-        width: 16,
-        height: 16,
-        borderRadius: "50%",
-        background: on ? teinte : C.border,
-        transform: on ? "scale(1.35)" : "scale(1)",
-        boxShadow: on ? `0 0 0 4px ${teinte}22` : "none",
-        // On ne transitionne QUE transform et les couleurs — jamais
-        // `all`, qui embarquerait aussi les propriétés de mise en page.
-        transition: "transform .08s ease, background-color .08s ease, box-shadow .08s ease",
-        willChange: "transform"
-      } }) }, i);
-    }) }),
-    /* @__PURE__ */ jsxs15("div", { style: { textAlign: "center", marginBottom: 6 }, children: [
-      /* @__PURE__ */ jsx18("div", { style: { fontSize: 64, fontWeight: 800, color: C.text, letterSpacing: "-2px", lineHeight: 1, fontFamily: FONTS.title }, children: bpm }),
-      /* @__PURE__ */ jsxs15("div", { style: { fontSize: 12, fontWeight: 700, color: C.primary, textTransform: "uppercase", letterSpacing: ".1em", marginTop: 2 }, children: [
-        "BPM \xB7 ",
-        tempoLabel
-      ] })
-    ] }),
-    /* @__PURE__ */ jsx18(
-      "input",
-      {
-        type: "range",
-        min: "40",
-        max: "240",
-        value: bpm,
-        "aria-label": "Tempo",
-        "aria-valuetext": `${bpm} battements par minute, ${tempoLabel}`,
-        onChange: (e) => setBpm(+e.target.value),
-        style: { width: "100%", margin: "16px 0 6px", accentColor: C.primary }
-      }
-    ),
-    /* @__PURE__ */ jsxs15("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", gap: 14, marginBottom: 20 }, children: [
-      [-5, -1].map((d) => /* @__PURE__ */ jsx18("button", { onClick: () => nudge(d), "aria-label": `Ralentir de ${-d}`, className: "gr-focus", style: pillBtn, children: d }, d)),
-      /* @__PURE__ */ jsx18("button", { onClick: toggle, "aria-label": playing ? "Arr\xEAter le m\xE9tronome" : "D\xE9marrer le m\xE9tronome", className: "gr-focus", style: {
-        width: 72,
-        height: 72,
-        borderRadius: "50%",
-        border: "none",
-        cursor: "pointer",
-        background: `linear-gradient(135deg,#FF9155,${C.primary})`,
-        color: C.onPrimaryBtn,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        boxShadow: `0 6px 20px ${C.primary}55`
-      }, children: /* @__PURE__ */ jsx18(Ti, { name: playing ? "player-pause" : "player-play", size: 30, color: C.onPrimaryBtn }) }),
-      [1, 5].map((d) => /* @__PURE__ */ jsxs15("button", { onClick: () => nudge(d), "aria-label": `Acc\xE9l\xE9rer de ${d}`, className: "gr-focus", style: pillBtn, children: [
-        "+",
-        d
-      ] }, d))
-    ] }),
-    /* @__PURE__ */ jsxs15("div", { style: {
-      background: C.surface,
-      border: `1.5px solid ${C.border}`,
-      borderRadius: R.lg,
-      padding: "10px 12px",
-      marginBottom: 10
-    }, children: [
-      /* @__PURE__ */ jsx18("div", { style: { fontSize: 11, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: C.text2, marginBottom: 8 }, children: "Son" }),
-      /* @__PURE__ */ jsx18("div", { role: "radiogroup", "aria-label": "Timbre du m\xE9tronome", style: { display: "flex", gap: 6 }, children: TIMBRES.map((t) => {
-        const actif = timbre === t.id;
-        return /* @__PURE__ */ jsx18(
-          "button",
-          {
-            role: "radio",
-            "aria-checked": actif,
-            onClick: () => setTimbre(t.id),
-            className: "gr-focus",
-            style: {
-              flex: 1,
-              padding: "11px 6px",
-              borderRadius: R.md,
-              minHeight: 44,
-              border: `1.5px solid ${actif ? C.primary : C.border}`,
-              background: actif ? C.primaryL : C.surface,
-              color: actif ? C.primaryD : C.text2,
-              fontWeight: 700,
-              fontSize: 12.5,
-              cursor: "pointer",
-              fontFamily: FONTS.ui
-            },
-            children: t.label
-          },
-          t.id
-        );
-      }) })
-    ] }),
-    /* @__PURE__ */ jsxs15("div", { style: { display: "flex", gap: 10 }, children: [
-      /* @__PURE__ */ jsxs15("div", { style: { flex: 1, background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: "10px 12px" }, children: [
-        /* @__PURE__ */ jsx18("div", { style: { fontSize: 9.5, fontWeight: 700, color: C.text3, textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 7 }, children: "Mesure" }),
-        /* @__PURE__ */ jsx18("div", { style: { display: "flex", gap: 6 }, children: [2, 3, 4, 6].map((n) => /* @__PURE__ */ jsx18("button", { onClick: () => setBeats(n), "aria-pressed": beats === n, "aria-label": `${n} temps par mesure`, className: "gr-focus", style: {
-          flex: 1,
-          minHeight: 40,
-          padding: "7px 0",
-          borderRadius: 8,
-          cursor: "pointer",
-          border: `1.5px solid ${beats === n ? C.primary : C.border}`,
-          background: beats === n ? C.primaryL : C.surface,
-          color: beats === n ? C.primaryD : C.text2,
-          fontWeight: 700,
-          fontSize: 13,
-          fontFamily: FONTS.ui
-        }, children: n }, n)) })
-      ] }),
-      /* @__PURE__ */ jsxs15(
-        "button",
-        {
-          onClick: tapTempo,
-          className: "gr-focus",
-          "aria-label": tapCount > 0 ? `Tap tempo, ${tapCount} appuis compt\xE9s` : "Tap tempo",
-          style: {
-            width: 96,
-            background: C.amberL,
-            border: `1.5px solid ${C.amberBorder}`,
-            borderRadius: R.lg,
-            color: C.amberD,
-            fontWeight: 700,
-            fontSize: 13,
-            fontFamily: FONTS.ui,
-            cursor: "pointer",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 3
-          },
-          children: [
-            /* @__PURE__ */ jsx18(Ti, { name: "hand-finger-down", size: 18, color: C.amber }),
-            /* @__PURE__ */ jsx18("span", { style: { whiteSpace: "nowrap" }, children: "Tap tempo" }),
-            /* @__PURE__ */ jsx18("div", { "aria-hidden": "true", style: {
-              height: 6,
-              display: "flex",
-              gap: 3,
-              alignItems: "center",
-              justifyContent: "center"
-            }, children: Array.from({ length: TAPS_MAX }).map((_, i) => /* @__PURE__ */ jsx18("div", { style: {
-              width: 4,
-              height: 4,
-              borderRadius: "50%",
-              background: i < tapCount ? C.amber : "transparent",
-              transition: "background-color .1s ease"
-            } }, i)) })
-          ]
-        }
-      )
-    ] }),
-    /* @__PURE__ */ jsx18("div", { role: "status", "aria-live": "polite", style: {
-      minHeight: 18,
-      marginTop: 8,
-      textAlign: "center",
-      fontSize: 11,
-      color: C.text2,
-      fontFamily: FONTS.ui,
-      lineHeight: 1.5
-    }, children: aideTap })
-  ] });
-}
-var NOTE_NAMES = ["Do", "Do#", "R\xE9", "R\xE9#", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "La#", "Si"];
-function noteToHz(name, oct) {
-  const idx = NOTE_NAMES.indexOf(name);
-  const midi = (oct + 1) * 12 + idx;
-  return 440 * Math.pow(2, (midi - 69) / 12);
-}
-var TUNINGS = [
-  // ── 6 cordes ──────────────────────────────────────────────
-  {
-    id: "standard",
-    group: "6 cordes",
-    label: "Standard (Mi)",
-    courses: [[["Mi", 2]], [["La", 2]], [["R\xE9", 3]], [["Sol", 3]], [["Si", 3]], [["Mi", 4]]]
-  },
-  {
-    id: "dropd",
-    group: "6 cordes",
-    label: "Drop D",
-    courses: [[["R\xE9", 2]], [["La", 2]], [["R\xE9", 3]], [["Sol", 3]], [["Si", 3]], [["Mi", 4]]]
-  },
-  {
-    id: "halfstep",
-    group: "6 cordes",
-    label: "Demi-ton plus bas (Mi\u266D)",
-    courses: [[["R\xE9#", 2]], [["Sol#", 2]], [["Do#", 3]], [["Fa#", 3]], [["La#", 3]], [["R\xE9#", 4]]]
-  },
-  {
-    id: "dadgad",
-    group: "6 cordes",
-    label: "DADGAD",
-    courses: [[["R\xE9", 2]], [["La", 2]], [["R\xE9", 3]], [["Sol", 3]], [["La", 3]], [["R\xE9", 4]]]
-  },
-  {
-    id: "openg",
-    group: "6 cordes",
-    label: "Open G",
-    courses: [[["R\xE9", 2]], [["Sol", 2]], [["R\xE9", 3]], [["Sol", 3]], [["Si", 3]], [["R\xE9", 4]]]
-  },
-  {
-    id: "opend",
-    group: "6 cordes",
-    label: "Open D",
-    courses: [[["R\xE9", 2]], [["La", 2]], [["R\xE9", 3]], [["Fa#", 3]], [["La", 3]], [["R\xE9", 4]]]
-  },
-  {
-    id: "opene",
-    group: "6 cordes",
-    label: "Open E",
-    courses: [[["Mi", 2]], [["Si", 2]], [["Mi", 3]], [["Sol#", 3]], [["Si", 3]], [["Mi", 4]]]
-  },
-  // ── 12 cordes ─────────────────────────────────────────────
-  {
-    id: "twelve",
-    group: "12 cordes",
-    label: "12 cordes (standard)",
-    courses: [
-      [["Mi", 2], ["Mi", 3]],
-      [["La", 2], ["La", 3]],
-      [["R\xE9", 3], ["R\xE9", 4]],
-      [["Sol", 3], ["Sol", 4]],
-      [["Si", 3], ["Si", 3]],
-      [["Mi", 4], ["Mi", 4]]
-    ]
-  },
-  // ── Guitare portugaise (fado) — notes fournies par l'utilisateur ──
-  {
-    id: "fado",
-    group: "Guitare portugaise",
-    label: "Guitare portugaise (fado)",
-    courses: [
-      [["R\xE9", 4], ["R\xE9", 3]],
-      [["La", 4], ["La", 3]],
-      [["Si", 4], ["Si", 3]],
-      [["Mi", 4], ["Mi", 4]],
-      [["La", 4], ["La", 4]],
-      [["Si", 4], ["Si", 4]]
-    ]
-  }
-];
-function buildTargets(tuning) {
-  const targets = [];
-  tuning.courses.forEach((course, ci) => {
-    course.forEach(([name, oct]) => {
-      targets.push({ name, oct, hz: noteToHz(name, oct), course: ci });
-    });
-  });
-  return targets;
-}
-function freqToNote(freq) {
-  const midi = Math.round(69 + 12 * Math.log2(freq / 440));
-  const refFreq = 440 * Math.pow(2, (midi - 69) / 12);
-  const cents = Math.round(1200 * Math.log2(freq / refFreq));
-  return { name: NOTE_NAMES[(midi % 12 + 12) % 12], octave: Math.floor(midi / 12) - 1, cents };
-}
-var PITCH_MIN_HZ = 60;
-var PITCH_MAX_HZ = 700;
-function nsdfAt(x, N2, lag) {
-  let acf = 0, energy = 0;
-  const n = N2 - lag;
-  for (let i = 0; i < n; i++) {
-    const a = x[i], b = x[i + lag];
-    acf += a * b;
-    energy += a * a + b * b;
-  }
-  return energy > 0 ? 2 * acf / energy : 0;
-}
-function detectPitch(buf, sampleRate) {
-  const R2 = 2;
-  const rate = sampleRate / R2;
-  const minLag = Math.max(2, Math.floor(rate / PITCH_MAX_HZ));
-  const maxLag = Math.ceil(rate / PITCH_MIN_HZ);
-  const N2 = Math.min(Math.floor(buf.length / R2), maxLag * 3);
-  if (N2 < maxLag + 2) return -1;
-  const x = new Float32Array(N2);
-  for (let i = 0; i < N2; i++) x[i] = buf[i * R2];
-  let e0 = 0;
-  for (let i = 0; i < N2; i++) e0 += x[i] * x[i];
-  if (Math.sqrt(e0 / N2) < 12e-4) return -1;
-  const nsdf = new Float32Array(maxLag + 2);
-  let best = 0;
-  for (let lag = minLag; lag <= maxLag; lag++) {
-    const v = nsdfAt(x, N2, lag);
-    nsdf[lag] = v;
-    if (v > best) best = v;
-  }
-  if (best < 0.35) return -1;
-  const thresh = best * 0.85;
-  let coarse = -1;
-  for (let i = minLag + 1; i < maxLag; i++) {
-    if (nsdf[i] >= thresh && nsdf[i] >= nsdf[i - 1] && nsdf[i] >= nsdf[i + 1]) {
-      coarse = i;
-      break;
-    }
-  }
-  if (coarse < 0) return -1;
-  const center = coarse * R2;
-  const lo = Math.max(2, center - R2 - 1);
-  const hi = Math.min(Math.floor(buf.length / 3) - 1, center + R2 + 1);
-  const NF = Math.min(buf.length, hi * 3);
-  let bestLag = center, bestVal = -Infinity;
-  const vals = {};
-  for (let l = lo; l <= hi; l++) {
-    const v = nsdfAt(buf, NF, l);
-    vals[l] = v;
-    if (v > bestVal) {
-      bestVal = v;
-      bestLag = l;
-    }
-  }
-  let T0 = bestLag;
-  const y1 = vals[bestLag - 1], y2 = vals[bestLag], y3 = vals[bestLag + 1];
-  if (y1 !== void 0 && y3 !== void 0) {
-    const a = (y1 + y3 - 2 * y2) / 2, b = (y3 - y1) / 2;
-    if (a !== 0) {
-      const shift = -b / (2 * a);
-      if (Math.abs(shift) <= 1) T0 = bestLag + shift;
-    }
-  }
-  const freq = sampleRate / T0;
-  if (freq < PITCH_MIN_HZ || freq > PITCH_MAX_HZ) return -1;
-  return freq;
-}
-function TuningPicker({ tuningId, setTuningId, compact = false }) {
-  const C = useC();
-  const groups = [...new Set(TUNINGS.map((t) => t.group))];
-  return /* @__PURE__ */ jsx18(
-    "select",
-    {
-      value: tuningId,
-      onChange: (e) => setTuningId(e.target.value),
-      style: {
-        width: compact ? "100%" : "auto",
-        maxWidth: "100%",
-        appearance: "none",
-        WebkitAppearance: "none",
-        background: C.surface,
-        border: `1.5px solid ${C.border}`,
-        borderRadius: R.lg,
-        padding: compact ? "10px 14px" : "11px 38px 11px 16px",
-        fontSize: 13.5,
-        fontWeight: 700,
-        color: C.text,
-        fontFamily: FONTS.ui,
-        cursor: "pointer",
-        textAlign: "center",
-        textAlignLast: "center",
-        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23${C.text3.replace("#", "")}' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "right 14px center"
-      },
-      children: groups.map((g) => /* @__PURE__ */ jsx18("optgroup", { label: g, children: TUNINGS.filter((t) => t.group === g).map((t) => /* @__PURE__ */ jsx18("option", { value: t.id, children: t.label }, t.id)) }, g))
-    }
-  );
-}
-function Tuner() {
-  const C = useC();
-  const [active, setActive] = useState13(false);
-  const [freq, setFreq] = useState13(0);
-  const [note, setNote] = useState13(null);
-  const [error, setError] = useState13(null);
-  const [tuningId, setTuningId] = useState13("standard");
-  const tuning = TUNINGS.find((t) => t.id === tuningId) || TUNINGS[0];
-  const targets = buildTargets(tuning);
-  const ctxRef = useRef9(null);
-  const analyser = useRef9(null);
-  const streamRef = useRef9(null);
-  const rafRef = useRef9(null);
-  const bufRef = useRef9(null);
-  const freqHistRef = useRef9([]);
-  const holdTimer = useRef9(null);
-  const lastNoteRef = useRef9(null);
-  const needleRef = useRef9(null);
-  const needleLabelRef = useRef9(null);
-  const centsTargetRef = useRef9(0);
-  const centsShownRef = useRef9(0);
-  const hasSignalRef = useRef9(false);
-  const stop = useCallback4(() => {
-    if (holdTimer.current) {
-      clearTimeout(holdTimer.current);
-      holdTimer.current = null;
-    }
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    if (streamRef.current) streamRef.current.getTracks().forEach((t) => t.stop());
-    if (ctxRef.current && ctxRef.current.state !== "closed") ctxRef.current.close();
-    ctxRef.current = analyser.current = streamRef.current = null;
-    centsTargetRef.current = 0;
-    centsShownRef.current = 0;
-    hasSignalRef.current = false;
-    freqHistRef.current = [];
-    setActive(false);
-    setFreq(0);
-    setNote(null);
-  }, []);
-  const start2 = useCallback4(async () => {
-    try {
-      let stream;
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          audio: { echoCancellation: false, autoGainControl: false, noiseSuppression: false, latency: 0 }
-        });
-      } catch {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      }
-      streamRef.current = stream;
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      if (ctx.state === "suspended") await ctx.resume();
-      ctxRef.current = ctx;
-      const src = ctx.createMediaStreamSource(stream);
-      const hp = ctx.createBiquadFilter();
-      hp.type = "highpass";
-      hp.frequency.value = 70;
-      hp.Q.value = 0.5;
-      const lp = ctx.createBiquadFilter();
-      lp.type = "lowpass";
-      lp.frequency.value = 1400;
-      lp.Q.value = 0.5;
-      const gain = ctx.createGain();
-      gain.gain.value = 4;
-      const an = ctx.createAnalyser();
-      an.fftSize = 8192;
-      an.smoothingTimeConstant = 0;
-      src.connect(hp);
-      hp.connect(lp);
-      lp.connect(gain);
-      gain.connect(an);
-      analyser.current = an;
-      bufRef.current = new Float32Array(an.fftSize);
-      freqHistRef.current = [];
-      setActive(true);
-      setError(null);
-      let frame = 0;
-      const tick = () => {
-        frame++;
-        if (frame % 2 === 0) {
-          an.getFloatTimeDomainData(bufRef.current);
-          const f = detectPitch(bufRef.current, ctx.sampleRate);
-          if (f > 0) {
-            const hist = freqHistRef.current;
-            hist.push(f);
-            if (hist.length > 5) hist.shift();
-            const sorted = [...hist].sort((a, b) => a - b);
-            const median = sorted[Math.floor(sorted.length / 2)];
-            if (holdTimer.current) {
-              clearTimeout(holdTimer.current);
-              holdTimer.current = null;
-            }
-            lastNoteRef.current = median;
-            const n = freqToNote(median);
-            centsTargetRef.current = Math.max(-50, Math.min(50, n.cents));
-            hasSignalRef.current = true;
-            setNote(
-              (prev) => prev && prev.name === n.name && prev.octave === n.octave && Math.abs(prev.cents - n.cents) < 3 ? prev : n
-            );
-            if (frame % 12 === 0) setFreq(median);
-          } else {
-            const hist = freqHistRef.current;
-            if (hist.length > 0) hist.shift();
-            if (hist.length === 0 && !holdTimer.current) {
-              holdTimer.current = setTimeout(() => {
-                setFreq(0);
-                setNote(null);
-                lastNoteRef.current = null;
-                holdTimer.current = null;
-                hasSignalRef.current = false;
-                centsTargetRef.current = 0;
-              }, 1500);
-            }
-          }
-        }
-        const target = centsTargetRef.current;
-        const next = centsShownRef.current + (target - centsShownRef.current) * 0.16;
-        centsShownRef.current = next;
-        if (needleRef.current) {
-          needleRef.current.style.transform = `translateX(${next}%)`;
-        }
-        if (needleLabelRef.current) {
-          const shown = Math.round(next);
-          needleLabelRef.current.textContent = hasSignalRef.current ? shown > 0 ? `+${shown}` : `${shown}` : "";
-        }
-        rafRef.current = requestAnimationFrame(tick);
-      };
-      tick();
-    } catch {
-      setError("Micro inaccessible. Autorise l'acc\xE8s au microphone dans ton navigateur.");
-      setActive(false);
-    }
-  }, []);
-  useEffect11(() => () => stop(), [stop]);
-  const cents = note?.cents ?? 0;
-  const inTune = active && note && Math.abs(cents) <= 5;
-  const needleColor = inTune ? C.green : Math.abs(cents) < 20 ? C.amber : C.pink;
-  const nearestCourse = freq > 0 ? targets.reduce((best, t) => {
-    const d = Math.abs(1200 * Math.log2(freq / t.hz));
-    return d < best.d ? { course: t.course, d } : best;
-  }, { course: -1, d: Infinity }).course : -1;
-  return /* @__PURE__ */ jsx18("div", { children: !active ? /* @__PURE__ */ jsxs15("div", { style: { textAlign: "center", padding: "10px 0 4px" }, children: [
-    /* @__PURE__ */ jsx18(Gropi, { pose: "listen", size: 120, anim: "bob", style: { margin: "0 auto 6px" } }),
-    /* @__PURE__ */ jsx18("p", { style: { fontSize: 13, color: C.text2, lineHeight: 1.55, maxWidth: 260, margin: "0 auto 16px" }, children: "Joue une corde \xE0 vide, Gropi \xE9coute et te dit si tu es juste." }),
-    /* @__PURE__ */ jsx18(TuningPicker, { tuningId, setTuningId }),
-    /* @__PURE__ */ jsxs15("button", { onClick: start2, className: "gr-focus", style: {
-      background: `linear-gradient(135deg,#FF9155,${C.primary})`,
-      color: C.onPrimaryBtn,
-      border: "none",
-      borderRadius: R.lg,
-      padding: "13px 28px",
-      fontSize: 14,
-      fontWeight: 700,
-      fontFamily: FONTS.ui,
-      cursor: "pointer",
-      boxShadow: `0 4px 16px ${C.primary}44`,
-      marginTop: 18,
-      display: "inline-flex",
-      alignItems: "center",
-      gap: 8
-    }, children: [
-      /* @__PURE__ */ jsx18(Ti, { name: "microphone", size: 16, color: C.onPrimaryBtn }),
-      " Activer l'accordeur"
-    ] }),
-    error && /* @__PURE__ */ jsx18("p", { style: { fontSize: 12, color: C.pink, marginTop: 14, lineHeight: 1.5 }, children: error })
-  ] }) : /* @__PURE__ */ jsxs15("div", { children: [
-    /* @__PURE__ */ jsxs15("div", { style: { textAlign: "center", marginBottom: 6 }, children: [
-      /* @__PURE__ */ jsxs15("div", { style: {
-        fontSize: 72,
-        fontWeight: 800,
-        lineHeight: 1,
-        letterSpacing: "-2px",
-        fontFamily: FONTS.title,
-        color: inTune ? C.green : C.text,
-        transition: "color .15s"
-      }, children: [
-        note ? note.name : "\u2014",
-        note && /* @__PURE__ */ jsx18("span", { style: { fontSize: 28, fontWeight: 700, color: C.text3 }, children: note.octave })
-      ] }),
-      /* @__PURE__ */ jsx18("div", { style: { fontSize: 13, fontWeight: 600, color: C.text3, marginTop: 2 }, children: freq > 0 ? `${freq.toFixed(1)} Hz` : "Joue une corde\u2026" })
-    ] }),
-    /* @__PURE__ */ jsxs15("div", { style: { position: "relative", height: 64, margin: "14px 0 8px", overflow: "hidden" }, children: [
-      /* @__PURE__ */ jsx18("div", { style: { position: "absolute", left: 0, right: 0, top: 30, height: 3, background: C.border, borderRadius: 2 } }),
-      /* @__PURE__ */ jsx18("div", { style: { position: "absolute", left: "45%", width: "10%", top: 26, height: 11, background: `${C.green}33`, borderRadius: 6 } }),
-      /* @__PURE__ */ jsx18("div", { style: { position: "absolute", left: "50%", top: 18, width: 2, height: 27, background: C.green, transform: "translateX(-50%)" } }),
-      /* @__PURE__ */ jsx18("div", { style: { position: "absolute", left: 0, right: 0, top: 8, pointerEvents: "none" }, children: /* @__PURE__ */ jsxs15("div", { ref: needleRef, style: { width: "100%", transform: "translateX(0%)", willChange: "transform" }, children: [
-        /* @__PURE__ */ jsx18("div", { style: {
-          width: 0,
-          height: 0,
-          margin: "0 auto",
-          borderLeft: "7px solid transparent",
-          borderRight: "7px solid transparent",
-          borderTop: `14px solid ${needleColor}`,
-          transition: "border-top-color .18s"
-        } }),
-        /* @__PURE__ */ jsx18("div", { ref: needleLabelRef, style: {
-          fontSize: 11,
-          fontWeight: 700,
-          textAlign: "center",
-          marginTop: 2,
-          color: needleColor,
-          transition: "color .18s"
-        } })
-      ] }) }),
-      /* @__PURE__ */ jsx18("div", { style: { position: "absolute", left: 0, top: 46, fontSize: 9.5, color: C.text3, fontWeight: 600 }, children: "\u266D trop bas" }),
-      /* @__PURE__ */ jsx18("div", { style: { position: "absolute", right: 0, top: 46, fontSize: 9.5, color: C.text3, fontWeight: 600 }, children: "trop haut \u266F" })
-    ] }),
-    /* @__PURE__ */ jsxs15("div", { "aria-hidden": !inTune, style: { height: 22, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontSize: 13, fontWeight: 700, color: C.green, marginBottom: 8, visibility: inTune ? "visible" : "hidden" }, children: [
-      /* @__PURE__ */ jsx18(Ti, { name: "check", size: 15, color: C.green }),
-      " Juste !"
-    ] }),
-    /* @__PURE__ */ jsx18("div", { style: { fontSize: 10, fontWeight: 700, color: C.text3, textTransform: "uppercase", letterSpacing: ".07em", textAlign: "center", marginTop: 8 }, children: tuning.label }),
-    /* @__PURE__ */ jsx18("div", { style: { display: "flex", justifyContent: "center", gap: 6, margin: "8px 0 18px", flexWrap: "wrap" }, children: tuning.courses.map((course, ci) => {
-      const on = nearestCourse === ci;
-      return /* @__PURE__ */ jsx18("div", { style: {
-        minWidth: 42,
-        textAlign: "center",
-        padding: "7px 8px",
-        borderRadius: 10,
-        border: `1.5px solid ${on ? C.primary : C.border}`,
-        background: on ? C.primaryL : C.surface,
-        transition: "all .12s"
-      }, children: course.map(([name, oct], k) => /* @__PURE__ */ jsxs15("div", { style: { lineHeight: 1.15 }, children: [
-        /* @__PURE__ */ jsx18("span", { style: { fontSize: 13, fontWeight: 800, color: on ? C.primaryD : C.text }, children: name }),
-        /* @__PURE__ */ jsx18("span", { style: { fontSize: 9, color: C.text3, fontWeight: 600 }, children: oct })
-      ] }, k)) }, ci);
-    }) }),
-    /* @__PURE__ */ jsx18("div", { style: { marginBottom: 14 }, children: /* @__PURE__ */ jsx18(TuningPicker, { tuningId, setTuningId, compact: true }) }),
-    /* @__PURE__ */ jsx18("button", { onClick: stop, className: "gr-focus", style: {
-      width: "100%",
-      padding: 12,
-      borderRadius: R.lg,
-      border: `1.5px solid ${C.border}`,
-      background: C.surface,
-      color: C.text2,
-      fontWeight: 700,
-      fontSize: 13,
-      fontFamily: FONTS.ui,
-      cursor: "pointer"
-    }, children: "Arr\xEAter l'accordeur" })
-  ] }) });
-}
-var CHORD_ROOTS = [
-  ["C", "Do"],
-  ["C#", "Do#"],
-  ["D", "R\xE9"],
-  ["D#", "R\xE9#"],
-  ["E", "Mi"],
-  ["F", "Fa"],
-  ["F#", "Fa#"],
-  ["G", "Sol"],
-  ["G#", "Sol#"],
-  ["A", "La"],
-  ["A#", "La#"],
-  ["B", "Si"]
-];
-var CHORD_FAMILIES = [
-  { id: "base", label: "Base", keys: ["maj", "min", "dim", "aug", "sus2", "sus4"] },
-  { id: "sept", label: "7e / 6e", keys: ["dom7", "maj7", "min7", "min7b5", "dim7", "minMaj7", "dom7sus4", "maj6", "min6"] },
-  { id: "neuf", label: "9e", keys: ["dom9", "maj9", "min9", "add9"] },
-  { id: "ext", label: "11e / 13e", keys: ["dom11", "min11", "maj7s11", "dom13", "min13", "maj13"] },
-  { id: "alt", label: "Alt\xE9r\xE9s", keys: ["dom7b9", "dom7s9", "dom7b5", "dom7s5"] }
-];
-var SPEED_PRESETS = [
-  { id: "lent", label: "Lent", secs: 2.2 },
-  { id: "normal", label: "Normal", secs: 1.4 },
-  { id: "rapide", label: "Rapide", secs: 0.8 }
-];
-var MAX_CHORDS = 12;
-function ChordPlayer() {
-  const C = useC();
-  const [root, setRoot] = useState13("C");
-  const [family, setFamily] = useState13("base");
-  const [quality, setQuality] = useState13("maj");
-  const [sequence, setSequence] = useState13([]);
-  const [playing, setPlaying] = useState13(false);
-  const [activeIdx, setActiveIdx] = useState13(-1);
-  const [speed, setSpeed] = useState13("normal");
-  const [suiteVidee, setSuiteVidee] = useState13(null);
-  const timerViderRef = useRef9(null);
-  useEffect11(() => () => clearTimeout(timerViderRef.current), []);
-  const stop = useCallback4(() => {
-    stopAll();
-    setPlaying(false);
-    setActiveIdx(-1);
-  }, []);
-  useEffect11(() => () => stopAll(), []);
-  const addChord = () => {
-    if (sequence.length >= MAX_CHORDS) return;
-    const rootFr = CHORD_ROOTS.find((r) => r[0] === root)?.[1] || root;
-    const label = `${rootFr}${CHORD_TYPES[quality]?.sym ?? ""}`;
-    setSequence((s) => [...s, { root, type: quality, label }]);
-  };
-  const removeChord = (i) => {
-    setSequence((s) => s.filter((_, idx) => idx !== i));
-  };
-  const clearAll = () => {
-    stop();
-    setSuiteVidee(sequence);
-    setSequence([]);
-    clearTimeout(timerViderRef.current);
-    timerViderRef.current = setTimeout(() => setSuiteVidee(null), 6e3);
-  };
-  const annulerVider = () => {
-    if (suiteVidee) setSequence(suiteVidee);
-    setSuiteVidee(null);
-    clearTimeout(timerViderRef.current);
-  };
-  const play = async () => {
-    if (sequence.length === 0) return;
-    const secs = SPEED_PRESETS.find((p) => p.id === speed)?.secs || 1.4;
-    setPlaying(true);
-    await playProgression(sequence, secs, (idx) => {
-      setActiveIdx(idx);
-      if (idx === -1) setPlaying(false);
-    });
-  };
-  const toggle = () => playing ? stop() : play();
-  const chip = {
-    padding: "8px 10px",
-    borderRadius: 10,
-    border: `1.5px solid ${C.border}`,
-    background: C.surface,
-    color: C.text2,
-    fontWeight: 700,
-    fontSize: 12.5,
-    cursor: "pointer",
-    fontFamily: FONTS.ui
-  };
-  return /* @__PURE__ */ jsxs15("div", { children: [
-    /* @__PURE__ */ jsxs15("div", { style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: 16 }, children: [
-      /* @__PURE__ */ jsx18("div", { style: { fontSize: 12, fontWeight: 700, color: C.text3, marginBottom: 9, fontFamily: FONTS.ui }, children: "Fondamentale" }),
-      /* @__PURE__ */ jsx18("div", { style: { display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6, marginBottom: 14 }, children: CHORD_ROOTS.map(([code, fr]) => /* @__PURE__ */ jsx18("button", { onClick: () => setRoot(code), "aria-pressed": root === code, className: "gr-focus", style: {
-        ...chip,
-        padding: "9px 0",
-        border: `1.5px solid ${root === code ? C.primary : C.border}`,
-        background: root === code ? C.primaryL : C.surface,
-        color: root === code ? C.primaryD : C.text2
-      }, children: fr }, code)) }),
-      /* @__PURE__ */ jsx18("div", { style: { fontSize: 12, fontWeight: 700, color: C.text3, marginBottom: 9, fontFamily: FONTS.ui }, children: "Famille" }),
-      /* @__PURE__ */ jsx18("div", { style: { display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }, children: CHORD_FAMILIES.map((f) => /* @__PURE__ */ jsx18("button", { "aria-pressed": family === f.id, className: "gr-focus", onClick: () => {
-        setFamily(f.id);
-        setQuality(f.keys[0]);
-      }, style: {
-        ...chip,
-        padding: "7px 10px",
-        fontSize: 12,
-        border: `1.5px solid ${family === f.id ? C.primary : C.border}`,
-        background: family === f.id ? C.primaryL : C.surface,
-        color: family === f.id ? C.primaryD : C.text2
-      }, children: f.label }, f.id)) }),
-      /* @__PURE__ */ jsx18("div", { style: { fontSize: 12, fontWeight: 700, color: C.text3, marginBottom: 9, fontFamily: FONTS.ui }, children: "Qualit\xE9" }),
-      /* @__PURE__ */ jsx18("div", { style: { display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 14 }, children: (CHORD_FAMILIES.find((f) => f.id === family)?.keys || []).map((key) => /* @__PURE__ */ jsx18("button", { onClick: () => setQuality(key), "aria-pressed": quality === key, "aria-label": CHORD_TYPES[key]?.name || key, className: "gr-focus", style: {
-        ...chip,
-        border: `1.5px solid ${quality === key ? C.primary : C.border}`,
-        background: quality === key ? C.primaryL : C.surface,
-        color: quality === key ? C.primaryD : C.text2
-      }, children: CHORD_TYPES[key]?.sym || CHORD_TYPES[key]?.name || key }, key)) }),
-      /* @__PURE__ */ jsx18("div", { style: { fontSize: 11.5, color: C.text3, marginBottom: 12, fontFamily: FONTS.ui, minHeight: 16 }, children: CHORD_TYPES[quality]?.name }),
-      /* @__PURE__ */ jsxs15("button", { onClick: addChord, disabled: sequence.length >= MAX_CHORDS, className: "gr-focus", style: {
-        width: "100%",
-        padding: "11px 0",
-        borderRadius: R.md,
-        border: "none",
-        background: sequence.length >= MAX_CHORDS ? C.border : C.primary,
-        color: C.onPrimaryBtn,
-        fontWeight: 700,
-        fontSize: 13.5,
-        fontFamily: FONTS.ui,
-        cursor: sequence.length >= MAX_CHORDS ? "default" : "pointer",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 6
-      }, children: [
-        /* @__PURE__ */ jsx18(Ti, { name: "plus", size: 15, color: C.onPrimaryBtn }),
-        "Ajouter \xE0 la suite"
-      ] })
-    ] }),
-    /* @__PURE__ */ jsxs15("div", { style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: 16, marginTop: 12 }, children: [
-      /* @__PURE__ */ jsxs15("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }, children: [
-        /* @__PURE__ */ jsxs15("div", { style: { fontSize: 12, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui }, children: [
-          "Ta suite (",
-          sequence.length,
-          "/",
-          MAX_CHORDS,
-          ")"
-        ] }),
-        sequence.length > 0 && /* @__PURE__ */ jsx18("button", { onClick: clearAll, className: "gr-focus", style: {
-          background: "none",
-          border: "none",
-          color: C.coral,
-          fontSize: 12.5,
-          fontWeight: 700,
-          fontFamily: FONTS.ui,
-          cursor: "pointer",
-          padding: "8px 10px",
-          margin: "-8px -10px",
-          minHeight: 36
-        }, children: "Vider" })
-      ] }),
-      sequence.length === 0 ? /* @__PURE__ */ jsx18("div", { role: "status", style: { textAlign: "center", padding: "18px 0", color: C.text3, fontSize: 13, fontFamily: FONTS.ui }, children: suiteVidee ? /* @__PURE__ */ jsxs15(Fragment9, { children: [
-        "Suite vid\xE9e.",
-        " ",
-        /* @__PURE__ */ jsx18("button", { onClick: annulerVider, className: "gr-focus", style: { background: "none", border: "none", padding: "6px 4px", color: C.primaryD, fontWeight: 800, fontSize: 13, fontFamily: FONTS.ui, cursor: "pointer", textDecoration: "underline" }, children: "Annuler" })
-      ] }) : "Ajoute des accords ci-dessus pour construire ta suite." }) : /* @__PURE__ */ jsx18("div", { style: { display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }, children: sequence.map((c, i) => /* @__PURE__ */ jsxs15("div", { style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 6,
-        padding: "8px 6px 8px 12px",
-        borderRadius: 10,
-        fontFamily: FONTS.ui,
-        fontWeight: 700,
-        fontSize: 13,
-        border: `1.5px solid ${activeIdx === i && playing ? C.primary : C.border}`,
-        background: activeIdx === i && playing ? C.primaryL : C.surface2,
-        color: activeIdx === i && playing ? C.primaryD : C.text,
-        transition: "all 0.15s"
-      }, children: [
-        c.label,
-        /* @__PURE__ */ jsx18("button", { onClick: () => removeChord(i), "aria-label": `Retirer ${c.label}`, className: "gr-focus", style: {
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          padding: 0,
-          width: 32,
-          height: 32,
-          margin: "-8px -4px -8px 0",
-          borderRadius: 8,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: C.text3
-        }, children: /* @__PURE__ */ jsx18(Ti, { name: "x", size: 13, color: C.text3 }) })
-      ] }, i)) }),
-      /* @__PURE__ */ jsx18("div", { style: { display: "flex", gap: 6, marginBottom: 14 }, children: SPEED_PRESETS.map((p) => /* @__PURE__ */ jsx18("button", { onClick: () => setSpeed(p.id), disabled: playing, "aria-pressed": speed === p.id, className: "gr-focus", style: {
-        flex: 1,
-        padding: "8px 0",
-        borderRadius: R.sm,
-        fontFamily: FONTS.ui,
-        border: `1.5px solid ${speed === p.id ? C.primary : C.border}`,
-        background: speed === p.id ? C.primaryL : C.surface,
-        color: speed === p.id ? C.primaryD : C.text2,
-        fontWeight: 700,
-        fontSize: 12.5,
-        cursor: playing ? "default" : "pointer",
-        opacity: playing ? 0.6 : 1
-      }, children: p.label }, p.id)) }),
-      /* @__PURE__ */ jsxs15("button", { onClick: toggle, disabled: sequence.length === 0, className: "gr-focus", style: {
-        width: "100%",
-        padding: "13px 0",
-        borderRadius: R.md,
-        border: "none",
-        background: sequence.length === 0 ? C.border : playing ? C.coral : C.primary,
-        color: C.onPrimaryBtn,
-        fontWeight: 800,
-        fontSize: 14,
-        fontFamily: FONTS.ui,
-        cursor: sequence.length === 0 ? "default" : "pointer",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 7
-      }, children: [
-        /* @__PURE__ */ jsx18(Ti, { name: playing ? "player-pause" : "player-play", size: 16, color: C.onPrimaryBtn }),
-        playing ? "Arr\xEAter" : "\xC9couter la suite"
-      ] })
-    ] })
-  ] });
-}
-var CORDES_LABELS = ["e", "B", "G", "D", "A", "E"];
-var CELL_H = 34;
-var HAUT_ENTETE = 16;
-var LARGEUR_CASE = { 2: 38, 1: 32 };
-var STOCKAGE_TAB = "groply:tab-brouillon";
-var HISTORIQUE_MAX = 60;
-var DELAI_DEUX_CHIFFRES = 900;
-var REPERES_SIMPLES = /* @__PURE__ */ new Set([3, 5, 7, 9, 15, 17, 19, 21]);
-var REPERES_DOUBLES = /* @__PURE__ */ new Set([12, 24]);
-function styleTouche(C, actif, extra = {}) {
-  return {
-    height: 40,
-    borderRadius: R.sm,
-    cursor: "pointer",
-    fontFamily: FONTS.ui,
-    border: `1.5px solid ${actif ? C.primary : C.border}`,
-    background: actif ? C.primaryL : C.surface,
-    color: actif ? C.primaryD : C.text,
-    fontWeight: 800,
-    fontSize: 14,
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 2,
-    padding: 0,
-    ...extra
-  };
-}
-function GrilleTab({ grille, evenements, res, selection, onSelect, colLecture, C }) {
-  const scrollRef = useRef9(null);
-  const nbCols = nbColsVisibles(grille);
-  const cellW = LARGEUR_CASE[res];
-  const nbCases = nbCols / res;
-  const casesParMesure = PAS_PAR_MESURE / res;
-  const casesParTemps = 4 / res;
-  const vide = derniereColonne(grille) < 0;
-  const liaisons = evenements.filter((e) => e.toCol != null);
-  const origines = new Set(liaisons.map((e) => `${e.string}-${e.col}`));
-  useEffect11(() => {
-    const el = scrollRef.current;
-    if (!el || !el.contains(document.activeElement)) return;
-    el.querySelector(`[data-case="${selection.corde}-${selection.col}"]`)?.focus({ preventScroll: true });
-  }, [selection]);
-  const colSuivie = colLecture ?? selection.col;
-  useEffect11(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const x = colSuivie / res * cellW;
-    const horsVue = x < el.scrollLeft + 8 || x + cellW > el.scrollLeft + el.clientWidth - 8;
-    if (colLecture != null || horsVue) el.scrollTo({ left: Math.max(0, x - el.clientWidth * 0.3), behavior: "smooth" });
-  }, [colSuivie, colLecture, res, cellW]);
-  return /* @__PURE__ */ jsxs15("div", { style: { position: "relative", display: "flex", border: `1.5px solid ${C.border}`, borderRadius: R.md, background: C.surface, overflow: "hidden" }, children: [
-    /* @__PURE__ */ jsx18("div", { "aria-hidden": "true", style: { flexShrink: 0, width: 24, background: C.surface2, borderRight: `1.5px solid ${C.border}`, paddingTop: HAUT_ENTETE }, children: CORDES_LABELS.map((l, i) => /* @__PURE__ */ jsx18("div", { style: { height: CELL_H, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11.5, fontWeight: 800, color: selection.corde === i + 1 ? C.primary : C.text3 }, children: l }, l + i)) }),
-    /* @__PURE__ */ jsx18("div", { ref: scrollRef, style: { overflowX: "auto", WebkitOverflowScrolling: "touch", flex: 1 }, children: /* @__PURE__ */ jsxs15("div", { style: { position: "relative", width: nbCases * cellW, height: HAUT_ENTETE + CELL_H * 6 }, children: [
-      Array.from({ length: nbCols / 4 }, (_, t) => t % 2 === 1 ? /* @__PURE__ */ jsx18("div", { style: { position: "absolute", top: HAUT_ENTETE, bottom: 0, left: t * casesParTemps * cellW, width: casesParTemps * cellW, background: C.surface2, opacity: 0.55 } }, "t" + t) : null),
-      /* @__PURE__ */ jsx18("div", { style: { position: "absolute", top: HAUT_ENTETE, bottom: 0, left: selection.col / res * cellW, width: cellW, background: C.primaryL, opacity: 0.6 } }),
-      colLecture != null && /* @__PURE__ */ jsx18("div", { style: { position: "absolute", top: HAUT_ENTETE, bottom: 0, left: colLecture / res * cellW, width: cellW, background: C.primary, opacity: 0.22 } }),
-      Array.from({ length: nbCols / PAS_PAR_MESURE }, (_, m) => /* @__PURE__ */ jsx18("div", { style: { position: "absolute", top: 1, left: m * casesParMesure * cellW + 5, fontSize: 10, fontWeight: 700, color: C.text3 }, children: m + 1 }, "n" + m)),
-      Array.from({ length: nbCols / PAS_PAR_MESURE }, (_, m) => m > 0 ? /* @__PURE__ */ jsx18("div", { style: { position: "absolute", top: HAUT_ENTETE + CELL_H / 2, height: CELL_H * 5, left: m * casesParMesure * cellW - 1, width: 2, background: C.text3 } }, "b" + m) : null),
-      CORDES_LABELS.map((label, idx) => {
-        const corde = idx + 1;
-        return /* @__PURE__ */ jsxs15("div", { style: { position: "absolute", top: HAUT_ENTETE + idx * CELL_H, left: 0, height: CELL_H, width: "100%", display: "flex" }, children: [
-          /* @__PURE__ */ jsx18("div", { style: { position: "absolute", left: 0, right: 0, top: CELL_H / 2, height: 1.5, background: C.border } }),
-          Array.from({ length: nbCases }, (_, d) => {
-            const col = d * res;
-            const cell = lireCase(grille, corde, col);
-            const sel = selection.corde === corde && selection.col === col;
-            const enAttente2 = cell && (cell.lie || cell.slide) && !origines.has(`${corde}-${col}`);
-            const repere = cell?.bend === 2 ? "full" : cell?.bend === 1 ? "\xBD" : enAttente2 ? cell.slide ? "sl\u2026" : "h/p\u2026" : "";
-            return /* @__PURE__ */ jsxs15(
-              "button",
-              {
-                onClick: () => onSelect({ corde, col }),
-                className: "gr-focus",
-                "data-case": `${corde}-${col}`,
-                tabIndex: sel ? 0 : -1,
-                "aria-current": sel ? "true" : void 0,
-                "aria-label": `Corde ${label}, mesure ${Math.floor(col / PAS_PAR_MESURE) + 1}, temps ${Math.floor(col % PAS_PAR_MESURE / 4) + 1}${cell ? cell.mute ? ", note \xE9touff\xE9e" : `, case ${cell.fret}` : ", vide"}`,
-                style: { position: "relative", width: cellW, height: CELL_H, flexShrink: 0, padding: 0, background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" },
-                children: [
-                  cell ? /* @__PURE__ */ jsx18("span", { style: {
-                    position: "relative",
-                    zIndex: 1,
-                    minWidth: 18,
-                    padding: "1px 3px",
-                    borderRadius: 4,
-                    fontFamily: "monospace",
-                    fontWeight: 800,
-                    fontSize: 13.5,
-                    lineHeight: "18px",
-                    background: sel ? C.primary : C.surface,
-                    color: sel ? C.onPrimaryBtn : C.text
-                  }, children: cell.mute ? "x" : cell.fret }) : sel ? /* @__PURE__ */ jsx18("span", { style: { position: "relative", zIndex: 1, width: 20, height: 20, borderRadius: 5, border: `2px solid ${C.primary}`, background: C.surface } }) : null,
-                  repere && /* @__PURE__ */ jsx18("span", { style: { position: "absolute", top: -1, right: 1, zIndex: 2, fontSize: 9.5, fontWeight: 800, color: enAttente2 ? C.text3 : C.primary }, children: repere })
-                ]
-              },
-              col
-            );
-          })
-        ] }, corde);
-      }),
-      liaisons.map((e, i) => {
-        const x1 = e.col / res * cellW + cellW / 2;
-        const x2 = e.toCol / res * cellW + cellW / 2;
-        const y = HAUT_ENTETE + (e.string - 1) * CELL_H;
-        if (e.type === "hammer" || e.type === "pull") {
-          return /* @__PURE__ */ jsxs15("div", { "aria-hidden": "true", style: { pointerEvents: "none" }, children: [
-            /* @__PURE__ */ jsx18("div", { style: { position: "absolute", zIndex: 3, left: x1 + 5, width: Math.max(6, x2 - x1 - 10), top: y + 3, height: 8, border: `1.5px solid ${C.primary}`, borderBottom: "none", borderRadius: "50% 50% 0 0 / 100% 100% 0 0" } }),
-            /* @__PURE__ */ jsx18("div", { style: { position: "absolute", zIndex: 4, left: (x1 + x2) / 2 - 4, top: y - 3, fontSize: 9, fontWeight: 800, lineHeight: "10px", color: C.primary, background: C.surface, padding: "0 1px" }, children: e.type === "hammer" ? "h" : "p" })
-          ] }, "l" + i);
-        }
-        return /* @__PURE__ */ jsx18("div", { "aria-hidden": "true", style: { position: "absolute", zIndex: 3, pointerEvents: "none", left: (x1 + x2) / 2 - 5, top: y + CELL_H / 2 - 9, fontSize: 14, fontWeight: 800, color: C.primary, lineHeight: "16px" }, children: e.type === "slide_up" ? "/" : "\\" }, "l" + i);
-      })
-    ] }) }),
-    vide && /* @__PURE__ */ jsx18("div", { "aria-hidden": "true", style: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }, children: /* @__PURE__ */ jsx18("div", { style: { fontSize: 12.5, fontWeight: 600, color: C.text2, background: C.surface, padding: "6px 10px", borderRadius: R.sm, border: `1px solid ${C.border}` }, children: "Touche une case pour placer ta premi\xE8re note" }) })
-  ] });
-}
-function ClavierManche({ cell, onFret, onMute, onEffacer, C }) {
-  const fretActif = cell && !cell.mute ? cell.fret : null;
-  const point = (k) => /* @__PURE__ */ jsx18("span", { style: { width: 4, height: 4, borderRadius: 2, background: C.text3 } }, k);
-  return /* @__PURE__ */ jsxs15("div", { role: "group", "aria-label": "Case du manche", style: { display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 5 }, children: [
-    Array.from({ length: 25 }, (_, f) => /* @__PURE__ */ jsxs15("button", { onClick: () => onFret(f), "aria-pressed": fretActif === f, className: "gr-focus", style: styleTouche(C, fretActif === f), children: [
-      /* @__PURE__ */ jsx18("span", { style: { lineHeight: "16px" }, children: f }),
-      /* @__PURE__ */ jsx18("span", { "aria-hidden": "true", style: { display: "flex", gap: 3, height: 4 }, children: REPERES_DOUBLES.has(f) ? [point(1), point(2)] : REPERES_SIMPLES.has(f) ? [point(1)] : null })
-    ] }, f)),
-    /* @__PURE__ */ jsx18("button", { onClick: onMute, "aria-pressed": !!cell?.mute, "aria-label": "Note \xE9touff\xE9e", className: "gr-focus", style: styleTouche(C, !!cell?.mute), children: "x" }),
-    /* @__PURE__ */ jsx18(
-      "button",
-      {
-        onClick: onEffacer,
-        disabled: !cell,
-        className: "gr-focus",
-        style: styleTouche(C, false, { gridColumn: "span 2", fontSize: 12.5, opacity: cell ? 1 : 0.4, cursor: cell ? "pointer" : "default" }),
-        children: "Effacer"
-      }
-    )
-  ] });
-}
-function TechniquesNote({ cell, onLie, onSlide, onBend, C }) {
-  const aNote = !!cell && !cell.mute && typeof cell.fret === "number";
-  const bouton = (label, actif, onClick) => /* @__PURE__ */ jsx18(
-    "button",
-    {
-      onClick,
-      disabled: !aNote,
-      "aria-pressed": actif,
-      className: "gr-focus",
-      style: styleTouche(C, actif, { flex: 1, fontSize: 12.5, opacity: aNote ? 1 : 0.4, cursor: aNote ? "pointer" : "default" }),
-      children: label
-    }
-  );
-  return /* @__PURE__ */ jsxs15("div", { role: "group", "aria-label": "Technique de la note", style: { display: "flex", gap: 5, marginTop: 5 }, children: [
-    bouton("Liaison h/p", !!cell?.lie, onLie),
-    bouton("Slide", !!cell?.slide, onSlide),
-    bouton(cell?.bend === 2 ? "Bend \xB7 1 ton" : cell?.bend === 1 ? "Bend \xB7 \xBD ton" : "Bend", !!cell?.bend, onBend)
-  ] });
-}
-function initialiserEditeur() {
-  let grille = null;
-  try {
-    const brut = localStorage.getItem(STOCKAGE_TAB);
-    if (brut) {
-      const g = JSON.parse(brut);
-      if (grilleValide(g)) grille = { notes: g.notes };
-    }
-  } catch {
-  }
-  return grille || grilleExemple();
-}
-function TabEditor() {
-  const C = useC();
-  const initRef = useRef9(null);
-  if (!initRef.current) initRef.current = initialiserEditeur();
-  const [edit, setEdit] = useState13(() => ({ grille: initRef.current, passe: [] }));
-  const grille = edit.grille;
-  const [res, setRes] = useState13(() => compatibleCroches(initRef.current) ? 2 : 1);
-  const [selection, setSelection] = useState13({ corde: 3, col: 0 });
-  const [bpm, setBpm] = useState13(80);
-  const [boucle, setBoucle] = useState13(false);
-  const [jouant, setJouant] = useState13(false);
-  const [colLecture, setColLecture] = useState13(null);
-  const [menuOuvert, setMenuOuvert] = useState13(false);
-  const [importOuvert, setImportOuvert] = useState13(false);
-  const [texteImport, setTexteImport] = useState13("");
-  const [erreurImport, setErreurImport] = useState13(null);
-  const [message, setMessage] = useState13(null);
-  const enLectureRef = useRef9(false);
-  const timerBoucleRef = useRef9(null);
-  const boucleRef = useRef9(boucle);
-  boucleRef.current = boucle;
-  const bpmRef = useRef9(bpm);
-  bpmRef.current = bpm;
-  const derniereSaisieRef = useRef9(null);
-  const menuRef = useRef9(null);
-  const timerMessageRef = useRef9(null);
-  const evenements = useMemo8(() => grilleVersEvenements(grille), [grille]);
-  const origines = useMemo8(() => new Set(evenements.filter((e) => e.toCol != null).map((e) => `${e.string}-${e.col}`)), [evenements]);
-  const cellSel = lireCase(grille, selection.corde, selection.col);
-  useEffect11(() => {
-    try {
-      localStorage.setItem(STOCKAGE_TAB, JSON.stringify(grille));
-    } catch {
-    }
-  }, [grille]);
-  useEffect11(() => {
-    if (res === 2 && !compatibleCroches(grille)) setRes(1);
-  }, [grille, res]);
-  useEffect11(() => {
-    const max = nbColsVisibles(grille) - res;
-    if (selection.col > max) setSelection((s) => ({ ...s, col: max }));
-  }, [grille, res, selection.col]);
-  const annoncer = useCallback4((txt) => {
-    setMessage(txt);
-    clearTimeout(timerMessageRef.current);
-    timerMessageRef.current = setTimeout(() => setMessage(null), 3500);
-  }, []);
-  const effacerMessage = useCallback4(() => {
-    setMessage(null);
-    clearTimeout(timerMessageRef.current);
-  }, []);
-  const modifier = useCallback4((fn) => {
-    setEdit((e) => {
-      const n = fn(e.grille);
-      if (n === e.grille) return e;
-      return { grille: n, passe: [...e.passe.slice(-(HISTORIQUE_MAX - 1)), e.grille] };
-    });
-  }, []);
-  const modifierSelection = useCallback4((fn) => {
-    const { corde, col } = selection;
-    effacerMessage();
-    modifier((g) => {
-      const avant = lireCase(g, corde, col);
-      const apres = fn(avant);
-      return apres === avant ? g : ecrireCase(g, corde, col, apres);
-    });
-  }, [selection, modifier, effacerMessage]);
-  const annuler = useCallback4(() => {
-    effacerMessage();
-    setEdit((e) => e.passe.length ? { grille: e.passe[e.passe.length - 1], passe: e.passe.slice(0, -1) } : e);
-  }, [effacerMessage]);
-  const onFret = useCallback4((f) => {
-    derniereSaisieRef.current = null;
-    modifierSelection((c) => poserFret(c, f));
-  }, [modifierSelection]);
-  const onMute = useCallback4(() => modifierSelection((c) => c?.mute ? null : { mute: true }), [modifierSelection]);
-  const onEffacer = useCallback4(() => {
-    derniereSaisieRef.current = null;
-    modifierSelection(() => null);
-  }, [modifierSelection]);
-  const basculer = useCallback4((champ) => modifierSelection((c) => {
-    if (!c || c.mute || typeof c.fret !== "number") return c;
-    return { fret: c.fret, [champ]: c[champ] ? void 0 : true };
-  }), [modifierSelection]);
-  const onLie = useCallback4(() => basculer("lie"), [basculer]);
-  const onSlide = useCallback4(() => basculer("slide"), [basculer]);
-  const onBend = useCallback4(() => modifierSelection((c) => {
-    if (!c || c.mute || typeof c.fret !== "number") return c;
-    return { fret: c.fret, bend: c.bend === 2 ? 1 : c.bend === 1 ? void 0 : 2 };
-  }), [modifierSelection]);
-  const deplacer = useCallback4((dCase, dCorde) => {
-    derniereSaisieRef.current = null;
-    effacerMessage();
-    setSelection((s) => ({
-      corde: Math.max(1, Math.min(6, s.corde + dCorde)),
-      col: Math.max(0, Math.min(nbColsVisibles(grille) - res, s.col + dCase * res))
-    }));
-  }, [grille, res, effacerMessage]);
-  const choisirResolution = (r) => {
-    if (r === 2 && !compatibleCroches(grille)) {
-      annoncer("Cette tab contient des doubles-croches : la vue croches en cacherait certaines.");
-      return;
-    }
-    setRes(r);
-    setSelection((s) => ({ ...s, col: s.col - s.col % r }));
-  };
-  const arreter = useCallback4(() => {
-    enLectureRef.current = false;
-    clearTimeout(timerBoucleRef.current);
-    timerBoucleRef.current = null;
-    stopAll();
-    setJouant(false);
-    setColLecture(null);
-  }, []);
-  const lancerRef = useRef9(null);
-  const lancer = useCallback4(async (bpmLecture) => {
-    const evs = grilleVersEvenements(grille);
-    if (evs.length === 0) return;
-    await unlockAudio();
-    enLectureRef.current = true;
-    setJouant(true);
-    clearTimeout(timerBoucleRef.current);
-    timerBoucleRef.current = null;
-    await playTab(evs, {
-      bpm: bpmLecture,
-      onEvent: (ev) => {
-        if (enLectureRef.current) setColLecture(ev.col);
-      },
-      onDone: () => {
-        if (!enLectureRef.current) return;
-        if (boucleRef.current) {
-          if (!timerBoucleRef.current) lancerRef.current?.(bpmRef.current);
-          return;
-        }
-        arreter();
-      }
-    });
-    if (!enLectureRef.current) return;
-    if (boucleRef.current) {
-      const secParPas = 60 / bpmLecture / 4;
-      const dureeMs2 = nbMesuresUtilisees(grille) * PAS_PAR_MESURE * secParPas * 1e3;
-      timerBoucleRef.current = setTimeout(() => {
-        timerBoucleRef.current = null;
-        if (enLectureRef.current) lancerRef.current?.(bpmRef.current);
-      }, dureeMs2);
-    }
-  }, [grille, arreter]);
-  lancerRef.current = lancer;
-  const basculerLecture = useCallback4(() => {
-    if (jouant) arreter();
-    else lancer(bpm);
-  }, [jouant, arreter, lancer, bpm]);
-  const changerTempo = (delta) => {
-    const nb = Math.max(30, Math.min(240, bpm + delta));
-    setBpm(nb);
-    bpmRef.current = nb;
-    if (jouant) lancer(nb);
-  };
-  const basculerBoucle = () => {
-    const suivant = !boucle;
-    setBoucle(suivant);
-    boucleRef.current = suivant;
-    if (!suivant) {
-      clearTimeout(timerBoucleRef.current);
-      timerBoucleRef.current = null;
-    }
-  };
-  useEffect11(() => () => {
-    enLectureRef.current = false;
-    clearTimeout(timerBoucleRef.current);
-    clearTimeout(timerMessageRef.current);
-    stopAll();
-  }, []);
-  useEffect11(() => {
-    const onKey = (e) => {
-      const tag = e.target?.tagName;
-      if (e.key === "Escape") {
-        setMenuOuvert(false);
-        setImportOuvert(false);
-        return;
-      }
-      if (tag === "TEXTAREA" || tag === "INPUT" || tag === "SELECT") return;
-      if ((e.key === " " || e.key === "Enter") && tag === "BUTTON") return;
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
-        annuler();
-        e.preventDefault();
-        return;
-      }
-      if (/^[0-9]$/.test(e.key)) {
-        const now2 = Date.now(), d = Number(e.key), der = derniereSaisieRef.current;
-        const enchainer = !!der && der.corde === selection.corde && der.col === selection.col && now2 - der.t < DELAI_DEUX_CHIFFRES;
-        const c = lireCase(grille, selection.corde, selection.col);
-        const combine = enchainer && c && !c.mute && typeof c.fret === "number" && c.fret * 10 + d <= 24;
-        modifierSelection((cell) => saisirChiffre(cell, d, enchainer));
-        derniereSaisieRef.current = combine ? null : { corde: selection.corde, col: selection.col, t: now2 };
-        e.preventDefault();
-        return;
-      }
-      const actions = {
-        ArrowLeft: () => deplacer(-1, 0),
-        ArrowRight: () => deplacer(1, 0),
-        ArrowUp: () => deplacer(0, -1),
-        ArrowDown: () => deplacer(0, 1),
-        Backspace: onEffacer,
-        Delete: onEffacer,
-        " ": basculerLecture,
-        x: onMute,
-        h: onLie,
-        s: onSlide,
-        b: onBend
-      };
-      const a = actions[e.key];
-      if (a) {
-        a();
-        e.preventDefault();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [grille, selection, modifierSelection, annuler, deplacer, onEffacer, basculerLecture, onMute, onLie, onSlide, onBend]);
-  useEffect11(() => {
-    if (!menuOuvert) return;
-    const fermer = (e) => {
-      if (!menuRef.current?.contains(e.target)) setMenuOuvert(false);
-    };
-    document.addEventListener("pointerdown", fermer);
-    return () => document.removeEventListener("pointerdown", fermer);
-  }, [menuOuvert]);
-  const importer = () => {
-    const { evenements: ev, erreur } = parseTab(texteImport);
-    if (erreur) {
-      setErreurImport(erreur);
-      return;
-    }
-    modifier(() => evenementsVersGrille(ev));
-    setSelection({ corde: 1, col: 0 });
-    setErreurImport(null);
-    setTexteImport("");
-    setImportOuvert(false);
-    annoncer("Tab import\xE9e. \xAB Annuler \xBB revient \xE0 la version pr\xE9c\xE9dente.");
-  };
-  const cle2 = `${selection.corde}-${selection.col}`;
-  const nomCorde = CORDES_LABELS[selection.corde - 1];
-  const aide = message || (!cellSel ? `Choisis la case du manche pour la corde ${nomCorde}.` : cellSel.mute ? "Note \xE9touff\xE9e : jou\xE9e sans hauteur, pour le rythme." : (cellSel.lie || cellSel.slide) && !origines.has(cle2) ? cellSel.slide ? "Place une note plus loin sur cette corde pour terminer le slide." : "Place une note plus loin sur cette corde : hammer-on si elle monte, pull-off si elle descend." : cellSel.bend ? `Case ${cellSel.fret}, tir\xE9e d'${cellSel.bend === 2 ? "un ton" : "un demi-ton"}.` : `Corde ${nomCorde}, case ${cellSel.fret}.`);
-  const itemMenu = (icon, label, onClick, danger) => /* @__PURE__ */ jsxs15("button", { role: "menuitem", onClick: () => {
-    setMenuOuvert(false);
-    onClick();
-  }, className: "gr-focus", style: {
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    width: "100%",
-    padding: "11px 12px",
-    border: "none",
-    background: "transparent",
-    cursor: "pointer",
-    fontSize: 13,
-    fontWeight: 700,
-    textAlign: "left",
-    color: danger ? C.primaryD : C.text,
-    fontFamily: FONTS.ui
-  }, children: [
-    /* @__PURE__ */ jsx18(Ti, { name: icon, size: 16, color: danger ? C.primary : C.text2 }),
-    label
-  ] });
-  const boutonCarre = { width: 40, height: 40, borderRadius: R.sm, border: `1.5px solid ${C.border}`, background: C.surface, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: C.text2, fontWeight: 800, fontFamily: FONTS.ui, padding: 0 };
-  return /* @__PURE__ */ jsxs15("div", { children: [
-    /* @__PURE__ */ jsxs15("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }, children: [
-      /* @__PURE__ */ jsx18("div", { role: "group", "aria-label": "Densit\xE9 de la grille", style: { display: "flex", background: C.surface2, borderRadius: R.sm, padding: 3 }, children: [[2, "Croches"], [1, "Doubles"]].map(([r, label]) => /* @__PURE__ */ jsx18("button", { onClick: () => choisirResolution(r), "aria-pressed": res === r, className: "gr-focus", style: {
-        padding: "7px 11px",
-        borderRadius: R.sm - 2,
-        border: "none",
-        cursor: "pointer",
-        fontFamily: FONTS.ui,
-        fontSize: 12,
-        fontWeight: 800,
-        background: res === r ? C.surface : "transparent",
-        color: res === r ? C.text : C.text3,
-        boxShadow: res === r ? `0 0 0 1.5px ${C.border}` : "none"
-      }, children: label }, r)) }),
-      /* @__PURE__ */ jsx18("div", { style: { flex: 1 } }),
-      /* @__PURE__ */ jsx18("button", { onClick: annuler, disabled: edit.passe.length === 0, className: "gr-focus", style: {
-        ...boutonCarre,
-        width: "auto",
-        padding: "0 12px",
-        fontSize: 12.5,
-        opacity: edit.passe.length ? 1 : 0.4,
-        cursor: edit.passe.length ? "pointer" : "default"
-      }, children: "Annuler" }),
-      /* @__PURE__ */ jsxs15("div", { ref: menuRef, style: { position: "relative" }, children: [
-        /* @__PURE__ */ jsx18("button", { onClick: () => setMenuOuvert((o) => !o), "aria-haspopup": "menu", "aria-expanded": menuOuvert, "aria-label": "Plus d'actions", className: "gr-focus", style: { ...boutonCarre, fontSize: 18 }, children: "\u22EF" }),
-        menuOuvert && /* @__PURE__ */ jsxs15("div", { role: "menu", style: { position: "absolute", right: 0, top: 44, zIndex: 20, minWidth: 220, background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.md, boxShadow: "0 8px 24px rgba(0,0,0,.18)", overflow: "hidden" }, children: [
-          itemMenu("clipboard-check", "Importer une tab texte", () => setImportOuvert(true)),
-          itemMenu("sparkles", "Repartir de l'exemple", () => {
-            modifier(() => grilleExemple());
-            annoncer("Exemple recharg\xE9. \xAB Annuler \xBB pour revenir.");
-          }),
-          itemMenu("trash", "Tout effacer", () => {
-            modifier(() => grilleVide());
-            annoncer("Tab effac\xE9e. \xAB Annuler \xBB la fait revenir.");
-          }, true)
-        ] })
-      ] })
-    ] }),
-    importOuvert && /* @__PURE__ */ jsxs15("div", { style: { marginBottom: 10, padding: 10, borderRadius: R.md, background: C.surface2 }, children: [
-      /* @__PURE__ */ jsx18("div", { style: { fontSize: 12, fontWeight: 700, color: C.text2, marginBottom: 6 }, children: "Colle une tab au format texte (6 lignes, une par corde)" }),
-      /* @__PURE__ */ jsx18(
-        "textarea",
-        {
-          value: texteImport,
-          onChange: (e) => setTexteImport(e.target.value),
-          spellCheck: false,
-          rows: 6,
-          placeholder: "e|--0---2---3h5---|\nB|----------------|\n\u2026",
-          style: { width: "100%", fontFamily: "monospace", fontSize: 12.5, lineHeight: 1.5, padding: "10px 12px", borderRadius: R.md, border: `1.5px solid ${erreurImport ? C.primary : C.border}`, background: C.surface, color: C.text, resize: "vertical" }
-        }
-      ),
-      erreurImport && /* @__PURE__ */ jsx18("div", { style: { fontSize: 12, color: C.primaryD, marginTop: 4 }, children: erreurImport }),
-      /* @__PURE__ */ jsxs15("div", { style: { display: "flex", gap: 6, marginTop: 8 }, children: [
-        /* @__PURE__ */ jsx18("button", { onClick: importer, className: "gr-focus", style: { flex: 1, height: 40, borderRadius: R.sm, border: "none", background: C.primaryBtn, color: C.onPrimaryBtn, fontWeight: 800, cursor: "pointer", fontFamily: FONTS.ui }, children: "Importer" }),
-        /* @__PURE__ */ jsx18("button", { onClick: () => {
-          setImportOuvert(false);
-          setErreurImport(null);
-        }, className: "gr-focus", style: { ...boutonCarre, width: "auto", padding: "0 14px", fontSize: 12.5 }, children: "Fermer" })
-      ] })
-    ] }),
-    /* @__PURE__ */ jsx18(
-      GrilleTab,
-      {
-        grille,
-        evenements,
-        res,
-        selection,
-        onSelect: (s) => {
-          setSelection(s);
-          derniereSaisieRef.current = null;
-          effacerMessage();
-        },
-        colLecture,
-        C
-      }
-    ),
-    /* @__PURE__ */ jsx18("div", { role: "status", "aria-live": "polite", style: { minHeight: 34, display: "flex", alignItems: "center", fontSize: 12, lineHeight: 1.35, color: message ? C.primaryD : C.text2, fontWeight: message ? 700 : 500, padding: "4px 2px" }, children: aide }),
-    /* @__PURE__ */ jsx18(ClavierManche, { cell: cellSel, onFret, onMute, onEffacer, C }),
-    /* @__PURE__ */ jsx18(TechniquesNote, { cell: cellSel, onLie, onSlide, onBend, C }),
-    /* @__PURE__ */ jsxs15("div", { style: { display: "flex", alignItems: "center", gap: 8, marginTop: 14 }, children: [
-      /* @__PURE__ */ jsxs15("button", { onClick: basculerLecture, disabled: !jouant && evenements.length === 0, className: "gr-focus", style: {
-        flex: 1,
-        height: 44,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 8,
-        borderRadius: R.lg,
-        border: "none",
-        background: jouant ? C.surface2 : C.primaryBtn,
-        color: jouant ? C.text : C.onPrimaryBtn,
-        fontWeight: 800,
-        fontSize: 14,
-        cursor: "pointer",
-        fontFamily: FONTS.ui,
-        opacity: !jouant && evenements.length === 0 ? 0.5 : 1
-      }, children: [
-        /* @__PURE__ */ jsx18(Ti, { name: jouant ? "player-pause" : "player-play", size: 17, color: jouant ? C.text : C.onPrimaryBtn }),
-        jouant ? "Arr\xEAter" : "\xC9couter"
-      ] }),
-      /* @__PURE__ */ jsxs15("div", { role: "group", "aria-label": "Tempo", style: { display: "flex", alignItems: "center", gap: 4 }, children: [
-        /* @__PURE__ */ jsx18("button", { onClick: () => changerTempo(-5), "aria-label": "Ralentir", className: "gr-focus", style: { ...boutonCarre, width: 36 }, children: "\u2212" }),
-        /* @__PURE__ */ jsxs15("div", { style: { minWidth: 44, textAlign: "center" }, children: [
-          /* @__PURE__ */ jsx18("div", { style: { fontSize: 15, fontWeight: 800, color: C.text, lineHeight: 1 }, children: bpm }),
-          /* @__PURE__ */ jsx18("div", { style: { fontSize: 9, color: C.text3, marginTop: 2 }, children: "BPM" })
-        ] }),
-        /* @__PURE__ */ jsx18("button", { onClick: () => changerTempo(5), "aria-label": "Acc\xE9l\xE9rer", className: "gr-focus", style: { ...boutonCarre, width: 36 }, children: "+" })
-      ] }),
-      /* @__PURE__ */ jsxs15("button", { onClick: basculerBoucle, "aria-pressed": boucle, "aria-label": "Lecture en boucle", className: "gr-focus", style: {
-        ...boutonCarre,
-        width: 52,
-        height: 44,
-        flexDirection: "column",
-        gap: 1,
-        border: `1.5px solid ${boucle ? C.primary : C.border}`,
-        background: boucle ? C.primaryL : C.surface
-      }, children: [
-        /* @__PURE__ */ jsx18(Ti, { name: "refresh", size: 15, color: boucle ? C.primary : C.text2 }),
-        /* @__PURE__ */ jsx18("span", { style: { fontSize: 9.5, fontWeight: 800, color: boucle ? C.primaryD : C.text3 }, children: "Boucle" })
-      ] })
-    ] })
-  ] });
-}
+init_tokens();
+init_ThemeContext();
+init_Ti();
+import { useState as useState19, useRef as useRef14, useEffect as useEffect16, useCallback as useCallback8, lazy, Suspense } from "react";
+import { jsx as jsx25, jsxs as jsxs22 } from "react/jsx-runtime";
+var Metronome2 = lazy(() => Promise.resolve().then(() => (init_Metronome(), Metronome_exports)).then((m) => ({ default: m.Metronome })));
+var Tuner2 = lazy(() => Promise.resolve().then(() => (init_Tuner(), Tuner_exports)).then((m) => ({ default: m.Tuner })));
+var ChordPlayer2 = lazy(() => Promise.resolve().then(() => (init_ChordPlayer(), ChordPlayer_exports)).then((m) => ({ default: m.ChordPlayer })));
+var TabEditor2 = lazy(() => Promise.resolve().then(() => (init_TabEditor(), TabEditor_exports)).then((m) => ({ default: m.TabEditor })));
+var FretboardExplorer2 = lazy(() => Promise.resolve().then(() => (init_FretboardExplorer(), FretboardExplorer_exports)).then((m) => ({ default: m.FretboardExplorer })));
 var ONGLETS_OUTILS = [
   { id: "metronome", label: "M\xE9tronome", icon: "clock" },
   { id: "tuner", label: "Accordeur", icon: "microphone" },
   { id: "chords", label: "Accords", icon: "music" },
   { id: "neck", label: "Manche", icon: "guitar-pick" },
-  { id: "tablature", label: "Tablature", icon: "notebook" },
-  { id: "jam", label: "Jam Session", icon: "music-plus", externe: true },
-  { id: "ear", label: "Ear Training", icon: "ear", externe: true }
+  { id: "tablature", label: "Tablature", icon: "notebook" }
 ];
-var OUTILS_INTERNES = new Set(ONGLETS_OUTILS.filter((t) => !t.externe).map((t) => t.id));
+var LIENS_EXTERNES = [
+  { id: "jam", label: "Jam Session", icon: "music-plus" },
+  { id: "ear", label: "Ear Training", icon: "ear" }
+];
+var OUTILS_INTERNES = new Set(ONGLETS_OUTILS.map((t) => t.id));
+var idOnglet = (id) => `outil-onglet-${id}`;
+var ID_PANNEAU = "outil-panneau";
+var OUTIL_PAR_ID = {
+  metronome: Metronome2,
+  tuner: Tuner2,
+  chords: ChordPlayer2,
+  tablature: TabEditor2
+};
+var comportementDefilement = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
 function ToolboxScreen({ onBack, navigate }) {
   const C = useC();
-  const [tab, setTabBrut] = useState13(() => {
+  const [tab, setTabBrut] = useState19(() => {
     try {
       const t = localStorage.getItem("groply:outil-actif");
       if (OUTILS_INTERNES.has(t)) return t;
@@ -13160,20 +13493,54 @@ function ToolboxScreen({ onBack, navigate }) {
     } catch {
     }
   };
-  const ongletsRef = useRef9(null);
-  const [finOnglets, setFinOnglets] = useState13(false);
-  const majFinOnglets = useCallback4(() => {
+  const ongletsRef = useRef14(null);
+  const [finOnglets, setFinOnglets] = useState19(false);
+  const majFinOnglets = useCallback8(() => {
     const el = ongletsRef.current;
     if (el) setFinOnglets(el.scrollLeft + el.clientWidth >= el.scrollWidth - 4);
   }, []);
-  useEffect11(() => {
+  useEffect16(() => {
     ongletsRef.current?.querySelector('[aria-selected="true"]')?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
     majFinOnglets();
     window.addEventListener("resize", majFinOnglets);
     return () => window.removeEventListener("resize", majFinOnglets);
   }, [majFinOnglets]);
-  return /* @__PURE__ */ jsxs15("div", { style: { paddingBottom: 30 }, children: [
-    /* @__PURE__ */ jsxs15("div", { style: {
+  const onKeyDownOnglets = (e) => {
+    const i = ONGLETS_OUTILS.findIndex((t) => t.id === tab);
+    const n = ONGLETS_OUTILS.length;
+    const cible = e.key === "ArrowRight" ? (i + 1) % n : e.key === "ArrowLeft" ? (i - 1 + n) % n : e.key === "Home" ? 0 : e.key === "End" ? n - 1 : null;
+    if (cible == null) return;
+    e.preventDefault();
+    const id = ONGLETS_OUTILS[cible].id;
+    setTab(id);
+    const bouton = document.getElementById(idOnglet(id));
+    bouton?.focus({ preventScroll: true });
+    bouton?.scrollIntoView?.({ block: "nearest", inline: "nearest", behavior: comportementDefilement() });
+  };
+  const styleOnglet = (actif) => ({
+    position: "relative",
+    flexShrink: 0,
+    width: 90,
+    padding: "10px 4px",
+    borderRadius: R.lg,
+    cursor: "pointer",
+    fontFamily: FONTS.ui,
+    border: `1.5px solid ${actif ? C.primary : C.border}`,
+    background: actif ? C.primaryL : C.surface,
+    color: actif ? C.primaryD : C.text2,
+    fontWeight: 700,
+    fontSize: 12,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 3,
+    textAlign: "center",
+    lineHeight: 1.2
+  });
+  const Outil = OUTIL_PAR_ID[tab];
+  return /* @__PURE__ */ jsxs22("div", { style: { paddingBottom: 30 }, children: [
+    /* @__PURE__ */ jsxs22("div", { style: {
       backgroundColor: "#b7a0c8",
       backgroundImage: "url('/sunrise.jpg')",
       backgroundSize: "cover",
@@ -13182,70 +13549,65 @@ function ToolboxScreen({ onBack, navigate }) {
       position: "relative",
       overflow: "hidden"
     }, children: [
-      /* @__PURE__ */ jsx18("div", { style: { position: "absolute", inset: 0, background: "rgba(160,55,0,.5)" } }),
-      /* @__PURE__ */ jsxs15("div", { style: { position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 12 }, children: [
-        onBack && /* @__PURE__ */ jsx18("button", { onClick: onBack, "aria-label": "Retour", className: "gr-focus", style: {
-          background: "rgba(255,255,255,.85)",
-          border: "none",
-          borderRadius: R.sm,
-          width: 36,
-          height: 36,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          cursor: "pointer"
-        }, children: /* @__PURE__ */ jsx18(Ti, { name: "arrow-left", size: 17, color: C.primaryD }) }),
-        /* @__PURE__ */ jsxs15("div", { style: { flex: 1 }, children: [
-          /* @__PURE__ */ jsx18("div", { style: { fontSize: 24, fontWeight: 800, color: "#fff", letterSpacing: "-.4px" }, children: "Bo\xEEte \xE0 outils" }),
-          /* @__PURE__ */ jsx18("div", { style: { fontSize: 12, color: "rgba(255,255,255,.8)", marginTop: 1 }, children: "Tout ce qu'il faut pour pratiquer" })
+      /* @__PURE__ */ jsx25("div", { style: { position: "absolute", inset: 0, background: "rgba(160,55,0,.5)" } }),
+      /* @__PURE__ */ jsxs22("div", { style: { position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 12 }, children: [
+        onBack && /* @__PURE__ */ jsx25(
+          BackButton,
+          {
+            onClick: onBack,
+            label: "Retour",
+            tint: { bg: "rgba(255,255,255,.85)", border: "transparent", icon: C.primaryD }
+          }
+        ),
+        /* @__PURE__ */ jsxs22("div", { style: { flex: 1 }, children: [
+          /* @__PURE__ */ jsx25("div", { style: { fontSize: 24, fontWeight: 800, color: "#fff", letterSpacing: "-.4px" }, children: "Bo\xEEte \xE0 outils" }),
+          /* @__PURE__ */ jsx25("div", { style: { fontSize: 12, color: "rgba(255,255,255,.8)", marginTop: 1 }, children: "Tout ce qu'il faut pour pratiquer" })
         ] })
       ] })
     ] }),
-    /* @__PURE__ */ jsxs15("div", { style: { position: "relative" }, children: [
-      /* @__PURE__ */ jsx18("div", { ref: ongletsRef, onScroll: majFinOnglets, style: { overflowX: "auto", WebkitOverflowScrolling: "touch", padding: "14px 20px 0" }, children: /* @__PURE__ */ jsx18("div", { role: "tablist", "aria-label": "Outils", style: { display: "flex", gap: 8, width: "max-content", alignItems: "stretch" }, children: ONGLETS_OUTILS.map((t, i) => {
-        const actif = tab === t.id;
-        const premierExterne = t.externe && !ONGLETS_OUTILS[i - 1]?.externe;
-        return /* @__PURE__ */ jsxs15("div", { style: { display: "flex", alignItems: "stretch", gap: 8 }, children: [
-          premierExterne && /* @__PURE__ */ jsx18("div", { "aria-hidden": "true", style: { width: 1.5, background: C.border, margin: "6px 0" } }),
-          /* @__PURE__ */ jsxs15(
+    /* @__PURE__ */ jsxs22("div", { style: { position: "relative" }, children: [
+      /* @__PURE__ */ jsx25("div", { ref: ongletsRef, onScroll: majFinOnglets, style: { overflowX: "auto", WebkitOverflowScrolling: "touch", padding: "14px 20px 0" }, children: /* @__PURE__ */ jsxs22("div", { style: { display: "flex", gap: 8, width: "max-content", alignItems: "stretch" }, children: [
+        /* @__PURE__ */ jsx25("div", { role: "tablist", "aria-label": "Outils", onKeyDown: onKeyDownOnglets, style: { display: "flex", gap: 8, alignItems: "stretch" }, children: ONGLETS_OUTILS.map((t) => {
+          const actif = tab === t.id;
+          return /* @__PURE__ */ jsxs22(
             "button",
             {
-              role: t.externe ? void 0 : "tab",
-              "aria-selected": t.externe ? void 0 : actif,
-              "aria-label": t.externe ? `${t.label} (ouvre une autre page)` : void 0,
-              onClick: () => t.externe ? navigate(t.id) : setTab(t.id),
+              type: "button",
+              role: "tab",
+              id: idOnglet(t.id),
+              "aria-selected": actif,
+              "aria-controls": ID_PANNEAU,
+              tabIndex: actif ? 0 : -1,
+              onClick: () => setTab(t.id),
               className: "gr-focus",
-              style: {
-                position: "relative",
-                flexShrink: 0,
-                width: 82,
-                padding: "10px 4px",
-                borderRadius: R.lg,
-                cursor: "pointer",
-                fontFamily: FONTS.ui,
-                border: `1.5px solid ${actif ? C.primary : C.border}`,
-                background: actif ? C.primaryL : C.surface,
-                color: actif ? C.primaryD : C.text2,
-                fontWeight: 700,
-                fontSize: 10.5,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 3,
-                textAlign: "center",
-                lineHeight: 1.2
-              },
+              style: styleOnglet(actif),
               children: [
-                t.externe && /* @__PURE__ */ jsx18("span", { "aria-hidden": "true", style: { position: "absolute", top: 3, right: 6, fontSize: 10, color: C.text3 }, children: "\u2197" }),
-                /* @__PURE__ */ jsx18(Ti, { name: t.icon, size: 15, color: actif ? C.primary : C.text3 }),
+                /* @__PURE__ */ jsx25(Ti, { name: t.icon, size: 15, color: actif ? C.primary : C.text3 }),
                 t.label
               ]
-            }
-          )
-        ] }, t.id);
-      }) }) }),
-      !finOnglets && /* @__PURE__ */ jsx18("div", { "aria-hidden": "true", style: {
+            },
+            t.id
+          );
+        }) }),
+        /* @__PURE__ */ jsx25("div", { "aria-hidden": "true", style: { width: 1.5, background: C.border, margin: "6px 0" } }),
+        LIENS_EXTERNES.map((t) => /* @__PURE__ */ jsxs22(
+          "button",
+          {
+            type: "button",
+            "aria-label": `${t.label} (ouvre une autre page)`,
+            onClick: () => navigate(t.id),
+            className: "gr-focus",
+            style: styleOnglet(false),
+            children: [
+              /* @__PURE__ */ jsx25("span", { "aria-hidden": "true", style: { position: "absolute", top: 3, right: 6, fontSize: 10, color: C.text3 }, children: "\u2197" }),
+              /* @__PURE__ */ jsx25(Ti, { name: t.icon, size: 15, color: C.text3 }),
+              t.label
+            ]
+          },
+          t.id
+        ))
+      ] }) }),
+      !finOnglets && /* @__PURE__ */ jsx25("div", { "aria-hidden": "true", style: {
         position: "absolute",
         top: 14,
         right: 0,
@@ -13257,18 +13619,24 @@ function ToolboxScreen({ onBack, navigate }) {
         alignItems: "center",
         justifyContent: "flex-end",
         paddingRight: 6
-      }, children: /* @__PURE__ */ jsx18(Ti, { name: "chevron-right", size: 18, color: C.text2 }) })
+      }, children: /* @__PURE__ */ jsx25(Ti, { name: "chevron-right", size: 18, color: C.text2 }) })
     ] }),
-    /* @__PURE__ */ jsx18("div", { role: "tabpanel", "aria-label": ONGLETS_OUTILS.find((t) => t.id === tab)?.label, style: { padding: "18px 20px 0" }, children: tab === "metronome" ? /* @__PURE__ */ jsx18(Metronome, {}) : tab === "tuner" ? /* @__PURE__ */ jsx18(Tuner, {}) : tab === "chords" ? /* @__PURE__ */ jsx18(ChordPlayer, {}) : tab === "tablature" ? /* @__PURE__ */ jsx18(TabEditor, {}) : /* @__PURE__ */ jsx18(FretboardExplorer, { embedded: true }) })
+    /* @__PURE__ */ jsx25("div", { role: "tabpanel", id: ID_PANNEAU, "aria-labelledby": idOnglet(tab), style: { padding: "18px 20px 0" }, children: /* @__PURE__ */ jsx25(Suspense, { fallback: /* @__PURE__ */ jsx25("div", { role: "status", style: { minHeight: 240, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: C.text3, fontFamily: FONTS.ui }, children: "Chargement\u2026" }), children: Outil ? /* @__PURE__ */ jsx25(Outil, {}) : /* @__PURE__ */ jsx25(FretboardExplorer2, { embedded: true }) }) })
   ] });
 }
+
+// smoke/_entry.jsx
+init_FretboardExplorer();
 
 // src/screens/TrainingScreen.jsx
 var TrainingScreen_exports = {};
 __export(TrainingScreen_exports, {
   TrainingScreen: () => TrainingScreen
 });
-import { useState as useState14, useMemo as useMemo9 } from "react";
+init_tokens();
+init_ThemeContext();
+init_Ti();
+import { useState as useState20, useMemo as useMemo9 } from "react";
 
 // src/store/seance.js
 var DUREES = [5, 15, 30];
@@ -13390,7 +13758,7 @@ function indexJour(dateStr) {
 }
 
 // src/screens/TrainingScreen.jsx
-import { Fragment as Fragment10, jsx as jsx19, jsxs as jsxs16 } from "react/jsx-runtime";
+import { Fragment as Fragment13, jsx as jsx26, jsxs as jsxs23 } from "react/jsx-runtime";
 var CLE_DUREE = "groply:duree-seance";
 var lireDuree = (defaut) => {
   try {
@@ -13418,10 +13786,10 @@ var JOURS = ["L", "M", "M", "J", "V", "S", "D"];
 var NOMS_JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"];
 function TrainingScreen({ state, dispatch, content, navigate }) {
   const C = useC();
-  const [domaineOuvert, setDomaineOuvert] = useState14(null);
-  const [exerciceOuvert, setExerciceOuvert] = useState14(null);
-  const [quizOuvert, setQuizOuvert] = useState14(false);
-  const [duree, setDuree] = useState14(() => lireDuree(dureeParDefaut(state.onboarding?.timePerWeek)));
+  const [domaineOuvert, setDomaineOuvert] = useState20(null);
+  const [exerciceOuvert, setExerciceOuvert] = useState20(null);
+  const [quizOuvert, setQuizOuvert] = useState20(false);
+  const [duree, setDuree] = useState20(() => lireDuree(dureeParDefaut(state.onboarding?.timePerWeek)));
   const objectif = state.onboarding?.goal || "global";
   const today = todayStr();
   const revisionDisponible = useMemo9(() => {
@@ -13439,11 +13807,11 @@ function TrainingScreen({ state, dispatch, content, navigate }) {
     else if (e.id === "jouer") navigate("jam", { retour: "training" });
   };
   if (exerciceOuvert) {
-    return /* @__PURE__ */ jsx19(ExerciseDetail, { ex: exerciceOuvert, state, dispatch, content, onBack: () => setExerciceOuvert(null) });
+    return /* @__PURE__ */ jsx26(ExerciseDetail, { ex: exerciceOuvert, state, dispatch, content, onBack: () => setExerciceOuvert(null) });
   }
   if (domaineOuvert) {
     const d = DOMAINES.find((x) => x.id === domaineOuvert);
-    return /* @__PURE__ */ jsx19(
+    return /* @__PURE__ */ jsx26(
       VueDomaine,
       {
         C,
@@ -13464,8 +13832,8 @@ function TrainingScreen({ state, dispatch, content, navigate }) {
     );
   }
   const domainesOrdonnes = [...DOMAINES].sort((a, b) => (b.objectif === objectif) - (a.objectif === objectif));
-  return /* @__PURE__ */ jsxs16("div", { children: [
-    /* @__PURE__ */ jsxs16("div", { style: {
+  return /* @__PURE__ */ jsxs23("div", { children: [
+    /* @__PURE__ */ jsxs23("div", { style: {
       backgroundColor: "#36b3d7",
       backgroundImage: "url('/ocean.jpg')",
       backgroundSize: "cover",
@@ -13474,10 +13842,10 @@ function TrainingScreen({ state, dispatch, content, navigate }) {
       position: "relative",
       overflow: "hidden"
     }, children: [
-      /* @__PURE__ */ jsx19("div", { style: { position: "absolute", inset: 0, background: "rgba(0,60,80,.52)", pointerEvents: "none" } }),
-      /* @__PURE__ */ jsxs16("div", { style: { position: "relative", zIndex: 1 }, children: [
-        /* @__PURE__ */ jsx19("h1", { style: { margin: 0, fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: "-.4px" }, children: "Pratique" }),
-        /* @__PURE__ */ jsxs16("div", { style: { fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,.85)", marginTop: 2 }, children: [
+      /* @__PURE__ */ jsx26("div", { style: { position: "absolute", inset: 0, background: "rgba(0,60,80,.52)", pointerEvents: "none" } }),
+      /* @__PURE__ */ jsxs23("div", { style: { position: "relative", zIndex: 1 }, children: [
+        /* @__PURE__ */ jsx26("h1", { style: { margin: 0, fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: "-.4px" }, children: "Pratique" }),
+        /* @__PURE__ */ jsxs23("div", { style: { fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,.85)", marginTop: 2 }, children: [
           gMastery.comprises,
           " compris \xB7 ",
           gMastery.ancrees,
@@ -13489,13 +13857,13 @@ function TrainingScreen({ state, dispatch, content, navigate }) {
         ] })
       ] })
     ] }),
-    /* @__PURE__ */ jsxs16("div", { style: { padding: "16px 16px 24px", display: "flex", flexDirection: "column", gap: 14 }, children: [
-      seance.vide ? /* @__PURE__ */ jsxs16("section", { style: { background: C.surface, border: `1.5px solid ${C.primaryBorder}`, borderRadius: 22, padding: 16, display: "flex", flexDirection: "column", gap: 12 }, children: [
-        /* @__PURE__ */ jsx19("div", { style: { fontSize: 12, fontWeight: 700, color: C.primaryD, textTransform: "uppercase", letterSpacing: ".06em" }, children: "Ta s\xE9ance du jour" }),
-        /* @__PURE__ */ jsx19("h2", { style: { margin: 0, fontSize: 20, fontWeight: 800, color: C.text }, children: "Commence par une le\xE7on" }),
-        /* @__PURE__ */ jsx19("div", { style: { fontSize: 13, color: C.text2, lineHeight: 1.5 }, children: "Ta s\xE9ance se composera d'elle-m\xEAme d\xE8s ta premi\xE8re le\xE7on : r\xE9vision de ce que tu as appris, puis du jeu." }),
-        /* @__PURE__ */ jsx19("button", { onClick: () => navigate("home"), className: "gr-focus", style: { minHeight: 52, border: "none", borderRadius: 16, background: C.primaryBtn || C.primary, color: C.onPrimaryBtn, fontFamily: "inherit", fontSize: 16, fontWeight: 800, cursor: "pointer" }, children: "Aller au Parcours" })
-      ] }) : /* @__PURE__ */ jsx19(
+    /* @__PURE__ */ jsxs23("div", { style: { padding: "16px 16px 24px", display: "flex", flexDirection: "column", gap: 14 }, children: [
+      seance.vide ? /* @__PURE__ */ jsxs23("section", { style: { background: C.surface, border: `1.5px solid ${C.primaryBorder}`, borderRadius: 22, padding: 16, display: "flex", flexDirection: "column", gap: 12 }, children: [
+        /* @__PURE__ */ jsx26("div", { style: { fontSize: 12, fontWeight: 700, color: C.primaryD, textTransform: "uppercase", letterSpacing: ".06em" }, children: "Ta s\xE9ance du jour" }),
+        /* @__PURE__ */ jsx26("h2", { style: { margin: 0, fontSize: 20, fontWeight: 800, color: C.text }, children: "Commence par une le\xE7on" }),
+        /* @__PURE__ */ jsx26("div", { style: { fontSize: 13, color: C.text2, lineHeight: 1.5 }, children: "Ta s\xE9ance se composera d'elle-m\xEAme d\xE8s ta premi\xE8re le\xE7on : r\xE9vision de ce que tu as appris, puis du jeu." }),
+        /* @__PURE__ */ jsx26("button", { onClick: () => navigate("home"), className: "gr-focus", style: { minHeight: 52, border: "none", borderRadius: 16, background: C.primaryBtn || C.primary, color: C.onPrimaryBtn, fontFamily: "inherit", fontSize: 16, fontWeight: 800, cursor: "pointer" }, children: "Aller au Parcours" })
+      ] }) : /* @__PURE__ */ jsx26(
         SeanceDuJour,
         {
           C,
@@ -13508,21 +13876,21 @@ function TrainingScreen({ state, dispatch, content, navigate }) {
           onLancer: lancerEtape
         }
       ),
-      /* @__PURE__ */ jsx19(Semaine, { C, state, objectifJours: objectifJoursSemaine(state.onboarding?.timePerWeek) }),
-      uniteEnAttente && /* @__PURE__ */ jsxs16("section", { style: { background: C.amberL, border: `1.5px solid ${C.amberBorder}`, borderRadius: R.lg, padding: "12px 14px", display: "flex", alignItems: "center", gap: 12 }, children: [
-        /* @__PURE__ */ jsx19(Ti, { name: "lock", size: 22, color: C.amberD }),
-        /* @__PURE__ */ jsxs16("div", { style: { flex: 1, minWidth: 0 }, children: [
-          /* @__PURE__ */ jsx19("div", { style: { fontSize: 14, fontWeight: 700, color: C.amberD }, children: "V\xE9rification pr\xEAte" }),
-          /* @__PURE__ */ jsxs16("div", { style: { fontSize: 12, color: C.amberD }, children: [
+      /* @__PURE__ */ jsx26(Semaine, { C, state, objectifJours: objectifJoursSemaine(state.onboarding?.timePerWeek) }),
+      uniteEnAttente && /* @__PURE__ */ jsxs23("section", { style: { background: C.amberL, border: `1.5px solid ${C.amberBorder}`, borderRadius: R.lg, padding: "12px 14px", display: "flex", alignItems: "center", gap: 12 }, children: [
+        /* @__PURE__ */ jsx26(Ti, { name: "lock", size: 22, color: C.amberD }),
+        /* @__PURE__ */ jsxs23("div", { style: { flex: 1, minWidth: 0 }, children: [
+          /* @__PURE__ */ jsx26("div", { style: { fontSize: 14, fontWeight: 700, color: C.amberD }, children: "V\xE9rification pr\xEAte" }),
+          /* @__PURE__ */ jsxs23("div", { style: { fontSize: 12, color: C.amberD }, children: [
             uniteEnAttente.title,
             " : le\xE7ons finies, \xE0 valider"
           ] })
         ] }),
-        /* @__PURE__ */ jsx19("button", { onClick: () => navigate("home"), className: "gr-focus", style: { minHeight: 44, padding: "0 14px", borderRadius: R.md, border: `1.5px solid ${C.amber}`, background: C.surface, color: C.amberD, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }, children: "Valider" })
+        /* @__PURE__ */ jsx26("button", { onClick: () => navigate("home"), className: "gr-focus", style: { minHeight: 44, padding: "0 14px", borderRadius: R.md, border: `1.5px solid ${C.amber}`, background: C.surface, color: C.amberD, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }, children: "Valider" })
       ] }),
-      /* @__PURE__ */ jsxs16("section", { "aria-labelledby": "titre-domaines", style: { display: "flex", flexDirection: "column", gap: 10 }, children: [
-        /* @__PURE__ */ jsx19("h2", { id: "titre-domaines", style: { margin: "4px 4px 0", fontSize: 17, fontWeight: 800, color: C.text }, children: "S'entra\xEEner sur\u2026" }),
-        /* @__PURE__ */ jsx19("div", { style: { display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }, children: domainesOrdonnes.map((d) => /* @__PURE__ */ jsx19(CarteDomaine, { C, d, state, progression, onOuvrir: () => setDomaineOuvert(d.id) }, d.id)) })
+      /* @__PURE__ */ jsxs23("section", { "aria-labelledby": "titre-domaines", style: { display: "flex", flexDirection: "column", gap: 10 }, children: [
+        /* @__PURE__ */ jsx26("h2", { id: "titre-domaines", style: { margin: "4px 4px 0", fontSize: 17, fontWeight: 800, color: C.text }, children: "S'entra\xEEner sur\u2026" }),
+        /* @__PURE__ */ jsx26("div", { style: { display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }, children: domainesOrdonnes.map((d) => /* @__PURE__ */ jsx26(CarteDomaine, { C, d, state, progression, onOuvrir: () => setDomaineOuvert(d.id) }, d.id)) })
       ] })
     ] })
   ] });
@@ -13530,12 +13898,12 @@ function TrainingScreen({ state, dispatch, content, navigate }) {
 function SeanceDuJour({ C, seance, duree, onDuree, onLancer }) {
   const { etapes, prochaine, terminee, totalMinutes } = seance;
   const commencee = etapes.some((e) => e.fait);
-  return /* @__PURE__ */ jsxs16("section", { "aria-labelledby": "titre-seance", style: { background: C.surface, border: `1.5px solid ${C.primaryBorder}`, borderRadius: 22, padding: 16, display: "flex", flexDirection: "column", gap: 14, boxShadow: "0 6px 20px rgba(184,64,16,.10)" }, children: [
-    /* @__PURE__ */ jsxs16("div", { children: [
-      /* @__PURE__ */ jsx19("div", { style: { fontSize: 12, fontWeight: 700, color: C.primaryD, textTransform: "uppercase", letterSpacing: ".06em" }, children: "Ta s\xE9ance du jour" }),
-      /* @__PURE__ */ jsx19("h2", { id: "titre-seance", style: { margin: "4px 0 0", fontSize: 20, fontWeight: 800, color: C.text, letterSpacing: "-.3px" }, children: terminee ? "S\xE9ance termin\xE9e" : commencee ? "On continue ?" : "Compos\xE9e pour toi" })
+  return /* @__PURE__ */ jsxs23("section", { "aria-labelledby": "titre-seance", style: { background: C.surface, border: `1.5px solid ${C.primaryBorder}`, borderRadius: 22, padding: 16, display: "flex", flexDirection: "column", gap: 14, boxShadow: "0 6px 20px rgba(184,64,16,.10)" }, children: [
+    /* @__PURE__ */ jsxs23("div", { children: [
+      /* @__PURE__ */ jsx26("div", { style: { fontSize: 12, fontWeight: 700, color: C.primaryD, textTransform: "uppercase", letterSpacing: ".06em" }, children: "Ta s\xE9ance du jour" }),
+      /* @__PURE__ */ jsx26("h2", { id: "titre-seance", style: { margin: "4px 0 0", fontSize: 20, fontWeight: 800, color: C.text, letterSpacing: "-.3px" }, children: terminee ? "S\xE9ance termin\xE9e" : commencee ? "On continue ?" : "Compos\xE9e pour toi" })
     ] }),
-    !terminee && /* @__PURE__ */ jsx19("div", { role: "group", "aria-label": "Dur\xE9e de la s\xE9ance", style: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 6, background: C.surface2, padding: 4, borderRadius: 14 }, children: DUREES.map((v) => /* @__PURE__ */ jsxs16("button", { onClick: () => onDuree(v), "aria-pressed": v === duree, className: "gr-focus", style: {
+    !terminee && /* @__PURE__ */ jsx26("div", { role: "group", "aria-label": "Dur\xE9e de la s\xE9ance", style: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 6, background: C.surface2, padding: 4, borderRadius: 14 }, children: DUREES.map((v) => /* @__PURE__ */ jsxs23("button", { onClick: () => onDuree(v), "aria-pressed": v === duree, className: "gr-focus", style: {
       minHeight: 44,
       border: "none",
       borderRadius: 11,
@@ -13550,10 +13918,10 @@ function SeanceDuJour({ C, seance, duree, onDuree, onLancer }) {
       v,
       " min"
     ] }, v)) }),
-    /* @__PURE__ */ jsx19("ol", { style: { listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 8 }, children: etapes.map((e, i) => {
+    /* @__PURE__ */ jsx26("ol", { style: { listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 8 }, children: etapes.map((e, i) => {
       const estProchaine = prochaine?.id === e.id;
       const reste = e.id === "jouer" && !e.fait && e.secondesFaites > 0 ? ` \xB7 ${Math.floor(e.secondesFaites / 60)} min jou\xE9e${e.secondesFaites >= 120 ? "s" : ""} sur ${e.minutes}` : "";
-      return /* @__PURE__ */ jsx19("li", { children: /* @__PURE__ */ jsxs16(
+      return /* @__PURE__ */ jsx26("li", { children: /* @__PURE__ */ jsxs23(
         "button",
         {
           onClick: () => onLancer(e),
@@ -13574,7 +13942,7 @@ function SeanceDuJour({ C, seance, duree, onDuree, onLancer }) {
             border: `1.5px solid ${estProchaine ? C.primaryBorder : "transparent"}`
           },
           children: [
-            /* @__PURE__ */ jsx19("div", { style: {
+            /* @__PURE__ */ jsx26("div", { style: {
               width: 34,
               height: 34,
               flexShrink: 0,
@@ -13584,26 +13952,26 @@ function SeanceDuJour({ C, seance, duree, onDuree, onLancer }) {
               justifyContent: "center",
               background: e.fait ? C.green : C.primaryL,
               border: e.fait ? "none" : `1.5px solid ${C.primaryBorder}`
-            }, children: /* @__PURE__ */ jsx19(Ti, { name: e.fait ? "check" : ICONE_ETAPE[e.id], size: 17, color: e.fait ? C.onPrimaryBtn : C.primaryD }) }),
-            /* @__PURE__ */ jsxs16("div", { style: { flex: 1, minWidth: 0 }, children: [
-              /* @__PURE__ */ jsx19("div", { style: { fontSize: 14, fontWeight: 700, color: C.text, textDecorationLine: e.fait ? "line-through" : "none", textDecorationColor: C.text3 }, children: e.titre }),
-              /* @__PURE__ */ jsxs16("div", { style: { fontSize: 12, color: C.text2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, children: [
+            }, children: /* @__PURE__ */ jsx26(Ti, { name: e.fait ? "check" : ICONE_ETAPE[e.id], size: 17, color: e.fait ? C.onPrimaryBtn : C.primaryD }) }),
+            /* @__PURE__ */ jsxs23("div", { style: { flex: 1, minWidth: 0 }, children: [
+              /* @__PURE__ */ jsx26("div", { style: { fontSize: 14, fontWeight: 700, color: C.text, textDecorationLine: e.fait ? "line-through" : "none", textDecorationColor: C.text3 }, children: e.titre }),
+              /* @__PURE__ */ jsxs23("div", { style: { fontSize: 12, color: C.text2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, children: [
                 e.detail,
                 reste
               ] })
             ] }),
-            /* @__PURE__ */ jsx19("div", { style: { fontSize: 12, fontWeight: 700, color: C.text2, whiteSpace: "nowrap" }, children: e.aJour ? "\xE0 jour" : `${e.minutes} min` })
+            /* @__PURE__ */ jsx26("div", { style: { fontSize: 12, fontWeight: 700, color: C.text2, whiteSpace: "nowrap" }, children: e.aJour ? "\xE0 jour" : `${e.minutes} min` })
           ]
         }
       ) }, e.id);
     }) }),
-    terminee ? /* @__PURE__ */ jsxs16("div", { role: "status", style: { display: "flex", alignItems: "center", gap: 10, background: C.greenL, border: `1.5px solid ${C.greenBorder}`, borderRadius: 14, padding: "12px 14px", color: C.greenD, fontSize: 13, lineHeight: 1.5 }, children: [
-      /* @__PURE__ */ jsx19(Ti, { name: "trophy", size: 22, color: C.greenD }),
-      /* @__PURE__ */ jsxs16("div", { children: [
-        /* @__PURE__ */ jsx19("b", { children: "Bravo, c'est fait pour aujourd'hui." }),
+    terminee ? /* @__PURE__ */ jsxs23("div", { role: "status", style: { display: "flex", alignItems: "center", gap: 10, background: C.greenL, border: `1.5px solid ${C.greenBorder}`, borderRadius: 14, padding: "12px 14px", color: C.greenD, fontSize: 13, lineHeight: 1.5 }, children: [
+      /* @__PURE__ */ jsx26(Ti, { name: "trophy", size: 22, color: C.greenD }),
+      /* @__PURE__ */ jsxs23("div", { children: [
+        /* @__PURE__ */ jsx26("b", { children: "Bravo, c'est fait pour aujourd'hui." }),
         " Envie de continuer ? Choisis un domaine ci-dessous."
       ] })
-    ] }) : /* @__PURE__ */ jsxs16("button", { onClick: () => onLancer(prochaine), className: "gr-focus", style: {
+    ] }) : /* @__PURE__ */ jsxs23("button", { onClick: () => onLancer(prochaine), className: "gr-focus", style: {
       minHeight: 52,
       border: "none",
       borderRadius: 16,
@@ -13618,7 +13986,7 @@ function SeanceDuJour({ C, seance, duree, onDuree, onLancer }) {
       justifyContent: "center",
       gap: 10
     }, children: [
-      /* @__PURE__ */ jsx19(Ti, { name: "player-play", size: 18, color: C.onPrimaryBtn }),
+      /* @__PURE__ */ jsx26(Ti, { name: "player-play", size: 18, color: C.onPrimaryBtn }),
       commencee ? `Continuer : ${prochaine.titre}` : `Commencer \xB7 ${totalMinutes} min`
     ] })
   ] });
@@ -13628,11 +13996,11 @@ function Semaine({ C, state, objectifJours }) {
   const faits = new Set(jours.map(indexJour));
   const auj = indexJour(todayStr());
   const n = jours.length;
-  return /* @__PURE__ */ jsxs16("section", { "aria-labelledby": "titre-semaine", style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }, children: [
-    /* @__PURE__ */ jsxs16("div", { style: { display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }, children: [
-      /* @__PURE__ */ jsx19("h2", { id: "titre-semaine", style: { margin: 0, fontSize: 15, fontWeight: 800, color: C.text }, children: "Cette semaine" }),
-      /* @__PURE__ */ jsxs16("div", { style: { fontSize: 13, color: C.text2 }, children: [
-        /* @__PURE__ */ jsxs16("b", { style: { color: C.text }, children: [
+  return /* @__PURE__ */ jsxs23("section", { "aria-labelledby": "titre-semaine", style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }, children: [
+    /* @__PURE__ */ jsxs23("div", { style: { display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }, children: [
+      /* @__PURE__ */ jsx26("h2", { id: "titre-semaine", style: { margin: 0, fontSize: 15, fontWeight: 800, color: C.text }, children: "Cette semaine" }),
+      /* @__PURE__ */ jsxs23("div", { style: { fontSize: 13, color: C.text2 }, children: [
+        /* @__PURE__ */ jsxs23("b", { style: { color: C.text }, children: [
           n,
           " jour",
           n > 1 ? "s" : ""
@@ -13641,13 +14009,13 @@ function Semaine({ C, state, objectifJours }) {
         objectifJours
       ] })
     ] }),
-    /* @__PURE__ */ jsx19("ul", { "aria-label": `Jours de pratique : ${n} sur ${objectifJours} vis\xE9s`, style: { listStyle: "none", margin: 0, padding: 0, display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: 6 }, children: JOURS.map((l, i) => /* @__PURE__ */ jsxs16(
+    /* @__PURE__ */ jsx26("ul", { "aria-label": `Jours de pratique : ${n} sur ${objectifJours} vis\xE9s`, style: { listStyle: "none", margin: 0, padding: 0, display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: 6 }, children: JOURS.map((l, i) => /* @__PURE__ */ jsxs23(
       "li",
       {
         "aria-label": `${NOMS_JOURS[i]} : ${faits.has(i) ? "pratiqu\xE9" : i === auj ? "aujourd'hui" : "pas de pratique"}`,
         style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 4 },
         children: [
-          /* @__PURE__ */ jsx19("div", { style: {
+          /* @__PURE__ */ jsx26("div", { style: {
             width: 30,
             height: 30,
             borderRadius: 999,
@@ -13657,8 +14025,8 @@ function Semaine({ C, state, objectifJours }) {
             boxSizing: "border-box",
             background: faits.has(i) ? C.green : i === auj ? C.surface : C.surface2,
             border: !faits.has(i) && i === auj ? `2px solid ${C.primary}` : "none"
-          }, children: faits.has(i) && /* @__PURE__ */ jsx19(Ti, { name: "check", size: 14, color: C.onPrimaryBtn }) }),
-          /* @__PURE__ */ jsx19("div", { "aria-hidden": "true", style: { fontSize: 11, fontWeight: i === auj ? 800 : 600, color: i === auj ? C.primaryD : C.text2 }, children: l })
+          }, children: faits.has(i) && /* @__PURE__ */ jsx26(Ti, { name: "check", size: 14, color: C.onPrimaryBtn }) }),
+          /* @__PURE__ */ jsx26("div", { "aria-hidden": "true", style: { fontSize: 11, fontWeight: i === auj ? 800 : 600, color: i === auj ? C.primaryD : C.text2 }, children: l })
         ]
       },
       i
@@ -13677,7 +14045,7 @@ function CarteDomaine({ C, d, state, progression, onOuvrir }) {
   const commencees = miennes.filter((p) => p.commencee);
   const niveau = commencees.length ? Math.round(commencees.reduce((s, p) => s + p.niveau, 0) / commencees.length) : 0;
   const detail = d.id === "Impro" ? `Jam Session \xB7 ${state.jam?.seances || 0} s\xE9ance${(state.jam?.seances || 0) > 1 ? "s" : ""}` : miennes.length ? `${miennes.length} comp\xE9tence${miennes.length > 1 ? "s" : ""}` : "\xC0 d\xE9bloquer dans le parcours";
-  return /* @__PURE__ */ jsxs16(
+  return /* @__PURE__ */ jsxs23(
     "button",
     {
       onClick: onOuvrir,
@@ -13685,10 +14053,10 @@ function CarteDomaine({ C, d, state, progression, onOuvrir }) {
       "aria-label": `${d.id} : ${detail}${commencees.length ? `, niveau moyen ${niveau} sur 3` : ""}`,
       style: { minHeight: 148, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10, padding: 14, borderRadius: 18, background: C.surface, border: `1.5px solid ${k.b}`, cursor: "pointer", textAlign: "left", fontFamily: "inherit" },
       children: [
-        /* @__PURE__ */ jsx19("div", { style: { width: 38, height: 38, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", background: k.l }, children: /* @__PURE__ */ jsx19(Ti, { name: d.icone, size: 20, color: k.c }) }),
-        /* @__PURE__ */ jsx19("div", { style: { fontSize: 15, fontWeight: 800, color: C.text }, children: d.id }),
-        d.id !== "Impro" && /* @__PURE__ */ jsx19("div", { "aria-hidden": "true", style: { display: "flex", gap: 4, width: "100%" }, children: [1, 2, 3].map((n) => /* @__PURE__ */ jsx19("div", { style: { flex: 1, height: 6, borderRadius: 3, background: n <= niveau ? k.c : C.border } }, n)) }),
-        /* @__PURE__ */ jsx19("div", { style: { fontSize: 12, color: C.text2 }, children: detail })
+        /* @__PURE__ */ jsx26("div", { style: { width: 38, height: 38, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", background: k.l }, children: /* @__PURE__ */ jsx26(Ti, { name: d.icone, size: 20, color: k.c }) }),
+        /* @__PURE__ */ jsx26("div", { style: { fontSize: 15, fontWeight: 800, color: C.text }, children: d.id }),
+        d.id !== "Impro" && /* @__PURE__ */ jsx26("div", { "aria-hidden": "true", style: { display: "flex", gap: 4, width: "100%" }, children: [1, 2, 3].map((n) => /* @__PURE__ */ jsx26("div", { style: { flex: 1, height: 6, borderRadius: 3, background: n <= niveau ? k.c : C.border } }, n)) }),
+        /* @__PURE__ */ jsx26("div", { style: { fontSize: 12, color: C.text2 }, children: detail })
       ]
     }
   );
@@ -13705,11 +14073,11 @@ function VueDomaine({ C, d, state, dispatch, content, navigate, progression, qui
     if (d.libre.quiz) setQuizOuvert(true);
     else navigate(d.libre.ecran, d.libre.ecran === "toolbox" ? {} : { retour: "training" });
   };
-  return /* @__PURE__ */ jsxs16("div", { children: [
-    /* @__PURE__ */ jsxs16("div", { style: { background: k.l, borderBottom: `1.5px solid ${k.b}`, padding: "18px 16px", display: "flex", flexDirection: "column", gap: 14 }, children: [
-      /* @__PURE__ */ jsx19("button", { onClick: onRetour, "aria-label": "Retour \xE0 Pratique", className: "gr-focus", style: { width: 44, height: 44, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", background: C.surface, border: `1.5px solid ${k.b}`, cursor: "pointer" }, children: /* @__PURE__ */ jsx19(Ti, { name: "arrow-left", size: 18, color: k.d }) }),
-      /* @__PURE__ */ jsx19("h1", { style: { margin: 0, fontSize: 28, fontWeight: 800, letterSpacing: "-.5px", color: k.d }, children: d.id }),
-      peutReviser ? /* @__PURE__ */ jsxs16("button", { onClick: () => navigate("review", { domaine: d.id, cible: 10, retour: "training" }), className: "gr-focus", style: {
+  return /* @__PURE__ */ jsxs23("div", { children: [
+    /* @__PURE__ */ jsxs23("div", { style: { background: k.l, borderBottom: `1.5px solid ${k.b}`, padding: "18px 16px", display: "flex", flexDirection: "column", gap: 14 }, children: [
+      /* @__PURE__ */ jsx26("button", { onClick: onRetour, "aria-label": "Retour \xE0 Pratique", className: "gr-focus", style: { width: 44, height: 44, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", background: C.surface, border: `1.5px solid ${k.b}`, cursor: "pointer" }, children: /* @__PURE__ */ jsx26(Ti, { name: "arrow-left", size: 18, color: k.d }) }),
+      /* @__PURE__ */ jsx26("h1", { style: { margin: 0, fontSize: 28, fontWeight: 800, letterSpacing: "-.5px", color: k.d }, children: d.id }),
+      peutReviser ? /* @__PURE__ */ jsxs23("button", { onClick: () => navigate("review", { domaine: d.id, cible: 10, retour: "training" }), className: "gr-focus", style: {
         minHeight: 52,
         border: "none",
         borderRadius: 16,
@@ -13724,24 +14092,24 @@ function VueDomaine({ C, d, state, dispatch, content, navigate, progression, qui
         justifyContent: "center",
         gap: 10
       }, children: [
-        /* @__PURE__ */ jsx19(Ti, { name: "player-play", size: 18, color: C.onPrimaryBtn }),
+        /* @__PURE__ */ jsx26(Ti, { name: "player-play", size: 18, color: C.onPrimaryBtn }),
         " S'entra\xEEner sur ",
         d.id === "Impro" ? "l'impro" : d.id === "Oreille" ? "l'oreille" : `le ${d.id.toLowerCase()}`
-      ] }) : d.id !== "Impro" && /* @__PURE__ */ jsx19("div", { style: { fontSize: 13, color: k.d }, children: "Rien \xE0 r\xE9viser pour l'instant : les comp\xE9tences de ce domaine se d\xE9bloquent avec les le\xE7ons du parcours." })
+      ] }) : d.id !== "Impro" && /* @__PURE__ */ jsx26("div", { style: { fontSize: 13, color: k.d }, children: "Rien \xE0 r\xE9viser pour l'instant : les comp\xE9tences de ce domaine se d\xE9bloquent avec les le\xE7ons du parcours." })
     ] }),
-    /* @__PURE__ */ jsx19("div", { style: { padding: 16, display: "flex", flexDirection: "column", gap: 16 }, children: quizOuvert ? /* @__PURE__ */ jsxs16("section", { children: [
-      /* @__PURE__ */ jsx19("button", { onClick: () => setQuizOuvert(false), className: "gr-focus", style: { minHeight: 44, border: "none", background: "none", color: C.text2, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", padding: 0 }, children: "\u2190 Fermer les quiz" }),
-      /* @__PURE__ */ jsx19(QuizScreen, { state, dispatch, content, embedded: true })
-    ] }) : /* @__PURE__ */ jsxs16(Fragment10, { children: [
-      d.id === "Impro" ? /* @__PURE__ */ jsx19(Bloc, { C, titre: "Ta Jam Session", children: /* @__PURE__ */ jsx19(
+    /* @__PURE__ */ jsx26("div", { style: { padding: 16, display: "flex", flexDirection: "column", gap: 16 }, children: quizOuvert ? /* @__PURE__ */ jsxs23("section", { children: [
+      /* @__PURE__ */ jsx26("button", { onClick: () => setQuizOuvert(false), className: "gr-focus", style: { minHeight: 44, border: "none", background: "none", color: C.text2, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", padding: 0 }, children: "\u2190 Fermer les quiz" }),
+      /* @__PURE__ */ jsx26(QuizScreen, { state, dispatch, content, embedded: true })
+    ] }) : /* @__PURE__ */ jsxs23(Fragment13, { children: [
+      d.id === "Impro" ? /* @__PURE__ */ jsx26(Bloc, { C, titre: "Ta Jam Session", children: /* @__PURE__ */ jsx26(
         Ligne,
         {
           C,
           titre: `${state.jam?.seances || 0} s\xE9ance${(state.jam?.seances || 0) > 1 ? "s" : ""} compt\xE9e${(state.jam?.seances || 0) > 1 ? "s" : ""}`,
           detail: `${Math.floor((state.jam?.secondes || 0) / 60)} min de jeu \xB7 ${state.jam?.contraintes || 0} contrainte${(state.jam?.contraintes || 0) > 1 ? "s" : ""} tenue${(state.jam?.contraintes || 0) > 1 ? "s" : ""}`
         }
-      ) }) : /* @__PURE__ */ jsxs16(Bloc, { C, titre: "Tes comp\xE9tences", children: [
-        debloquees.map((p) => /* @__PURE__ */ jsx19(
+      ) }) : /* @__PURE__ */ jsxs23(Bloc, { C, titre: "Tes comp\xE9tences", children: [
+        debloquees.map((p) => /* @__PURE__ */ jsx26(
           Ligne,
           {
             C,
@@ -13752,7 +14120,7 @@ function VueDomaine({ C, d, state, dispatch, content, navigate, progression, qui
           },
           p.id
         )),
-        verrouillees.map((f) => /* @__PURE__ */ jsx19(
+        verrouillees.map((f) => /* @__PURE__ */ jsx26(
           Ligne,
           {
             C,
@@ -13762,9 +14130,9 @@ function VueDomaine({ C, d, state, dispatch, content, navigate, progression, qui
           },
           f.id
         )),
-        !debloquees.length && !verrouillees.length && /* @__PURE__ */ jsx19(Ligne, { C, titre: "Aucune comp\xE9tence dans ce domaine", detail: "" })
+        !debloquees.length && !verrouillees.length && /* @__PURE__ */ jsx26(Ligne, { C, titre: "Aucune comp\xE9tence dans ce domaine", detail: "" })
       ] }),
-      exercices.length > 0 && /* @__PURE__ */ jsx19(Bloc, { C, titre: "Guitare en main", children: exercices.map((e) => /* @__PURE__ */ jsx19(
+      exercices.length > 0 && /* @__PURE__ */ jsx26(Bloc, { C, titre: "Guitare en main", children: exercices.map((e) => /* @__PURE__ */ jsx26(
         Ligne,
         {
           C,
@@ -13774,28 +14142,28 @@ function VueDomaine({ C, d, state, dispatch, content, navigate, progression, qui
         },
         e.id
       )) }),
-      /* @__PURE__ */ jsx19(Bloc, { C, titre: "En libre", children: /* @__PURE__ */ jsx19(Ligne, { C, titre: d.libre.titre, detail: d.libre.detail, onClick: ouvrirLibre }) })
+      /* @__PURE__ */ jsx26(Bloc, { C, titre: "En libre", children: /* @__PURE__ */ jsx26(Ligne, { C, titre: d.libre.titre, detail: d.libre.detail, onClick: ouvrirLibre }) })
     ] }) })
   ] });
 }
 function Bloc({ C, titre, children }) {
-  return /* @__PURE__ */ jsxs16("section", { style: { display: "flex", flexDirection: "column", gap: 8 }, children: [
-    /* @__PURE__ */ jsx19("h2", { style: { margin: "0 4px", fontSize: 16, fontWeight: 800, color: C.text }, children: titre }),
-    /* @__PURE__ */ jsx19("ul", { style: { listStyle: "none", margin: 0, padding: 0, background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: 18, overflow: "hidden" }, children })
+  return /* @__PURE__ */ jsxs23("section", { style: { display: "flex", flexDirection: "column", gap: 8 }, children: [
+    /* @__PURE__ */ jsx26("h2", { style: { margin: "0 4px", fontSize: 16, fontWeight: 800, color: C.text }, children: titre }),
+    /* @__PURE__ */ jsx26("ul", { style: { listStyle: "none", margin: 0, padding: 0, background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: 18, overflow: "hidden" }, children })
   ] });
 }
 function Ligne({ C, titre, detail, jauge, couleur, verrou, onClick }) {
-  const contenu = /* @__PURE__ */ jsxs16(Fragment10, { children: [
-    /* @__PURE__ */ jsxs16("div", { style: { flex: 1, minWidth: 0 }, children: [
-      /* @__PURE__ */ jsx19("div", { style: { fontSize: 14, fontWeight: 700, color: verrou ? C.text2 : C.text }, children: titre }),
-      detail && /* @__PURE__ */ jsx19("div", { style: { fontSize: 12, color: C.text2 }, children: detail })
+  const contenu = /* @__PURE__ */ jsxs23(Fragment13, { children: [
+    /* @__PURE__ */ jsxs23("div", { style: { flex: 1, minWidth: 0 }, children: [
+      /* @__PURE__ */ jsx26("div", { style: { fontSize: 14, fontWeight: 700, color: verrou ? C.text2 : C.text }, children: titre }),
+      detail && /* @__PURE__ */ jsx26("div", { style: { fontSize: 12, color: C.text2 }, children: detail })
     ] }),
-    verrou && /* @__PURE__ */ jsx19(Ti, { name: "lock", size: 17, color: C.text2, label: "Verrouill\xE9e" }),
-    jauge != null && !verrou && /* @__PURE__ */ jsx19("div", { role: "img", "aria-label": `niveau ${jauge} sur 3`, style: { display: "flex", gap: 3, flexShrink: 0 }, children: [1, 2, 3].map((n) => /* @__PURE__ */ jsx19("div", { style: { width: 14, height: 6, borderRadius: 3, background: n <= jauge ? couleur : C.border } }, n)) }),
-    onClick && /* @__PURE__ */ jsx19(Ti, { name: "chevron-right", size: 18, color: C.text2 })
+    verrou && /* @__PURE__ */ jsx26(Ti, { name: "lock", size: 17, color: C.text2, label: "Verrouill\xE9e" }),
+    jauge != null && !verrou && /* @__PURE__ */ jsx26("div", { role: "img", "aria-label": `niveau ${jauge} sur 3`, style: { display: "flex", gap: 3, flexShrink: 0 }, children: [1, 2, 3].map((n) => /* @__PURE__ */ jsx26("div", { style: { width: 14, height: 6, borderRadius: 3, background: n <= jauge ? couleur : C.border } }, n)) }),
+    onClick && /* @__PURE__ */ jsx26(Ti, { name: "chevron-right", size: 18, color: C.text2 })
   ] });
   const style = { display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", minHeight: 56, boxSizing: "border-box", borderTop: `1px solid ${C.surface2}` };
-  return /* @__PURE__ */ jsx19("li", { style: { borderTop: "none" }, children: onClick ? /* @__PURE__ */ jsx19("button", { onClick, className: "gr-focus", style: { ...style, width: "100%", background: "none", border: "none", borderTop: `1px solid ${C.surface2}`, textAlign: "left", cursor: "pointer", fontFamily: "inherit" }, children: contenu }) : /* @__PURE__ */ jsx19("div", { style, children: contenu }) });
+  return /* @__PURE__ */ jsx26("li", { style: { borderTop: "none" }, children: onClick ? /* @__PURE__ */ jsx26("button", { onClick, className: "gr-focus", style: { ...style, width: "100%", background: "none", border: "none", borderTop: `1px solid ${C.surface2}`, textAlign: "left", cursor: "pointer", fontFamily: "inherit" }, children: contenu }) : /* @__PURE__ */ jsx26("div", { style, children: contenu }) });
 }
 
 // src/screens/PracticeScreen.jsx
@@ -13803,7 +14171,10 @@ var PracticeScreen_exports = {};
 __export(PracticeScreen_exports, {
   PracticeScreen: () => PracticeScreen
 });
-import { useState as useState15, useEffect as useEffect12, useRef as useRef10 } from "react";
+init_tokens();
+init_ThemeContext();
+init_Ti();
+import { useState as useState21, useEffect as useEffect17, useRef as useRef15 } from "react";
 
 // src/store/challenges.js
 var KEYS = ["A", "B", "C", "D", "E", "F", "G"];
@@ -13837,14 +14208,14 @@ var DAILY_CHALLENGES = [
 ];
 
 // src/screens/PracticeScreen.jsx
-import { jsx as jsx20, jsxs as jsxs17 } from "react/jsx-runtime";
+import { jsx as jsx27, jsxs as jsxs24 } from "react/jsx-runtime";
 function PracticeScreen({ dispatch }) {
   const C = useC();
-  const [tab, setTab] = useState15("impro");
-  const [current, setCurrent] = useState15(null);
-  const [pop, setPop] = useState15(false);
-  const timerRef = useRef10(null);
-  useEffect12(() => () => {
+  const [tab, setTab] = useState21("impro");
+  const [current, setCurrent] = useState21(null);
+  const [pop, setPop] = useState21(false);
+  const timerRef = useRef15(null);
+  useEffect17(() => () => {
     if (timerRef.current) clearTimeout(timerRef.current);
   }, []);
   const generateImpro = () => {
@@ -13878,12 +14249,12 @@ function PracticeScreen({ dispatch }) {
       setCurrent(null);
     }, 1e3);
   };
-  return /* @__PURE__ */ jsxs17("div", { style: { padding: "18px 16px 0" }, children: [
-    pop && /* @__PURE__ */ jsx20(XPPop, { amount: 50, onDone: () => {
+  return /* @__PURE__ */ jsxs24("div", { style: { padding: "18px 16px 0" }, children: [
+    pop && /* @__PURE__ */ jsx27(XPPop, { amount: 50, onDone: () => {
     } }),
-    /* @__PURE__ */ jsx20("h1", { style: { margin: 0, fontSize: 24, fontWeight: 700, fontFamily: FONTS.title, letterSpacing: "-0.01em", color: C.text }, children: "Practice libre" }),
-    /* @__PURE__ */ jsx20("p", { style: { fontSize: 13, color: C.text2, margin: "3px 0 14px", fontFamily: FONTS.ui }, children: "D\xE9fis g\xE9n\xE9r\xE9s \xE0 l'infini. Jamais 2 fois pareil." }),
-    /* @__PURE__ */ jsx20("div", { style: { display: "flex", gap: 6, marginBottom: 12 }, children: [{ id: "impro", label: "Impro" }, { id: "neck", label: "Manche" }, { id: "rhythm", label: "Rythme" }].map((t) => /* @__PURE__ */ jsx20("button", { onClick: () => {
+    /* @__PURE__ */ jsx27("h1", { style: { margin: 0, fontSize: 24, fontWeight: 700, fontFamily: FONTS.title, letterSpacing: "-0.01em", color: C.text }, children: "Practice libre" }),
+    /* @__PURE__ */ jsx27("p", { style: { fontSize: 13, color: C.text2, margin: "3px 0 14px", fontFamily: FONTS.ui }, children: "D\xE9fis g\xE9n\xE9r\xE9s \xE0 l'infini. Jamais 2 fois pareil." }),
+    /* @__PURE__ */ jsx27("div", { style: { display: "flex", gap: 6, marginBottom: 12 }, children: [{ id: "impro", label: "Impro" }, { id: "neck", label: "Manche" }, { id: "rhythm", label: "Rythme" }].map((t) => /* @__PURE__ */ jsx27("button", { onClick: () => {
       setTab(t.id);
       setCurrent(null);
     }, style: {
@@ -13898,15 +14269,15 @@ function PracticeScreen({ dispatch }) {
       cursor: "pointer",
       fontFamily: FONTS.ui
     }, children: t.label }, t.id)) }),
-    !current ? /* @__PURE__ */ jsxs17("div", { style: { background: C.coralL, border: `1px solid ${C.coralBorder}`, borderRadius: R.lg, padding: 20, textAlign: "center" }, children: [
-      /* @__PURE__ */ jsx20(Ti, { name: "dice-5", size: 36, color: C.coral }),
-      /* @__PURE__ */ jsx20("div", { style: { fontSize: 17, fontWeight: 700, color: C.coralD, marginTop: 10, marginBottom: 6, fontFamily: FONTS.title }, children: "G\xE9n\xE8re ton d\xE9fi" }),
-      /* @__PURE__ */ jsxs17("div", { style: { fontSize: 13, color: C.coralD, marginBottom: 14, lineHeight: 1.55, fontFamily: FONTS.ui }, children: [
+    !current ? /* @__PURE__ */ jsxs24("div", { style: { background: C.coralL, border: `1px solid ${C.coralBorder}`, borderRadius: R.lg, padding: 20, textAlign: "center" }, children: [
+      /* @__PURE__ */ jsx27(Ti, { name: "dice-5", size: 36, color: C.coral }),
+      /* @__PURE__ */ jsx27("div", { style: { fontSize: 17, fontWeight: 700, color: C.coralD, marginTop: 10, marginBottom: 6, fontFamily: FONTS.title }, children: "G\xE9n\xE8re ton d\xE9fi" }),
+      /* @__PURE__ */ jsxs24("div", { style: { fontSize: 13, color: C.coralD, marginBottom: 14, lineHeight: 1.55, fontFamily: FONTS.ui }, children: [
         tab === "impro" && "Tonalit\xE9, mode, tempo et contrainte tir\xE9s au sort.",
         tab === "neck" && "Un d\xE9fi de visualisation du manche.",
         tab === "rhythm" && "Un d\xE9fi de m\xE9tronome \xE0 un tempo donn\xE9."
       ] }),
-      /* @__PURE__ */ jsxs17("button", { onClick: tab === "impro" ? generateImpro : tab === "neck" ? generateNeck : generateRhythm, style: {
+      /* @__PURE__ */ jsxs24("button", { onClick: tab === "impro" ? generateImpro : tab === "neck" ? generateNeck : generateRhythm, style: {
         width: "100%",
         padding: "14px",
         borderRadius: R.md,
@@ -13923,21 +14294,21 @@ function PracticeScreen({ dispatch }) {
         gap: 6
       }, children: [
         "G\xE9n\xE9rer un d\xE9fi ",
-        /* @__PURE__ */ jsx20(Ti, { name: "dice-5", size: 16 })
+        /* @__PURE__ */ jsx27(Ti, { name: "dice-5", size: 16 })
       ] })
-    ] }) : /* @__PURE__ */ jsxs17("div", { children: [
-      /* @__PURE__ */ jsxs17("div", { style: { background: C.primaryL, border: `1px solid ${C.primaryBorder}`, borderRadius: R.lg, padding: 20, marginBottom: 12 }, children: [
-        /* @__PURE__ */ jsx20("div", { style: { fontSize: 10, fontWeight: 500, color: C.primaryD, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8, fontFamily: FONTS.ui }, children: "D\xE9fi en cours" }),
-        /* @__PURE__ */ jsx20("div", { style: { fontSize: 22, fontWeight: 700, color: C.primaryD, marginBottom: 8, fontFamily: FONTS.title }, children: current.title }),
-        /* @__PURE__ */ jsx20("div", { style: { fontSize: 14, color: C.primaryD, lineHeight: 1.55, fontFamily: FONTS.title }, children: current.sub }),
-        /* @__PURE__ */ jsxs17("div", { style: { fontSize: 11, color: C.primaryD, marginTop: 12, opacity: 0.7, fontFamily: FONTS.ui }, children: [
+    ] }) : /* @__PURE__ */ jsxs24("div", { children: [
+      /* @__PURE__ */ jsxs24("div", { style: { background: C.primaryL, border: `1px solid ${C.primaryBorder}`, borderRadius: R.lg, padding: 20, marginBottom: 12 }, children: [
+        /* @__PURE__ */ jsx27("div", { style: { fontSize: 11, fontWeight: 500, color: C.primaryD, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8, fontFamily: FONTS.ui }, children: "D\xE9fi en cours" }),
+        /* @__PURE__ */ jsx27("div", { style: { fontSize: 22, fontWeight: 700, color: C.primaryD, marginBottom: 8, fontFamily: FONTS.title }, children: current.title }),
+        /* @__PURE__ */ jsx27("div", { style: { fontSize: 14, color: C.primaryD, lineHeight: 1.55, fontFamily: FONTS.title }, children: current.sub }),
+        /* @__PURE__ */ jsxs24("div", { style: { fontSize: 11, color: C.primaryD, marginTop: 12, opacity: 0.7, fontFamily: FONTS.ui }, children: [
           "Dur\xE9e : ",
           current.time,
           " min"
         ] })
       ] }),
-      /* @__PURE__ */ jsxs17("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }, children: [
-        /* @__PURE__ */ jsxs17("button", { onClick: () => setCurrent(null), style: {
+      /* @__PURE__ */ jsxs24("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }, children: [
+        /* @__PURE__ */ jsxs24("button", { onClick: () => setCurrent(null), style: {
           padding: "12px",
           borderRadius: R.md,
           border: `1px solid ${C.border}`,
@@ -13953,9 +14324,9 @@ function PracticeScreen({ dispatch }) {
           gap: 5
         }, children: [
           "Autre d\xE9fi ",
-          /* @__PURE__ */ jsx20(Ti, { name: "dice-5", size: 14 })
+          /* @__PURE__ */ jsx27(Ti, { name: "dice-5", size: 14 })
         ] }),
-        /* @__PURE__ */ jsx20("button", { onClick: finish, style: {
+        /* @__PURE__ */ jsx27("button", { onClick: finish, style: {
           padding: "12px",
           borderRadius: R.md,
           border: "none",
@@ -13972,7 +14343,7 @@ function PracticeScreen({ dispatch }) {
         }, children: "Termin\xE9 \xB7 +50 XP" })
       ] })
     ] }),
-    /* @__PURE__ */ jsx20("div", { style: { height: 16 } })
+    /* @__PURE__ */ jsx27("div", { style: { height: 16 } })
   ] });
 }
 
@@ -13981,15 +14352,18 @@ var ChallengeScreen_exports = {};
 __export(ChallengeScreen_exports, {
   ChallengeScreen: () => ChallengeScreen
 });
-import { useState as useState16, useEffect as useEffect13, useRef as useRef11 } from "react";
-import { jsx as jsx21, jsxs as jsxs18 } from "react/jsx-runtime";
+init_tokens();
+init_ThemeContext();
+init_Ti();
+import { useState as useState22, useEffect as useEffect18, useRef as useRef16 } from "react";
+import { jsx as jsx28, jsxs as jsxs25 } from "react/jsx-runtime";
 function ChallengeScreen({ state, dispatch, navigate }) {
   const C = useC();
   const ch = DAILY_CHALLENGES[state.dailyChallengeIdx % DAILY_CHALLENGES.length];
   const done = state.dailyChallengeDone;
-  const [pop, setPop] = useState16(false);
-  const timerRef = useRef11(null);
-  useEffect13(() => () => {
+  const [pop, setPop] = useState22(false);
+  const timerRef = useRef16(null);
+  useEffect18(() => () => {
     if (timerRef.current) clearTimeout(timerRef.current);
   }, []);
   const finish = () => {
@@ -13998,29 +14372,29 @@ function ChallengeScreen({ state, dispatch, navigate }) {
     dispatch({ type: "MARK_STREAK" });
     timerRef.current = setTimeout(() => setPop(false), 1e3);
   };
-  return /* @__PURE__ */ jsxs18("div", { style: { padding: "14px 16px 0" }, children: [
-    pop && /* @__PURE__ */ jsx21(XPPop, { amount: 80, onDone: () => {
+  return /* @__PURE__ */ jsxs25("div", { style: { padding: "14px 16px 0" }, children: [
+    pop && /* @__PURE__ */ jsx28(XPPop, { amount: 80, onDone: () => {
     } }),
-    /* @__PURE__ */ jsxs18("button", { onClick: () => navigate("home"), style: { background: "none", border: "none", cursor: "pointer", color: C.text2, fontSize: 13, padding: "0 0 12px", fontFamily: FONTS.ui, display: "flex", alignItems: "center", gap: 4 }, children: [
-      /* @__PURE__ */ jsx21(Ti, { name: "chevron-left", size: 16 }),
+    /* @__PURE__ */ jsxs25("button", { onClick: () => navigate("home"), style: { background: "none", border: "none", cursor: "pointer", color: C.text2, fontSize: 13, padding: "0 0 12px", fontFamily: FONTS.ui, display: "flex", alignItems: "center", gap: 4 }, children: [
+      /* @__PURE__ */ jsx28(Ti, { name: "chevron-left", size: 16 }),
       " RETOUR"
     ] }),
-    /* @__PURE__ */ jsx21("h1", { style: { margin: "0 0 16px", fontSize: 24, fontWeight: 700, fontFamily: FONTS.title, letterSpacing: "-0.01em", color: C.text }, children: "D\xE9fi du jour" }),
-    /* @__PURE__ */ jsxs18("div", { style: {
+    /* @__PURE__ */ jsx28("h1", { style: { margin: "0 0 16px", fontSize: 24, fontWeight: 700, fontFamily: FONTS.title, letterSpacing: "-0.01em", color: C.text }, children: "D\xE9fi du jour" }),
+    /* @__PURE__ */ jsxs25("div", { style: {
       background: done ? C.greenL : C.amberL,
       borderRadius: R.lg,
       padding: 20,
       marginBottom: 14,
       border: `1px solid ${done ? C.greenBorder : C.amberBorder}`
     }, children: [
-      /* @__PURE__ */ jsxs18("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }, children: [
-        /* @__PURE__ */ jsx21(Ti, { name: done ? "trophy" : "bolt", size: 16, color: done ? C.green : C.amber }),
-        /* @__PURE__ */ jsx21("div", { style: { fontSize: 10, fontWeight: 500, color: done ? C.greenD : C.amberD, letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: FONTS.ui }, children: done ? "D\xE9fi compl\xE9t\xE9" : "Aujourd'hui" })
+      /* @__PURE__ */ jsxs25("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }, children: [
+        /* @__PURE__ */ jsx28(Ti, { name: done ? "trophy" : "bolt", size: 16, color: done ? C.green : C.amber }),
+        /* @__PURE__ */ jsx28("div", { style: { fontSize: 11, fontWeight: 500, color: done ? C.greenD : C.amberD, letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: FONTS.ui }, children: done ? "D\xE9fi compl\xE9t\xE9" : "Aujourd'hui" })
       ] }),
-      /* @__PURE__ */ jsx21("p", { style: { margin: "0 0 12px", fontSize: 16, fontWeight: 500, color: done ? C.greenD : C.amberD, lineHeight: 1.55, fontFamily: FONTS.title }, children: ch }),
-      /* @__PURE__ */ jsx21("div", { style: { fontSize: 12, color: done ? C.greenD : C.amberD, opacity: 0.7, fontFamily: FONTS.ui }, children: "R\xE9compense : +80 XP" })
+      /* @__PURE__ */ jsx28("p", { style: { margin: "0 0 12px", fontSize: 16, fontWeight: 500, color: done ? C.greenD : C.amberD, lineHeight: 1.55, fontFamily: FONTS.title }, children: ch }),
+      /* @__PURE__ */ jsx28("div", { style: { fontSize: 12, color: done ? C.greenD : C.amberD, opacity: 0.7, fontFamily: FONTS.ui }, children: "R\xE9compense : +80 XP" })
     ] }),
-    !done ? /* @__PURE__ */ jsxs18("button", { onClick: finish, style: {
+    !done ? /* @__PURE__ */ jsxs25("button", { onClick: finish, style: {
       width: "100%",
       padding: "14px",
       borderRadius: R.md,
@@ -14037,13 +14411,13 @@ function ChallengeScreen({ state, dispatch, navigate }) {
       gap: 6
     }, children: [
       "D\xE9fi relev\xE9 ",
-      /* @__PURE__ */ jsx21(Ti, { name: "check", size: 16 })
-    ] }) : /* @__PURE__ */ jsxs18("div", { style: { background: C.greenL, borderRadius: R.md, padding: 18, textAlign: "center", border: `1px solid ${C.greenBorder}` }, children: [
-      /* @__PURE__ */ jsx21(Ti, { name: "trophy", size: 32, color: C.green }),
-      /* @__PURE__ */ jsx21("div", { style: { fontWeight: 700, color: C.greenD, fontSize: 16, fontFamily: FONTS.title, marginTop: 8 }, children: "D\xE9fi compl\xE9t\xE9 !" }),
-      /* @__PURE__ */ jsx21("div", { style: { fontSize: 12, color: C.green, marginTop: 4, fontFamily: FONTS.ui }, children: "Reviens demain." })
+      /* @__PURE__ */ jsx28(Ti, { name: "check", size: 16 })
+    ] }) : /* @__PURE__ */ jsxs25("div", { style: { background: C.greenL, borderRadius: R.md, padding: 18, textAlign: "center", border: `1px solid ${C.greenBorder}` }, children: [
+      /* @__PURE__ */ jsx28(Ti, { name: "trophy", size: 32, color: C.green }),
+      /* @__PURE__ */ jsx28("div", { style: { fontWeight: 700, color: C.greenD, fontSize: 16, fontFamily: FONTS.title, marginTop: 8 }, children: "D\xE9fi compl\xE9t\xE9 !" }),
+      /* @__PURE__ */ jsx28("div", { style: { fontSize: 12, color: C.green, marginTop: 4, fontFamily: FONTS.ui }, children: "Reviens demain." })
     ] }),
-    /* @__PURE__ */ jsx21("div", { style: { height: 16 } })
+    /* @__PURE__ */ jsx28("div", { style: { height: 16 } })
   ] });
 }
 
@@ -14052,7 +14426,12 @@ var OnboardingScreen_exports = {};
 __export(OnboardingScreen_exports, {
   OnboardingScreen: () => OnboardingScreen
 });
-import { useState as useState17, useEffect as useEffect14, useMemo as useMemo10 } from "react";
+init_tokens();
+init_ThemeContext();
+init_Ti();
+init_Gropi();
+import { useState as useState23, useEffect as useEffect19, useMemo as useMemo10 } from "react";
+init_Fretboard();
 
 // src/store/placementEngine.js
 var TESTABLE_MODULES = ["neck", "scales", "harmony", "rhythm", "impro"];
@@ -14137,7 +14516,7 @@ function weakestModule(skillLevels, testedModules = TESTABLE_MODULES) {
 }
 
 // src/onboarding/OnboardingScreen.jsx
-import { Fragment as Fragment11, jsx as jsx22, jsxs as jsxs19 } from "react/jsx-runtime";
+import { Fragment as Fragment14, jsx as jsx29, jsxs as jsxs26 } from "react/jsx-runtime";
 var GOAL_OPTIONS = [
   { id: "impro", module: "impro", label: "Improviser librement", icon: "wand" },
   { id: "theorie", module: "harmony", label: "Comprendre la th\xE9orie en profondeur", icon: "stack-2" },
@@ -14152,22 +14531,22 @@ var TIME_OPTIONS = [
 var ALL_PROFILE_MODULES = [.../* @__PURE__ */ new Set([...TESTABLE_MODULES, "impro"])];
 function OnboardingScreen({ content, onComplete, onEvent }) {
   const C = useC();
-  const [phase, setPhase] = useState17("welcome");
-  const [queue, setQueue] = useState17(null);
-  const [qIdx, setQIdx] = useState17(0);
-  const [currentQ, setCurrentQ] = useState17(null);
-  const [selected, setSelected] = useState17(null);
-  const [answered, setAnswered] = useState17(false);
-  const [forceReveal, setForceReveal] = useState17(false);
-  const [usedIds] = useState17(() => /* @__PURE__ */ new Set());
+  const [phase, setPhase] = useState23("welcome");
+  const [queue, setQueue] = useState23(null);
+  const [qIdx, setQIdx] = useState23(0);
+  const [currentQ, setCurrentQ] = useState23(null);
+  const [selected, setSelected] = useState23(null);
+  const [answered, setAnswered] = useState23(false);
+  const [forceReveal, setForceReveal] = useState23(false);
+  const [usedIds] = useState23(() => /* @__PURE__ */ new Set());
   const modulesTestes = useMemo10(() => availableModules(content?.quiz || []), [content]);
   const nbQuestions = useMemo10(() => placementQuestionCount(content?.quiz || []), [content]);
-  const [results, setResults] = useState17(() => Object.fromEntries(TESTABLE_MODULES.map((m) => [m, 0])));
-  const [skillLevels, setSkillLevels] = useState17({ neck: null, scales: null, harmony: null, rhythm: null, impro: null });
-  const [overallTier, setOverallTier] = useState17(null);
-  const [weakest, setWeakest] = useState17(null);
-  const [goal, setGoal] = useState17(null);
-  const [timePerWeek, setTimePerWeek] = useState17(null);
+  const [results, setResults] = useState23(() => Object.fromEntries(TESTABLE_MODULES.map((m) => [m, 0])));
+  const [skillLevels, setSkillLevels] = useState23({ neck: null, scales: null, harmony: null, rhythm: null, impro: null });
+  const [overallTier, setOverallTier] = useState23(null);
+  const [weakest, setWeakest] = useState23(null);
+  const [goal, setGoal] = useState23(null);
+  const [timePerWeek, setTimePerWeek] = useState23(null);
   const emit = (name, props) => {
     try {
       onEvent?.(name, props);
@@ -14244,7 +14623,7 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
     emit("placement_completed", { skillLevels: finalLevels, overallTier: overall, weakestModule: weak });
     setPhase("results");
   }
-  useEffect14(() => {
+  useEffect19(() => {
     if (phase === "testing" && queue && !currentQ) {
       const nextIdx = qIdx + 1;
       if (nextIdx < queue.length) {
@@ -14273,7 +14652,7 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
   }
   const questionNumber = qIdx + 1;
   const progressPct = phase === "welcome" ? 0 : phase === "testIntro" ? 5 : phase === "testing" ? Math.round(5 + (questionNumber - (answered ? 0 : 1)) / Math.max(1, nbQuestions) * 65) : phase === "results" ? 75 : phase === "goal" ? 85 : phase === "time" ? 95 : 100;
-  return /* @__PURE__ */ jsxs19("div", { style: {
+  return /* @__PURE__ */ jsxs26("div", { style: {
     minHeight: "100dvh",
     display: "flex",
     flexDirection: "column",
@@ -14281,28 +14660,28 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
     fontFamily: FONTS.title,
     padding: "calc(env(safe-area-inset-top, 0px) + 12px) 0 24px"
   }, children: [
-    phase !== "welcome" && /* @__PURE__ */ jsx22("div", { style: { padding: "0 20px 4px" }, children: /* @__PURE__ */ jsx22(ProgressBar, { pct: progressPct }) }),
-    /* @__PURE__ */ jsxs19("div", { style: { flex: 1, display: "flex", flexDirection: "column", padding: "0 20px", maxWidth: 440, width: "100%", margin: "0 auto" }, children: [
-      phase === "welcome" && /* @__PURE__ */ jsxs19("div", { style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 18, minHeight: 0 }, children: [
-        /* @__PURE__ */ jsx22(Gropi, { pose: "wave", size: 110, anim: "bob" }),
-        /* @__PURE__ */ jsx22("h1", { style: { margin: 0, fontSize: 24, fontWeight: 800, color: C.text, letterSpacing: "-.3px" }, children: "Bienvenue sur Groply" }),
-        /* @__PURE__ */ jsx22("p", { style: { margin: 0, fontSize: 14.5, lineHeight: 1.6, color: C.text2, maxWidth: 300 }, children: "Avant de commencer, on va mesurer ton vrai niveau : pas celui que tu crois avoir, celui que tu as vraiment. 2 minutes, promis." }),
-        /* @__PURE__ */ jsx22(PrimaryButton, { C, onClick: () => {
+    phase !== "welcome" && /* @__PURE__ */ jsx29("div", { style: { padding: "0 20px 4px" }, children: /* @__PURE__ */ jsx29(ProgressBar, { pct: progressPct }) }),
+    /* @__PURE__ */ jsxs26("div", { style: { flex: 1, display: "flex", flexDirection: "column", padding: "0 20px", maxWidth: 440, width: "100%", margin: "0 auto" }, children: [
+      phase === "welcome" && /* @__PURE__ */ jsxs26("div", { style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 18, minHeight: 0 }, children: [
+        /* @__PURE__ */ jsx29(Gropi, { pose: "wave", size: 110, anim: "bob" }),
+        /* @__PURE__ */ jsx29("h1", { style: { margin: 0, fontSize: 24, fontWeight: 800, color: C.text, letterSpacing: "-.3px" }, children: "Bienvenue sur Groply" }),
+        /* @__PURE__ */ jsx29("p", { style: { margin: 0, fontSize: 14.5, lineHeight: 1.6, color: C.text2, maxWidth: 300 }, children: "Avant de commencer, on va mesurer ton vrai niveau : pas celui que tu crois avoir, celui que tu as vraiment. 2 minutes, promis." }),
+        /* @__PURE__ */ jsx29(PrimaryButton, { C, onClick: () => {
           emit("onboarding_started");
           setPhase("testIntro");
         }, children: "Commencer" })
       ] }),
-      phase === "testIntro" && /* @__PURE__ */ jsxs19("div", { style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 16 }, children: [
-        /* @__PURE__ */ jsx22(Gropi, { pose: "think", size: 90, anim: "bob" }),
-        /* @__PURE__ */ jsx22("h2", { style: { margin: 0, fontSize: 20, fontWeight: 800, color: C.text }, children: "Le test de placement" }),
-        /* @__PURE__ */ jsx22("p", { style: { margin: 0, fontSize: 13.5, lineHeight: 1.6, color: C.text2, maxWidth: 300 }, children: "12 questions, 4 domaines (manche, gammes, harmonie, rythme). \xC7a commence simple, puis \xE7a monte en difficult\xE9. C'est normal de s\xE9cher sur les derni\xE8res." }),
-        /* @__PURE__ */ jsx22("p", { style: { margin: 0, fontSize: 12, color: C.text3, maxWidth: 280 }, children: "Pas de retour en arri\xE8re possible une fois lanc\xE9. R\xE9ponds au mieux : c'est fait pour r\xE9v\xE9ler o\xF9 tu es, pas pour te juger. Si tu ne sais pas, dis-le, \xE7a compte aussi." }),
-        /* @__PURE__ */ jsx22(PrimaryButton, { C, onClick: startTest, children: "Lancer le test" })
+      phase === "testIntro" && /* @__PURE__ */ jsxs26("div", { style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 16 }, children: [
+        /* @__PURE__ */ jsx29(Gropi, { pose: "think", size: 90, anim: "bob" }),
+        /* @__PURE__ */ jsx29("h2", { style: { margin: 0, fontSize: 20, fontWeight: 800, color: C.text }, children: "Le test de placement" }),
+        /* @__PURE__ */ jsx29("p", { style: { margin: 0, fontSize: 13.5, lineHeight: 1.6, color: C.text2, maxWidth: 300 }, children: "12 questions, 4 domaines (manche, gammes, harmonie, rythme). \xC7a commence simple, puis \xE7a monte en difficult\xE9. C'est normal de s\xE9cher sur les derni\xE8res." }),
+        /* @__PURE__ */ jsx29("p", { style: { margin: 0, fontSize: 12, color: C.text3, maxWidth: 280 }, children: "Pas de retour en arri\xE8re possible une fois lanc\xE9. R\xE9ponds au mieux : c'est fait pour r\xE9v\xE9ler o\xF9 tu es, pas pour te juger. Si tu ne sais pas, dis-le, \xE7a compte aussi." }),
+        /* @__PURE__ */ jsx29(PrimaryButton, { C, onClick: startTest, children: "Lancer le test" })
       ] }),
-      phase === "testing" && currentQ && /* @__PURE__ */ jsxs19("div", { style: { flex: 1, display: "flex", flexDirection: "column", paddingTop: 24, gap: 14 }, children: [
-        /* @__PURE__ */ jsxs19("div", { style: { display: "flex", alignItems: "center", gap: 8 }, children: [
-          /* @__PURE__ */ jsx22(Ti, { name: MODULE[currentQ.moduleId]?.icon || "music", size: 16, color: C.primary }),
-          /* @__PURE__ */ jsxs19("span", { style: { fontSize: 11.5, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: C.primary, fontFamily: FONTS.ui }, children: [
+      phase === "testing" && currentQ && /* @__PURE__ */ jsxs26("div", { style: { flex: 1, display: "flex", flexDirection: "column", paddingTop: 24, gap: 14 }, children: [
+        /* @__PURE__ */ jsxs26("div", { style: { display: "flex", alignItems: "center", gap: 8 }, children: [
+          /* @__PURE__ */ jsx29(Ti, { name: MODULE[currentQ.moduleId]?.icon || "music", size: 16, color: C.primary }),
+          /* @__PURE__ */ jsxs26("span", { style: { fontSize: 11.5, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: C.primary, fontFamily: FONTS.ui }, children: [
             MODULE[currentQ.moduleId]?.label || currentQ.moduleId,
             " \xB7 Question ",
             questionNumber,
@@ -14310,9 +14689,9 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
             PLACEMENT_QUESTION_COUNT
           ] })
         ] }),
-        currentQ.type === "fretboard" ? /* @__PURE__ */ jsxs19(Fragment11, { children: [
-          /* @__PURE__ */ jsx22("div", { style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: 16 }, children: /* @__PURE__ */ jsx22("p", { style: { margin: 0, fontSize: 15, fontWeight: 600, lineHeight: 1.5, color: C.text }, children: currentQ.q }) }),
-          /* @__PURE__ */ jsx22(
+        currentQ.type === "fretboard" ? /* @__PURE__ */ jsxs26(Fragment14, { children: [
+          /* @__PURE__ */ jsx29("div", { style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: 16 }, children: /* @__PURE__ */ jsx29("p", { style: { margin: 0, fontSize: 15, fontWeight: 600, lineHeight: 1.5, color: C.text }, children: currentQ.q }) }),
+          /* @__PURE__ */ jsx29(
             FretboardQuizQuestion,
             {
               question: currentQ,
@@ -14321,9 +14700,9 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
               forceReveal
             }
           )
-        ] }) : /* @__PURE__ */ jsxs19(Fragment11, { children: [
-          /* @__PURE__ */ jsx22("div", { style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: 16 }, children: /* @__PURE__ */ jsx22("p", { style: { margin: 0, fontSize: 15, fontWeight: 600, lineHeight: 1.5, color: C.text }, children: currentQ.q }) }),
-          /* @__PURE__ */ jsx22("div", { style: { display: "flex", flexDirection: "column", gap: 8 }, children: currentQ.o.map((opt, i) => {
+        ] }) : /* @__PURE__ */ jsxs26(Fragment14, { children: [
+          /* @__PURE__ */ jsx29("div", { style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: 16 }, children: /* @__PURE__ */ jsx29("p", { style: { margin: 0, fontSize: 15, fontWeight: 600, lineHeight: 1.5, color: C.text }, children: currentQ.q }) }),
+          /* @__PURE__ */ jsx29("div", { style: { display: "flex", flexDirection: "column", gap: 8 }, children: currentQ.o.map((opt, i) => {
             let bg = C.surface, border = `1.5px solid ${C.border}`, col = C.text;
             if (answered) {
               if (i === currentQ.a) {
@@ -14336,7 +14715,7 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
                 col = C.coralD;
               }
             }
-            return /* @__PURE__ */ jsx22("button", { onClick: () => choose(i), disabled: answered, style: {
+            return /* @__PURE__ */ jsx29("button", { onClick: () => choose(i), disabled: answered, style: {
               textAlign: "left",
               minHeight: 48,
               padding: "12px 14px",
@@ -14352,7 +14731,7 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
             }, children: opt }, i);
           }) })
         ] }),
-        !answered && /* @__PURE__ */ jsx22(
+        !answered && /* @__PURE__ */ jsx29(
           "button",
           {
             onClick: currentQ.type === "fretboard" ? () => setForceReveal(true) : chooseDontKnow,
@@ -14372,8 +14751,8 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
             children: "Je ne sais pas"
           }
         ),
-        answered && /* @__PURE__ */ jsxs19(Fragment11, { children: [
-          currentQ.type !== "fretboard" && /* @__PURE__ */ jsxs19("p", { style: {
+        answered && /* @__PURE__ */ jsxs26(Fragment14, { children: [
+          currentQ.type !== "fretboard" && /* @__PURE__ */ jsxs26("p", { style: {
             margin: 0,
             fontSize: 12.5,
             color: C.text2,
@@ -14386,18 +14765,18 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
             selected === null ? "Pas de souci, tu la reverras. " : "",
             currentQ.exp
           ] }),
-          currentQ.type === "fretboard" && forceReveal && /* @__PURE__ */ jsx22("p", { style: { margin: 0, fontSize: 12.5, color: C.text2, lineHeight: 1.5 }, children: "Pas de souci, tu la reverras. Les bonnes positions sont affich\xE9es sur le manche." }),
-          /* @__PURE__ */ jsx22(PrimaryButton, { C, onClick: continueTest, children: "Continuer" })
+          currentQ.type === "fretboard" && forceReveal && /* @__PURE__ */ jsx29("p", { style: { margin: 0, fontSize: 12.5, color: C.text2, lineHeight: 1.5 }, children: "Pas de souci, tu la reverras. Les bonnes positions sont affich\xE9es sur le manche." }),
+          /* @__PURE__ */ jsx29(PrimaryButton, { C, onClick: continueTest, children: "Continuer" })
         ] })
       ] }),
       phase === "results" && overallTier && (() => {
         const totalCorrect = TESTABLE_MODULES.reduce((sum, m) => sum + (results[m] || 0), 0);
         const { grade, level } = startFromScore(totalCorrect, PLACEMENT_QUESTION_COUNT);
-        return /* @__PURE__ */ jsxs19("div", { style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 14, paddingTop: 12 }, children: [
-          /* @__PURE__ */ jsx22(Gropi, { pose: "celebrate", size: 100, anim: "cheer" }),
-          /* @__PURE__ */ jsx22("div", { style: { fontSize: 12, fontWeight: 700, color: C.text2, textTransform: "uppercase", letterSpacing: ".08em" }, children: "Ton profil Groply" }),
-          /* @__PURE__ */ jsx22("h1", { style: { margin: 0, fontSize: 22, fontWeight: 800, color: C.text, letterSpacing: "-.2px" }, children: grade.label }),
-          /* @__PURE__ */ jsxs19("div", { style: {
+        return /* @__PURE__ */ jsxs26("div", { style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 14, paddingTop: 12 }, children: [
+          /* @__PURE__ */ jsx29(Gropi, { pose: "celebrate", size: 100, anim: "cheer" }),
+          /* @__PURE__ */ jsx29("div", { style: { fontSize: 12, fontWeight: 700, color: C.text2, textTransform: "uppercase", letterSpacing: ".08em" }, children: "Ton profil Groply" }),
+          /* @__PURE__ */ jsx29("h1", { style: { margin: 0, fontSize: 22, fontWeight: 800, color: C.text, letterSpacing: "-.2px" }, children: grade.label }),
+          /* @__PURE__ */ jsxs26("div", { style: {
             fontSize: 11,
             fontWeight: 700,
             color: C.primary,
@@ -14410,13 +14789,13 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
             "Niveau ",
             level
           ] }),
-          /* @__PURE__ */ jsx22("p", { style: { margin: 0, fontSize: 13, color: C.text2, lineHeight: 1.55, maxWidth: 300 }, children: grade.blurb }),
-          /* @__PURE__ */ jsx22("div", { style: { width: "100%", display: "flex", flexDirection: "column", gap: 7, marginTop: 6 }, children: ALL_PROFILE_MODULES.map((m) => {
+          /* @__PURE__ */ jsx29("p", { style: { margin: 0, fontSize: 13, color: C.text2, lineHeight: 1.55, maxWidth: 300 }, children: grade.blurb }),
+          /* @__PURE__ */ jsx29("div", { style: { width: "100%", display: "flex", flexDirection: "column", gap: 7, marginTop: 6 }, children: ALL_PROFILE_MODULES.map((m) => {
             const tier = skillLevels[m];
             const value = TIER_VALUE[tier] || 0;
             const th = MODULE[m] || {};
             const isWeak = m === weakest;
-            return /* @__PURE__ */ jsxs19("div", { style: {
+            return /* @__PURE__ */ jsxs26("div", { style: {
               display: "flex",
               alignItems: "center",
               gap: 10,
@@ -14425,9 +14804,9 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
               borderRadius: R.md,
               padding: "10px 13px"
             }, children: [
-              /* @__PURE__ */ jsx22(Ti, { name: th.icon || "music", size: 16, color: C[th.color] || C.text2 }),
-              /* @__PURE__ */ jsx22("span", { style: { flex: 1, textAlign: "left", fontSize: 13, fontWeight: 700, color: C.text }, children: th.label || m }),
-              /* @__PURE__ */ jsx22("div", { style: { display: "flex", gap: 3 }, children: [1, 2, 3, 4].map((seg) => /* @__PURE__ */ jsx22("span", { style: {
+              /* @__PURE__ */ jsx29(Ti, { name: th.icon || "music", size: 16, color: C[th.color] || C.text2 }),
+              /* @__PURE__ */ jsx29("span", { style: { flex: 1, textAlign: "left", fontSize: 13, fontWeight: 700, color: C.text }, children: th.label || m }),
+              /* @__PURE__ */ jsx29("div", { style: { display: "flex", gap: 3 }, children: [1, 2, 3, 4].map((seg) => /* @__PURE__ */ jsx29("span", { style: {
                 width: 14,
                 height: 6,
                 borderRadius: 3,
@@ -14435,18 +14814,18 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
               } }, seg)) })
             ] }, m);
           }) }),
-          weakest && /* @__PURE__ */ jsxs19("p", { style: { margin: "2px 0 0", fontSize: 12.5, color: C.text2, lineHeight: 1.5, maxWidth: 300 }, children: [
+          weakest && /* @__PURE__ */ jsxs26("p", { style: { margin: "2px 0 0", fontSize: 12.5, color: C.text2, lineHeight: 1.5, maxWidth: 300 }, children: [
             "Gropi a rep\xE9r\xE9 que ",
-            /* @__PURE__ */ jsx22("b", { style: { color: C.text }, children: MODULE[weakest]?.label }),
+            /* @__PURE__ */ jsx29("b", { style: { color: C.text }, children: MODULE[weakest]?.label }),
             " m\xE9rite un coup de boost, on le met en priorit\xE9 dans ton Parcours."
           ] }),
-          /* @__PURE__ */ jsx22(PrimaryButton, { C, onClick: () => {
+          /* @__PURE__ */ jsx29(PrimaryButton, { C, onClick: () => {
             setPhase("goal");
             emit("onboarding_step_view", { step: "goal" });
           }, children: "Continuer" })
         ] });
       })(),
-      phase === "goal" && /* @__PURE__ */ jsxs19(
+      phase === "goal" && /* @__PURE__ */ jsxs26(
         StepLayout,
         {
           C,
@@ -14454,18 +14833,18 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
           title: "Quel est ton objectif principal ?",
           subtitle: "Le Parcours en tiendra compte, en plus de ton profil, sans jamais sauter les autres domaines.",
           children: [
-            GOAL_OPTIONS.map((opt) => /* @__PURE__ */ jsx22(OptionCard, { C, selected: goal === opt.id, onClick: () => setGoal(opt.id), children: /* @__PURE__ */ jsxs19("div", { style: { display: "flex", alignItems: "center", gap: 10 }, children: [
-              /* @__PURE__ */ jsx22(Ti, { name: opt.icon, size: 19, color: goal === opt.id ? C.primary : C.text2 }),
-              /* @__PURE__ */ jsx22("div", { style: { fontWeight: 700, fontSize: 14.5 }, children: opt.label })
+            GOAL_OPTIONS.map((opt) => /* @__PURE__ */ jsx29(OptionCard, { C, selected: goal === opt.id, onClick: () => setGoal(opt.id), children: /* @__PURE__ */ jsxs26("div", { style: { display: "flex", alignItems: "center", gap: 10 }, children: [
+              /* @__PURE__ */ jsx29(Ti, { name: opt.icon, size: 19, color: goal === opt.id ? C.primary : C.text2 }),
+              /* @__PURE__ */ jsx29("div", { style: { fontWeight: 700, fontSize: 14.5 }, children: opt.label })
             ] }) }, opt.id)),
-            /* @__PURE__ */ jsx22(PrimaryButton, { C, disabled: !goal, onClick: () => {
+            /* @__PURE__ */ jsx29(PrimaryButton, { C, disabled: !goal, onClick: () => {
               setPhase("time");
               emit("onboarding_step_view", { step: "time" });
             }, children: "Continuer" })
           ]
         }
       ),
-      phase === "time" && /* @__PURE__ */ jsxs19(
+      phase === "time" && /* @__PURE__ */ jsxs26(
         StepLayout,
         {
           C,
@@ -14473,8 +14852,8 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
           title: "Combien de temps veux-tu y consacrer ?",
           subtitle: "\xC7a r\xE8gle tes objectifs hebdo, modifiable \xE0 tout moment dans les r\xE9glages.",
           children: [
-            TIME_OPTIONS.map((opt) => /* @__PURE__ */ jsx22(OptionCard, { C, selected: timePerWeek === opt.id, onClick: () => setTimePerWeek(opt.id), children: /* @__PURE__ */ jsx22("div", { style: { fontWeight: 700, fontSize: 14.5 }, children: opt.label }) }, opt.id)),
-            /* @__PURE__ */ jsx22(PrimaryButton, { C, disabled: !timePerWeek, onClick: finish, children: "C'est parti" })
+            TIME_OPTIONS.map((opt) => /* @__PURE__ */ jsx29(OptionCard, { C, selected: timePerWeek === opt.id, onClick: () => setTimePerWeek(opt.id), children: /* @__PURE__ */ jsx29("div", { style: { fontWeight: 700, fontSize: 14.5 }, children: opt.label }) }, opt.id)),
+            /* @__PURE__ */ jsx29(PrimaryButton, { C, disabled: !timePerWeek, onClick: finish, children: "C'est parti" })
           ]
         }
       )
@@ -14482,15 +14861,15 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
   ] });
 }
 function StepLayout({ C, eyebrow, title, subtitle, children }) {
-  return /* @__PURE__ */ jsxs19("div", { style: { flex: 1, display: "flex", flexDirection: "column", paddingTop: 28, gap: 14 }, children: [
-    /* @__PURE__ */ jsx22("div", { style: { fontSize: 11.5, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: C.primary, fontFamily: FONTS.ui }, children: eyebrow }),
-    /* @__PURE__ */ jsx22("h2", { style: { margin: 0, fontSize: 21, fontWeight: 800, color: C.text, letterSpacing: "-.2px", lineHeight: 1.3 }, children: title }),
-    subtitle && /* @__PURE__ */ jsx22("p", { style: { margin: 0, fontSize: 13, color: C.text2, lineHeight: 1.5 }, children: subtitle }),
-    /* @__PURE__ */ jsx22("div", { style: { display: "flex", flexDirection: "column", gap: 10, marginTop: 6 }, children })
+  return /* @__PURE__ */ jsxs26("div", { style: { flex: 1, display: "flex", flexDirection: "column", paddingTop: 28, gap: 14 }, children: [
+    /* @__PURE__ */ jsx29("div", { style: { fontSize: 11.5, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: C.primary, fontFamily: FONTS.ui }, children: eyebrow }),
+    /* @__PURE__ */ jsx29("h2", { style: { margin: 0, fontSize: 21, fontWeight: 800, color: C.text, letterSpacing: "-.2px", lineHeight: 1.3 }, children: title }),
+    subtitle && /* @__PURE__ */ jsx29("p", { style: { margin: 0, fontSize: 13, color: C.text2, lineHeight: 1.5 }, children: subtitle }),
+    /* @__PURE__ */ jsx29("div", { style: { display: "flex", flexDirection: "column", gap: 10, marginTop: 6 }, children })
   ] });
 }
 function OptionCard({ C, selected, onClick, children }) {
-  return /* @__PURE__ */ jsx22(
+  return /* @__PURE__ */ jsx29(
     "button",
     {
       onClick,
@@ -14512,7 +14891,7 @@ function OptionCard({ C, selected, onClick, children }) {
   );
 }
 function PrimaryButton({ C, onClick, disabled, children }) {
-  return /* @__PURE__ */ jsx22(
+  return /* @__PURE__ */ jsx29(
     "button",
     {
       onClick,
@@ -14536,6 +14915,10 @@ function PrimaryButton({ C, onClick, disabled, children }) {
     }
   );
 }
+
+// smoke/_entry.jsx
+init_Fretboard();
+init_ThemeContext();
 export {
   ChallengeScreen_exports as ChallengeScreen,
   CoursesScreen_exports as CoursesScreen,

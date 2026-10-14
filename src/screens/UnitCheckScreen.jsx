@@ -102,7 +102,7 @@ export function UnitCheckScreen({ unit, content, dispatch, onDone, state }) {
 
         {!passed && lessonsToReview.length > 0 && (
           <div style={{ width: "100%", maxWidth: 280, marginTop: 18, textAlign: "left" }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: C.text3, textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 8 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.text3, textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 8 }}>
               À revoir en priorité
             </div>
             {lessonsToReview.map(l => (
@@ -149,7 +149,7 @@ export function UnitCheckScreen({ unit, content, dispatch, onDone, state }) {
         <span style={{ fontSize: 12, fontWeight: 700, color: C.text3, flexShrink: 0 }}>{idx + 1}/{questions.length}</span>
       </div>
 
-      <div style={{ fontSize: 10, color: C.text3, marginBottom: 8, textTransform: "uppercase", letterSpacing: ".1em", fontWeight: 600 }}>
+      <div style={{ fontSize: 11, color: C.text3, marginBottom: 8, textTransform: "uppercase", letterSpacing: ".1em", fontWeight: 600 }}>
         Vérification · {unit.title}
       </div>
 
@@ -165,7 +165,7 @@ export function UnitCheckScreen({ unit, content, dispatch, onDone, state }) {
         }
         return (
           <button key={i} onClick={() => choose(i)} disabled={answered} style={{ display: "flex", alignItems: "center", gap: 10, background: bg, border, borderRadius: R.md, padding: "12px 14px", cursor: answered ? "default" : "pointer", textAlign: "left", width: "100%", marginBottom: 7, fontFamily: FONTS.title }}>
-            <div style={{ width: 26, height: 26, borderRadius: 8, background: badgeBg, color: badgeFg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{ic}</div>
+            <div style={{ width: 26, height: 26, borderRadius: 8, background: badgeBg, color: badgeFg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{ic}</div>
             <span style={{ fontSize: 13, color: col, lineHeight: 1.45, fontWeight: answered && i === q.a ? 700 : 500 }}>{opt}</span>
           </button>
         );

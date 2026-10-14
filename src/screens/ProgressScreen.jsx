@@ -132,7 +132,7 @@ function ProgressScreen({ state, content, onOpenSettings }) {
             }}>
               <Ti name={s.ic} size={18} color={s.ic_c} />
               <div style={{ fontSize:20, fontWeight:800, color:s.v_c, letterSpacing:"-.5px", marginTop:4, lineHeight:1 }}>{s.v}</div>
-              <div style={{ fontSize:10, color:s.v_c, fontWeight:600, textTransform:"uppercase", letterSpacing:".05em", marginTop:3, opacity:.7 }}>{s.l}</div>
+              <div style={{ fontSize:11, color:s.v_c, fontWeight:600, textTransform:"uppercase", letterSpacing:".05em", marginTop:3, opacity:.7 }}>{s.l}</div>
             </div>
           ))}
         </div>
@@ -193,7 +193,7 @@ function ProgressScreen({ state, content, onOpenSettings }) {
                 background:C.surface2, borderRadius:R.md,
               }}>
                 <div style={{ fontSize:19, fontWeight:800, color:x.c, lineHeight:1 }}>{x.n}</div>
-                <div style={{ fontSize:10.5, color:C.text2, fontWeight:600, marginTop:3 }}>{x.l}</div>
+                <div style={{ fontSize:11, color:C.text2, fontWeight:600, marginTop:3 }}>{x.l}</div>
               </div>
             ))}
           </div>
@@ -204,7 +204,7 @@ function ProgressScreen({ state, content, onOpenSettings }) {
           {aAncrer.length > 0 && (
             <div style={{ marginTop:14, paddingTop:12, borderTop:`1px solid ${C.border}` }}>
               <div style={{
-                fontSize:10.5, fontWeight:700, letterSpacing:".07em",
+                fontSize:11, fontWeight:700, letterSpacing:".07em",
                 textTransform:"uppercase", color:C.text2, marginBottom:8,
               }}>
                 Bientôt ancrées
@@ -279,12 +279,12 @@ function ProgressScreen({ state, content, onOpenSettings }) {
                   }}>
                     <span style={{
                       position:"absolute", top:4, right:4,
-                      fontSize:7, fontWeight:700, padding:"1px 4px", borderRadius:3,
+                      fontSize:9, fontWeight:700, padding:"1px 4px", borderRadius:3,
                       letterSpacing:".05em", textTransform:"uppercase",
                       background:rarity.bg, color:rarity.fg,
                     }}>{rarity.label}</span>
                     <Ti name={b.icon.replace("ti-","")} size={22} color={tint.icon} />
-                    <div style={{ fontSize:9.5, fontWeight:600, lineHeight:1.25, marginTop:5, color:tint.text }}>{b.label}</div>
+                    <div style={{ fontSize:11, fontWeight:600, lineHeight:1.25, marginTop:5, color:tint.text }}>{b.label}</div>
                   </div>
                 );
               })}

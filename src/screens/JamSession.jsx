@@ -1,16 +1,28 @@
 // GuitarPath -- screens/JamSession.jsx
 // Outil interactif d'improvisation : gamme active, notes cibles, contraintes + backing track
-import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useState, useMemo, useEffect, useEffectEvent, useRef, useCallback } from "react";
 import { useWakeLock } from "../hooks/useWakeLock.js";
 import { FONTS, R } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { Gropi } from "../design/Gropi.jsx";
+import { BackButton } from "../design/ui.jsx";
 import { Fretboard } from "../Fretboard.jsx";
 import { getScaleNotes, noteToFr, normalizeNote } from "../fretboardUtils.js";
-import { generateWalkingBar, toToneNote as toToneNoteFromMidi, toToneTime } from "../music/walkingBass.js";
 import { createComper, beatToToneTime } from "../music/compRhythm.js";
 import * as Tone from "tone";
+// Sous-modules de l'écran (src/screens/jam) : données et fonctions pures,
+// et les blocs qui suivent le temps de jeu chaque seconde.
+import { makeContexts } from "./jam/contextes.js";
+import { MIXAGE } from "./jam/mixage.js";
+import {
+  ROOTS_FR, CHROMATIC, transposeNote, notesAccord, nomAccord,
+  getVoicedChord, getBassPattern, getDrumPattern, getStyle,
+} from "./jam/harmonie.js";
+import { creerChrono } from "./jam/chrono.js";
+import { SEUIL_SESSION, BPM_MIN, BPM_MAX } from "./jam/reglages.js";
+import { SuiviSeance } from "./jam/SuiviSeance.jsx";
+import { CarteContrainte } from "./jam/CarteContrainte.jsx";
 
 // ── Moteur de groove (src/jam) ─────────────────────────────────────────
 // L'horloge reste Tone.Transport, partagée avec les accords et la basse :
@@ -58,178 +70,6 @@ function shade(hex, amount) {
   b = Math.max(0, Math.min(255, b));
   return "#" + ((r << 16) | (g << 8) | b).toString(16).padStart(6, "0");
 }
-
-// ─────────────────────────────────────────────────────────────────────────
-// CONTEXTES
-// ─────────────────────────────────────────────────────────────────────────
-const makeContexts = (C) => [
-  {
-    id: "blues_minor",
-    label: "Blues mineur",
-    color: C.amber, colorL: C.amberL, colorD: C.amberD, colorB: C.amberBorder,
-    scale: "pentatonic_minor",
-    desc: "Le terrain de jeu du rock et du blues. La pentatonique mineure sonne sur tout.",
-    targetDesc: "Fondamentale, tierce mineure, quinte",
-    bpm: 80,
-    // Vraie grille de blues mineur, pas un accord en boucle : le IVm et le
-    // V7 sont ce qui donne des points de résolution à travailler.
-    chords: [
-      { degree: 0, quality: "min7", bars: 4 },
-      { degree: 5, quality: "min7", bars: 2 },
-      { degree: 0, quality: "min7", bars: 2 },
-      { degree: 7, quality: "dom7", bars: 2 },
-      { degree: 0, quality: "min7", bars: 2 },
-    ],
-  },
-  {
-    id: "blues_12",
-    label: "Blues 12 mesures",
-    color: C.primary, colorL: C.primaryL, colorD: C.primaryD, colorB: C.primaryBorder,
-    scale: "blues",
-    desc: "La note bleue (b5) est ta couleur signature.",
-    targetDesc: "Fondamentale, tierce mineure, note bleue",
-    bpm: 80,
-    // Progression blues 12 mesures : I7-I7-I7-I7-IV7-IV7-I7-I7-V7-IV7-I7-V7
-    chords: [
-      { degree: 0,  quality: "dom7", bars: 4 },
-      { degree: 5,  quality: "dom7", bars: 2 },
-      { degree: 0,  quality: "dom7", bars: 2 },
-      { degree: 7,  quality: "dom7", bars: 1 },
-      { degree: 5,  quality: "dom7", bars: 1 },
-      { degree: 0,  quality: "dom7", bars: 1 },
-      { degree: 7,  quality: "dom7", bars: 1 },
-    ],
-  },
-  {
-    id: "jazz_251",
-    label: "Jazz ii-V-I",
-    color: C.green, colorL: C.greenL, colorD: C.greenD, colorB: C.greenBorder,
-    scale: "major",
-    desc: "Cible les guide tones (3e et 7e) de chaque accord sur les temps forts.",
-    targetDesc: "3e (couleur), 7e majeure ou mineure (tension)",
-    bpm: 120,
-    // ii-V-I : Dm7 (2 bars) - G7 (2 bars) - Cmaj7 (4 bars)
-    chords: [
-      { degree: 2,  quality: "min7", bars: 2 },
-      { degree: 7,  quality: "dom7", bars: 2 },
-      { degree: 0,  quality: "maj7", bars: 4 },
-    ],
-  },
-  {
-    id: "modal_dorian",
-    label: "Modal Dorien",
-    color: "#185FA5", colorL: "#E6F1FB", colorD: "#042C53", colorB: "#A0BFE0",
-    scale: "dorian",
-    desc: "La sixte majeure est ta note caractéristique. Évite de résoudre trop tôt.",
-    targetDesc: "Fondamentale, 6te majeure (couleur dorien), tierce mineure",
-    bpm: 90,
-    // Im7 - IV7 : c'est ce va-et-vient qui FAIT entendre le dorien.
-    // Un Im7 seul en boucle ne révèle rien — la 6te majeure, qui est la
-    // note caractéristique du mode, ne s'entend que par contraste avec le
-    // IV majeur. Un seul accord ne donne rien à travailler.
-    chords: [
-      { degree: 0, quality: "min7", bars: 2 },
-      { degree: 5, quality: "dom7", bars: 2 },
-    ],
-  },
-  {
-    id: "modal_mixo",
-    label: "Modal Mixolydien",
-    color: C.coral, colorL: C.coralL, colorD: C.coralD, colorB: C.coralBorder,
-    scale: "mixolydian",
-    desc: "Son rock/funk. La b7 naturelle donne la couleur dominante.",
-    targetDesc: "Fondamentale, tierce majeure, 7e mineure (couleur)",
-    bpm: 100,
-    // I7 - bVII : la cadence qui signe le mixolydien. Le bVII majeur est ce
-    // qui distingue le mode d'un simple accord de dominante tenu.
-    chords: [
-      { degree: 0,  quality: "dom7", bars: 2 },
-      { degree: 10, quality: "maj",  bars: 2 },
-    ],
-  },
-];
-
-const ROOTS_FR = [
-  { en: "A",  fr: "La"   }, { en: "B",  fr: "Si"   }, { en: "C",  fr: "Do"   },
-  { en: "D",  fr: "Ré"   }, { en: "E",  fr: "Mi"   }, { en: "F",  fr: "Fa"   },
-  { en: "G",  fr: "Sol"  }, { en: "C#", fr: "Do#"  }, { en: "D#", fr: "Ré#"  },
-  { en: "F#", fr: "Fa#"  }, { en: "G#", fr: "Sol#" }, { en: "A#", fr: "La#"  },
-];
-
-const CHROMATIC = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
-const SHARP_TO_FLAT = { "C#":"Db","D#":"Eb","F#":"Gb","G#":"Ab","A#":"Bb" };
-
-function transposeNote(root, semitones) {
-  const idx = CHROMATIC.indexOf(root);
-  return CHROMATIC[(idx + semitones) % 12];
-}
-
-const CHORD_INTERVALS = {
-  maj7:  [0, 4, 7, 11],
-  min7:  [0, 3, 7, 10],
-  dom7:  [0, 4, 7, 10],
-  maj:   [0, 4, 7],
-  min:   [0, 3, 7],
-};
-const QUALITE_LABEL = { maj7: "maj7", min7: "m7", dom7: "7", maj: "", min: "m" };
-
-/** Notes (noms anglais) d'un accord de la grille, transposé dans la tonalité. */
-function notesAccord(root, chord) {
-  const r = transposeNote(root, chord.degree);
-  return (CHORD_INTERVALS[chord.quality] || CHORD_INTERVALS.dom7).map(i => transposeNote(r, i));
-}
-const nomAccord = (root, chord) => {
-  const r = transposeNote(root, chord.degree);
-  return (ROOTS_FR.find(x => x.en === r)?.fr ?? r) + (QUALITE_LABEL[chord.quality] ?? "");
-};
-
-// Contraintes : une limite claire, tenue 2 minutes. `contextes` restreint
-// une contrainte aux styles où elle a un sens musical (absent = tous).
-const CONSTRAINTS = [
-  { text: "Joue UNIQUEMENT des notes longues. Zéro double-croche.", level: "Facile" },
-  { text: "Chaque phrase doit finir sur une note de l'accord.", level: "Facile" },
-  { text: "4 notes maximum par phrase, et un silence entre chaque phrase.", level: "Facile" },
-  { text: "Joue une phrase de 2 mesures, puis 2 mesures de silence : question-réponse.", level: "Facile" },
-  { text: "Fais entendre la sixte majeure au moins une fois par phrase : c'est elle qui signe le dorien.", level: "Facile", contextes: ["modal_dorian"] },
-  { text: "Reste uniquement sur les 3 cordes aiguës.", level: "Moyen" },
-  { text: "Commence chaque phrase sur un temps fort (1 ou 3).", level: "Moyen" },
-  { text: "Utilise le silence pendant au moins 50 % du temps.", level: "Moyen" },
-  { text: "Monte progressivement en intensité pendant 2 minutes, puis redescends.", level: "Moyen" },
-  { text: "Glisse la note bleue (quinte diminuée) dans chaque phrase, en note de passage.", level: "Moyen", contextes: ["blues_12"] },
-  { text: "Termine tes phrases sur la septième mineure plutôt que sur la fondamentale.", level: "Moyen", contextes: ["modal_mixo"] },
-  { text: "Sur l'accord IVm7, vise sa tierce mineure : elle sort de ta penta et fait entendre le changement.", level: "Difficile", contextes: ["blues_minor"] },
-  { text: "Chaque phrase contient exactement une note chromatique (hors gamme).", level: "Difficile" },
-  { text: "Cible uniquement les guide tones (3e et 7e) sur les temps 1 et 3.", level: "Difficile" },
-  { text: "Relie les accords : la 7e de chaque accord descend d'un demi-ton vers la 3e du suivant.", level: "Difficile", contextes: ["jazz_251"] },
-  { text: "Construis un solo en 3 actes : calme (1 min), montée (2 min), sommet (30 s).", level: "Difficile" },
-  { text: "Joue les yeux fermés. Sens le manche, ne le regarde pas.", level: "Difficile" },
-];
-const NIVEAUX_CONTRAINTE = ["Facile", "Moyen", "Difficile"];
-const DUREE_CONTRAINTE = 120;          // secondes de jeu réel
-const SEUIL_SESSION = 180;             // 3 min de jeu réel pour compter une session
-
-/** Niveau de départ des contraintes, d'après le niveau de l'app — modifiable ensuite. */
-const niveauParDefaut = (niveauApp) => (niveauApp >= 16 ? "Difficile" : niveauApp >= 6 ? "Moyen" : "Facile");
-const fmtDuree = (sec) => `${Math.floor(sec / 60)}:${String(Math.max(0, sec) % 60).padStart(2, "0")}`;
-
-const BPM_MIN = 40;
-const BPM_MAX = 200;
-
-// ── Mixage ───────────────────────────────────────────────────────────────
-// Avant : tous les instruments au centre, sans égalisation ni limiteur. Le
-// piano et la basse se disputaient les graves, et les pics pouvaient saturer
-// sur un haut-parleur de téléphone. Gestes classiques, volontairement
-// mesurés, et regroupés ici pour être ajustés à l'oreille.
-export const MIXAGE = {
-  pianoPasseHaut: 160,   // Hz — sous ce seuil, le piano laisse la place à la basse
-  pianoPan: 0.18,        // −1 gauche … +1 droite — légèrement à droite
-  charlestonPan: -0.22,  // légèrement à gauche (basse et grosse caisse restent au centre)
-  bassePasseHaut: 45,    // Hz — infra-basses : inaudibles au téléphone, elles font pomper le compresseur
-  batterieReverb: 0.14,  // part de la batterie envoyée dans la réverbération : même « pièce » que le piano
-  limiteurDb: -1,        // plafond final : aucun pic ne dépasse −1 dB
-};
-
-const makeLevelColor = (C) => ({ "Facile": C.green, "Moyen": C.amber, "Difficile": C.coral });
 
 // ─────────────────────────────────────────────────────────────────────────
 // BACKING TRACK PLAYER — Version Pro
@@ -313,139 +153,20 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
 
   // Changer de STYLE en jouant change la grille, le son et la batterie :
   // on relance aussitôt, plutôt que de s'arrêter en silence.
+  // Effect Events : relisent la version courante de start/stopBacking sans
+  // figurer dans les dépendances — l'effet ne se redéclenche QUE sur un
+  // changement de style, jamais à cause d'un simple re-rendu.
+  const relancerSiJoue = useEffectEvent(() => {
+    if (playingRef.current) { stopBacking(); startBacking(); }
+  });
+  const arreterAuDemontage = useEffectEvent(() => stopBacking());
   const contexteRef = useRef(context.id);
   useEffect(() => {
     if (contexteRef.current === context.id) return;
     contexteRef.current = context.id;
-    if (playingRef.current) { stopBacking(); startBacking(); }
+    relancerSiJoue();
   }, [context.id]);
-  useEffect(() => () => stopBacking(), []);
-
-  // ── Voicings d'accords réalistes (positions de guitare) ──────────────────
-  // Intervalles depuis la root, construits pour sonner comme une vraie main
-  const VOICINGS = {
-    // Voicing jazz : root basse, 3e, 5e, 7e en ordre montant
-    min7:  { intervals: [0, 10, 15, 19], desc: "x-R-b7-3-5" },
-    maj7:  { intervals: [0, 11, 16, 19], desc: "x-R-7-3-5"  },
-    dom7:  { intervals: [0, 10, 16, 19], desc: "x-R-b7-3-5" },
-    // Pour le blues : accords ouverts plus puissants
-    dom7b: { intervals: [0, 7, 10, 16],  desc: "R-5-b7-3"   },
-    // Triades. Sans elles, le bVII majeur du mixolydien retombait sur le
-    // voicing m7 par défaut : en La, le Sol affiché « Sol » sonnait Sol m7
-    // (Sol-Si♭-Ré-Fa) — deux notes étrangères au mode (Si♭ et Fa), sur
-    // l'accord même qui doit le faire entendre.
-    maj:   { intervals: [0, 4, 7, 16],   desc: "R-3-5-3"    },
-    min:   { intervals: [0, 3, 7, 15],   desc: "R-b3-5-b3"  },
-  };
-
-  function getVoicedChord(rootNote, quality, style = "jazz") {
-    const iBlues = style === "blues" || style === "blues12";
-    const voicing = iBlues && quality === "dom7"
-      ? VOICINGS.dom7b
-      : VOICINGS[quality] || VOICINGS.dom7;
-
-    const rootIdx = CHROMATIC.indexOf(rootNote);
-    if (rootIdx < 0) return [];
-
-    // ── Voicing SANS FONDAMENTALE ────────────────────────────────────
-    // En groupe, un pianiste ne joue pas la fondamentale : c'est le
-    // bassiste qui la tient. Jouer les deux produit exactement ce qu'on
-    // veut éviter — deux instruments qui se disputent le même registre
-    // grave, et l'accompagnement qui masque la ligne de basse.
-    //
-    // On retire donc le degré 0 et on ne garde que ce qui donne la
-    // couleur : tierce, septième, quinte, extensions.
-    const rootless = voicing.intervals.filter(i => i % 12 !== 0);
-    const degrees = rootless.length ? rootless : voicing.intervals;
-
-    // Position du voicing : la note la plus grave doit rester AU-DESSUS de
-    // la plage de la basse (qui monte jusqu'à MIDI 48).
-    const COMP_MIN_MIDI = 52;    // Mi3 — plancher de l'accompagnement
-    const lowestDegree = Math.min(...degrees);
-    let base = 36 + rootIdx;
-    // On remonte par octaves jusqu'à dégager la basse, sans jamais partir
-    // dans l'aigu où joue le guitariste.
-    while (base + lowestDegree < COMP_MIN_MIDI) base += 12;
-    while (base + lowestDegree >= COMP_MIN_MIDI + 12) base -= 12;
-
-    const SHARP_TO_FLAT = { "C#":"Db","D#":"Eb","F#":"Gb","G#":"Ab","A#":"Bb" };
-    return degrees.map(interval => {
-      const midi = base + interval;
-      const name = CHROMATIC[((midi % 12) + 12) % 12];
-      const oct  = Math.floor(midi / 12) - 1;
-      return `${SHARP_TO_FLAT[name] || name}${oct}`;
-    });
-  }
-
-  function getBassPattern(rootNote, quality, style, nextRoot, barIdx, energy = 3) {
-    // Délègue au générateur de walking bass. L'ancienne version répétait le
-    // même arpège (R-5-6-b7) à chaque mesure, indéfiniment : c'était la
-    // cause principale du rendu mécanique, bien avant la qualité des
-    // échantillons. Le nouveau générateur produit des notes d'approche vers
-    // l'accord suivant, un contour alterné et des variations de mesure en
-    // mesure.
-    const bluesy = style === "blues" || style === "blues12";
-    const notes = generateWalkingBar({
-      rootName: normalizeNote(rootNote),
-      quality: quality || "dom7",
-      nextRoot: normalizeNote(nextRoot || rootNote),
-      style: bluesy ? "blues" : "jazz",
-      barIndex: barIdx || 0,
-      energy,
-    });
-    return notes.map(n => ({
-      note: toToneNoteFromMidi(n.midi),
-      time: toToneTime(n.beat),
-      dur: n.dur,
-      velocity: n.velocity,
-    }));
-  }
-
-  // ── Patterns de batterie selon le style ────────────────────────────────
-  function getDrumPattern(style) {
-    if (style === "blues" || style === "blues12") {
-      return {
-        kick:  ["0:0:0", "0:2:0"],
-        snare: ["0:1:0", "0:3:0"],
-        hihat: ["0:0:0","0:0:2","0:1:0","0:1:2","0:2:0","0:2:2","0:3:0","0:3:2"],
-        shuffle: true,
-      };
-    }
-    if (style === "jazz") {
-      return {
-        kick:  ["0:0:0", "0:2:2"],
-        snare: ["0:1:0", "0:3:0"],
-        hihat: ["0:0:0","0:0:3","0:1:2","0:2:0","0:2:3","0:3:2"],
-        shuffle: false,
-      };
-    }
-    if (style === "funk") {
-      return {
-        kick:  ["0:0:0","0:0:3","0:2:0","0:2:2"],
-        snare: ["0:1:0","0:3:0","0:3:2"],
-        hihat: ["0:0:0","0:0:1","0:0:2","0:0:3","0:1:0","0:1:1","0:1:2","0:1:3","0:2:0","0:2:1","0:2:2","0:2:3","0:3:0","0:3:1","0:3:2","0:3:3"],
-        shuffle: false,
-      };
-    }
-    // Rock
-    return {
-      kick:  ["0:0:0","0:0:2","0:2:0"],
-      snare: ["0:1:0","0:3:0"],
-      hihat: ["0:0:0","0:0:2","0:1:0","0:1:2","0:2:0","0:2:2","0:3:0","0:3:2"],
-      shuffle: false,
-    };
-  }
-
-  function getStyle(contextId) {
-    const map = {
-      blues_minor:  "blues",
-      blues_12:     "blues12",
-      jazz_251:     "jazz",
-      modal_dorian: "funk",
-      modal_mixo:   "rock",
-    };
-    return map[contextId] || "rock";
-  }
+  useEffect(() => () => arreterAuDemontage(), []);
 
   /**
    * Joue un élément de batterie.
@@ -996,7 +717,7 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
       {/* Accord en cours (grand) + accord suivant + bouton lecture */}
       <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
         <div style={{ flex: 1, minWidth: 0 }} aria-live="polite">
-          <div style={{ fontSize: 10.5, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em" }}>
             {compte != null ? "Prépare-toi" : playing ? "Maintenant" : "Premier accord"}
           </div>
           <div style={{ fontSize: compte != null ? 46 : 40, fontWeight: 800, lineHeight: 1.05, letterSpacing: "-1px", fontFamily: FONTS.title, color: playing ? context.colorD : C.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -1074,7 +795,7 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
               fontFamily: FONTS.ui, transition: "background 0.12s, border-color 0.12s",
             }}>
               {nomAccord(root, chord)}
-              <span style={{ fontSize: 10, color: isActive ? context.color : C.text3, marginLeft: 4 }}>
+              <span style={{ fontSize: 11, color: isActive ? context.color : C.text3, marginLeft: 4 }}>
                 ×{chord.bars}
               </span>
             </div>
@@ -1088,7 +809,7 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
           <button onClick={() => changerTempo(-5)} aria-label="Ralentir de 5" className="gr-focus" style={carre}>−</button>
           <div style={{ minWidth: 52, textAlign: "center" }}>
             <div style={{ fontSize: 18, fontWeight: 800, color: C.text, lineHeight: 1, fontFamily: FONTS.ui }}>{bpm}</div>
-            <div style={{ fontSize: 9.5, color: C.text3, marginTop: 2, fontFamily: FONTS.ui }}>BPM</div>
+            <div style={{ fontSize: 11, color: C.text3, marginTop: 2, fontFamily: FONTS.ui }}>BPM</div>
           </div>
           <button onClick={() => changerTempo(5)} aria-label="Accélérer de 5" className="gr-focus" style={carre}>+</button>
         </div>
@@ -1100,7 +821,7 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
           color: rampe ? context.colorD : C.text2, fontWeight: 700, fontSize: 12, textAlign: "left", lineHeight: 1.2,
         }}>
           Accélération
-          <div style={{ fontSize: 10, fontWeight: 600, color: rampe ? context.colorD : C.text3 }}>+5 toutes les 2 grilles</div>
+          <div style={{ fontSize: 11, fontWeight: 600, color: rampe ? context.colorD : C.text3 }}>+5 toutes les 2 grilles</div>
         </button>
       </div>
 
@@ -1154,18 +875,21 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
 // ─────────────────────────────────────────────────────────────────────────
 export function JamSession({ onBack, dispatch, state }) {
   const C = useC();
-  const LEVEL_COLOR = makeLevelColor(C);
-  const CONTEXTS = makeContexts(C);
+  // Les couleurs des contextes ne dépendent que du thème : même objet `ctx`
+  // d'un rendu à l'autre tant que le thème ne change pas.
+  const CONTEXTS = useMemo(() => makeContexts(C), [C]);
   const [contextId, setContextId] = useState("blues_minor");
   const [root, setRoot]           = useState("A");
   const [displayMode, setDisplayMode] = useState("notes");
-  const [constraint, setConstraint]   = useState(null);
   const [showRootPicker, setShowRootPicker] = useState(false);
   const [bpm, setBpm] = useState(CONTEXTS[0].bpm);
   const [accordIdx, setAccordIdx] = useState(null);   // accord en cours de lecture (null = arrêt)
   const [enLecture, setEnLecture] = useState(false);
-  const surLecture = (joue) => { setEnLecture(joue); if (!joue) enregistrerTempsRef.current?.(); };
-  const enregistrerTempsRef = useRef(null);
+
+  // Temps de jeu réel : compteur hors état React (voir jam/chrono.js). Cet
+  // écran ne se re-rend plus chaque seconde ; seuls SuiviSeance et
+  // CarteContrainte, abonnés, le font.
+  const [chrono] = useState(creerChrono);
 
   // ── La pratique compte ──────────────────────────────────────────────────
   // 3 minutes de jeu réel (décompte exclu) comptent comme une séance de
@@ -1173,53 +897,51 @@ export function JamSession({ onBack, dispatch, state }) {
   // MARK_STREAK, UPDATE_WEEKLY). L'XP reste soumise au plafond quotidien du
   // reducer : on affiche donc ce qui a VRAIMENT été crédité, pas un chiffre
   // promis. Une séance au plus par visite de l'écran.
-  const [secondesJouees, setSecondesJouees] = useState(0);
-  const [sessionComptee, setSessionComptee] = useState(null);   // null | { xp }
-  const attenteGainRef = useRef(false);
-  useEffect(() => {
-    if (sessionComptee || secondesJouees < SEUIL_SESSION || !dispatch) return;
-    attenteGainRef.current = true;
+  const [sessionComptee, setSessionComptee] = useState(null);   // null | { xp } — xp null = en attente du reducer
+  const sessionCompteeRef = useRef(false);
+  // Appelé par le lecteur à chaque seconde jouée (hors rendu) : le seuil est
+  // vérifié ici, au lieu d'un effet qui dépendait d'un état mis à jour chaque seconde.
+  const unSecondeDePlus = () => {
+    chrono.tic();
+    const secondes = chrono.lire();
+    if (sessionCompteeRef.current || secondes < SEUIL_SESSION || !dispatch) return;
+    sessionCompteeRef.current = true;
     setSessionComptee({ xp: null });
     dispatch({ type: "MARK_STREAK" });
     dispatch({ type: "UPDATE_WEEKLY", field: "sessions" });
     dispatch({ type: "JAM_PROGRES", seance: true });
     // En dernier : lastGain décrit la dernière action traitée.
-    dispatch({ type: "PRACTICE_DONE", minutes: Math.round(secondesJouees / 60) });
-  }, [secondesJouees, sessionComptee, dispatch]);
-  useEffect(() => {
-    if (!attenteGainRef.current || state?.lastGain?.kind !== "practice") return;
-    attenteGainRef.current = false;
-    setSessionComptee({ xp: state.lastGain.xp || 0 });
-  }, [state?.lastGain]);
+    dispatch({ type: "PRACTICE_DONE", minutes: Math.round(secondes / 60) });
+  };
+  // XP réellement créditée : lue sur le premier `lastGain` de pratique qui
+  // suit le comptage. Ajustement pendant le rendu (motif React « état
+  // dérivé d'une prop qui change ») plutôt qu'un setState dans un effet.
+  const [gainVu, setGainVu] = useState(state?.lastGain);
+  if (state?.lastGain !== gainVu) {
+    setGainVu(state?.lastGain);
+    if (sessionComptee?.xp === null && state?.lastGain?.kind === "practice") {
+      setSessionComptee({ xp: state.lastGain.xp || 0 });
+    }
+  }
 
   // Temps de jeu total (badges « heures de jam »). Accumulé localement, et
   // enregistré quand la lecture s'arrête, quand on quitte l'écran ou quand
   // l'app passe en arrière-plan — pas une écriture de sauvegarde par seconde.
-  const secondesRef = useRef(0);  secondesRef.current = secondesJouees;
+  // `dispatch` est stable (useCallback dans App) : l'effet ne se réabonne pas.
   const dejaEnregistreRef = useRef(0);
-  const dispatchRef = useRef(dispatch); dispatchRef.current = dispatch;
   const enregistrerTemps = useCallback(() => {
-    const delta = secondesRef.current - dejaEnregistreRef.current;
-    if (delta <= 0 || !dispatchRef.current) return;
-    dejaEnregistreRef.current = secondesRef.current;
-    dispatchRef.current({ type: "JAM_PROGRES", secondes: delta });
-  }, []);
-  enregistrerTempsRef.current = enregistrerTemps;
+    const total = chrono.lire();
+    const delta = total - dejaEnregistreRef.current;
+    if (delta <= 0 || !dispatch) return;
+    dejaEnregistreRef.current = total;
+    dispatch({ type: "JAM_PROGRES", secondes: delta });
+  }, [chrono, dispatch]);
   useEffect(() => {
     const auMasquage = () => { if (document.visibilityState === "hidden") enregistrerTemps(); };
     document.addEventListener("visibilitychange", auMasquage);
     return () => { document.removeEventListener("visibilitychange", auMasquage); enregistrerTemps(); };
   }, [enregistrerTemps]);
-
-  // ── Contraintes : adaptées au style et au niveau, tenues 2 minutes ─────
-  const [niveauContrainte, setNiveauContrainte] = useState(() => niveauParDefaut(state?.level || 1));
-  const [resteContrainte, setResteContrainte] = useState(DUREE_CONTRAINTE);
-  const [contraintesTenues, setContraintesTenues] = useState(0);
-  const unSecondeDePlus = () => {
-    setSecondesJouees(n => n + 1);
-    setResteContrainte(r => (constraintRef.current && r > 0 ? r - 1 : r));
-  };
-  const constraintRef = useRef(null);
+  const surLecture = (joue) => { setEnLecture(joue); if (!joue) enregistrerTemps(); };
 
   const ctx    = CONTEXTS.find(c => c.id === contextId);
   const rootFr = ROOTS_FR.find(r => r.en === root)?.fr ?? root;
@@ -1240,24 +962,6 @@ export function JamSession({ onBack, dispatch, state }) {
   const dansLaGamme = (n) => activeNotes.some(g => normalizeNote(g) === normalizeNote(n));
   const choisirContexte = (c) => { setContextId(c.id); setBpm(c.bpm); };
 
-  constraintRef.current = constraint;
-  const tenue = constraint && resteContrainte === 0;
-  const contrainteTenueRef = useRef(null);
-  useEffect(() => {
-    if (tenue && contrainteTenueRef.current !== constraint) {
-      contrainteTenueRef.current = constraint;
-      setContraintesTenues(n => n + 1);
-      dispatch?.({ type: "JAM_PROGRES", contrainte: true });
-    }
-  }, [tenue, constraint]);
-  const randomConstraint = (niveau = niveauContrainte) => {
-    const candidates = CONSTRAINTS.filter(c =>
-      c.level === niveau && (!c.contextes || c.contextes.includes(contextId)) && c !== constraint);
-    const pool = candidates.length ? candidates : CONSTRAINTS.filter(c => c.level === niveau);
-    setConstraint(pool[Math.floor(Math.random() * pool.length)]);
-    setResteContrainte(DUREE_CONTRAINTE);
-  };
-
   const transposeSemitone = (dir) => {
     const idx = CHROMATIC.indexOf(root);
     setRoot(CHROMATIC[(idx + dir + 12) % 12]);
@@ -1268,9 +972,7 @@ export function JamSession({ onBack, dispatch, state }) {
 
       {/* Header */}
       <div style={{ padding: "14px 16px 12px", display: "flex", alignItems: "center", gap: 10, borderBottom: `1px solid ${C.border}`, background: C.surface, position: "sticky", top: 0, zIndex: 10 }}>
-        <button onClick={onBack} aria-label="Retour aux outils" className="gr-focus" style={{ width: 40, height: 40, margin: "-4px 0 -4px -8px", background: "none", border: "none", borderRadius: R.sm, cursor: "pointer", color: C.text2, padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <Ti name="chevron-left" size={22} />
-        </button>
+        <BackButton onClick={onBack} label="Retour aux outils" />
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 16, fontWeight: 700, color: C.text, fontFamily: FONTS.title }}>Jam Session</div>
           <div style={{ fontSize: 11, color: C.text3, fontFamily: FONTS.ui }}>{rootFr} - {ctx.label}</div>
@@ -1307,30 +1009,7 @@ export function JamSession({ onBack, dispatch, state }) {
         <BackingTrackPlayer context={ctx} root={root} bpm={bpm} onBpmChange={setBpm} onChord={setAccordIdx} onSecondeJouee={unSecondeDePlus} onLecture={surLecture} />
 
         {/* Séance de pratique : on voit ce qu'il reste pour qu'elle compte */}
-        {(secondesJouees > 0 || sessionComptee) && (
-          <div role="status" style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: R.md, background: sessionComptee ? C.greenL : C.surface, border: `1px solid ${sessionComptee ? C.greenBorder : C.border}` }}>
-            {sessionComptee ? (
-              <>
-                <Ti name="check" size={16} color={C.greenD} />
-                <div style={{ fontSize: 12.5, color: C.greenD, fontFamily: FONTS.ui, lineHeight: 1.4 }}>
-                  <b>Séance comptée</b> dans ta série et tes objectifs
-                  {sessionComptee.xp > 0 ? ` · +${sessionComptee.xp} XP` : sessionComptee.xp === 0 ? " · XP de pratique du jour déjà au maximum" : ""}
-                </div>
-              </>
-            ) : (
-              <>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 12, color: C.text2, fontFamily: FONTS.ui }}>
-                    Encore <b>{fmtDuree(SEUIL_SESSION - secondesJouees)}</b> de jeu pour que la séance compte
-                  </div>
-                  <div aria-hidden="true" style={{ height: 4, borderRadius: 2, background: C.border, marginTop: 6, overflow: "hidden" }}>
-                    <div style={{ width: `${Math.min(100, (secondesJouees / SEUIL_SESSION) * 100)}%`, height: "100%", background: ctx.color, transition: "width 1s linear" }} />
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        )}
+        <SuiviSeance chrono={chrono} sessionComptee={sessionComptee} couleur={ctx.color} />
 
         {/* Tonique */}
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -1416,7 +1095,7 @@ export function JamSession({ onBack, dispatch, state }) {
         {/* Notes + cibles */}
         <div style={{ display: "flex", gap: 10 }}>
           <div style={{ flex: 1, background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: "10px 12px" }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Gamme</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Gamme</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
               {activeNotes.map((note, i) => (
                 <div key={note} style={{ padding: "4px 8px", borderRadius: R.pill, background: i === 0 ? ctx.colorL : C.bg, border: `1px solid ${i === 0 ? ctx.color : C.border}`, fontSize: 12, fontWeight: i === 0 ? 700 : 400, color: i === 0 ? ctx.colorD : C.text2, fontFamily: FONTS.ui }}>
@@ -1426,68 +1105,17 @@ export function JamSession({ onBack, dispatch, state }) {
             </div>
           </div>
           <div style={{ flex: 1, background: ctx.colorL, border: `1px solid ${ctx.colorB}`, borderRadius: R.lg, padding: "10px 12px" }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: ctx.colorD, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Cibles</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: ctx.colorD, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Cibles</div>
             <div style={{ fontSize: 11, color: ctx.colorD, fontFamily: FONTS.ui, lineHeight: 1.5 }}>{ctx.targetDesc}</div>
           </div>
         </div>
 
         {/* Contrainte : adaptée au style et au niveau, chronométrée */}
-        <div style={{ background: constraint ? C.amberL : C.surface, border: `1px solid ${constraint ? C.amberBorder : C.border}`, borderRadius: R.lg, padding: "12px 14px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-            <div style={{ flex: 1, fontSize: 10.5, fontWeight: 700, color: constraint ? C.amberD : C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em" }}>
-              Contrainte du moment
-            </div>
-            {contraintesTenues > 0 && (
-              <span style={{ fontSize: 11, fontWeight: 700, color: C.amberD, fontFamily: FONTS.ui }}>{contraintesTenues} tenue{contraintesTenues > 1 ? "s" : ""}</span>
-            )}
-          </div>
-          <div role="group" aria-label="Difficulté des contraintes" style={{ display: "flex", gap: 4, marginBottom: 10, background: C.surface2, borderRadius: R.sm, padding: 3 }}>
-            {NIVEAUX_CONTRAINTE.map(n => (
-              <button key={n} onClick={() => { setNiveauContrainte(n); if (constraint) randomConstraint(n); }} aria-pressed={niveauContrainte === n} className="gr-focus" style={{
-                flex: 1, minHeight: 34, borderRadius: R.sm - 2, border: "none", cursor: "pointer", fontFamily: FONTS.ui, fontSize: 12, fontWeight: 700,
-                background: niveauContrainte === n ? C.surface : "transparent", color: niveauContrainte === n ? LEVEL_COLOR[n] : C.text3,
-                boxShadow: niveauContrainte === n ? `0 0 0 1.5px ${C.border}` : "none",
-              }}>{n}</button>
-            ))}
-          </div>
-          {constraint ? (
-            <>
-              <div id="contrainte-texte" aria-live="polite" style={{ fontSize: 14, color: C.amberD, fontFamily: FONTS.title, lineHeight: 1.5, fontWeight: 600 }}>{constraint.text}</div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
-                {tenue ? (
-                  <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 700, color: C.greenD, fontFamily: FONTS.ui }}>
-                    <Ti name="check" size={15} color={C.greenD} /> Tenue 2 minutes, bravo.
-                  </div>
-                ) : (
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 12, color: C.amberD, fontFamily: FONTS.ui }}>
-                      {!enLecture ? "Lance le backing : le chrono tourne pendant que tu joues." : <>Tiens-la encore <b>{fmtDuree(resteContrainte)}</b></>}
-                    </div>
-                    <div aria-hidden="true" style={{ height: 4, borderRadius: 2, background: C.amberBorder, marginTop: 6, overflow: "hidden" }}>
-                      <div style={{ width: `${((DUREE_CONTRAINTE - resteContrainte) / DUREE_CONTRAINTE) * 100}%`, height: "100%", background: C.amber, transition: "width 1s linear" }} />
-                    </div>
-                  </div>
-                )}
-                <button onClick={() => randomConstraint()} className="gr-focus" style={{ minHeight: 36, padding: "0 14px", borderRadius: R.pill, border: `1px solid ${C.amber}`, background: tenue ? C.amber : C.surface, color: tenue ? C.onPrimaryBtn : C.amberD, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }}>
-                  {tenue ? "Suivante" : "Changer"}
-                </button>
-              </div>
-            </>
-          ) : (
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ flex: 1, fontSize: 12.5, color: C.text2, fontFamily: FONTS.ui, lineHeight: 1.45 }}>
-                Une limite claire, tenue 2 minutes : c'est ce qui fait progresser en impro.
-              </div>
-              <button onClick={() => randomConstraint()} className="gr-focus" style={{ minHeight: 36, padding: "0 14px", borderRadius: R.pill, border: "none", background: C.amber, color: C.onPrimaryBtn, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }}>
-                Tirer
-              </button>
-            </div>
-          )}
-        </div>
+        <CarteContrainte chrono={chrono} enLecture={enLecture} contextId={contextId} niveauApp={state?.level} dispatch={dispatch} />
 
         {/* Rappels */}
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: "12px 14px" }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Rappels</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Rappels</div>
           {["Silence = note. Utilise-le.", "Arrive sur une note de l'accord sur les temps forts.", "Une bonne phrase monte puis descend.", "Le sommet d'un solo se place vers les deux tiers, pas à la fin."].map((tip, i) => (
             <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: i < 3 ? 6 : 0 }}>
               <div style={{ width: 4, height: 4, borderRadius: "50%", background: ctx.color, marginTop: 6, flexShrink: 0 }} />

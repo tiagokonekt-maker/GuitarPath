@@ -84,7 +84,7 @@ function PracticeScreen({ dispatch }) {
       ) : (
         <div>
           <div style={{ background: C.primaryL, border: `1px solid ${C.primaryBorder}`, borderRadius: R.lg, padding: 20, marginBottom: 12 }}>
-            <div style={{ fontSize: 10, fontWeight: 500, color: C.primaryD, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8, fontFamily: FONTS.ui }}>
+            <div style={{ fontSize: 11, fontWeight: 500, color: C.primaryD, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8, fontFamily: FONTS.ui }}>
               Défi en cours
             </div>
             <div style={{ fontSize: 22, fontWeight: 700, color: C.primaryD, marginBottom: 8, fontFamily: FONTS.title }}>{current.title}</div>

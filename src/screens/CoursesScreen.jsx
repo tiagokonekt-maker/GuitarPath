@@ -8,7 +8,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { FONTS, R } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
-import { ProgressBar, XPPop } from "../design/ui.jsx";
+import { BackButton, ProgressBar, XPPop } from "../design/ui.jsx";
 import { buildModuleTheme } from "../store/moduleTheme.js";
 import { buildPath, getPathStats, UNIT_BONUS_XP } from "../store/pathEngine.js";
 // todayStr en heure LOCALE (voir store/dates.js) — surtout ne pas
@@ -267,20 +267,20 @@ function PathNode({ lesson, state, th, onSelect, isCurrent, isLocked, gropiTip, 
             cursor:isCurrent?"pointer":"default",
           }}>
           {isCurrent&&(
-            <div style={{fontSize:8.5,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:C.primary,marginBottom:3}}>
+            <div style={{fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:C.primary,marginBottom:3}}>
               En cours
             </div>
           )}
           <div style={{fontSize:12.5,fontWeight:700,color:done?th.colorD:isCurrent?C.primaryD:C.text,lineHeight:1.3}}>
             {lesson.title}
           </div>
-          <div style={{fontSize:10,color:C.text3,marginTop:3}}>{lesson.duration} min</div>
+          <div style={{fontSize:11,color:C.text3,marginTop:3}}>{lesson.duration} min</div>
           {isCurrent&&(
             <div style={{
               display:"inline-block",marginTop:8,
               background:C.primary,color:C.onPrimaryBtn,
               borderRadius:999,padding:"5px 14px",
-              fontSize:10,fontWeight:700,letterSpacing:".06em",textTransform:"uppercase",
+              fontSize:11,fontWeight:700,letterSpacing:".06em",textTransform:"uppercase",
               boxShadow:`0 3px 10px ${C.primary}44`,
             }}>Commencer</div>
           )}
@@ -354,7 +354,7 @@ function UnitChest({ unit, onClaim, onCheck }) {
         <Ti name={icon} size={26} color={iconColor}/>
       </button>
       <div style={{
-        fontSize:9,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",
+        fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",
         color:(bonusClaimable||needsCheck)?C.primaryD||C.primary:C.text3,fontFamily:FONTS.ui,marginTop:7,textAlign:"center",
       }}>
         {label}
@@ -429,7 +429,7 @@ function CurrentUnitBanner({ stats, MODULE_THEME }) {
         <Ti name={th?th.icon.replace("ti-",""):"trophy"} size={20} color={th?th.color:C.green}/>
       </div>
       <div style={{flex:1}}>
-        <div style={{fontSize:9,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:th?th.colorD:C.greenD,fontFamily:FONTS.ui}}>
+        <div style={{fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:th?th.colorD:C.greenD,fontFamily:FONTS.ui}}>
           {u ? `Unité ${u.index+1} sur ${stats.units}` : "Parcours"}
         </div>
         <div style={{fontSize:15,fontWeight:800,color:th?th.colorD:C.greenD,letterSpacing:"-.2px",marginTop:2}}>
@@ -463,7 +463,7 @@ function UnitHeader({ unit, th }) {
       }}>
         <Ti name={unit.unlocked?th.icon.replace("ti-",""):"lock"} size={13} color={unit.unlocked?th.color:C.text3}/>
         <span style={{
-          fontSize:10,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",
+          fontSize:11,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",
           color:unit.unlocked?th.colorD:C.text3,fontFamily:FONTS.ui,
         }}>
           {unit.title}
@@ -566,7 +566,7 @@ function WelcomeModal({ state, tip, navigate, onClose }) {
               <Ti name="flame" size={16} color={state.streak>0?C.primary:C.text3}/>
               <div>
                 <div style={{ fontSize:15, fontWeight:800, color:C.text, lineHeight:1.1 }}>{state.streak}</div>
-                <div style={{ fontSize:9.5, fontWeight:700, color:C.text3, textTransform:"uppercase", letterSpacing:".05em" }}>
+                <div style={{ fontSize:11, fontWeight:700, color:C.text3, textTransform:"uppercase", letterSpacing:".05em" }}>
                   {state.streak > 1 ? "jours de série" : "jour de série"}
                 </div>
               </div>
@@ -579,7 +579,7 @@ function WelcomeModal({ state, tip, navigate, onClose }) {
               <Ti name="medal" size={16} color={C.primary}/>
               <div style={{ minWidth:0 }}>
                 <div style={{ fontSize:12.5, fontWeight:800, color:C.text, lineHeight:1.25, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{grade.label}</div>
-                <div style={{ fontSize:9.5, fontWeight:700, color:C.text3, textTransform:"uppercase", letterSpacing:".05em" }}>Niveau {state.level}</div>
+                <div style={{ fontSize:11, fontWeight:700, color:C.text3, textTransform:"uppercase", letterSpacing:".05em" }}>Niveau {state.level}</div>
               </div>
             </div>
           </div>
@@ -609,7 +609,7 @@ function WelcomeModal({ state, tip, navigate, onClose }) {
             <Gropi pose="wave" size={38} anim="wiggle"/>
             <div style={{ flex:1, minWidth:0 }}>
               <div style={{
-                fontSize:9, fontWeight:700, letterSpacing:".1em", textTransform:"uppercase",
+                fontSize:11, fontWeight:700, letterSpacing:".1em", textTransform:"uppercase",
                 color:C.primaryD, fontFamily:FONTS.ui, marginBottom:3,
               }}>{TIP_LABELS[tip.type] || "Conseil de Gropi"}</div>
               <p style={{ margin:0, fontSize:12.5, lineHeight:1.45, fontWeight:500, color:C.text }}>{tip.text}</p>
@@ -753,7 +753,7 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
       // qui donne la sensation "j'arrive directement là où j'en suis"
       // plutôt que d'avoir à vérifier si un minuscule scroll a eu lieu.
       currentRef.current?.scrollIntoView({
-        behavior: scrolledTo.current === null ? "auto" : "smooth",
+        behavior: scrolledTo.current === null || matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
         block: "start",
       });
       scrolledTo.current = focus.key;
@@ -977,9 +977,7 @@ function LessonView({ lesson, state, dispatch, onBack }) {
     <div>
       {pop&&<XPPop amount={30} onDone={()=>{}}/>}
       <div style={{padding:"14px 20px 0",display:"flex",alignItems:"center",gap:10}}>
-        <button onClick={onBack} style={{background:C.surface,border:`1.5px solid ${C.border}`,borderRadius:R.sm,width:36,height:36,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>
-          <Ti name="arrow-left" size={17} color={C.text}/>
-        </button>
+        <BackButton onClick={onBack} label="Retour au parcours" style={{borderRadius:R.sm}}/>
         <span style={{fontSize:13,fontWeight:600,color:C.text2,fontFamily:FONTS.ui}}>Retour au parcours</span>
       </div>
       <div style={{padding:"16px 20px 0"}}>

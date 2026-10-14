@@ -444,6 +444,7 @@ function AppInner({ onThemeChange }) {
       // Questions écrites + une question GÉNÉRÉE par compétence débloquée (au
       // niveau de l'élève, jamais avant sa leçon) : le moteur de révision
       // choisit ensuite ce qui est dû ou nouveau, comme pour les autres.
+      const state = stateRef.current;
       let vivier = [...content.quiz, ...questionsGenereesPour(state)];
       if (domaine) vivier = vivierDuDomaine(vivier, domaine);
       const taille = cible || cibleSession;
@@ -453,6 +454,9 @@ function AppInner({ onThemeChange }) {
       );
       setReviewQuestions(session.questions);
     }
+    // Retaper sur l'onglet déjà affiché ne doit pas empiler une entrée
+    // d'historique de plus (sinon il faut appuyer plusieurs fois sur retour).
+    const memeEcran = s === ecranRef.current && !showSettingsRef.current;
     setRetourEcran(retour);
     setShowSettings(false);
     setScreen(s);
@@ -460,26 +464,46 @@ function AppInner({ onThemeChange }) {
     // l'écran précédent au lieu de quitter la PWA.
     try {
       const url = s === "home" ? "#" : `#${s}`;
-      if (remplacer) history.replaceState({ screen: s }, "", url);
+      if (remplacer || memeEcran) history.replaceState({ screen: s }, "", url);
       else history.pushState({ screen: s }, "", url);
     } catch { /* contexte sans history (tests, iframe) */ }
-  }, [content, state, cibleSession]);
+  }, [content, cibleSession]);
+
+  // L'écouteur lit showSettings par une ref : quand l'effet dépendait de
+  // showSettings, il rejouait l'ancrage initial (replaceState) à chaque
+  // ouverture des Réglages et écrasait l'entrée #reglages.
+  const ecranRef = useRef(screen);
+  const showSettingsRef = useRef(showSettings);
+  useEffect(() => {
+    ecranRef.current = screen;
+    showSettingsRef.current = showSettings;
+  }, [screen, showSettings]);
 
   useEffect(() => {
     const auRetour = (e) => {
       const s = e.state?.screen;
-      if (showSettings) { setShowSettings(false); return; }
+      if (showSettingsRef.current) { setShowSettings(false); return; }
       setScreen(ECRANS_VALIDES.has(s) ? s : "home");
     };
     window.addEventListener("popstate", auRetour);
-    // Ancrage initial, pour que le premier retour ne sorte pas de l'app.
+    return () => window.removeEventListener("popstate", auRetour);
+  }, []);
+
+  // Ancrage initial, une seule fois, pour que le premier retour ne sorte
+  // pas de l'app.
+  useEffect(() => {
     try {
       const depart = (location.hash || "").slice(1);
       history.replaceState({ screen: ECRANS_VALIDES.has(depart) ? depart : "home" }, "");
       if (ECRANS_VALIDES.has(depart)) setScreen(depart);
-    } catch { /* noop */ }
-    return () => window.removeEventListener("popstate", auRetour);
-  }, [showSettings]);
+    } catch { /* contexte sans history */ }
+  }, []);
+
+  // Chaque écran s'ouvre en haut de page, pas à la position de défilement
+  // de l'écran précédent.
+  useEffect(() => {
+    try { window.scrollTo(0, 0); } catch { /* environnement sans fenêtre */ }
+  }, [screen, showSettings]);
 
   // Raccourcis du manifeste (?shortcut=session|jam). L'ancienne version
   // écrivait `window.__GROPLY_SHORTCUT` dans index.html, valeur que personne
@@ -588,7 +612,7 @@ function AppInner({ onThemeChange }) {
 
   return (
     <>
-      {toast && <Toast msg={toast} onClose={() => setToast(null)} />}
+      {toast && <Toast key={toast} msg={toast} onClose={() => setToast(null)} />}
 
       <main
         className="gr-vscroll"
@@ -676,7 +700,6 @@ function EcranChargement({ C, texte, hauteur = "100dvh" }) {
         animation: "gr-spin .8s linear infinite",
       }} />
       {texte && <div style={{ fontSize: 13, color: C.text2 }}>{texte}</div>}
-      <style>{`@keyframes gr-spin { to { transform: rotate(360deg) } }`}</style>
     </div>
   );
 }

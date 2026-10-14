@@ -209,3 +209,6 @@ img, svg { max-width: 100%; }
   body { background: #fff; color: #000; }
   .gr-no-print { display: none !important; }
 }
+
+/* Spinner des écrans de chargement (App.jsx › EcranChargement) */
+@keyframes gr-spin { to { transform: rotate(360deg) } }

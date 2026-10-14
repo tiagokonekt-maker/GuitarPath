@@ -296,14 +296,14 @@ export function ReviewSession({ questions, state, dispatch, onDone }) {
       {/* Badge type */}
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
         <div style={{
-          padding: "3px 8px", borderRadius: R.pill, fontSize: 10, fontWeight: 700,
+          padding: "3px 8px", borderRadius: R.pill, fontSize: 11, fontWeight: 700,
           fontFamily: FONTS.ui, letterSpacing: "0.06em", textTransform: "uppercase",
           background: isFret ? C.amberL : C.primaryL,
           color: isFret ? C.amberD : C.primaryD,
         }}>
           {q.genere ? `${q.famille} · niveau ${q.niveauFamille}/3` : `${isFret ? "Manche" : "QCM"} · Niv. ${q.lvl}`}
         </div>
-        {q.genere && <div style={{ fontSize: 10.5, color: C.text3, fontFamily: FONTS.ui }}>{q.libelleNiveau}</div>}
+        {q.genere && <div style={{ fontSize: 11, color: C.text3, fontFamily: FONTS.ui }}>{q.libelleNiveau}</div>}
       </div>
 
       {/* Question */}
@@ -396,7 +396,7 @@ export function ReviewSession({ questions, state, dispatch, onDone }) {
                 cursor: answered ? "default" : "pointer", textAlign: "left",
                 width: "100%", marginBottom: 7, fontFamily: FONTS.title,
               }}>
-                <div style={{ width: 24, height: 24, borderRadius: 7, background: badgeBg, color: badgeFg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 500, flexShrink: 0, fontFamily: FONTS.ui }}>
+                <div style={{ width: 24, height: 24, borderRadius: 7, background: badgeBg, color: badgeFg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 500, flexShrink: 0, fontFamily: FONTS.ui }}>
                   {ic}
                 </div>
                 {q.grilles

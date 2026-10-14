@@ -27,7 +27,7 @@ import { Ti } from "../design/Ti.jsx";
 import { todayStr } from "../store/state.js";
 import { BADGES } from "../store/badges.js";
 import { gradeForLevel } from "../store/grades.js";
-import { ConfirmDialog } from "../design/ui.jsx";
+import { BackButton, ConfirmDialog } from "../design/ui.jsx";
 import { listSampleUrls, SAMPLE_COUNT } from "../audioEngine.js";
 
 import { useC } from "../design/ThemeContext.jsx";
@@ -136,9 +136,7 @@ function SettingsScreen({ state, dispatch, content, onClose, user, onSignOut, on
         padding:"22px 20px 18px", position:"relative", overflow:"hidden",
       }}>
         <div style={{ position:"absolute", inset:0, background:"rgba(20,18,16,.6)", pointerEvents:"none" }}/>
-        <button onClick={onClose} style={{ position:"relative", zIndex:1, background:C.surface, border:`1.5px solid ${C.border}`, borderRadius:R.sm, width:36, height:36, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", marginBottom:14 }}>
-          <Ti name="arrow-left" size={17} color={C.text} />
-        </button>
+        <BackButton onClick={onClose} label="Fermer les réglages" style={{ position:"relative", zIndex:1, borderRadius:R.sm, marginBottom:14 }} />
         <div style={{ position:"relative", zIndex:1, fontSize:26, fontWeight:800, color:"#fff", letterSpacing:"-.4px" }}>Réglages</div>
       </div>
 

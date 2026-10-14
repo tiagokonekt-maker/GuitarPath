@@ -347,7 +347,7 @@ export function FretboardExplorer({ onBack, embedded = false }) {
                 }}
               >
                 <div style={{ fontSize: 12.5, fontWeight: 700 }}>{m.label}</div>
-                <div style={{ fontSize: 10, opacity: 0.75, marginTop: 1 }}>{m.hint}</div>
+                <div style={{ fontSize: 11, opacity: 0.75, marginTop: 1 }}>{m.hint}</div>
               </button>
             ))}
           </div>
@@ -356,7 +356,7 @@ export function FretboardExplorer({ onBack, embedded = false }) {
         {/* Formes jouables sur le manche */}
         {tab === "chord" && shapes.length > 0 && (
           <div style={{ marginBottom: 12 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
               {shapes.length} façon{shapes.length > 1 ? "s" : ""} de le jouer
             </div>
             <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch" }}>
@@ -374,7 +374,7 @@ export function FretboardExplorer({ onBack, embedded = false }) {
 
         {/* Notes actives */}
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: "12px 14px" }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
             Notes - {rootFr} {activeLabel}
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
@@ -401,7 +401,7 @@ export function FretboardExplorer({ onBack, embedded = false }) {
         {/* Info pedagogique */}
         {info && (
           <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: "12px 14px" }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>
               Contexte
             </div>
             <p style={{ margin: "0 0 6px", fontSize: 13, color: C.text, fontFamily: FONTS.title, lineHeight: 1.55 }}>{info.desc}</p>

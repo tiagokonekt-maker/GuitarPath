@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { FONTS, R } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
-import { ProgressBar, XPPop } from "../design/ui.jsx";
+import { BackButton, ProgressBar, XPPop } from "../design/ui.jsx";
 import { Gropi } from "../design/Gropi.jsx";
 import { buildModuleTheme } from "../store/moduleTheme.js";
 import { updateReviewHistory } from "../store/reviewEngine.js";
@@ -149,7 +149,7 @@ function ExercisesScreen({ state, dispatch, content, embedded = false }) {
                 <Ti name="player-play" size={24} color="#fff" />
               </div>
               <div style={{ flex:1 }}>
-                <div style={{ fontSize:10, fontWeight:700, color:C.primary, letterSpacing:".08em", textTransform:"uppercase", marginBottom:3 }}>
+                <div style={{ fontSize:11, fontWeight:700, color:C.primary, letterSpacing:".08em", textTransform:"uppercase", marginBottom:3 }}>
                   {LEVEL_LABELS[recommended.lvl||1]} · {DIFF_STARS[recommended.lvl||1]}
                 </div>
                 <div style={{ fontSize:15, fontWeight:800, color:C.text, letterSpacing:"-.2px" }}>{recommended.title}</div>
@@ -220,7 +220,7 @@ function ExercisesScreen({ state, dispatch, content, embedded = false }) {
                       }
                       {count > 1 && (
                         <div style={{ position:"absolute", top:-4, right:-4, width:16, height:16, borderRadius:"50%", background:C.green, display:"flex", alignItems:"center", justifyContent:"center" }}>
-                          <span style={{ fontSize:8, fontWeight:800, color:"#fff" }}>{count}</span>
+                          <span style={{ fontSize:10, fontWeight:800, color:"#fff" }}>{count}</span>
                         </div>
                       )}
                     </div>
@@ -266,9 +266,7 @@ function BackBtn({ onBack }) {
   const C = useC();
   return (
     <div style={{ padding:"14px 20px 0", display:"flex", alignItems:"center", gap:10, marginBottom:4 }}>
-      <button onClick={onBack} style={{ background:C.surface, border:`1.5px solid ${C.border}`, borderRadius:R.sm, width:36, height:36, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer" }}>
-        <Ti name="arrow-left" size={17} color={C.text} />
-      </button>
+      <BackButton onClick={onBack} label="Retour aux exercices" style={{ borderRadius:R.sm }} />
       <span style={{ fontSize:13, fontWeight:600, color:C.text2, fontFamily:FONTS.ui }}>Retour</span>
     </div>
   );
@@ -437,7 +435,7 @@ function ExHeader({ ex, theme, lc }) {
         </div>
         <div>
           <div style={{ display:"flex", gap:6, alignItems:"center", marginBottom:3 }}>
-            <span style={{ fontSize:10, fontWeight:700, color:lc.dot, background:lc.bg, border:`1px solid ${lc.border}`, borderRadius:99, padding:"1px 7px", textTransform:"uppercase", letterSpacing:".06em" }}>
+            <span style={{ fontSize:11, fontWeight:700, color:lc.dot, background:lc.bg, border:`1px solid ${lc.border}`, borderRadius:99, padding:"1px 7px", textTransform:"uppercase", letterSpacing:".06em" }}>
               {LEVEL_LABELS[ex.lvl||1]}
             </span>
             <span style={{ fontSize:11, color:lc.dot }}>{DIFF_STARS[ex.lvl||1]}</span>

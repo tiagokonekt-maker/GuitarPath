@@ -156,7 +156,7 @@ function QuizScreen({ state, dispatch, content, embedded = false }) {
             <Ti name="star" size={24} color="#fff" />
           </div>
           <div style={{ flex:1 }}>
-            <div style={{ fontSize:10, fontWeight:700, color:C.primary, letterSpacing:".08em", textTransform:"uppercase", marginBottom:3 }}>
+            <div style={{ fontSize:11, fontWeight:700, color:C.primary, letterSpacing:".08em", textTransform:"uppercase", marginBottom:3 }}>
               Recommandé · 7 questions
             </div>
             <div style={{ fontSize:15, fontWeight:800, color:C.text, letterSpacing:"-.2px" }}>Quiz du jour</div>
@@ -339,17 +339,17 @@ function QuizPlayer({ pool, title, state, dispatch, content, onDone }) {
         }}>
           <div style={{textAlign:"center"}}>
             <div style={{fontSize:26,fontWeight:800,color:C.green}}>{score}</div>
-            <div style={{fontSize:10,fontWeight:700,color:C.text3,textTransform:"uppercase",letterSpacing:".06em"}}>Correctes</div>
+            <div style={{fontSize:11,fontWeight:700,color:C.text3,textTransform:"uppercase",letterSpacing:".06em"}}>Correctes</div>
           </div>
           <div style={{width:1,background:C.border}}/>
           <div style={{textAlign:"center"}}>
             <div style={{fontSize:26,fontWeight:800,color:C.text2}}>{questions.length-score}</div>
-            <div style={{fontSize:10,fontWeight:700,color:C.text3,textTransform:"uppercase",letterSpacing:".06em"}}>À revoir</div>
+            <div style={{fontSize:11,fontWeight:700,color:C.text3,textTransform:"uppercase",letterSpacing:".06em"}}>À revoir</div>
           </div>
           <div style={{width:1,background:C.border}}/>
           <div style={{textAlign:"center"}}>
             <div style={{fontSize:26,fontWeight:800,color:C.primary}}>+{xpEarned}</div>
-            <div style={{fontSize:10,fontWeight:700,color:C.text3,textTransform:"uppercase",letterSpacing:".06em"}}>XP</div>
+            <div style={{fontSize:11,fontWeight:700,color:C.text3,textTransform:"uppercase",letterSpacing:".06em"}}>XP</div>
           </div>
         </div>
 
@@ -396,7 +396,7 @@ function QuizPlayer({ pool, title, state, dispatch, content, onDone }) {
       </div>
 
       {/* Meta */}
-      <div style={{ fontSize:10, color:C.text3, marginBottom:8, textTransform:"uppercase", letterSpacing:".1em", fontWeight:600 }}>
+      <div style={{ fontSize:11, color:C.text3, marginBottom:8, textTransform:"uppercase", letterSpacing:".1em", fontWeight:600 }}>
         {linkedCourse?.title} · Niv. {q.lvl}
         {isFretQ && <span style={{ marginLeft:6, color:C.amber, fontWeight:700 }}>· Manche</span>}
       </div>
@@ -443,7 +443,7 @@ function QuizPlayer({ pool, title, state, dispatch, content, onDone }) {
             }
             return (
               <button key={i} onClick={()=>choose(i)} disabled={answered} style={{ display:"flex", alignItems:"center", gap:10, background:bg, border, borderRadius:R.md, padding:"12px 14px", cursor:answered?"default":"pointer", textAlign:"left", width:"100%", marginBottom:7, fontFamily:FONTS.title }}>
-                <div style={{ width:26, height:26, borderRadius:8, background:badgeBg, color:badgeFg, display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:700, flexShrink:0 }}>{ic}</div>
+                <div style={{ width:26, height:26, borderRadius:8, background:badgeBg, color:badgeFg, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700, flexShrink:0 }}>{ic}</div>
                 <span style={{ fontSize:13, color:col, lineHeight:1.45, fontWeight:answered&&i===q.a?700:500 }}>{opt}</span>
               </button>
             );

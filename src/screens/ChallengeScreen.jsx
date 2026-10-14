@@ -39,7 +39,7 @@ function ChallengeScreen({ state, dispatch, navigate }) {
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
           <Ti name={done ? "trophy" : "bolt"} size={16} color={done ? C.green : C.amber} />
-          <div style={{ fontSize: 10, fontWeight: 500, color: done ? C.greenD : C.amberD, letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: FONTS.ui }}>
+          <div style={{ fontSize: 11, fontWeight: 500, color: done ? C.greenD : C.amberD, letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: FONTS.ui }}>
             {done ? "Défi complété" : "Aujourd'hui"}
           </div>
         </div>

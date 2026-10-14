@@ -6,9 +6,10 @@
 // n'annonçait ni le gain d'XP, ni le déblocage d'un badge, ni le message
 // d'erreur. Ils portent maintenant role="status" + aria-live="polite".
 // La barre de progression expose sa valeur (role="progressbar").
-import { useEffect, useRef } from "react";
+import { useEffect, useEffectEvent } from "react";
 import { FONTS, T } from "./tokens.js";
 import { useC } from "./ThemeContext.jsx";
+import Ti from "./Ti.jsx";
 
 export function ProgressBar({ pct, color, h = 6, label }) {
   const C = useC();
@@ -35,11 +36,11 @@ export function XPPop({ amount, onDone }) {
   const C = useC();
   // `onDone` dans les deps relançait le minuteur à chaque rendu quand
   // l'appelant passait une fonction anonyme (ce que font tous les écrans :
-  // `onDone={() => {}}`). Une ref fige la callback.
-  const doneRef = useRef(onDone);
-  doneRef.current = onDone;
+  // `onDone={() => {}}`). useEffectEvent lit toujours la dernière callback
+  // sans en faire une dépendance.
+  const terminer = useEffectEvent(() => onDone?.());
   useEffect(() => {
-    const t = setTimeout(() => doneRef.current?.(), 1400);
+    const t = setTimeout(terminer, 1400);
     return () => clearTimeout(t);
   }, []);
 
@@ -60,17 +61,16 @@ export function XPPop({ amount, onDone }) {
 
 export function Toast({ msg, onClose, duration = 3500 }) {
   const C = useC();
-  const closeRef = useRef(onClose);
-  closeRef.current = onClose;
+  const fermer = useEffectEvent(() => onClose?.());
   useEffect(() => {
-    const t = setTimeout(() => closeRef.current?.(), duration);
+    const t = setTimeout(fermer, duration);
     return () => clearTimeout(t);
   }, [duration]);
 
   return (
     <div
       role="status" aria-live="polite"
-      onClick={() => closeRef.current?.()}
+      onClick={() => onClose?.()}
       style={{
         position: "fixed",
         top: "calc(env(safe-area-inset-top, 0px) + 14px)",
@@ -171,5 +171,29 @@ export function ConfirmDialog({
         </div>
       </div>
     </div>
+  );
+}
+
+// Bouton retour commun : 44 px (taille tactile minimale), libellé lisible
+// par les lecteurs d'écran, focus visible. `tint` = { bg, border, icon }.
+export function BackButton({ onClick, label = "Retour", tint, style }) {
+  const C = useC();
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      className="gr-focus"
+      style={{
+        width: 44, height: 44, flexShrink: 0, borderRadius: 12,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        background: tint?.bg ?? C.surface,
+        border: `1.5px solid ${tint?.border ?? C.border}`,
+        cursor: "pointer", padding: 0,
+        ...style,
+      }}
+    >
+      <Ti name="arrow-left" size={18} color={tint?.icon ?? C.text} />
+    </button>
   );
 }

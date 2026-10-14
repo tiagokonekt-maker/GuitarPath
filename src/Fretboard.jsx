@@ -24,24 +24,10 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useC } from "./design/ThemeContext.jsx";
 import { Ti } from "./design/Ti.jsx";
-import { TAP, T } from "./design/tokens.js";
-
-// ── Retour haptique ───────────────────────────────────────────────────────
-// Sur un manche, la confirmation tactile compte autant que la confirmation
-// visuelle : l'utilisateur a les yeux sur sa guitare, pas sur l'écran.
-const vibrer = (ms = 8) => {
-  try { navigator.vibrate?.(ms); } catch { /* non supporté */ }
-};
-
-/**
- * Libellé lu par un lecteur d'écran pour une case du manche.
- * Fretboard.jsx ne comportait AUCUN attribut aria : les cases étaient des
- * <div> cliquables muettes.
- */
-const labelCase = (corde, fret, note) =>
-  fret === 0
-    ? `Corde ${corde} à vide, ${note || ""}`.trim()
-    : `Corde ${corde}, case ${fret}${note ? `, ${note}` : ""}`;
+import { TAP } from "./design/tokens.js";
+// Grille cordes × cases partagée (rendu, clavier, survol, libellés aria) :
+// voir fretboard/FretGrid.jsx.
+import { FretGrid } from "./fretboard/FretGrid.jsx";
 import {
   getNoteAtPosition,
   getScalePositions,
@@ -50,8 +36,6 @@ import {
   getQuizTargetPositions,
   isCorrectPosition,
   checkQuizCompletion,
-  MARKER_FRETS,
-  DOUBLE_MARKER_FRETS,
   SCALES,
   CHORD_TYPES,
   INTERVAL_NAMES,
@@ -148,27 +132,17 @@ function NoteMarker({ label, color, size = 28, style = {} }) {
   );
 }
 
-// ── Repère visuel (point incrusté) ──────────────────────────────────────────
-function FretMarker({ isDouble }) {
-  const C = useC();
+// ── Pastille compacte (canvas du quiz et de l'exercice) ─────────────────────
+function PastilleDense({ label, color, size = 26, opacity = 1 }) {
   return (
     <div style={{
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      gap: isDouble ? 6 : 0,
-      height: 10,
-      marginTop: 2,
-    }}>
-      {isDouble ? (
-        <>
-          <div style={{ width: 6, height: 6, borderRadius: "50%", background: C.border }} />
-          <div style={{ width: 6, height: 6, borderRadius: "50%", background: C.border }} />
-        </>
-      ) : (
-        <div style={{ width: 6, height: 6, borderRadius: "50%", background: C.border }} />
-      )}
-    </div>
+      width: size, height: size, borderRadius: "50%",
+      background: color.bg, border: `1.5px solid ${color.border}`,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      fontSize: 7, fontWeight: 700, color: color.text,
+      fontFamily: FONTS.ui, position: "relative", zIndex: 2,
+      userSelect: "none", opacity,
+    }}>{label}</div>
   );
 }
 
@@ -291,12 +265,9 @@ export function Fretboard({
   }, [mode, quizRevealed, activePositions, onNoteClick, onQuizProgress, onQuizComplete]);
 
   // ── Layout du manche ────────────────────────────────────────────────────
-  const fretRange = [];
-  for (let f = startFret; f <= endFret; f++) fretRange.push(f);
-
-  // Cordes : 6 (Mi grave) → 1 (Mi aigu) — affichage de gauche à droite en orientation portrait
-  // En affichage portrait (mobile), les cordes sont en lignes horizontales (6 en haut = Mi grave)
-  const strings = [1, 2, 3, 4, 5, 6];
+  // Cases frettées affichées (la case 0 est la colonne des cordes à vide)
+  const frets = [];
+  for (let f = Math.max(1, startFret); f <= endFret; f++) frets.push(f);
 
   // ── Tailles adaptées au mode compact ────────────────────────────────────
   // Le mode « compact » servait à insérer le manche dans une leçon. Il
@@ -308,21 +279,18 @@ export function Fretboard({
   const openW  = compact ? 34 : 38;
   const labelW = compact ? 26 : 30;
 
-  // ── Styles communs ───────────────────────────────────────────────────────
-  const stringNameStyle = {
-    width: labelW,
-    height: cellH,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: T.micro,   // 11 px : plancher de lisibilité (était 9)
-    fontWeight: 700,
-    color: C.text3,
-    fontFamily: FONTS.ui,
-    flexShrink: 0,
-  };
+  // Les cases ne sont activables que si un clic a un effet
+  const interactive = mode === "quiz" || !!onNoteClick;
 
-  const STRING_LABELS = { 6: "E₂", 5: "A₂", 4: "D₃", 3: "G₃", 2: "B₃", 1: "E₄" };
+  // ── Résumé pour les lecteurs d'écran ────────────────────────────────────
+  const rootFr = root ? noteToFr(root) : "";
+  const resume = (
+    mode === "scale" && root && scale ? `Manche : gamme ${SCALES[scale]?.name ?? scale} de ${rootFr}`
+    : mode === "chord" && root && chord ? `Manche : accord ${rootFr} ${CHORD_TYPES[chord]?.name ?? chord}`
+    : mode === "highlight" && highlightedNotes?.length ? `Manche : notes ${highlightedNotes.map(noteToFr).join(", ")}`
+    : mode === "quiz" && quizTarget ? `Manche : trouve tous les ${noteToFr(quizTarget)}`
+    : "Manche de guitare"
+  ) + `, cases ${startFret} à ${endFret}`;
 
   return (
     <div style={{ width: "100%", userSelect: "none" }}>
@@ -331,165 +299,21 @@ export function Fretboard({
           manche continue à droite. */}
       <div className="gr-hscroll-wrap">
       <div className="gr-hscroll" role="group" aria-label="Manche de guitare, défile horizontalement">
-        <div style={{ minWidth: "fit-content", paddingBottom: 2 }}>
-
-          {/* ── Numéros de cases ────────────────────────────────────── */}
-          {showFretNumbers && (
-            <div style={{ display: "flex", marginBottom: 2 }}>
-              {/* Espace pour le label de corde */}
-              {showStringNames && <div style={{ width: labelW, flexShrink: 0 }} />}
-              {/* Espace pour les cordes à vide */}
-              {showOpenStrings && <div style={{ width: openW, flexShrink: 0 }} />}
-
-              {fretRange.filter(f => f > 0).map(f => (
-                <div key={f} style={{
-                  width: cellW,
-                  height: 18,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 9,
-                  color: C.text3,
-                  fontFamily: FONTS.ui,
-                  fontWeight: f % 12 === 0 ? 700 : 400,
-                  flexShrink: 0,
-                }}>
-                  {f}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* ── Corps du manche ─────────────────────────────────────── */}
-          {strings.map((s) => (
-            <div key={s} style={{ display: "flex", alignItems: "center", position: "relative" }}>
-
-              {/* Label de corde */}
-              {showStringNames && (
-                <div style={stringNameStyle}>{STRING_LABELS[s]}</div>
-              )}
-
-              {/* Cordes à vide */}
-              {showOpenStrings && (
-                <div
-                  onClick={() => { vibrer(); handleCellClick(s, 0); }}
-                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); vibrer(); handleCellClick(s, 0); } }}
-                  role="button" tabIndex={0}
-                  aria-label={labelCase(s, 0, getNoteAtPosition(s, 0))}
-                  style={{
-                    width: openW,
-                    height: cellH,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                    position: "relative",
-                    cursor: (mode === "quiz" || onNoteClick) ? "pointer" : "default",
-                  }}
-                  onMouseEnter={e => {
-                    if (mode === "quiz" || onNoteClick) {
-                      e.currentTarget.style.background = `${C.primary}08`;
-                    }
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.background = "transparent";
-                  }}
-                >
-                  {/* Ligne de corde */}
-                  <div style={{
-                    position: "absolute",
-                    left: 0, right: 0,
-                    top: "50%",
-                    height: getStringThickness(s),
-                    background: C.border,
-                    transform: "translateY(-50%)",
-                  }} />
-                  {/* Note à vide */}
-                  <div style={{ position: "relative", zIndex: 2 }}>
-                    {renderCell(s, 0)}
-                  </div>
-                </div>
-              )}
-
-              {/* Cases du manche */}
-              {fretRange.filter(f => f > 0).map((f, fIdx) => {
-                const isFirstFret = fIdx === 0;
-                return (
-                  <div
-                    key={f}
-                    onClick={() => { vibrer(); handleCellClick(s, f); }}
-                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); vibrer(); handleCellClick(s, f); } }}
-                    role="button" tabIndex={0}
-                    aria-label={labelCase(s, f, getNoteAtPosition(s, f))}
-                    style={{
-                      width: cellW,
-                      height: cellH,
-                      position: "relative",
-                      flexShrink: 0,
-                      cursor: (mode === "quiz" || onNoteClick) ? "pointer" : "default",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    {/* Filet de gauche (plus épais pour le sillet) */}
-                    <div style={{
-                      position: "absolute",
-                      left: 0, top: 0, bottom: 0,
-                      width: isFirstFret ? 3 : 1,
-                      background: isFirstFret ? C.text : C.border,
-                    }} />
-
-                    {/* Ligne de corde (horizontale) */}
-                    <div style={{
-                      position: "absolute",
-                      left: 0, right: 0,
-                      top: "50%",
-                      height: getStringThickness(s),
-                      background: C.border,
-                      transform: "translateY(-50%)",
-                      zIndex: 0,
-                    }} />
-
-                    {/* Zone cliquable + feedback hover */}
-                    <div style={{
-                      position: "absolute",
-                      inset: 0,
-                      zIndex: 1,
-                    }}
-                      onMouseEnter={e => {
-                        if (mode === "quiz" || onNoteClick) {
-                          e.currentTarget.style.background = `${C.primary}08`;
-                        }
-                      }}
-                      onMouseLeave={e => {
-                        e.currentTarget.style.background = "transparent";
-                      }}
-                    />
-
-                    {/* Pastille de note */}
-                    <div style={{ position: "relative", zIndex: 2 }}>
-                      {renderCell(s, f)}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ))}
-
-          {/* ── Repères visuels (points sous le manche) ──────────────── */}
-          <div style={{ display: "flex", marginTop: 0 }}>
-            {showStringNames && <div style={{ width: labelW, flexShrink: 0 }} />}
-            {showOpenStrings && <div style={{ width: openW, flexShrink: 0 }} />}
-            {fretRange.filter(f => f > 0).map(f => (
-              <div key={f} style={{ width: cellW, flexShrink: 0 }}>
-                {MARKER_FRETS.includes(f) && <FretMarker fret={f} isDouble={false} />}
-                {DOUBLE_MARKER_FRETS.includes(f) && <FretMarker fret={f} isDouble={true} />}
-              </div>
-            ))}
-          </div>
-
-        </div>
+        <FretGrid
+          frets={frets}
+          showOpen={showOpenStrings}
+          showStringNames={showStringNames}
+          showFretNumbers={showFretNumbers}
+          cellW={cellW} cellH={cellH} openW={openW} labelW={labelW}
+          variant="standard"
+          renderCell={renderCell}
+          interactive={interactive}
+          onCellClick={handleCellClick}
+          isCellSelected={mode === "quiz" && !quizRevealed
+            ? (s, f) => quizSelected.some(p => p.string === s && p.fret === f)
+            : undefined}
+          ariaLabel={resume}
+        />
       </div>
       </div>{/* /gr-hscroll-wrap */}
 
@@ -581,15 +405,6 @@ export function Fretboard({
       />
     );
   }
-}
-
-// ───────────────────────────────────────────────────────────────────────────
-// ÉPAISSEUR DES CORDES (esthétique)
-// ───────────────────────────────────────────────────────────────────────────
-function getStringThickness(string) {
-  // Corde 6 = Mi grave (la plus épaisse), corde 1 = Mi aigu (la plus fine)
-  const thicknesses = { 6: 3, 5: 2.5, 4: 2, 3: 1.5, 2: 1.5, 1: 1 };
-  return thicknesses[string] || 1.5;
 }
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -985,8 +800,8 @@ export function FretboardQuizQuestion({ question, onComplete, answered, forceRev
           contextPositions={contextPositions}
           selected={quizSelected}
           revealed={revealed}
+          locked={answered}
           onCellClick={handleCellClick}
-          compact={true}
           question={question}
         />
       </div>
@@ -1033,16 +848,12 @@ export function FretboardQuizQuestion({ question, onComplete, answered, forceRev
 }
 
 // ── Canvas interne du quiz fretboard ────────────────────────────────────────
-function FretboardQuizCanvas({ targetPositions, contextPositions, selected, revealed, onCellClick }) {
+function FretboardQuizCanvas({ targetPositions, contextPositions, selected, revealed, locked, onCellClick, question }) {
   const C = useC();
   const NOTE_COLORS = useMemo(() => getNoteColors(C), [C]);
   // En mode quiz, on ne compacte JAMAIS : c'est le moment où une erreur de
   // visée coûte le plus cher. 44 px de haut = recommandation Apple.
-  const CW = TAP.fretW, CH = TAP.fret, OW = 34, LW = 26, DOT = 26;
-  const strings = [1, 2, 3, 4, 5, 6];
-  const MAX_F = 12;
-  const SLABELS = { 6: "E₂", 5: "A₂", 4: "D₃", 3: "G₃", 2: "B₃", 1: "E₄" };
-  const MARKERS = [3, 5, 7, 9];
+  const DOT = 26;
 
   // Map pour lookup rapide
   const targetMap = useMemo(() => {
@@ -1057,109 +868,46 @@ function FretboardQuizCanvas({ targetPositions, contextPositions, selected, reve
     return m;
   }, [contextPositions]);
 
+  const isSel = (s, f) => selected.some(p => p.string === s && p.fret === f);
+
   function renderDot(s, f) {
     const key = `${s}-${f}`;
-    const isSelected = selected.some(p => p.string === s && p.fret === f);
+    const isSelected = isSel(s, f);
     const isTarget = targetMap[key];
     const ctx = contextMap[key];
+    const dot = (col) => <PastilleDense label={noteToFr(getNoteAtPosition(s, f))} color={col} size={DOT} />;
 
     if (revealed) {
-      if (isTarget && isSelected) return mkDot(noteToFr(getNoteAtPosition(s, f)), NOTE_COLORS.correct, DOT);
-      if (isTarget && !isSelected) return mkDot(noteToFr(getNoteAtPosition(s, f)), NOTE_COLORS.missed, DOT);
-      if (!isTarget && isSelected) return mkDot(noteToFr(getNoteAtPosition(s, f)), NOTE_COLORS.wrong, DOT);
-      if (ctx && !isTarget) {
-        // Note de contexte (accord/gamme) visible mais pas la cible
-        return mkDot(noteToFr(getNoteAtPosition(s, f)), NOTE_COLORS.other, DOT);
-      }
+      if (isTarget && isSelected) return dot(NOTE_COLORS.correct);
+      if (isTarget && !isSelected) return dot(NOTE_COLORS.missed);
+      if (!isTarget && isSelected) return dot(NOTE_COLORS.wrong);
+      // Note de contexte (accord/gamme) visible mais pas la cible
+      if (ctx && !isTarget) return dot(NOTE_COLORS.other);
       return null;
     }
 
-    if (isSelected) return mkDot(noteToFr(getNoteAtPosition(s, f)), NOTE_COLORS.selected, DOT);
+    if (isSelected) return dot(NOTE_COLORS.selected);
 
     // Contexte toujours visible (pour find_chord, find_scale_root)
-    if (ctx && !isTarget) {
-      return mkDot(noteToFr(getNoteAtPosition(s, f)), NOTE_COLORS.other, DOT);
-    }
+    if (ctx && !isTarget) return dot(NOTE_COLORS.other);
 
     return null;
   }
 
-  function mkDot(lbl, col, sz) {
-    return (
-      <div style={{
-        width: sz, height: sz, borderRadius: "50%",
-        background: col.bg, border: `1.5px solid ${col.border}`,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: 7, fontWeight: 700, color: col.text,
-        fontFamily: FONTS.ui, position: "relative", zIndex: 2,
-        userSelect: "none",
-      }}>{lbl}</div>
-    );
-  }
-
-  const frets = Array.from({ length: MAX_F }, (_, i) => i + 1);
+  const interactive = !revealed && !locked;
+  const consigne = question?.q ? ` : ${question.q}` : "";
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", minWidth: "fit-content" }}>
-      {/* Numéros de cases */}
-      <div style={{ display: "flex", marginBottom: 1 }}>
-        <div style={{ width: LW, flexShrink: 0 }} />
-        <div style={{ width: OW, flexShrink: 0 }} />
-        {frets.map(f => (
-          <div key={f} style={{ width: CW, flexShrink: 0, textAlign: "center", fontSize: T.micro, color: C.text3, height: 16, lineHeight: "16px", fontFamily: FONTS.ui, fontWeight: f === 12 ? 700 : 400 }}>{f}</div>
-        ))}
-      </div>
-
-      {strings.map(s => (
-        <div key={s} style={{ display: "flex", alignItems: "center" }}>
-          <div style={{ width: LW, flexShrink: 0, textAlign: "center", fontSize: T.micro, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui }}>{SLABELS[s]}</div>
-
-          {/* Case 0 — corde à vide */}
-          <div
-            onClick={() => { vibrer(); onCellClick(s, 0); }}
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); vibrer(); onCellClick(s, 0); } }}
-              role="button" tabIndex={0}
-              aria-label={labelCase(s, 0, getNoteAtPosition(s, 0))}
-            style={{ width: OW, height: CH, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", cursor: revealed ? "default" : "pointer" }}
-            onMouseEnter={e => { if (!revealed) e.currentTarget.style.background = `${C.primary}0A`; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
-          >
-            <div style={{ position: "absolute", left: 0, right: 0, top: "50%", height: getStringThickness(s), background: C.border, transform: "translateY(-50%)" }} />
-            <div style={{ position: "relative", zIndex: 2 }}>{renderDot(s, 0)}</div>
-          </div>
-
-          {/* Cases 1–12 */}
-          {frets.map((f, fi) => (
-            <div
-              key={f}
-              onClick={() => { vibrer(); onCellClick(s, f); }}
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); vibrer(); onCellClick(s, f); } }}
-              role="button" tabIndex={0}
-              aria-label={labelCase(s, f, getNoteAtPosition(s, f))}
-              style={{ width: CW, height: CH, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", cursor: revealed ? "default" : "pointer" }}
-              onMouseEnter={e => { if (!revealed) e.currentTarget.style.background = `${C.primary}0A`; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
-            >
-              <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: fi === 0 ? 2 : 0.5, background: fi === 0 ? C.text : C.border }} />
-              <div style={{ position: "absolute", left: 0, right: 0, top: "50%", height: getStringThickness(s), background: C.border, transform: "translateY(-50%)", zIndex: 0 }} />
-              <div style={{ position: "relative", zIndex: 2 }}>{renderDot(s, f)}</div>
-            </div>
-          ))}
-        </div>
-      ))}
-
-      {/* Repères */}
-      <div style={{ display: "flex", marginTop: 1 }}>
-        <div style={{ width: LW, flexShrink: 0 }} />
-        <div style={{ width: OW, flexShrink: 0 }} />
-        {frets.map(f => (
-          <div key={f} style={{ width: CW, flexShrink: 0 }}>
-            {MARKERS.includes(f) && <div style={{ width: 5, height: 5, borderRadius: "50%", background: C.border, margin: "2px auto 0" }} />}
-            {f === 12 && <div style={{ display: "flex", gap: 4, justifyContent: "center", marginTop: 2 }}><div style={{ width: 5, height: 5, borderRadius: "50%", background: C.border }} /><div style={{ width: 5, height: 5, borderRadius: "50%", background: C.border }} /></div>}
-          </div>
-        ))}
-      </div>
-    </div>
+    <FretGrid
+      frets={Array.from({ length: 12 }, (_, i) => i + 1)}
+      cellW={TAP.fretW} cellH={TAP.fret} openW={34} labelW={26}
+      variant="dense"
+      renderCell={renderDot}
+      interactive={interactive}
+      onCellClick={onCellClick}
+      isCellSelected={isSel}
+      ariaLabel={interactive ? `Manche interactif${consigne}` : `Manche, correction affichée${consigne}`}
+    />
   );
 }
 
@@ -1387,15 +1135,16 @@ export function FretboardExercise({ ex, onComplete, dispatch }) {
 }
 
 // ── Canvas du manche pour FretboardExercise ──────────────────────────────────
+// Épaisseurs propres au canvas d'exercice (cordes 3 et 4 un peu plus épaisses
+// que sur <Fretboard />) — conservées telles quelles pour ne rien changer au rendu.
+const EPAISSEURS_EXERCICE = { 1: 1, 2: 1.5, 3: 2, 4: 2.5, 5: 2.5, 6: 3 };
+
 function ExerciseCanvas({ stage, targetMap, selected, revealed, onCellClick }) {
   const C = useC();
   const NOTE_COLORS = useMemo(() => getNoteColors(C), [C]);
-  const CW = TAP.fretW, CH = TAP.fret, OW = 34, LW = 26, DOT = 26;
-  const strings = [1, 2, 3, 4, 5, 6];
+  const DOT = 26;
   const MAX_F = (stage.fretRange || [0, 12])[1];
   const MIN_F = (stage.fretRange || [0, 12])[0];
-  const SLABELS = { 6: "E₂", 5: "A₂", 4: "D₃", 3: "G₃", 2: "B₃", 1: "E₄" };
-  const MARKERS = [3, 5, 7, 9];
 
   // Positions de contexte à afficher en fond (gamme/accord de contexte)
   const contextPositions = useMemo(() => {
@@ -1413,17 +1162,16 @@ function ExerciseCanvas({ stage, targetMap, selected, revealed, onCellClick }) {
     return m;
   }, [contextPositions]);
 
-  function getStringThicknessLocal(s) {
-    return [null, 1, 1.5, 2, 2.5, 2.5, 3][s] || 1.5;
-  }
+  const isSel = (s, f) => selected.some(p => p.string === s && p.fret === f);
 
   function renderDot(s, f) {
     const key = `${s}-${f}`;
     const note = getNoteAtPosition(s, f);
-    const isSelected = selected.some(p => p.string === s && p.fret === f);
+    const isSelected = isSel(s, f);
     const isTarget = !!targetMap[key];
     const isContext = !!contextMap[key];
     const { showNotes, showIntervals, showDegrees } = stage.display || {};
+    const dot = (lbl, col, opacity) => <PastilleDense label={lbl} color={col} size={DOT} opacity={opacity} />;
 
     // Label de la note
     const getLabel = (pos) => {
@@ -1435,100 +1183,42 @@ function ExerciseCanvas({ stage, targetMap, selected, revealed, onCellClick }) {
 
     if (revealed) {
       const tPos = targetMap[key];
-      if (isTarget && isSelected) return mkDot(getLabel(tPos), NOTE_COLORS.correct, DOT);
-      if (isTarget && !isSelected) return mkDot(getLabel(tPos), NOTE_COLORS.missed, DOT);
-      if (!isTarget && isSelected) return mkDot(noteToFr(note), NOTE_COLORS.wrong, DOT);
-      if (isContext) return mkDot(getLabel(contextMap[key]), NOTE_COLORS.other, DOT, 0.4);
+      if (isTarget && isSelected) return dot(getLabel(tPos), NOTE_COLORS.correct);
+      if (isTarget && !isSelected) return dot(getLabel(tPos), NOTE_COLORS.missed);
+      if (!isTarget && isSelected) return dot(noteToFr(note), NOTE_COLORS.wrong);
+      if (isContext) return dot(getLabel(contextMap[key]), NOTE_COLORS.other, 0.4);
       return null;
     }
 
-    if (isSelected) return mkDot(noteToFr(note), NOTE_COLORS.selected, DOT);
+    if (isSelected) return dot(noteToFr(note), NOTE_COLORS.selected);
     // Affichage contexte (gamme/accord de fond)
-    if (isContext && !isTarget) return mkDot(getLabel(contextMap[key]), NOTE_COLORS.other, DOT, 0.5);
+    if (isContext && !isTarget) return dot(getLabel(contextMap[key]), NOTE_COLORS.other, 0.5);
     // Affichage notes visibles si showNotes
     if (showNotes) {
-      return mkDot(noteToFr(note), { bg: C.surface2, text: C.text3, border: C.border }, DOT);
+      return dot(noteToFr(note), { bg: C.surface2, text: C.text3, border: C.border });
     }
     return null;
   }
 
-  function mkDot(lbl, col, sz, opacity = 1) {
-    return (
-      <div style={{
-        width: sz, height: sz, borderRadius: "50%",
-        background: col.bg, border: `1.5px solid ${col.border}`,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: 7, fontWeight: 700, color: col.text,
-        fontFamily: FONTS.ui, position: "relative", zIndex: 2,
-        userSelect: "none", opacity,
-      }}>{lbl}</div>
-    );
-  }
-
+  // Cases MIN_F+1 … MAX_F ; la case 0 (à vide) n'existe que si MIN_F === 0.
+  // Avant l'extraction, la ligne des numéros gardait la colonne « à vide »
+  // même quand MIN_F > 0 (ex. fretRange [4, 9]) : tous les numéros étaient
+  // décalés d'une colonne par rapport aux cases. Corrigé par FretGrid.
   const frets = Array.from({ length: MAX_F - MIN_F }, (_, i) => MIN_F + i + 1);
+  const consigne = stage.instruction ? ` : ${stage.instruction}` : "";
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", minWidth: "fit-content" }}>
-      {/* Numéros de cases */}
-      <div style={{ display: "flex", marginBottom: 1 }}>
-        <div style={{ width: LW, flexShrink: 0 }} />
-        <div style={{ width: OW, flexShrink: 0 }} />
-        {frets.map(f => (
-          <div key={f} style={{ width: CW, flexShrink: 0, textAlign: "center", fontSize: T.micro, color: C.text3, height: 16, lineHeight: "16px", fontFamily: FONTS.ui, fontWeight: f === 12 ? 700 : 400 }}>{f}</div>
-        ))}
-      </div>
-
-      {strings.map(s => (
-        <div key={s} style={{ display: "flex", alignItems: "center" }}>
-          <div style={{ width: LW, flexShrink: 0, textAlign: "center", fontSize: T.micro, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui }}>{SLABELS[s]}</div>
-
-          {/* Case 0 */}
-          {MIN_F === 0 && (
-            <div
-              onClick={() => { vibrer(); onCellClick(s, 0); }}
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); vibrer(); onCellClick(s, 0); } }}
-              role="button" tabIndex={0}
-              aria-label={labelCase(s, 0, getNoteAtPosition(s, 0))}
-              style={{ width: OW, height: CH, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", cursor: revealed ? "default" : "pointer" }}
-              onMouseEnter={e => { if (!revealed) e.currentTarget.style.background = `${C.primary}0A`; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
-            >
-              <div style={{ position: "absolute", left: 0, right: 0, top: "50%", height: getStringThicknessLocal(s), background: C.border, transform: "translateY(-50%)" }} />
-              <div style={{ position: "relative", zIndex: 2 }}>{renderDot(s, 0)}</div>
-            </div>
-          )}
-
-          {/* Cases 1–N */}
-          {frets.map((f, fi) => (
-            <div
-              key={f}
-              onClick={() => { vibrer(); onCellClick(s, f); }}
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); vibrer(); onCellClick(s, f); } }}
-              role="button" tabIndex={0}
-              aria-label={labelCase(s, f, getNoteAtPosition(s, f))}
-              style={{ width: CW, height: CH, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", cursor: revealed ? "default" : "pointer" }}
-              onMouseEnter={e => { if (!revealed) e.currentTarget.style.background = `${C.primary}0A`; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
-            >
-              <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: (MIN_F === 0 && fi === 0) || fi === 0 ? 2 : 0.5, background: fi === 0 ? C.text : C.border }} />
-              <div style={{ position: "absolute", left: 0, right: 0, top: "50%", height: getStringThicknessLocal(s), background: C.border, transform: "translateY(-50%)", zIndex: 0 }} />
-              <div style={{ position: "relative", zIndex: 2 }}>{renderDot(s, f)}</div>
-            </div>
-          ))}
-        </div>
-      ))}
-
-      {/* Repères */}
-      <div style={{ display: "flex", marginTop: 1 }}>
-        <div style={{ width: LW, flexShrink: 0 }} />
-        {MIN_F === 0 && <div style={{ width: OW, flexShrink: 0 }} />}
-        {frets.map(f => (
-          <div key={f} style={{ width: CW, flexShrink: 0 }}>
-            {MARKERS.includes(f) && <div style={{ width: 5, height: 5, borderRadius: "50%", background: C.border, margin: "2px auto 0" }} />}
-            {f === 12 && <div style={{ display: "flex", gap: 4, justifyContent: "center", marginTop: 2 }}><div style={{ width: 5, height: 5, borderRadius: "50%", background: C.border }} /><div style={{ width: 5, height: 5, borderRadius: "50%", background: C.border }} /></div>}
-          </div>
-        ))}
-      </div>
-    </div>
+    <FretGrid
+      frets={frets}
+      showOpen={MIN_F === 0}
+      cellW={TAP.fretW} cellH={TAP.fret} openW={34} labelW={26}
+      variant="dense"
+      epaisseurs={EPAISSEURS_EXERCICE}
+      renderCell={renderDot}
+      interactive={!revealed}
+      onCellClick={onCellClick}
+      isCellSelected={isSel}
+      ariaLabel={!revealed ? `Manche interactif${consigne}` : `Manche, correction affichée${consigne}`}
+    />
   );
 }
