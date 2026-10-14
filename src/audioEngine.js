@@ -93,6 +93,8 @@ export const isToneReady = () => Tone !== null;
 // que playChord et playInterval n'en ont pas besoin — d'où le fait que les
 // autres modes fonctionnaient et que celui-là, spécifiquement, restait muet.
 import { CHORD_TYPES, normalizeNote, getScaleNotes, getChordNotes } from "./fretboardUtils.js";
+import { NOTES_DIESES_EN } from "./music/notes.js";
+import { symboleAccord, epelerDansTonalite, nomRacineGamme, simplifier, nomFr } from "./music/orthographe.js";
 import { planifierTab } from "./tab/tabSon.js";
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -221,7 +223,7 @@ function toToneNote(note, octave) {
   return `${flat || note}${octave}`;
 }
 
-const CHROMATIC = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+const CHROMATIC = NOTES_DIESES_EN;
 const OPEN_STRINGS = { 1:"E4", 2:"B3", 3:"G3", 4:"D3", 5:"A2", 6:"E2" };
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -1260,7 +1262,9 @@ const dureeMs = (finDerniereAttaque, dureeNote) =>
   Math.round((finDerniereAttaque + secondes(dureeNote)) * 1000) + QUEUE_AUDIBLE_MS;
 
 export function generateEarTrainingQuestion(type = "interval") {
-  const NOTES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+  // Valeurs INTERNES (dièses) : elles servent au son et aux clés de réponse.
+  // Les libellés montrés à l'élève passent par music/orthographe.js.
+  const NOTES = NOTES_DIESES_EN;
   const INTERVAL_NAMES = {
     3:  "Tierce mineure",
     4:  "Tierce majeure",
@@ -1365,7 +1369,10 @@ export function generateEarTrainingQuestion(type = "interval") {
       .sort(() => Math.random() - 0.5)
       .map(c => ({
         key: c.root + "|" + c.quality.key,
-        label: (c.root + c.quality.suffix) || c.root,
+        // Libellé orthographié, en notation française comme le reste de
+        // l'app (« Sibm », « Mib7 », pas « A#m » ni « D#7 ») ; la clé, elle,
+        // reste en dièses.
+        label: symboleAccord(c.root, c.quality.key),
       }));
 
     // Note de reference FIXE (Do), et non la fondamentale de la reponse.
@@ -1388,7 +1395,7 @@ export function generateEarTrainingQuestion(type = "interval") {
       // Aide optionnelle, declenchee par un bouton distinct.
       playReference: () => playNote(referenceNote, "2n"),
       referenceDurationMs: dureeMs(0, "2n"),
-      referenceLabel: "C",
+      referenceLabel: "Do",
     };
   }
 
@@ -1442,8 +1449,16 @@ export function generateEarTrainingQuestion(type = "interval") {
     // recalculee dans cette meme tonalite — sinon la bonne reponse serait
     // reconnaissable a sa seule tonique.
     const SUFFIX = { maj:"", min:"m", dom7:"7", maj7:"maj7", min7:"m7" };
+    // Chaque accord est orthographié DANS la tonalité de la suite : en Do
+    // mineur, i - VI - III - VII s'écrit Dom - Lab - Mib - Sib (et non
+    // Sol# - Ré# - La#). La couleur de la suite (majeure ou mineure) fixe la
+    // gamme de référence.
+    const gammeDe = (p) => (p.key.startsWith("i-") ? "natural_minor" : "major");
     const nameProg = (p) => p.degrees
-      .map(([semi, t]) => NOTES[(rootIdx + semi) % 12] + SUFFIX[t])
+      .map(([semi, t]) => {
+        const n = epelerDansTonalite((rootIdx + semi) % 12, NOTES[rootIdx], gammeDe(p));
+        return (n ? nomFr(simplifier(n)) : NOTES[(rootIdx + semi) % 12]) + SUFFIX[t];
+      })
       .join(" - ");
 
     const options = [chosen, ...distractors]
@@ -1454,7 +1469,7 @@ export function generateEarTrainingQuestion(type = "interval") {
       type:    "progression",
       chords,
       tonic:   NOTES[rootIdx],
-      tonicFr: NOTES[rootIdx],
+      tonicFr: nomRacineGamme(NOTES[rootIdx], gammeDe(chosen)),
       roman:   chosen.label,
       answer:  chosen.key,
       options,

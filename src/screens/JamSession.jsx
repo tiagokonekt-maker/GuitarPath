@@ -8,7 +8,8 @@ import { Ti } from "../design/Ti.jsx";
 import { Gropi } from "../design/Gropi.jsx";
 import { BackButton } from "../design/ui.jsx";
 import { Fretboard } from "../Fretboard.jsx";
-import { getScaleNotes, noteToFr, normalizeNote } from "../fretboardUtils.js";
+import { getScaleNotes, normalizeNote } from "../fretboardUtils.js";
+import { nomsGamme } from "../music/orthographe.js";
 import { createComper } from "../music/compRhythm.js";
 import { companionSwing, swingBeat } from "../jam/music/groove.js";
 import { activerSessionAudio } from "../audioEngine.js";
@@ -18,7 +19,7 @@ import * as Tone from "tone";
 import { makeContexts } from "./jam/contextes.js";
 import { MIXAGE } from "./jam/mixage.js";
 import {
-  ROOTS_FR, CHROMATIC, transposeNote, notesAccord, nomAccord,
+  ROOTS_FR, CHROMATIC, transposeNote, nomsNotesAccord, nomAccord, nomTonique,
   getVoicedChord, getBassPattern, getDrumPattern, getStyle,
 } from "./jam/harmonie.js";
 import { creerChrono } from "./jam/chrono.js";
@@ -832,7 +833,7 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
             {compte != null ? "Prépare-toi" : playing ? "Maintenant" : "Premier accord"}
           </div>
           <div style={{ fontSize: compte != null ? 46 : 40, fontWeight: 800, lineHeight: 1.05, letterSpacing: "-1px", fontFamily: FONTS.title, color: playing ? context.colorD : C.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-            {compte != null ? `${compte}…` : nomAccord(root, accord)}
+            {compte != null ? `${compte}…` : nomAccord(root, accord, context.scale)}
           </div>
           {/* Une pastille par mesure de l'accord en cours : on voit combien il en reste */}
           <div aria-hidden="true" style={{ display: "flex", gap: 4, marginTop: 6, height: 6 }}>
@@ -841,7 +842,7 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
             ))}
           </div>
           <div style={{ fontSize: 13, color: C.text2, fontFamily: FONTS.ui, marginTop: 7 }}>
-            Ensuite : <b style={{ color: C.text }}>{nomAccord(root, suivant)}</b>
+            Ensuite : <b style={{ color: C.text }}>{nomAccord(root, suivant, context.scale)}</b>
           </div>
         </div>
 
@@ -905,7 +906,7 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
               color: isActive ? context.colorD : C.text2,
               fontFamily: FONTS.ui, transition: "background 0.12s, border-color 0.12s",
             }}>
-              {nomAccord(root, chord)}
+              {nomAccord(root, chord, context.scale)}
               <span style={{ fontSize: 11, color: isActive ? context.color : C.text3, marginLeft: 4 }}>
                 ×{chord.bars}
               </span>
@@ -1055,8 +1056,11 @@ export function JamSession({ onBack, dispatch, state }) {
   const surLecture = (joue) => { setEnLecture(joue); if (!joue) enregistrerTemps(); };
 
   const ctx    = CONTEXTS.find(c => c.id === contextId);
-  const rootFr = ROOTS_FR.find(r => r.en === root)?.fr ?? root;
+  // Tonique et gamme orthographiées pour l'affichage (Sib, pas La#) ; les
+  // notes internes (dièses) restent celles qu'on compare et qu'on joue.
+  const rootFr = nomTonique(root, ctx.scale);
   const activeNotes = useMemo(() => getScaleNotes(root, ctx.scale), [root, ctx.scale]);
+  const nomsActifs = useMemo(() => nomsGamme(root, ctx.scale), [root, ctx.scale]);
 
   // ── Le manche suit les accords ──────────────────────────────────────────
   // Pendant la lecture, les notes de l'accord en cours s'allument sur la
@@ -1066,10 +1070,11 @@ export function JamSession({ onBack, dispatch, state }) {
   // tierce majeure du IV7 sur un blues, par exemple) sont signalées à part,
   // parce que c'est justement là que se joue le changement.
   const accordEnCours = accordIdx != null ? ctx.chords[accordIdx] : null;
-  const notesDeLAccord = useMemo(
-    () => (accordEnCours ? notesAccord(root, accordEnCours) : []),
-    [accordEnCours, root]
+  const notesAccordAffichees = useMemo(
+    () => (accordEnCours ? nomsNotesAccord(root, accordEnCours, ctx.scale) : []),
+    [accordEnCours, root, ctx.scale]
   );
+  const notesDeLAccord = useMemo(() => notesAccordAffichees.map(x => x.note), [notesAccordAffichees]);
   const dansLaGamme = (n) => activeNotes.some(g => normalizeNote(g) === normalizeNote(n));
   const choisirContexte = (c) => { setContextId(c.id); setBpm(c.bpm); };
 
@@ -1147,7 +1152,7 @@ export function JamSession({ onBack, dispatch, state }) {
                 color: root === r.en ? ctx.colorD : C.text,
                 fontSize: 12, fontWeight: root === r.en ? 700 : 400,
                 cursor: "pointer", fontFamily: FONTS.ui,
-              }}>{r.fr}</button>
+              }}>{nomTonique(r.en, ctx.scale)}</button>
             ))}
           </div>
         )}
@@ -1176,9 +1181,9 @@ export function JamSession({ onBack, dispatch, state }) {
             {accordEnCours ? (
               <>
                 <span style={{ fontSize: 11, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, marginRight: 2 }}>
-                  Notes de {nomAccord(root, accordEnCours)} :
+                  Notes de {nomAccord(root, accordEnCours, ctx.scale)} :
                 </span>
-                {notesDeLAccord.map(n => {
+                {notesAccordAffichees.map(({ note: n, nom }) => {
                   const dedans = dansLaGamme(n);
                   return (
                     <span key={n} title={dedans ? "Dans ta gamme" : "Hors de ta gamme : c'est la note qui fait entendre le changement"} style={{
@@ -1186,7 +1191,7 @@ export function JamSession({ onBack, dispatch, state }) {
                       background: dedans ? ctx.colorL : C.surface,
                       border: `1.5px ${dedans ? "solid" : "dashed"} ${dedans ? ctx.color : C.text3}`,
                       color: dedans ? ctx.colorD : C.text,
-                    }}>{noteToFr(n)}{dedans ? "" : " *"}</span>
+                    }}>{nom}{dedans ? "" : " *"}</span>
                   );
                 })}
                 {notesDeLAccord.some(n => !dansLaGamme(n)) && (
@@ -1210,7 +1215,7 @@ export function JamSession({ onBack, dispatch, state }) {
             <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
               {activeNotes.map((note, i) => (
                 <div key={note} style={{ padding: "4px 8px", borderRadius: R.pill, background: i === 0 ? ctx.colorL : C.bg, border: `1px solid ${i === 0 ? ctx.color : C.border}`, fontSize: 12, fontWeight: i === 0 ? 700 : 400, color: i === 0 ? ctx.colorD : C.text2, fontFamily: FONTS.ui }}>
-                  {noteToFr(note)}{i === 0 ? " R" : ""}
+                  {nomsActifs[i] ?? note}{i === 0 ? " R" : ""}
                 </div>
               ))}
             </div>

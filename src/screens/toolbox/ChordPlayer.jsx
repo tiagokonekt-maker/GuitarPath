@@ -6,15 +6,16 @@ import { useC } from "../../design/ThemeContext.jsx";
 import { Ti } from "../../design/Ti.jsx";
 import { playProgression, stopAll } from "../../audioEngine.js";
 import { CHORD_TYPES } from "../../fretboardUtils.js";
+import { NOTES_DIESES_EN } from "../../music/notes.js";
+import { symboleAccord, nomRacineAccord } from "../../music/orthographe.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // LECTEUR D'ACCORDS — construis une suite d'accords, écoute-la jouée avec
 // le vrai son de guitare (même moteur que le reste de l'app).
 // ═══════════════════════════════════════════════════════════════════════════
-const CHORD_ROOTS = [
-  ["C","Do"],["C#","Do#"],["D","Ré"],["D#","Ré#"],["E","Mi"],["F","Fa"],
-  ["F#","Fa#"],["G","Sol"],["G#","Sol#"],["A","La"],["A#","La#"],["B","Si"],
-];
+// Fondamentales : valeurs internes en dièses (celles que joue le moteur
+// audio). Le nom AFFICHÉ suit la qualité choisie : Sib, Mib m, Do# m, Réb…
+const CHORD_ROOTS = NOTES_DIESES_EN;
 // Qualités groupées par famille : à plat, 29 pastilles seraient illisibles
 // sur un écran de téléphone. On sélectionne d'abord la famille, ce qui garde
 // des zones tactiles confortables.
@@ -62,10 +63,10 @@ export function ChordPlayer() {
 
   const addChord = () => {
     if (sequence.length >= MAX_CHORDS) return;
-    const rootFr = CHORD_ROOTS.find(r => r[0] === root)?.[1] || root;
     // Symbole conventionnel plutôt que le nom en clair : un guitariste lit
-    // "Do7♯9" immédiatement, là où "Do 7 dièse 9" demande un décodage.
-    const label = `${rootFr}${CHORD_TYPES[quality]?.sym ?? ""}`;
+    // "Do7♯9" immédiatement, là où "Do 7 dièse 9" demande un décodage. La
+    // fondamentale est orthographiée selon l'accord (Sib7, pas La#7).
+    const label = symboleAccord(root, quality);
     setSequence(s => [...s, { root, type: quality, label }]);
   };
   const removeChord = (i) => {
@@ -107,14 +108,14 @@ export function ChordPlayer() {
       <div style={{ background:C.surface, border:`1.5px solid ${C.border}`, borderRadius:R.lg, padding:16 }}>
         <div style={{ fontSize:12, fontWeight:700, color:C.text3, marginBottom:9, fontFamily:FONTS.ui }}>Fondamentale</div>
         <div style={{ display:"grid", gridTemplateColumns:"repeat(6, 1fr)", gap:6, marginBottom:14 }}>
-          {CHORD_ROOTS.map(([code, fr]) => (
+          {CHORD_ROOTS.map(code => (
             <button key={code} onClick={() => setRoot(code)} aria-pressed={root===code} className="gr-focus" style={{
               ...chip, padding:"9px 0",
               border:`1.5px solid ${root===code ? C.primary : C.border}`,
               background: root===code ? C.primaryL : C.surface,
               color: root===code ? C.primaryD : C.text2,
             }}>
-              {fr}
+              {nomRacineAccord(code, quality)}
             </button>
           ))}
         </div>

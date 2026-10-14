@@ -5,17 +5,16 @@ import { FONTS, R } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { Fretboard } from "../Fretboard.jsx";
-import { SCALES, CHORD_TYPES, getScaleNotes, getChordNotes, noteToFr, normalizeNote } from "../fretboardUtils.js";
+import { SCALES, CHORD_TYPES, getScaleNotes, getChordNotes, normalizeNote } from "../fretboardUtils.js";
+import { NOTES_DIESES_EN } from "../music/notes.js";
+import { nomsGamme, nomsAccord, nomRacineGamme, nomRacineAccord } from "../music/orthographe.js";
 import { getChordShapes } from "../music/chordShapes.js";
 import { ChordDiagram } from "../diagrams.jsx";
 import { playScaleFromRoot, playChordFromRoot, playArpeggioFromRoot, stopAll, unlockAudio } from "../audioEngine.js";
 
-const ROOTS_FR = [
-  { en: "C",  fr: "Do"   }, { en: "C#", fr: "Do#"  }, { en: "D",  fr: "Re"   },
-  { en: "D#", fr: "Re#"  }, { en: "E",  fr: "Mi"   }, { en: "F",  fr: "Fa"   },
-  { en: "F#", fr: "Fa#"  }, { en: "G",  fr: "Sol"  }, { en: "G#", fr: "Sol#" },
-  { en: "A",  fr: "La"   }, { en: "A#", fr: "La#"  }, { en: "B",  fr: "Si"   },
-];
+// Toniques : valeurs internes en dièses. Leur nom AFFICHÉ dépend de la gamme
+// ou de l'accord choisi (Sib majeur, Do# mineur…) : voir nomRacine plus bas.
+const ROOTS = NOTES_DIESES_EN;
 
 const SCALE_OPTIONS = [
   { key: "pentatonic_minor", label: "Pentatonique mineure" },
@@ -179,12 +178,17 @@ export function FretboardExplorer({ onBack, embedded = false }) {
   const activeLabel = tab === "scale"
     ? (SCALE_OPTIONS.find(s => s.key === scaleKey)?.label ?? scaleKey)
     : (CHORD_OPTIONS.find(c => c.key === chordKey)?.label ?? chordKey);
-  const rootFr = ROOTS_FR.find(r => r.en === root)?.fr ?? root;
+  // Orthographe selon le contexte : la tonique et les notes s'écrivent comme
+  // dans la tonalité (Fa majeur : Sib, pas La#). Les valeurs internes
+  // (activeNotes, root) restent en dièses pour l'audio et le manche.
+  const nomRacine = (r) => tab === "scale" ? nomRacineGamme(r, scaleKey) : nomRacineAccord(r, chordKey);
+  const rootFr = nomRacine(root);
+  const nomsActifs = tab === "scale" ? nomsGamme(root, scaleKey) : nomsAccord(root, chordKey);
 
   const transposeSemitone = (dir) => {
-    const idx = ROOTS_FR.findIndex(r => r.en === root);
+    const idx = ROOTS.indexOf(root);
     const next = (idx + dir + 12) % 12;
-    setRoot(ROOTS_FR[next].en);
+    setRoot(ROOTS[next]);
   };
 
   return (
@@ -260,15 +264,15 @@ export function FretboardExplorer({ onBack, embedded = false }) {
         {/* Picker tonique */}
         {showRootPicker && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6, background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: 10 }}>
-            {ROOTS_FR.map(r => (
-              <button key={r.en} onClick={() => { setRoot(r.en); setShowRootPicker(false); }} style={{
+            {ROOTS.map(r => (
+              <button key={r} onClick={() => { setRoot(r); setShowRootPicker(false); }} style={{
                 padding: "8px 4px", borderRadius: 8,
-                border: `1px solid ${root === r.en ? C.primary : C.border}`,
-                background: root === r.en ? C.primaryL : C.bg,
-                color: root === r.en ? C.primaryD : C.text,
-                fontSize: 12, fontWeight: root === r.en ? 700 : 400,
+                border: `1px solid ${root === r ? C.primary : C.border}`,
+                background: root === r ? C.primaryL : C.bg,
+                color: root === r ? C.primaryD : C.text,
+                fontSize: 12, fontWeight: root === r ? 700 : 400,
                 cursor: "pointer", fontFamily: FONTS.ui,
-              }}>{r.fr}</button>
+              }}>{nomRacine(r)}</button>
             ))}
           </div>
         )}
@@ -387,7 +391,7 @@ export function FretboardExplorer({ onBack, embedded = false }) {
                 color: i === 0 ? C.amberD : C.primaryD,
                 fontFamily: FONTS.ui,
               }}>
-                {noteToFr(note)}{i === 0 ? " R" : ""}
+                {nomsActifs[i] ?? note}{i === 0 ? " R" : ""}
               </div>
             ))}
           </div>

@@ -20,12 +20,13 @@
 // raisonnement (compter les cases, empiler les intervalles), pour que
 // l'erreur serve à apprendre la méthode.
 
+// Lettres, demi-tons naturels et noms chromatiques : définis une seule fois
+// dans music/notes.js (partagés avec le manche, la Jam, la boîte à outils).
+import { LETTRES_FR, LETTRES_EN, NATUREL, NOTES_DIESES_FR, NOTES_DIESES_EN } from "../music/notes.js";
+
 // ─────────────────────────────────────────────────────────────────────────
 // THÉORIE : notes orthographiées (lettre + altération)
 // ─────────────────────────────────────────────────────────────────────────
-const LETTRES_FR = ["Do", "Ré", "Mi", "Fa", "Sol", "La", "Si"];
-const LETTRES_EN = ["C", "D", "E", "F", "G", "A", "B"];
-const NATUREL    = [0, 2, 4, 5, 7, 9, 11];   // demi-tons depuis Do
 
 /** Une note = { l: index de lettre (0=Do…6=Si), acc: -2..2 }. */
 export const N = (l, acc = 0) => ({ l, acc });
@@ -87,7 +88,7 @@ const ARMURES = { "Do": [0, ""], "Sol": [1, "#"], "Ré": [2, "#"], "La": [3, "#"
 // Manche
 const CORDE_MIDI = { 6: 40, 5: 45, 4: 50, 3: 55, 2: 59, 1: 64 };
 const NOM_CORDE = { 6: "Mi grave", 5: "La", 4: "Ré", 3: "Sol", 2: "Si", 1: "Mi aigu" };
-const NOMS_PC = ["Do", "Do#", "Ré", "Ré#", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "La#", "Si"];
+const NOMS_PC = NOTES_DIESES_FR;   // notes isolées, sans tonalité : dièses
 export const noteManche = (corde, cas) => NOMS_PC[(CORDE_MIDI[corde] + cas) % 12];
 const estNaturelle = (corde, cas) => !noteManche(corde, cas).includes("#");
 
@@ -376,7 +377,7 @@ function familleMode(nomMode, lecon, num, dt, descr) {
 // (audioEngine.jouerEcoute). Les tests comparent cette description à la
 // bonne réponse : ce qu'on entend est forcément ce qui est corrigé.
 // ─────────────────────────────────────────────────────────────────────────
-const NOMS_TONE = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+const NOMS_TONE = NOTES_DIESES_EN;
 export const midiVersTone = (m) => `${NOMS_TONE[m % 12]}${Math.floor(m / 12) - 1}`;
 const nomMidi = (m) => NOMS_PC[m % 12];
 const entre = (rng, a, b) => a + Math.floor(rng() * (b - a + 1));
@@ -588,7 +589,9 @@ const familleFonctions = {
     const d = choisir(rng, choix), tonique = niv === 3 ? entre(rng, 45, 55) : choisir(rng, [48, 50, 52]);
     const accord = (deg) => { const [dec, pile] = DEGRES_ACCORDS[deg]; return [...pile, 12].map(i => tonique + dec + i); };
     const o = choix.map(k => DEGRES_ACCORDS[k][2]);
-    const nomT = NOMS_PC[tonique % 12];
+    // Nom USUEL de la tonalité (Lab majeur, pas Sol# majeur) : RACINES[3]
+    // contient les 12 tonalités majeures orthographiées.
+    const nomT = nom(RACINES[3].find(r => pc(r) === tonique % 12));
     const pourquoi = { I: "c'était encore la tonique : aucun mouvement", IV: "le IV s'éloigne de la tonique en douceur, sans tension", V: "le V crée une tension qui appelle le retour à la tonique", vi: "le vi est mineur : même famille que le I, en plus sombre" }[d];
     return { q: "Écoute : d'abord l'accord I (la tonique), puis un autre accord. Lequel ?", o, a: o.indexOf(DEGRES_ACCORDS[d][2]),
       audio: { type: "suite", accords: [accord("I").map(midiVersTone), accord(d).map(midiVersTone)] },

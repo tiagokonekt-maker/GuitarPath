@@ -6,11 +6,14 @@ import { useC } from "../../design/ThemeContext.jsx";
 import { Ti } from "../../design/Ti.jsx";
 import { Gropi } from "../../design/Gropi.jsx";
 import { detectPitch } from "../../music/pitch.js";
+import { NOTES_DIESES_FR } from "../../music/notes.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // ACCORDEUR (micro + autocorrélation)
 // ═══════════════════════════════════════════════════════════════════════════
-const NOTE_NAMES = ["Do","Do#","Ré","Ré#","Mi","Fa","Fa#","Sol","Sol#","La","La#","Si"];
+// Un accordeur mesure une hauteur isolée, sans tonalité : les dièses sont
+// la convention des accordeurs (et des noms du catalogue ci-dessous).
+const NOTE_NAMES = NOTES_DIESES_FR;
 
 // note (nom FR + octave) -> fréquence (La4 = 440 Hz, tempérament égal)
 function noteToHz(name, oct) {

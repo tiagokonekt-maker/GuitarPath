@@ -4,16 +4,21 @@
 // (aucune logique modifiée) : elles étaient recréées à chaque rendu du
 // lecteur alors qu'elles ne dépendent d'aucun état.
 import { normalizeNote } from "../../fretboardUtils.js";
+import { NOTES_DIESES_EN, NOTES_DIESES_FR } from "../../music/notes.js";
+import { epelerDansTonalite, epelerAccord, simplifier, nomFr, nomRacineGamme } from "../../music/orthographe.js";
 import { generateWalkingBar, toToneNote as toToneNoteFromMidi, toToneTime } from "../../music/walkingBass.js";
 
-export const ROOTS_FR = [
-  { en: "A",  fr: "La"   }, { en: "B",  fr: "Si"   }, { en: "C",  fr: "Do"   },
-  { en: "D",  fr: "Ré"   }, { en: "E",  fr: "Mi"   }, { en: "F",  fr: "Fa"   },
-  { en: "G",  fr: "Sol"  }, { en: "C#", fr: "Do#"  }, { en: "D#", fr: "Ré#"  },
-  { en: "F#", fr: "Fa#"  }, { en: "G#", fr: "Sol#" }, { en: "A#", fr: "La#"  },
-];
+// Toniques proposées : naturelles d'abord, altérées ensuite. `en` est la
+// valeur interne (dièses) ; `fr` le nom sans contexte. Pour l'AFFICHAGE,
+// passer par nomTonique() : la tonique s'écrit selon la gamme jouée
+// (Sib et non La#, Do# m mais Réb majeur).
+export const ROOTS_FR = ["A", "B", "C", "D", "E", "F", "G", "C#", "D#", "F#", "G#", "A#"]
+  .map(en => ({ en, fr: NOTES_DIESES_FR[NOTES_DIESES_EN.indexOf(en)] }));
 
-export const CHROMATIC = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+export const CHROMATIC = NOTES_DIESES_EN;
+
+/** Nom affiché de la tonique, orthographié pour la gamme du contexte. */
+export const nomTonique = (root, scaleKey) => nomRacineGamme(root, scaleKey);
 const SHARP_TO_FLAT = { "C#":"Db","D#":"Eb","F#":"Gb","G#":"Ab","A#":"Bb" };
 
 export function transposeNote(root, semitones) {
@@ -35,10 +40,31 @@ export function notesAccord(root, chord) {
   const r = transposeNote(root, chord.degree);
   return (CHORD_INTERVALS[chord.quality] || CHORD_INTERVALS.dom7).map(i => transposeNote(r, i));
 }
-export const nomAccord = (root, chord) => {
-  const r = transposeNote(root, chord.degree);
-  return (ROOTS_FR.find(x => x.en === r)?.fr ?? r) + (QUALITE_LABEL[chord.quality] ?? "");
+/**
+ * Fondamentale de l'accord, orthographiée DANS la tonalité : en Fa, le IV
+ * est Sib (pas La#) ; en Mib, le ii est Fa m. Sans gamme connue, on prend
+ * la majeure de la tonique.
+ */
+const racineDansTonalite = (root, chord, scaleKey) =>
+  epelerDansTonalite(CHROMATIC.indexOf(transposeNote(root, chord.degree)), root, scaleKey || "major");
+
+export const nomAccord = (root, chord, scaleKey) => {
+  const r = racineDansTonalite(root, chord, scaleKey);
+  const nom = r ? nomFr(simplifier(r)) : transposeNote(root, chord.degree);
+  return nom + (QUALITE_LABEL[chord.quality] ?? "");
 };
+
+/**
+ * Notes de l'accord pour l'affichage : `note` reste la valeur interne
+ * (dièses, comparable à la gamme et au manche), `nom` est orthographié
+ * depuis la fondamentale de l'accord (Sib7 = Sib-Ré-Fa-Lab).
+ */
+export function nomsNotesAccord(root, chord, scaleKey) {
+  const internes = notesAccord(root, chord);
+  const r = racineDansTonalite(root, chord, scaleKey);
+  const epelees = r ? epelerAccord(r, CHORD_INTERVALS[chord.quality] || CHORD_INTERVALS.dom7) : [];
+  return internes.map((note, i) => ({ note, nom: epelees[i] ? nomFr(simplifier(epelees[i])) : note }));
+}
 
 // ── Voicings d'accords réalistes (positions de guitare) ──────────────────
 // Intervalles depuis la root, construits pour sonner comme une vraie main

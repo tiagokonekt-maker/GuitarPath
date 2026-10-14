@@ -53,9 +53,9 @@ const vibrer = (ms = 8) => {
 // Ex. « Corde de Mi grave, case 3, Sol ». Le numéro de corde seul (« Corde
 // 6 ») ne parle qu'aux guitaristes déjà aguerris.
 const NOMS_CORDES = { 6: "Mi grave", 5: "La", 4: "Ré", 3: "Sol", 2: "Si", 1: "Mi aigu" };
-const labelCase = (corde, fret, note) => {
+const labelCase = (corde, fret, note, nomNote = noteToFr) => {
   const nom = `Corde de ${NOMS_CORDES[corde] ?? corde}`;
-  const n = note ? noteToFr(note) : "";
+  const n = note ? nomNote(note) : "";
   return fret === 0
     ? `${nom} à vide${n ? `, ${n}` : ""}`
     : `${nom}, case ${fret}${n ? `, ${n}` : ""}`;
@@ -125,6 +125,8 @@ const VARIANTES = {
  * onCellClick    : (corde, case) => void
  * isCellSelected : (corde, case) => boolean — expose aria-selected (optionnel)
  * ariaLabel      : résumé du manche (lu en entier en mode non interactif)
+ * nomNote        : (note interne) => nom lu — orthographié selon la tonalité
+ *                  quand l'appelant en connaît une (défaut : noteToFr, dièses)
  */
 export function FretGrid({
   frets,
@@ -139,6 +141,7 @@ export function FretGrid({
   onCellClick,
   isCellSelected,
   ariaLabel = "Manche de guitare",
+  nomNote = noteToFr,
 }) {
   const C = useC();
   const V = VARIANTES[variant] ?? VARIANTES.standard;
@@ -190,7 +193,7 @@ export function FretGrid({
       ref: (el) => { if (el) refs.current.set(k, el); else refs.current.delete(k); },
       role: "gridcell",
       tabIndex: estActif ? 0 : -1,
-      "aria-label": labelCase(s, f, getNoteAtPosition(s, f)),
+      "aria-label": labelCase(s, f, getNoteAtPosition(s, f), nomNote),
       ...(isCellSelected ? { "aria-selected": !!isCellSelected(s, f) } : {}),
       "data-interactive": "",
       onClick: () => { setActif({ s, f }); activer(s, f); },

@@ -42,6 +42,49 @@ import {
   noteToFr,
   normalizeNote,
 } from "./fretboardUtils.js";
+import { carteNoms, lireNote, nomFr, nomEn, nomRacineGamme, nomRacineAccord } from "./music/orthographe.js";
+
+// ───────────────────────────────────────────────────────────────────────────
+// ORTHOGRAPHE DES PASTILLES
+// Les positions restent calculées en notes internes (dièses) ; seul le NOM
+// affiché change quand une gamme ou un accord donne une tonalité : en Fa
+// majeur la pastille dit « Sib », pas « La# ». Sans contexte (quiz « trouve
+// tous les… », note isolée), on garde noteToFr (dièses), comme avant.
+// Les doubles altérations (7e de dim7) sont affichées sous leur enharmonique
+// simple (Sibb → La) : lisible sur une pastille, et le contenu des leçons
+// écrit déjà le 𝄫 là où il l'enseigne.
+// ───────────────────────────────────────────────────────────────────────────
+function carteContexte({ mode, root, scale, chord, highlightedNotes, quizTarget, lang }) {
+  const langue = lang === "en" ? "en" : "fr";
+  if (mode === "scale" && root && scale) return carteNoms(root, { gamme: scale, langue });
+  if (mode === "chord" && root && chord) return carteNoms(root, { accord: chord, langue });
+  // Notes surlignées ou cible de quiz : on respecte l'orthographe écrite
+  // par l'auteur (« Bb » s'affiche Sib, « A# » La#).
+  const ecrites = mode === "highlight" ? highlightedNotes : mode === "quiz" && quizTarget ? [quizTarget] : null;
+  if (ecrites?.length) {
+    const carte = new Map();
+    for (const n of ecrites) {
+      if (!carte.has(normalizeNote(n))) carte.set(normalizeNote(n), nomEcrit(n, lang));
+    }
+    return carte;
+  }
+  return null;
+}
+/** Nom d'une note dans l'orthographe où elle est écrite ("Bb" → "Sib"). */
+function nomEcrit(n, lang = "fr") {
+  const lu = lireNote(n);
+  if (!lu) return nomSansContexte(n, lang);
+  return lang === "en" ? nomEn(lu) : nomFr(lu);
+}
+const nomSansContexte = (note, lang) => (lang === "fr" ? noteToFr(note) : note);
+/** Nom affiché d'une fondamentale, orthographié pour sa gamme ou son accord. */
+function nomRacine(root, { scale, chord, lang = "fr" } = {}) {
+  if (!root) return "";
+  const langue = lang === "en" ? "en" : "fr";
+  if (scale) return nomRacineGamme(root, scale, langue);
+  if (chord) return nomRacineAccord(root, chord, langue);
+  return nomSansContexte(root, lang);
+}
 
 const FONTS = {
   title:    '"Clarendon LT", "Clarendon", "Playfair Display", Georgia, serif',
@@ -84,10 +127,11 @@ function colorForDegree(degree, isRoot, NOTE_COLORS) {
 // ───────────────────────────────────────────────────────────────────────────
 // LABEL D'UNE NOTE selon le displayMode
 // ───────────────────────────────────────────────────────────────────────────
-function getNoteLabel(note, interval, degree, displayMode, lang = "fr") {
+function getNoteLabel(note, interval, degree, displayMode, lang = "fr", noms = null) {
+  const nomNote = () => noms?.get(normalizeNote(note)) ?? nomSansContexte(note, lang);
   switch (displayMode) {
     case "notes":
-      return lang === "fr" ? noteToFr(note) : note;
+      return nomNote();
     case "intervals":
       return INTERVAL_NAMES[interval]?.short ?? "?";
     case "degrees":
@@ -96,7 +140,7 @@ function getNoteLabel(note, interval, degree, displayMode, lang = "fr") {
       if (interval != null) return INTERVAL_NAMES[interval]?.short ?? "?";
       return "?";
     default:
-      return lang === "fr" ? noteToFr(note) : note;
+      return nomNote();
   }
 }
 
@@ -234,6 +278,13 @@ export function Fretboard({
     return [];
   }, [mode, root, scale, chord, highlightedNotes, quizTarget, endFret]);
 
+  // ── Noms orthographiés selon la tonalité (voir carteContexte) ───────────
+  const nomsContexte = useMemo(
+    () => carteContexte({ mode, root, scale, chord, highlightedNotes, quizTarget, lang }),
+    [mode, root, scale, chord, highlightedNotes, quizTarget, lang]
+  );
+  const nomAffiche = (note) => nomsContexte?.get(normalizeNote(note)) ?? nomSansContexte(note, lang);
+
   // ── Lookup rapide : pos → info ───────────────────────────────────────────
   const positionMap = useMemo(() => {
     const map = {};
@@ -283,12 +334,12 @@ export function Fretboard({
   const interactive = mode === "quiz" || !!onNoteClick;
 
   // ── Résumé pour les lecteurs d'écran ────────────────────────────────────
-  const rootFr = root ? noteToFr(root) : "";
+  const rootFr = nomRacine(root, { scale: mode === "scale" ? scale : null, chord: mode === "chord" ? chord : null });
   const resume = (
     mode === "scale" && root && scale ? `Manche : gamme ${SCALES[scale]?.name ?? scale} de ${rootFr}`
     : mode === "chord" && root && chord ? `Manche : accord ${rootFr} ${CHORD_TYPES[chord]?.name ?? chord}`
-    : mode === "highlight" && highlightedNotes?.length ? `Manche : notes ${highlightedNotes.map(noteToFr).join(", ")}`
-    : mode === "quiz" && quizTarget ? `Manche : trouve tous les ${noteToFr(quizTarget)}`
+    : mode === "highlight" && highlightedNotes?.length ? `Manche : notes ${highlightedNotes.map(n => nomEcrit(n)).join(", ")}`
+    : mode === "quiz" && quizTarget ? `Manche : trouve tous les ${nomEcrit(quizTarget)}`
     : "Manche de guitare"
   ) + `, cases ${startFret} à ${endFret}`;
 
@@ -313,6 +364,7 @@ export function Fretboard({
             ? (s, f) => quizSelected.some(p => p.string === s && p.fret === f)
             : undefined}
           ariaLabel={resume}
+          nomNote={nomAffiche}
         />
       </div>
       </div>{/* /gr-hscroll-wrap */}
@@ -345,22 +397,22 @@ export function Fretboard({
       if (quizRevealed) {
         if (isCorrect && isSelected) {
           const note = getNoteAtPosition(s, f);
-          return <NoteMarker label={lang === "fr" ? noteToFr(note) : note} color={NOTE_COLORS.correct} size={dotSz} />;
+          return <NoteMarker label={nomAffiche(note)} color={NOTE_COLORS.correct} size={dotSz} />;
         }
         if (isCorrect && !isSelected) {
           const note = getNoteAtPosition(s, f);
-          return <NoteMarker label={lang === "fr" ? noteToFr(note) : note} color={NOTE_COLORS.missed} size={dotSz} />;
+          return <NoteMarker label={nomAffiche(note)} color={NOTE_COLORS.missed} size={dotSz} />;
         }
         if (!isCorrect && isSelected) {
           const note = getNoteAtPosition(s, f);
-          return <NoteMarker label={lang === "fr" ? noteToFr(note) : note} color={NOTE_COLORS.wrong} size={dotSz} />;
+          return <NoteMarker label={nomAffiche(note)} color={NOTE_COLORS.wrong} size={dotSz} />;
         }
         return null;
       }
 
       if (isSelected) {
         const note = getNoteAtPosition(s, f);
-        return <NoteMarker label={lang === "fr" ? noteToFr(note) : note} color={NOTE_COLORS.selected} size={dotSz} />;
+        return <NoteMarker label={nomAffiche(note)} color={NOTE_COLORS.selected} size={dotSz} />;
       }
       return null;
     }
@@ -370,14 +422,14 @@ export function Fretboard({
       const isExt = externalSelected.some(p => p.string === s && p.fret === f);
       if (isExt) {
         const note = getNoteAtPosition(s, f);
-        return <NoteMarker label={lang === "fr" ? noteToFr(note) : note} color={NOTE_COLORS.selected} size={dotSz} />;
+        return <NoteMarker label={nomAffiche(note)} color={NOTE_COLORS.selected} size={dotSz} />;
       }
     }
 
     // Mode visualisation
     if (!pos) return null;
 
-    const label = getNoteLabel(pos.note, pos.interval, pos.degree, displayMode, lang);
+    const label = getNoteLabel(pos.note, pos.interval, pos.degree, displayMode, lang, nomsContexte);
     const baseColor = pos.isRoot
       ? NOTE_COLORS.root
       : colorForDegree(pos.degree, false, NOTE_COLORS);
@@ -413,7 +465,7 @@ export function Fretboard({
 function QuizControls({ selected, correct, revealed, target, lang, onReveal, onReset }) {
   const C = useC();
   const result = checkQuizCompletion(selected, correct);
-  const label = lang === "fr" ? noteToFr(target) : target;
+  const label = nomEcrit(target, lang);
 
   return (
     <div style={{
@@ -551,7 +603,11 @@ export function FretboardLesson({ block }) {
   }[block.mode] ?? "";
 
   const rootLabel = block.root
-    ? (block.lang === "en" ? block.root : noteToFr(block.root))
+    ? nomRacine(block.root, {
+        scale: block.mode === "scale" ? block.scale : null,
+        chord: block.mode === "chord" ? block.chord : null,
+        lang: block.lang === "en" ? "en" : "fr",
+      })
     : "";
 
   return (
@@ -870,12 +926,24 @@ function FretboardQuizCanvas({ targetPositions, contextPositions, selected, reve
 
   const isSel = (s, f) => selected.some(p => p.string === s && p.fret === f);
 
+  // Noms orthographiés : selon l'accord ou la gamme de contexte s'il y en a
+  // un, sinon selon l'orthographe de la note cible (« Bb » → Sib).
+  const nomsQuestion = useMemo(() => {
+    const fretMode = question?.fretMode || question?.concept?.type;
+    const root = question?.root || question?.concept?.root;
+    if (fretMode === "find_chord" && root && question.chord) return carteNoms(root, { accord: question.chord });
+    if (fretMode === "find_scale_root" && root && question.scale) return carteNoms(root, { gamme: question.scale });
+    const cible = question?.target || root;
+    return cible ? new Map([[normalizeNote(cible), nomEcrit(cible)]]) : null;
+  }, [question]);
+
   function renderDot(s, f) {
     const key = `${s}-${f}`;
     const isSelected = isSel(s, f);
     const isTarget = targetMap[key];
     const ctx = contextMap[key];
-    const dot = (col) => <PastilleDense label={noteToFr(getNoteAtPosition(s, f))} color={col} size={DOT} />;
+    const note = getNoteAtPosition(s, f);
+    const dot = (col) => <PastilleDense label={nomsQuestion?.get(note) ?? noteToFr(note)} color={col} size={DOT} />;
 
     if (revealed) {
       if (isTarget && isSelected) return dot(NOTE_COLORS.correct);

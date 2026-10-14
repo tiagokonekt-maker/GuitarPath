@@ -12,7 +12,9 @@
 //
 // JavaScript pur, testable en Node.
 
-const CHROMATIC = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+import { NOTES_DIESES_EN } from "./notes.js";
+
+const CHROMATIC = NOTES_DIESES_EN;   // classes de hauteur internes (music/notes.js)
 // Cordes à vide, de la 6e (grave) à la 1re (aiguë).
 const OPEN_STRINGS = ["E","A","D","G","B","E"];
 

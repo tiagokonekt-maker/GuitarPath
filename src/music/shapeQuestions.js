@@ -14,7 +14,8 @@
 // d'erreur musicale introduit ici.
 
 import { getChordShapes } from "./chordShapes.js";
-import { CHORD_TYPES, noteToFr } from "../fretboardUtils.js";
+import { CHORD_TYPES } from "../fretboardUtils.js";
+import { symboleAccord } from "./orthographe.js";
 
 // Tonalités usuelles à la guitare — on évite les tonalités rares en début de
 // parcours, elles n'apportent rien pédagogiquement et découragent.
@@ -80,9 +81,8 @@ export function makeShapeQuestion(level = 1, rng = Math.random) {
     // Moins de 2 doigts, il n'y a pas de forme à reproduire.
     if (positions.length < 2) continue;
 
-    const rootFr = noteToFr(root);
-    const sym = CHORD_TYPES[quality]?.sym ?? "";
-    const chordName = `${rootFr}${sym}`;
+    // Nom orthographié selon l'accord : Sib7, pas La#7.
+    const chordName = symboleAccord(root, quality);
 
     // L'énoncé change selon le niveau : c'est lui qui porte la progression
     // pédagogique, pas seulement la difficulté de la forme.

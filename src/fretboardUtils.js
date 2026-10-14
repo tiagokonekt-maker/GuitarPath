@@ -8,8 +8,12 @@
 // CONSTANTES FONDAMENTALES
 // ───────────────────────────────────────────────────────────────────────────
 
-// Les 12 notes en notation internationale (sharps par défaut)
-export const CHROMATIC_NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+import { NOTES_DIESES_EN, NOTES_DIESES_FR } from "./music/notes.js";
+
+// Les 12 notes en notation internationale (sharps par défaut). Noms de
+// CLASSES DE HAUTEUR pour les calculs : pour montrer une note à l'élève dans
+// une tonalité (Sib en Fa, pas La#), voir music/orthographe.js.
+export const CHROMATIC_NOTES = NOTES_DIESES_EN;
 
 // Alias bémols → dièses (sens unique — on normalise toujours vers les dièses)
 export const ENHARMONICS = {
@@ -18,11 +22,8 @@ export const ENHARMONICS = {
 };
 
 // Noms français des notes (pour l'affichage en mode "french")
-export const NOTES_FR = {
-  "C": "Do", "C#": "Do#", "D": "Ré", "D#": "Ré#",
-  "E": "Mi", "F": "Fa", "F#": "Fa#", "G": "Sol",
-  "G#": "Sol#", "A": "La", "A#": "La#", "B": "Si",
-};
+// (dièses, sans contexte de tonalité — voir noteToFr)
+export const NOTES_FR = Object.fromEntries(NOTES_DIESES_EN.map((en, i) => [en, NOTES_DIESES_FR[i]]));
 
 // Cordes à vide — de la corde 1 (Mi aigu) à la corde 6 (Mi grave)
 // Convention Guitar Path : corde 6 = Mi grave (gauche), corde 1 = Mi aigu (droite)
@@ -140,7 +141,7 @@ export const INTERVAL_NAMES = {
 
 /**
  * Normalise une note vers sa forme sharp canonique.
- * "Bb" → "A#", "Do" → "C", etc.
+ * "Bb" → "A#", "Do" → "C", "Sib" → "A#", "Cb" → "B", etc.
  */
 export function normalizeNote(note) {
   if (!note) return null;
@@ -149,6 +150,17 @@ export function normalizeNote(note) {
   if (frToEn[note]) return frToEn[note];
   // Résolution des bémols
   if (ENHARMONICS[note]) return ENHARMONICS[note];
+  // Noms orthographiés venus de music/orthographe.js ("Sib", "Mib", "Mi#",
+  // "Sibb") : ramenés à leur classe de hauteur, pour que l'affichage
+  // orthographié reste comparable à la logique interne.
+  const m = /^(Do|Ré|Re|Mi|Fa|Sol|La|Si|[A-G])(#{1,2}|b{1,2})$/.exec(note);
+  if (m) {
+    const lettre = m[1] === "Re" ? "Ré" : m[1];
+    const base = frToEn[lettre] ?? lettre;
+    const acc = m[2].startsWith("#") ? m[2].length : -m[2].length;
+    const idx = CHROMATIC_NOTES.indexOf(base);
+    if (idx !== -1) return CHROMATIC_NOTES[(idx + acc + 12) % 12];
+  }
   return note;
 }
 
@@ -320,7 +332,11 @@ export function getInterval(from, to) {
 }
 
 /**
- * Retourne le nom français d'une note.
+ * Retourne le nom français d'une note, SANS contexte de tonalité : les
+ * altérées sortent toujours en dièses ("Bb" → "La#"). À réserver aux notes
+ * isolées (accordeur, quiz « trouve tous les… »). Dès qu'une gamme ou un
+ * accord est connu, passer par music/orthographe.js (nomsGamme,
+ * carteNoms…), qui écrit Sib en Fa majeur.
  * @param {string} note - Note en notation anglaise (ex: "C#")
  * @returns {string}    - "Do#"
  */

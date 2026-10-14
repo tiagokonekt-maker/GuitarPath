@@ -642,13 +642,34 @@ var init_Gropi = __esm({
   }
 });
 
+// src/music/notes.js
+var NOTES_DIESES_EN, NOTES_DIESES_FR, NOTES_BEMOLS_EN, LETTRES_FR, LETTRES_EN, NATUREL;
+var init_notes = __esm({
+  "src/music/notes.js"() {
+    NOTES_DIESES_EN = Object.freeze(["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]);
+    NOTES_DIESES_FR = Object.freeze(["Do", "Do#", "R\xE9", "R\xE9#", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "La#", "Si"]);
+    NOTES_BEMOLS_EN = Object.freeze(["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"]);
+    LETTRES_FR = Object.freeze(["Do", "R\xE9", "Mi", "Fa", "Sol", "La", "Si"]);
+    LETTRES_EN = Object.freeze(["C", "D", "E", "F", "G", "A", "B"]);
+    NATUREL = Object.freeze([0, 2, 4, 5, 7, 9, 11]);
+  }
+});
+
 // src/fretboardUtils.js
-function normalizeNote(note) {
-  if (!note) return null;
+function normalizeNote(note2) {
+  if (!note2) return null;
   const frToEn = Object.fromEntries(Object.entries(NOTES_FR).map(([en, fr]) => [fr, en]));
-  if (frToEn[note]) return frToEn[note];
-  if (ENHARMONICS[note]) return ENHARMONICS[note];
-  return note;
+  if (frToEn[note2]) return frToEn[note2];
+  if (ENHARMONICS[note2]) return ENHARMONICS[note2];
+  const m = /^(Do|Ré|Re|Mi|Fa|Sol|La|Si|[A-G])(#{1,2}|b{1,2})$/.exec(note2);
+  if (m) {
+    const lettre = m[1] === "Re" ? "R\xE9" : m[1];
+    const base = frToEn[lettre] ?? lettre;
+    const acc = m[2].startsWith("#") ? m[2].length : -m[2].length;
+    const idx = CHROMATIC_NOTES.indexOf(base);
+    if (idx !== -1) return CHROMATIC_NOTES[(idx + acc + 12) % 12];
+  }
+  return note2;
 }
 function getNoteAtPosition(string, fret) {
   const openNote = OPEN_STRINGS[string];
@@ -656,8 +677,8 @@ function getNoteAtPosition(string, fret) {
   const openIdx = CHROMATIC_NOTES.indexOf(openNote);
   return CHROMATIC_NOTES[(openIdx + fret) % 12];
 }
-function getPositionsOfNote(note, maxFret = 12, strings = [1, 2, 3, 4, 5, 6]) {
-  const target = normalizeNote(note);
+function getPositionsOfNote(note2, maxFret = 12, strings = [1, 2, 3, 4, 5, 6]) {
+  const target = normalizeNote(note2);
   const positions = [];
   for (const s of strings) {
     for (let f = 0; f <= maxFret; f++) {
@@ -693,9 +714,9 @@ function getScalePositions(root, scaleKey, maxFret = 12) {
   const positions = [];
   for (let s = 1; s <= 6; s++) {
     for (let f = 0; f <= maxFret; f++) {
-      const note = getNoteAtPosition(s, f);
-      const noteIdx = CHROMATIC_NOTES.indexOf(note);
-      if (scaleNotes.includes(note)) {
+      const note2 = getNoteAtPosition(s, f);
+      const noteIdx = CHROMATIC_NOTES.indexOf(note2);
+      if (scaleNotes.includes(note2)) {
         const semitones = (noteIdx - rootIdx + 12) % 12;
         let degreeIdx = scale.intervals.indexOf(semitones);
         let actualInterval = semitones;
@@ -706,11 +727,11 @@ function getScalePositions(root, scaleKey, maxFret = 12) {
         positions.push({
           string: s,
           fret: f,
-          note,
+          note: note2,
           interval: actualInterval,
           // Degré dans la gamme (1-based), ex: 1 = fondamentale, 5 = quinte
           degree: degreeIdx + 1,
-          isRoot: note === rootNorm
+          isRoot: note2 === rootNorm
         });
       }
     }
@@ -726,9 +747,9 @@ function getChordPositions(root, chordType, maxFret = 12) {
   const positions = [];
   for (let s = 1; s <= 6; s++) {
     for (let f = 0; f <= maxFret; f++) {
-      const note = getNoteAtPosition(s, f);
-      const noteIdx = CHROMATIC_NOTES.indexOf(note);
-      if (chordNotes.includes(note)) {
+      const note2 = getNoteAtPosition(s, f);
+      const noteIdx = CHROMATIC_NOTES.indexOf(note2);
+      if (chordNotes.includes(note2)) {
         const semitones = (noteIdx - rootIdx + 12) % 12;
         let degreeIdx = chord.intervals.indexOf(semitones);
         let actualInterval = semitones;
@@ -739,10 +760,10 @@ function getChordPositions(root, chordType, maxFret = 12) {
         positions.push({
           string: s,
           fret: f,
-          note,
+          note: note2,
           interval: actualInterval,
           degree: degreeIdx + 1,
-          isRoot: note === rootNorm
+          isRoot: note2 === rootNorm
         });
       }
     }
@@ -755,8 +776,8 @@ function getInterval(from, to) {
   if (a === -1 || b === -1) return null;
   return (b - a + 12) % 12;
 }
-function noteToFr(note) {
-  return NOTES_FR[normalizeNote(note)] || note;
+function noteToFr(note2) {
+  return NOTES_FR[normalizeNote(note2)] || note2;
 }
 function getHighlightPositions(notes, maxFret = 12) {
   if (!notes || notes.length === 0) return [];
@@ -764,12 +785,12 @@ function getHighlightPositions(notes, maxFret = 12) {
   const positions = [];
   for (let s = 1; s <= 6; s++) {
     for (let f = 0; f <= maxFret; f++) {
-      const note = getNoteAtPosition(s, f);
-      if (normalized.includes(note)) {
+      const note2 = getNoteAtPosition(s, f);
+      if (normalized.includes(note2)) {
         positions.push({
           string: s,
           fret: f,
-          note,
+          note: note2,
           isRoot: f === 0 ? false : void 0
           // le caller peut surcharger
         });
@@ -798,7 +819,8 @@ function checkQuizCompletion(selected, correct) {
 var CHROMATIC_NOTES, ENHARMONICS, NOTES_FR, OPEN_STRINGS, MARKER_FRETS, DOUBLE_MARKER_FRETS, SCALES, CHORD_TYPES, INTERVAL_NAMES;
 var init_fretboardUtils = __esm({
   "src/fretboardUtils.js"() {
-    CHROMATIC_NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+    init_notes();
+    CHROMATIC_NOTES = NOTES_DIESES_EN;
     ENHARMONICS = {
       "Db": "C#",
       "Eb": "D#",
@@ -808,20 +830,7 @@ var init_fretboardUtils = __esm({
       "Bb": "A#",
       "Cb": "B"
     };
-    NOTES_FR = {
-      "C": "Do",
-      "C#": "Do#",
-      "D": "R\xE9",
-      "D#": "R\xE9#",
-      "E": "Mi",
-      "F": "Fa",
-      "F#": "Fa#",
-      "G": "Sol",
-      "G#": "Sol#",
-      "A": "La",
-      "A#": "La#",
-      "B": "Si"
-    };
+    NOTES_FR = Object.fromEntries(NOTES_DIESES_EN.map((en, i) => [en, NOTES_DIESES_FR[i]]));
     OPEN_STRINGS = {
       1: "E",
       // Mi aigu
@@ -913,6 +922,187 @@ var init_fretboardUtils = __esm({
       12: { short: "8", name: "Octave", fr: "Octave" },
       14: { short: "9", name: "Major 9th", fr: "Neuvi\xE8me majeure" }
     };
+  }
+});
+
+// src/music/orthographe.js
+function intervalle(n, numero, demiTons) {
+  const l = (n.l + numero - 1) % 7;
+  let acc = ((pcDe(n) + demiTons - NATUREL[l]) % 12 + 12) % 12;
+  if (acc > 6) acc -= 12;
+  return note(l, acc);
+}
+function simplifier(n) {
+  if (Math.abs(n.acc) < 2) return n;
+  const pc2 = pcDe(n);
+  const nat = NATUREL.indexOf(pc2);
+  if (nat !== -1) return note(nat);
+  return n.acc > 0 ? note(NATUREL.indexOf(pc2 - 1), 1) : note(NATUREL.indexOf((pc2 + 1) % 12), -1);
+}
+function lireNote(nom2) {
+  if (nom2 && typeof nom2 === "object" && Number.isInteger(nom2.l)) return nom2;
+  const s = String(nom2 ?? "").trim().replace(/♯/g, "#").replace(/♭/g, "b");
+  const m = /^(Do|Ré|Re|Mi|Fa|Sol|La|Si|[A-G])(#{1,2}|b{1,2})?(-?\d+)?$/.exec(s);
+  if (!m) return null;
+  const l = m[1].length === 1 ? LETTRE_EN[m[1]] : LETTRE_FR[m[1]];
+  const alt = m[2] || "";
+  return note(l, alt.startsWith("#") ? alt.length : alt ? -alt.length : 0);
+}
+function numerosGamme(intervalles, scaleKey) {
+  if (scaleKey && NUMEROS_GAMME[scaleKey]) return NUMEROS_GAMME[scaleKey];
+  if (intervalles.length === 7) return intervalles.map((_, i) => i + 1);
+  return intervalles.map((i) => NUMERO_GAMME[i % 12]);
+}
+function numerosAccord(intervalles, chordKey) {
+  if (chordKey && NUMEROS_ACCORD[chordKey]) return NUMEROS_ACCORD[chordKey];
+  return intervalles.map((i) => NUMERO_PAR_DEFAUT[i] ?? NUMERO_PAR_DEFAUT[i % 12]);
+}
+function candidats(pc2) {
+  const nat = NATUREL.indexOf(pc2);
+  if (nat !== -1) return [note(nat)];
+  return [note(NATUREL.indexOf(pc2 - 1), 1), note(NATUREL.indexOf((pc2 + 1) % 12), -1)];
+}
+function choisirRacine(racine, intervalles, numeros) {
+  const pc2 = typeof racine === "number" ? (racine % 12 + 12) % 12 : pcDeNom(racine);
+  if (pc2 == null) return null;
+  const options = candidats(pc2);
+  if (options.length === 1) return options[0];
+  const usuelle = (estMineure(intervalles) ? USUELLE_MINEURE : USUELLE_MAJEURE)[pc2];
+  let meilleure = null, meilleurCout = Infinity;
+  for (const r of options) {
+    const c = cout(epelerDepuis(r, intervalles, numeros));
+    const egal = c === meilleurCout;
+    if (c < meilleurCout || egal && r.l === usuelle.l && r.acc === usuelle.acc) {
+      meilleure = r;
+      meilleurCout = c;
+    }
+  }
+  return meilleure;
+}
+function epelerGamme(racine, gamme) {
+  const st = structureGamme(gamme);
+  if (!st) return [];
+  const r = typeof racine === "object" && racine ? racine : choisirRacine(racine, st.intervalles, st.numeros);
+  return r ? epelerDepuis(r, st.intervalles, st.numeros) : [];
+}
+function epelerAccord(racine, accord) {
+  const st = structureAccord(accord);
+  if (!st) return [];
+  const r = typeof racine === "object" && racine ? racine : choisirRacine(racine, st.intervalles, st.numeros);
+  return r ? epelerDepuis(r, st.intervalles, st.numeros) : [];
+}
+function epelerDansTonalite(pcOuNom, tonique, gamme = "major") {
+  const pc2 = typeof pcOuNom === "number" ? (pcOuNom % 12 + 12) % 12 : pcDeNom(pcOuNom);
+  const st = structureGamme(gamme);
+  if (pc2 == null || !st) return null;
+  const notesGamme = epelerGamme(tonique, gamme);
+  if (!notesGamme.length) return null;
+  const dansGamme = notesGamme.find((n2) => pcDe(n2) === pc2);
+  if (dansGamme) return dansGamme;
+  const t = notesGamme[0];
+  const dt = (pc2 - pcDe(t) + 12) % 12;
+  const num = NUMERO_GAMME[dt];
+  let n = intervalle(t, num, dt);
+  if (Math.abs(n.acc) >= 2) {
+    for (const autre of [num - 1, num + 1]) {
+      const essai = intervalle(t, (autre - 1 + 7) % 7 + 1, dt);
+      if (Math.abs(essai.acc) < Math.abs(n.acc)) n = essai;
+    }
+  }
+  return n;
+}
+function simplifierRare(n) {
+  const s = simplifier(n);
+  const nat = NATUREL.indexOf(pcDe(s));
+  return s.acc !== 0 && nat !== -1 ? note(nat) : s;
+}
+function carteNoms(racine, { gamme, accord, langue = "fr" } = {}) {
+  const notes = gamme ? epelerGamme(racine, gamme) : accord ? epelerAccord(racine, accord) : [];
+  const rares = !!gamme && !estHeptatonique(gamme);
+  const carte = /* @__PURE__ */ new Map();
+  for (const n of notes) {
+    const cle2 = NOTES_DIESES_EN[pcDe(n)];
+    if (!carte.has(cle2)) carte.set(cle2, nomEnLangue(rares ? simplifierRare(n) : simplifier(n), langue));
+  }
+  return carte;
+}
+var note, pcDe, suffixe, nomFr, nomEn, nomEnLangue, LETTRE_EN, LETTRE_FR, pcDeNom, NUMERO_PAR_DEFAUT, NUMERO_GAMME, NUMEROS_ACCORD, NUMEROS_GAMME, epelerDepuis, USUELLE_MAJEURE, USUELLE_MINEURE, estMineure, cout, structureGamme, structureAccord, racineGamme, racineAccord, estHeptatonique, pourAffichage, nomsGamme, nomsAccord, nomRacineGamme, nomRacineAccord, symboleAccord;
+var init_orthographe = __esm({
+  "src/music/orthographe.js"() {
+    init_notes();
+    init_fretboardUtils();
+    note = (l, acc = 0) => ({ l, acc });
+    pcDe = (n) => ((NATUREL[n.l] + n.acc) % 12 + 12) % 12;
+    suffixe = (acc) => acc > 0 ? "#".repeat(acc) : "b".repeat(-acc);
+    nomFr = (n) => LETTRES_FR[n.l] + suffixe(n.acc);
+    nomEn = (n) => LETTRES_EN[n.l] + suffixe(n.acc);
+    nomEnLangue = (n, langue) => langue === "en" ? nomEn(n) : nomFr(n);
+    LETTRE_EN = { C: 0, D: 1, E: 2, F: 3, G: 4, A: 5, B: 6 };
+    LETTRE_FR = { Do: 0, "R\xE9": 1, Re: 1, Mi: 2, Fa: 3, Sol: 4, La: 5, Si: 6 };
+    pcDeNom = (nom2) => {
+      const n = lireNote(nom2);
+      return n ? pcDe(n) : null;
+    };
+    NUMERO_PAR_DEFAUT = {
+      0: 1,
+      1: 2,
+      2: 2,
+      3: 3,
+      4: 3,
+      5: 4,
+      6: 5,
+      7: 5,
+      8: 5,
+      9: 6,
+      10: 7,
+      11: 7,
+      12: 1,
+      13: 2,
+      14: 2,
+      15: 2,
+      16: 3,
+      17: 4,
+      18: 4,
+      19: 5,
+      20: 6,
+      21: 6
+    };
+    NUMERO_GAMME = { ...NUMERO_PAR_DEFAUT, 8: 6 };
+    NUMEROS_ACCORD = { dim7: [1, 3, 5, 7] };
+    NUMEROS_GAMME = { whole_tone: [1, 2, 3, 4, 5, 7] };
+    epelerDepuis = (racine, intervalles, numeros) => intervalles.map((dt, i) => intervalle(racine, numeros[i], dt));
+    USUELLE_MAJEURE = [note(0), note(1, -1), note(1), note(2, -1), note(2), note(3), note(3, 1), note(4), note(5, -1), note(5), note(6, -1), note(6)];
+    USUELLE_MINEURE = [note(0), note(0, 1), note(1), note(2, -1), note(2), note(3), note(3, 1), note(4), note(4, 1), note(5), note(6, -1), note(6)];
+    estMineure = (intervalles) => {
+      const r = intervalles.map((i) => i % 12);
+      return r.includes(3) && !r.includes(4);
+    };
+    cout = (notes) => notes.reduce((s, n) => s + (Math.abs(n.acc) >= 2 ? 10 : Math.abs(n.acc)), 0);
+    structureGamme = (gamme) => {
+      const intervalles = Array.isArray(gamme) ? gamme : SCALES[gamme]?.intervals;
+      if (!intervalles) return null;
+      return { intervalles, numeros: numerosGamme(intervalles, Array.isArray(gamme) ? null : gamme) };
+    };
+    structureAccord = (accord) => {
+      const intervalles = Array.isArray(accord) ? accord : CHORD_TYPES[accord]?.intervals;
+      if (!intervalles) return null;
+      return { intervalles, numeros: numerosAccord(intervalles, Array.isArray(accord) ? null : accord) };
+    };
+    racineGamme = (racine, gamme) => epelerGamme(racine, gamme)[0] ?? null;
+    racineAccord = (racine, accord) => epelerAccord(racine, accord)[0] ?? null;
+    estHeptatonique = (gamme) => (Array.isArray(gamme) ? gamme : SCALES[gamme]?.intervals)?.length === 7;
+    pourAffichage = (notes, langue, simplifierDoubles, rares = false) => notes.map((n) => nomEnLangue(rares ? simplifierRare(n) : simplifierDoubles ? simplifier(n) : n, langue));
+    nomsGamme = (racine, gamme, { langue = "fr", simplifierDoubles = true } = {}) => pourAffichage(epelerGamme(racine, gamme), langue, simplifierDoubles, simplifierDoubles && !estHeptatonique(gamme));
+    nomsAccord = (racine, accord, { langue = "fr", simplifierDoubles = true } = {}) => pourAffichage(epelerAccord(racine, accord), langue, simplifierDoubles);
+    nomRacineGamme = (racine, gamme, langue = "fr") => {
+      const r = racineGamme(racine, gamme);
+      return r ? nomEnLangue(r, langue) : String(racine ?? "");
+    };
+    nomRacineAccord = (racine, accord, langue = "fr") => {
+      const r = racineAccord(racine, accord);
+      return r ? nomEnLangue(r, langue) : String(racine ?? "");
+    };
+    symboleAccord = (racine, accord, langue = "fr") => nomRacineAccord(racine, accord, langue) + (CHORD_TYPES[accord]?.sym ?? "");
   }
 });
 
@@ -1429,9 +1619,9 @@ function secondes(v) {
   const brut = parseFloat(v);
   return Number.isFinite(brut) ? brut : 1;
 }
-function toToneNote(note, octave) {
-  const flat = SHARP_TO_FLAT[note];
-  return `${flat || note}${octave}`;
+function toToneNote(note2, octave) {
+  const flat = SHARP_TO_FLAT[note2];
+  return `${flat || note2}${octave}`;
 }
 function midiOf(name, octave) {
   return CHROMATIC.indexOf(name) + 12 * (octave + 1);
@@ -1462,13 +1652,13 @@ function buildVoicingFromIntervals(rootName, intervals) {
 function strumInto(notes, duration, when, direction = "down", spread = 0.026, cible = sampler) {
   const ordered = direction === "down" ? notes : [...notes].reverse();
   const n = ordered.length;
-  ordered.forEach((note, i) => {
+  ordered.forEach((note2, i) => {
     const curve = Math.sin((i + 0.6) / n * Math.PI);
     const velocity = Math.max(0.35, Math.min(1, 0.55 + curve * 0.35 + (Math.random() - 0.5) * 0.07));
     const jitter = (Math.random() - 0.5) * spread * 0.35;
     const t = when + i * spread + jitter;
     try {
-      cible.triggerAttackRelease(note, secondes(duration), t, velocity);
+      cible.triggerAttackRelease(note2, secondes(duration), t, velocity);
     } catch {
     }
   });
@@ -1623,12 +1813,12 @@ async function ensureLoaded() {
   }
   return isLoaded;
 }
-async function playNote(note, duration = "4n") {
+async function playNote(note2, duration = "4n") {
   if (!await ensureLoaded()) return;
   stopAll();
   reveillerSortie();
   try {
-    sampler.triggerAttackRelease(note, secondes(duration), Tone.now());
+    sampler.triggerAttackRelease(note2, secondes(duration), Tone.now());
   } catch (e) {
     warn("playNote:", e);
   }
@@ -1657,13 +1847,13 @@ async function playScale(notes, bpm = 80, onStep) {
   try {
     const s = nouvelleLecture();
     const t0 = departLecture();
-    notes.forEach((note, i) => {
+    notes.forEach((note2, i) => {
       const t = t0 + i * spb;
       try {
-        s.triggerAttackRelease(note, spb * 0.85, t);
+        s.triggerAttackRelease(note2, spb * 0.85, t);
       } catch {
       }
-      if (onStep) visuelA(t, () => onStep(i, note));
+      if (onStep) visuelA(t, () => onStep(i, note2));
     });
     if (onStep) visuelA(t0 + notes.length * spb, () => onStep(-1, null));
   } catch (e) {
@@ -1689,7 +1879,7 @@ async function playRythme(spec) {
   if (!await ensureLoaded()) return 0;
   stopAll();
   reveillerSortie();
-  const { note = "A3", clic = "E5" } = spec || {};
+  const { note: note2 = "A3", clic = "E5" } = spec || {};
   const plan = planRythme(spec);
   try {
     const s = nouvelleLecture();
@@ -1702,7 +1892,7 @@ async function playRythme(spec) {
     }
     for (const t of plan.attaques) {
       try {
-        s.triggerAttackRelease(note, plan.duree, t0 + t, 0.85);
+        s.triggerAttackRelease(note2, plan.duree, t0 + t, 0.85);
       } catch {
       }
     }
@@ -1756,7 +1946,7 @@ async function playInterval(note1, note2, mode = "ascending") {
 async function playScaleFromRoot(root, scaleKey, bpm = 80, onStep) {
   const notes = getScaleNotes(root, scaleKey);
   if (!notes.length) return;
-  const toneNotes = notes.map((note, i) => toToneNote(note, i < 5 ? 3 : 4));
+  const toneNotes = notes.map((note2, i) => toToneNote(note2, i < 5 ? 3 : 4));
   await playScale(toneNotes, bpm, onStep ? (i) => onStep(i, notes[i] ?? null) : void 0);
   return notes;
 }
@@ -1895,11 +2085,11 @@ async function playTabSampler(evenements, opts = {}) {
         continue;
       }
       if (ev.type === "note") {
-        const note = getToneNoteAtPosition(ev.string, ev.fret);
+        const note2 = getToneNoteAtPosition(ev.string, ev.fret);
         differer(() => {
           onEvent?.(ev);
           try {
-            sampler.triggerAttackRelease(note, dureeNote, Tone.now(), 0.75);
+            sampler.triggerAttackRelease(note2, dureeNote, Tone.now(), 0.75);
           } catch (e) {
             warn("playTab note:", e);
           }
@@ -1907,11 +2097,11 @@ async function playTabSampler(evenements, opts = {}) {
         continue;
       }
       if (ev.type === "bend") {
-        const note = getToneNoteAtPosition(ev.string, ev.toFret);
+        const note2 = getToneNoteAtPosition(ev.string, ev.toFret);
         differer(() => {
           onEvent?.(ev);
           try {
-            sampler.triggerAttackRelease(note, dureeNote, Tone.now(), 0.75);
+            sampler.triggerAttackRelease(note2, dureeNote, Tone.now(), 0.75);
           } catch (e) {
             warn("playTab bend:", e);
           }
@@ -1941,12 +2131,12 @@ async function playTabSampler(evenements, opts = {}) {
         differer(() => {
           onEvent?.(ev);
           cases.forEach((f, i) => {
-            const note = getToneNoteAtPosition(ev.string, f);
+            const note2 = getToneNoteAtPosition(ev.string, f);
             const estArrivee = i === cases.length - 1;
             const t = Tone.now() + (cases.length > 1 ? i / (cases.length - 1) * dureeGlissando : 0);
             try {
               sampler.triggerAttackRelease(
-                note,
+                note2,
                 estArrivee ? dureeNote : 0.045,
                 t,
                 estArrivee ? 0.75 : 0.4
@@ -2009,11 +2199,11 @@ function stopProgression() {
 function fioriture(notes, { gap = 0.055, duration = "8n", from = 0.62, to = 0.3 } = {}) {
   if (!isLoaded || !sampler || !Tone) return false;
   const now2 = Tone.now() + 0.01;
-  notes.forEach((note, i) => {
+  notes.forEach((note2, i) => {
     const t = notes.length === 1 ? 0 : i / (notes.length - 1);
     const velocity = from + (to - from) * t;
     try {
-      sampler.triggerAttackRelease(note, secondes(duration), now2 + i * gap, velocity);
+      sampler.triggerAttackRelease(note2, secondes(duration), now2 + i * gap, velocity);
     } catch {
     }
   });
@@ -2078,7 +2268,7 @@ function stopAll() {
   }
 }
 function generateEarTrainingQuestion(type = "interval") {
-  const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+  const NOTES = NOTES_DIESES_EN;
   const INTERVAL_NAMES2 = {
     3: "Tierce mineure",
     4: "Tierce majeure",
@@ -2158,7 +2348,10 @@ function generateEarTrainingQuestion(type = "interval") {
     const distractors = candidates.sort(() => Math.random() - 0.5).slice(0, 3);
     const options = [{ root, quality }, ...distractors].sort(() => Math.random() - 0.5).map((c) => ({
       key: c.root + "|" + c.quality.key,
-      label: c.root + c.quality.suffix || c.root
+      // Libellé orthographié, en notation française comme le reste de
+      // l'app (« Sibm », « Mib7 », pas « A#m » ni « D#7 ») ; la clé, elle,
+      // reste en dièses.
+      label: symboleAccord(c.root, c.quality.key)
     }));
     const referenceNote = toToneNote("C", 3);
     return {
@@ -2173,7 +2366,7 @@ function generateEarTrainingQuestion(type = "interval") {
       // Aide optionnelle, declenchee par un bouton distinct.
       playReference: () => playNote(referenceNote, "2n"),
       referenceDurationMs: dureeMs(0, "2n"),
-      referenceLabel: "C"
+      referenceLabel: "Do"
     };
   }
   if (type === "progression") {
@@ -2206,13 +2399,17 @@ function generateEarTrainingQuestion(type = "interval") {
     );
     const distractors = sameLength.sort(() => Math.random() - 0.5).slice(0, 3);
     const SUFFIX = { maj: "", min: "m", dom7: "7", maj7: "maj7", min7: "m7" };
-    const nameProg = (p) => p.degrees.map(([semi, t]) => NOTES[(rootIdx + semi) % 12] + SUFFIX[t]).join(" - ");
+    const gammeDe = (p) => p.key.startsWith("i-") ? "natural_minor" : "major";
+    const nameProg = (p) => p.degrees.map(([semi, t]) => {
+      const n = epelerDansTonalite((rootIdx + semi) % 12, NOTES[rootIdx], gammeDe(p));
+      return (n ? nomFr(simplifier(n)) : NOTES[(rootIdx + semi) % 12]) + SUFFIX[t];
+    }).join(" - ");
     const options = [chosen, ...distractors].sort(() => Math.random() - 0.5).map((p) => ({ key: p.key, label: nameProg(p), roman: p.label }));
     return {
       type: "progression",
       chords,
       tonic: NOTES[rootIdx],
-      tonicFr: NOTES[rootIdx],
+      tonicFr: nomRacineGamme(NOTES[rootIdx], gammeDe(chosen)),
       roman: chosen.label,
       answer: chosen.key,
       options,
@@ -2269,6 +2466,8 @@ var Tone, tonePromise, ctxGeste, SAMPLE_URLS, busGuitare, buffersCordes, voixCor
 var init_audioEngine = __esm({
   "src/audioEngine.js"() {
     init_fretboardUtils();
+    init_notes();
+    init_orthographe();
     init_tabSon();
     Tone = null;
     tonePromise = null;
@@ -2345,7 +2544,7 @@ var init_audioEngine = __esm({
       "G#": "Ab",
       "A#": "Bb"
     };
-    CHROMATIC = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+    CHROMATIC = NOTES_DIESES_EN;
     OPEN_STRINGS2 = { 1: "E4", 2: "B3", 3: "G3", 4: "D3", 5: "A2", 6: "E2" };
     DEV = typeof import.meta !== "undefined" && false;
     warn = (...a) => {
@@ -2457,7 +2656,8 @@ function getChordShapes(rootName, quality, maxFret = 10, chordIntervals = null) 
 var CHROMATIC2, OPEN_STRINGS3, SHAPES;
 var init_chordShapes = __esm({
   "src/music/chordShapes.js"() {
-    CHROMATIC2 = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+    init_notes();
+    CHROMATIC2 = NOTES_DIESES_EN;
     OPEN_STRINGS3 = ["E", "A", "D", "G", "B", "E"];
     SHAPES = {
       maj: [
@@ -2550,7 +2750,8 @@ function FretGrid({
   interactive = false,
   onCellClick,
   isCellSelected,
-  ariaLabel = "Manche de guitare"
+  ariaLabel = "Manche de guitare",
+  nomNote = noteToFr
 }) {
   const C = useC();
   const V = VARIANTES[variant] ?? VARIANTES.standard;
@@ -2614,7 +2815,7 @@ function FretGrid({
       },
       role: "gridcell",
       tabIndex: estActif ? 0 : -1,
-      "aria-label": labelCase(s, f, getNoteAtPosition(s, f)),
+      "aria-label": labelCase(s, f, getNoteAtPosition(s, f), nomNote),
       ...isCellSelected ? { "aria-selected": !!isCellSelected(s, f) } : {},
       "data-interactive": "",
       onClick: () => {
@@ -2762,9 +2963,9 @@ var init_FretGrid = __esm({
       }
     };
     NOMS_CORDES = { 6: "Mi grave", 5: "La", 4: "R\xE9", 3: "Sol", 2: "Si", 1: "Mi aigu" };
-    labelCase = (corde, fret, note) => {
+    labelCase = (corde, fret, note2, nomNote = noteToFr) => {
       const nom2 = `Corde de ${NOMS_CORDES[corde] ?? corde}`;
-      const n = note ? noteToFr(note) : "";
+      const n = note2 ? nomNote(note2) : "";
       return fret === 0 ? `${nom2} \xE0 vide${n ? `, ${n}` : ""}` : `${nom2}, case ${fret}${n ? `, ${n}` : ""}`;
     };
     EPAISSEURS_CORDES = { 6: 3, 5: 2.5, 4: 2, 3: 1.5, 2: 1.5, 1: 1 };
@@ -2903,10 +3104,10 @@ var init_fretboardValidator = __esm({
         const positions = [];
         for (let s = minStr; s <= maxStr; s++) {
           for (let f = minFret; f <= maxFret; f++) {
-            const note = getNoteAtPosition(s, f);
-            const iv = getInterval(rootNorm, note);
+            const note2 = getNoteAtPosition(s, f);
+            const iv = getInterval(rootNorm, note2);
             if (iv === interval) {
-              positions.push({ string: s, fret: f, note, interval: iv });
+              positions.push({ string: s, fret: f, note: note2, interval: iv });
             }
           }
         }
@@ -2975,6 +3176,32 @@ __export(Fretboard_exports, {
 });
 import { useState as useState10, useMemo as useMemo3, useCallback as useCallback2, useEffect as useEffect8 } from "react";
 import { Fragment as Fragment8, jsx as jsx12, jsxs as jsxs10 } from "react/jsx-runtime";
+function carteContexte({ mode, root, scale, chord, highlightedNotes, quizTarget, lang }) {
+  const langue = lang === "en" ? "en" : "fr";
+  if (mode === "scale" && root && scale) return carteNoms(root, { gamme: scale, langue });
+  if (mode === "chord" && root && chord) return carteNoms(root, { accord: chord, langue });
+  const ecrites = mode === "highlight" ? highlightedNotes : mode === "quiz" && quizTarget ? [quizTarget] : null;
+  if (ecrites?.length) {
+    const carte = /* @__PURE__ */ new Map();
+    for (const n of ecrites) {
+      if (!carte.has(normalizeNote(n))) carte.set(normalizeNote(n), nomEcrit(n, lang));
+    }
+    return carte;
+  }
+  return null;
+}
+function nomEcrit(n, lang = "fr") {
+  const lu = lireNote(n);
+  if (!lu) return nomSansContexte(n, lang);
+  return lang === "en" ? nomEn(lu) : nomFr(lu);
+}
+function nomRacine(root, { scale, chord, lang = "fr" } = {}) {
+  if (!root) return "";
+  const langue = lang === "en" ? "en" : "fr";
+  if (scale) return nomRacineGamme(root, scale, langue);
+  if (chord) return nomRacineAccord(root, chord, langue);
+  return nomSansContexte(root, lang);
+}
 function getNoteColors(C) {
   return {
     root: { bg: C.amber, text: "#fff", border: C.amberD },
@@ -3000,10 +3227,11 @@ function colorForDegree(degree, isRoot, NOTE_COLORS) {
   };
   return map[degree] || NOTE_COLORS.other;
 }
-function getNoteLabel(note, interval, degree, displayMode, lang = "fr") {
+function getNoteLabel(note2, interval, degree, displayMode, lang = "fr", noms = null) {
+  const nomNote = () => noms?.get(normalizeNote(note2)) ?? nomSansContexte(note2, lang);
   switch (displayMode) {
     case "notes":
-      return lang === "fr" ? noteToFr(note) : note;
+      return nomNote();
     case "intervals":
       return INTERVAL_NAMES[interval]?.short ?? "?";
     case "degrees":
@@ -3011,7 +3239,7 @@ function getNoteLabel(note, interval, degree, displayMode, lang = "fr") {
       if (interval != null) return INTERVAL_NAMES[interval]?.short ?? "?";
       return "?";
     default:
-      return lang === "fr" ? noteToFr(note) : note;
+      return nomNote();
   }
 }
 function NoteMarker({ label, color, size = 28, style = {} }) {
@@ -3103,6 +3331,11 @@ function Fretboard({
     }
     return [];
   }, [mode, root, scale, chord, highlightedNotes, quizTarget, endFret]);
+  const nomsContexte = useMemo3(
+    () => carteContexte({ mode, root, scale, chord, highlightedNotes, quizTarget, lang }),
+    [mode, root, scale, chord, highlightedNotes, quizTarget, lang]
+  );
+  const nomAffiche = (note2) => nomsContexte?.get(normalizeNote(note2)) ?? nomSansContexte(note2, lang);
   const positionMap = useMemo3(() => {
     const map = {};
     for (const p of activePositions) {
@@ -3111,7 +3344,7 @@ function Fretboard({
     return map;
   }, [activePositions]);
   const handleCellClick = useCallback2((string, fret) => {
-    const note = getNoteAtPosition(string, fret);
+    const note2 = getNoteAtPosition(string, fret);
     if (mode === "quiz" && !quizRevealed) {
       setQuizSelected((prev) => {
         const already = prev.some((p) => p.string === string && p.fret === fret);
@@ -3123,7 +3356,7 @@ function Fretboard({
       });
       return;
     }
-    onNoteClick?.({ string, fret, note });
+    onNoteClick?.({ string, fret, note: note2 });
   }, [mode, quizRevealed, activePositions, onNoteClick, onQuizProgress, onQuizComplete]);
   const frets = [];
   for (let f = Math.max(1, startFret); f <= endFret; f++) frets.push(f);
@@ -3133,8 +3366,8 @@ function Fretboard({
   const openW = compact ? 34 : 38;
   const labelW = compact ? 26 : 30;
   const interactive = mode === "quiz" || !!onNoteClick;
-  const rootFr = root ? noteToFr(root) : "";
-  const resume = (mode === "scale" && root && scale ? `Manche : gamme ${SCALES[scale]?.name ?? scale} de ${rootFr}` : mode === "chord" && root && chord ? `Manche : accord ${rootFr} ${CHORD_TYPES[chord]?.name ?? chord}` : mode === "highlight" && highlightedNotes?.length ? `Manche : notes ${highlightedNotes.map(noteToFr).join(", ")}` : mode === "quiz" && quizTarget ? `Manche : trouve tous les ${noteToFr(quizTarget)}` : "Manche de guitare") + `, cases ${startFret} \xE0 ${endFret}`;
+  const rootFr = nomRacine(root, { scale: mode === "scale" ? scale : null, chord: mode === "chord" ? chord : null });
+  const resume = (mode === "scale" && root && scale ? `Manche : gamme ${SCALES[scale]?.name ?? scale} de ${rootFr}` : mode === "chord" && root && chord ? `Manche : accord ${rootFr} ${CHORD_TYPES[chord]?.name ?? chord}` : mode === "highlight" && highlightedNotes?.length ? `Manche : notes ${highlightedNotes.map((n) => nomEcrit(n)).join(", ")}` : mode === "quiz" && quizTarget ? `Manche : trouve tous les ${nomEcrit(quizTarget)}` : "Manche de guitare") + `, cases ${startFret} \xE0 ${endFret}`;
   return /* @__PURE__ */ jsxs10("div", { style: { width: "100%", userSelect: "none" }, children: [
     /* @__PURE__ */ jsx12("div", { className: "gr-hscroll-wrap", children: /* @__PURE__ */ jsx12("div", { className: "gr-hscroll", role: "group", "aria-label": "Manche de guitare, d\xE9file horizontalement", children: /* @__PURE__ */ jsx12(
       FretGrid,
@@ -3152,7 +3385,8 @@ function Fretboard({
         interactive,
         onCellClick: handleCellClick,
         isCellSelected: mode === "quiz" && !quizRevealed ? (s, f) => quizSelected.some((p) => p.string === s && p.fret === f) : void 0,
-        ariaLabel: resume
+        ariaLabel: resume,
+        nomNote: nomAffiche
       }
     ) }) }),
     mode === "quiz" && /* @__PURE__ */ jsx12(
@@ -3179,34 +3413,34 @@ function Fretboard({
       const isCorrect = isCorrectPosition(s, f, activePositions);
       if (quizRevealed) {
         if (isCorrect && isSelected) {
-          const note = getNoteAtPosition(s, f);
-          return /* @__PURE__ */ jsx12(NoteMarker, { label: lang === "fr" ? noteToFr(note) : note, color: NOTE_COLORS.correct, size: dotSz });
+          const note2 = getNoteAtPosition(s, f);
+          return /* @__PURE__ */ jsx12(NoteMarker, { label: nomAffiche(note2), color: NOTE_COLORS.correct, size: dotSz });
         }
         if (isCorrect && !isSelected) {
-          const note = getNoteAtPosition(s, f);
-          return /* @__PURE__ */ jsx12(NoteMarker, { label: lang === "fr" ? noteToFr(note) : note, color: NOTE_COLORS.missed, size: dotSz });
+          const note2 = getNoteAtPosition(s, f);
+          return /* @__PURE__ */ jsx12(NoteMarker, { label: nomAffiche(note2), color: NOTE_COLORS.missed, size: dotSz });
         }
         if (!isCorrect && isSelected) {
-          const note = getNoteAtPosition(s, f);
-          return /* @__PURE__ */ jsx12(NoteMarker, { label: lang === "fr" ? noteToFr(note) : note, color: NOTE_COLORS.wrong, size: dotSz });
+          const note2 = getNoteAtPosition(s, f);
+          return /* @__PURE__ */ jsx12(NoteMarker, { label: nomAffiche(note2), color: NOTE_COLORS.wrong, size: dotSz });
         }
         return null;
       }
       if (isSelected) {
-        const note = getNoteAtPosition(s, f);
-        return /* @__PURE__ */ jsx12(NoteMarker, { label: lang === "fr" ? noteToFr(note) : note, color: NOTE_COLORS.selected, size: dotSz });
+        const note2 = getNoteAtPosition(s, f);
+        return /* @__PURE__ */ jsx12(NoteMarker, { label: nomAffiche(note2), color: NOTE_COLORS.selected, size: dotSz });
       }
       return null;
     }
     if (externalSelected) {
       const isExt = externalSelected.some((p) => p.string === s && p.fret === f);
       if (isExt) {
-        const note = getNoteAtPosition(s, f);
-        return /* @__PURE__ */ jsx12(NoteMarker, { label: lang === "fr" ? noteToFr(note) : note, color: NOTE_COLORS.selected, size: dotSz });
+        const note2 = getNoteAtPosition(s, f);
+        return /* @__PURE__ */ jsx12(NoteMarker, { label: nomAffiche(note2), color: NOTE_COLORS.selected, size: dotSz });
       }
     }
     if (!pos) return null;
-    const label = getNoteLabel(pos.note, pos.interval, pos.degree, displayMode, lang);
+    const label = getNoteLabel(pos.note, pos.interval, pos.degree, displayMode, lang, nomsContexte);
     const baseColor = pos.isRoot ? NOTE_COLORS.root : colorForDegree(pos.degree, false, NOTE_COLORS);
     const flashList = flashNotes == null ? [] : Array.isArray(flashNotes) ? flashNotes : [flashNotes];
     const isFlashing = flashList.some((n) => n && normalizeNote(n) === normalizeNote(pos.note));
@@ -3231,7 +3465,7 @@ function Fretboard({
 function QuizControls({ selected, correct, revealed, target, lang, onReveal, onReset }) {
   const C = useC();
   const result = checkQuizCompletion(selected, correct);
-  const label = lang === "fr" ? noteToFr(target) : target;
+  const label = nomEcrit(target, lang);
   return /* @__PURE__ */ jsxs10("div", { style: {
     marginTop: 12,
     padding: "12px 14px",
@@ -3323,7 +3557,11 @@ function FretboardLesson({ block }) {
     "highlight": "",
     "quiz": ""
   }[block.mode] ?? "";
-  const rootLabel = block.root ? block.lang === "en" ? block.root : noteToFr(block.root) : "";
+  const rootLabel = block.root ? nomRacine(block.root, {
+    scale: block.mode === "scale" ? block.scale : null,
+    chord: block.mode === "chord" ? block.chord : null,
+    lang: block.lang === "en" ? "en" : "fr"
+  }) : "";
   return /* @__PURE__ */ jsxs10("div", { style: {
     background: C.surface2,
     borderRadius: 14,
@@ -3558,12 +3796,21 @@ function FretboardQuizCanvas({ targetPositions, contextPositions, selected, reve
     return m;
   }, [contextPositions]);
   const isSel = (s, f) => selected.some((p) => p.string === s && p.fret === f);
+  const nomsQuestion = useMemo3(() => {
+    const fretMode = question?.fretMode || question?.concept?.type;
+    const root = question?.root || question?.concept?.root;
+    if (fretMode === "find_chord" && root && question.chord) return carteNoms(root, { accord: question.chord });
+    if (fretMode === "find_scale_root" && root && question.scale) return carteNoms(root, { gamme: question.scale });
+    const cible = question?.target || root;
+    return cible ? /* @__PURE__ */ new Map([[normalizeNote(cible), nomEcrit(cible)]]) : null;
+  }, [question]);
   function renderDot(s, f) {
     const key = `${s}-${f}`;
     const isSelected = isSel(s, f);
     const isTarget = targetMap[key];
     const ctx = contextMap[key];
-    const dot = (col) => /* @__PURE__ */ jsx12(PastilleDense, { label: noteToFr(getNoteAtPosition(s, f)), color: col, size: DOT });
+    const note2 = getNoteAtPosition(s, f);
+    const dot = (col) => /* @__PURE__ */ jsx12(PastilleDense, { label: nomsQuestion?.get(note2) ?? noteToFr(note2), color: col, size: DOT });
     if (revealed) {
       if (isTarget && isSelected) return dot(NOTE_COLORS.correct);
       if (isTarget && !isSelected) return dot(NOTE_COLORS.missed);
@@ -3842,30 +4089,30 @@ function ExerciseCanvas({ stage, targetMap, selected, revealed, onCellClick }) {
   const isSel = (s, f) => selected.some((p) => p.string === s && p.fret === f);
   function renderDot(s, f) {
     const key = `${s}-${f}`;
-    const note = getNoteAtPosition(s, f);
+    const note2 = getNoteAtPosition(s, f);
     const isSelected = isSel(s, f);
     const isTarget = !!targetMap[key];
     const isContext = !!contextMap[key];
     const { showNotes, showIntervals, showDegrees } = stage.display || {};
     const dot = (lbl, col, opacity) => /* @__PURE__ */ jsx12(PastilleDense, { label: lbl, color: col, size: DOT, opacity });
     const getLabel = (pos) => {
-      if (showNotes) return noteToFr(note);
+      if (showNotes) return noteToFr(note2);
       if (showIntervals && pos?.interval != null) return INTERVAL_NAMES[pos.interval]?.short ?? "";
       if (showDegrees && pos?.degree) return String(pos.degree);
-      return noteToFr(note);
+      return noteToFr(note2);
     };
     if (revealed) {
       const tPos = targetMap[key];
       if (isTarget && isSelected) return dot(getLabel(tPos), NOTE_COLORS.correct);
       if (isTarget && !isSelected) return dot(getLabel(tPos), NOTE_COLORS.missed);
-      if (!isTarget && isSelected) return dot(noteToFr(note), NOTE_COLORS.wrong);
+      if (!isTarget && isSelected) return dot(noteToFr(note2), NOTE_COLORS.wrong);
       if (isContext) return dot(getLabel(contextMap[key]), NOTE_COLORS.other, 0.4);
       return null;
     }
-    if (isSelected) return dot(noteToFr(note), NOTE_COLORS.selected);
+    if (isSelected) return dot(noteToFr(note2), NOTE_COLORS.selected);
     if (isContext && !isTarget) return dot(getLabel(contextMap[key]), NOTE_COLORS.other, 0.5);
     if (showNotes) {
-      return dot(noteToFr(note), { bg: C.surface2, text: C.text3, border: C.border });
+      return dot(noteToFr(note2), { bg: C.surface2, text: C.text3, border: C.border });
     }
     return null;
   }
@@ -3890,7 +4137,7 @@ function ExerciseCanvas({ stage, targetMap, selected, revealed, onCellClick }) {
     }
   );
 }
-var FONTS2, EPAISSEURS_EXERCICE;
+var nomSansContexte, FONTS2, EPAISSEURS_EXERCICE;
 var init_Fretboard = __esm({
   "src/Fretboard.jsx"() {
     init_ThemeContext();
@@ -3898,7 +4145,9 @@ var init_Fretboard = __esm({
     init_tokens();
     init_FretGrid();
     init_fretboardUtils();
+    init_orthographe();
     init_fretboardValidator();
+    nomSansContexte = (note2, lang) => lang === "fr" ? noteToFr(note2) : note2;
     FONTS2 = {
       title: '"Clarendon LT", "Clarendon", "Playfair Display", Georgia, serif',
       ui: '"Inter", "Helvetica Neue", -apple-system, sans-serif',
@@ -4427,7 +4676,7 @@ function Tuner() {
   const C = useC();
   const [active, setActive] = useState15(false);
   const [freq, setFreq] = useState15(0);
-  const [note, setNote] = useState15(null);
+  const [note2, setNote] = useState15(null);
   const [error, setError] = useState15(null);
   const [tuningId, setTuningId] = useState15("standard");
   const tuning = TUNINGS.find((t) => t.id === tuningId) || TUNINGS[0];
@@ -4592,8 +4841,8 @@ function Tuner() {
     }
   }, []);
   useEffect12(() => () => stop(), [stop]);
-  const cents = note?.cents ?? 0;
-  const inTune = active && note && Math.abs(cents) <= 5;
+  const cents = note2?.cents ?? 0;
+  const inTune = active && note2 && Math.abs(cents) <= 5;
   const needleColor = inTune ? C.green : Math.abs(cents) < 20 ? C.amber : C.pink;
   const nearestCourse = freq > 0 ? targets.reduce((best, t) => {
     const d = Math.abs(1200 * Math.log2(freq / t.hz));
@@ -4636,8 +4885,8 @@ function Tuner() {
         color: inTune ? C.green : C.text,
         transition: "color .15s"
       }, children: [
-        note ? note.name : "\u2014",
-        note && /* @__PURE__ */ jsx20("span", { style: { fontSize: 28, fontWeight: 700, color: C.text3 }, children: note.octave })
+        note2 ? note2.name : "\u2014",
+        note2 && /* @__PURE__ */ jsx20("span", { style: { fontSize: 28, fontWeight: 700, color: C.text3 }, children: note2.octave })
       ] }),
       /* @__PURE__ */ jsx20("div", { style: { fontSize: 13, fontWeight: 600, color: C.text3, marginTop: 2 }, children: freq > 0 ? `${freq.toFixed(1)} Hz` : "Joue une corde\u2026" })
     ] }),
@@ -4710,7 +4959,8 @@ var init_Tuner = __esm({
     init_Ti();
     init_Gropi();
     init_pitch();
-    NOTE_NAMES = ["Do", "Do#", "R\xE9", "R\xE9#", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "La#", "Si"];
+    init_notes();
+    NOTE_NAMES = NOTES_DIESES_FR;
     TUNINGS = [
       // ── 6 cordes ──────────────────────────────────────────────
       {
@@ -4814,8 +5064,7 @@ function ChordPlayer() {
   useEffect13(() => () => stopAll(), []);
   const addChord = () => {
     if (sequence.length >= MAX_CHORDS) return;
-    const rootFr = CHORD_ROOTS.find((r) => r[0] === root)?.[1] || root;
-    const label = `${rootFr}${CHORD_TYPES[quality]?.sym ?? ""}`;
+    const label = symboleAccord(root, quality);
     setSequence((s) => [...s, { root, type: quality, label }]);
   };
   const removeChord = (i) => {
@@ -4857,13 +5106,13 @@ function ChordPlayer() {
   return /* @__PURE__ */ jsxs18("div", { children: [
     /* @__PURE__ */ jsxs18("div", { style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: 16 }, children: [
       /* @__PURE__ */ jsx21("div", { style: { fontSize: 12, fontWeight: 700, color: C.text3, marginBottom: 9, fontFamily: FONTS.ui }, children: "Fondamentale" }),
-      /* @__PURE__ */ jsx21("div", { style: { display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6, marginBottom: 14 }, children: CHORD_ROOTS.map(([code, fr]) => /* @__PURE__ */ jsx21("button", { onClick: () => setRoot(code), "aria-pressed": root === code, className: "gr-focus", style: {
+      /* @__PURE__ */ jsx21("div", { style: { display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6, marginBottom: 14 }, children: CHORD_ROOTS.map((code) => /* @__PURE__ */ jsx21("button", { onClick: () => setRoot(code), "aria-pressed": root === code, className: "gr-focus", style: {
         ...chip,
         padding: "9px 0",
         border: `1.5px solid ${root === code ? C.primary : C.border}`,
         background: root === code ? C.primaryL : C.surface,
         color: root === code ? C.primaryD : C.text2
-      }, children: fr }, code)) }),
+      }, children: nomRacineAccord(code, quality) }, code)) }),
       /* @__PURE__ */ jsx21("div", { style: { fontSize: 12, fontWeight: 700, color: C.text3, marginBottom: 9, fontFamily: FONTS.ui }, children: "Famille" }),
       /* @__PURE__ */ jsx21("div", { style: { display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }, children: CHORD_FAMILIES.map((f) => /* @__PURE__ */ jsx21("button", { "aria-pressed": family === f.id, className: "gr-focus", onClick: () => {
         setFamily(f.id);
@@ -5003,20 +5252,9 @@ var init_ChordPlayer = __esm({
     init_Ti();
     init_audioEngine();
     init_fretboardUtils();
-    CHORD_ROOTS = [
-      ["C", "Do"],
-      ["C#", "Do#"],
-      ["D", "R\xE9"],
-      ["D#", "R\xE9#"],
-      ["E", "Mi"],
-      ["F", "Fa"],
-      ["F#", "Fa#"],
-      ["G", "Sol"],
-      ["G#", "Sol#"],
-      ["A", "La"],
-      ["A#", "La#"],
-      ["B", "Si"]
-    ];
+    init_notes();
+    init_orthographe();
+    CHORD_ROOTS = NOTES_DIESES_EN;
     CHORD_FAMILIES = [
       { id: "base", label: "Base", keys: ["maj", "min", "dim", "aug", "sus2", "sus4"] },
       { id: "sept", label: "7e / 6e", keys: ["dom7", "maj7", "min7", "min7b5", "dim7", "minMaj7", "dom7sus4", "maj6", "min6"] },
@@ -6215,7 +6453,7 @@ function FretboardExplorer({ onBack, embedded = false }) {
       await unlockAudio();
     } catch {
     }
-    const onStep = (i, note) => setFlashNotes(i < 0 ? null : note);
+    const onStep = (i, note2) => setFlashNotes(i < 0 ? null : note2);
     let dureeMs2 = 2600;
     try {
       if (tab === "scale") {
@@ -6249,11 +6487,13 @@ function FretboardExplorer({ onBack, embedded = false }) {
   }, [tab, root, scaleKey, chordKey]);
   const info = tab === "scale" ? SCALE_INFO[scaleKey] : CHORD_INFO[chordKey];
   const activeLabel = tab === "scale" ? SCALE_OPTIONS.find((s) => s.key === scaleKey)?.label ?? scaleKey : CHORD_OPTIONS.find((c) => c.key === chordKey)?.label ?? chordKey;
-  const rootFr = ROOTS_FR2.find((r) => r.en === root)?.fr ?? root;
+  const nomRacine2 = (r) => tab === "scale" ? nomRacineGamme(r, scaleKey) : nomRacineAccord(r, chordKey);
+  const rootFr = nomRacine2(root);
+  const nomsActifs = tab === "scale" ? nomsGamme(root, scaleKey) : nomsAccord(root, chordKey);
   const transposeSemitone = (dir) => {
-    const idx = ROOTS_FR2.findIndex((r) => r.en === root);
+    const idx = ROOTS.indexOf(root);
     const next = (idx + dir + 12) % 12;
-    setRoot(ROOTS_FR2[next].en);
+    setRoot(ROOTS[next]);
   };
   return /* @__PURE__ */ jsxs21("div", { style: embedded ? { display: "flex", flexDirection: "column", background: "transparent" } : { display: "flex", flexDirection: "column", minHeight: "100dvh", background: C.bg }, children: [
     /* @__PURE__ */ jsxs21("div", { style: embedded ? { padding: "0 0 12px", display: "flex", alignItems: "center", gap: 10 } : { padding: "14px 16px 12px", display: "flex", alignItems: "center", gap: 10, borderBottom: `1px solid ${C.border}`, background: C.surface, position: "sticky", top: 0, zIndex: 10 }, children: [
@@ -6316,20 +6556,20 @@ function FretboardExplorer({ onBack, embedded = false }) {
         /* @__PURE__ */ jsx24("button", { onClick: () => setShowRootPicker(!showRootPicker), style: { flex: 1, height: 34, borderRadius: 10, border: `1.5px solid ${C.primary}`, background: C.primaryL, cursor: "pointer", fontSize: 16, fontWeight: 700, color: C.primaryD, fontFamily: FONTS.ui }, children: rootFr }),
         /* @__PURE__ */ jsx24("button", { onClick: () => transposeSemitone(1), style: { width: 34, height: 34, borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }, children: /* @__PURE__ */ jsx24(Ti, { name: "chevron-right", size: 16, color: C.text2 }) })
       ] }),
-      showRootPicker && /* @__PURE__ */ jsx24("div", { style: { display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6, background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: 10 }, children: ROOTS_FR2.map((r) => /* @__PURE__ */ jsx24("button", { onClick: () => {
-        setRoot(r.en);
+      showRootPicker && /* @__PURE__ */ jsx24("div", { style: { display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6, background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: 10 }, children: ROOTS.map((r) => /* @__PURE__ */ jsx24("button", { onClick: () => {
+        setRoot(r);
         setShowRootPicker(false);
       }, style: {
         padding: "8px 4px",
         borderRadius: 8,
-        border: `1px solid ${root === r.en ? C.primary : C.border}`,
-        background: root === r.en ? C.primaryL : C.bg,
-        color: root === r.en ? C.primaryD : C.text,
+        border: `1px solid ${root === r ? C.primary : C.border}`,
+        background: root === r ? C.primaryL : C.bg,
+        color: root === r ? C.primaryD : C.text,
         fontSize: 12,
-        fontWeight: root === r.en ? 700 : 400,
+        fontWeight: root === r ? 700 : 400,
         cursor: "pointer",
         fontFamily: FONTS.ui
-      }, children: r.fr }, r.en)) }),
+      }, children: nomRacine2(r) }, r)) }),
       /* @__PURE__ */ jsxs21("div", { style: { display: "flex", alignItems: "center", gap: 8 }, children: [
         /* @__PURE__ */ jsx24("div", { style: { fontSize: 11, fontWeight: 600, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", width: 60 }, children: tab === "scale" ? "Gamme" : "Accord" }),
         /* @__PURE__ */ jsx24("div", { style: { flex: 1, overflowX: "auto", WebkitOverflowScrolling: "touch" }, children: /* @__PURE__ */ jsx24("div", { style: { display: "flex", gap: 6, paddingBottom: 4 }, children: (tab === "scale" ? SCALE_OPTIONS : CHORD_OPTIONS).map((opt) => {
@@ -6420,7 +6660,7 @@ function FretboardExplorer({ onBack, embedded = false }) {
           " ",
           activeLabel
         ] }),
-        /* @__PURE__ */ jsx24("div", { style: { display: "flex", flexWrap: "wrap", gap: 6 }, children: activeNotes.map((note, i) => /* @__PURE__ */ jsxs21("div", { style: {
+        /* @__PURE__ */ jsx24("div", { style: { display: "flex", flexWrap: "wrap", gap: 6 }, children: activeNotes.map((note2, i) => /* @__PURE__ */ jsxs21("div", { style: {
           padding: "5px 10px",
           borderRadius: R.pill,
           background: i === 0 ? C.amberL : C.primaryL,
@@ -6430,9 +6670,9 @@ function FretboardExplorer({ onBack, embedded = false }) {
           color: i === 0 ? C.amberD : C.primaryD,
           fontFamily: FONTS.ui
         }, children: [
-          noteToFr(note),
+          nomsActifs[i] ?? note2,
           i === 0 ? " R" : ""
-        ] }, note)) }),
+        ] }, note2)) }),
         tab === "chord" && CHORD_INFO[chordKey] && /* @__PURE__ */ jsxs21("div", { style: { marginTop: 8, fontSize: 12, color: C.text3, fontFamily: FONTS.ui }, children: [
           "Formule : ",
           /* @__PURE__ */ jsx24("strong", { style: { color: C.text2 }, children: CHORD_INFO[chordKey].formula })
@@ -6449,7 +6689,7 @@ function FretboardExplorer({ onBack, embedded = false }) {
     ] })
   ] });
 }
-var ROOTS_FR2, SCALE_OPTIONS, CHORD_OPTIONS, SCALE_INFO, CHORD_INFO;
+var ROOTS, SCALE_OPTIONS, CHORD_OPTIONS, SCALE_INFO, CHORD_INFO;
 var init_FretboardExplorer = __esm({
   "src/screens/FretboardExplorer.jsx"() {
     init_tokens();
@@ -6457,23 +6697,12 @@ var init_FretboardExplorer = __esm({
     init_Ti();
     init_Fretboard();
     init_fretboardUtils();
+    init_notes();
+    init_orthographe();
     init_chordShapes();
     init_diagrams();
     init_audioEngine();
-    ROOTS_FR2 = [
-      { en: "C", fr: "Do" },
-      { en: "C#", fr: "Do#" },
-      { en: "D", fr: "Re" },
-      { en: "D#", fr: "Re#" },
-      { en: "E", fr: "Mi" },
-      { en: "F", fr: "Fa" },
-      { en: "F#", fr: "Fa#" },
-      { en: "G", fr: "Sol" },
-      { en: "G#", fr: "Sol#" },
-      { en: "A", fr: "La" },
-      { en: "A#", fr: "La#" },
-      { en: "B", fr: "Si" }
-    ];
+    ROOTS = NOTES_DIESES_EN;
     SCALE_OPTIONS = [
       { key: "pentatonic_minor", label: "Pentatonique mineure" },
       { key: "pentatonic_major", label: "Pentatonique majeure" },
@@ -8404,6 +8633,7 @@ init_audioEngine();
 // src/music/shapeQuestions.js
 init_chordShapes();
 init_fretboardUtils();
+init_orthographe();
 var COMMON_ROOTS = ["E", "A", "D", "G", "C"];
 var EXTENDED_ROOTS = ["E", "A", "D", "G", "C", "F", "B", "F#"];
 var LEVEL_SPEC = {
@@ -8434,9 +8664,7 @@ function makeShapeQuestion(level = 1, rng = Math.random) {
     const positions = shapeToPositions(shape2);
     const openPositions = shapeToOpenPositions(shape2);
     if (positions.length < 2) continue;
-    const rootFr = noteToFr(root);
-    const sym = CHORD_TYPES[quality]?.sym ?? "";
-    const chordName = `${rootFr}${sym}`;
+    const chordName = symboleAccord(root, quality);
     let q, hint;
     if (spec.openOnly) {
       q = `Montre la forme de ${chordName} en position ouverte`;
@@ -9059,15 +9287,13 @@ init_Gropi();
 import { useState as useState6, useEffect as useEffect5 } from "react";
 
 // src/store/generateurs.js
-var LETTRES_FR = ["Do", "R\xE9", "Mi", "Fa", "Sol", "La", "Si"];
-var LETTRES_EN = ["C", "D", "E", "F", "G", "A", "B"];
-var NATUREL = [0, 2, 4, 5, 7, 9, 11];
+init_notes();
 var N = (l, acc = 0) => ({ l, acc });
 var pc = (n) => ((NATUREL[n.l] + n.acc) % 12 + 12) % 12;
-var suffixe = (acc) => acc > 0 ? "#".repeat(acc) : "b".repeat(-acc);
-var nom = (n) => LETTRES_FR[n.l] + suffixe(n.acc);
-var nomEn = (n) => LETTRES_EN[n.l] + suffixe(n.acc);
-function intervalle(n, numero, demiTons) {
+var suffixe2 = (acc) => acc > 0 ? "#".repeat(acc) : "b".repeat(-acc);
+var nom = (n) => LETTRES_FR[n.l] + suffixe2(n.acc);
+var nomEn2 = (n) => LETTRES_EN[n.l] + suffixe2(n.acc);
+function intervalle2(n, numero, demiTons) {
   const l = (n.l + numero - 1) % 7;
   let acc = ((pc(n) + demiTons - NATUREL[l]) % 12 + 12) % 12;
   if (acc > 6) acc -= 12;
@@ -9104,13 +9330,13 @@ var ACCORDS = {
   m7b5: { fr: "demi-diminu\xE9", sym: "m7\u266D5", pile: [[3, 3], [5, 6], [7, 10]] },
   dim7: { fr: "diminu\xE9 7", sym: "dim7", pile: [[3, 3], [5, 6], [7, 9]] }
 };
-var notesAccord = (r, type) => [r, ...ACCORDS[type].pile.map(([k, d]) => intervalle(r, k, d))];
-var symbole = (r, type) => nomEn(r) + ACCORDS[type].sym;
+var notesAccord = (r, type) => [r, ...ACCORDS[type].pile.map(([k, d]) => intervalle2(r, k, d))];
+var symbole = (r, type) => nomEn2(r) + ACCORDS[type].sym;
 var symboleFr = (r, type) => `${symbole(r, type)} (${nom(r)} ${ACCORDS[type].fr})`;
 var GAMME_MAJ = [[1, 0], [2, 2], [3, 4], [4, 5], [5, 7], [6, 9], [7, 11]];
-var gammeMajeure = (r) => GAMME_MAJ.map(([k, d]) => intervalle(r, k, d));
+var gammeMajeure = (r) => GAMME_MAJ.map(([k, d]) => intervalle2(r, k, d));
 var PENTA_MIN = [[1, 0], [3, 3], [4, 5], [5, 7], [7, 10]];
-var pentaMineure = (r) => PENTA_MIN.map(([k, d]) => intervalle(r, k, d));
+var pentaMineure = (r) => PENTA_MIN.map(([k, d]) => intervalle2(r, k, d));
 var ARMURES = {
   "Do": [0, ""],
   "Sol": [1, "#"],
@@ -9127,7 +9353,7 @@ var ARMURES = {
 };
 var CORDE_MIDI2 = { 6: 40, 5: 45, 4: 50, 3: 55, 2: 59, 1: 64 };
 var NOM_CORDE = { 6: "Mi grave", 5: "La", 4: "R\xE9", 3: "Sol", 2: "Si", 1: "Mi aigu" };
-var NOMS_PC = ["Do", "Do#", "R\xE9", "R\xE9#", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "La#", "Si"];
+var NOMS_PC = NOTES_DIESES_FR;
 var noteManche = (corde, cas) => NOMS_PC[(CORDE_MIDI2[corde] + cas) % 12];
 var estNaturelle = (corde, cas) => !noteManche(corde, cas).includes("#");
 var choisir = (rng, arr) => arr[Math.floor(rng() * arr.length)];
@@ -9140,31 +9366,31 @@ function melanger(rng, arr) {
   return a;
 }
 var RARES = /* @__PURE__ */ new Set(["Mi#", "Si#", "Fab", "Dob"]);
-function pcDeNom(n) {
+function pcDeNom2(n) {
   const m = /^(Do|Ré|Mi|Fa|Sol|La|Si)(#{0,2}|b{0,2})$/.exec(n);
   if (!m) return null;
   const acc = m[2].startsWith("#") ? m[2].length : -m[2].length;
   return ((NATUREL[LETTRES_FR.indexOf(m[1])] + acc) % 12 + 12) % 12;
 }
 function qcm(rng, bonne, leurresCandidats) {
-  const pcBonne = pcDeNom(bonne);
-  const leurres = [...new Set(leurresCandidats.filter((x) => x !== bonne && !RARES.has(x) && (pcBonne == null || pcDeNom(x) !== pcBonne)))];
+  const pcBonne = pcDeNom2(bonne);
+  const leurres = [...new Set(leurresCandidats.filter((x) => x !== bonne && !RARES.has(x) && (pcBonne == null || pcDeNom2(x) !== pcBonne)))];
   if (leurres.length < 3) return null;
   const o = melanger(rng, [bonne, ...melanger(rng, leurres).slice(0, 3)]);
   return { o, a: o.indexOf(bonne) };
 }
 var liste = (notes) => notes.map(nom).join(" - ");
 function cheminManche(corde, cas) {
-  const note = noteManche(corde, cas);
-  if (cas === 0) return `\xC0 vide, la corde ${corde} donne ${note}.`;
-  if (cas === 12) return `La case 12 est l'octave de la corde \xE0 vide : ${note}, comme \xE0 vide.`;
+  const note2 = noteManche(corde, cas);
+  if (cas === 0) return `\xC0 vide, la corde ${corde} donne ${note2}.`;
+  if (cas === 12) return `La case 12 est l'octave de la corde \xE0 vide : ${note2}, comme \xE0 vide.`;
   const depuis12 = cas >= 8, pas = [];
   if (depuis12) {
     for (let c = 12; c >= cas; c--) if (estNaturelle(corde, c) || c === cas) pas.push(`${noteManche(corde, c)} (${c})`);
   } else {
     for (let c = 0; c <= cas; c++) if (estNaturelle(corde, c) || c === cas) pas.push(`${noteManche(corde, c)} (${c})`);
   }
-  const alt = note.includes("#") ? ` Case ${cas} tombe entre deux notes naturelles : c'est ${note}, un demi-ton ${depuis12 ? "sous" : "au-dessus de"} ${noteManche(corde, cas + (depuis12 ? 1 : -1))}.` : "";
+  const alt = note2.includes("#") ? ` Case ${cas} tombe entre deux notes naturelles : c'est ${note2}, un demi-ton ${depuis12 ? "sous" : "au-dessus de"} ${noteManche(corde, cas + (depuis12 ? 1 : -1))}.` : "";
   return `${depuis12 ? "Depuis l'octave (case 12)" : "Depuis la corde \xE0 vide"}, par les notes naturelles : ${pas.join(" \u2192 ")}.${alt}`;
 }
 function familleCorde(corde, lecon, suffixeId) {
@@ -9202,16 +9428,16 @@ function familleOctave(depart, arrivee, lecon, id) {
     titre: `Octaves : corde ${depart} \u2192 corde ${arrivee}`,
     niveaux: ["cases 1 \xE0 7", "cases 1 \xE0 10", "cases 1 \xE0 10, en partant de la note"],
     generer(niv, rng) {
-      const max = niv === 1 ? 7 : 10, cas = 1 + Math.floor(rng() * max), note = noteManche(depart, cas), bonne = `Case ${cas + 2}`;
+      const max = niv === 1 ? 7 : 10, cas = 1 + Math.floor(rng() * max), note2 = noteManche(depart, cas), bonne = `Case ${cas + 2}`;
       const r = qcm(rng, bonne, [cas, cas + 1, cas + 3, cas - 2, cas + 5, cas - 1].filter((c) => c >= 0 && c <= 12).map((c) => `Case ${c}`));
-      const q = niv === 3 ? `Tu joues ${note} sur la corde ${depart}, case ${cas}. Sur quelle case de la corde ${arrivee} est son octave ?` : `Corde ${depart}, case ${cas}. O\xF9 est l'octave, sur la corde ${arrivee} ?`;
-      return r && { q, ...r, exp: `Pattern corde ${depart} \u2192 corde ${arrivee} : deux cordes plus haut, deux cases plus loin. Case ${cas} \u2192 case ${cas + 2} (${note}).` };
+      const q = niv === 3 ? `Tu joues ${note2} sur la corde ${depart}, case ${cas}. Sur quelle case de la corde ${arrivee} est son octave ?` : `Corde ${depart}, case ${cas}. O\xF9 est l'octave, sur la corde ${arrivee} ?`;
+      return r && { q, ...r, exp: `Pattern corde ${depart} \u2192 corde ${arrivee} : deux cordes plus haut, deux cases plus loin. Case ${cas} \u2192 case ${cas + 2} (${note2}).` };
     }
   };
 }
 function voisin(d, pas, sens) {
   const cible = ((pc(d) + sens * pas) % 12 + 12) % 12;
-  if (pas === 2) return intervalle(d, sens > 0 ? 2 : 7, sens > 0 ? 2 : 10);
+  if (pas === 2) return intervalle2(d, sens > 0 ? 2 : 7, sens > 0 ? 2 : 10);
   const lVoisine = (d.l + (sens > 0 ? 1 : 6)) % 7;
   if (NATUREL[lVoisine] === cible) return N(lVoisine, 0);
   return N(d.l, d.acc + sens);
@@ -9251,10 +9477,10 @@ function familleIntervalles(id, lecon, titre, cles) {
         const res2 = qcm(rng, String(dt), [dt - 1, dt + 1, dt + 2, dt - 2].filter((x) => x > 0).map(String));
         return res2 && { q: `Combien de demi-tons contient une ${nomI} ?`, ...res2, exp: `${nomI[0].toUpperCase() + nomI.slice(1)} = ${dt} demi-tons, soit ${dt} cases sur une m\xEAme corde.` };
       }
-      const r = choisir(rng, RACINES[niv]), c = intervalle(r, num, dt);
+      const r = choisir(rng, RACINES[niv]), c = intervalle2(r, num, dt);
       if (!simple(c)) return null;
       const bonne = nom(c);
-      const leurres = [intervalle(r, num, dt - 1), intervalle(r, num, dt + 1), intervalle(r, num - 1, dt - 1), intervalle(r, num + 1, dt + 1), intervalle(r, num + 1, dt + 2)].filter(simple).map(nom);
+      const leurres = [intervalle2(r, num, dt - 1), intervalle2(r, num, dt + 1), intervalle2(r, num - 1, dt - 1), intervalle2(r, num + 1, dt + 1), intervalle2(r, num + 1, dt + 2)].filter(simple).map(nom);
       const res = qcm(rng, bonne, leurres);
       return res && {
         q: `Quelle est la ${nomI} de ${nom(r)} ?`,
@@ -9275,7 +9501,7 @@ var familleDegres = {
     const r = choisir(rng, RACINES[niv]), g = gammeMajeure(r);
     if (!g.every(simple)) return null;
     const k = 1 + Math.floor(rng() * 6), bonne = nom(g[k]);
-    const res = qcm(rng, bonne, [...g.filter((_, i) => i !== k).map(nom), nom(intervalle(g[k], 1, 1)), nom(intervalle(g[k], 1, -1))].filter((x) => !/(##|bb)/.test(x)));
+    const res = qcm(rng, bonne, [...g.filter((_, i) => i !== k).map(nom), nom(intervalle2(g[k], 1, 1)), nom(intervalle2(g[k], 1, -1))].filter((x) => !/(##|bb)/.test(x)));
     const libelle = niv === 3 && rng() < 0.5 ? `la ${NOMS[k]} (${k + 1}e degr\xE9)` : `le ${k + 1}e degr\xE9`;
     return res && {
       q: `Quel est ${libelle} de ${nom(r)} majeur ?`,
@@ -9311,7 +9537,7 @@ var famillePenta = {
     const r = choisir(rng, pool), p = pentaMineure(r);
     if (!p.every(simple)) return null;
     const dedans = new Set(p.map(pc));
-    const hors = [intervalle(r, 2, 2), intervalle(r, 3, 4), intervalle(r, 6, 8), intervalle(r, 7, 11), intervalle(r, 2, 1), intervalle(r, 6, 9)].filter((n) => simple(n) && !dedans.has(pc(n)));
+    const hors = [intervalle2(r, 2, 2), intervalle2(r, 3, 4), intervalle2(r, 6, 8), intervalle2(r, 7, 11), intervalle2(r, 2, 1), intervalle2(r, 6, 9)].filter((n) => simple(n) && !dedans.has(pc(n)));
     const cible = choisir(rng, p.slice(1));
     const res = qcm(rng, nom(cible), hors.map(nom));
     return res && {
@@ -9328,10 +9554,10 @@ var familleRelative = {
   titre: "Relatives mineures",
   niveaux: ["Do, Sol, Fa", "7 tonalit\xE9s", "12 tonalit\xE9s"],
   generer(niv, rng) {
-    const r = choisir(rng, RACINES[niv]), rel = intervalle(r, 6, 9);
+    const r = choisir(rng, RACINES[niv]), rel = intervalle2(r, 6, 9);
     if (!simple(rel)) return null;
     const bonne = `${nom(rel)} mineur`;
-    const res = qcm(rng, bonne, [intervalle(r, 3, 4), intervalle(r, 5, 7), intervalle(r, 6, 8), intervalle(r, 2, 2), intervalle(r, 4, 5)].filter(simple).map((n) => `${nom(n)} mineur`));
+    const res = qcm(rng, bonne, [intervalle2(r, 3, 4), intervalle2(r, 5, 7), intervalle2(r, 6, 8), intervalle2(r, 2, 2), intervalle2(r, 4, 5)].filter(simple).map((n) => `${nom(n)} mineur`));
     return res && {
       q: `Quelle est la relative mineure de ${nom(r)} majeur ?`,
       ...res,
@@ -9351,7 +9577,7 @@ var familleTriades = {
     if (!notes.every(simple)) return null;
     const bonne = liste(notes);
     const autres = ["maj", "min", "dim", "aug"].filter((x) => x !== t).map((x) => notesAccord(r, x)).filter((ns) => ns.every(simple)).map(liste);
-    const res = qcm(rng, bonne, [...autres, liste([r, intervalle(r, 3, 4), intervalle(r, 5, 6)]), liste([r, intervalle(r, 4, 5), intervalle(r, 5, 7)])]);
+    const res = qcm(rng, bonne, [...autres, liste([r, intervalle2(r, 3, 4), intervalle2(r, 5, 6)]), liste([r, intervalle2(r, 4, 5), intervalle2(r, 5, 7)])]);
     const recette = { maj: "tierce majeure (4 demi-tons) + quinte juste (7)", min: "tierce mineure (3) + quinte juste (7)", dim: "tierce mineure (3) + quinte diminu\xE9e (6)", aug: "tierce majeure (4) + quinte augment\xE9e (8)" }[t];
     return res && {
       q: `Quelles sont les notes de ${nom(r)} ${ACCORDS[t].fr} ?`,
@@ -9379,7 +9605,7 @@ var familleSeptiemes = {
     if (!notes.every(simple)) return null;
     const bonne = liste(notes);
     const autres = ["maj7", "m7", "7", "m7b5"].filter((x) => x !== t).map((x) => notesAccord(r, x)).filter((ns) => ns.every(simple)).map(liste);
-    const res = qcm(rng, bonne, [...autres, liste([r, intervalle(r, 3, 4), intervalle(r, 5, 7), intervalle(r, 6, 9)])]);
+    const res = qcm(rng, bonne, [...autres, liste([r, intervalle2(r, 3, 4), intervalle2(r, 5, 7), intervalle2(r, 6, 9)])]);
     return res && {
       q: `Quelles sont les notes de ${symboleFr(r, t)} ?`,
       ...res,
@@ -9433,10 +9659,10 @@ function familleMode(nomMode, lecon, num, dt, descr) {
     titre: `Note caract\xE9ristique : ${nomMode}`,
     niveaux: ["depuis des notes naturelles simples", "7 fondamentales", "12 fondamentales"],
     generer(niv, rng) {
-      const r = choisir(rng, RACINES[niv]), c = intervalle(r, num, dt);
+      const r = choisir(rng, RACINES[niv]), c = intervalle2(r, num, dt);
       if (!simple(c)) return null;
       const bonne = nom(c);
-      const res = qcm(rng, bonne, [intervalle(r, num, dt + (dt % 2 ? 1 : -1)), intervalle(r, num, dt + 1), intervalle(r, num, dt - 1), intervalle(r, 3, 3), intervalle(r, 5, 7)].filter(simple).map(nom));
+      const res = qcm(rng, bonne, [intervalle2(r, num, dt + (dt % 2 ? 1 : -1)), intervalle2(r, num, dt + 1), intervalle2(r, num, dt - 1), intervalle2(r, 3, 3), intervalle2(r, 5, 7)].filter(simple).map(nom));
       return res && {
         q: `Quelle est la note caract\xE9ristique de ${nom(r)} ${nomMode} ?`,
         ...res,
@@ -9445,7 +9671,7 @@ function familleMode(nomMode, lecon, num, dt, descr) {
     }
   };
 }
-var NOMS_TONE = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+var NOMS_TONE = NOTES_DIESES_EN;
 var midiVersTone = (m) => `${NOMS_TONE[m % 12]}${Math.floor(m / 12) - 1}`;
 var nomMidi = (m) => NOMS_PC[m % 12];
 var entre = (rng, a, b) => a + Math.floor(rng() * (b - a + 1));
@@ -9721,7 +9947,7 @@ var familleFonctions = {
       return [...pile, 12].map((i) => tonique + dec + i);
     };
     const o = choix.map((k) => DEGRES_ACCORDS[k][2]);
-    const nomT = NOMS_PC[tonique % 12];
+    const nomT = nom(RACINES[3].find((r) => pc(r) === tonique % 12));
     const pourquoi = { I: "c'\xE9tait encore la tonique : aucun mouvement", IV: "le IV s'\xE9loigne de la tonique en douceur, sans tension", V: "le V cr\xE9e une tension qui appelle le retour \xE0 la tonique", vi: "le vi est mineur : m\xEAme famille que le I, en plus sombre" }[d];
     return {
       q: "\xC9coute : d'abord l'accord I (la tonique), puis un autre accord. Lequel ?",
@@ -10894,13 +11120,13 @@ function EarTraining({ onBack, dispatch, state }) {
               col = C.coralD;
             }
           }
-          const suffixe2 = selected === null ? "" : isAnswer ? ", bonne r\xE9ponse" : isSelected ? ", ta r\xE9ponse, incorrecte" : "";
+          const suffixe3 = selected === null ? "" : isAnswer ? ", bonne r\xE9ponse" : isSelected ? ", ta r\xE9ponse, incorrecte" : "";
           return /* @__PURE__ */ jsxs8(
             "button",
             {
               onClick: () => handleAnswer(opt),
               disabled: selected !== null,
-              "aria-label": suffixe2 ? `${opt.label}${suffixe2}` : void 0,
+              "aria-label": suffixe3 ? `${opt.label}${suffixe3}` : void 0,
               className: "gr-focus",
               style: { padding: "14px 16px", minHeight: 48, borderRadius: 12, border, background: bg, cursor: selected !== null ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", fontFamily: FONTS.title },
               children: [
@@ -10933,6 +11159,7 @@ init_Ti();
 init_Gropi();
 init_Fretboard();
 init_fretboardUtils();
+init_orthographe();
 
 // src/music/compRhythm.js
 var COMP_PATTERNS = {
@@ -11242,9 +11469,12 @@ var MIXAGE = {
 
 // src/screens/jam/harmonie.js
 init_fretboardUtils();
+init_notes();
+init_orthographe();
 
 // src/music/walkingBass.js
-var CHROMATIC3 = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+init_notes();
+var CHROMATIC3 = NOTES_DIESES_EN;
 var midiOf2 = (name, oct) => CHROMATIC3.indexOf(name) + 12 * (oct + 1);
 var nameOfMidi = (m) => CHROMATIC3[(m % 12 + 12) % 12];
 var octOfMidi = (m) => Math.floor(m / 12) - 1;
@@ -11336,21 +11566,9 @@ function toToneTime(beat) {
 }
 
 // src/screens/jam/harmonie.js
-var ROOTS_FR = [
-  { en: "A", fr: "La" },
-  { en: "B", fr: "Si" },
-  { en: "C", fr: "Do" },
-  { en: "D", fr: "R\xE9" },
-  { en: "E", fr: "Mi" },
-  { en: "F", fr: "Fa" },
-  { en: "G", fr: "Sol" },
-  { en: "C#", fr: "Do#" },
-  { en: "D#", fr: "R\xE9#" },
-  { en: "F#", fr: "Fa#" },
-  { en: "G#", fr: "Sol#" },
-  { en: "A#", fr: "La#" }
-];
-var CHROMATIC4 = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+var ROOTS_FR = ["A", "B", "C", "D", "E", "F", "G", "C#", "D#", "F#", "G#", "A#"].map((en) => ({ en, fr: NOTES_DIESES_FR[NOTES_DIESES_EN.indexOf(en)] }));
+var CHROMATIC4 = NOTES_DIESES_EN;
+var nomTonique = (root, scaleKey) => nomRacineGamme(root, scaleKey);
 var SHARP_TO_FLAT2 = { "C#": "Db", "D#": "Eb", "F#": "Gb", "G#": "Ab", "A#": "Bb" };
 function transposeNote(root, semitones) {
   const idx = CHROMATIC4.indexOf(root);
@@ -11368,10 +11586,18 @@ function notesAccord2(root, chord) {
   const r = transposeNote(root, chord.degree);
   return (CHORD_INTERVALS[chord.quality] || CHORD_INTERVALS.dom7).map((i) => transposeNote(r, i));
 }
-var nomAccord = (root, chord) => {
-  const r = transposeNote(root, chord.degree);
-  return (ROOTS_FR.find((x) => x.en === r)?.fr ?? r) + (QUALITE_LABEL[chord.quality] ?? "");
+var racineDansTonalite = (root, chord, scaleKey) => epelerDansTonalite(CHROMATIC4.indexOf(transposeNote(root, chord.degree)), root, scaleKey || "major");
+var nomAccord = (root, chord, scaleKey) => {
+  const r = racineDansTonalite(root, chord, scaleKey);
+  const nom2 = r ? nomFr(simplifier(r)) : transposeNote(root, chord.degree);
+  return nom2 + (QUALITE_LABEL[chord.quality] ?? "");
 };
+function nomsNotesAccord(root, chord, scaleKey) {
+  const internes = notesAccord2(root, chord);
+  const r = racineDansTonalite(root, chord, scaleKey);
+  const epelees = r ? epelerAccord(r, CHORD_INTERVALS[chord.quality] || CHORD_INTERVALS.dom7) : [];
+  return internes.map((note2, i) => ({ note: note2, nom: epelees[i] ? nomFr(simplifier(epelees[i])) : note2 }));
+}
 var VOICINGS = {
   // Voicing jazz : root basse, 3e, 5e, 7e en ordre montant
   min7: { intervals: [0, 10, 15, 19], desc: "x-R-b7-3-5" },
@@ -12527,9 +12753,9 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
             hit.velocity
           );
         }
-        if (!coupe.basse) bassPattern.forEach(({ note, beat: b, dur, velocity }) => {
+        if (!coupe.basse) bassPattern.forEach(({ note: note2, beat: b, dur, velocity }) => {
           bassRef.current?.triggerAttackRelease(
-            note,
+            note2,
             dur,
             instant(b),
             velocity ?? 0.8
@@ -12691,11 +12917,11 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
     /* @__PURE__ */ jsxs13("div", { style: { display: "flex", alignItems: "center", gap: 14 }, children: [
       /* @__PURE__ */ jsxs13("div", { style: { flex: 1, minWidth: 0 }, "aria-live": "polite", children: [
         /* @__PURE__ */ jsx15("div", { style: { fontSize: 11, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em" }, children: compte != null ? "Pr\xE9pare-toi" : playing ? "Maintenant" : "Premier accord" }),
-        /* @__PURE__ */ jsx15("div", { style: { fontSize: compte != null ? 46 : 40, fontWeight: 800, lineHeight: 1.05, letterSpacing: "-1px", fontFamily: FONTS.title, color: playing ? context2.colorD : C.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, children: compte != null ? `${compte}\u2026` : nomAccord(root, accord) }),
+        /* @__PURE__ */ jsx15("div", { style: { fontSize: compte != null ? 46 : 40, fontWeight: 800, lineHeight: 1.05, letterSpacing: "-1px", fontFamily: FONTS.title, color: playing ? context2.colorD : C.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, children: compte != null ? `${compte}\u2026` : nomAccord(root, accord, context2.scale) }),
         /* @__PURE__ */ jsx15("div", { "aria-hidden": "true", style: { display: "flex", gap: 4, marginTop: 6, height: 6 }, children: Array.from({ length: accord.bars }, (_, b) => /* @__PURE__ */ jsx15("div", { style: { width: 18, height: 6, borderRadius: 3, background: b <= mesureDansAccord ? context2.color : C.border, transition: "background .08s" } }, b)) }),
         /* @__PURE__ */ jsxs13("div", { style: { fontSize: 13, color: C.text2, fontFamily: FONTS.ui, marginTop: 7 }, children: [
           "Ensuite : ",
-          /* @__PURE__ */ jsx15("b", { style: { color: C.text }, children: nomAccord(root, suivant) })
+          /* @__PURE__ */ jsx15("b", { style: { color: C.text }, children: nomAccord(root, suivant, context2.scale) })
         ] })
       ] }),
       /* @__PURE__ */ jsx15(
@@ -12768,7 +12994,7 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
         fontFamily: FONTS.ui,
         transition: "background 0.12s, border-color 0.12s"
       }, children: [
-        nomAccord(root, chord),
+        nomAccord(root, chord, context2.scale),
         /* @__PURE__ */ jsxs13("span", { style: { fontSize: 11, color: isActive ? context2.color : C.text3, marginLeft: 4 }, children: [
           "\xD7",
           chord.bars
@@ -12908,13 +13134,15 @@ function JamSession({ onBack, dispatch, state }) {
     if (!joue) enregistrerTemps();
   };
   const ctx = CONTEXTS.find((c) => c.id === contextId);
-  const rootFr = ROOTS_FR.find((r) => r.en === root)?.fr ?? root;
+  const rootFr = nomTonique(root, ctx.scale);
   const activeNotes = useMemo4(() => getScaleNotes(root, ctx.scale), [root, ctx.scale]);
+  const nomsActifs = useMemo4(() => nomsGamme(root, ctx.scale), [root, ctx.scale]);
   const accordEnCours = accordIdx != null ? ctx.chords[accordIdx] : null;
-  const notesDeLAccord = useMemo4(
-    () => accordEnCours ? notesAccord2(root, accordEnCours) : [],
-    [accordEnCours, root]
+  const notesAccordAffichees = useMemo4(
+    () => accordEnCours ? nomsNotesAccord(root, accordEnCours, ctx.scale) : [],
+    [accordEnCours, root, ctx.scale]
   );
+  const notesDeLAccord = useMemo4(() => notesAccordAffichees.map((x) => x.note), [notesAccordAffichees]);
   const dansLaGamme = (n) => activeNotes.some((g) => normalizeNote(g) === normalizeNote(n));
   const choisirContexte = (c) => {
     setContextId(c.id);
@@ -12974,7 +13202,7 @@ function JamSession({ onBack, dispatch, state }) {
         fontWeight: root === r.en ? 700 : 400,
         cursor: "pointer",
         fontFamily: FONTS.ui
-      }, children: r.fr }, r.en)) }),
+      }, children: nomTonique(r.en, ctx.scale) }, r.en)) }),
       /* @__PURE__ */ jsx15("div", { style: { display: "flex", gap: 6 }, children: [{ key: "notes", label: "Notes" }, { key: "intervals", label: "Intervalles" }, { key: "degrees", label: "Degr\xE9s" }].map((m) => /* @__PURE__ */ jsx15("button", { onClick: () => setDisplayMode(m.key), "aria-pressed": displayMode === m.key, className: "gr-focus", style: {
         flex: 1,
         minHeight: 40,
@@ -13004,10 +13232,10 @@ function JamSession({ onBack, dispatch, state }) {
         /* @__PURE__ */ jsx15("div", { style: { padding: "8px 12px 10px", borderTop: `1px solid ${C.border}`, minHeight: 44, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }, "aria-live": "polite", children: accordEnCours ? /* @__PURE__ */ jsxs13(Fragment11, { children: [
           /* @__PURE__ */ jsxs13("span", { style: { fontSize: 11, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, marginRight: 2 }, children: [
             "Notes de ",
-            nomAccord(root, accordEnCours),
+            nomAccord(root, accordEnCours, ctx.scale),
             " :"
           ] }),
-          notesDeLAccord.map((n) => {
+          notesAccordAffichees.map(({ note: n, nom: nom2 }) => {
             const dedans = dansLaGamme(n);
             return /* @__PURE__ */ jsxs13("span", { title: dedans ? "Dans ta gamme" : "Hors de ta gamme : c'est la note qui fait entendre le changement", style: {
               padding: "3px 8px",
@@ -13019,7 +13247,7 @@ function JamSession({ onBack, dispatch, state }) {
               border: `1.5px ${dedans ? "solid" : "dashed"} ${dedans ? ctx.color : C.text3}`,
               color: dedans ? ctx.colorD : C.text
             }, children: [
-              noteToFr(n),
+              nom2,
               dedans ? "" : " *"
             ] }, n);
           }),
@@ -13029,10 +13257,10 @@ function JamSession({ onBack, dispatch, state }) {
       /* @__PURE__ */ jsxs13("div", { style: { display: "flex", gap: 10 }, children: [
         /* @__PURE__ */ jsxs13("div", { style: { flex: 1, background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: "10px 12px" }, children: [
           /* @__PURE__ */ jsx15("div", { style: { fontSize: 11, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }, children: "Gamme" }),
-          /* @__PURE__ */ jsx15("div", { style: { display: "flex", flexWrap: "wrap", gap: 4 }, children: activeNotes.map((note, i) => /* @__PURE__ */ jsxs13("div", { style: { padding: "4px 8px", borderRadius: R.pill, background: i === 0 ? ctx.colorL : C.bg, border: `1px solid ${i === 0 ? ctx.color : C.border}`, fontSize: 12, fontWeight: i === 0 ? 700 : 400, color: i === 0 ? ctx.colorD : C.text2, fontFamily: FONTS.ui }, children: [
-            noteToFr(note),
+          /* @__PURE__ */ jsx15("div", { style: { display: "flex", flexWrap: "wrap", gap: 4 }, children: activeNotes.map((note2, i) => /* @__PURE__ */ jsxs13("div", { style: { padding: "4px 8px", borderRadius: R.pill, background: i === 0 ? ctx.colorL : C.bg, border: `1px solid ${i === 0 ? ctx.color : C.border}`, fontSize: 12, fontWeight: i === 0 ? 700 : 400, color: i === 0 ? ctx.colorD : C.text2, fontFamily: FONTS.ui }, children: [
+            nomsActifs[i] ?? note2,
             i === 0 ? " R" : ""
-          ] }, note)) })
+          ] }, note2)) })
         ] }),
         /* @__PURE__ */ jsxs13("div", { style: { flex: 1, background: ctx.colorL, border: `1px solid ${ctx.colorB}`, borderRadius: R.lg, padding: "10px 12px" }, children: [
           /* @__PURE__ */ jsx15("div", { style: { fontSize: 11, fontWeight: 700, color: ctx.colorD, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }, children: "Cibles" }),
@@ -13997,8 +14225,8 @@ function choisirExercice(state, content, objectif) {
   const faites = state.completedLessons || {};
   const fait = state.completedExercises || {};
   const prefere = MODULES_OBJECTIF[objectif] || [];
-  const candidats = (content.exercises || []).filter((e) => (!e.unlockedBy?.length || e.unlockedBy.every((id) => faites[id])) && (!e.courseLink || faites[e.courseLink]));
-  if (!candidats.length) return null;
+  const candidats2 = (content.exercises || []).filter((e) => (!e.unlockedBy?.length || e.unlockedBy.every((id) => faites[id])) && (!e.courseLink || faites[e.courseLink]));
+  if (!candidats2.length) return null;
   const cle2 = (e) => [
     fait[e.id] ? 1 : 0,
     // jamais fait d'abord
@@ -14010,7 +14238,7 @@ function choisirExercice(state, content, objectif) {
     // pas trop long
     e.lvl ?? 9
   ];
-  return [...candidats].sort((a, b) => {
+  return [...candidats2].sort((a, b) => {
     const ka = cle2(a), kb = cle2(b);
     for (let i = 0; i < ka.length; i++) if (ka[i] !== kb[i]) return ka[i] < kb[i] ? -1 : 1;
     return 0;
