@@ -38,14 +38,14 @@ function forcePwd(pwd) {
 
 export function AuthScreen({
   onSignIn, onSignUp, onResetPassword, onUpdatePassword, onResendConfirmation,
-  recovery = false,
+  recovery = false, initialError = null,
 }) {
   const C = useC();
   const [mode, setMode]         = useState(recovery ? 'newPassword' : 'login');
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState(null);
+  const [error, setError]       = useState(initialError);
   const [success, setSuccess]   = useState(null);
   const [showPwd, setShowPwd]   = useState(false);
 

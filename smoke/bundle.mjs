@@ -6167,6 +6167,13 @@ function ExercisesScreen({ state, dispatch, content, embedded = false }) {
     ] })
   ] });
 }
+function BackBtn({ onBack }) {
+  const C = useC();
+  return /* @__PURE__ */ jsxs7("div", { style: { padding: "14px 20px 0", display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }, children: [
+    /* @__PURE__ */ jsx9("button", { onClick: onBack, style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.sm, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }, children: /* @__PURE__ */ jsx9(Ti, { name: "arrow-left", size: 17, color: C.text }) }),
+    /* @__PURE__ */ jsx9("span", { style: { fontSize: 13, fontWeight: 600, color: C.text2, fontFamily: FONTS.ui }, children: "Retour" })
+  ] });
+}
 function ExerciseDetail({ ex, state, dispatch, onBack, content }) {
   const { FretboardExercise: FretboardExercise2 } = useRenderers();
   const C = useC();
@@ -6182,13 +6189,11 @@ function ExerciseDetail({ ex, state, dispatch, onBack, content }) {
   }, []);
   const theme = MODULE_THEME2[ex.mod] || MODULE_THEME2.neck;
   const lc = LEVEL_COLORS[ex.lvl || 1];
-  function BackBtn() {
-    return /* @__PURE__ */ jsxs7("div", { style: { padding: "14px 20px 0", display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }, children: [
-      /* @__PURE__ */ jsx9("button", { onClick: onBack, style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.sm, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }, children: /* @__PURE__ */ jsx9(Ti, { name: "arrow-left", size: 17, color: C.text }) }),
-      /* @__PURE__ */ jsx9("span", { style: { fontSize: 13, fontWeight: 600, color: C.text2, fontFamily: FONTS.ui }, children: "Retour" })
-    ] });
-  }
-  if (ex.type === "fretboard_exercise") {
+  const estFretboard = ex.type === "fretboard_exercise";
+  useEffect6(() => {
+    if (!estFretboard && checked.length > 0 && !done) dispatch({ type: "SAVE_EXERCISE_PROGRESS", id: ex.id, checkedSteps: checked });
+  }, [checked, done, estFretboard, dispatch, ex.id]);
+  if (estFretboard) {
     const finishFretboard = ({ totalXp, stages }) => {
       dispatch({ type: "COMPLETE_EXERCISE", id: ex.id, title: ex.title, xp: totalXp || ex.xp });
       dispatch({ type: "MARK_STREAK" });
@@ -6202,7 +6207,7 @@ function ExerciseDetail({ ex, state, dispatch, onBack, content }) {
     };
     const linkedLesson2 = ex.courseLink ? content.courses.flatMap((c) => c.lessons).find((l) => l.id === ex.courseLink) : null;
     return /* @__PURE__ */ jsxs7("div", { children: [
-      /* @__PURE__ */ jsx9(BackBtn, {}),
+      /* @__PURE__ */ jsx9(BackBtn, { onBack }),
       /* @__PURE__ */ jsxs7("div", { style: { padding: "0 20px" }, children: [
         /* @__PURE__ */ jsx9(ExHeader, { ex, theme, lc }),
         linkedLesson2 && /* @__PURE__ */ jsx9(LinkedLesson, { lesson: linkedLesson2 }),
@@ -6213,9 +6218,6 @@ function ExerciseDetail({ ex, state, dispatch, onBack, content }) {
     ] });
   }
   const allDone = checked.length === (ex.steps || []).length;
-  useEffect6(() => {
-    if (checked.length > 0 && !done) dispatch({ type: "SAVE_EXERCISE_PROGRESS", id: ex.id, checkedSteps: checked });
-  }, [checked]);
   const toggle = (i) => setChecked((prev) => prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i]);
   const finish = () => {
     setPop(true);
@@ -6232,7 +6234,7 @@ function ExerciseDetail({ ex, state, dispatch, onBack, content }) {
   return /* @__PURE__ */ jsxs7("div", { children: [
     pop && /* @__PURE__ */ jsx9(XPPop, { amount: ex.xp, onDone: () => {
     } }),
-    /* @__PURE__ */ jsx9(BackBtn, {}),
+    /* @__PURE__ */ jsx9(BackBtn, { onBack }),
     /* @__PURE__ */ jsxs7("div", { style: { padding: "0 20px" }, children: [
       /* @__PURE__ */ jsx9(ExHeader, { ex, theme, lc }),
       linkedLesson && /* @__PURE__ */ jsx9(LinkedLesson, { lesson: linkedLesson }),

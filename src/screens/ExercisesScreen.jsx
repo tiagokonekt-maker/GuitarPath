@@ -260,6 +260,20 @@ function ExercisesScreen({ state, dispatch, content, embedded = false }) {
   );
 }
 
+// Défini hors de ExerciseDetail : un composant déclaré dans le rendu est un
+// NOUVEAU type à chaque rendu, donc démonté/remonté à chaque case cochée.
+function BackBtn({ onBack }) {
+  const C = useC();
+  return (
+    <div style={{ padding:"14px 20px 0", display:"flex", alignItems:"center", gap:10, marginBottom:4 }}>
+      <button onClick={onBack} style={{ background:C.surface, border:`1.5px solid ${C.border}`, borderRadius:R.sm, width:36, height:36, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer" }}>
+        <Ti name="arrow-left" size={17} color={C.text} />
+      </button>
+      <span style={{ fontSize:13, fontWeight:600, color:C.text2, fontFamily:FONTS.ui }}>Retour</span>
+    </div>
+  );
+}
+
 // ── ExerciseDetail (logique inchangée, layout redesigné) ──────────────────────
 function ExerciseDetail({ ex, state, dispatch, onBack, content }) {
   const { FretboardExercise } = useRenderers();
@@ -275,19 +289,17 @@ function ExerciseDetail({ ex, state, dispatch, onBack, content }) {
   const theme  = MODULE_THEME[ex.mod] || MODULE_THEME.neck;
   const lc     = LEVEL_COLORS[ex.lvl||1];
 
-  function BackBtn() {
-    return (
-      <div style={{ padding:"14px 20px 0", display:"flex", alignItems:"center", gap:10, marginBottom:4 }}>
-        <button onClick={onBack} style={{ background:C.surface, border:`1.5px solid ${C.border}`, borderRadius:R.sm, width:36, height:36, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer" }}>
-          <Ti name="arrow-left" size={17} color={C.text} />
-        </button>
-        <span style={{ fontSize:13, fontWeight:600, color:C.text2, fontFamily:FONTS.ui }}>Retour</span>
-      </div>
-    );
-  }
+  const estFretboard = ex.type === "fretboard_exercise";
+
+  // Sauvegarde des étapes cochées (exercice classique). Placé AVANT le
+  // retour anticipé de l'exercice fretboard : un hook appelé après un
+  // `return` conditionnel change l'ordre des hooks d'un rendu à l'autre.
+  useEffect(() => {
+    if (!estFretboard && checked.length > 0 && !done) dispatch({ type:"SAVE_EXERCISE_PROGRESS", id:ex.id, checkedSteps:checked });
+  }, [checked, done, estFretboard, dispatch, ex.id]);
 
   // Exercice fretboard interactif
-  if (ex.type === "fretboard_exercise") {
+  if (estFretboard) {
     const finishFretboard = ({ totalXp, stages }) => {
       dispatch({ type:"COMPLETE_EXERCISE", id:ex.id, title:ex.title, xp:totalXp||ex.xp });
       dispatch({ type:"MARK_STREAK" });
@@ -308,7 +320,7 @@ function ExerciseDetail({ ex, state, dispatch, onBack, content }) {
     const linkedLesson = ex.courseLink ? content.courses.flatMap(c=>c.lessons).find(l=>l.id===ex.courseLink) : null;
     return (
       <div>
-        <BackBtn />
+        <BackBtn onBack={onBack} />
         <div style={{ padding:"0 20px" }}>
           <ExHeader ex={ex} theme={theme} lc={lc} />
           {linkedLesson && <LinkedLesson lesson={linkedLesson} />}
@@ -322,9 +334,6 @@ function ExerciseDetail({ ex, state, dispatch, onBack, content }) {
 
   // Exercice classique
   const allDone = checked.length === (ex.steps||[]).length;
-  useEffect(() => {
-    if (checked.length > 0 && !done) dispatch({ type:"SAVE_EXERCISE_PROGRESS", id:ex.id, checkedSteps:checked });
-  }, [checked]);
   const toggle = (i) => setChecked(prev => prev.includes(i) ? prev.filter(x=>x!==i) : [...prev, i]);
   const finish = () => {
     setPop(true);
@@ -349,7 +358,7 @@ function ExerciseDetail({ ex, state, dispatch, onBack, content }) {
   return (
     <div>
       {pop && <XPPop amount={ex.xp} onDone={()=>{}} />}
-      <BackBtn />
+      <BackBtn onBack={onBack} />
       <div style={{ padding:"0 20px" }}>
         <ExHeader ex={ex} theme={theme} lc={lc} />
         {linkedLesson && <LinkedLesson lesson={linkedLesson} />}

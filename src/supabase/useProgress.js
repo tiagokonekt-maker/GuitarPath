@@ -1,5 +1,6 @@
 import { useCallback, useRef } from 'react';
 import { supabase, getCachedAccessToken, SUPABASE_REST, SUPABASE_KEY } from './supabaseClient';
+import { cleHorsLigne, interpreterChargementProgression, purgerDonneesPersonnelles } from '../store/compte.js';
 
 // ── Ce qui change ─────────────────────────────────────────────────────────
 // 1. `updated_at` est LU au chargement et renvoyé à l'appelant : le merge
@@ -12,50 +13,47 @@ import { supabase, getCachedAccessToken, SUPABASE_REST, SUPABASE_KEY } from './s
 //    le seul moment où le navigateur garantit encore de laisser passer une
 //    requête sur mobile.
 // 4. Plus aucun `console.log` en production.
+// 5. `loadProgress` LÈVE une erreur quand le chargement échoue, et ne renvoie
+//    `null` que s'il n'y a vraiment aucune ligne. Avant, les deux cas
+//    renvoyaient `null` et l'app écrasait la progression cloud.
+// 6. Le repli hors-ligne est indexé par userId : un autre compte connecté
+//    ensuite sur le même appareil ne le synchronise plus dans le sien.
 
-const OFFLINE_KEY = 'groply_offline_state';
-const LEGACY_OFFLINE_KEY = 'guitarpath_offline_state';
 const DEV = typeof import.meta !== 'undefined' && import.meta.env?.DEV;
 
 const log = (...a) => { if (DEV) console.warn('[groply/progress]', ...a); };
 
-const writeOffline = (state) => {
-  try { localStorage.setItem(OFFLINE_KEY, JSON.stringify(state)); } catch { /* quota */ }
+const writeOffline = (userId, state) => {
+  try { localStorage.setItem(cleHorsLigne(userId), JSON.stringify(state)); } catch { /* quota */ }
 };
-const clearOffline = () => {
-  try { localStorage.removeItem(OFFLINE_KEY); } catch { /* noop */ }
+const clearOffline = (userId) => {
+  try { localStorage.removeItem(cleHorsLigne(userId)); } catch { /* noop */ }
 };
 
 export function useProgress(userId) {
   const inFlight = useRef(false);
 
   // ── Charger la progression depuis Supabase ──────────────────────────
+  // Renvoie la progression, `null` s'il n'y a pas encore de ligne (première
+  // connexion), et LÈVE une erreur si on ne sait pas (réseau, RLS, 5xx…) :
+  // l'appelant ne doit surtout pas écrire dans le cloud dans ce dernier cas.
   const loadProgress = useCallback(async () => {
     if (!userId) return null;
-    try {
-      // `maybeSingle()` plutôt que `single()` : à la première connexion il
-      // n'y a pas de ligne, et `single()` renvoyait alors une erreur qu'il
-      // fallait reconnaître par son code (PGRST116).
-      const { data, error } = await supabase
-        .from('progress')
-        .select('xp, level, streak, data, updated_at')
-        .eq('user_id', userId)
-        .maybeSingle();
+    // `maybeSingle()` plutôt que `single()` : à la première connexion il
+    // n'y a pas de ligne, et `single()` renvoyait alors une erreur qu'il
+    // fallait reconnaître par son code (PGRST116).
+    const reponse = await supabase
+      .from('progress')
+      .select('xp, level, streak, data, updated_at')
+      .eq('user_id', userId)
+      .maybeSingle();
 
-      if (error) { log('load', error.message); return null; }
-      if (!data) return null;
-
-      return {
-        ...(data.data && typeof data.data === 'object' ? data.data : {}),
-        xp: data.xp,
-        level: data.level,
-        streak: data.streak,
-        cloudUpdatedAt: data.updated_at || '',
-      };
-    } catch (e) {
-      log('load offline', e?.message);
-      return null;
+    const r = interpreterChargementProgression(reponse);
+    if (r.statut === 'erreur') {
+      log('load', r.erreur?.message);
+      throw new Error(r.erreur?.message || 'Chargement de la progression impossible');
     }
+    return r.progression;
   }, [userId]);
 
   // ── Sauvegarder la progression ──────────────────────────────────────
@@ -68,7 +66,7 @@ export function useProgress(userId) {
 
     // Repli écrit d'emblée : si la requête n'aboutit pas (onglet fermé,
     // réseau coupé en cours de route), la session n'est pas perdue.
-    writeOffline(state);
+    writeOffline(userId, state);
 
     try {
       inFlight.current = true;
@@ -82,7 +80,7 @@ export function useProgress(userId) {
         }, { onConflict: 'user_id' });
 
       if (error) { log('save', error.message); return false; }
-      clearOffline();
+      clearOffline(userId);
       return true;
     } catch (e) {
       log('save offline', e?.message);
@@ -109,7 +107,7 @@ export function useProgress(userId) {
    */
   const flush = useCallback((state) => {
     if (!userId || !state) return;
-    writeOffline(state);
+    writeOffline(userId, state);
 
     const token = getCachedAccessToken();
     if (!SUPABASE_REST || !token) return;   // le repli local suffira
@@ -129,7 +127,7 @@ export function useProgress(userId) {
           user_id: userId, xp, level, streak, data: rest,
           updated_at: new Date().toISOString(),
         }),
-      }).then(() => clearOffline()).catch(() => { /* le repli local prendra le relais */ });
+      }).then(r => { if (r.ok) clearOffline(userId); }).catch(() => { /* le repli local prendra le relais */ });
     } catch {
       /* idem */
     }
@@ -140,13 +138,11 @@ export function useProgress(userId) {
     if (!userId) return;
     let raw = null;
     try {
-      raw = localStorage.getItem(OFFLINE_KEY) || localStorage.getItem(LEGACY_OFFLINE_KEY);
+      raw = localStorage.getItem(cleHorsLigne(userId));
     } catch { return; }
     if (!raw) return;
     try {
-      const state = JSON.parse(raw);
-      const ok = await saveProgress(state);
-      if (ok) { try { localStorage.removeItem(LEGACY_OFFLINE_KEY); } catch {} }
+      await saveProgress(JSON.parse(raw));
     } catch (e) {
       log('sync', e?.message);
     }
@@ -164,10 +160,10 @@ export function useProgress(userId) {
       const { error } = await supabase.functions.invoke('delete-account', { body: {} });
       if (error) return { ok: false, error: error.message };
       try {
-        localStorage.removeItem(OFFLINE_KEY);
-        localStorage.removeItem('groply_state');
+        localStorage.removeItem(cleHorsLigne(userId));
         localStorage.removeItem('groply_content');
       } catch { /* noop */ }
+      purgerDonneesPersonnelles(localStorage);
       await supabase.auth.signOut();
       return { ok: true };
     } catch (e) {

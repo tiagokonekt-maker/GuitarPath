@@ -35,7 +35,8 @@ import { Ti } from "./design/Ti.jsx";
 import { Toast } from "./design/ui.jsx";
 import { Gropi } from "./design/Gropi.jsx";
 import { ThemeProvider, useC } from "./design/ThemeContext.jsx";
-import { loadState, saveState, loadContent, mergeStates, STATE_KEY } from "./store/state.js";
+import { loadState, saveState, loadContent, mergeStates, defaultState, STATE_KEY } from "./store/state.js";
+import { preparerStockagePour, purgerDonneesPersonnelles, delaiNouvelEssai } from "./store/compte.js";
 import { reducer } from "./store/reducer.js";
 import { BADGES, computeNewBadges } from "./store/badges.js";
 import { buildReviewSession } from "./store/reviewEngine.js";
@@ -132,10 +133,11 @@ export default function App() {
 
 function AppInner({ onThemeChange }) {
   const {
-    user, loading: authLoading, recovery,
+    user, loading: authLoading, recovery, linkError,
     signIn, signUp, signOut, resetPassword, updatePassword, resendConfirmation,
   } = useAuth();
   const { loadProgress, saveProgress, flush, syncOfflineData, deleteAccount } = useProgress(user?.id);
+  const userId = user?.id ?? null;
 
   const C = useC();
   const [state, setState] = useState(loadState);
@@ -146,6 +148,10 @@ function AppInner({ onThemeChange }) {
   const [toast, setToast] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
   const [progressLoaded, setProgressLoaded] = useState(false);
+  // Échec du chargement cloud : on réessaie, et en attendant AUCUNE écriture
+  // cloud n'est faite (progressLoaded reste faux).
+  const [chargementEchoue, setChargementEchoue] = useState(false);
+  const [essaiChargement, setEssaiChargement] = useState(0);
 
   const stateRef = useRef(state);
   stateRef.current = state;
@@ -212,11 +218,49 @@ function AppInner({ onThemeChange }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signatureBadges, content]);
 
-  // ── Chargement de la progression cloud ─────────────────────────────────
+  // ── Isolation entre comptes ────────────────────────────────────────────
+  // L'état local (groply_state, file analytics…) appartient au dernier
+  // compte connecté. À la déconnexion, ou si un AUTRE compte se connecte sur
+  // l'appareil, il est purgé et l'état en mémoire repart de zéro : sinon il
+  // était fusionné puis poussé dans le compte de la personne suivante.
+  // Les états de chargement sont réinitialisés pendant le rendu (et non dans
+  // un effet) pour qu'aucun rendu ne réutilise ceux du compte précédent.
+  const [userPrecedent, setUserPrecedent] = useState(userId);
+  if (userId !== userPrecedent) {
+    setUserPrecedent(userId);
+    setProgressLoaded(false);
+    setChargementEchoue(false);
+    setEssaiChargement(0);
+  }
+  const dernierUserRef = useRef(userId);
   useEffect(() => {
-    if (!user) { setProgressLoaded(false); return; }
-    if (progressLoaded) return;
+    const avant = dernierUserRef.current;
+    dernierUserRef.current = userId;
+    if (userId) {
+      if (!preparerStockagePour(userId, localStorage)) return;
+    } else {
+      // Au démarrage (personne n'était connecté), rien à purger : on ne
+      // réagit qu'à la transition « connecté → déconnecté ».
+      if (!avant) return;
+      purgerDonneesPersonnelles(localStorage);
+    }
+    analytics.reset();
+    const neuf = defaultState();
+    setState(neuf);
+    onThemeChange(neuf.theme);
+    setScreen("home");
+  }, [userId, onThemeChange]);
+
+  // ── Chargement de la progression cloud ─────────────────────────────────
+  // Trois issues bien distinctes (voir store/compte.js) :
+  //   progression trouvée → fusion ; pas de ligne → l'état local fait foi ;
+  //   ERREUR → on ne sait rien du cloud : on n'y écrit pas et on réessaie.
+  // Avant, l'erreur était traitée comme une absence de ligne, et la
+  // sauvegarde suivante écrasait la progression cloud.
+  useEffect(() => {
+    if (!userId || progressLoaded) return;
     let annule = false;
+    let minuteur = null;
     loadProgress()
       .then(cloud => {
         if (annule) return;
@@ -227,11 +271,30 @@ function AppInner({ onThemeChange }) {
           if (sain.streak == null) delete sain.streak;
           setState(prev => mergeStates(prev, sain));
         }
+        setChargementEchoue(false);
         setProgressLoaded(true);
       })
-      .catch(() => { if (!annule) setProgressLoaded(true); });   // hors-ligne : on n'enferme pas l'utilisateur
-    return () => { annule = true; };
-  }, [user, progressLoaded, loadProgress]);
+      .catch(() => {
+        if (annule) return;
+        setChargementEchoue(true);
+        minuteur = setTimeout(() => setEssaiChargement(n => n + 1), delaiNouvelEssai(essaiChargement));
+      });
+    return () => { annule = true; clearTimeout(minuteur); };
+  }, [userId, progressLoaded, loadProgress, essaiChargement]);
+
+  // Retour du réseau pendant un échec : nouvel essai immédiat.
+  useEffect(() => {
+    if (!chargementEchoue) return;
+    const reessayer = () => setEssaiChargement(n => n + 1);
+    window.addEventListener("online", reessayer);
+    return () => window.removeEventListener("online", reessayer);
+  }, [chargementEchoue]);
+
+  // Hors-ligne avec un compte déjà initialisé sur cet appareil : on laisse
+  // travailler sur l'état local (sans aucune écriture cloud) plutôt que
+  // d'enfermer l'utilisateur sur l'écran de chargement. Sans onboarding
+  // local, on attend le cloud : c'est peut-être un nouvel appareil.
+  const progressionUtilisable = progressLoaded || (chargementEchoue && !!state.onboarding?.done);
 
   // ── Sauvegarde cloud débouncée ─────────────────────────────────────────
   const saveTimer = useRef(null);
@@ -262,10 +325,13 @@ function AppInner({ onThemeChange }) {
 
   // ── Retour en ligne ────────────────────────────────────────────────────
   useEffect(() => {
-    const enLigne = () => { if (user) syncOfflineData(); };
+    // Seulement une fois la progression cloud chargée : le repli hors-ligne
+    // est écrit tel quel, sans fusion.
+    if (!user || !progressLoaded) return;
+    const enLigne = () => syncOfflineData();
     window.addEventListener("online", enLigne);
     return () => window.removeEventListener("online", enLigne);
-  }, [user, syncOfflineData]);
+  }, [user, progressLoaded, syncOfflineData]);
 
   // ── Rotation du défi du jour ───────────────────────────────────────────
   // Après le chargement cloud : sinon la rotation était calculée sur l'état
@@ -293,22 +359,43 @@ function AppInner({ onThemeChange }) {
   useEffect(() => {
     if (!import.meta.env.PROD || !("serviceWorker" in navigator)) return;
 
+    // Première visite : aucun SW ne contrôle encore la page. Le
+    // `clients.claim()` du SW fraîchement installé déclenche alors un
+    // `controllerchange` qui n'est PAS une mise à jour — recharger à ce
+    // moment couperait la première session pour rien.
+    let avaitControleur = !!navigator.serviceWorker.controller;
+
     let dejaRecharge = false;
+    let surVisibilite = null;
+    let filet = null;
+    const nettoyerAttente = () => {
+      if (surVisibilite) document.removeEventListener("visibilitychange", surVisibilite);
+      clearTimeout(filet);
+      surVisibilite = null;
+      filet = null;
+    };
     const recharger = () => {
       if (dejaRecharge) return;
       dejaRecharge = true;
+      nettoyerAttente();
       window.location.reload();
     };
 
     const surChangementControleur = () => {
+      if (!avaitControleur) { avaitControleur = true; return; }
+
       // On ne recharge pas sous les doigts de quelqu'un en pleine leçon.
       // Si l'onglet est déjà en arrière-plan, aucune raison d'attendre.
       if (document.visibilityState === "hidden") { recharger(); return; }
 
+      // Une attente est déjà en place (deux mises à jour rapprochées) :
+      // inutile d'empiler un second listener et un second minuteur.
+      if (surVisibilite) return;
+
       // Sinon, on attend le prochain passage en arrière-plan — changement
       // d'onglet, mise en veille de l'écran, retour à l'accueil du
       // téléphone. C'est un moment sans coût pour recharger.
-      const surVisibilite = () => {
+      surVisibilite = () => {
         if (document.visibilityState === "hidden") recharger();
       };
       document.addEventListener("visibilitychange", surVisibilite);
@@ -318,12 +405,7 @@ function AppInner({ onThemeChange }) {
       // après 10 minutes plutôt que de laisser tourner indéfiniment une
       // version obsolète. La progression est sauvegardée en continu
       // (localStorage à chaque action), donc le coût réel est minime.
-      const filet = setTimeout(recharger, 10 * 60 * 1000);
-
-      return () => {
-        document.removeEventListener("visibilitychange", surVisibilite);
-        clearTimeout(filet);
-      };
+      filet = setTimeout(recharger, 10 * 60 * 1000);
     };
 
     navigator.serviceWorker.addEventListener("controllerchange", surChangementControleur);
@@ -336,11 +418,15 @@ function AppInner({ onThemeChange }) {
         reg.update().catch(() => {});
       } catch { /* la PWA reste utilisable sans SW */ }
     };
-    window.addEventListener("load", enregistrer);
+    // L'effet peut s'exécuter après l'événement `load` (chunks lazy, contenu
+    // déjà en cache) : dans ce cas, l'écouter ne servirait à rien.
+    if (document.readyState === "complete") enregistrer();
+    else window.addEventListener("load", enregistrer);
 
     return () => {
       window.removeEventListener("load", enregistrer);
       navigator.serviceWorker.removeEventListener("controllerchange", surChangementControleur);
+      nettoyerAttente();
     };
   }, []);
 
@@ -401,12 +487,26 @@ function AppInner({ onThemeChange }) {
   // ne lisait : les deux raccourcis ne faisaient rien.
   const raccourciTraite = useRef(false);
   useEffect(() => {
-    if (raccourciTraite.current || !content || !progressLoaded) return;
+    if (raccourciTraite.current || !content || !progressionUtilisable) return;
     raccourciTraite.current = true;
     const sc = new URLSearchParams(location.search).get("shortcut");
     if (sc === "session") navigate("review", { remplacer: true });
     if (sc === "jam")     navigate("jam",    { remplacer: true });
-  }, [content, progressLoaded, navigate]);
+  }, [content, progressionUtilisable, navigate]);
+
+  // Déconnexion volontaire : on pousse d'abord la dernière progression (la
+  // sauvegarde débouncée n'a peut-être pas eu lieu), puisque l'état local
+  // sera purgé juste après.
+  const deconnecter = useCallback(async () => {
+    clearTimeout(saveTimer.current);
+    if (progressLoaded) {
+      await Promise.race([
+        saveProgress(stateRef.current),
+        new Promise(r => setTimeout(r, 4000)),
+      ]);
+    }
+    await signOut();
+  }, [progressLoaded, saveProgress, signOut]);
 
   const ouvrirReglages = useCallback(() => {
     setShowSettings(true);
@@ -424,13 +524,18 @@ function AppInner({ onThemeChange }) {
       onResetPassword={resetPassword} onUpdatePassword={updatePassword}
       onResendConfirmation={resendConfirmation}
       recovery={recovery}
+      initialError={linkError}
     />
   );
 
   // On attend le contenu ET la progression cloud avant de décider quoi que ce
   // soit : c'est ce qui empêche de réimposer l'onboarding sur un nouvel
   // appareil (audit §2.5).
-  if (!content || !progressLoaded) return <EcranChargement C={C} texte="Chargement…" />;
+  if (!content || !progressionUtilisable) return (
+    <EcranChargement C={C} texte={chargementEchoue
+      ? "Connexion au serveur impossible, nouvel essai…"
+      : "Chargement…"} />
+  );
 
   if (!state.onboarding?.done) {
     return (
@@ -451,7 +556,7 @@ function AppInner({ onThemeChange }) {
       <SettingsScreen {...props}
         onClose={() => { setShowSettings(false); try { history.back(); } catch {} }}
         onImported={rechargerContenu}
-        user={user} onSignOut={signOut} onDeleteAccount={deleteAccount} />
+        user={user} onSignOut={deconnecter} onDeleteAccount={deleteAccount} />
     );
     switch (screen) {
       case "home":

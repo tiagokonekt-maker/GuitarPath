@@ -27,8 +27,8 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import { supabase } from "./supabase/supabaseClient.js";
+import { ANALYTICS_QUEUE_KEY as QUEUE_KEY, estRejetDefinitif, evenementsDe } from "./store/compte.js";
 
-const QUEUE_KEY = "groply_analytics_queue";
 const FLUSH_INTERVAL_MS = 8000;
 const MAX_BATCH = 25;
 
@@ -104,11 +104,14 @@ const onHidden = () => { if (document.visibilityState === "hidden") { persistQue
 const onPageHide = () => persistQueueToStorage();
 
 export function initAnalytics(currentUserId) {
-  userId = currentUserId || null;
+  setAnalyticsUser(currentUserId);
   if (started) return;
   started = true;
 
   loadQueueFromStorage();
+  // Événements laissés par un autre compte (même appareil) : ils seraient
+  // refusés par la RLS avec le jeton de celui-ci, et bloqueraient la file.
+  queue = evenementsDe(queue, userId);
   flushTimer = setInterval(flush, FLUSH_INTERVAL_MS);
   window.addEventListener("online", flush);
   window.addEventListener("pagehide", onPageHide);
@@ -129,7 +132,15 @@ export function stopAnalytics() {
 }
 
 export function setAnalyticsUser(currentUserId) {
-  userId = currentUserId || null;
+  const nouveau = currentUserId || null;
+  if (nouveau !== userId) queue = evenementsDe(queue, nouveau);
+  userId = nouveau;
+}
+
+/** Vide la file (mémoire + stockage) : à la déconnexion ou au changement de compte. */
+export function resetAnalytics() {
+  queue = [];
+  try { localStorage.removeItem(QUEUE_KEY); } catch { /* noop */ }
 }
 
 // ── API publique ──────────────────────────────────────────────────────────
@@ -185,12 +196,14 @@ async function flush() {
 
   const batch = queue.splice(0, MAX_BATCH);
   try {
-    const { error } = await supabase.from("analytics_events").insert(batch);
+    const { error, status } = await supabase.from("analytics_events").insert(batch);
+    // Refus définitif (RLS, schéma…) : retenter ne ferait que bloquer la file.
+    if (error && estRejetDefinitif(status)) return;
     if (error) throw error;
   } catch {
-    // Échec réseau/RLS : on remet en file pour retenter plus tard,
+    // Échec réseau ou refus temporaire : on remet en file pour retenter plus tard,
     // sans bloquer l'expérience utilisateur (analytics = best-effort).
-    queue = [...batch, ...queue];
+    queue = evenementsDe([...batch, ...queue], userId);
     persistQueueToStorage();
   }
 }
@@ -228,6 +241,7 @@ const dntActif = () => {
 export const analytics = {
   start(uid) { if (dntActif()) return; initAnalytics(uid); setAnalyticsUser(uid); },
   stop()     { stopAnalytics(); },
+  reset()    { resetAnalytics(); },
   track(event, props) { if (!started) return; track(event, props); },
   trackAction(action)  { if (!started) return; trackAction(action); },
 };

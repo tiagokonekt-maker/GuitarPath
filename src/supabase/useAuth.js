@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from './supabaseClient';
+import { supabase, sessionDepuisUrl } from './supabaseClient';
 
 // ── Ce qui change ─────────────────────────────────────────────────────────
 // • `resetPassword` + `updatePassword` : un utilisateur qui perd son mot de
@@ -29,6 +29,7 @@ export function traduireErreurAuth(message = '') {
     [/network|fetch failed|failed to fetch/i,                'Pas de connexion. Vérifie ton réseau et réessaie.'],
     [/captcha/i,                                             'Vérification anti-robot échouée. Recharge la page.'],
     [/same password/i,                                       'Le nouveau mot de passe doit être différent de l\'ancien.'],
+    [/code verifier|flow state/i,                             'Ce lien doit être ouvert dans le navigateur où tu as fait la demande. Demande-en un nouveau.'],
     [/token has expired|invalid token|expired/i,             'Ce lien a expiré. Demande-en un nouveau.'],
   ];
   for (const [re, fr] of table) if (re.test(m)) return fr;
@@ -41,11 +42,23 @@ export function useAuth() {
   // Vrai quand l'utilisateur arrive par un lien de réinitialisation : il faut
   // alors lui présenter le formulaire de nouveau mot de passe.
   const [recovery, setRecovery] = useState(false);
+  // Lien email invalide ou expiré : message à montrer sur l'écran de connexion.
+  const [linkError, setLinkError] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
 
-    supabase.auth.getSession()
+    // On traite d'abord un éventuel lien email (`?code=` PKCE) : la session
+    // qu'il ouvre doit être en place avant de décider quel écran afficher.
+    sessionDepuisUrl
+      .then((lien) => {
+        if (cancelled) return;
+        // Le PASSWORD_RECOVERY peut être émis avant l'abonnement ci-dessous :
+        // on ne compte pas uniquement sur l'événement.
+        if (lien?.redirectType === 'recovery') setRecovery(true);
+        if (lien?.erreur) setLinkError(traduireErreurAuth(lien.erreur.message));
+      })
+      .then(() => supabase.auth.getSession())
       .then(({ data: { session } }) => {
         if (cancelled) return;
         setUser(session?.user ?? null);
@@ -112,7 +125,7 @@ export function useAuth() {
   }, []);
 
   return {
-    user, loading, recovery,
+    user, loading, recovery, linkError,
     signUp, signIn, signOut,
     resetPassword, updatePassword, resendConfirmation,
   };
