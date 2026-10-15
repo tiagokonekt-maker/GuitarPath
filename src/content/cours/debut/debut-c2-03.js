@@ -43,7 +43,7 @@ export default {
 };
 
 export const quiz = [
-  {id:"q-debut-29",courseId:"debut",lessonId:"debut-c2-03",lvl:1,q:"Combien de cordes gratte-t-on pour l'accord de Ré (xx0232) ?",o:["6","5","4","3"],a:2,exp:"Les deux x indiquent que les cordes 6 et 5 ne sont pas jouées : on gratte les cordes 4 à 1, en partant du Ré de la corde 4 à vide.",xp:25},
+  {id:"q-debut-29",courseId:"debut",lessonId:"debut-c2-03",lvl:1,q:"Pour l'accord de Ré majeur, depuis quelle corde commences-tu à gratter ?",o:["La corde 6 (Mi grave)","La corde 5 (La)","La corde 4 (Ré)","La corde 3 (Sol)"],a:2,exp:"On part de la corde 4 à vide : c'est le Ré, la fondamentale de l'accord. Les cordes 6 et 5 ne sont pas jouées (xx0232), sinon l'accord sonne lourd et flou.",xp:25},
   {id:"q-debut-30",courseId:"debut",lessonId:"debut-c2-03",lvl:1,q:"Dans l'accord de Do (x32010), quelle corde reste à vide entre deux doigts posés ?",o:["La corde 3","La corde 5","La corde 6","La corde 4"],a:0,exp:"Corde 4 case 2, corde 3 à vide, corde 2 case 1 : la corde 3 doit sonner entre deux doigts, d'où l'importance de bien les arrondir.",xp:25},
   {id:"q-debut-31",courseId:"debut",lessonId:"debut-c2-03",lvl:2,q:"Quelles sont les notes de l'accord de Sol majeur ?",o:["Sol, Si, Ré","Sol, Si♭, Ré","Sol, Do, Mi","Sol, La, Si"],a:0,exp:"Sol majeur = Sol, Si, Ré. Sur la guitare (320003) : Sol, Si, Ré, Sol, Si, Sol, de la corde 6 à la corde 1.",xp:30},
   {id:"q-debut-32",courseId:"debut",lessonId:"debut-c2-03",lvl:2,q:"L'accord de Ré majeur contient Ré, La et…",o:["Fa","Fa#","Sol","Si"],a:1,exp:"Ré majeur = Ré, Fa#, La. C'est la corde 1 case 2 qui donne le Fa#. Avec un Fa naturel, ce serait Ré mineur.",xp:30},
