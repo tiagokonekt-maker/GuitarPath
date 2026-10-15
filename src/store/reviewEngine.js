@@ -197,7 +197,13 @@ export function buildReviewSession(allQuestions, reviewHistory, completedLessons
       .filter(q => !session.some(s => s.id === q.id))
       .map(q => ({ q, lastSeen: reviewHistory?.[q.id]?.lastSeen || "2000-01-01" }))
       .sort((a, b) => a.lastSeen.localeCompare(b.lastSeen));
-    for (const { q } of notDue) { if (!canAdd(q)) break; add(q); }
+    // Une question de manche refusée (plafond, ou trois d'affilée) ne doit
+    // pas arrêter le remplissage : on passe à la suivante. Avant, un `break`
+    // ici rendait la séance plus courte que prévu.
+    for (const { q } of notDue) {
+      if (session.length >= targetCount) break;
+      if (canAdd(q)) add(q);
+    }
   }
 
   // 6. Contenu légèrement en avance, borné, fourni par l'appelant.

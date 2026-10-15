@@ -53,6 +53,14 @@ export const defaultState = () => ({
   // sans lui, un reset était systématiquement annulé par n'importe quel
   // autre appareil encore porteur de l'ancienne progression (audit §2.3).
   resetAt: "",
+  // Numéro d'« époque » : +1 à chaque RESET. Au merge, l'époque la plus
+  // récente gagne entièrement, quelle que soit l'activité de l'autre côté :
+  // un appareil resté sur l'ancienne époque porte forcément la progression
+  // d'avant le reset, mêlée à ce qu'il a fait depuis, sans moyen de les
+  // séparer. Comparer des dates (l'ancienne méthode) laissait ressusciter
+  // toute la progression effacée dès que cet appareil avait joué un jour
+  // après le reset, et se trompait autour de minuit (UTC contre heure locale).
+  resetEpoch: 0,
 
   // Dernier crédit d'XP réellement accordé — permet aux écrans d'afficher
   // le vrai montant plutôt qu'une valeur nominale.
@@ -100,6 +108,9 @@ function migrate(parsed) {
   if (!s.semaine || typeof s.semaine !== "object" || !Array.isArray(s.semaine.jours)) s.semaine = defaultState().semaine;
   if (typeof s.derniereRevision !== "string") s.derniereRevision = "";
   if (typeof s.resetAt !== "string") s.resetAt = "";
+  // Avant l'époque, seul resetAt existait : un état qui en porte un a vécu
+  // un reset, il démarre donc à l'époque 1.
+  if (!Number.isInteger(parsed?.resetEpoch) || parsed.resetEpoch < 0) s.resetEpoch = s.resetAt ? 1 : 0;
   s.onboarding = { ...defaultState().onboarding, ...(s.onboarding || {}) };
 
   // Les comptes déjà actifs avant l'introduction de l'onboarding ne doivent
@@ -160,18 +171,6 @@ export const saveState = (s) => {
 const maxStr = (a = "", b = "") => (a > b ? a : b);
 const maxNum = (a, b) => Math.max(Number(a) || 0, Number(b) || 0);
 
-/**
- * Un RESET volontaire doit gagner contre un état plus « avancé ».
- * On considère qu'un côté a été réinitialisé APRÈS l'autre si son `resetAt`
- * est postérieur à la dernière activité connue de l'autre côté. Dans ce
- * cas, la progression de l'autre côté est écartée au lieu d'être fusionnée.
- */
-function resetWins(a, b) {
-  if (!a?.resetAt) return false;
-  const otherActivity = maxStr(b?.lastSessionDate || "", (b?.resetAt || "").slice(0, 10));
-  return a.resetAt.slice(0, 10) >= otherActivity;
-}
-
 export const mergeStates = (local, cloud) => {
   if (!cloud) return local;
   if (!local) return migrate(cloud);
@@ -179,15 +178,11 @@ export const mergeStates = (local, cloud) => {
   const L = migrate(local), C = migrate(cloud);
 
   // ── Départage par RESET ────────────────────────────────────────────────
-  // Avant ce garde-fou, la confirmation « action irréversible » mentait :
-  // Math.max(0, 4200) rendait 4200 dès que le second appareil se
-  // resynchronisait, et la progression ressuscitait.
-  if (resetWins(L, C) && !resetWins(C, L)) {
-    return { ...L, resetAt: L.resetAt };
-  }
-  if (resetWins(C, L) && !resetWins(L, C)) {
-    return { ...C, theme: L.theme || C.theme, resetAt: C.resetAt };
-  }
+  // Sans ce garde-fou, Math.max(0, 4200) rendait 4200 dès que le second
+  // appareil se resynchronisait, et la progression effacée ressuscitait.
+  // L'époque la plus récente gagne en entier (voir resetEpoch, defaultState).
+  if (L.resetEpoch > C.resetEpoch) return L;
+  if (C.resetEpoch > L.resetEpoch) return { ...C, theme: L.theme || C.theme };
 
   const m = { ...L };
   m.resetAt = maxStr(L.resetAt, C.resetAt);
@@ -230,15 +225,18 @@ export const mergeStates = (local, cloud) => {
   m.wrongQuiz = [...new Set([...(L.wrongQuiz || []), ...(C.wrongQuiz || [])])]
     .filter(id => !m.quizResults[id]?.correct);
 
-  // Révision espacée : on garde l'entrée la plus travaillée, puis la plus récente
+  // Révision espacée : on garde l'entrée la plus RÉCENTE, puis la plus
+  // travaillée. Garder d'abord la plus travaillée faisait perdre un échec
+  // récent sur l'autre appareil (moins de tentatives, mais plus à jour) :
+  // la question restait programmée loin alors qu'elle venait d'être ratée.
   const mergeHistories = (a = {}, b = {}) => {
     const out = { ...b };
     for (const [id, lh] of Object.entries(a)) {
       const ch = out[id];
       if (!ch) { out[id] = lh; continue; }
       const pickLocal =
-        (lh.attempts || 0) > (ch.attempts || 0) ||
-        ((lh.attempts || 0) === (ch.attempts || 0) && (lh.lastSeen || "") >= (ch.lastSeen || ""));
+        (lh.lastSeen || "") > (ch.lastSeen || "") ||
+        ((lh.lastSeen || "") === (ch.lastSeen || "") && (lh.attempts || 0) >= (ch.attempts || 0));
       out[id] = pickLocal ? lh : ch;
     }
     return out;

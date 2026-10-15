@@ -8807,8 +8807,8 @@ function buildReviewSession(allQuestions, reviewHistory, completedLessons, optio
   if (session.length < targetCount) {
     const notDue = eligible.filter((q) => !session.some((s) => s.id === q.id)).map((q) => ({ q, lastSeen: reviewHistory?.[q.id]?.lastSeen || "2000-01-01" })).sort((a, b) => a.lastSeen.localeCompare(b.lastSeen));
     for (const { q } of notDue) {
-      if (!canAdd(q)) break;
-      add(q);
+      if (session.length >= targetCount) break;
+      if (canAdd(q)) add(q);
     }
   }
   if (session.length < targetCount && Array.isArray(lookaheadQuestions)) {
@@ -13751,6 +13751,158 @@ init_tokens();
 init_Ti();
 import { useState as useState13 } from "react";
 init_audioEngine();
+
+// stub:supa-stub
+var supabase = { auth: { getSession: async () => ({ data: {} }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {
+} } } }) }, from: () => ({}) };
+
+// src/store/compte.js
+var ANALYTICS_QUEUE_KEY = "groply_analytics_queue";
+var estRejetDefinitif = (status) => status >= 400 && status < 500 && status !== 408 && status !== 429;
+var evenementsDe = (file, userId2) => (Array.isArray(file) ? file : []).filter((e) => e && userId2 && e.user_id === userId2);
+
+// src/analyticsProps.js
+var ANALYTICS_OFF_KEY = "groply_analytics_off";
+function statistiquesDesactivees(storage) {
+  try {
+    return storage?.getItem(ANALYTICS_OFF_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+function enregistrerPreferenceStatistiques(storage, actif) {
+  try {
+    if (actif) storage.removeItem(ANALYTICS_OFF_KEY);
+    else storage.setItem(ANALYTICS_OFF_KEY, "1");
+  } catch {
+  }
+}
+
+// src/analytics.js
+var FLUSH_INTERVAL_MS = 8e3;
+var MAX_BATCH = 25;
+var userId = null;
+var queue = [];
+var flushTimer = null;
+var started = false;
+var onHidden = () => {
+  if (document.visibilityState === "hidden") {
+    persistQueueToStorage();
+    flush();
+  }
+};
+var onPageHide = () => persistQueueToStorage();
+function initAnalytics(currentUserId) {
+  setAnalyticsUser(currentUserId);
+  if (started) return;
+  started = true;
+  loadQueueFromStorage();
+  queue = evenementsDe(queue, userId);
+  flushTimer = setInterval(flush, FLUSH_INTERVAL_MS);
+  window.addEventListener("online", flush);
+  window.addEventListener("pagehide", onPageHide);
+  document.addEventListener("visibilitychange", onHidden);
+}
+function stopAnalytics() {
+  if (!started) return;
+  started = false;
+  clearInterval(flushTimer);
+  flushTimer = null;
+  window.removeEventListener("online", flush);
+  window.removeEventListener("pagehide", onPageHide);
+  document.removeEventListener("visibilitychange", onHidden);
+  persistQueueToStorage();
+  userId = null;
+}
+function setAnalyticsUser(currentUserId) {
+  const nouveau = currentUserId || null;
+  if (nouveau !== userId) queue = evenementsDe(queue, nouveau);
+  userId = nouveau;
+}
+function resetAnalytics() {
+  queue = [];
+  try {
+    localStorage.removeItem(ANALYTICS_QUEUE_KEY);
+  } catch {
+  }
+}
+async function flush() {
+  if (collecteRefusee()) {
+    queue = [];
+    return;
+  }
+  if (queue.length === 0) return;
+  if (!navigator.onLine) {
+    persistQueueToStorage();
+    return;
+  }
+  const batch = queue.splice(0, MAX_BATCH);
+  try {
+    const { error, status } = await supabase.from("analytics_events").insert(batch);
+    if (error && estRejetDefinitif(status)) return;
+    if (error) throw error;
+  } catch {
+    if (collecteRefusee()) {
+      queue = [];
+      return;
+    }
+    queue = evenementsDe([...batch, ...queue], userId);
+    persistQueueToStorage();
+  }
+}
+function persistQueueToStorage() {
+  try {
+    if (queue.length === 0 || collecteRefusee()) {
+      localStorage.removeItem(ANALYTICS_QUEUE_KEY);
+      return;
+    }
+    localStorage.setItem(ANALYTICS_QUEUE_KEY, JSON.stringify(queue.slice(0, 200)));
+  } catch {
+  }
+}
+function loadQueueFromStorage() {
+  try {
+    const raw = localStorage.getItem(ANALYTICS_QUEUE_KEY);
+    if (raw) queue = [...JSON.parse(raw), ...queue];
+    localStorage.removeItem(ANALYTICS_QUEUE_KEY);
+  } catch {
+  }
+}
+var dntActif = () => {
+  try {
+    return navigator.doNotTrack === "1" || window.doNotTrack === "1" || navigator.globalPrivacyControl === true;
+  } catch {
+    return false;
+  }
+};
+var refusMemoire = false;
+var uidCourant = null;
+function collecteRefusee() {
+  if (refusMemoire) return true;
+  try {
+    return statistiquesDesactivees(localStorage);
+  } catch {
+    return false;
+  }
+}
+function statistiquesActivees() {
+  return !collecteRefusee();
+}
+function signalNavigateurRefus() {
+  return dntActif();
+}
+function definirStatistiquesActivees(actif) {
+  refusMemoire = !actif;
+  enregistrerPreferenceStatistiques(localStorage, actif);
+  if (!actif) {
+    stopAnalytics();
+    resetAnalytics();
+  } else if (uidCourant && !dntActif()) {
+    initAnalytics(uidCourant);
+  }
+}
+
+// src/screens/SettingsScreen.jsx
 init_ThemeContext();
 import { jsx as jsx18, jsxs as jsxs15 } from "react/jsx-runtime";
 function SettingsSection({ title, children }) {
@@ -13773,6 +13925,13 @@ function SettingsScreen({ state, dispatch, content, onClose, user, onSignOut, on
   const [confirmation, setConfirmation] = useState13(null);
   const [saisie, setSaisie] = useState13("");
   const [audioOffline, setAudioOffline] = useState13(null);
+  const [stats, setStats] = useState13(statistiquesActivees);
+  const refusNavigateur = signalNavigateurRefus();
+  const basculerStats = () => {
+    const actif = !stats;
+    definirStatistiquesActivees(actif);
+    setStats(actif);
+  };
   const fermerConfirmation = () => {
     setConfirmation(null);
     setSaisie("");
@@ -13902,6 +14061,61 @@ function SettingsScreen({ state, dispatch, content, onClose, user, onSignOut, on
         /* @__PURE__ */ jsx18(Ti, { name: "logout", size: 16, color: C.text2 }),
         " Se d\xE9connecter"
       ] }),
+      /* @__PURE__ */ jsx18(SettingsSection, { title: "Confidentialit\xE9", children: /* @__PURE__ */ jsxs15("div", { style: { padding: "4px 16px 14px" }, children: [
+        /* @__PURE__ */ jsxs15(
+          "button",
+          {
+            type: "button",
+            role: "switch",
+            "aria-checked": stats && !refusNavigateur,
+            "aria-labelledby": "reglage-stats-libelle",
+            "aria-describedby": "reglage-stats-aide",
+            disabled: refusNavigateur,
+            onClick: basculerStats,
+            className: "gr-focus",
+            style: {
+              width: "100%",
+              minHeight: 48,
+              padding: "8px 0",
+              background: "none",
+              border: "none",
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              textAlign: "left",
+              cursor: refusNavigateur ? "default" : "pointer",
+              fontFamily: FONTS.ui
+            },
+            children: [
+              /* @__PURE__ */ jsx18("span", { id: "reglage-stats-libelle", style: { flex: 1, fontSize: T.small, fontWeight: 700, color: C.text }, children: "Statistiques d'utilisation" }),
+              /* @__PURE__ */ jsx18("span", { "aria-hidden": "true", style: {
+                position: "relative",
+                width: 44,
+                height: 26,
+                flexShrink: 0,
+                borderRadius: 13,
+                background: stats && !refusNavigateur ? C.primaryBtn : C.surface,
+                border: `1.5px solid ${stats && !refusNavigateur ? C.primaryBtn : C.borderStrong}`,
+                opacity: refusNavigateur ? 0.5 : 1,
+                transition: "background .15s"
+              }, children: /* @__PURE__ */ jsx18("span", { style: {
+                position: "absolute",
+                top: 2,
+                left: stats && !refusNavigateur ? 20 : 2,
+                width: 19,
+                height: 19,
+                borderRadius: "50%",
+                background: stats && !refusNavigateur ? C.onPrimaryBtn : C.borderStrong,
+                transition: "left .15s"
+              } }) })
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsxs15("p", { id: "reglage-stats-aide", style: { margin: "2px 0 0", fontSize: T.micro, color: C.text2, lineHeight: 1.5 }, children: [
+          refusNavigateur ? "Ton navigateur envoie un signal \xAB Do Not Track \xBB ou GPC : aucune statistique n'est envoy\xE9e. " : "Mesure d'audience interne (\xE9crans vus, sessions termin\xE9es), sans tes r\xE9ponses ni publicit\xE9. ",
+          /* @__PURE__ */ jsx18("a", { href: "/confidentialite.html", style: { color: C.text2 }, children: "En savoir plus" })
+        ] })
+      ] }) }),
       /* @__PURE__ */ jsxs15(SettingsSection, { title: "Contenu p\xE9dagogique", children: [
         /* @__PURE__ */ jsx18(SettingsRow, { label: "Modules", value: content.courses.length }),
         /* @__PURE__ */ jsx18(SettingsRow, { label: "Quiz", value: `${content.quiz.length} questions` }),
@@ -15021,11 +15235,11 @@ function availableModules(quizBank) {
 }
 function buildPlacementQueue(quizBank = null) {
   const modules = quizBank ? availableModules(quizBank) : [...TESTABLE_MODULES];
-  const queue = [];
+  const queue2 = [];
   for (const lvl of PLACEMENT_LEVELS) {
-    for (const moduleId of modules) queue.push({ moduleId, lvl });
+    for (const moduleId of modules) queue2.push({ moduleId, lvl });
   }
-  return queue;
+  return queue2;
 }
 function placementQuestionCount(quizBank = null) {
   return buildPlacementQueue(quizBank).length;
@@ -15099,7 +15313,7 @@ var ALL_PROFILE_MODULES = [.../* @__PURE__ */ new Set([...TESTABLE_MODULES, "imp
 function OnboardingScreen({ content, onComplete, onEvent }) {
   const C = useC();
   const [phase, setPhase] = useState23("welcome");
-  const [queue, setQueue] = useState23(null);
+  const [queue2, setQueue] = useState23(null);
   const [qIdx, setQIdx] = useState23(0);
   const [currentQ, setCurrentQ] = useState23(null);
   const [selected, setSelected] = useState23(null);
@@ -15167,9 +15381,9 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
   }
   function continueTest() {
     const nextIdx = qIdx + 1;
-    if (nextIdx < queue.length) {
+    if (nextIdx < queue2.length) {
       setQIdx(nextIdx);
-      loadQuestion(nextIdx, queue);
+      loadQuestion(nextIdx, queue2);
       return;
     }
     const newLevels = { ...skillLevels };
@@ -15191,14 +15405,14 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
     setPhase("results");
   }
   useEffect19(() => {
-    if (phase === "testing" && queue && !currentQ) {
+    if (phase === "testing" && queue2 && !currentQ) {
       const nextIdx = qIdx + 1;
-      if (nextIdx < queue.length) {
+      if (nextIdx < queue2.length) {
         setQIdx(nextIdx);
-        loadQuestion(nextIdx, queue);
+        loadQuestion(nextIdx, queue2);
       } else continueTest();
     }
-  }, [phase, currentQ, queue]);
+  }, [phase, currentQ, queue2]);
   function finish() {
     const goalOpt = GOAL_OPTIONS.find((g) => g.id === goal);
     const totalCorrect = modulesTestes.reduce((sum, m) => sum + (results[m] || 0), 0);

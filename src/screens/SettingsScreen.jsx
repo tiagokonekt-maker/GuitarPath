@@ -29,6 +29,7 @@ import { BADGES } from "../store/badges.js";
 import { gradeForLevel } from "../store/grades.js";
 import { BackButton, ConfirmDialog } from "../design/ui.jsx";
 import { listSampleUrls, SAMPLE_COUNT } from "../audioEngine.js";
+import { statistiquesActivees, definirStatistiquesActivees, signalNavigateurRefus } from "../analytics.js";
 
 import { useC } from "../design/ThemeContext.jsx";
 
@@ -61,6 +62,14 @@ function SettingsScreen({ state, dispatch, content, onClose, user, onSignOut, on
   const [confirmation, setConfirmation] = useState(null);
   const [saisie, setSaisie] = useState("");
   const [audioOffline, setAudioOffline] = useState(null);
+  // Opposition à la mesure d'audience (RGPD art. 21) : préférence d'appareil.
+  const [stats, setStats] = useState(statistiquesActivees);
+  const refusNavigateur = signalNavigateurRefus();
+  const basculerStats = () => {
+    const actif = !stats;
+    definirStatistiquesActivees(actif);
+    setStats(actif);
+  };
 
   const fermerConfirmation = () => { setConfirmation(null); setSaisie(""); };
 
@@ -182,6 +191,47 @@ function SettingsScreen({ state, dispatch, content, onClose, user, onSignOut, on
         <button onClick={onSignOut} className="gr-focus" style={btn(C.text2, C.borderStrong)}>
           <Ti name="logout" size={16} color={C.text2} /> Se déconnecter
         </button>
+
+        {/* Confidentialité — interrupteur accessible (role="switch") : le
+            libellé et l'explication sont reliés au contrôle, cible ≥ 44 px. */}
+        <SettingsSection title="Confidentialité">
+          <div style={{ padding:"4px 16px 14px" }}>
+            <button
+              type="button" role="switch" aria-checked={stats && !refusNavigateur}
+              aria-labelledby="reglage-stats-libelle" aria-describedby="reglage-stats-aide"
+              disabled={refusNavigateur}
+              onClick={basculerStats} className="gr-focus"
+              style={{
+                width:"100%", minHeight:48, padding:"8px 0", background:"none", border:"none",
+                display:"flex", alignItems:"center", gap:12, textAlign:"left",
+                cursor: refusNavigateur ? "default" : "pointer", fontFamily:FONTS.ui,
+              }}>
+              <span id="reglage-stats-libelle" style={{ flex:1, fontSize:T.small, fontWeight:700, color:C.text }}>
+                Statistiques d'utilisation
+              </span>
+              {/* Piste + curseur, purement décoratifs : l'état est porté par aria-checked. */}
+              <span aria-hidden="true" style={{
+                position:"relative", width:44, height:26, flexShrink:0, borderRadius:13,
+                background: stats && !refusNavigateur ? C.primaryBtn : C.surface,
+                border:`1.5px solid ${stats && !refusNavigateur ? C.primaryBtn : C.borderStrong}`,
+                opacity: refusNavigateur ? .5 : 1, transition:"background .15s",
+              }}>
+                <span style={{
+                  position:"absolute", top:2, left: stats && !refusNavigateur ? 20 : 2,
+                  width:19, height:19, borderRadius:"50%",
+                  background: stats && !refusNavigateur ? C.onPrimaryBtn : C.borderStrong,
+                  transition:"left .15s",
+                }}/>
+              </span>
+            </button>
+            <p id="reglage-stats-aide" style={{ margin:"2px 0 0", fontSize:T.micro, color:C.text2, lineHeight:1.5 }}>
+              {refusNavigateur
+                ? "Ton navigateur envoie un signal « Do Not Track » ou GPC : aucune statistique n'est envoyée. "
+                : "Mesure d'audience interne (écrans vus, sessions terminées), sans tes réponses ni publicité. "}
+              <a href="/confidentialite.html" style={{ color:C.text2 }}>En savoir plus</a>
+            </p>
+          </div>
+        </SettingsSection>
 
         {/* Contenu */}
         <SettingsSection title="Contenu pédagogique">

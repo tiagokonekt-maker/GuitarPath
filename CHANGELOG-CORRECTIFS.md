@@ -14,7 +14,12 @@ ne signale aucune anomalie.
 # Dans le SQL Editor du dashboard Supabase
 # → copier/coller sql/01-rls-progress.sql, exécuter
 # → puis sql/02-delete-account.sql
+# → puis sql/03-limites-et-retention.sql  (plafonds de taille, updated_at
+#   posé par le serveur, limite de débit analytics, purge à 13 mois)
 ```
+
+`03` utilise **pg_cron**. Si `create extension` échoue, l'activer dans
+Database → Extensions → pg_cron, puis rejouer le fichier (il est idempotent).
 
 Le fichier finit par un **test négatif** en `curl`. Fais-le. Voir une policy
 dans le dashboard ne prouve pas qu'elle protège : seul un appel réel avec le
@@ -22,13 +27,30 @@ jeton d'un autre compte le prouve.
 
 ### 2. La suppression de compte
 
+La fonction est dans `supabase/functions/delete-account/index.ts`
+(disposition par défaut de la CLI) : les commandes se lancent **depuis la
+racine du dépôt**, après `sql/02-delete-account.sql` (table `deletion_log`).
+
 ```bash
+supabase login
+supabase link --project-ref <ref-du-projet>
+supabase secrets set GROPLY_HASH_SALT="$(openssl rand -hex 32)"
+supabase secrets set GROPLY_ORIGIN="https://<domaine-de-prod>,https://<projet>.vercel.app"
 supabase functions deploy delete-account
-# Puis, dans les variables d'environnement de la fonction :
-#   SUPABASE_SERVICE_ROLE_KEY  (jamais préfixée VITE_, jamais dans le dépôt)
-#   GROPLY_ORIGIN              (l'origine de ton app, pour le CORS)
-#   GROPLY_HASH_SALT           (une chaîne aléatoire, pour le journal anonyme)
+# SUPABASE_URL, SUPABASE_ANON_KEY et SUPABASE_SERVICE_ROLE_KEY sont fournies
+# automatiquement à la fonction. La clé service_role n'est JAMAIS préfixée
+# VITE_ ni commitée.
 ```
+
+- `GROPLY_HASH_SALT` est **obligatoire** : sans lui la fonction répond 500
+  avant de supprimer quoi que ce soit. Le générer une fois, ne plus jamais le
+  changer (les empreintes déjà journalisées deviendraient invérifiables).
+- `GROPLY_ORIGIN` : origines autorisées séparées par des virgules, sans `/`
+  final. Plus aucun repli sur `*` : sans cette variable, un appel depuis le
+  navigateur est refusé (403). Ajouter `http://localhost:5173` pour tester la
+  suppression en développement.
+- Chaque étape (journal, progression, événements, compte) est contrôlée : un
+  échec renvoie 500 en nommant l'étape, jamais un faux « ok ».
 
 ### 3. Les migrations de données
 

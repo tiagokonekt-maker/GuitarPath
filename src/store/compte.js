@@ -68,6 +68,29 @@ export function purgerDonneesPersonnelles(storage) {
 }
 
 /**
+ * Caches de contenu pédagogique (actuel et ancien nom). Pas des données
+ * personnelles — d'où leur absence de la purge de déconnexion, qui évite de
+ * retélécharger le contenu — mais effacés lors d'une suppression de compte,
+ * qui promet un appareil « propre ».
+ */
+export const CLES_CONTENU = ["groply_content", "guitarpath_v3_content"];
+/** Brouillon de tablature (Boîte à outils) : contenu créé par la personne. */
+export const CLE_BROUILLON_TAB = "groply:tab-brouillon";
+
+/**
+ * Purge complète après suppression du compte (RGPD art. 17) : données
+ * personnelles, repli hors-ligne de CE compte, caches de contenu et
+ * brouillon de tablature. Les replis hors-ligne d'autres comptes et les
+ * préférences d'appareil (dont `groply_analytics_off` : l'opposition à la
+ * mesure d'audience doit survivre) ne sont pas touchés.
+ */
+export function purgerSuppressionCompte(storage, userId) {
+  purgerDonneesPersonnelles(storage);
+  if (userId) retirer(storage, cleHorsLigne(userId));
+  for (const k of [...CLES_CONTENU, CLE_BROUILLON_TAB]) retirer(storage, k);
+}
+
+/**
  * À appeler dès que l'utilisateur connecté est connu. Si les données locales
  * appartiennent à quelqu'un d'autre, elles sont purgées et la fonction
  * renvoie `true` : l'appelant doit alors réinitialiser son état en mémoire.

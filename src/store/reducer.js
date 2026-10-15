@@ -331,13 +331,13 @@ function reducer(state, action) {
       // avec la progression pédagogique. Tout le reste — y compris
       // l'onboarding — repart de `defaultState()`.
       //
-      // On continue d'HORODATER le reset : c'est ce qui permet à
-      // mergeStates de ne pas le laisser annuler par un autre appareil
-      // (state.js/resetWins).
+      // Nouvelle « époque » : c'est ce qui empêche mergeStates de laisser
+      // un autre appareil annuler le reset (state.js, resetEpoch).
       return {
         ...defaultState(),
         theme: s.theme,
         resetAt: new Date().toISOString(),
+        resetEpoch: (s.resetEpoch || 0) + 1,
       };
 
     default:

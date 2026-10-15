@@ -7,8 +7,13 @@
 -- contourne tout le RLS : elle ne doit JAMAIS se trouver dans le navigateur.
 --
 -- Deux mises en œuvre possibles. La fonction SQL ci-dessous est la plus
--- simple ; l'Edge Function (fichier voisin) est celle qu'appelle le client
--- via supabase.functions.invoke('delete-account').
+-- simple ; l'Edge Function supabase/functions/delete-account/index.ts (à la
+-- racine du dépôt, disposition par défaut de la CLI) est celle qu'appelle le
+-- client via supabase.functions.invoke('delete-account'). Déploiement :
+--   supabase functions deploy delete-account
+-- avec les secrets GROPLY_HASH_SALT et GROPLY_ORIGIN (voir l'en-tête du
+-- fichier). La table deletion_log ci-dessous doit exister AVANT le premier
+-- appel : la fonction y écrit en premier et refuse de continuer sinon.
 -- ═══════════════════════════════════════════════════════════════════════════
 
 -- ── Option A : fonction SQL SECURITY DEFINER ──────────────────────────────

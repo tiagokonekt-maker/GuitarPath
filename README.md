@@ -33,6 +33,11 @@ VITE_SUPABASE_ANON_KEY=...
 - Le dossier `.vercel/` est créé automatiquement en liant le projet à Vercel. Il ne doit jamais être commité (déjà couvert par `.gitignore`).
 - `project.json` contient l'identifiant du projet Vercel (`projectId`) et celui de l'organisation/utilisateur propriétaire (`orgId`).
 
+## Notes de déploiement (Supabase)
+
+- SQL à exécuter dans l'ordre, dans le SQL Editor : `sql/01-rls-progress.sql`, `sql/02-delete-account.sql`, `sql/03-limites-et-retention.sql` (ce dernier exige l'extension pg_cron : Database → Extensions).
+- Edge Function de suppression de compte : `supabase/functions/delete-account/`. Depuis la racine du dépôt : `supabase secrets set GROPLY_HASH_SALT=... GROPLY_ORIGIN=https://...` puis `supabase functions deploy delete-account`. Détails dans `CHANGELOG-CORRECTIFS.md`.
+
 ## Structure
 
 ```

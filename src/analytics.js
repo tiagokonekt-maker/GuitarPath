@@ -28,6 +28,14 @@
 
 import { supabase } from "./supabase/supabaseClient.js";
 import { ANALYTICS_QUEUE_KEY as QUEUE_KEY, estRejetDefinitif, evenementsDe } from "./store/compte.js";
+import {
+  nettoyerProps, nomEvenementValide,
+  statistiquesDesactivees, enregistrerPreferenceStatistiques,
+} from "./analyticsProps.js";
+
+// Rétention : les événements sont supprimés en base après 13 mois par une
+// tâche pg_cron (sql/03-limites-et-retention.sql), qui plafonne aussi la
+// taille de `props` et le débit d'insertion par compte.
 
 const FLUSH_INTERVAL_MS = 8000;
 const MAX_BATCH = 25;
@@ -39,7 +47,8 @@ let started = false;
 
 // ── Taxonomie des événements ────────────────────────────────────────────
 // Garder cette liste à jour évite les événements "orphelins" mal nommés
-// dispersés dans le code. Un event = un nom stable + des props libres.
+// dispersés dans le code. Un event = un nom stable + quelques props
+// primitives, filtrées par la liste blanche de analyticsProps.js.
 export const EVENTS = {
   // Onboarding
   ONBOARDING_STARTED:   "onboarding_started",
@@ -94,6 +103,8 @@ const IGNORED_ACTIONS = new Set([
   "MARK_STREAK",       // dérivé de app_open + date, pas un choix utilisateur
   "DISMISS_GROPI_TIP",
   "UPDATE_WEEKLY",
+  "JAM_PROGRES",       // compteur de temps : la séance est déjà tracée par PRACTICE_DONE
+  "UNLOCK_BADGES",     // App.jsx émet déjà un badge_unlocked par badge, avec son id
 ]);
 
 // ── Cycle de vie ─────────────────────────────────────────────────────────
@@ -146,11 +157,14 @@ export function resetAnalytics() {
 // ── API publique ──────────────────────────────────────────────────────────
 /** Track un événement libre (vues d'écran, étapes d'onboarding, etc.) */
 export function track(event, props = {}) {
-  if (!event) return;
+  const nom = nomEvenementValide(event);
+  if (!nom || collecteRefusee()) return;
   queue.push({
     user_id: userId,
-    event,
-    props,
+    event: nom,
+    // Minimisation : uniquement quelques primitives, jamais d'historique ni
+    // de contenu de réponse (voir analyticsProps.js).
+    props: nettoyerProps(nom, props),
     created_at: new Date().toISOString(),
   });
   if (queue.length >= MAX_BATCH) flush();
@@ -175,6 +189,7 @@ export function trackAction(action, prevState, nextState) {
   if (!action?.type || IGNORED_ACTIONS.has(action.type)) return;
   const event = ACTION_EVENT_MAP[action.type] || action.type.toLowerCase();
 
+  // Copie brute, filtrée ensuite par track() → nettoyerProps().
   const props = { ...action };
   delete props.type;
 
@@ -191,6 +206,7 @@ export function trackAction(action, prevState, nextState) {
 
 // ── Envoi ────────────────────────────────────────────────────────────────
 async function flush() {
+  if (collecteRefusee()) { queue = []; return; }
   if (queue.length === 0) return;
   if (!navigator.onLine) { persistQueueToStorage(); return; }
 
@@ -203,6 +219,8 @@ async function flush() {
   } catch {
     // Échec réseau ou refus temporaire : on remet en file pour retenter plus tard,
     // sans bloquer l'expérience utilisateur (analytics = best-effort).
+    // Sauf si l'utilisateur s'est opposé entre-temps : on abandonne le lot.
+    if (collecteRefusee()) { queue = []; return; }
     queue = evenementsDe([...batch, ...queue], userId);
     persistQueueToStorage();
   }
@@ -210,7 +228,7 @@ async function flush() {
 
 function persistQueueToStorage() {
   try {
-    if (queue.length === 0) { localStorage.removeItem(QUEUE_KEY); return; }
+    if (queue.length === 0 || collecteRefusee()) { localStorage.removeItem(QUEUE_KEY); return; }
     localStorage.setItem(QUEUE_KEY, JSON.stringify(queue.slice(0, 200)));
   } catch { /* stockage plein ou indisponible : on laisse tomber ces events */ }
 }
@@ -238,9 +256,44 @@ const dntActif = () => {
   } catch { return false; }
 };
 
+// Opposition dans l'app (Réglages → Statistiques d'utilisation). Copie en
+// mémoire en plus du localStorage : si le stockage est indisponible (navigation
+// privée stricte), le choix tient au moins jusqu'à la fermeture de l'onglet.
+let refusMemoire = false;
+let uidCourant = null;   // dernier compte passé à analytics.start()
+function collecteRefusee() {
+  if (refusMemoire) return true;
+  try { return statistiquesDesactivees(localStorage); } catch { return false; }
+}
+
+/** État affiché par le réglage : vrai si des statistiques peuvent être envoyées. */
+export function statistiquesActivees() { return !collecteRefusee(); }
+/** Vrai si le navigateur envoie déjà Do Not Track / GPC (le réglage est alors sans effet). */
+export function signalNavigateurRefus() { return dntActif(); }
+
+/**
+ * Active ou désactive la collecte sur cet appareil. À la désactivation, la
+ * file (mémoire + stockage) est vidée : rien de ce qui était en attente ne
+ * part. La préférence est une donnée d'appareil, hors de la purge par compte.
+ */
+export function definirStatistiquesActivees(actif) {
+  refusMemoire = !actif;
+  enregistrerPreferenceStatistiques(localStorage, actif);
+  if (!actif) {
+    stopAnalytics();
+    resetAnalytics();
+  } else if (uidCourant && !dntActif()) {
+    initAnalytics(uidCourant);
+  }
+}
+
 export const analytics = {
-  start(uid) { if (dntActif()) return; initAnalytics(uid); setAnalyticsUser(uid); },
-  stop()     { stopAnalytics(); },
+  start(uid) {
+    uidCourant = uid || null;
+    if (dntActif() || collecteRefusee()) return;
+    initAnalytics(uid);
+  },
+  stop()     { uidCourant = null; stopAnalytics(); },
   reset()    { resetAnalytics(); },
   track(event, props) { if (!started) return; track(event, props); },
   trackAction(action)  { if (!started) return; trackAction(action); },

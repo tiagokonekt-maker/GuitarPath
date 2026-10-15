@@ -251,6 +251,21 @@ function AppInner({ onThemeChange }) {
     setScreen("home");
   }, [userId, onThemeChange]);
 
+  // ── Fusion d'une progression venue du cloud ────────────────────────────
+  // Utilisée au chargement, lors d'un conflit d'écriture (un autre appareil
+  // a écrit entre-temps), à la relecture au retour sur l'app, et pour le
+  // repli hors-ligne. Renvoie l'état fusionné, à écrire tel quel.
+  const fusionnerCloud = useCallback((cloud) => {
+    const sain = { ...cloud };
+    if (sain.xp == null) delete sain.xp;
+    if (sain.level == null) delete sain.level;
+    if (sain.streak == null) delete sain.streak;
+    const fusion = mergeStates(stateRef.current, sain);
+    stateRef.current = fusion;
+    setState(prev => mergeStates(prev, sain));
+    return fusion;
+  }, []);
+
   // ── Chargement de la progression cloud ─────────────────────────────────
   // Trois issues bien distinctes (voir store/compte.js) :
   //   progression trouvée → fusion ; pas de ligne → l'état local fait foi ;
@@ -264,13 +279,7 @@ function AppInner({ onThemeChange }) {
     loadProgress()
       .then(cloud => {
         if (annule) return;
-        if (cloud) {
-          const sain = { ...cloud };
-          if (sain.xp == null) delete sain.xp;
-          if (sain.level == null) delete sain.level;
-          if (sain.streak == null) delete sain.streak;
-          setState(prev => mergeStates(prev, sain));
-        }
+        if (cloud) fusionnerCloud(cloud);
         setChargementEchoue(false);
         setProgressLoaded(true);
       })
@@ -280,7 +289,7 @@ function AppInner({ onThemeChange }) {
         minuteur = setTimeout(() => setEssaiChargement(n => n + 1), delaiNouvelEssai(essaiChargement));
       });
     return () => { annule = true; clearTimeout(minuteur); };
-  }, [userId, progressLoaded, loadProgress, essaiChargement]);
+  }, [userId, progressLoaded, loadProgress, essaiChargement, fusionnerCloud]);
 
   // Retour du réseau pendant un échec : nouvel essai immédiat.
   useEffect(() => {
@@ -301,9 +310,28 @@ function AppInner({ onThemeChange }) {
   useEffect(() => {
     if (!user || !progressLoaded) return;
     clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => saveProgress(stateRef.current), 3000);
+    saveTimer.current = setTimeout(() => saveProgress(stateRef.current, fusionnerCloud), 3000);
     return () => clearTimeout(saveTimer.current);
-  }, [state, user, progressLoaded, saveProgress]);
+  }, [state, user, progressLoaded, saveProgress, fusionnerCloud]);
+
+  // ── Relecture au retour sur l'app ──────────────────────────────────────
+  // Une app restée ouverte en arrière-plan (onglet, PWA sur le téléphone)
+  // ne voyait jamais ce qui avait été fait sur un autre appareil entre-temps.
+  // On relit au retour au premier plan (au plus une fois par minute) et on
+  // fusionne : l'écran affiche la progression à jour.
+  useEffect(() => {
+    if (!user || !progressLoaded) return;
+    let derniere = Date.now();
+    const auRetour = () => {
+      if (document.visibilityState !== "visible" || Date.now() - derniere < 60_000) return;
+      derniere = Date.now();
+      loadProgress()
+        .then(cloud => { if (cloud) fusionnerCloud(cloud); })
+        .catch(() => { /* hors-ligne : la prochaine sauvegarde fusionnera */ });
+    };
+    document.addEventListener("visibilitychange", auRetour);
+    return () => document.removeEventListener("visibilitychange", auRetour);
+  }, [user, progressLoaded, loadProgress, fusionnerCloud]);
 
   // ── Sauvegarde de dernière chance ──────────────────────────────────────
   // Le geste normal sur mobile : je termine mon quiz, je ferme l'app. Sans
@@ -328,10 +356,14 @@ function AppInner({ onThemeChange }) {
     // Seulement une fois la progression cloud chargée : le repli hors-ligne
     // est écrit tel quel, sans fusion.
     if (!user || !progressLoaded) return;
-    const enLigne = () => syncOfflineData();
+    const enLigne = () => syncOfflineData(fusionnerCloud);
+    // Aussi au démarrage : un repli laissé par une fermeture hors-ligne
+    // n'attendait jusqu'ici que l'événement « online », qui ne vient pas
+    // si l'app redémarre déjà connectée.
+    enLigne();
     window.addEventListener("online", enLigne);
     return () => window.removeEventListener("online", enLigne);
-  }, [user, progressLoaded, syncOfflineData]);
+  }, [user, progressLoaded, syncOfflineData, fusionnerCloud]);
 
   // ── Rotation du défi du jour ───────────────────────────────────────────
   // Après le chargement cloud : sinon la rotation était calculée sur l'état
@@ -524,12 +556,12 @@ function AppInner({ onThemeChange }) {
     clearTimeout(saveTimer.current);
     if (progressLoaded) {
       await Promise.race([
-        saveProgress(stateRef.current),
+        saveProgress(stateRef.current, fusionnerCloud),
         new Promise(r => setTimeout(r, 4000)),
       ]);
     }
     await signOut();
-  }, [progressLoaded, saveProgress, signOut]);
+  }, [progressLoaded, saveProgress, signOut, fusionnerCloud]);
 
   const ouvrirReglages = useCallback(() => {
     setShowSettings(true);
