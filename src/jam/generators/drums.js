@@ -6,6 +6,29 @@
 import { parseGrid, stepPosition, packSwing, humanize } from "../music/groove.js";
 
 /**
+ * Voix « virtuelles » d'un pack, jouées avec les échantillons existants
+ * (public/audio/drums n'a ni rim-click, ni shaker, ni charleston au pied).
+ * Approximation documentée : la même peau ou la même cymbale, frappée
+ * nettement moins fort. Le nom d'origine reste dans `articulation`.
+ *   rim      → caisse claire très douce (cross-stick, clave de bossa)
+ *   shaker   → charleston fermée douce (shaker de bossa)
+ *   pedalHat → charleston fermée « au pied » (2 et 4 du jazz) : jamais
+ *              remplacée par la ride, contrairement à la charleston jouée.
+ */
+export const DRUM_ALIASES = {
+  rim:      { instrument: "snare", gain: 0.42 },
+  shaker:   { instrument: "hihat", gain: 0.5 },
+  pedalHat: { instrument: "hihat", gain: 0.62 },
+};
+
+/** Évènement d'une frappe, voix virtuelles résolues. */
+function frappe(voix, time, velocity, open) {
+  const alias = DRUM_ALIASES[voix];
+  if (alias) return { instrument: alias.instrument, time, velocity: velocity * alias.gain, open: false, articulation: voix };
+  return { instrument: voix, time, velocity, open };
+}
+
+/**
  * Génère les évènements d'UNE mesure de batterie.
  *
  * @param pack     le pack de style
@@ -29,7 +52,19 @@ export function generateDrumBar(pack, decision, opts) {
   const events = [];
 
   // ── Voix du motif de base ─────────────────────────────────────────────
-  for (const [instrument, grid] of Object.entries(pattern.grid || {})) {
+  // Motif sur plusieurs mesures (`bars: 2`, la clave de bossa) : chaque
+  // grille est découpée en `bars` tranches égales, jouées tour à tour selon
+  // l'index de mesure transmis par le Director.
+  const nBars = Math.max(1, Math.floor(pattern.bars ?? 1));
+  const tranche = ((decision.barIndex ?? 0) % nBars + nBars) % nBars;
+  const grilleDeLaMesure = (g) => {
+    if (nBars === 1) return g;
+    const len = g.length / nBars;
+    return g.slice(tranche * len, (tranche + 1) * len);
+  };
+
+  for (const [instrument, gridEntier] of Object.entries(pattern.grid || {})) {
+    const grid = grilleDeLaMesure(gridEntier);
     // Les ghost notes ne sortent qu'à partir d'une certaine énergie : c'est
     // ce qui différencie un groove sobre d'un groove qui "parle".
     const allowGhosts = decision.ghostNotes;
@@ -45,12 +80,12 @@ export function generateDrumBar(pack, decision, opts) {
       if (hit.open && !decision.openHats) continue;
 
       const frac = stepPosition(hit.step, hit.stepsPerBar, swing, beatsPerBar, swingSteps);
-      events.push({
-        instrument: hit.open ? (inst === "hihat" ? "hihatOpen" : inst) : inst,
-        time: barStartTime + frac * barDuration,
-        velocity: hit.velocity,
-        open: hit.open,
-      });
+      events.push(frappe(
+        hit.open ? (inst === "hihat" ? "hihatOpen" : inst) : inst,
+        barStartTime + frac * barDuration,
+        hit.velocity,
+        hit.open,
+      ));
     }
   }
 
@@ -69,12 +104,7 @@ export function generateDrumBar(pack, decision, opts) {
         // sonnerait « à côté ».
         const frac = stepPosition(hit.step, hit.stepsPerBar, swing, beatsPerBar, swingSteps);
         if (frac < fillStart) continue;
-        events.push({
-          instrument,
-          time: barStartTime + frac * barDuration,
-          velocity: hit.velocity,
-          open: false,
-        });
+        events.push(frappe(instrument, barStartTime + frac * barDuration, hit.velocity, false));
       }
     }
   }

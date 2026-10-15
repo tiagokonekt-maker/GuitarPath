@@ -13,6 +13,7 @@
 //   { type: "note_grid",     data: { ... } }   → grille de notes sur 1 corde
 //   { type: "circle_of_fifths", data: { ... } } → cercle des quintes (majeures + relatifs mineurs)
 //   { type: "degree_chart",  data: { ... } }   → les 7 degrés d'une gamme (nom, chiffrage, fonction)
+//   { type: "tab", text, data: { lines } }     → tablature ASCII (6 lignes, corde 1 en haut)
 //
 // UTILISATION dans content.js :
 //   { type: "fretboard", caption: "...", data: { ... } }
@@ -893,6 +894,59 @@ export function NoteGrid({ data, caption }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// 7bis. TAB — tablature ASCII
+//
+// block = {
+//   type: "tab",
+//   caption: "…",            // légende visible sous la tab
+//   text: "Tab — corde 1 : 0, 1, 3…", // la même tab dite en mots
+//   data: { lines: [         // 6 lignes, corde 1 (Mi aigu) EN HAUT
+//     "e|-0---1---3---|",
+//     "B|-------------|", …
+//   ] },
+// }
+//
+// Accessibilité : le <pre> n'a aucun sens lu caractère par caractère
+// (« tiret tiret zéro tiret… »), il est donc masqué aux lecteurs d'écran ;
+// c'est `text` qui sert de nom accessible (role="img"). La légende reste
+// du texte normal, lue après.
+// ═══════════════════════════════════════════════════════════════════════════
+const MONO = 'ui-monospace, "SF Mono", Menlo, Consolas, "Roboto Mono", monospace';
+
+export function TabBlock({ data, caption, text }) {
+  const DC = useC();
+  const lines = Array.isArray(data?.lines) ? data.lines : [];
+  if (lines.length === 0) {
+    return text ? <p style={{ margin: 0, fontSize: 15, lineHeight: 1.7, color: DC.text }}>{text}</p> : null;
+  }
+  return (
+    <DiagramCard caption={caption} accent={DC.primary}>
+      <div role="img" aria-label={text || caption || "Tablature"} style={{ padding: "12px 14px", width: "max-content", minWidth: "100%", boxSizing: "border-box" }}>
+        <pre aria-hidden="true" style={{
+          margin: 0, fontFamily: MONO, fontSize: 14, lineHeight: 1.45,
+          whiteSpace: "pre", color: DC.text3, fontWeight: 600,
+        }}>
+          {lines.map((ligne, i) => {
+            // Nom de corde (« e| ») en secondaire, chiffres (cases) mis en
+            // valeur, tirets et barres en tertiaire.
+            const m = /^([A-Za-z]{1,2}\|)?(.*)$/.exec(String(ligne));
+            const morceaux = (m[2] || "").split(/(\d+)/);
+            return (
+              <span key={i} style={{ display: "block" }}>
+                {m[1] && <span style={{ color: DC.text2, fontWeight: 700 }}>{m[1]}</span>}
+                {morceaux.map((t, j) => (j % 2 === 1
+                  ? <span key={j} style={{ color: DC.primaryInk || DC.primary, fontWeight: 800 }}>{t}</span>
+                  : t))}
+              </span>
+            );
+          })}
+        </pre>
+      </div>
+    </DiagramCard>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // RENDERER — function centrale, à appeler dans LessonView de App.jsx
 //
 // Usage dans App.jsx :
@@ -915,6 +969,7 @@ export function renderDiagramBlock(block, key) {
     case "strum_pattern":  return <StrumPattern key={key} data={data} caption={caption} />;
     case "circle_of_fifths": return <CircleOfFifths key={key} data={data} caption={caption} />;
     case "degree_chart":   return <DegreeChart key={key} data={data} caption={caption} />;
+    case "tab":            return <TabBlock key={key} data={data} caption={caption} text={block.text} />;
     default:               return null;
   }
 }

@@ -163,6 +163,14 @@ test("COMPLETE_ONBOARDING ne crédite l'XP de départ qu'une fois", () => {
   assert.equal(s.xp, 1680);
 });
 
+test("COMPLETE_ONBOARDING conserve la réponse « Tu as déjà joué ? »", () => {
+  const s = reducer(S(), { type: "COMPLETE_ONBOARDING", goal: "impro", skipped: true, experience: "debutant" });
+  assert.equal(s.onboarding.experience, "debutant");
+  const sans = reducer(S(), { type: "COMPLETE_ONBOARDING", goal: "impro" });
+  assert.equal(sans.onboarding.experience, null, "absente → null, jamais undefined");
+  assert.equal(defaultState().onboarding.experience, null);
+});
+
 test("SET_THEME rejette une valeur invalide", () => {
   assert.equal(reducer(S(), { type: "SET_THEME", theme: "arc-en-ciel" }).theme, "auto");
   assert.equal(reducer(S(), { type: "SET_THEME", theme: "dark" }).theme, "dark");

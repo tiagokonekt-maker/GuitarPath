@@ -468,7 +468,7 @@ function AppInner({ onThemeChange }) {
   // Options de navigation (toutes facultatives) :
   //   retour  : écran où revenir à la fin (la séance du jour revient à Pratique) ;
   //   cible   : nombre de questions de révision (selon la durée de séance) ;
-  //   domaine : réviser un seul domaine ("Manche", "Théorie", "Oreille", "Rythme", "Impro").
+  //   domaine : réviser un seul domaine ("Premiers pas", "Manche", "Théorie", "Oreille", "Rythme", "Impro").
   const [retourEcran, setRetourEcran] = useState(null);
   const navigate = useCallback((s, { remplacer = false, retour = null, cible = null, domaine = null } = {}) => {
     if (!ECRANS_VALIDES.has(s)) return;

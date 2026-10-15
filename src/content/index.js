@@ -11,20 +11,25 @@
 // cohérence de l'ensemble, y compris les fichiers oubliés dans un index.
 // ═══════════════════════════════════════════════════════════════════════════
 
+import debut, { LECONS as leconsDebut } from "./cours/debut/index.js";
 import neck, { LECONS as leconsNeck } from "./cours/neck/index.js";
 import scales, { LECONS as leconsScales } from "./cours/scales/index.js";
 import harmony, { LECONS as leconsHarmony } from "./cours/harmony/index.js";
 import rhythm, { LECONS as leconsRhythm } from "./cours/rhythm/index.js";
 import impro, { LECONS as leconsImpro } from "./cours/impro/index.js";
 
+import exosDebut from "./exercices/debut.js";
 import exosNeck from "./exercices/neck.js";
 import exosScales from "./exercices/scales.js";
 import exosHarmony from "./exercices/harmony.js";
 import exosRhythm from "./exercices/rhythm.js";
 import exosImpro from "./exercices/impro.js";
 
-// Ordre des modules = ordre d'affichage du parcours.
+// Ordre des modules = ordre d'affichage du parcours. « Premiers pas »
+// (debut) passe en tête : ses unités précèdent le palier 1 (prelude: true,
+// voir store/pathEngine.js).
 const MODULES = [
+  [debut, leconsDebut],
   [neck, leconsNeck],
   [scales, leconsScales],
   [harmony, leconsHarmony],
@@ -40,6 +45,7 @@ export const COURSES = MODULES.map(([meta, lecons]) => ({
 export const QUIZ = MODULES.flatMap(([, lecons]) => lecons.flatMap(l => l.quiz ?? []));
 
 export const EXERCISES = [
+  ...exosDebut,
   ...exosNeck,
   ...exosScales,
   ...exosHarmony,

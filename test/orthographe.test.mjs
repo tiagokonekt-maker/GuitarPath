@@ -225,27 +225,32 @@ test("Jam : accords et notes orthographiés dans la tonalité", () => {
   assert.deepEqual(n.map(x => x.note), ["A#", "D", "F", "G#"]);   // valeurs internes inchangées
 });
 
-const NOM_ACCORD_FR = /^(Do|Ré|Mi|Fa|Sol|La|Si)(#|b)?(m|7|m7|maj7)?$/;
+const NOM_ACCORD_FR = /^(Do|Ré|Mi|Fa|Sol|La|Si)(#|b)?(m|7|m7|maj7|dim)?$/;
 test("oreille : libellés d'accords en français orthographié, clés internes inchangées", () => {
+  // Accord en tonalité : « Rém (ii) » — nom orthographié dans la tonalité
+  // annoncée, puis le degré (la clé interne).
+  const DEMI_TONS = { "I": 0, "IV": 5, "V": 7, "vi": 9, "ii": 2, "iii": 4, "V7": 7, "vii°": 11 };
   for (let i = 0; i < 300; i++) {
-    const q = generateEarTrainingQuestion("chord_full");
+    const q = generateEarTrainingQuestion("chord_full", { pool: Object.keys(DEMI_TONS), toutesOptions: true });
+    const tonique = normalizeNote(/Tonalité : (\S+) majeur/.exec(q.consigne)[1]);
     for (const o of q.options) {
-      assert.match(o.label, NOM_ACCORD_FR, o.label);
-      const [root] = o.key.split("|");
-      assert.equal(normalizeNote(o.label.match(/^(Do|Ré|Mi|Fa|Sol|La|Si)(#|b)?/)[0]), root, `${o.label} ≠ ${o.key}`);
-      // Sib et Mib toujours ; Sol# seulement en mineur (Sol#m), Lab sinon.
-      assert.ok(!/^(La#|Ré#)/.test(o.label) && !/^Sol#(7|maj7)?$/.test(o.label), o.label);
+      const m = /^(\S+) \((.+)\)$/.exec(o.label);
+      assert.ok(m && m[2] === o.key, o.label);
+      assert.match(m[1], NOM_ACCORD_FR, o.label);
+      const racine = normalizeNote(m[1].match(/^(Do|Ré|Mi|Fa|Sol|La|Si)(#|b)?/)[0]);
+      assert.equal((CHROMATIC_NOTES.indexOf(racine) - CHROMATIC_NOTES.indexOf(tonique) + 12) % 12, DEMI_TONS[o.key], `${o.label} en ${tonique}`);
     }
-    assert.equal(q.referenceLabel, "Do");
+    // Une lettre par degré : Ré#dim en Mi majeur (sensible), jamais Mib ; Sib en Fa, jamais La#.
+    const lettre = (o) => /^(Do|Ré|Mi|Fa|Sol|La|Si)/.exec(o.label)[1];
+    const parDegre = new Map(q.options.map(o => [DEMI_TONS[o.key], lettre(o)]));
+    assert.equal(new Set(parDegre.values()).size, parDegre.size, q.options.map(o => o.label).join(", "));
   }
   for (let i = 0; i < 300; i++) {
     const q = generateEarTrainingQuestion("progression");
-    const bonne = q.options.find(o => o.key === q.answer);
-    const noms = bonne.label.split(" - ");
-    assert.equal(noms.length, q.chords.length);
-    noms.forEach((nom, k) => {
+    assert.equal(q.noms.length, q.chords.length);
+    q.noms.forEach((nom, k) => {
       assert.match(nom, NOM_ACCORD_FR, nom);
-      assert.equal(normalizeNote(nom.match(/^(Do|Ré|Mi|Fa|Sol|La|Si)(#|b)?/)[0]), q.chords[k].root, bonne.label);
+      assert.equal(normalizeNote(nom.match(/^(Do|Ré|Mi|Fa|Sol|La|Si)(#|b)?/)[0]), q.chords[k].root, q.noms.join(" – "));
     });
   }
 });

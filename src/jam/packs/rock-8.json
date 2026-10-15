@@ -1,0 +1,100 @@
+{
+  "id": "rock-8",
+  "name": "Rock",
+  "tempoRange": [90, 140],
+  "defaultTempo": 112,
+
+  "feel": {
+    "subdivision": 8,
+    "swing": 0
+  },
+
+  "instruments": ["drums", "bass", "comp"],
+  "audioPack": "drums-vcsl",
+
+  "energyLevels": {
+    "1": { "instruments": ["drums"],                 "velocityRange": [0.34, 0.54] },
+    "2": { "instruments": ["drums", "bass"],         "velocityRange": [0.44, 0.66] },
+    "3": { "instruments": ["drums", "bass", "comp"], "velocityRange": [0.56, 0.82] },
+    "4": { "instruments": ["drums", "bass", "comp"], "velocityRange": [0.66, 0.94] },
+    "5": { "instruments": ["drums", "bass", "comp"], "velocityRange": [0.76, 1.00] }
+  },
+
+  "drumPatterns": [
+    {
+      "id": "rock-base",
+      "weight": 0.5,
+      "minEnergy": 1,
+      "grid": {
+        "kick":  "x...x...",
+        "snare": "..X...X.",
+        "hihat": "Xx.xXx.x"
+      }
+    },
+    {
+      "id": "rock-push",
+      "weight": 0.3,
+      "minEnergy": 2,
+      "grid": {
+        "kick":  "x...xx..",
+        "snare": "..X...X.",
+        "hihat": "XxxxXxxx"
+      }
+    },
+    {
+      "id": "rock-drive",
+      "weight": 0.2,
+      "minEnergy": 4,
+      "grid": {
+        "kick":  "x..xx.x.",
+        "snare": "..X..oX.",
+        "hihat": "XxxxXxxO"
+      }
+    }
+  ],
+
+  "fills": [
+    {
+      "id": "rock-fill-snare",
+      "weight": 0.4,
+      "minEnergy": 2,
+      "beats": 1,
+      "grid": { "snare": "............xxxX" }
+    },
+    {
+      "id": "rock-fill-toms",
+      "weight": 0.4,
+      "minEnergy": 3,
+      "beats": 2,
+      "grid": {
+        "snare":  "........xx......",
+        "tomMid": "..........xx....",
+        "tomLow": "............xxxX"
+      }
+    },
+    {
+      "id": "rock-fill-crash-kick",
+      "weight": 0.2,
+      "minEnergy": 4,
+      "beats": 1,
+      "grid": { "snare": "......X.", "tomLow": ".......X" }
+    }
+  ],
+
+  "humanize": {
+    "offsets": {
+      "kick": -2,
+      "snare": 2,
+      "hihat": 0,
+      "ride": 0,
+      "crash": -2,
+      "tomMid": 1,
+      "tomLow": 1
+    },
+    "jitterMs": 5,
+    "velSigma": 0.05
+  },
+
+  "bassStyle": { "approach": "rootEighths", "ghostNotes": false, "octaveJumps": 0.2 },
+  "compStyle": { "instrument": "piano", "rhythm": "rock8", "voicing": "power", "register": [52, 67] }
+}

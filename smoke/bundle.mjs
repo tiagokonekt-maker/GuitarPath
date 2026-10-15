@@ -228,6 +228,9 @@ var init_tokens = __esm({
       // largeur de case (était 36)
     };
     MODULE = {
+      // Module d'initiation (prelude) : corail, la seule famille de la palette
+      // qu'aucun autre module ni domaine d'entraînement n'utilise.
+      debut: { icon: "sparkles", color: "coral", label: "Premiers pas" },
       neck: { icon: "map-2", color: "amber", label: "Manche" },
       scales: { icon: "music", color: "green", label: "Gammes" },
       harmony: { icon: "stack-2", color: "purple", label: "Harmonie" },
@@ -414,6 +417,225 @@ var init_Ti = __esm({
   "src/design/Ti.jsx"() {
     init_icons();
     Ti_default = Ti;
+  }
+});
+
+// src/design/ui.jsx
+import { useEffect as useEffect2, useEffectEvent } from "react";
+import { Fragment, jsx as jsx3, jsxs } from "react/jsx-runtime";
+function ProgressBar({ pct, color, h = 6, label }) {
+  const C = useC();
+  const valeur = Math.max(0, Math.min(100, Math.round(Number(pct) || 0)));
+  return /* @__PURE__ */ jsx3(
+    "div",
+    {
+      role: "progressbar",
+      "aria-valuenow": valeur,
+      "aria-valuemin": 0,
+      "aria-valuemax": 100,
+      "aria-label": label || "Progression",
+      style: { background: C.border, borderRadius: 999, overflow: "hidden", height: h },
+      children: /* @__PURE__ */ jsx3("div", { style: {
+        width: `${valeur}%`,
+        height: "100%",
+        background: color || C.primary,
+        borderRadius: 999,
+        transition: "width 0.4s ease"
+      } })
+    }
+  );
+}
+function XPPop({ amount, onDone }) {
+  const C = useC();
+  const terminer = useEffectEvent(() => onDone?.());
+  useEffect2(() => {
+    const t = setTimeout(terminer, 1400);
+    return () => clearTimeout(t);
+  }, []);
+  if (!amount || amount <= 0) return null;
+  return /* @__PURE__ */ jsxs("div", { role: "status", "aria-live": "polite", style: {
+    position: "fixed",
+    bottom: 92,
+    left: "50%",
+    transform: "translateX(-50%)",
+    background: C.primaryBtn,
+    color: C.onPrimaryBtn,
+    padding: "9px 18px",
+    borderRadius: 999,
+    fontSize: T.body,
+    fontWeight: 700,
+    fontFamily: FONTS.ui,
+    zIndex: 200,
+    pointerEvents: "none",
+    animation: "fadeUp 1.4s ease forwards",
+    boxShadow: "0 6px 20px rgba(0,0,0,.18)"
+  }, children: [
+    "+",
+    amount,
+    " XP"
+  ] });
+}
+function ConfirmDialog({
+  titre,
+  message,
+  confirmLabel = "Confirmer",
+  cancelLabel = "Annuler",
+  danger = false,
+  motDeConfirmation = null,
+  onConfirm,
+  onCancel,
+  saisie,
+  onSaisie
+}) {
+  const C = useC();
+  const pret = !motDeConfirmation || (saisie || "").trim().toUpperCase() === motDeConfirmation.toUpperCase();
+  useEffect2(() => {
+    const auClavier = (e) => {
+      if (e.key === "Escape") onCancel?.();
+    };
+    document.addEventListener("keydown", auClavier);
+    return () => document.removeEventListener("keydown", auClavier);
+  }, [onCancel]);
+  return /* @__PURE__ */ jsx3(
+    "div",
+    {
+      role: "dialog",
+      "aria-modal": "true",
+      "aria-label": titre,
+      onClick: (e) => {
+        if (e.target === e.currentTarget) onCancel?.();
+      },
+      style: {
+        position: "fixed",
+        inset: 0,
+        zIndex: 500,
+        background: "rgba(20,14,8,.55)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 20
+      },
+      children: /* @__PURE__ */ jsxs("div", { style: {
+        background: C.surface,
+        borderRadius: 20,
+        padding: 22,
+        maxWidth: 340,
+        width: "100%",
+        border: `1.5px solid ${C.border}`,
+        fontFamily: FONTS.ui,
+        boxShadow: "0 20px 60px rgba(0,0,0,.3)"
+      }, children: [
+        /* @__PURE__ */ jsx3("div", { style: { fontSize: T.h3, fontWeight: 800, color: C.text, marginBottom: 8 }, children: titre }),
+        /* @__PURE__ */ jsx3("p", { style: { fontSize: T.small, color: C.text2, lineHeight: 1.6, margin: "0 0 16px" }, children: message }),
+        motDeConfirmation && /* @__PURE__ */ jsxs(Fragment, { children: [
+          /* @__PURE__ */ jsxs("label", { htmlFor: "confirm-word", style: { fontSize: 12, color: C.text2, display: "block", marginBottom: 6 }, children: [
+            "Tape ",
+            /* @__PURE__ */ jsx3("strong", { style: { color: C.text }, children: motDeConfirmation }),
+            " pour confirmer"
+          ] }),
+          /* @__PURE__ */ jsx3(
+            "input",
+            {
+              id: "confirm-word",
+              value: saisie || "",
+              onChange: (e) => onSaisie?.(e.target.value),
+              autoComplete: "off",
+              autoCapitalize: "characters",
+              className: "gr-focus",
+              style: {
+                width: "100%",
+                boxSizing: "border-box",
+                padding: "12px 14px",
+                borderRadius: 12,
+                border: `1.5px solid ${C.borderStrong}`,
+                fontSize: 16,
+                background: C.surface2,
+                color: C.text,
+                fontFamily: FONTS.ui,
+                marginBottom: 16
+              }
+            }
+          )
+        ] }),
+        /* @__PURE__ */ jsxs("div", { style: { display: "flex", flexDirection: "column", gap: 8 }, children: [
+          /* @__PURE__ */ jsx3(
+            "button",
+            {
+              onClick: () => pret && onConfirm?.(),
+              disabled: !pret,
+              className: "gr-focus",
+              style: {
+                padding: "14px",
+                borderRadius: 12,
+                border: "none",
+                minHeight: 48,
+                background: !pret ? C.surface2 : danger ? C.danger : C.primaryBtn,
+                color: !pret ? C.text3 : C.onPrimaryBtn,
+                fontWeight: 700,
+                fontSize: T.body,
+                fontFamily: FONTS.ui,
+                cursor: pret ? "pointer" : "not-allowed"
+              },
+              children: confirmLabel
+            }
+          ),
+          /* @__PURE__ */ jsx3(
+            "button",
+            {
+              onClick: () => onCancel?.(),
+              className: "gr-focus",
+              style: {
+                padding: "14px",
+                borderRadius: 12,
+                minHeight: 48,
+                background: "none",
+                border: `1.5px solid ${C.border}`,
+                color: C.text,
+                fontWeight: 600,
+                fontSize: T.body,
+                fontFamily: FONTS.ui,
+                cursor: "pointer"
+              },
+              children: cancelLabel
+            }
+          )
+        ] })
+      ] })
+    }
+  );
+}
+function BackButton({ onClick, label = "Retour", tint, style }) {
+  const C = useC();
+  return /* @__PURE__ */ jsx3(
+    "button",
+    {
+      type: "button",
+      onClick,
+      "aria-label": label,
+      className: "gr-focus",
+      style: {
+        width: 44,
+        height: 44,
+        flexShrink: 0,
+        borderRadius: 12,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: tint?.bg ?? C.surface,
+        border: `1.5px solid ${tint?.border ?? C.border}`,
+        cursor: "pointer",
+        padding: 0,
+        ...style
+      },
+      children: /* @__PURE__ */ jsx3(Ti_default, { name: "arrow-left", size: 18, color: tint?.icon ?? C.text })
+    }
+  );
+}
+var init_ui = __esm({
+  "src/design/ui.jsx"() {
+    init_tokens();
+    init_ThemeContext();
+    init_Ti();
   }
 });
 
@@ -1103,6 +1325,211 @@ var init_orthographe = __esm({
       return r ? nomEnLangue(r, langue) : String(racine ?? "");
     };
     symboleAccord = (racine, accord, langue = "fr") => nomRacineAccord(racine, accord, langue) + (CHORD_TYPES[accord]?.sym ?? "");
+  }
+});
+
+// src/store/oreille.js
+function melanger(rng, arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function tirerIntervalle(rng, dt, mode = "ascending") {
+  const base = entre(rng, 45, 57);
+  return { dt, mode, midi: [base, base + dt] };
+}
+function voicingAccord(racine, iv) {
+  return [...iv.map((i) => racine + i), racine + 12];
+}
+function tirerAccord(rng, qualite) {
+  const racine = entre(rng, 48, 55);
+  return { qualite, racine, midi: voicingAccord(racine, QUALITES[qualite].iv) };
+}
+function nomDansLaTonalite(pc2, toniquePc, mineur = false) {
+  const n = epelerDansTonalite(pcDe2(pc2), NOTES_DIESES_EN[pcDe2(toniquePc)], gammeDe(mineur));
+  return n ? nomFr(simplifier(n)) : NOTES_DIESES_EN[pcDe2(pc2)];
+}
+function tirerAccordEnTonalite(rng, degre, toniquePc = choisir(rng, TONALITES_MAJ)) {
+  const d = DEGRES_TONALITE[degre];
+  const toniqueMidi = 45 + pcDe2(toniquePc - 9);
+  const reference = voicingAccord(toniqueMidi, QUALITES.maj.iv);
+  const cible = voicingAccord(basseDegre(toniqueMidi, d.semi), QUALITES[d.type].iv);
+  return { degre, toniquePc, reference, midi: cible, nom: accordDansLaTonalite(toniquePc, d.semi, d.type), tonalite: nomTonalite(toniquePc) };
+}
+function tirerProgression(rng, cle2, toniquePc) {
+  const p = PROGRESSIONS[cle2];
+  const t = toniquePc ?? choisir(rng, p.mineur ? TONALITES_MIN : TONALITES_MAJ);
+  const toniqueMidi = 45 + pcDe2(t - 9);
+  const accords = p.degres.map(([semi, type]) => voicingAccord(basseDegre(toniqueMidi, semi), QUALITES[type].iv));
+  const noms = p.degres.map(([semi, type]) => accordDansLaTonalite(t, semi, type, p.mineur));
+  return { cle: cle2, toniquePc: t, mineur: p.mineur, accords, noms, romain: romainDe(cle2), tonalite: nomTonalite(t, p.mineur) };
+}
+function touchesDictee(toniquePc, niveau) {
+  const p = NIVEAUX_DICTEE[Math.max(1, Math.min(NIVEAUX_DICTEE.length, niveau)) - 1];
+  const e = p.mineur ? ECHELLES.mineur : ECHELLES.majeur;
+  return Array.from({ length: p.degreMax + 1 }, (_, d) => {
+    const nom2 = nomDansLaTonalite(toniquePc + e[d], toniquePc, p.mineur);
+    return { degre: d, numero: d + 1, nom: d === 7 ? `${nom2} aigu` : nom2 };
+  });
+}
+function tirerDictee(rng, niveau = 1, toniquePc) {
+  const niv = Math.max(1, Math.min(NIVEAUX_DICTEE.length, niveau));
+  const p = NIVEAUX_DICTEE[niv - 1];
+  const t = toniquePc ?? choisir(rng, p.mineur ? TONALITES_MIN : TONALITES_MAJ);
+  const e = p.mineur ? ECHELLES.mineur : ECHELLES.majeur;
+  const toniqueMidi = 55 + pcDe2(t - 7);
+  const degres = [0];
+  while (degres.length < p.n) {
+    const prec = degres[degres.length - 1];
+    const possibles = [];
+    for (let d = 0; d <= p.degreMax; d++) if (d !== prec && Math.abs(d - prec) <= p.sautMax) possibles.push(d);
+    degres.push(choisir(rng, possibles));
+  }
+  const touches = touchesDictee(t, niv);
+  return {
+    niveau: niv,
+    mineur: p.mineur,
+    toniquePc: t,
+    toniqueMidi,
+    degres,
+    midi: degres.map((d) => toniqueMidi + e[d]),
+    // Accord de la tonique, une octave sous la mélodie : il installe la tonalité.
+    reference: voicingAccord(toniqueMidi - 12, p.mineur ? QUALITES.min.iv : QUALITES.maj.iv),
+    touches,
+    noms: degres.map((d) => touches[d].nom),
+    tonalite: nomTonalite(t, p.mineur),
+    libelle: p.libelle
+  };
+}
+function poolAdaptatif(ordre, depart, historique, cle2) {
+  const h = historique || {};
+  let k = Math.min(depart, ordre.length);
+  ordre.forEach((x, i) => {
+    if ((h[cle2(x)]?.attempts || 0) > 0) k = Math.max(k, i + 1);
+  });
+  let nouveau = null;
+  if (k < ordre.length && ordre.slice(0, k).every((x) => estAcquis(h[cle2(x)]))) {
+    nouveau = ordre[k];
+    k++;
+  }
+  return { pool: ordre.slice(0, k), nouveau, total: ordre.length };
+}
+function choisirItem(rng, pool, historique, cle2, precedent = null) {
+  const h = historique || {};
+  const poids = pool.map((x) => {
+    if (x === precedent && pool.length > 1) return 0;
+    const e = h[cle2(x)];
+    if (!e?.attempts) return 4;
+    return 1 + (estAcquis(e) ? 0 : 2) + 2 * (1 - (e.successes || 0) / e.attempts);
+  });
+  const total = poids.reduce((a, b) => a + b, 0);
+  let r = rng() * total;
+  for (let i = 0; i < pool.length; i++) {
+    r -= poids[i];
+    if (r < 0 && poids[i] > 0) return pool[i];
+  }
+  return pool.find((_, i) => poids[i] > 0) ?? pool[0];
+}
+function niveauProgressif(h, seuils = SEUILS_DICTEE) {
+  const r = h?.successes || 0;
+  let n = 1;
+  seuils.forEach((s, i) => {
+    if (r >= s) n = i + 1;
+  });
+  if ((h?.attempts || 0) > 0 && (h?.streak || 0) === 0) n = Math.max(1, n - 1);
+  return n;
+}
+var choisir, entre, midiVersTone, pcDe2, INTERVALLES, ORDRE_INTERVALLES, DEPART_INTERVALLES, SENS, QUALITES, ORDRE_QUALITES, DEPART_QUALITES, TONALITES_MAJ, TONALITES_MIN, gammeDe, nomTonalite, accordDansLaTonalite, DEGRES_TONALITE, ORDRE_DEGRES, DEPART_DEGRES, basseDegre, PROGRESSIONS, ORDRE_PROGRESSIONS, DEPART_PROGRESSIONS, romainDe, NIVEAUX_DICTEE, ECHELLES, SEUILS_DICTEE, cleItem, estAcquis, precision;
+var init_oreille = __esm({
+  "src/store/oreille.js"() {
+    init_notes();
+    init_orthographe();
+    choisir = (rng, arr) => arr[Math.floor(rng() * arr.length)];
+    entre = (rng, a, b) => a + Math.floor(rng() * (b - a + 1));
+    midiVersTone = (m) => `${NOTES_DIESES_EN[(m % 12 + 12) % 12]}${Math.floor(m / 12) - 1}`;
+    pcDe2 = (m) => (m % 12 + 12) % 12;
+    INTERVALLES = {
+      1: { nom: "Seconde mineure", repere: "Tr\xE8s serr\xE9e, grin\xE7ante : le motif de suspense des films de requin." },
+      2: { nom: "Seconde majeure", repere: "Le pas d'une gamme : les deux premi\xE8res notes d'une gamme qui monte." },
+      3: { nom: "Tierce mineure", repere: "Douce et un peu triste : l'appel \xAB cou-cou \xBB d'une comptine, ou le d\xE9but d'une m\xE9lodie mineure." },
+      4: { nom: "Tierce majeure", repere: "Lumineuse et stable : les deux premi\xE8res notes d'un accord majeur arp\xE9g\xE9." },
+      5: { nom: "Quarte juste", repere: "Affirm\xE9e, comme un appel : le d\xE9but de nombreux hymnes et marches." },
+      6: { nom: "Triton", repere: "Instable, il \xAB veut \xBB se r\xE9soudre : l'intervalle des sir\xE8nes et des ambiances inqui\xE9tantes." },
+      7: { nom: "Quinte juste", repere: "Ouverte et h\xE9ro\xEFque : le d\xE9part de nombreux th\xE8mes de films d'aventure et d'espace." },
+      8: { nom: "Sixte mineure", repere: "Dramatique, doux-amer : une sixte qui a souvent envie de redescendre d'un demi-ton." },
+      9: { nom: "Sixte majeure", repere: "Chaleureuse et chantante : l'\xE9lan de beaucoup d'airs populaires et de jingles." },
+      10: { nom: "Septi\xE8me mineure", repere: "Bluesy, en suspens : la note que la septi\xE8me de dominante ajoute \xE0 l'accord." },
+      11: { nom: "Septi\xE8me majeure", repere: "Presque une octave, tr\xE8s tendue : elle \xAB veut \xBB monter d'un demi-ton." },
+      12: { nom: "Octave", repere: "La m\xEAme note, plus aigu\xEB : le grand saut d'ouverture de nombreuses m\xE9lodies c\xE9l\xE8bres." }
+    };
+    ORDRE_INTERVALLES = [12, 7, 4, 5, 2, 3, 9, 10, 1, 11, 8, 6];
+    DEPART_INTERVALLES = 3;
+    SENS = { ascending: "en montant", descending: "en descendant", harmonic: "ensemble" };
+    QUALITES = {
+      maj: { nom: "Majeur", sym: "", iv: [0, 4, 7], couleur: "tierce majeure et quinte juste : stable, lumineux" },
+      min: { nom: "Mineur", sym: "m", iv: [0, 3, 7], couleur: "tierce mineure et quinte juste : plus sombre" },
+      aug: { nom: "Augment\xE9", sym: "aug", iv: [0, 4, 8], couleur: "deux tierces majeures : suspendu, \xE9trange" },
+      dim: { nom: "Diminu\xE9", sym: "dim", iv: [0, 3, 6], couleur: "deux tierces mineures : tendu, instable" },
+      dom7: { nom: "Septi\xE8me (7)", sym: "7", iv: [0, 4, 7, 10], couleur: "majeur + septi\xE8me mineure : bluesy, appelle une r\xE9solution" },
+      min7: { nom: "Mineur 7 (m7)", sym: "m7", iv: [0, 3, 7, 10], couleur: "mineur + septi\xE8me mineure : doux, d\xE9tendu" },
+      maj7: { nom: "Majeur 7 (maj7)", sym: "maj7", iv: [0, 4, 7, 11], couleur: "majeur + septi\xE8me majeure : r\xEAveur, jazzy" },
+      sus4: { nom: "Sus4", sym: "sus4", iv: [0, 5, 7], couleur: "la quarte remplace la tierce : en attente, ni majeur ni mineur" },
+      sus2: { nom: "Sus2", sym: "sus2", iv: [0, 2, 7], couleur: "la seconde remplace la tierce : ouvert, a\xE9rien" },
+      min7b5: { nom: "Demi-diminu\xE9 (m7\u266D5)", sym: "m7\u266D5", iv: [0, 3, 6, 10], couleur: "diminu\xE9 + septi\xE8me mineure : sombre, appelle un V" },
+      dim7: { nom: "Diminu\xE9 7 (dim7)", sym: "dim7", iv: [0, 3, 6, 9], couleur: "tierces mineures empil\xE9es : tr\xE8s tendu, sym\xE9trique" }
+    };
+    ORDRE_QUALITES = ["maj", "min", "aug", "dim", "dom7", "min7", "maj7", "sus4", "sus2"];
+    DEPART_QUALITES = 2;
+    TONALITES_MAJ = [0, 7, 2, 9, 4, 5, 10, 3];
+    TONALITES_MIN = [9, 4, 11, 2, 7, 0, 5];
+    gammeDe = (mineur) => mineur ? "natural_minor" : "major";
+    nomTonalite = (toniquePc, mineur = false) => `${nomRacineGamme(NOTES_DIESES_EN[pcDe2(toniquePc)], gammeDe(mineur))} ${mineur ? "mineur" : "majeur"}`;
+    accordDansLaTonalite = (toniquePc, semi, type, mineur = false) => nomDansLaTonalite(toniquePc + semi, toniquePc, mineur) + (QUALITES[type]?.sym ?? "");
+    DEGRES_TONALITE = {
+      "I": { semi: 0, type: "maj", fonction: "la tonique : aucun mouvement, on est \xAB \xE0 la maison \xBB" },
+      "IV": { semi: 5, type: "maj", fonction: "la sous-dominante : on s'\xE9loigne en douceur" },
+      "V": { semi: 7, type: "maj", fonction: "la dominante : une tension qui appelle le retour" },
+      "vi": { semi: 9, type: "min", fonction: "le relatif mineur : m\xEAme famille que le I, en plus sombre" },
+      "ii": { semi: 2, type: "min", fonction: "le ii : mineur, il pr\xE9pare souvent le V" },
+      "iii": { semi: 4, type: "min", fonction: "le iii : mineur, proche du I (deux notes en commun)" },
+      "V7": { semi: 7, type: "dom7", fonction: "la dominante avec sa septi\xE8me : la tension la plus forte" },
+      "vii\xB0": { semi: 11, type: "dim", fonction: "le vii\xB0 : diminu\xE9, il bascule vers la tonique" }
+    };
+    ORDRE_DEGRES = ["I", "IV", "V", "vi", "ii", "iii", "V7", "vii\xB0"];
+    DEPART_DEGRES = 3;
+    basseDegre = (toniqueMidi, semi) => toniqueMidi + (semi > 6 ? semi - 12 : semi);
+    PROGRESSIONS = {
+      "I-IV-V-I": { mineur: false, degres: [[0, "maj", "I"], [5, "maj", "IV"], [7, "maj", "V"], [0, "maj", "I"]] },
+      "I-V-vi-IV": { mineur: false, degres: [[0, "maj", "I"], [7, "maj", "V"], [9, "min", "vi"], [5, "maj", "IV"]] },
+      "i-iv-v-i": { mineur: true, degres: [[0, "min", "i"], [5, "min", "iv"], [7, "min", "v"], [0, "min", "i"]] },
+      "I-vi-IV-V": { mineur: false, degres: [[0, "maj", "I"], [9, "min", "vi"], [5, "maj", "IV"], [7, "maj", "V"]] },
+      "i-VI-III-VII": { mineur: true, degres: [[0, "min", "i"], [8, "maj", "VI"], [3, "maj", "III"], [10, "maj", "VII"]] },
+      // Mineur harmonique : la sensible rend le V majeur.
+      "i-iv-V-i": { mineur: true, harmonique: true, degres: [[0, "min", "i"], [5, "min", "iv"], [7, "maj", "V"], [0, "min", "i"]] },
+      "I-vi-ii-V": { mineur: false, degres: [[0, "maj", "I"], [9, "min", "vi"], [2, "min", "ii"], [7, "maj", "V"]] },
+      // Cadence andalouse : descend jusqu'au V majeur (mineur harmonique).
+      "i-VII-VI-V": { mineur: true, harmonique: true, degres: [[0, "min", "i"], [10, "maj", "VII"], [8, "maj", "VI"], [7, "maj", "V"]] },
+      "I-IV-vi-V": { mineur: false, degres: [[0, "maj", "I"], [5, "maj", "IV"], [9, "min", "vi"], [7, "maj", "V"]] },
+      "i-VI-VII-i": { mineur: true, degres: [[0, "min", "i"], [8, "maj", "VI"], [10, "maj", "VII"], [0, "min", "i"]] }
+    };
+    ORDRE_PROGRESSIONS = Object.keys(PROGRESSIONS);
+    DEPART_PROGRESSIONS = 3;
+    romainDe = (cle2) => PROGRESSIONS[cle2].degres.map((d) => d[2]).join(" \u2013 ");
+    NIVEAUX_DICTEE = [
+      { n: 3, degreMax: 2, sautMax: 1, mineur: false, libelle: "3 notes, de la tonique \xE0 la tierce, par degr\xE9s conjoints" },
+      { n: 4, degreMax: 4, sautMax: 2, mineur: false, libelle: "4 notes, de la tonique \xE0 la quinte" },
+      { n: 4, degreMax: 7, sautMax: 4, mineur: false, libelle: "4 notes, sur toute l'octave, avec des sauts" },
+      { n: 5, degreMax: 7, sautMax: 7, mineur: false, libelle: "5 notes, sur toute l'octave" },
+      { n: 5, degreMax: 7, sautMax: 4, mineur: true, libelle: "5 notes, en mineur" }
+    ];
+    ECHELLES = { majeur: [0, 2, 4, 5, 7, 9, 11, 12], mineur: [0, 2, 3, 5, 7, 8, 10, 12] };
+    SEUILS_DICTEE = [0, 3, 7, 12, 18];
+    cleItem = (mode, item) => `ear:${mode}:${item}`;
+    estAcquis = (h) => (h?.streak || 0) >= 2;
+    precision = (h) => h?.attempts ? Math.round((h.successes || 0) / h.attempts * 100) : null;
   }
 });
 
@@ -1813,16 +2240,6 @@ async function ensureLoaded() {
   }
   return isLoaded;
 }
-async function playNote(note2, duration = "4n") {
-  if (!await ensureLoaded()) return;
-  stopAll();
-  reveillerSortie();
-  try {
-    sampler.triggerAttackRelease(note2, secondes(duration), Tone.now());
-  } catch (e) {
-    warn("playNote:", e);
-  }
-}
 async function playChord(notes, duration = "2n", opts = {}) {
   if (!await ensureLoaded()) return;
   stopAll();
@@ -1918,9 +2335,35 @@ async function playSuite(accords, secondesParAccord = 1.6) {
     warn("playSuite:", e);
   }
 }
+function dureeMelodieMs(nbNotes, avecReference = true) {
+  const depart = avecReference ? MELODIE_DEPART : 0;
+  return Math.round((depart + Math.max(0, nbNotes - 1) * MELODIE_ECART + MELODIE_NOTE) * 1e3) + QUEUE_AUDIBLE_MS;
+}
+async function playMelodie(notes, { reference = null } = {}) {
+  if (!await ensureLoaded()) return 0;
+  stopAll();
+  reveillerSortie();
+  const avecRef = !!reference?.length;
+  try {
+    const s = nouvelleLecture();
+    const t0 = departLecture();
+    if (avecRef) strumInto(reference, MELODIE_DEPART * 0.85, t0, "down", 0.03, s);
+    const debut = t0 + (avecRef ? MELODIE_DEPART : 0);
+    notes.forEach((note2, i) => {
+      try {
+        s.triggerAttackRelease(note2, MELODIE_NOTE, debut + i * MELODIE_ECART, 0.85);
+      } catch {
+      }
+    });
+  } catch (e) {
+    warn("playMelodie:", e);
+  }
+  return dureeMelodieMs(notes.length, avecRef);
+}
 async function jouerEcoute(spec) {
   if (!spec) return;
   if (spec.type === "suite") return playSuite(spec.accords);
+  if (spec.type === "melodie") return playMelodie(spec.notes, { reference: spec.reference });
   if (spec.type === "intervalle") return playInterval(spec.notes[0], spec.notes[1], spec.mode || "ascending");
   if (spec.type === "accord") return spec.arpege ? playScale(spec.notes, 150) : playChord(spec.notes, "2n");
   if (spec.type === "rythme") return playRythme(spec);
@@ -2267,163 +2710,126 @@ function stopAll() {
   } catch {
   }
 }
-function generateEarTrainingQuestion(type = "interval") {
-  const NOTES = NOTES_DIESES_EN;
-  const INTERVAL_NAMES2 = {
-    3: "Tierce mineure",
-    4: "Tierce majeure",
-    5: "Quarte juste",
-    7: "Quinte juste",
-    9: "Sixte majeure",
-    10: "Septi\xE8me mineure",
-    12: "Octave"
-  };
+function optionsDe(rng, pool, bonne, toutes) {
+  if (toutes) return [...pool];
+  return melanger(rng, [bonne, ...melanger(rng, pool.filter((x) => x !== bonne)).slice(0, 3)]);
+}
+function generateEarTrainingQuestion(type = "interval", opts = {}) {
+  const rng = opts.rng || Math.random;
+  const toutes = !!opts.toutesOptions;
   if (type === "interval") {
-    const intervals = [3, 4, 5, 7, 9, 10, 12];
-    const semitones = intervals[Math.floor(Math.random() * intervals.length)];
-    const rootIdx = Math.floor(Math.random() * 12);
-    const root = NOTES[rootIdx];
-    const topIdx = (rootIdx + semitones) % 12;
-    const top = NOTES[topIdx];
-    const octaveTop = rootIdx + semitones >= 12 ? 4 : 3;
-    const note1 = toToneNote(root, 3);
-    const note2 = toToneNote(top, octaveTop);
-    const distractors = intervals.filter((i) => i !== semitones).sort(() => Math.random() - 0.5).slice(0, 3);
-    const options = [semitones, ...distractors].sort(() => Math.random() - 0.5).map((i) => ({ semitones: i, label: INTERVAL_NAMES2[i] }));
+    const pool = opts.pool?.length ? opts.pool : INTERVALLES_HISTORIQUES;
+    const dt = opts.cible ?? choisir(rng, pool);
+    const sens = !opts.sens || opts.sens === "mix" ? opts.sens === "mix" ? choisir(rng, ["ascending", "descending", "harmonic"]) : "ascending" : opts.sens;
+    const { midi } = tirerIntervalle(rng, dt, sens);
+    const note1 = midiVersTone(midi[0]), note2 = midiVersTone(midi[1]);
+    const options = optionsDe(rng, pool, dt, toutes).map((i) => ({ key: i, semitones: i, label: INTERVALLES[i].nom }));
     return {
       type: "interval",
+      mode: sens,
       note1,
       note2,
-      answer: semitones,
+      answer: dt,
       options,
-      play: () => playInterval(note1, note2, "ascending"),
-      // La 2e note attaque à 0,65 s, elle dure "4n" (0,5 s au tempo par défaut).
-      durationMs: dureeMs(0.65, "4n")
+      repere: INTERVALLES[dt].repere,
+      consigne: `\xC9coute l'intervalle (${SENS[sens]})`,
+      detail: `${dt} demi-ton${dt > 1 ? "s" : ""}, ${SENS[sens]}`,
+      play: () => playInterval(note1, note2, sens),
+      // Mélodique : la 2e note attaque à 0,65 s et dure « 4n » (0,5 s).
+      // Harmonique : les deux notes ensemble, « 2n ».
+      durationMs: sens === "harmonic" ? dureeMs(0, "2n") : dureeMs(ECART_INTERVALLE_MS / 1e3, "4n")
     };
   }
   if (type === "chord_quality") {
-    const qualities = [
-      { key: "maj", label: "Major", intervals: [0, 4, 7] },
-      { key: "min", label: "Minor", intervals: [0, 3, 7] },
-      { key: "dom7", label: "Dom7", intervals: [0, 4, 7, 10] },
-      { key: "min7", label: "Minor 7", intervals: [0, 3, 7, 10] }
-    ];
-    const rootIdx = Math.floor(Math.random() * 12);
-    const quality = qualities[Math.floor(Math.random() * qualities.length)];
-    const notes = quality.intervals.map((i, idx) => {
-      return toToneNote(NOTES[(rootIdx + i) % 12], idx === 0 ? 2 : 3);
-    });
+    const pool = opts.pool?.length ? opts.pool : QUALITES_HISTORIQUES;
+    const q = opts.cible ?? choisir(rng, pool);
+    const notes = tirerAccord(rng, q).midi.map(midiVersTone);
+    const options = optionsDe(rng, pool, q, toutes).map((k) => ({ key: k, label: QUALITES[k].nom }));
+    const ARPEGE_BPM = 150, pas = 60 / ARPEGE_BPM;
     return {
       type: "chord_quality",
       notes,
-      answer: quality.key,
-      options: qualities.map((q) => ({ key: q.key, label: q.label })),
+      answer: q,
+      options,
+      repere: `${QUALITES[q].nom} : ${QUALITES[q].couleur}.`,
+      consigne: "\xC9coute l'accord",
       play: () => playChord(notes, "2n", { spread: 0.065 }),
       // Grattage étalé : la dernière corde attaque à (n-1) × 0,065 s.
-      durationMs: dureeMs((notes.length - 1) * 0.065, "2n")
+      durationMs: dureeMs((notes.length - 1) * 0.065, "2n"),
+      // Le même accord, note à note : on entend chaque intervalle.
+      playArpege: () => playScale(notes, ARPEGE_BPM),
+      arpegeDurationMs: dureeMs((notes.length - 1) * pas, pas * 0.85)
     };
   }
   if (type === "chord_full") {
-    const qualities = [
-      { key: "maj", suffix: "", intervals: [0, 4, 7] },
-      { key: "min", suffix: "m", intervals: [0, 3, 7] },
-      { key: "dom7", suffix: "7", intervals: [0, 4, 7, 10] },
-      { key: "min7", suffix: "m7", intervals: [0, 3, 7, 10] }
-    ];
-    const rootIdx = Math.floor(Math.random() * 12);
-    const root = NOTES[rootIdx];
-    const quality = qualities[Math.floor(Math.random() * qualities.length)];
-    const notes = quality.intervals.map(
-      (i, idx) => toToneNote(NOTES[(rootIdx + i) % 12], idx === 0 ? 2 : 3)
-    );
-    const answerKey = root + "|" + quality.key;
-    const candidates = [];
-    for (const q of qualities) {
-      if (q.key !== quality.key) candidates.push({ root, quality: q });
-    }
-    for (const shift of [2, 5, 7, 9]) {
-      const r = NOTES[(rootIdx + shift) % 12];
-      candidates.push({ root: r, quality });
-    }
-    const distractors = candidates.sort(() => Math.random() - 0.5).slice(0, 3);
-    const options = [{ root, quality }, ...distractors].sort(() => Math.random() - 0.5).map((c) => ({
-      key: c.root + "|" + c.quality.key,
-      // Libellé orthographié, en notation française comme le reste de
-      // l'app (« Sibm », « Mib7 », pas « A#m » ni « D#7 ») ; la clé, elle,
-      // reste en dièses.
-      label: symboleAccord(c.root, c.quality.key)
+    const pool = opts.pool?.length ? opts.pool : ORDRE_DEGRES.slice(0, 4);
+    const degre = opts.cible ?? choisir(rng, pool);
+    const t = tirerAccordEnTonalite(rng, degre);
+    const ref = t.reference.map(midiVersTone), cible = t.midi.map(midiVersTone);
+    const SEC = 1.6;
+    const options = optionsDe(rng, pool, degre, toutes).map((d) => ({
+      key: d,
+      label: `${accordDansLaTonalite(t.toniquePc, DEGRES_TONALITE[d].semi, DEGRES_TONALITE[d].type)} (${d})`
     }));
-    const referenceNote = toToneNote("C", 3);
     return {
       type: "chord_full",
-      notes,
-      root,
-      answer: answerKey,
+      notes: cible,
+      reference: ref,
+      tonalite: t.tonalite,
+      answer: degre,
       options,
-      // Action principale : l'accord, directement.
-      play: () => playChord(notes, "2n", { spread: 0.065 }),
-      durationMs: dureeMs((notes.length - 1) * 0.065, "2n"),
-      // Aide optionnelle, declenchee par un bouton distinct.
-      playReference: () => playNote(referenceNote, "2n"),
-      referenceDurationMs: dureeMs(0, "2n"),
-      referenceLabel: "Do"
+      repere: `${t.nom} est ${DEGRES_TONALITE[degre].fonction}.`,
+      consigne: `Tonalit\xE9 : ${t.tonalite}. \xC9coute la tonique, puis l'accord`,
+      play: () => playSuite([ref, cible], SEC),
+      // Le 2e accord attaque à 1,6 s (+ étalement du grattage) et sonne 90 %.
+      durationMs: dureeMs(SEC + 6 * 0.026, SEC * 0.9),
+      playReference: () => playChord(ref, "2n"),
+      referenceLabel: "l'accord de tonique"
     };
   }
   if (type === "progression") {
     const SEC_PAR_ACCORD = 1.6;
-    const progressions = [
-      { key: "I-V-vi-IV", label: "I - V - vi - IV", degrees: [[0, "maj"], [7, "maj"], [9, "min"], [5, "maj"]] },
-      { key: "ii-V-I", label: "ii - V - I", degrees: [[2, "min7"], [7, "dom7"], [0, "maj7"]] },
-      { key: "I-IV-V", label: "I - IV - V", degrees: [[0, "maj"], [5, "maj"], [7, "maj"]] },
-      { key: "i-iv-v", label: "i - iv - v (mineur)", degrees: [[0, "min"], [5, "min"], [7, "min"]] },
-      { key: "I-vi-IV-V", label: "I - vi - IV - V", degrees: [[0, "maj"], [9, "min"], [5, "maj"], [7, "maj"]] },
-      // i - VI - III - VII : la suite "epique" (Zeppelin, metal, folk nordique).
-      // En contexte mineur ces degres s'ecrivent en bemols (Abm, Eb, Bb en
-      // Do mineur), mais l'affichage se fait en chiffres romains — donc
-      // aucune ambiguite d'ecriture pour l'utilisateur.
-      { key: "i-VI-III-VII", label: "i - VI - III - VII", degrees: [[0, "min"], [8, "maj"], [3, "maj"], [10, "maj"]] },
-      // Deux suites ajoutees pour equilibrer les groupes : il faut au moins
-      // 4 suites de MEME longueur pour pouvoir proposer 4 options qui ont
-      // toutes le meme nombre d'accords que ce qui a ete joue.
-      { key: "I-vi-ii-V", label: "I - vi - ii - V", degrees: [[0, "maj"], [9, "min"], [2, "min7"], [7, "dom7"]] },
-      { key: "vi-IV-I", label: "vi - IV - I", degrees: [[9, "min"], [5, "maj"], [0, "maj"]] }
-    ];
-    const rootIdx = Math.floor(Math.random() * 12);
-    const chosen = progressions[Math.floor(Math.random() * progressions.length)];
-    const chords = chosen.degrees.map(([semi, type2]) => ({
-      root: NOTES[(rootIdx + semi) % 12],
-      type: type2
-    }));
-    const sameLength = progressions.filter(
-      (p) => p.key !== chosen.key && p.degrees.length === chosen.degrees.length
-    );
-    const distractors = sameLength.sort(() => Math.random() - 0.5).slice(0, 3);
-    const SUFFIX = { maj: "", min: "m", dom7: "7", maj7: "maj7", min7: "m7" };
-    const gammeDe = (p) => p.key.startsWith("i-") ? "natural_minor" : "major";
-    const nameProg = (p) => p.degrees.map(([semi, t]) => {
-      const n = epelerDansTonalite((rootIdx + semi) % 12, NOTES[rootIdx], gammeDe(p));
-      return (n ? nomFr(simplifier(n)) : NOTES[(rootIdx + semi) % 12]) + SUFFIX[t];
-    }).join(" - ");
-    const options = [chosen, ...distractors].sort(() => Math.random() - 0.5).map((p) => ({ key: p.key, label: nameProg(p), roman: p.label }));
+    const pool = opts.pool?.length ? opts.pool : ORDRE_PROGRESSIONS.slice(0, 4);
+    const cle2 = opts.cible ?? choisir(rng, pool);
+    const p = tirerProgression(rng, cle2);
+    const accords = p.accords.map((a) => a.map(midiVersTone));
+    const options = optionsDe(rng, pool, cle2, toutes).map((k) => ({ key: k, label: romainDe(k) }));
     return {
       type: "progression",
-      chords,
-      tonic: NOTES[rootIdx],
-      tonicFr: nomRacineGamme(NOTES[rootIdx], gammeDe(chosen)),
-      roman: chosen.label,
-      answer: chosen.key,
+      accords,
+      // Fondamentales (dièses, valeurs internes) et types : forme historique.
+      chords: PROGRESSIONS[cle2].degres.map(([semi, type2]) => ({ root: NOTES_DIESES_EN[(p.toniquePc + semi) % 12], type: type2 })),
+      tonic: NOTES_DIESES_EN[p.toniquePc],
+      tonicFr: p.tonalite,
+      tonalite: p.tonalite,
+      roman: p.romain,
+      noms: p.noms,
+      answer: cle2,
       options,
-      // 1,6 s par accord : assez pour entendre chaque couleur sans perdre
-      // le fil de la suite. Plus lent, la coherence harmonique se dissout.
-      play: (onStep) => playProgression(chords, SEC_PAR_ACCORD, onStep),
-      // Le dernier accord attaque à (n-1) × 1,6 s et sonne 90 % de l'intervalle.
-      // L'ancien calcul de l'écran (n × 1600 + 400) ignorait la queue de
-      // relâchement : le bouton repassait en « play » avec du son encore
-      // audible, et on ne pouvait plus l'arrêter.
-      durationMs: dureeMs(
-        (chords.length - 1) * SEC_PAR_ACCORD + SEC_PAR_ACCORD * 0.9,
-        0
-      )
+      // Les degrés en chiffres romains se lisent dans toutes les tonalités ;
+      // l'orthographe des accords (Dom – Lab – Mib – Sib) vient avec la
+      // correction, une fois la tonalité dévoilée.
+      repere: `En ${p.tonalite} : ${p.noms.join(" \u2013 ")}.`,
+      consigne: "\xC9coute la suite (le premier accord est la tonique)",
+      play: () => playSuite(accords, SEC_PAR_ACCORD),
+      durationMs: dureeMs((accords.length - 1) * SEC_PAR_ACCORD + 6 * 0.026, SEC_PAR_ACCORD * 0.9)
+    };
+  }
+  if (type === "dictation") {
+    const d = tirerDictee(rng, opts.niveau || 1);
+    const notes = d.midi.map(midiVersTone), reference = d.reference.map(midiVersTone);
+    return {
+      type: "dictation",
+      ...d,
+      notes,
+      referenceNotes: reference,
+      answer: d.degres.join("-"),
+      options: [],
+      consigne: `Tonalit\xE9 : ${d.tonalite}. La m\xE9lodie part de la tonique (${d.touches[0].nom})`,
+      play: () => playMelodie(notes, { reference }),
+      durationMs: dureeMelodieMs(notes.length, true),
+      playReference: () => playMelodie([notes[0]], { reference }),
+      referenceLabel: "la tonique"
     };
   }
   return null;
@@ -2462,12 +2868,12 @@ function makeEarQuizQuestion(mode = "interval") {
     play: ear.play
   };
 }
-var Tone, tonePromise, ctxGeste, SAMPLE_URLS, busGuitare, buffersCordes, voixCordes, generationTab, NOMS_ECHANTILLONS, MIDI_MIN_ECH, MIDI_MAX_ECH, BASE_URL, RELEASE, QUEUE_AUDIBLE_MS, RONDE_120, listSampleUrls, SAMPLE_COUNT, SHARP_TO_FLAT, CHROMATIC, OPEN_STRINGS2, DEV, warn, sortieMaitre, enAttente, lectureEnCours, departLecture, restaurationTimer, sampler, loadPromise, isLoaded, loadError, ECART_INTERVALLE_MS, promesseCordes, urlsCordes, vitessePour, progressionTimers, progressionTimer, dureeMs;
+var Tone, tonePromise, ctxGeste, SAMPLE_URLS, busGuitare, buffersCordes, voixCordes, generationTab, NOMS_ECHANTILLONS, MIDI_MIN_ECH, MIDI_MAX_ECH, BASE_URL, RELEASE, QUEUE_AUDIBLE_MS, RONDE_120, listSampleUrls, SAMPLE_COUNT, SHARP_TO_FLAT, CHROMATIC, OPEN_STRINGS2, DEV, warn, sortieMaitre, enAttente, lectureEnCours, departLecture, restaurationTimer, sampler, loadPromise, isLoaded, loadError, MELODIE_ECART, MELODIE_DEPART, MELODIE_NOTE, ECART_INTERVALLE_MS, promesseCordes, urlsCordes, vitessePour, progressionTimers, progressionTimer, dureeMs, INTERVALLES_HISTORIQUES, QUALITES_HISTORIQUES;
 var init_audioEngine = __esm({
   "src/audioEngine.js"() {
     init_fretboardUtils();
     init_notes();
-    init_orthographe();
+    init_oreille();
     init_tabSon();
     Tone = null;
     tonePromise = null;
@@ -2570,6 +2976,9 @@ var init_audioEngine = __esm({
         }
       });
     }
+    MELODIE_ECART = 0.7;
+    MELODIE_DEPART = 1.6;
+    MELODIE_NOTE = 0.6;
     ECART_INTERVALLE_MS = 650;
     promesseCordes = null;
     urlsCordes = (buffers) => Object.fromEntries(Object.keys(SAMPLE_URLS).map((n) => [n, buffers.get(n)]));
@@ -2577,6 +2986,8 @@ var init_audioEngine = __esm({
     progressionTimers = [];
     progressionTimer = null;
     dureeMs = (finDerniereAttaque, dureeNote) => Math.round((finDerniereAttaque + secondes(dureeNote)) * 1e3) + QUEUE_AUDIBLE_MS;
+    INTERVALLES_HISTORIQUES = [3, 4, 5, 7, 9, 10, 12];
+    QUALITES_HISTORIQUES = ["maj", "min", "dom7", "min7"];
   }
 });
 
@@ -3174,7 +3585,7 @@ __export(Fretboard_exports, {
   FretboardLesson: () => FretboardLesson,
   FretboardQuizQuestion: () => FretboardQuizQuestion
 });
-import { useState as useState10, useMemo as useMemo3, useCallback as useCallback2, useEffect as useEffect8 } from "react";
+import { useState as useState10, useMemo as useMemo4, useCallback as useCallback2, useEffect as useEffect8 } from "react";
 import { Fragment as Fragment8, jsx as jsx12, jsxs as jsxs10 } from "react/jsx-runtime";
 function carteContexte({ mode, root, scale, chord, highlightedNotes, quizTarget, lang }) {
   const langue = lang === "en" ? "en" : "fr";
@@ -3313,10 +3724,10 @@ function Fretboard({
   flashNotes = null
 }) {
   const C = useC();
-  const NOTE_COLORS = useMemo3(() => getNoteColors(C), [C]);
+  const NOTE_COLORS = useMemo4(() => getNoteColors(C), [C]);
   const [quizSelected, setQuizSelected] = useState10([]);
   const [quizRevealed, setQuizRevealed] = useState10(false);
-  const activePositions = useMemo3(() => {
+  const activePositions = useMemo4(() => {
     if (mode === "scale" && root && scale) {
       return getScalePositions(root, scale, endFret);
     }
@@ -3331,12 +3742,12 @@ function Fretboard({
     }
     return [];
   }, [mode, root, scale, chord, highlightedNotes, quizTarget, endFret]);
-  const nomsContexte = useMemo3(
+  const nomsContexte = useMemo4(
     () => carteContexte({ mode, root, scale, chord, highlightedNotes, quizTarget, lang }),
     [mode, root, scale, chord, highlightedNotes, quizTarget, lang]
   );
   const nomAffiche = (note2) => nomsContexte?.get(normalizeNote(note2)) ?? nomSansContexte(note2, lang);
-  const positionMap = useMemo3(() => {
+  const positionMap = useMemo4(() => {
     const map = {};
     for (const p of activePositions) {
       map[`${p.string}-${p.fret}`] = p;
@@ -3656,7 +4067,7 @@ function FretboardQuizQuestion({ question, onComplete, answered, forceReveal }) 
     setShowHint(false);
     setLastKey(questionKey);
   }
-  const targetPositions = useMemo3(() => {
+  const targetPositions = useMemo4(() => {
     const fretMode = question.fretMode || question.concept?.type;
     const target = question.target || question.concept?.root;
     const root = question.root || question.concept?.root;
@@ -3668,7 +4079,7 @@ function FretboardQuizQuestion({ question, onComplete, answered, forceReveal }) 
     }
     return [];
   }, [question]);
-  const contextPositions = useMemo3(() => {
+  const contextPositions = useMemo4(() => {
     const fretMode = question.fretMode || question.concept?.type;
     const root = question.root || question.concept?.root;
     const { scale, chord } = question;
@@ -3779,16 +4190,16 @@ function FretboardQuizQuestion({ question, onComplete, answered, forceReveal }) 
 }
 function FretboardQuizCanvas({ targetPositions, contextPositions, selected, revealed, locked, onCellClick, question }) {
   const C = useC();
-  const NOTE_COLORS = useMemo3(() => getNoteColors(C), [C]);
+  const NOTE_COLORS = useMemo4(() => getNoteColors(C), [C]);
   const DOT = 26;
-  const targetMap = useMemo3(() => {
+  const targetMap = useMemo4(() => {
     const m = {};
     targetPositions.forEach((p) => {
       m[`${p.string}-${p.fret}`] = true;
     });
     return m;
   }, [targetPositions]);
-  const contextMap = useMemo3(() => {
+  const contextMap = useMemo4(() => {
     const m = {};
     contextPositions.forEach((p) => {
       m[`${p.string}-${p.fret}`] = p;
@@ -3796,7 +4207,7 @@ function FretboardQuizCanvas({ targetPositions, contextPositions, selected, reve
     return m;
   }, [contextPositions]);
   const isSel = (s, f) => selected.some((p) => p.string === s && p.fret === f);
-  const nomsQuestion = useMemo3(() => {
+  const nomsQuestion = useMemo4(() => {
     const fretMode = question?.fretMode || question?.concept?.type;
     const root = question?.root || question?.concept?.root;
     if (fretMode === "find_chord" && root && question.chord) return carteNoms(root, { accord: question.chord });
@@ -3852,14 +4263,14 @@ function FretboardExercise({ ex, onComplete, dispatch }) {
   const [allDone, setAllDone] = useState10(false);
   const stage = ex.stages[stageIdx];
   const isLast = stageIdx === ex.stages.length - 1;
-  const targetPositions = useMemo3(() => {
+  const targetPositions = useMemo4(() => {
     if (!stage) return [];
     return getTargetPositions(stage.concept, {
       fretRange: stage.fretRange || [0, 12],
       stringRange: stage.stringRange || [1, 6]
     });
   }, [stage]);
-  const targetMap = useMemo3(() => {
+  const targetMap = useMemo4(() => {
     const m = {};
     targetPositions.forEach((p) => {
       m[`${p.string}-${p.fret}`] = p;
@@ -4067,11 +4478,11 @@ function FretboardExercise({ ex, onComplete, dispatch }) {
 }
 function ExerciseCanvas({ stage, targetMap, selected, revealed, onCellClick }) {
   const C = useC();
-  const NOTE_COLORS = useMemo3(() => getNoteColors(C), [C]);
+  const NOTE_COLORS = useMemo4(() => getNoteColors(C), [C]);
   const DOT = 26;
   const MAX_F = (stage.fretRange || [0, 12])[1];
   const MIN_F = (stage.fretRange || [0, 12])[0];
-  const contextPositions = useMemo3(() => {
+  const contextPositions = useMemo4(() => {
     if (!stage.display?.showContext) return [];
     const ctx = stage.display.showContext;
     return getTargetPositions(ctx, {
@@ -4079,7 +4490,7 @@ function ExerciseCanvas({ stage, targetMap, selected, revealed, onCellClick }) {
       stringRange: stage.stringRange || [1, 6]
     });
   }, [stage]);
-  const contextMap = useMemo3(() => {
+  const contextMap = useMemo4(() => {
     const m = {};
     contextPositions.forEach((p) => {
       m[`${p.string}-${p.fret}`] = p;
@@ -5593,7 +6004,7 @@ var TabEditor_exports = {};
 __export(TabEditor_exports, {
   TabEditor: () => TabEditor
 });
-import { useState as useState17, useRef as useRef12, useEffect as useEffect14, useCallback as useCallback7, useMemo as useMemo6, useId } from "react";
+import { useState as useState17, useRef as useRef12, useEffect as useEffect14, useCallback as useCallback7, useMemo as useMemo7, useId } from "react";
 import { jsx as jsx22, jsxs as jsxs19 } from "react/jsx-runtime";
 function styleTouche(C, actif, extra = {}) {
   return {
@@ -5822,8 +6233,8 @@ function TabEditor() {
   const derniereSaisieRef = useRef12(null);
   const menuRef = useRef12(null);
   const timerMessageRef = useRef12(null);
-  const evenements = useMemo6(() => grilleVersEvenements(grille), [grille]);
-  const origines = useMemo6(() => new Set(evenements.filter((e) => e.toCol != null).map((e) => `${e.string}-${e.col}`)), [evenements]);
+  const evenements = useMemo7(() => grilleVersEvenements(grille), [grille]);
+  const origines = useMemo7(() => new Set(evenements.filter((e) => e.toCol != null).map((e) => `${e.string}-${e.col}`)), [evenements]);
   const cellSel = lireCase(grille, selection.corde, selection.col);
   useEffect14(() => {
     try {
@@ -6190,8 +6601,38 @@ var init_TabEditor = __esm({
 });
 
 // src/diagrams.jsx
-import { useMemo as useMemo7 } from "react";
+var diagrams_exports = {};
+__export(diagrams_exports, {
+  CAGEDForm: () => CAGEDForm,
+  ChordDiagram: () => ChordDiagram,
+  CircleOfFifths: () => CircleOfFifths,
+  DegreeChart: () => DegreeChart,
+  FretboardDiagram: () => FretboardDiagram,
+  IntervalChart: () => IntervalChart,
+  NoteGrid: () => NoteGrid,
+  RhythmGrid: () => RhythmGrid,
+  ScalePattern: () => ScalePattern,
+  StrumPattern: () => StrumPattern,
+  TabBlock: () => TabBlock,
+  renderDiagramBlock: () => renderDiagramBlock
+});
+import { useMemo as useMemo8 } from "react";
 import { jsx as jsx23, jsxs as jsxs20 } from "react/jsx-runtime";
+function getNoteColors2(DC) {
+  return {
+    primary: { fill: DC.primary, text: "#fff" },
+    green: { fill: DC.green, text: "#fff" },
+    amber: { fill: DC.amber, text: "#fff" },
+    coral: { fill: DC.coral, text: "#fff" },
+    pink: { fill: DC.pink, text: "#fff" },
+    neutral: { fill: DC.text2, text: "#fff" },
+    ghost: { fill: DC.border, text: DC.text2 },
+    open: { fill: DC.surface, text: DC.primary, stroke: DC.primary },
+    // corde à vide
+    muted: { fill: "none", text: DC.coral }
+    // corde étouffée (X)
+  };
+}
 function DiagramCard({ caption, children, accent }) {
   const DC = useC();
   const dotColor = accent || DC.primary;
@@ -6219,6 +6660,504 @@ function DiagramCard({ caption, children, accent }) {
       caption
     ] })
   ] });
+}
+function FretboardDiagram({ data, caption }) {
+  const DC = useC();
+  const NOTE_COLORS = useMemo8(() => getNoteColors2(DC), [DC]);
+  const {
+    frets = 5,
+    startFret = 0,
+    notes = [],
+    showStringNames = false,
+    showFretNumbers = true,
+    markerFrets = [3, 5, 7, 9, 12]
+  } = data;
+  const STRINGS = 6;
+  const LEFT_PAD = showStringNames ? 46 : 30;
+  const TOP_PAD = showFretNumbers ? 22 : 10;
+  const BOTTOM_PAD = 14;
+  const RIGHT_PAD = 12;
+  const STRING_SPACING = 32;
+  const FRET_SPACING = 44;
+  const NOTE_R = 12;
+  const svgW = LEFT_PAD + frets * FRET_SPACING + RIGHT_PAD;
+  const svgH = TOP_PAD + (STRINGS - 1) * STRING_SPACING + BOTTOM_PAD;
+  const sy = (s) => TOP_PAD + (s - 1) * STRING_SPACING;
+  const fx = (f) => LEFT_PAD + (f - startFret - 0.5) * FRET_SPACING;
+  const displayFrets = Array.from({ length: frets }, (_, i) => startFret + i + 1);
+  return /* @__PURE__ */ jsx23(DiagramCard, { caption, accent: DC.amber, children: /* @__PURE__ */ jsxs20(
+    "svg",
+    {
+      width: "100%",
+      viewBox: `0 0 ${svgW} ${svgH}`,
+      style: { display: "block", minWidth: Math.min(svgW, 300) },
+      "aria-label": caption || "Diagramme de manche",
+      children: [
+        startFret === 0 && /* @__PURE__ */ jsx23(
+          "rect",
+          {
+            x: LEFT_PAD - 4,
+            y: TOP_PAD - 2,
+            width: 5,
+            height: (STRINGS - 1) * STRING_SPACING + 4,
+            fill: DC.text,
+            rx: 2
+          }
+        ),
+        displayFrets.map((f, i) => /* @__PURE__ */ jsx23(
+          "line",
+          {
+            x1: LEFT_PAD + i * FRET_SPACING + FRET_SPACING,
+            y1: TOP_PAD - 2,
+            x2: LEFT_PAD + i * FRET_SPACING + FRET_SPACING,
+            y2: TOP_PAD + (STRINGS - 1) * STRING_SPACING + 2,
+            stroke: DC.border,
+            strokeWidth: 1.5
+          },
+          f
+        )),
+        Array.from({ length: STRINGS }, (_, i) => i + 1).map((s) => /* @__PURE__ */ jsx23(
+          "line",
+          {
+            x1: LEFT_PAD - 4,
+            y1: sy(s),
+            x2: LEFT_PAD + frets * FRET_SPACING,
+            y2: sy(s),
+            stroke: DC.text3,
+            strokeWidth: s === 1 ? 1 : s === 2 ? 1.2 : s === 3 ? 1.5 : s === 4 ? 1.8 : s === 5 ? 2.2 : 2.6
+          },
+          s
+        )),
+        markerFrets.filter((f) => f > startFret && f <= startFret + frets).map((f) => {
+          const x = fx(f);
+          const isDouble = f % 12 === 0 && f !== 0;
+          return isDouble ? /* @__PURE__ */ jsxs20("g", { children: [
+            /* @__PURE__ */ jsx23("circle", { cx: x, cy: sy(2), r: 4, fill: DC.border }),
+            /* @__PURE__ */ jsx23("circle", { cx: x, cy: sy(5), r: 4, fill: DC.border })
+          ] }, f) : /* @__PURE__ */ jsx23("circle", { cx: x, cy: sy(3.5), r: 4, fill: DC.border }, f);
+        }),
+        showFretNumbers && displayFrets.map((f, i) => /* @__PURE__ */ jsx23(
+          "text",
+          {
+            x: LEFT_PAD + i * FRET_SPACING + FRET_SPACING / 2,
+            y: TOP_PAD - 8,
+            textAnchor: "middle",
+            fontSize: 9,
+            fill: DC.text3,
+            fontFamily: FONT,
+            children: f
+          },
+          f
+        )),
+        showStringNames && Array.from({ length: STRINGS }, (_, i) => i + 1).map((s) => /* @__PURE__ */ jsx23(
+          "text",
+          {
+            x: LEFT_PAD - 8,
+            y: sy(s) + 4,
+            textAnchor: "end",
+            fontSize: 9,
+            fill: DC.text2,
+            fontFamily: FONT,
+            children: ["Mi", "Si", "Sol", "R\xE9", "La", "Mi"][s - 1]
+          },
+          s
+        )),
+        notes.map((n, i) => {
+          const { string: s, fret: f, label = "", color = "primary", root = false, open: isOpen = false, muted: isMuted = false } = n;
+          const col = NOTE_COLORS[color] || NOTE_COLORS.primary;
+          if (isMuted) {
+            const x2 = LEFT_PAD - 16;
+            const y2 = sy(s);
+            return /* @__PURE__ */ jsx23("text", { x: x2, y: y2 + 4, textAnchor: "middle", fontSize: 13, fill: DC.coral, fontFamily: FONT, fontWeight: 700, children: "\xD7" }, i);
+          }
+          if (isOpen) {
+            const x2 = LEFT_PAD - 16;
+            const y2 = sy(s);
+            return /* @__PURE__ */ jsx23("circle", { cx: x2, cy: y2, r: NOTE_R - 2, fill: "none", stroke: col.stroke || DC.primary, strokeWidth: 2 }, i);
+          }
+          if (f === 0) {
+            const x2 = LEFT_PAD - 16;
+            const y2 = sy(s);
+            return /* @__PURE__ */ jsxs20("g", { children: [
+              /* @__PURE__ */ jsx23("circle", { cx: x2, cy: y2, r: NOTE_R - 2, fill: col.fill, stroke: col.fill, strokeWidth: 2 }),
+              label && /* @__PURE__ */ jsx23(
+                "text",
+                {
+                  x: x2,
+                  y: y2 + 4,
+                  textAnchor: "middle",
+                  fontSize: label.length > 2 ? 7 : 9,
+                  fill: col.text,
+                  fontFamily: FONT,
+                  fontWeight: 600,
+                  children: label
+                }
+              )
+            ] }, i);
+          }
+          const x = LEFT_PAD + (f - startFret - 1) * FRET_SPACING + FRET_SPACING / 2;
+          const y = sy(s);
+          if (f < startFret + 1 || f > startFret + frets) {
+            if (typeof console !== "undefined" && console.warn) {
+              console.warn(`FretboardDiagram: note case ${f} hors de la fen\xEAtre [${startFret + 1},${startFret + frets}] ignor\xE9e (corde ${s}). Ajuste startFret/frets dans le contenu.`);
+            }
+            return null;
+          }
+          return /* @__PURE__ */ jsxs20("g", { children: [
+            /* @__PURE__ */ jsx23(
+              "circle",
+              {
+                cx: x,
+                cy: y,
+                r: NOTE_R,
+                fill: col.fill,
+                stroke: root ? col.fill : "none",
+                strokeWidth: root ? 3 : 0,
+                style: { filter: root ? `drop-shadow(0 0 3px ${col.fill}60)` : "none" }
+              }
+            ),
+            label && /* @__PURE__ */ jsx23(
+              "text",
+              {
+                x,
+                y: y + 4,
+                textAnchor: "middle",
+                fontSize: label.length > 2 ? 8 : 10,
+                fill: col.text,
+                fontFamily: FONT,
+                fontWeight: 600,
+                children: label
+              }
+            )
+          ] }, i);
+        })
+      ]
+    }
+  ) });
+}
+function ScalePattern({ data, caption }) {
+  const DC = useC();
+  const NOTE_COLORS = useMemo8(() => getNoteColors2(DC), [DC]);
+  const {
+    strings = [],
+    // [c6, c5, c4, c3, c2, c1]
+    startFret = 4,
+    endFret = 9,
+    noteMap = {},
+    rootColor = "amber",
+    noteColor = "primary",
+    // Note caractéristique (ex. la sixte majeure du dorien). Avant, les
+    // légendes promettaient « en corail » / « en rose » alors que le
+    // composant ne savait afficher que 2 couleurs : la note la plus
+    // importante d'un mode n'était jamais distinguée. strings[i].accent
+    // liste les cases concernées ; un anneau s'ajoute à la couleur, pour
+    // que la distinction ne repose pas sur la couleur seule.
+    accentColor = "coral",
+    accentLabel = "note caract\xE9ristique"
+  } = data;
+  const aDesAccents = strings.some((st) => (st.accent || []).length);
+  const STRINGS = 6;
+  const displayFrets = endFret - startFret + 1;
+  const LEFT_PAD = 32;
+  const TOP_PAD = 18;
+  const BOTTOM_PAD = 14;
+  const STRING_SPACING = 30;
+  const FRET_SPACING = 40;
+  const NOTE_R = 11;
+  const svgW = LEFT_PAD + displayFrets * FRET_SPACING + 12;
+  const svgH = TOP_PAD + (STRINGS - 1) * STRING_SPACING + BOTTOM_PAD;
+  const sy = (s) => TOP_PAD + (STRINGS - 1 - s) * STRING_SPACING;
+  const fx = (f) => LEFT_PAD + (f - startFret + 0.5) * FRET_SPACING;
+  const stringsArr = strings.length === 6 ? strings : Array(6).fill({ frets: [], root: [] });
+  return /* @__PURE__ */ jsxs20(DiagramCard, { caption, accent: NOTE_COLORS[rootColor]?.fill || DC.amber, children: [
+    /* @__PURE__ */ jsxs20(
+      "svg",
+      {
+        width: "100%",
+        viewBox: `0 0 ${svgW} ${svgH}`,
+        style: { display: "block", minWidth: 260 },
+        "aria-label": caption || "Pattern de gamme",
+        children: [
+          Array.from({ length: displayFrets + 1 }, (_, i) => i).map((i) => /* @__PURE__ */ jsx23(
+            "line",
+            {
+              x1: LEFT_PAD + i * FRET_SPACING,
+              y1: TOP_PAD - 2,
+              x2: LEFT_PAD + i * FRET_SPACING,
+              y2: TOP_PAD + (STRINGS - 1) * STRING_SPACING + 2,
+              stroke: i === 0 ? DC.text : DC.border,
+              strokeWidth: i === 0 ? 3 : 1.5
+            },
+            i
+          )),
+          stringsArr.map((_, s) => /* @__PURE__ */ jsx23(
+            "line",
+            {
+              x1: LEFT_PAD,
+              y1: sy(s),
+              x2: LEFT_PAD + displayFrets * FRET_SPACING,
+              y2: sy(s),
+              stroke: DC.text3,
+              strokeWidth: s === 0 ? 2.4 : s === 1 ? 2 : s === 2 ? 1.6 : s === 3 ? 1.3 : s === 4 ? 1.1 : 0.9
+            },
+            s
+          )),
+          Array.from({ length: displayFrets }, (_, i) => startFret + i).map((f, i) => /* @__PURE__ */ jsx23(
+            "text",
+            {
+              x: LEFT_PAD + i * FRET_SPACING + FRET_SPACING / 2,
+              y: TOP_PAD - 7,
+              textAnchor: "middle",
+              fontSize: 9,
+              fill: DC.text3,
+              fontFamily: FONT,
+              children: f
+            },
+            f
+          )),
+          ["Mi", "La", "R\xE9", "Sol", "Si", "Mi"].map((name, s) => /* @__PURE__ */ jsx23(
+            "text",
+            {
+              x: LEFT_PAD - 6,
+              y: sy(s) + 4,
+              textAnchor: "end",
+              fontSize: 9,
+              fill: DC.text2,
+              fontFamily: FONT,
+              children: name
+            },
+            s
+          )),
+          stringsArr.map((str, s) => {
+            const { frets = [], root = [], accent = [] } = str;
+            return frets.map((f) => {
+              if (f < startFret || f > endFret) {
+                if (typeof console !== "undefined" && console.warn) {
+                  console.warn(`ScalePattern: note case ${f} hors de la fen\xEAtre [${startFret},${endFret}] ignor\xE9e (corde index ${s}). Ajuste startFret/endFret dans le contenu.`);
+                }
+                return null;
+              }
+              const isRoot = root.includes(f);
+              const isAccent = !isRoot && accent.includes(f);
+              const col = isRoot ? NOTE_COLORS[rootColor] : isAccent ? NOTE_COLORS[accentColor] : NOTE_COLORS[noteColor];
+              const key = `${f},${s}`;
+              const label = noteMap[key] || (isRoot ? "R" : "");
+              const x = fx(f);
+              const y = sy(s);
+              return /* @__PURE__ */ jsxs20("g", { children: [
+                /* @__PURE__ */ jsx23(
+                  "circle",
+                  {
+                    cx: x,
+                    cy: y,
+                    r: NOTE_R,
+                    fill: col.fill,
+                    stroke: isAccent ? DC.text : "none",
+                    strokeWidth: isAccent ? 1.5 : 0,
+                    style: { filter: isRoot ? `drop-shadow(0 0 4px ${col.fill}80)` : "none" }
+                  }
+                ),
+                label && /* @__PURE__ */ jsx23(
+                  "text",
+                  {
+                    x,
+                    y: y + 4,
+                    textAnchor: "middle",
+                    fontSize: label.length > 2 ? 7.5 : 9,
+                    fill: col.text,
+                    fontFamily: FONT,
+                    fontWeight: 600,
+                    children: label
+                  }
+                )
+              ] }, `${s}-${f}`);
+            });
+          })
+        ]
+      }
+    ),
+    /* @__PURE__ */ jsxs20("div", { "aria-hidden": "true", style: { display: "flex", gap: 12, flexWrap: "wrap", marginTop: 6, fontSize: 11, color: DC.text2, fontFamily: FONT }, children: [
+      /* @__PURE__ */ jsxs20("span", { style: { display: "inline-flex", alignItems: "center", gap: 5 }, children: [
+        /* @__PURE__ */ jsx23("span", { style: { width: 10, height: 10, borderRadius: 5, background: NOTE_COLORS[rootColor]?.fill } }),
+        " fondamentale"
+      ] }),
+      aDesAccents && /* @__PURE__ */ jsxs20("span", { style: { display: "inline-flex", alignItems: "center", gap: 5 }, children: [
+        /* @__PURE__ */ jsx23("span", { style: { width: 10, height: 10, borderRadius: 5, background: NOTE_COLORS[accentColor]?.fill, boxShadow: `0 0 0 1.5px ${DC.text}` } }),
+        " ",
+        accentLabel
+      ] })
+    ] })
+  ] });
+}
+function CircleOfFifths({ data, caption }) {
+  const DC = useC();
+  const { highlight = [], showMinors = true } = data || {};
+  const cx = 110, cy = 110;
+  const rMaj = showMinors ? 86 : 92;
+  const rMin = 54;
+  const svgSize = 220;
+  const pos = (r, i) => {
+    const angle = (-90 + i * 30) * Math.PI / 180;
+    return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
+  };
+  return /* @__PURE__ */ jsx23(DiagramCard, { caption: caption || "Cercle des quintes", accent: DC.primary, children: /* @__PURE__ */ jsxs20(
+    "svg",
+    {
+      width: "100%",
+      viewBox: `0 0 ${svgSize} ${svgSize}`,
+      style: { display: "block", minWidth: 220, maxWidth: 280, margin: "0 auto" },
+      "aria-label": caption || "Cercle des quintes",
+      children: [
+        /* @__PURE__ */ jsx23("circle", { cx, cy, r: rMaj, fill: "none", stroke: DC.border, strokeWidth: 1 }),
+        showMinors && /* @__PURE__ */ jsx23("circle", { cx, cy, r: rMin, fill: "none", stroke: DC.border, strokeWidth: 1 }),
+        FIFTHS_MAJORS.map((name, i) => {
+          const { x, y } = pos(rMaj, i);
+          const isHi = highlight.includes(name);
+          return /* @__PURE__ */ jsxs20("g", { children: [
+            /* @__PURE__ */ jsx23(
+              "circle",
+              {
+                cx: x,
+                cy: y,
+                r: 15,
+                fill: isHi ? DC.primary : DC.surface,
+                stroke: isHi ? DC.primary : DC.border,
+                strokeWidth: isHi ? 0 : 1.5
+              }
+            ),
+            /* @__PURE__ */ jsx23(
+              "text",
+              {
+                x,
+                y: y + 4,
+                textAnchor: "middle",
+                fontSize: name.length > 2 ? 8.5 : 10.5,
+                fontWeight: 700,
+                fill: isHi ? "#fff" : DC.text,
+                fontFamily: FONT,
+                children: name
+              }
+            )
+          ] }, name);
+        }),
+        showMinors && FIFTHS_MINORS.map((name, i) => {
+          const { x, y } = pos(rMin, i);
+          const isHi = highlight.includes(FIFTHS_MAJORS[i]);
+          return /* @__PURE__ */ jsxs20("g", { children: [
+            /* @__PURE__ */ jsx23(
+              "circle",
+              {
+                cx: x,
+                cy: y,
+                r: 13,
+                fill: isHi ? DC.primaryL : DC.bg,
+                stroke: isHi ? DC.primary : DC.border,
+                strokeWidth: 1
+              }
+            ),
+            /* @__PURE__ */ jsx23(
+              "text",
+              {
+                x,
+                y: y + 3,
+                textAnchor: "middle",
+                fontSize: 7,
+                fontWeight: 600,
+                fill: isHi ? DC.primary : DC.text3,
+                fontFamily: FONT,
+                children: name
+              }
+            )
+          ] }, name);
+        })
+      ]
+    }
+  ) });
+}
+function DegreeChart({ data, caption }) {
+  const DC = useC();
+  const NOTE_COLORS = useMemo8(() => getNoteColors2(DC), [DC]);
+  const { boxes = [] } = data || {};
+  return /* @__PURE__ */ jsx23(DiagramCard, { caption: caption || "Les degr\xE9s de la gamme", accent: DC.primary, children: /* @__PURE__ */ jsx23("div", { style: { padding: "10px 12px" }, children: boxes.map((b, i) => {
+    const col = NOTE_COLORS[b.tint] || NOTE_COLORS.neutral;
+    return /* @__PURE__ */ jsxs20("div", { style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      padding: "6px 8px",
+      borderRadius: 8,
+      marginBottom: 3,
+      background: col.fill + "18"
+    }, children: [
+      /* @__PURE__ */ jsx23("div", { style: {
+        minWidth: 28,
+        height: 22,
+        padding: "0 4px",
+        borderRadius: 6,
+        background: col.fill,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: 10,
+        fontWeight: 700,
+        fontFamily: FONT,
+        color: col.text,
+        flexShrink: 0
+      }, children: b.top }),
+      /* @__PURE__ */ jsx23("div", { style: { flex: 1, fontSize: 11.5, fontFamily: FONT, color: DC.text, fontWeight: 600 }, children: b.label }),
+      b.sub && /* @__PURE__ */ jsx23("div", { style: { fontSize: 10, fontFamily: FONT, color: DC.text3, flexShrink: 0 }, children: b.sub })
+    ] }, i);
+  }) }) });
+}
+function IntervalChart({ data, caption }) {
+  const DC = useC();
+  const NOTE_COLORS = useMemo8(() => getNoteColors2(DC), [DC]);
+  const { highlight = [], showOnGuitar = false } = data || {};
+  return /* @__PURE__ */ jsx23(DiagramCard, { caption: caption || "Les 12 intervalles", accent: DC.primary, children: /* @__PURE__ */ jsxs20("div", { style: { padding: "10px 12px" }, children: [
+    INTERVALS.map((iv) => {
+      const isHighlighted = highlight.includes(iv.symbol);
+      const col = NOTE_COLORS[iv.color] || NOTE_COLORS.neutral;
+      return /* @__PURE__ */ jsxs20("div", { style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        padding: "6px 8px",
+        borderRadius: 8,
+        marginBottom: 3,
+        background: isHighlighted ? col.fill + "18" : "transparent",
+        border: isHighlighted ? `1px solid ${col.fill}40` : "1px solid transparent"
+      }, children: [
+        /* @__PURE__ */ jsx23("div", { style: {
+          width: 22,
+          height: 22,
+          borderRadius: 6,
+          background: isHighlighted ? col.fill : DC.surface2,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 9,
+          fontWeight: 700,
+          fontFamily: FONT,
+          color: isHighlighted ? col.text : DC.text3,
+          flexShrink: 0
+        }, children: iv.semitones }),
+        /* @__PURE__ */ jsx23("div", { style: {
+          width: 28,
+          fontSize: 11,
+          fontWeight: 700,
+          fontFamily: FONT,
+          color: isHighlighted ? col.fill : DC.text,
+          flexShrink: 0
+        }, children: iv.symbol }),
+        /* @__PURE__ */ jsx23("div", { style: { flex: 1, fontSize: 11, fontFamily: FONT, color: DC.text2 }, children: iv.name }),
+        /* @__PURE__ */ jsx23("div", { style: { fontSize: 10, fontFamily: FONT, color: isHighlighted ? col.fill : DC.text3, textAlign: "right", flexShrink: 0 }, children: iv.character })
+      ] }, iv.symbol);
+    }),
+    showOnGuitar && /* @__PURE__ */ jsxs20("div", { style: { marginTop: 10, padding: "8px 10px", background: DC.amberL, borderRadius: 10, border: `1px solid ${DC.amberBorder}` }, children: [
+      /* @__PURE__ */ jsx23("div", { style: { fontSize: 10, fontWeight: 600, color: DC.amberD, fontFamily: FONT, marginBottom: 4, letterSpacing: "0.05em", textTransform: "uppercase" }, children: "Sur 1 seule corde" }),
+      /* @__PURE__ */ jsx23("div", { style: { fontSize: 11, color: DC.amberD, fontFamily: FONT, lineHeight: 1.6 }, children: "Tierce maj = 4 cases \xB7 Quinte = 7 cases \xB7 Octave = 12 cases" })
+    ] })
+  ] }) });
 }
 function ChordDiagram({ data, caption }) {
   const DC = useC();
@@ -6389,12 +7328,1670 @@ function ChordDiagram({ data, caption }) {
     }
   ) });
 }
-var FONT, STRING_LABELS2;
+function CAGEDForm({ data, caption }) {
+  const DC = useC();
+  const NOTE_COLORS = useMemo8(() => getNoteColors2(DC), [DC]);
+  const { form = "E", root = "La", rootFret = 5, notes = [], startFret = 4, frets = 5 } = data;
+  const color = CAGED_COLORS[form] || "primary";
+  const tint = NOTE_COLORS[color];
+  const enhancedCaption = caption || `Forme ${form} \u2014 ${root} (case ${rootFret})`;
+  return /* @__PURE__ */ jsxs20("div", { children: [
+    /* @__PURE__ */ jsxs20("div", { style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 8,
+      marginBottom: 8
+    }, children: [
+      /* @__PURE__ */ jsx23("div", { style: {
+        width: 32,
+        height: 32,
+        borderRadius: 8,
+        background: tint.fill,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: 16,
+        fontWeight: 700,
+        color: tint.text,
+        fontFamily: FONT
+      }, children: form }),
+      /* @__PURE__ */ jsxs20("div", { children: [
+        /* @__PURE__ */ jsxs20("div", { style: { fontSize: 12, fontWeight: 600, color: DC.text, fontFamily: FONT }, children: [
+          root,
+          " \u2014 Forme ",
+          form
+        ] }),
+        /* @__PURE__ */ jsxs20("div", { style: { fontSize: 10, color: DC.text3, fontFamily: FONT }, children: [
+          "Fondamentale case ",
+          rootFret
+        ] })
+      ] })
+    ] }),
+    /* @__PURE__ */ jsx23(
+      FretboardDiagram,
+      {
+        data: { frets, startFret, notes, showStringNames: true, showFretNumbers: true },
+        caption: enhancedCaption
+      }
+    )
+  ] });
+}
+function NoteGrid({ data, caption }) {
+  const DC = useC();
+  const NOTE_COLORS = useMemo8(() => getNoteColors2(DC), [DC]);
+  const { string: strNum = 6, stringName = "Corde", highlights = [], maxFret = 12 } = data;
+  const CELL_W = 26;
+  const H = 44;
+  const LEFT_PAD = 8;
+  const svgW = LEFT_PAD + (maxFret + 1) * CELL_W + 8;
+  const MID_Y = H / 2;
+  const STRING_Y = MID_Y;
+  const NOTE_R = 10;
+  const MARKER_FRETS2 = [3, 5, 7, 9, 12];
+  const hlMap = {};
+  highlights.forEach((h) => {
+    hlMap[h.fret] = h;
+  });
+  return /* @__PURE__ */ jsx23(DiagramCard, { caption: caption || `Notes sur la corde ${strNum} (${stringName})`, accent: DC.amber, children: /* @__PURE__ */ jsxs20(
+    "svg",
+    {
+      width: "100%",
+      viewBox: `0 0 ${svgW} ${H}`,
+      style: { display: "block", minWidth: 280 },
+      "aria-label": caption || "Grille de notes",
+      children: [
+        /* @__PURE__ */ jsx23(
+          "line",
+          {
+            x1: LEFT_PAD,
+            y1: STRING_Y,
+            x2: svgW - 4,
+            y2: STRING_Y,
+            stroke: DC.text3,
+            strokeWidth: strNum >= 4 ? 2.2 : 1.4
+          }
+        ),
+        Array.from({ length: maxFret + 1 }, (_, i) => i).map((f) => /* @__PURE__ */ jsx23(
+          "line",
+          {
+            x1: LEFT_PAD + f * CELL_W,
+            y1: STRING_Y - NOTE_R - 2,
+            x2: LEFT_PAD + f * CELL_W,
+            y2: STRING_Y + NOTE_R + 2,
+            stroke: f === 0 ? DC.text : DC.border,
+            strokeWidth: f === 0 ? 3 : 1.2
+          },
+          f
+        )),
+        MARKER_FRETS2.filter((f) => f <= maxFret).map((f) => /* @__PURE__ */ jsx23(
+          "circle",
+          {
+            cx: LEFT_PAD + f * CELL_W + CELL_W / 2,
+            cy: STRING_Y + NOTE_R + 8,
+            r: 3,
+            fill: DC.border
+          },
+          f
+        )),
+        highlights.map((h) => {
+          const col = NOTE_COLORS[h.color] || NOTE_COLORS.primary;
+          const x = LEFT_PAD + h.fret * CELL_W + (h.fret > 0 ? CELL_W / 2 : 0);
+          const y = STRING_Y;
+          return /* @__PURE__ */ jsxs20("g", { children: [
+            /* @__PURE__ */ jsx23(
+              "circle",
+              {
+                cx: x,
+                cy: y,
+                r: NOTE_R,
+                fill: col.fill,
+                style: { filter: `drop-shadow(0 0 3px ${col.fill}80)` }
+              }
+            ),
+            /* @__PURE__ */ jsx23(
+              "text",
+              {
+                x,
+                y: y + 4,
+                textAnchor: "middle",
+                fontSize: h.label.length > 2 ? 7 : 9,
+                fill: col.text,
+                fontFamily: FONT,
+                fontWeight: 600,
+                children: h.label
+              }
+            )
+          ] }, h.fret);
+        }),
+        Array.from({ length: maxFret + 1 }, (_, f) => f).map((f) => {
+          if (hlMap[f]) return null;
+          if (!MARKER_FRETS2.includes(f) && f !== 0 && f !== maxFret) return null;
+          return /* @__PURE__ */ jsx23(
+            "text",
+            {
+              x: LEFT_PAD + f * CELL_W + (f > 0 ? CELL_W / 2 : 0),
+              y: STRING_Y - NOTE_R - 5,
+              textAnchor: "middle",
+              fontSize: 8,
+              fill: DC.text3,
+              fontFamily: FONT,
+              children: f
+            },
+            f
+          );
+        })
+      ]
+    }
+  ) });
+}
+function TabBlock({ data, caption, text }) {
+  const DC = useC();
+  const lines = Array.isArray(data?.lines) ? data.lines : [];
+  if (lines.length === 0) {
+    return text ? /* @__PURE__ */ jsx23("p", { style: { margin: 0, fontSize: 15, lineHeight: 1.7, color: DC.text }, children: text }) : null;
+  }
+  return /* @__PURE__ */ jsx23(DiagramCard, { caption, accent: DC.primary, children: /* @__PURE__ */ jsx23("div", { role: "img", "aria-label": text || caption || "Tablature", style: { padding: "12px 14px", width: "max-content", minWidth: "100%", boxSizing: "border-box" }, children: /* @__PURE__ */ jsx23("pre", { "aria-hidden": "true", style: {
+    margin: 0,
+    fontFamily: MONO,
+    fontSize: 14,
+    lineHeight: 1.45,
+    whiteSpace: "pre",
+    color: DC.text3,
+    fontWeight: 600
+  }, children: lines.map((ligne, i) => {
+    const m = /^([A-Za-z]{1,2}\|)?(.*)$/.exec(String(ligne));
+    const morceaux = (m[2] || "").split(/(\d+)/);
+    return /* @__PURE__ */ jsxs20("span", { style: { display: "block" }, children: [
+      m[1] && /* @__PURE__ */ jsx23("span", { style: { color: DC.text2, fontWeight: 700 }, children: m[1] }),
+      morceaux.map((t, j) => j % 2 === 1 ? /* @__PURE__ */ jsx23("span", { style: { color: DC.primaryInk || DC.primary, fontWeight: 800 }, children: t }, j) : t)
+    ] }, i);
+  }) }) }) });
+}
+function renderDiagramBlock(block, key) {
+  const { type, data, caption } = block;
+  switch (type) {
+    case "fretboard":
+      return /* @__PURE__ */ jsx23(FretboardDiagram, { data, caption }, key);
+    case "scale_pattern":
+      return /* @__PURE__ */ jsx23(ScalePattern, { data, caption }, key);
+    case "interval_chart":
+      return /* @__PURE__ */ jsx23(IntervalChart, { data, caption }, key);
+    case "chord_diagram":
+      return /* @__PURE__ */ jsx23(ChordDiagram, { data, caption }, key);
+    case "caged_form":
+      return /* @__PURE__ */ jsx23(CAGEDForm, { data, caption }, key);
+    case "note_grid":
+      return /* @__PURE__ */ jsx23(NoteGrid, { data, caption }, key);
+    case "rhythm_grid":
+      return /* @__PURE__ */ jsx23(RhythmGrid, { data, caption }, key);
+    case "strum_pattern":
+      return /* @__PURE__ */ jsx23(StrumPattern, { data, caption }, key);
+    case "circle_of_fifths":
+      return /* @__PURE__ */ jsx23(CircleOfFifths, { data, caption }, key);
+    case "degree_chart":
+      return /* @__PURE__ */ jsx23(DegreeChart, { data, caption }, key);
+    case "tab":
+      return /* @__PURE__ */ jsx23(TabBlock, { data, caption, text: block.text }, key);
+    default:
+      return null;
+  }
+}
+function RhythmGrid({ data, caption }) {
+  const DC = useC();
+  const {
+    beats = 4,
+    subdivision = 8,
+    accents = [],
+    muted = [],
+    highlights = [],
+    counters = [],
+    label = ""
+  } = data;
+  const CELL_W = subdivision <= 8 ? 32 : 22;
+  const CELL_H2 = 36;
+  const LEFT_PAD = 8;
+  const TOP_PAD = 28;
+  const total = beats * (subdivision / 4);
+  const svgW = LEFT_PAD * 2 + total * CELL_W;
+  const svgH = TOP_PAD + CELL_H2 + 28;
+  const getColor = (i) => {
+    if (highlights.includes(i)) return { bg: DC.primary, text: "#fff" };
+    if (accents.includes(i)) return { bg: DC.amber, text: "#fff" };
+    if (muted.includes(i)) return { bg: DC.surface2, text: DC.text3 };
+    return { bg: DC.greenL, text: DC.greenD };
+  };
+  const getCounter = (i) => {
+    if (counters[i]) return counters[i];
+    const beat = Math.floor(i / (subdivision / 4)) + 1;
+    const sub = i % (subdivision / 4);
+    if (sub === 0) return String(beat);
+    if (subdivision === 8) return "et";
+    if (subdivision === 12) {
+      if (sub === 1) return "trip";
+      if (sub === 2) return "let";
+    }
+    if (subdivision === 16) {
+      if (sub === 1) return "e";
+      if (sub === 2) return "et";
+      if (sub === 3) return "a";
+    }
+    return "";
+  };
+  return /* @__PURE__ */ jsx23(DiagramCard, { caption: caption || label, accent: DC.green, children: /* @__PURE__ */ jsxs20(
+    "svg",
+    {
+      width: "100%",
+      viewBox: `0 0 ${svgW} ${svgH}`,
+      style: { display: "block", minWidth: 240 },
+      "aria-label": caption || "Grille rythmique",
+      children: [
+        Array.from({ length: beats }, (_, b) => /* @__PURE__ */ jsx23(
+          "text",
+          {
+            x: LEFT_PAD + b * (subdivision / 4) * CELL_W + CELL_W / 2,
+            y: 16,
+            textAnchor: "middle",
+            fontSize: 10,
+            fill: DC.text2,
+            fontFamily: FONT,
+            fontWeight: 600,
+            children: b + 1
+          },
+          b
+        )),
+        Array.from({ length: beats + 1 }, (_, b) => /* @__PURE__ */ jsx23(
+          "line",
+          {
+            x1: LEFT_PAD + b * (subdivision / 4) * CELL_W,
+            y1: TOP_PAD - 4,
+            x2: LEFT_PAD + b * (subdivision / 4) * CELL_W,
+            y2: TOP_PAD + CELL_H2 + 4,
+            stroke: b === 0 || b === beats ? DC.text : DC.border,
+            strokeWidth: b === 0 || b === beats ? 2 : 1
+          },
+          b
+        )),
+        Array.from({ length: total }, (_, i) => {
+          const col = getColor(i);
+          const x = LEFT_PAD + i * CELL_W;
+          const counter = getCounter(i);
+          return /* @__PURE__ */ jsxs20("g", { children: [
+            /* @__PURE__ */ jsx23(
+              "rect",
+              {
+                x: x + 1,
+                y: TOP_PAD,
+                width: CELL_W - 2,
+                height: CELL_H2,
+                fill: col.bg,
+                rx: 4
+              }
+            ),
+            /* @__PURE__ */ jsx23(
+              "text",
+              {
+                x: x + CELL_W / 2,
+                y: TOP_PAD + CELL_H2 / 2 + 4,
+                textAnchor: "middle",
+                fontSize: 10,
+                fill: col.text,
+                fontFamily: FONT,
+                fontWeight: 600,
+                children: counter
+              }
+            )
+          ] }, i);
+        }),
+        Array.from({ length: total - 1 }, (_, i) => {
+          if ((i + 1) % (subdivision / 4) === 0) return null;
+          const x = LEFT_PAD + (i + 1) * CELL_W;
+          return /* @__PURE__ */ jsx23(
+            "line",
+            {
+              x1: x,
+              y1: TOP_PAD,
+              x2: x,
+              y2: TOP_PAD + CELL_H2,
+              stroke: DC.surface,
+              strokeWidth: 1.5
+            },
+            i
+          );
+        }),
+        label && /* @__PURE__ */ jsx23(
+          "text",
+          {
+            x: svgW / 2,
+            y: TOP_PAD + CELL_H2 + 18,
+            textAnchor: "middle",
+            fontSize: 9,
+            fill: DC.text3,
+            fontFamily: FONT,
+            children: label
+          }
+        )
+      ]
+    }
+  ) });
+}
+function getStrumColors(DC) {
+  return {
+    B: { bg: DC.primary, text: "#fff", label: "\u2193" },
+    H: { bg: DC.blue, text: "#fff", label: "\u2191" },
+    BH: { bg: DC.primary, text: "#fff", label: "\u2193\u2191" },
+    "-H": { bg: DC.blue, text: "#fff", label: "\u2191" },
+    "-": { bg: DC.surface2, text: DC.text3, label: "\u2013" },
+    x: { bg: DC.amber, text: "#fff", label: "\xD7" }
+  };
+}
+function getStyleColors(DC) {
+  return {
+    folk: DC.green,
+    pop: DC.primary,
+    rock: DC.coral,
+    reggae: DC.amber,
+    blues: DC.amber,
+    bossa: DC.pink,
+    funk: DC.coral
+  };
+}
+function StrumPattern({ data, caption }) {
+  const DC = useC();
+  const STRUM_COLORS = useMemo8(() => getStrumColors(DC), [DC]);
+  const STYLE_COLORS = useMemo8(() => getStyleColors(DC), [DC]);
+  const { pattern = [], beats = 4, style = "folk", bpm } = data;
+  const CELL_W = 40;
+  const CELL_H2 = 44;
+  const LEFT_PAD = 8;
+  const TOP_PAD = 24;
+  const svgW = LEFT_PAD * 2 + pattern.length * CELL_W;
+  const svgH = TOP_PAD + CELL_H2 + 24;
+  const accent = STYLE_COLORS[style] || DC.primary;
+  return /* @__PURE__ */ jsx23(DiagramCard, { caption: caption || `Pattern ${style}${bpm ? ` \xB7 ${bpm} BPM` : ""}`, accent, children: /* @__PURE__ */ jsxs20(
+    "svg",
+    {
+      width: "100%",
+      viewBox: `0 0 ${svgW} ${svgH}`,
+      style: { display: "block", minWidth: 260 },
+      "aria-label": caption || "Pattern de strumming",
+      children: [
+        Array.from({ length: beats }, (_, b) => {
+          const cellsPerBeat = pattern.length / beats;
+          const x = LEFT_PAD + b * cellsPerBeat * CELL_W + cellsPerBeat * CELL_W / 2;
+          return /* @__PURE__ */ jsx23(
+            "text",
+            {
+              x,
+              y: 16,
+              textAnchor: "middle",
+              fontSize: 10,
+              fill: DC.text2,
+              fontFamily: FONT,
+              fontWeight: 600,
+              children: b + 1
+            },
+            b
+          );
+        }),
+        pattern.map((p, i) => {
+          const col = STRUM_COLORS[p] || STRUM_COLORS["-"];
+          const x = LEFT_PAD + i * CELL_W;
+          return /* @__PURE__ */ jsxs20("g", { children: [
+            /* @__PURE__ */ jsx23(
+              "rect",
+              {
+                x: x + 2,
+                y: TOP_PAD,
+                width: CELL_W - 4,
+                height: CELL_H2,
+                fill: col.bg,
+                rx: 6
+              }
+            ),
+            /* @__PURE__ */ jsx23(
+              "text",
+              {
+                x: x + CELL_W / 2,
+                y: TOP_PAD + CELL_H2 / 2 + 5,
+                textAnchor: "middle",
+                fontSize: col.label.length > 2 ? 10 : 14,
+                fill: col.text,
+                fontFamily: FONT,
+                fontWeight: 700,
+                children: col.label
+              }
+            )
+          ] }, i);
+        }),
+        Array.from({ length: beats + 1 }, (_, b) => {
+          const cellsPerBeat = pattern.length / beats;
+          const x = LEFT_PAD + b * cellsPerBeat * CELL_W;
+          return /* @__PURE__ */ jsx23(
+            "line",
+            {
+              x1: x,
+              y1: TOP_PAD - 2,
+              x2: x,
+              y2: TOP_PAD + CELL_H2 + 2,
+              stroke: DC.border,
+              strokeWidth: 1
+            },
+            b
+          );
+        }),
+        /* @__PURE__ */ jsx23(
+          "text",
+          {
+            x: svgW / 2,
+            y: TOP_PAD + CELL_H2 + 16,
+            textAnchor: "middle",
+            fontSize: 9,
+            fill: DC.text3,
+            fontFamily: FONT,
+            children: "\u2193 bas \xB7 \u2191 haut \xB7 \u2013 silence \xB7 \xD7 \xE9touff\xE9"
+          }
+        )
+      ]
+    }
+  ) });
+}
+var FONT, FIFTHS_MAJORS, FIFTHS_MINORS, INTERVALS, STRING_LABELS2, CAGED_COLORS, MONO;
 var init_diagrams = __esm({
   "src/diagrams.jsx"() {
     init_ThemeContext();
     FONT = '"Josefin Sans", "Roboto", sans-serif';
+    FIFTHS_MAJORS = ["Do", "Sol", "R\xE9", "La", "Mi", "Si", "Fa#", "R\xE9b", "Lab", "Mib", "Sib", "Fa"];
+    FIFTHS_MINORS = ["Lam", "Mim", "Sim", "Fa#m", "Do#m", "Sol#m", "R\xE9#m", "Sibm", "Fam", "Dom", "Solm", "R\xE9m"];
+    INTERVALS = [
+      { semitones: 1, symbol: "m2", name: "2de mineure", color: "coral", character: "Dissonance forte" },
+      { semitones: 2, symbol: "M2", name: "2de majeure", color: "neutral", character: "Tension douce" },
+      { semitones: 3, symbol: "m3", name: "3ce mineure", color: "primary", character: "M\xE9lancolie" },
+      { semitones: 4, symbol: "M3", name: "3ce majeure", color: "green", character: "Joie, brillance" },
+      { semitones: 5, symbol: "P4", name: "Quarte juste", color: "neutral", character: "Stabilit\xE9" },
+      { semitones: 6, symbol: "TT", name: "Triton", color: "coral", character: "Tension max" },
+      { semitones: 7, symbol: "P5", name: "Quinte juste", color: "amber", character: "Force, stabilit\xE9" },
+      { semitones: 8, symbol: "m6", name: "6te mineure", color: "primary", character: "Tristesse, lyrisme" },
+      { semitones: 9, symbol: "M6", name: "6te majeure", color: "green", character: "Douceur, chaleur" },
+      { semitones: 10, symbol: "m7", name: "7\xE8me mineure", color: "amber", character: "Tension blues" },
+      { semitones: 11, symbol: "M7", name: "7\xE8me majeure", color: "pink", character: "Couleur jazz" },
+      { semitones: 12, symbol: "P8", name: "Octave", color: "neutral", character: "Unisson \xE0 l'octave" }
+    ];
     STRING_LABELS2 = ["Mi", "La", "R\xE9", "Sol", "Si", "Mi"];
+    CAGED_COLORS = { C: "green", A: "amber", G: "pink", E: "primary", D: "coral" };
+    MONO = 'ui-monospace, "SF Mono", Menlo, Consolas, "Roboto Mono", monospace';
+  }
+});
+
+// src/morceaux/titres/odeALaJoie.js
+var odeALaJoie_default;
+var init_odeALaJoie = __esm({
+  "src/morceaux/titres/odeALaJoie.js"() {
+    odeALaJoie_default = {
+      id: "ode-a-la-joie",
+      titre: "Ode \xE0 la joie",
+      auteur: "Ludwig van Beethoven (1824)",
+      description: "Le th\xE8me c\xE9l\xE8bre de la 9e symphonie : des notes voisines, id\xE9al pour une premi\xE8re m\xE9lodie.",
+      niveau: "debutant",
+      type: "melodie",
+      tempo: 100,
+      tonalite: "Do majeur",
+      mesure: "4/4",
+      colsParMesure: 16,
+      licence: "Domaine public \u2014 Beethoven (1770-1827). Tablature originale Groply.",
+      melodie: "Mi Mi Fa Sol | Sol Fa Mi R\xE9 | Do Do R\xE9 Mi | Mi R\xE9 R\xE9 | Mi Mi Fa Sol | Sol Fa Mi R\xE9 | Do Do R\xE9 Mi | R\xE9 Do Do | R\xE9 R\xE9 Mi Do | R\xE9 Mi Fa Mi Do | R\xE9 Mi Fa Mi R\xE9 | Do R\xE9 Sol | Mi Mi Fa Sol | Sol Fa Mi R\xE9 | Do Do R\xE9 Mi | R\xE9 Do Do",
+      tab: `
+e|0---0---1---3---|3---1---0-------|------------0---|0---------------|
+B|----------------|------------3---|1---1---3-------|------3-3-------|
+G|----------------|----------------|----------------|----------------|
+D|----------------|----------------|----------------|----------------|
+A|----------------|----------------|----------------|----------------|
+E|----------------|----------------|----------------|----------------|
+
+e|0---0---1---3---|3---1---0-------|------------0---|----------------|
+B|----------------|------------3---|1---1---3-------|3-----1-1-------|
+G|----------------|----------------|----------------|----------------|
+D|----------------|----------------|----------------|----------------|
+A|----------------|----------------|----------------|----------------|
+E|----------------|----------------|----------------|----------------|
+
+e|--------0-------|----0-1-0-------|----0-1-0-------|----------------|
+B|3---3-------1---|3-----------1---|3-----------3---|1---3-----------|
+G|----------------|----------------|----------------|--------0-------|
+D|----------------|----------------|----------------|----------------|
+A|----------------|----------------|----------------|----------------|
+E|----------------|----------------|----------------|----------------|
+
+e|0---0---1---3---|3---1---0-------|------------0---|----------------|
+B|----------------|------------3---|1---1---3-------|3-----1-1-------|
+G|----------------|----------------|----------------|----------------|
+D|----------------|----------------|----------------|----------------|
+A|----------------|----------------|----------------|----------------|
+E|----------------|----------------|----------------|----------------|
+`
+    };
+  }
+});
+
+// src/morceaux/titres/auClairDeLaLune.js
+var auClairDeLaLune_default;
+var init_auClairDeLaLune = __esm({
+  "src/morceaux/titres/auClairDeLaLune.js"() {
+    auClairDeLaLune_default = {
+      id: "au-clair-de-la-lune",
+      titre: "Au clair de la lune",
+      auteur: "Traditionnel fran\xE7ais",
+      description: "Cinq notes pour les couplets, un pont qui descend vers la corde de Sol.",
+      niveau: "debutant",
+      type: "melodie",
+      tempo: 92,
+      tonalite: "Do majeur",
+      mesure: "4/4",
+      colsParMesure: 16,
+      licence: "Domaine public \u2014 chanson traditionnelle fran\xE7aise. Tablature originale Groply.",
+      melodie: "Do Do Do R\xE9 | Mi R\xE9 | Do Mi R\xE9 R\xE9 | Do | Do Do Do R\xE9 | Mi R\xE9 | Do Mi R\xE9 R\xE9 | Do | R\xE9 R\xE9 R\xE9 R\xE9 | La La | R\xE9 Do Si La | Sol | Do Do Do R\xE9 | Mi R\xE9 | Do Mi R\xE9 R\xE9 | Do",
+      tab: `
+e|----------------|0---------------|----0-----------|----------------|
+B|1---1---1---3---|--------3-------|1-------3---3---|1---------------|
+G|----------------|----------------|----------------|----------------|
+D|----------------|----------------|----------------|----------------|
+A|----------------|----------------|----------------|----------------|
+E|----------------|----------------|----------------|----------------|
+
+e|----------------|0---------------|----0-----------|----------------|
+B|1---1---1---3---|--------3-------|1-------3---3---|1---------------|
+G|----------------|----------------|----------------|----------------|
+D|----------------|----------------|----------------|----------------|
+A|----------------|----------------|----------------|----------------|
+E|----------------|----------------|----------------|----------------|
+
+e|----------------|----------------|----------------|----------------|
+B|3---3---3---3---|----------------|3---1---0-------|----------------|
+G|----------------|2-------2-------|------------2---|0---------------|
+D|----------------|----------------|----------------|----------------|
+A|----------------|----------------|----------------|----------------|
+E|----------------|----------------|----------------|----------------|
+
+e|----------------|0---------------|----0-----------|----------------|
+B|1---1---1---3---|--------3-------|1-------3---3---|1---------------|
+G|----------------|----------------|----------------|----------------|
+D|----------------|----------------|----------------|----------------|
+A|----------------|----------------|----------------|----------------|
+E|----------------|----------------|----------------|----------------|
+`
+    };
+  }
+});
+
+// src/morceaux/titres/frereJacques.js
+var frereJacques_default;
+var init_frereJacques = __esm({
+  "src/morceaux/titres/frereJacques.js"() {
+    frereJacques_default = {
+      id: "frere-jacques",
+      titre: "Fr\xE8re Jacques",
+      auteur: "Traditionnel fran\xE7ais",
+      description: "Un canon connu de tous : premi\xE8res croches et passage sur la case 5.",
+      niveau: "debutant",
+      type: "melodie",
+      tempo: 96,
+      tonalite: "Do majeur",
+      mesure: "4/4",
+      colsParMesure: 16,
+      licence: "Domaine public \u2014 canon traditionnel. Tablature originale Groply.",
+      melodie: "Do R\xE9 Mi Do | Do R\xE9 Mi Do | Mi Fa Sol | Mi Fa Sol | Sol La Sol Fa Mi Do | Sol La Sol Fa Mi Do | Do Sol Do | Do Sol Do",
+      tab: `
+e|--------0-------|--------0-------|0---1---3-------|0---1---3-------|
+B|1---3-------1---|1---3-------1---|----------------|----------------|
+G|----------------|----------------|----------------|----------------|
+D|----------------|----------------|----------------|----------------|
+A|----------------|----------------|----------------|----------------|
+E|----------------|----------------|----------------|----------------|
+
+e|3-5-3-1-0-------|3-5-3-1-0-------|----------------|----------------|
+B|------------1---|------------1---|1-------1-------|1-------1-------|
+G|----------------|----------------|----0-----------|----0-----------|
+D|----------------|----------------|----------------|----------------|
+A|----------------|----------------|----------------|----------------|
+E|----------------|----------------|----------------|----------------|
+`
+    };
+  }
+});
+
+// src/morceaux/titres/ahVousDiraiJe.js
+var ahVousDiraiJe_default;
+var init_ahVousDiraiJe = __esm({
+  "src/morceaux/titres/ahVousDiraiJe.js"() {
+    ahVousDiraiJe_default = {
+      id: "ah-vous-dirai-je",
+      titre: "Ah ! vous dirai-je, maman",
+      auteur: "Traditionnel fran\xE7ais (v. 1760)",
+      description: "Notes r\xE9p\xE9t\xE9es deux par deux : parfait pour poser les doigts sans se presser.",
+      niveau: "debutant",
+      type: "melodie",
+      tempo: 96,
+      tonalite: "Do majeur",
+      mesure: "4/4",
+      colsParMesure: 16,
+      licence: "Domaine public \u2014 air traditionnel. Tablature originale Groply.",
+      melodie: "Do Do Sol Sol | La La Sol | Fa Fa Mi Mi | R\xE9 R\xE9 Do | Sol Sol Fa Fa | Mi Mi R\xE9 | Sol Sol Fa Fa | Mi Mi R\xE9 | Do Do Sol Sol | La La Sol | Fa Fa Mi Mi | R\xE9 R\xE9 Do",
+      tab: `
+e|--------3---3---|5---5---3-------|1---1---0---0---|----------------|
+B|1---1-----------|----------------|----------------|3---3---1-------|
+G|----------------|----------------|----------------|----------------|
+D|----------------|----------------|----------------|----------------|
+A|----------------|----------------|----------------|----------------|
+E|----------------|----------------|----------------|----------------|
+
+e|3---3---1---1---|0---0-----------|3---3---1---1---|0---0-----------|
+B|----------------|--------3-------|----------------|--------3-------|
+G|----------------|----------------|----------------|----------------|
+D|----------------|----------------|----------------|----------------|
+A|----------------|----------------|----------------|----------------|
+E|----------------|----------------|----------------|----------------|
+
+e|--------3---3---|5---5---3-------|1---1---0---0---|----------------|
+B|1---1-----------|----------------|----------------|3---3---1-------|
+G|----------------|----------------|----------------|----------------|
+D|----------------|----------------|----------------|----------------|
+A|----------------|----------------|----------------|----------------|
+E|----------------|----------------|----------------|----------------|
+`
+    };
+  }
+});
+
+// src/morceaux/titres/greensleeves.js
+var greensleeves_default;
+var init_greensleeves = __esm({
+  "src/morceaux/titres/greensleeves.js"() {
+    greensleeves_default = {
+      id: "greensleeves",
+      titre: "Greensleeves",
+      auteur: "Traditionnel anglais (XVIe si\xE8cle)",
+      description: "Une m\xE9lodie \xE0 trois temps, avec rythmes point\xE9s et le Sol# du mode mineur.",
+      niveau: "intermediaire",
+      type: "melodie",
+      tempo: 100,
+      tonalite: "La mineur",
+      mesure: "3/4",
+      colsParMesure: 12,
+      licence: "Domaine public \u2014 air traditionnel anglais. Tablature originale Groply.",
+      melodie: "La | Do R\xE9 | Mi Fa Mi | R\xE9 Si | Sol La Si | Do La | La Sol# La | Si Sol# | Mi La | Do R\xE9 | Mi Fa Mi | R\xE9 Si | Sol La Si | Do Si La | Sol# Fa# Sol# | La | La",
+      tab: `
+e|------------|------------|0-----1-0---|------------|
+B|------------|1-------3---|------------|3-------0---|
+G|--------2---|------------|------------|------------|
+D|------------|------------|------------|------------|
+A|------------|------------|------------|------------|
+E|------------|------------|------------|------------|
+
+e|------------|------------|------------|------------|
+B|--------0---|1-----------|------------|0-----------|
+G|0-----2-----|--------2---|2-----1-2---|--------1---|
+D|------------|------------|------------|------------|
+A|------------|------------|------------|------------|
+E|------------|------------|------------|------------|
+
+e|------------|------------|0-----1-0---|------------|
+B|------------|1-------3---|------------|3-------0---|
+G|--------2---|------------|------------|------------|
+D|2-----------|------------|------------|------------|
+A|------------|------------|------------|------------|
+E|------------|------------|------------|------------|
+
+e|------------|------------|------------|------------|
+B|--------0---|1-----0-----|------------|------------|
+G|0-----2-----|--------2---|1-------1---|2-----------|
+D|------------|------------|------4-----|------------|
+A|------------|------------|------------|------------|
+E|------------|------------|------------|------------|
+
+e|------------|
+B|------------|
+G|2-----------|
+D|------------|
+A|------------|
+E|------------|
+`
+    };
+  }
+});
+
+// src/morceaux/titres/premiersAccords.js
+var premiersAccords_default;
+var init_premiersAccords = __esm({
+  "src/morceaux/titres/premiersAccords.js"() {
+    premiersAccords_default = {
+      id: "premiers-accords",
+      titre: "Premiers accords : Sol \u2013 Mim \u2013 Do \u2013 R\xE9",
+      auteur: "Exercice original Groply",
+      description: "Quatre accords ouverts, un grattage par temps : de quoi travailler les changements.",
+      niveau: "debutant",
+      type: "accords",
+      tempo: 72,
+      tonalite: "Sol majeur",
+      mesure: "4/4",
+      colsParMesure: 16,
+      licence: "\u0152uvre originale Groply.",
+      accords: ["G", "Em", "C", "D"],
+      grille: ["G", "Em", "C", "D", "G", "Em", "C", "D", "G"],
+      tab: `
+e|3---3---3---3---|0---0---0---0---|0---0---0---0---|2---2---2---2---|
+B|0---0---0---0---|0---0---0---0---|1---1---1---1---|3---3---3---3---|
+G|0---0---0---0---|0---0---0---0---|0---0---0---0---|2---2---2---2---|
+D|0---0---0---0---|2---2---2---2---|2---2---2---2---|0---0---0---0---|
+A|2---2---2---2---|2---2---2---2---|3---3---3---3---|----------------|
+E|3---3---3---3---|0---0---0---0---|----------------|----------------|
+
+e|3---3---3---3---|0---0---0---0---|0---0---0---0---|2---2---2---2---|
+B|0---0---0---0---|0---0---0---0---|1---1---1---1---|3---3---3---3---|
+G|0---0---0---0---|0---0---0---0---|0---0---0---0---|2---2---2---2---|
+D|0---0---0---0---|2---2---2---2---|2---2---2---2---|0---0---0---0---|
+A|2---2---2---2---|2---2---2---2---|3---3---3---3---|----------------|
+E|3---3---3---3---|0---0---0---0---|----------------|----------------|
+
+e|3---------------|
+B|0---------------|
+G|0---------------|
+D|0---------------|
+A|2---------------|
+E|3---------------|
+`
+    };
+  }
+});
+
+// src/morceaux/titres/pickingDoLamFaSol.js
+var pickingDoLamFaSol_default;
+var init_pickingDoLamFaSol = __esm({
+  "src/morceaux/titres/pickingDoLamFaSol.js"() {
+    pickingDoLamFaSol_default = {
+      id: "picking-do-lam-fa-sol",
+      titre: "Picking Do \u2013 Lam \u2013 Fa \u2013 Sol",
+      auteur: "Exercice original Groply",
+      description: "Un arp\xE8ge r\xE9gulier en croches sur la grille la plus jou\xE9e de la pop.",
+      niveau: "intermediaire",
+      type: "accords",
+      tempo: 76,
+      tonalite: "Do majeur",
+      mesure: "4/4",
+      colsParMesure: 16,
+      licence: "\u0152uvre originale Groply.",
+      accords: ["C", "Am", "F", "G"],
+      grille: ["C", "Am", "F", "G", "C", "Am", "F", "G", "C"],
+      tab: `
+e|------0---------|------0---------|------1---------|------3---------|
+B|----1-------1---|----1-------1---|----1-------1---|----0-------0---|
+G|--0-------0---0-|--2-------2---2-|--2-------2---2-|--0-------0---0-|
+D|--------2-------|--------2-------|3-------3-------|--------0-------|
+A|3---------------|0---------------|----------------|----------------|
+E|----------------|----------------|----------------|3---------------|
+
+e|------0---------|------0---------|------1---------|------3---------|
+B|----1-------1---|----1-------1---|----1-------1---|----0-------0---|
+G|--0-------0---0-|--2-------2---2-|--2-------2---2-|--0-------0---0-|
+D|--------2-------|--------2-------|3-------3-------|--------0-------|
+A|3---------------|0---------------|----------------|----------------|
+E|----------------|----------------|----------------|3---------------|
+
+e|0---------------|
+B|1---------------|
+G|0---------------|
+D|2---------------|
+A|3---------------|
+E|----------------|
+`
+    };
+  }
+});
+
+// src/morceaux/titres/risingSun.js
+var risingSun_default;
+var init_risingSun = __esm({
+  "src/morceaux/titres/risingSun.js"() {
+    risingSun_default = {
+      id: "rising-sun",
+      titre: "House of the Rising Sun (grille)",
+      auteur: "Traditionnel am\xE9ricain",
+      description: "La grille Lam \u2013 Do \u2013 R\xE9 \u2013 Fa \u2013 Mi en arp\xE8ges \xE0 six croches.",
+      niveau: "intermediaire",
+      type: "accords",
+      tempo: 110,
+      tonalite: "La mineur",
+      mesure: "6/8",
+      colsParMesure: 12,
+      licence: "Domaine public \u2014 grille traditionnelle. Arp\xE8ge original Groply, sans paroles.",
+      accords: ["Am", "C", "D", "F", "E"],
+      grille: ["Am", "C", "D", "F", "Am", "C", "E", "E", "Am", "C", "D", "F", "Am", "E", "Am", "E"],
+      tab: `
+e|------0-----|------0-----|------2-----|------1-----|
+B|----1---1---|----1---1---|----3---3---|----1---1---|
+G|--2-------2-|--0-------0-|--2-------2-|--2-------2-|
+D|------------|------------|0-----------|3-----------|
+A|0-----------|3-----------|------------|------------|
+E|------------|------------|------------|------------|
+
+e|------0-----|------0-----|------0-----|------0-----|
+B|----1---1---|----1---1---|----0---0---|----0---0---|
+G|--2-------2-|--0-------0-|--1-------1-|--1-------1-|
+D|------------|------------|------------|------------|
+A|0-----------|3-----------|------------|------------|
+E|------------|------------|0-----------|0-----------|
+
+e|------0-----|------0-----|------2-----|------1-----|
+B|----1---1---|----1---1---|----3---3---|----1---1---|
+G|--2-------2-|--0-------0-|--2-------2-|--2-------2-|
+D|------------|------------|0-----------|3-----------|
+A|0-----------|3-----------|------------|------------|
+E|------------|------------|------------|------------|
+
+e|------0-----|------0-----|------0-----|------0-----|
+B|----1---1---|----0---0---|----1---1---|----0---0---|
+G|--2-------2-|--1-------1-|--2-------2-|--1-------1-|
+D|------------|------------|------------|------------|
+A|0-----------|------------|0-----------|------------|
+E|------------|0-----------|------------|0-----------|
+`
+    };
+  }
+});
+
+// src/morceaux/titres/riffRockMi.js
+var riffRockMi_default;
+var init_riffRockMi = __esm({
+  "src/morceaux/titres/riffRockMi.js"() {
+    riffRockMi_default = {
+      id: "riff-rock-mi",
+      titre: "Riff rock en Mi",
+      auteur: "Riff original Groply",
+      description: "Des croches sur la corde grave, cases 0, 3 et 5 : le riff pour se lancer.",
+      niveau: "debutant",
+      type: "riff",
+      tempo: 100,
+      tonalite: "Mi mineur",
+      mesure: "4/4",
+      colsParMesure: 16,
+      licence: "\u0152uvre originale Groply.",
+      tab: `
+e|----------------|----------------|----------------|----------------|
+B|----------------|----------------|----------------|----------------|
+G|----------------|----------------|----------------|----------------|
+D|----------------|----------------|----------------|----------------|
+A|----------------|----------------|----------------|--------0-0-2-2-|
+E|0-0-3-0-5-0-3-0-|0-0-3-0-5-0-3-0-|0-0-3-0-5-0-3-0-|0-0-3-0---------|
+
+e|----------------|----------------|----------------|----------------|
+B|----------------|----------------|----------------|----------------|
+G|----------------|----------------|----------------|----------------|
+D|----------------|----------------|----------------|2---------------|
+A|----------------|----------------|----------------|2---------------|
+E|0-0-3-0-5-0-3-0-|0-0-3-0-5-0-3-0-|0-0-3-0-5-0-3-0-|0---------------|
+`
+    };
+  }
+});
+
+// src/morceaux/titres/riffFolkRe.js
+var riffFolkRe_default;
+var init_riffFolkRe = __esm({
+  "src/morceaux/titres/riffFolkRe.js"() {
+    riffFolkRe_default = {
+      id: "riff-folk-re",
+      titre: "Riff folk en R\xE9",
+      auteur: "Riff original Groply",
+      description: "Des arp\xE8ges ouverts \xE9gay\xE9s de hammer-ons, dans l'esprit folk.",
+      niveau: "intermediaire",
+      type: "riff",
+      tempo: 84,
+      tonalite: "R\xE9 majeur",
+      mesure: "4/4",
+      colsParMesure: 16,
+      licence: "\u0152uvre originale Groply.",
+      grille: ["D", "D", "G", "A", "D", "D", "G", "D"],
+      tab: `
+e|----------2-----|--------2h3-2---|------------3---|----------------|
+B|--------3---3---|------3-------3-|----------0---0-|--------0h2-----|
+G|----0h2-------2-|----2-----------|--------0-------|------2-----2---|
+D|0---------------|0---------------|----0h2---------|----2---------2-|
+A|----------------|----------------|----------------|0---------------|
+E|----------------|----------------|3---------------|----------------|
+
+e|----------2-----|--------2h3-2---|------------3---|2---------------|
+B|--------3---3---|------3-------3-|----------0---0-|3---------------|
+G|----0h2-------2-|----2-----------|--------0-------|2---------------|
+D|0---------------|0---------------|----0h2---------|0---------------|
+A|----------------|----------------|----------------|----------------|
+E|----------------|----------------|3---------------|----------------|
+`
+    };
+  }
+});
+
+// src/morceaux/titres/bluesEnLa.js
+var bluesEnLa_default;
+var init_bluesEnLa = __esm({
+  "src/morceaux/titres/bluesEnLa.js"() {
+    bluesEnLa_default = {
+      id: "blues-en-la",
+      titre: "Blues en La (shuffle)",
+      auteur: "Riff original Groply",
+      description: "La grille de 12 mesures avec le riff \xAB quinte \u2013 sixte \xBB sur deux cordes.",
+      niveau: "intermediaire",
+      type: "riff",
+      tempo: 84,
+      tonalite: "La (blues)",
+      mesure: "4/4",
+      colsParMesure: 16,
+      licence: "Riff original Groply ; grille de blues traditionnelle (domaine public).",
+      grille: ["A", "A", "A", "A", "D", "D", "A", "A", "E", "D", "A", "E"],
+      tab: `
+e|----------------|----------------|----------------|----------------|
+B|----------------|----------------|----------------|----------------|
+G|----------------|----------------|----------------|----------------|
+D|2--24--42--24--4|2--24--42--24--4|2--24--42--24--4|2--24--42--24--4|
+A|0--00--00--00--0|0--00--00--00--0|0--00--00--00--0|0--00--00--00--0|
+E|----------------|----------------|----------------|----------------|
+
+e|----------------|----------------|----------------|----------------|
+B|----------------|----------------|----------------|----------------|
+G|2--24--42--24--4|2--24--42--24--4|----------------|----------------|
+D|0--00--00--00--0|0--00--00--00--0|2--24--42--24--4|2--24--42--24--4|
+A|----------------|----------------|0--00--00--00--0|0--00--00--00--0|
+E|----------------|----------------|----------------|----------------|
+
+e|----------------|----------------|----------------|----------------|
+B|----------------|----------------|----------------|----------------|
+G|----------------|2--24--42--24--4|----------------|----------------|
+D|----------------|0--00--00--00--0|2--24--42--24--4|----------------|
+A|2--24--42--24--4|----------------|0--00--00--00--0|2--24--42--24--4|
+E|0--00--00--00--0|----------------|----------------|0--00--00--00--0|
+`
+    };
+  }
+});
+
+// src/morceaux/catalogue.js
+var MORCEAUX, morceauParId;
+var init_catalogue = __esm({
+  "src/morceaux/catalogue.js"() {
+    init_odeALaJoie();
+    init_auClairDeLaLune();
+    init_frereJacques();
+    init_ahVousDiraiJe();
+    init_greensleeves();
+    init_premiersAccords();
+    init_pickingDoLamFaSol();
+    init_risingSun();
+    init_riffRockMi();
+    init_riffFolkRe();
+    init_bluesEnLa();
+    MORCEAUX = [
+      odeALaJoie_default,
+      auClairDeLaLune_default,
+      frereJacques_default,
+      ahVousDiraiJe_default,
+      premiersAccords_default,
+      riffRockMi_default,
+      greensleeves_default,
+      pickingDoLamFaSol_default,
+      risingSun_default,
+      riffFolkRe_default,
+      bluesEnLa_default
+    ];
+    morceauParId = (id) => MORCEAUX.find((m) => m.id === id) || null;
+  }
+});
+
+// src/morceaux/accords.js
+var FORMES_ACCORDS, nomAccord2;
+var init_accords = __esm({
+  "src/morceaux/accords.js"() {
+    FORMES_ACCORDS = {
+      C: { nom: "Do", frets: [-1, 3, 2, 0, 1, 0], fingers: [0, 3, 2, 0, 1, 0] },
+      Am: { nom: "Lam", frets: [-1, 0, 2, 2, 1, 0], fingers: [0, 0, 2, 3, 1, 0] },
+      D: { nom: "R\xE9", frets: [-1, -1, 0, 2, 3, 2], fingers: [0, 0, 0, 1, 3, 2] },
+      // Petite forme de Fa : un mini-barré sur les deux cordes aiguës, sans grand barré.
+      F: { nom: "Fa", frets: [-1, -1, 3, 2, 1, 1], fingers: [0, 0, 3, 2, 1, 1], barre: { fret: 1, from: 4, to: 5 } },
+      E: { nom: "Mi", frets: [0, 2, 2, 1, 0, 0], fingers: [0, 2, 3, 1, 0, 0] },
+      G: { nom: "Sol", frets: [3, 2, 0, 0, 0, 3], fingers: [2, 1, 0, 0, 0, 3] },
+      Em: { nom: "Mim", frets: [0, 2, 2, 0, 0, 0], fingers: [0, 2, 3, 0, 0, 0] },
+      A: { nom: "La", frets: [-1, 0, 2, 2, 2, 0], fingers: [0, 0, 1, 2, 3, 0] }
+    };
+    nomAccord2 = (symbole2) => FORMES_ACCORDS[symbole2]?.nom ?? symbole2;
+  }
+});
+
+// src/morceaux/morceaux.js
+function compterMesures(tab) {
+  let n = 0;
+  for (const ligne of String(tab).split(/\r?\n/)) {
+    if (/^\s*e\s*\|/.test(ligne)) n += Math.max(0, (ligne.match(/\|/g) || []).length - 1);
+  }
+  return n;
+}
+function analyserMorceau(morceau) {
+  const W = morceau.colsParMesure;
+  const { evenements: bruts, erreur, avertissements } = parseTab(morceau.tab);
+  const anomalies = [];
+  const pas = W + 1;
+  const versMusical = (col) => Math.floor(col / pas) * W + col % pas;
+  const evenements = bruts.map((ev) => {
+    const pos = ev.col % pas;
+    if (pos >= W) anomalies.push(`\xC9v\xE8nement sur une barre de mesure (corde ${ev.string}, colonne ${ev.col}).`);
+    const out = { ...ev, col: versMusical(ev.col), mesure: Math.floor(ev.col / pas) };
+    if (ev.releaseCol != null) out.releaseCol = versMusical(ev.releaseCol);
+    return out;
+  });
+  const nbMesures = compterMesures(morceau.tab);
+  for (const ligne of String(morceau.tab).split(/\r?\n/)) {
+    const m = ligne.match(/^\s*[eBGDAE]\s*(\|.*\|)\s*$/);
+    if (!m) continue;
+    const corps = m[1];
+    for (let i = 0; i < corps.length; i++) {
+      const doitEtreBarre = i % pas === 0;
+      if (corps[i] === "|" !== doitEtreBarre) {
+        anomalies.push(`Mesure de largeur incorrecte : \xAB ${ligne.trim()} \xBB (${W} caract\xE8res attendus par mesure).`);
+        break;
+      }
+    }
+  }
+  return { evenements, nbMesures, colsParMesure: W, erreur, avertissements: avertissements || [], anomalies };
+}
+function bpmEffectif(tempo, pourcent) {
+  const p = Math.max(VITESSE_MIN, Math.min(VITESSE_MAX, Number(pourcent) || VITESSE_MAX));
+  return Math.max(20, Math.round(tempo * p / 100));
+}
+function tempsDeMesure(signature, colsParMesure) {
+  const [num, den] = String(signature || "4/4").split("/").map(Number);
+  if (den === 8 && num % 3 === 0) {
+    return Array.from({ length: num / 3 }, (_, i) => i * 6).filter((c) => c < colsParMesure);
+  }
+  const pasTemps = 16 / (den || 4);
+  return Array.from({ length: num || 4 }, (_, i) => i * pasTemps).filter((c) => c < colsParMesure);
+}
+function extraireSegment(evenements, colsParMesure, debut, fin) {
+  const d = Math.max(0, Math.min(debut, fin)), f = Math.max(debut, fin);
+  const decalage = d * colsParMesure;
+  return evenements.filter((e) => e.mesure >= d && e.mesure <= f).map((e) => {
+    const out = { ...e, col: e.col - decalage, colMorceau: e.col };
+    if (e.releaseCol != null) out.releaseCol = e.releaseCol - decalage;
+    if (e.toCol != null) out.toCol = e.toCol - decalage;
+    return out;
+  });
+}
+function ajouterDecompte(evenements, colsParMesure, temps) {
+  const clics = temps.map((c, i) => ({ type: "mute", string: 4, col: c, decompte: i + 1 }));
+  const decales = evenements.map((e) => {
+    const out = { ...e, col: e.col + colsParMesure };
+    if (e.releaseCol != null) out.releaseCol = e.releaseCol + colsParMesure;
+    if (e.toCol != null) out.toCol = e.toCol + colsParMesure;
+    return out;
+  });
+  return [...clics, ...decales];
+}
+function preparerLecture(analyse, opts) {
+  const { tempo, signature, pourcent = 100, decompte = false } = opts;
+  const W = analyse.colsParMesure;
+  const dernier = Math.max(0, analyse.nbMesures - 1);
+  const debut = Math.max(0, Math.min(dernier, opts.debut ?? 0));
+  const fin = Math.max(debut, Math.min(dernier, opts.fin ?? dernier));
+  let evenements = extraireSegment(analyse.evenements, W, debut, fin);
+  let colonnes = (fin - debut + 1) * W;
+  if (decompte) {
+    evenements = ajouterDecompte(evenements, W, tempsDeMesure(signature, W));
+    colonnes += W;
+  }
+  const bpm = bpmEffectif(tempo, pourcent);
+  return { evenements, bpm, colonnes, duree: dureeColonnes(colonnes, bpm), debut, fin };
+}
+function filtrerMorceaux(liste2, { niveau = "tous", type = "tous" } = {}) {
+  return liste2.filter((m) => (niveau === "tous" || m.niveau === niveau) && (type === "tous" || m.type === type));
+}
+function texteEvenement(ev) {
+  switch (ev.type) {
+    case "mute":
+      return "x";
+    case "note":
+      return String(ev.fret);
+    case "hammer":
+      return `${ev.fromFret}h${ev.toFret}`;
+    case "pull":
+      return `${ev.fromFret}p${ev.toFret}`;
+    case "slide_up":
+      return `${ev.fromFret}/${ev.toFret}`;
+    case "slide_down":
+      return `${ev.fromFret}\\${ev.toFret}`;
+    case "bend":
+      return `${ev.fromFret}b${ev.toFret}${ev.releaseFret != null ? "r" + ev.releaseFret : ""}`;
+    default:
+      return "?";
+  }
+}
+var NIVEAUX, TYPES, VITESSE_MIN, VITESSE_MAX, dureeColonnes;
+var init_morceaux = __esm({
+  "src/morceaux/morceaux.js"() {
+    init_tabParser();
+    init_tabSon();
+    NIVEAUX = { debutant: "D\xE9butant", intermediaire: "Interm\xE9diaire" };
+    TYPES = { melodie: "M\xE9lodie", riff: "Riff", accords: "Accords" };
+    VITESSE_MIN = 40;
+    VITESSE_MAX = 100;
+    dureeColonnes = (nbCols, bpm) => nbCols * (60 / bpm) / 4;
+  }
+});
+
+// src/screens/toolbox/Morceaux.jsx
+var Morceaux_exports = {};
+__export(Morceaux_exports, {
+  Morceaux: () => Morceaux
+});
+import { useState as useState18, useRef as useRef13, useEffect as useEffect15, useCallback as useCallback8, useMemo as useMemo9, useId as useId2 } from "react";
+import { jsx as jsx24, jsxs as jsxs21 } from "react/jsx-runtime";
+function lireFiltres() {
+  try {
+    const f = JSON.parse(localStorage.getItem(STOCKAGE_FILTRES) || "null");
+    if (f && (f.niveau === "tous" || f.niveau in NIVEAUX) && (f.type === "tous" || f.type in TYPES)) return f;
+  } catch {
+  }
+  return { niveau: "tous", type: "tous" };
+}
+function Puce({ actif, onClick, children, C }) {
+  return /* @__PURE__ */ jsx24("button", { type: "button", onClick, "aria-pressed": actif, className: "gr-focus", style: {
+    minHeight: TAP.min,
+    padding: "0 14px",
+    borderRadius: R.pill,
+    cursor: "pointer",
+    fontFamily: FONTS.ui,
+    border: `1.5px solid ${actif ? C.primary : C.border}`,
+    background: actif ? C.primaryL : C.surface,
+    color: actif ? C.primaryD : C.text2,
+    fontWeight: 700,
+    fontSize: T.small,
+    flexShrink: 0
+  }, children });
+}
+function Etiquette({ children, C, teinte }) {
+  const t = teinte === "vert" ? { bg: C.greenL, fg: C.greenD } : teinte === "violet" ? { bg: C.purpleL, fg: C.purpleD } : { bg: C.surface2, fg: C.text2 };
+  return /* @__PURE__ */ jsx24("span", { style: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 4,
+    padding: "3px 8px",
+    borderRadius: R.pill,
+    background: t.bg,
+    color: t.fg,
+    fontSize: T.micro,
+    fontWeight: 700,
+    lineHeight: 1.3
+  }, children });
+}
+function ListeMorceaux({ onOuvrir, dernierOuvert, C }) {
+  const [filtres, setFiltresBruts] = useState18(lireFiltres);
+  const setFiltre = (cle2, valeur) => {
+    const f = { ...filtres, [cle2]: valeur };
+    setFiltresBruts(f);
+    try {
+      localStorage.setItem(STOCKAGE_FILTRES, JSON.stringify(f));
+    } catch {
+    }
+  };
+  const liste2 = filtrerMorceaux(MORCEAUX, filtres);
+  useEffect15(() => {
+    if (dernierOuvert) document.getElementById(`morceau-${dernierOuvert}`)?.focus({ preventScroll: false });
+  }, [dernierOuvert]);
+  const groupe = (cle2, label, options) => /* @__PURE__ */ jsx24("div", { role: "group", "aria-label": label, style: { display: "flex", gap: 6, overflowX: "auto", paddingBottom: 2, WebkitOverflowScrolling: "touch" }, children: [["tous", "Tous"], ...Object.entries(options)].map(([v, l]) => /* @__PURE__ */ jsx24(Puce, { actif: filtres[cle2] === v, onClick: () => setFiltre(cle2, v), C, children: l }, v)) });
+  return /* @__PURE__ */ jsxs21("div", { children: [
+    /* @__PURE__ */ jsx24("p", { style: { margin: "0 0 12px", fontSize: T.small, color: C.text2, lineHeight: 1.45 }, children: "Des airs du domaine public et des riffs originaux, \xE0 \xE9couter puis jouer \xE0 ton rythme." }),
+    /* @__PURE__ */ jsxs21("div", { style: { display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 }, children: [
+      groupe("niveau", "Filtrer par niveau", NIVEAUX),
+      groupe("type", "Filtrer par type", TYPES)
+    ] }),
+    /* @__PURE__ */ jsxs21("div", { role: "status", style: { fontSize: T.micro, color: C.text3, fontWeight: 700, marginBottom: 8 }, children: [
+      liste2.length,
+      " morceau",
+      liste2.length > 1 ? "x" : ""
+    ] }),
+    liste2.length === 0 ? /* @__PURE__ */ jsx24("div", { style: { padding: 16, borderRadius: R.md, background: C.surface2, color: C.text2, fontSize: T.small }, children: "Aucun morceau ne correspond \xE0 ces filtres." }) : /* @__PURE__ */ jsx24("ul", { style: { listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 8 }, children: liste2.map((m) => /* @__PURE__ */ jsx24("li", { children: /* @__PURE__ */ jsxs21("button", { type: "button", id: `morceau-${m.id}`, onClick: () => onOuvrir(m.id), className: "gr-focus", style: {
+      width: "100%",
+      textAlign: "left",
+      cursor: "pointer",
+      fontFamily: FONTS.ui,
+      padding: "12px 14px",
+      minHeight: 64,
+      borderRadius: R.lg,
+      border: `1.5px solid ${C.border}`,
+      background: C.surface,
+      color: C.text,
+      display: "flex",
+      alignItems: "center",
+      gap: 12
+    }, children: [
+      /* @__PURE__ */ jsx24("span", { "aria-hidden": "true", style: {
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        flexShrink: 0,
+        background: C.primaryL,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center"
+      }, children: /* @__PURE__ */ jsx24(Ti, { name: m.type === "accords" ? "stack-2" : m.type === "riff" ? "bolt" : "music", size: 20, color: C.primary }) }),
+      /* @__PURE__ */ jsxs21("span", { style: { flex: 1, minWidth: 0 }, children: [
+        /* @__PURE__ */ jsx24("span", { style: { display: "block", fontSize: T.body, fontWeight: 800, lineHeight: 1.25 }, children: m.titre }),
+        /* @__PURE__ */ jsx24("span", { style: { display: "block", fontSize: T.micro, color: C.text3, marginTop: 2 }, children: m.auteur }),
+        /* @__PURE__ */ jsxs21("span", { style: { display: "flex", flexWrap: "wrap", gap: 4, marginTop: 6 }, children: [
+          /* @__PURE__ */ jsx24(Etiquette, { C, teinte: m.niveau === "debutant" ? "vert" : "violet", children: NIVEAUX[m.niveau] }),
+          /* @__PURE__ */ jsx24(Etiquette, { C, children: TYPES[m.type] }),
+          /* @__PURE__ */ jsxs21(Etiquette, { C, children: [
+            m.tempo,
+            " BPM"
+          ] })
+        ] })
+      ] }),
+      /* @__PURE__ */ jsx24(Ti, { name: "chevron-right", size: 18, color: C.text3 })
+    ] }) }, m.id)) })
+  ] });
+}
+function TabLecture({ morceau, analyse, colCourante, debut, fin, C }) {
+  const scrollRef = useRef13(null);
+  const W = analyse.colsParMesure;
+  const largeurMesure = W * LARGEUR_COL;
+  const largeur = analyse.nbMesures * largeurMesure;
+  const hauteur = HAUT_ENTETE2 + HAUT_CORDE * 6;
+  const passageEntier = debut === 0 && fin === analyse.nbMesures - 1;
+  const temps = tempsDeMesure(morceau.mesure, W);
+  const pasTemps = temps.length > 1 ? temps[1] - temps[0] : 4;
+  const cible = colCourante ?? debut * W;
+  useEffect15(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const x = cible * LARGEUR_COL;
+    const horsVue = x < el.scrollLeft + 8 || x + LARGEUR_COL > el.scrollLeft + el.clientWidth - 8;
+    if (colCourante != null || horsVue) {
+      el.scrollTo({ left: Math.max(0, x - el.clientWidth * 0.3), behavior: mouvementReduit() ? "auto" : "smooth" });
+    }
+  }, [cible, colCourante]);
+  return /* @__PURE__ */ jsxs21("div", { style: { display: "flex", border: `1.5px solid ${C.border}`, borderRadius: R.md, background: C.surface, overflow: "hidden" }, children: [
+    /* @__PURE__ */ jsx24("div", { "aria-hidden": "true", style: { flexShrink: 0, width: 22, background: C.surface2, borderRight: `1.5px solid ${C.border}`, paddingTop: HAUT_ENTETE2 }, children: CORDES_LABELS2.map((l, i) => /* @__PURE__ */ jsx24("div", { style: { height: HAUT_CORDE, display: "flex", alignItems: "center", justifyContent: "center", fontSize: T.micro, fontWeight: 800, color: C.text3 }, children: l }, l + i)) }),
+    /* @__PURE__ */ jsx24(
+      "div",
+      {
+        ref: scrollRef,
+        tabIndex: 0,
+        className: "gr-focus",
+        role: "region",
+        "aria-label": `Tablature, ${analyse.nbMesures} mesures (d\xE9filement horizontal)`,
+        style: { overflowX: "auto", WebkitOverflowScrolling: "touch", flex: 1 },
+        children: /* @__PURE__ */ jsxs21("div", { "aria-hidden": "true", style: { position: "relative", width: largeur + 4, height: hauteur }, children: [
+          !passageEntier && /* @__PURE__ */ jsx24("div", { style: { position: "absolute", top: 0, bottom: 0, left: debut * largeurMesure, width: (fin - debut + 1) * largeurMesure, background: C.primaryL } }),
+          Array.from({ length: Math.ceil(analyse.nbMesures * W / pasTemps) }, (_, t) => t % 2 === 1 ? /* @__PURE__ */ jsx24("div", { style: { position: "absolute", top: HAUT_ENTETE2, bottom: 0, left: t * pasTemps * LARGEUR_COL, width: pasTemps * LARGEUR_COL, background: C.surface2, opacity: 0.35 } }, "t" + t) : null),
+          colCourante != null && /* @__PURE__ */ jsx24("div", { style: { position: "absolute", top: HAUT_ENTETE2, bottom: 0, left: colCourante * LARGEUR_COL - 2, width: LARGEUR_COL + 4, borderRadius: 4, background: C.primary, opacity: 0.28 } }),
+          CORDES_LABELS2.map((l, i) => /* @__PURE__ */ jsx24("div", { style: { position: "absolute", left: 0, right: 0, top: HAUT_ENTETE2 + i * HAUT_CORDE + HAUT_CORDE / 2, height: 1.5, background: C.border } }, "c" + i)),
+          Array.from({ length: analyse.nbMesures }, (_, m) => /* @__PURE__ */ jsxs21("div", { children: [
+            /* @__PURE__ */ jsxs21("div", { style: { position: "absolute", top: 3, left: m * largeurMesure + 4, fontSize: T.micro, fontWeight: 700, color: C.text3, lineHeight: "14px", whiteSpace: "nowrap" }, children: [
+              m + 1,
+              morceau.grille?.[m] && /* @__PURE__ */ jsx24("span", { style: { marginLeft: 6, color: C.primaryInk, fontWeight: 800 }, children: nomAccord2(morceau.grille[m]) })
+            ] }),
+            /* @__PURE__ */ jsx24("div", { style: { position: "absolute", top: HAUT_ENTETE2 + HAUT_CORDE / 2, height: HAUT_CORDE * 5 + 1.5, left: (m + 1) * largeurMesure - 1, width: 2, background: C.text3 } })
+          ] }, "m" + m)),
+          analyse.evenements.map((ev, i) => {
+            const actif = colCourante === ev.col;
+            return /* @__PURE__ */ jsx24("span", { style: {
+              position: "absolute",
+              left: ev.col * LARGEUR_COL,
+              top: HAUT_ENTETE2 + (ev.string - 1) * HAUT_CORDE + HAUT_CORDE / 2 - 9,
+              minWidth: LARGEUR_COL,
+              height: 18,
+              padding: "0 1px",
+              borderRadius: 4,
+              textAlign: "center",
+              fontFamily: "monospace",
+              fontWeight: 800,
+              fontSize: 13,
+              lineHeight: "18px",
+              background: actif ? C.primaryBtn : C.surface,
+              color: actif ? C.onPrimaryBtn : C.text
+            }, children: texteEvenement(ev) }, i);
+          })
+        ] })
+      }
+    )
+  ] });
+}
+function Accords({ morceau, mesureCourante, C }) {
+  return /* @__PURE__ */ jsxs21("section", { "aria-labelledby": "morceau-accords", style: { marginTop: 16 }, children: [
+    /* @__PURE__ */ jsx24("h3", { id: "morceau-accords", style: { margin: "0 0 8px", fontSize: T.small, fontWeight: 800, color: C.text, fontFamily: FONTS.title }, children: "Accords" }),
+    /* @__PURE__ */ jsx24("div", { style: { display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch" }, children: morceau.accords.map((s) => {
+      const f = FORMES_ACCORDS[s];
+      return f ? /* @__PURE__ */ jsx24("div", { style: { flexShrink: 0, width: 128 }, children: /* @__PURE__ */ jsx24(ChordDiagram, { data: { name: f.nom, frets: f.frets, fingers: f.fingers, startFret: 1, barre: f.barre }, caption: `${f.nom} (${s})` }) }, s) : null;
+    }) }),
+    morceau.grille && /* @__PURE__ */ jsx24("ol", { "aria-label": "Grille, un accord par mesure", style: { listStyle: "none", margin: "10px 0 0", padding: 0, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 4 }, children: morceau.grille.map((s, i) => {
+      const actif = mesureCourante === i;
+      return /* @__PURE__ */ jsxs21("li", { "aria-current": actif ? "true" : void 0, style: {
+        padding: "8px 4px",
+        borderRadius: R.sm,
+        textAlign: "center",
+        fontWeight: 800,
+        fontSize: T.small,
+        border: `1.5px solid ${actif ? C.primary : C.border}`,
+        background: actif ? C.primaryL : C.surface,
+        color: actif ? C.primaryD : C.text
+      }, children: [
+        /* @__PURE__ */ jsx24("span", { style: { fontSize: T.micro, fontWeight: 600, color: C.text3, marginRight: 4 }, children: i + 1 }),
+        nomAccord2(s)
+      ] }, i);
+    }) })
+  ] });
+}
+function LecteurMorceau({ morceau, onRetour, C }) {
+  const analyse = useMemo9(() => analyserMorceau(morceau), [morceau]);
+  const derniere = analyse.nbMesures - 1;
+  const idVitesse = useId2();
+  const [vitesse, setVitesse] = useState18(100);
+  const [debut, setDebut] = useState18(0);
+  const [fin, setFin] = useState18(derniere);
+  const [boucle, setBoucle] = useState18(false);
+  const [decompte, setDecompte] = useState18(true);
+  const [jouant, setJouant] = useState18(false);
+  const [colCourante, setColCourante] = useState18(null);
+  const [clic, setClic] = useState18(null);
+  const reglagesRef = useRef13({ vitesse, debut, fin, boucle, decompte });
+  const majReglages = (champs) => {
+    reglagesRef.current = { ...reglagesRef.current, ...champs };
+  };
+  const enLectureRef = useRef13(false);
+  const timerBoucleRef = useRef13(null);
+  const titreRef = useRef13(null);
+  useEffect15(() => {
+    titreRef.current?.focus();
+  }, []);
+  const arreter = useCallback8(() => {
+    enLectureRef.current = false;
+    clearTimeout(timerBoucleRef.current);
+    timerBoucleRef.current = null;
+    stopAll();
+    setJouant(false);
+    setColCourante(null);
+    setClic(null);
+  }, []);
+  const lancerRef = useRef13(null);
+  const lancer = useCallback8(async (premierPassage) => {
+    const r = reglagesRef.current;
+    const plan = preparerLecture(analyse, {
+      tempo: morceau.tempo,
+      signature: morceau.mesure,
+      pourcent: r.vitesse,
+      debut: r.debut,
+      fin: r.fin,
+      decompte: premierPassage && r.decompte
+    });
+    if (!plan.evenements.length) return;
+    enLectureRef.current = true;
+    setJouant(true);
+    clearTimeout(timerBoucleRef.current);
+    timerBoucleRef.current = null;
+    await playTab(plan.evenements, {
+      bpm: plan.bpm,
+      onEvent: (ev) => {
+        if (!enLectureRef.current) return;
+        if (ev.decompte) {
+          setClic(ev.decompte);
+          return;
+        }
+        setClic(null);
+        setColCourante(ev.colMorceau);
+      },
+      onDone: () => {
+        if (!enLectureRef.current) return;
+        if (!reglagesRef.current.boucle) arreter();
+      }
+    });
+    if (!enLectureRef.current) return;
+    if (r.boucle) {
+      timerBoucleRef.current = setTimeout(() => {
+        timerBoucleRef.current = null;
+        if (!enLectureRef.current) return;
+        if (reglagesRef.current.boucle) lancerRef.current?.(false);
+        else arreter();
+      }, plan.duree * 1e3);
+    }
+  }, [analyse, morceau, arreter]);
+  useEffect15(() => {
+    lancerRef.current = lancer;
+  }, [lancer]);
+  useEffect15(() => () => {
+    enLectureRef.current = false;
+    clearTimeout(timerBoucleRef.current);
+    stopAll();
+  }, []);
+  const basculerLecture = () => {
+    if (jouant) {
+      arreter();
+      return;
+    }
+    unlockAudio();
+    lancer(true);
+  };
+  const changerVitesse = (v) => {
+    setVitesse(v);
+    majReglages({ vitesse: v });
+  };
+  const changerDebut = (d) => {
+    const f = Math.max(d, fin);
+    setDebut(d);
+    setFin(f);
+    majReglages({ debut: d, fin: f });
+  };
+  const changerFin = (f) => {
+    const d = Math.min(debut, f);
+    setDebut(d);
+    setFin(f);
+    majReglages({ debut: d, fin: f });
+  };
+  const toutLeMorceau = () => {
+    setDebut(0);
+    setFin(derniere);
+    majReglages({ debut: 0, fin: derniere });
+  };
+  const basculerBoucle = () => {
+    const b = !boucle;
+    setBoucle(b);
+    majReglages({ boucle: b });
+  };
+  const basculerDecompte = () => {
+    const d = !decompte;
+    setDecompte(d);
+    majReglages({ decompte: d });
+  };
+  const bpm = bpmEffectif(morceau.tempo, vitesse);
+  const mesureCourante = colCourante != null ? Math.floor(colCourante / analyse.colsParMesure) : null;
+  const passageEntier = debut === 0 && fin === derniere;
+  const optionsMesures = Array.from({ length: analyse.nbMesures }, (_, i) => /* @__PURE__ */ jsx24("option", { value: i, children: i + 1 }, i));
+  const styleSelect = {
+    minHeight: TAP.min,
+    minWidth: 64,
+    padding: "0 10px",
+    borderRadius: R.sm,
+    border: `1.5px solid ${C.borderStrong}`,
+    background: C.surface,
+    color: C.text,
+    fontFamily: FONTS.ui,
+    fontSize: T.body,
+    fontWeight: 700
+  };
+  const styleBascule = (actif) => ({
+    minHeight: TAP.min,
+    padding: "0 12px",
+    borderRadius: R.md,
+    cursor: "pointer",
+    fontFamily: FONTS.ui,
+    border: `1.5px solid ${actif ? C.primary : C.border}`,
+    background: actif ? C.primaryL : C.surface,
+    color: actif ? C.primaryD : C.text2,
+    fontWeight: 800,
+    fontSize: T.small,
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6
+  });
+  const statut = jouant ? clic ? `D\xE9compte : ${clic}` : `Lecture ${passageEntier ? "du morceau" : `des mesures ${debut + 1} \xE0 ${fin + 1}`} \xE0 ${vitesse} %${boucle ? ", en boucle" : ""}.` : "";
+  return /* @__PURE__ */ jsxs21("div", { children: [
+    /* @__PURE__ */ jsxs21("div", { style: { display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 10 }, children: [
+      /* @__PURE__ */ jsx24(BackButton, { onClick: onRetour, label: "Retour \xE0 la liste des morceaux" }),
+      /* @__PURE__ */ jsxs21("div", { style: { flex: 1, minWidth: 0 }, children: [
+        /* @__PURE__ */ jsx24("h2", { ref: titreRef, tabIndex: -1, style: { margin: 0, fontSize: T.h3, fontWeight: 800, color: C.text, fontFamily: FONTS.title, lineHeight: 1.2, outline: "none" }, children: morceau.titre }),
+        /* @__PURE__ */ jsx24("div", { style: { fontSize: T.micro, color: C.text3, marginTop: 2 }, children: morceau.auteur })
+      ] })
+    ] }),
+    /* @__PURE__ */ jsx24("p", { style: { margin: "0 0 8px", fontSize: T.small, color: C.text2, lineHeight: 1.45 }, children: morceau.description }),
+    /* @__PURE__ */ jsxs21("div", { style: { display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 14 }, children: [
+      /* @__PURE__ */ jsx24(Etiquette, { C, teinte: morceau.niveau === "debutant" ? "vert" : "violet", children: NIVEAUX[morceau.niveau] }),
+      /* @__PURE__ */ jsx24(Etiquette, { C, children: TYPES[morceau.type] }),
+      /* @__PURE__ */ jsxs21(Etiquette, { C, children: [
+        morceau.tempo,
+        " BPM"
+      ] }),
+      /* @__PURE__ */ jsx24(Etiquette, { C, children: morceau.tonalite }),
+      /* @__PURE__ */ jsx24(Etiquette, { C, children: morceau.mesure })
+    ] }),
+    /* @__PURE__ */ jsx24(TabLecture, { morceau, analyse, colCourante, debut, fin, C }),
+    /* @__PURE__ */ jsx24("div", { "aria-hidden": "true", style: { height: 28, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginTop: 6 }, children: clic && Array.from({ length: clic }, (_, i) => /* @__PURE__ */ jsx24("span", { style: { fontSize: 20, fontWeight: 800, color: i === clic - 1 ? C.primary : C.text3 }, children: i + 1 }, i)) }),
+    /* @__PURE__ */ jsxs21("button", { type: "button", onClick: basculerLecture, className: "gr-focus", style: {
+      width: "100%",
+      minHeight: TAP.comfy,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+      borderRadius: R.lg,
+      border: "none",
+      background: jouant ? C.surface2 : C.primaryBtn,
+      color: jouant ? C.text : C.onPrimaryBtn,
+      fontWeight: 800,
+      fontSize: T.body,
+      cursor: "pointer",
+      fontFamily: FONTS.ui
+    }, children: [
+      /* @__PURE__ */ jsx24(Ti, { name: jouant ? "player-stop" : "player-play", size: 18, color: jouant ? C.text : C.onPrimaryBtn }),
+      jouant ? "Arr\xEAter" : "\xC9couter"
+    ] }),
+    /* @__PURE__ */ jsx24("div", { role: "status", "aria-live": "polite", style: { minHeight: 20, fontSize: T.micro, color: C.text2, marginTop: 4, textAlign: "center" }, children: statut }),
+    /* @__PURE__ */ jsxs21("div", { style: { marginTop: 10, padding: "12px 14px", borderRadius: R.md, background: C.surface, border: `1.5px solid ${C.border}` }, children: [
+      /* @__PURE__ */ jsxs21("label", { htmlFor: idVitesse, style: { display: "flex", justifyContent: "space-between", fontSize: T.small, fontWeight: 800, color: C.text }, children: [
+        /* @__PURE__ */ jsx24("span", { children: "Vitesse" }),
+        /* @__PURE__ */ jsxs21("span", { style: { color: C.primaryInk }, children: [
+          vitesse,
+          " % \xB7 ",
+          bpm,
+          " BPM"
+        ] })
+      ] }),
+      /* @__PURE__ */ jsx24(
+        "input",
+        {
+          id: idVitesse,
+          type: "range",
+          min: VITESSE_MIN,
+          max: VITESSE_MAX,
+          step: 5,
+          value: vitesse,
+          onChange: (e) => changerVitesse(Number(e.target.value)),
+          "aria-valuetext": `${vitesse} % du tempo, ${bpm} battements par minute`,
+          className: "gr-focus",
+          style: { width: "100%", height: TAP.min, accentColor: C.primary, margin: 0 }
+        }
+      ),
+      /* @__PURE__ */ jsx24("div", { style: { display: "flex", gap: 6, flexWrap: "wrap" }, children: [50, 75, 100].map((v) => /* @__PURE__ */ jsxs21(Puce, { actif: vitesse === v, onClick: () => changerVitesse(v), C, children: [
+        v,
+        " %"
+      ] }, v)) }),
+      jouant && /* @__PURE__ */ jsx24("div", { style: { fontSize: T.micro, color: C.text3, marginTop: 6 }, children: "Appliqu\xE9e au prochain passage." })
+    ] }),
+    /* @__PURE__ */ jsxs21("div", { style: { marginTop: 10, padding: "12px 14px", borderRadius: R.md, background: C.surface, border: `1.5px solid ${C.border}` }, children: [
+      /* @__PURE__ */ jsx24("div", { style: { fontSize: T.small, fontWeight: 800, color: C.text, marginBottom: 8 }, children: "Passage \xE0 travailler" }),
+      /* @__PURE__ */ jsxs21("div", { role: "group", "aria-label": "Passage, de la mesure A \xE0 la mesure B", style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }, children: [
+        /* @__PURE__ */ jsx24("span", { "aria-hidden": "true", style: { fontSize: T.small, color: C.text2 }, children: "Mesure" }),
+        /* @__PURE__ */ jsx24(
+          "select",
+          {
+            value: debut,
+            onChange: (e) => changerDebut(Number(e.target.value)),
+            className: "gr-focus",
+            style: styleSelect,
+            "aria-label": "Mesure de d\xE9but du passage (A)",
+            children: optionsMesures
+          }
+        ),
+        /* @__PURE__ */ jsx24("span", { "aria-hidden": "true", style: { fontSize: T.small, color: C.text2 }, children: "\xE0" }),
+        /* @__PURE__ */ jsx24(
+          "select",
+          {
+            value: fin,
+            onChange: (e) => changerFin(Number(e.target.value)),
+            className: "gr-focus",
+            style: styleSelect,
+            "aria-label": "Mesure de fin du passage (B)",
+            children: optionsMesures
+          }
+        ),
+        !passageEntier && /* @__PURE__ */ jsx24("button", { type: "button", onClick: toutLeMorceau, className: "gr-focus", style: { ...styleBascule(false), fontWeight: 700 }, children: "Tout" })
+      ] }),
+      /* @__PURE__ */ jsxs21("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }, children: [
+        /* @__PURE__ */ jsxs21("button", { type: "button", onClick: basculerBoucle, "aria-pressed": boucle, className: "gr-focus", style: styleBascule(boucle), children: [
+          /* @__PURE__ */ jsx24(Ti, { name: "refresh", size: 16, color: boucle ? C.primary : C.text2 }),
+          " En boucle"
+        ] }),
+        /* @__PURE__ */ jsxs21("button", { type: "button", onClick: basculerDecompte, "aria-pressed": decompte, className: "gr-focus", style: styleBascule(decompte), children: [
+          /* @__PURE__ */ jsx24(Ti, { name: "metronome", size: 16, color: decompte ? C.primary : C.text2 }),
+          " D\xE9compte"
+        ] })
+      ] })
+    ] }),
+    morceau.accords && /* @__PURE__ */ jsx24(Accords, { morceau, mesureCourante, C }),
+    /* @__PURE__ */ jsxs21("details", { style: { marginTop: 16 }, children: [
+      /* @__PURE__ */ jsx24("summary", { className: "gr-focus", style: { cursor: "pointer", minHeight: TAP.min, display: "flex", alignItems: "center", fontSize: T.small, fontWeight: 800, color: C.text }, children: "Tab au format texte" }),
+      /* @__PURE__ */ jsx24("pre", { style: { margin: "6px 0 0", padding: 10, borderRadius: R.sm, background: C.surface2, color: C.text, fontSize: 12, lineHeight: 1.4, overflowX: "auto" }, children: morceau.tab.trim() })
+    ] }),
+    /* @__PURE__ */ jsxs21("p", { style: { margin: "14px 0 0", fontSize: T.micro, color: C.text3, lineHeight: 1.45 }, children: [
+      /* @__PURE__ */ jsx24(Ti, { name: "info-circle", size: 13, color: C.text3, style: { verticalAlign: "-2px", marginRight: 4 } }),
+      morceau.licence
+    ] })
+  ] });
+}
+function Morceaux() {
+  const C = useC();
+  const [ouvert, setOuvert] = useState18(null);
+  const [dernierOuvert, setDernierOuvert] = useState18(null);
+  const morceau = ouvert ? morceauParId(ouvert) : null;
+  const ouvrir = (id) => {
+    setOuvert(id);
+    window.scrollTo?.({ top: 0, behavior: mouvementReduit() ? "auto" : "smooth" });
+  };
+  const retour = () => {
+    setDernierOuvert(ouvert);
+    setOuvert(null);
+  };
+  return morceau ? /* @__PURE__ */ jsx24(LecteurMorceau, { morceau, onRetour: retour, C }, morceau.id) : /* @__PURE__ */ jsx24(ListeMorceaux, { onOuvrir: ouvrir, dernierOuvert, C });
+}
+var CORDES_LABELS2, LARGEUR_COL, HAUT_CORDE, HAUT_ENTETE2, STOCKAGE_FILTRES, mouvementReduit;
+var init_Morceaux = __esm({
+  "src/screens/toolbox/Morceaux.jsx"() {
+    init_tokens();
+    init_ThemeContext();
+    init_Ti();
+    init_ui();
+    init_diagrams();
+    init_audioEngine();
+    init_catalogue();
+    init_accords();
+    init_morceaux();
+    CORDES_LABELS2 = ["e", "B", "G", "D", "A", "E"];
+    LARGEUR_COL = 14;
+    HAUT_CORDE = 26;
+    HAUT_ENTETE2 = 22;
+    STOCKAGE_FILTRES = "groply:morceaux-filtres";
+    mouvementReduit = () => !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   }
 });
 
@@ -6403,20 +9000,20 @@ var FretboardExplorer_exports = {};
 __export(FretboardExplorer_exports, {
   FretboardExplorer: () => FretboardExplorer
 });
-import { useState as useState18, useMemo as useMemo8, useRef as useRef13, useEffect as useEffect15 } from "react";
-import { jsx as jsx24, jsxs as jsxs21 } from "react/jsx-runtime";
+import { useState as useState19, useMemo as useMemo10, useRef as useRef14, useEffect as useEffect16 } from "react";
+import { jsx as jsx25, jsxs as jsxs22 } from "react/jsx-runtime";
 function FretboardExplorer({ onBack, embedded = false }) {
   const C = useC();
-  const [tab, setTab] = useState18("scale");
-  const [root, setRoot] = useState18("A");
-  const [scaleKey, setScaleKey] = useState18("pentatonic_minor");
-  const [chordKey, setChordKey] = useState18("min7");
-  const [displayMode, setDisplayMode] = useState18("notes");
-  const [showRootPicker, setShowRootPicker] = useState18(false);
-  const [isPlaying, setIsPlaying] = useState18(false);
-  const [flashNotes, setFlashNotes] = useState18(null);
-  const [arpeggio, setArpeggio] = useState18(true);
-  const shapes = useMemo8(() => {
+  const [tab, setTab] = useState19("scale");
+  const [root, setRoot] = useState19("A");
+  const [scaleKey, setScaleKey] = useState19("pentatonic_minor");
+  const [chordKey, setChordKey] = useState19("min7");
+  const [displayMode, setDisplayMode] = useState19("notes");
+  const [showRootPicker, setShowRootPicker] = useState19(false);
+  const [isPlaying, setIsPlaying] = useState19(false);
+  const [flashNotes, setFlashNotes] = useState19(null);
+  const [arpeggio, setArpeggio] = useState19(true);
+  const shapes = useMemo10(() => {
     if (tab !== "chord") return [];
     return getChordShapes(
       normalizeNote(root),
@@ -6425,7 +9022,7 @@ function FretboardExplorer({ onBack, embedded = false }) {
       CHORD_TYPES[chordKey]?.intervals || null
     );
   }, [tab, root, chordKey]);
-  const finTimerRef = useRef13(null);
+  const finTimerRef = useRef14(null);
   const annulerFin = () => {
     if (finTimerRef.current) {
       clearTimeout(finTimerRef.current);
@@ -6474,14 +9071,14 @@ function FretboardExplorer({ onBack, embedded = false }) {
       setFlashNotes(null);
     }, dureeMs2);
   };
-  useEffect15(() => () => {
+  useEffect16(() => () => {
     annulerFin();
     try {
       stopAll();
     } catch {
     }
   }, []);
-  const activeNotes = useMemo8(() => {
+  const activeNotes = useMemo10(() => {
     if (tab === "scale") return getScaleNotes(root, scaleKey);
     return getChordNotes(root, chordKey);
   }, [tab, root, scaleKey, chordKey]);
@@ -6495,18 +9092,18 @@ function FretboardExplorer({ onBack, embedded = false }) {
     const next = (idx + dir + 12) % 12;
     setRoot(ROOTS[next]);
   };
-  return /* @__PURE__ */ jsxs21("div", { style: embedded ? { display: "flex", flexDirection: "column", background: "transparent" } : { display: "flex", flexDirection: "column", minHeight: "100dvh", background: C.bg }, children: [
-    /* @__PURE__ */ jsxs21("div", { style: embedded ? { padding: "0 0 12px", display: "flex", alignItems: "center", gap: 10 } : { padding: "14px 16px 12px", display: "flex", alignItems: "center", gap: 10, borderBottom: `1px solid ${C.border}`, background: C.surface, position: "sticky", top: 0, zIndex: 10 }, children: [
-      !embedded && /* @__PURE__ */ jsx24("button", { onClick: onBack, style: { background: "none", border: "none", cursor: "pointer", color: C.text2, padding: 0, display: "flex", alignItems: "center" }, children: /* @__PURE__ */ jsx24(Ti, { name: "chevron-left", size: 22 }) }),
-      /* @__PURE__ */ jsxs21("div", { style: { flex: 1 }, children: [
-        !embedded && /* @__PURE__ */ jsx24("div", { style: { fontSize: 16, fontWeight: 700, color: C.text, fontFamily: FONTS.title }, children: "Explorateur du manche" }),
-        /* @__PURE__ */ jsxs21("div", { style: { fontSize: 11, color: C.text3, fontFamily: FONTS.ui }, children: [
+  return /* @__PURE__ */ jsxs22("div", { style: embedded ? { display: "flex", flexDirection: "column", background: "transparent" } : { display: "flex", flexDirection: "column", minHeight: "100dvh", background: C.bg }, children: [
+    /* @__PURE__ */ jsxs22("div", { style: embedded ? { padding: "0 0 12px", display: "flex", alignItems: "center", gap: 10 } : { padding: "14px 16px 12px", display: "flex", alignItems: "center", gap: 10, borderBottom: `1px solid ${C.border}`, background: C.surface, position: "sticky", top: 0, zIndex: 10 }, children: [
+      !embedded && /* @__PURE__ */ jsx25("button", { onClick: onBack, style: { background: "none", border: "none", cursor: "pointer", color: C.text2, padding: 0, display: "flex", alignItems: "center" }, children: /* @__PURE__ */ jsx25(Ti, { name: "chevron-left", size: 22 }) }),
+      /* @__PURE__ */ jsxs22("div", { style: { flex: 1 }, children: [
+        !embedded && /* @__PURE__ */ jsx25("div", { style: { fontSize: 16, fontWeight: 700, color: C.text, fontFamily: FONTS.title }, children: "Explorateur du manche" }),
+        /* @__PURE__ */ jsxs22("div", { style: { fontSize: 11, color: C.text3, fontFamily: FONTS.ui }, children: [
           rootFr,
           " - ",
           activeLabel
         ] })
       ] }),
-      /* @__PURE__ */ jsx24(
+      /* @__PURE__ */ jsx25(
         "button",
         {
           onClick: isPlaying ? handleStop : handlePlay,
@@ -6524,12 +9121,12 @@ function FretboardExplorer({ onBack, embedded = false }) {
             justifyContent: "center",
             boxShadow: "0 2px 8px rgba(232,93,26,0.3)"
           },
-          children: /* @__PURE__ */ jsx24(Ti, { name: isPlaying ? "player-stop-filled" : "volume", size: 16, color: "#fff" })
+          children: /* @__PURE__ */ jsx25(Ti, { name: isPlaying ? "player-stop-filled" : "volume", size: 16, color: "#fff" })
         }
       )
     ] }),
-    /* @__PURE__ */ jsxs21("div", { style: { padding: "14px 16px", display: "flex", flexDirection: "column", gap: 12, overflowY: "auto", paddingBottom: 32 }, children: [
-      /* @__PURE__ */ jsx24("div", { style: { display: "flex", background: C.surface2, borderRadius: R.lg, padding: 3, gap: 2 }, children: [{ key: "scale", label: "Gammes", icon: "music" }, { key: "chord", label: "Accords", icon: "guitar-pick" }].map((t) => /* @__PURE__ */ jsxs21("button", { onClick: () => setTab(t.key), style: {
+    /* @__PURE__ */ jsxs22("div", { style: { padding: "14px 16px", display: "flex", flexDirection: "column", gap: 12, overflowY: "auto", paddingBottom: 32 }, children: [
+      /* @__PURE__ */ jsx25("div", { style: { display: "flex", background: C.surface2, borderRadius: R.lg, padding: 3, gap: 2 }, children: [{ key: "scale", label: "Gammes", icon: "music" }, { key: "chord", label: "Accords", icon: "guitar-pick" }].map((t) => /* @__PURE__ */ jsxs22("button", { onClick: () => setTab(t.key), style: {
         flex: 1,
         padding: "9px 12px",
         borderRadius: R.md,
@@ -6547,16 +9144,16 @@ function FretboardExplorer({ onBack, embedded = false }) {
         fontWeight: tab === t.key ? 600 : 400,
         transition: "all 0.15s"
       }, children: [
-        /* @__PURE__ */ jsx24(Ti, { name: t.icon, size: 14 }),
+        /* @__PURE__ */ jsx25(Ti, { name: t.icon, size: 14 }),
         t.label
       ] }, t.key)) }),
-      /* @__PURE__ */ jsxs21("div", { style: { display: "flex", alignItems: "center", gap: 8 }, children: [
-        /* @__PURE__ */ jsx24("div", { style: { fontSize: 11, fontWeight: 600, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", width: 60 }, children: "Tonique" }),
-        /* @__PURE__ */ jsx24("button", { onClick: () => transposeSemitone(-1), style: { width: 34, height: 34, borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }, children: /* @__PURE__ */ jsx24(Ti, { name: "chevron-left", size: 16, color: C.text2 }) }),
-        /* @__PURE__ */ jsx24("button", { onClick: () => setShowRootPicker(!showRootPicker), style: { flex: 1, height: 34, borderRadius: 10, border: `1.5px solid ${C.primary}`, background: C.primaryL, cursor: "pointer", fontSize: 16, fontWeight: 700, color: C.primaryD, fontFamily: FONTS.ui }, children: rootFr }),
-        /* @__PURE__ */ jsx24("button", { onClick: () => transposeSemitone(1), style: { width: 34, height: 34, borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }, children: /* @__PURE__ */ jsx24(Ti, { name: "chevron-right", size: 16, color: C.text2 }) })
+      /* @__PURE__ */ jsxs22("div", { style: { display: "flex", alignItems: "center", gap: 8 }, children: [
+        /* @__PURE__ */ jsx25("div", { style: { fontSize: 11, fontWeight: 600, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", width: 60 }, children: "Tonique" }),
+        /* @__PURE__ */ jsx25("button", { onClick: () => transposeSemitone(-1), style: { width: 34, height: 34, borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }, children: /* @__PURE__ */ jsx25(Ti, { name: "chevron-left", size: 16, color: C.text2 }) }),
+        /* @__PURE__ */ jsx25("button", { onClick: () => setShowRootPicker(!showRootPicker), style: { flex: 1, height: 34, borderRadius: 10, border: `1.5px solid ${C.primary}`, background: C.primaryL, cursor: "pointer", fontSize: 16, fontWeight: 700, color: C.primaryD, fontFamily: FONTS.ui }, children: rootFr }),
+        /* @__PURE__ */ jsx25("button", { onClick: () => transposeSemitone(1), style: { width: 34, height: 34, borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }, children: /* @__PURE__ */ jsx25(Ti, { name: "chevron-right", size: 16, color: C.text2 }) })
       ] }),
-      showRootPicker && /* @__PURE__ */ jsx24("div", { style: { display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6, background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: 10 }, children: ROOTS.map((r) => /* @__PURE__ */ jsx24("button", { onClick: () => {
+      showRootPicker && /* @__PURE__ */ jsx25("div", { style: { display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6, background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: 10 }, children: ROOTS.map((r) => /* @__PURE__ */ jsx25("button", { onClick: () => {
         setRoot(r);
         setShowRootPicker(false);
       }, style: {
@@ -6570,11 +9167,11 @@ function FretboardExplorer({ onBack, embedded = false }) {
         cursor: "pointer",
         fontFamily: FONTS.ui
       }, children: nomRacine2(r) }, r)) }),
-      /* @__PURE__ */ jsxs21("div", { style: { display: "flex", alignItems: "center", gap: 8 }, children: [
-        /* @__PURE__ */ jsx24("div", { style: { fontSize: 11, fontWeight: 600, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", width: 60 }, children: tab === "scale" ? "Gamme" : "Accord" }),
-        /* @__PURE__ */ jsx24("div", { style: { flex: 1, overflowX: "auto", WebkitOverflowScrolling: "touch" }, children: /* @__PURE__ */ jsx24("div", { style: { display: "flex", gap: 6, paddingBottom: 4 }, children: (tab === "scale" ? SCALE_OPTIONS : CHORD_OPTIONS).map((opt) => {
+      /* @__PURE__ */ jsxs22("div", { style: { display: "flex", alignItems: "center", gap: 8 }, children: [
+        /* @__PURE__ */ jsx25("div", { style: { fontSize: 11, fontWeight: 600, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", width: 60 }, children: tab === "scale" ? "Gamme" : "Accord" }),
+        /* @__PURE__ */ jsx25("div", { style: { flex: 1, overflowX: "auto", WebkitOverflowScrolling: "touch" }, children: /* @__PURE__ */ jsx25("div", { style: { display: "flex", gap: 6, paddingBottom: 4 }, children: (tab === "scale" ? SCALE_OPTIONS : CHORD_OPTIONS).map((opt) => {
           const active = tab === "scale" ? scaleKey === opt.key : chordKey === opt.key;
-          return /* @__PURE__ */ jsx24("button", { onClick: () => tab === "scale" ? setScaleKey(opt.key) : setChordKey(opt.key), style: {
+          return /* @__PURE__ */ jsx25("button", { onClick: () => tab === "scale" ? setScaleKey(opt.key) : setChordKey(opt.key), style: {
             flexShrink: 0,
             padding: "7px 12px",
             borderRadius: R.pill,
@@ -6589,7 +9186,7 @@ function FretboardExplorer({ onBack, embedded = false }) {
           }, children: opt.label }, opt.key);
         }) }) })
       ] }),
-      /* @__PURE__ */ jsx24("div", { style: { display: "flex", gap: 6 }, children: [{ key: "notes", label: "Notes" }, { key: "intervals", label: "Intervalles" }, { key: "degrees", label: "Degres" }].map((m) => /* @__PURE__ */ jsx24("button", { onClick: () => setDisplayMode(m.key), style: {
+      /* @__PURE__ */ jsx25("div", { style: { display: "flex", gap: 6 }, children: [{ key: "notes", label: "Notes" }, { key: "intervals", label: "Intervalles" }, { key: "degrees", label: "Degres" }].map((m) => /* @__PURE__ */ jsx25("button", { onClick: () => setDisplayMode(m.key), style: {
         flex: 1,
         padding: "7px 0",
         borderRadius: 8,
@@ -6601,7 +9198,7 @@ function FretboardExplorer({ onBack, embedded = false }) {
         cursor: "pointer",
         fontFamily: FONTS.ui
       }, children: m.label }, m.key)) }),
-      /* @__PURE__ */ jsx24("div", { style: { background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, overflow: "hidden" }, children: /* @__PURE__ */ jsx24("div", { style: { padding: "10px 8px 6px", overflowX: "auto", WebkitOverflowScrolling: "touch" }, children: /* @__PURE__ */ jsx24(
+      /* @__PURE__ */ jsx25("div", { style: { background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, overflow: "hidden" }, children: /* @__PURE__ */ jsx25("div", { style: { padding: "10px 8px 6px", overflowX: "auto", WebkitOverflowScrolling: "touch" }, children: /* @__PURE__ */ jsx25(
         Fretboard,
         {
           mode: tab === "scale" ? "scale" : "chord",
@@ -6614,10 +9211,10 @@ function FretboardExplorer({ onBack, embedded = false }) {
           flashNotes
         }
       ) }) }),
-      tab === "chord" && /* @__PURE__ */ jsx24("div", { style: { display: "flex", gap: 6, marginBottom: 12 }, children: [
+      tab === "chord" && /* @__PURE__ */ jsx25("div", { style: { display: "flex", gap: 6, marginBottom: 12 }, children: [
         { id: true, label: "Arp\xE9g\xE9", hint: "note \xE0 note" },
         { id: false, label: "Plaqu\xE9", hint: "d'un bloc" }
-      ].map((m) => /* @__PURE__ */ jsxs21(
+      ].map((m) => /* @__PURE__ */ jsxs22(
         "button",
         {
           onClick: () => setArpeggio(m.id),
@@ -6632,20 +9229,20 @@ function FretboardExplorer({ onBack, embedded = false }) {
             fontFamily: FONTS.ui
           },
           children: [
-            /* @__PURE__ */ jsx24("div", { style: { fontSize: 12.5, fontWeight: 700 }, children: m.label }),
-            /* @__PURE__ */ jsx24("div", { style: { fontSize: 11, opacity: 0.75, marginTop: 1 }, children: m.hint })
+            /* @__PURE__ */ jsx25("div", { style: { fontSize: 12.5, fontWeight: 700 }, children: m.label }),
+            /* @__PURE__ */ jsx25("div", { style: { fontSize: 11, opacity: 0.75, marginTop: 1 }, children: m.hint })
           ]
         },
         String(m.id)
       )) }),
-      tab === "chord" && shapes.length > 0 && /* @__PURE__ */ jsxs21("div", { style: { marginBottom: 12 }, children: [
-        /* @__PURE__ */ jsxs21("div", { style: { fontSize: 11, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }, children: [
+      tab === "chord" && shapes.length > 0 && /* @__PURE__ */ jsxs22("div", { style: { marginBottom: 12 }, children: [
+        /* @__PURE__ */ jsxs22("div", { style: { fontSize: 11, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }, children: [
           shapes.length,
           " fa\xE7on",
           shapes.length > 1 ? "s" : "",
           " de le jouer"
         ] }),
-        /* @__PURE__ */ jsx24("div", { style: { display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch" }, children: shapes.map((sh, i) => /* @__PURE__ */ jsx24("div", { style: { flexShrink: 0, width: 150 }, children: /* @__PURE__ */ jsx24(
+        /* @__PURE__ */ jsx25("div", { style: { display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch" }, children: shapes.map((sh, i) => /* @__PURE__ */ jsx25("div", { style: { flexShrink: 0, width: 150 }, children: /* @__PURE__ */ jsx25(
           ChordDiagram,
           {
             data: { name: rootFr, frets: sh.frets, fingers: sh.fingers, startFret: sh.startFret, barre: sh.barre },
@@ -6653,14 +9250,14 @@ function FretboardExplorer({ onBack, embedded = false }) {
           }
         ) }, i)) })
       ] }),
-      /* @__PURE__ */ jsxs21("div", { style: { background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: "12px 14px" }, children: [
-        /* @__PURE__ */ jsxs21("div", { style: { fontSize: 11, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }, children: [
+      /* @__PURE__ */ jsxs22("div", { style: { background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: "12px 14px" }, children: [
+        /* @__PURE__ */ jsxs22("div", { style: { fontSize: 11, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }, children: [
           "Notes - ",
           rootFr,
           " ",
           activeLabel
         ] }),
-        /* @__PURE__ */ jsx24("div", { style: { display: "flex", flexWrap: "wrap", gap: 6 }, children: activeNotes.map((note2, i) => /* @__PURE__ */ jsxs21("div", { style: {
+        /* @__PURE__ */ jsx25("div", { style: { display: "flex", flexWrap: "wrap", gap: 6 }, children: activeNotes.map((note2, i) => /* @__PURE__ */ jsxs22("div", { style: {
           padding: "5px 10px",
           borderRadius: R.pill,
           background: i === 0 ? C.amberL : C.primaryL,
@@ -6673,17 +9270,17 @@ function FretboardExplorer({ onBack, embedded = false }) {
           nomsActifs[i] ?? note2,
           i === 0 ? " R" : ""
         ] }, note2)) }),
-        tab === "chord" && CHORD_INFO[chordKey] && /* @__PURE__ */ jsxs21("div", { style: { marginTop: 8, fontSize: 12, color: C.text3, fontFamily: FONTS.ui }, children: [
+        tab === "chord" && CHORD_INFO[chordKey] && /* @__PURE__ */ jsxs22("div", { style: { marginTop: 8, fontSize: 12, color: C.text3, fontFamily: FONTS.ui }, children: [
           "Formule : ",
-          /* @__PURE__ */ jsx24("strong", { style: { color: C.text2 }, children: CHORD_INFO[chordKey].formula })
+          /* @__PURE__ */ jsx25("strong", { style: { color: C.text2 }, children: CHORD_INFO[chordKey].formula })
         ] })
       ] }),
-      info && /* @__PURE__ */ jsxs21("div", { style: { background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: "12px 14px" }, children: [
-        /* @__PURE__ */ jsx24("div", { style: { fontSize: 11, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }, children: "Contexte" }),
-        /* @__PURE__ */ jsx24("p", { style: { margin: "0 0 6px", fontSize: 13, color: C.text, fontFamily: FONTS.title, lineHeight: 1.55 }, children: info.desc }),
-        "usage" in info && /* @__PURE__ */ jsxs21("div", { style: { display: "flex", alignItems: "center", gap: 6 }, children: [
-          /* @__PURE__ */ jsx24(Ti, { name: "music", size: 12, color: C.text3 }),
-          /* @__PURE__ */ jsx24("span", { style: { fontSize: 11, color: C.text3, fontFamily: FONTS.ui }, children: info.usage })
+      info && /* @__PURE__ */ jsxs22("div", { style: { background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: "12px 14px" }, children: [
+        /* @__PURE__ */ jsx25("div", { style: { fontSize: 11, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }, children: "Contexte" }),
+        /* @__PURE__ */ jsx25("p", { style: { margin: "0 0 6px", fontSize: 13, color: C.text, fontFamily: FONTS.title, lineHeight: 1.55 }, children: info.desc }),
+        "usage" in info && /* @__PURE__ */ jsxs22("div", { style: { display: "flex", alignItems: "center", gap: 6 }, children: [
+          /* @__PURE__ */ jsx25(Ti, { name: "music", size: 12, color: C.text3 }),
+          /* @__PURE__ */ jsx25("span", { style: { fontSize: 11, color: C.text3, fontFamily: FONTS.ui }, children: info.usage })
         ] })
       ] })
     ] })
@@ -6765,227 +9362,14 @@ __export(CoursesScreen_exports, {
 init_tokens();
 init_ThemeContext();
 init_Ti();
+init_ui();
 import { useState as useState4, useMemo, useEffect as useEffect4, useRef as useRef3 } from "react";
-
-// src/design/ui.jsx
-init_tokens();
-init_ThemeContext();
-init_Ti();
-import { useEffect as useEffect2, useEffectEvent } from "react";
-import { Fragment, jsx as jsx3, jsxs } from "react/jsx-runtime";
-function ProgressBar({ pct, color, h = 6, label }) {
-  const C = useC();
-  const valeur = Math.max(0, Math.min(100, Math.round(Number(pct) || 0)));
-  return /* @__PURE__ */ jsx3(
-    "div",
-    {
-      role: "progressbar",
-      "aria-valuenow": valeur,
-      "aria-valuemin": 0,
-      "aria-valuemax": 100,
-      "aria-label": label || "Progression",
-      style: { background: C.border, borderRadius: 999, overflow: "hidden", height: h },
-      children: /* @__PURE__ */ jsx3("div", { style: {
-        width: `${valeur}%`,
-        height: "100%",
-        background: color || C.primary,
-        borderRadius: 999,
-        transition: "width 0.4s ease"
-      } })
-    }
-  );
-}
-function XPPop({ amount, onDone }) {
-  const C = useC();
-  const terminer = useEffectEvent(() => onDone?.());
-  useEffect2(() => {
-    const t = setTimeout(terminer, 1400);
-    return () => clearTimeout(t);
-  }, []);
-  if (!amount || amount <= 0) return null;
-  return /* @__PURE__ */ jsxs("div", { role: "status", "aria-live": "polite", style: {
-    position: "fixed",
-    bottom: 92,
-    left: "50%",
-    transform: "translateX(-50%)",
-    background: C.primaryBtn,
-    color: C.onPrimaryBtn,
-    padding: "9px 18px",
-    borderRadius: 999,
-    fontSize: T.body,
-    fontWeight: 700,
-    fontFamily: FONTS.ui,
-    zIndex: 200,
-    pointerEvents: "none",
-    animation: "fadeUp 1.4s ease forwards",
-    boxShadow: "0 6px 20px rgba(0,0,0,.18)"
-  }, children: [
-    "+",
-    amount,
-    " XP"
-  ] });
-}
-function ConfirmDialog({
-  titre,
-  message,
-  confirmLabel = "Confirmer",
-  cancelLabel = "Annuler",
-  danger = false,
-  motDeConfirmation = null,
-  onConfirm,
-  onCancel,
-  saisie,
-  onSaisie
-}) {
-  const C = useC();
-  const pret = !motDeConfirmation || (saisie || "").trim().toUpperCase() === motDeConfirmation.toUpperCase();
-  useEffect2(() => {
-    const auClavier = (e) => {
-      if (e.key === "Escape") onCancel?.();
-    };
-    document.addEventListener("keydown", auClavier);
-    return () => document.removeEventListener("keydown", auClavier);
-  }, [onCancel]);
-  return /* @__PURE__ */ jsx3(
-    "div",
-    {
-      role: "dialog",
-      "aria-modal": "true",
-      "aria-label": titre,
-      onClick: (e) => {
-        if (e.target === e.currentTarget) onCancel?.();
-      },
-      style: {
-        position: "fixed",
-        inset: 0,
-        zIndex: 500,
-        background: "rgba(20,14,8,.55)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 20
-      },
-      children: /* @__PURE__ */ jsxs("div", { style: {
-        background: C.surface,
-        borderRadius: 20,
-        padding: 22,
-        maxWidth: 340,
-        width: "100%",
-        border: `1.5px solid ${C.border}`,
-        fontFamily: FONTS.ui,
-        boxShadow: "0 20px 60px rgba(0,0,0,.3)"
-      }, children: [
-        /* @__PURE__ */ jsx3("div", { style: { fontSize: T.h3, fontWeight: 800, color: C.text, marginBottom: 8 }, children: titre }),
-        /* @__PURE__ */ jsx3("p", { style: { fontSize: T.small, color: C.text2, lineHeight: 1.6, margin: "0 0 16px" }, children: message }),
-        motDeConfirmation && /* @__PURE__ */ jsxs(Fragment, { children: [
-          /* @__PURE__ */ jsxs("label", { htmlFor: "confirm-word", style: { fontSize: 12, color: C.text2, display: "block", marginBottom: 6 }, children: [
-            "Tape ",
-            /* @__PURE__ */ jsx3("strong", { style: { color: C.text }, children: motDeConfirmation }),
-            " pour confirmer"
-          ] }),
-          /* @__PURE__ */ jsx3(
-            "input",
-            {
-              id: "confirm-word",
-              value: saisie || "",
-              onChange: (e) => onSaisie?.(e.target.value),
-              autoComplete: "off",
-              autoCapitalize: "characters",
-              className: "gr-focus",
-              style: {
-                width: "100%",
-                boxSizing: "border-box",
-                padding: "12px 14px",
-                borderRadius: 12,
-                border: `1.5px solid ${C.borderStrong}`,
-                fontSize: 16,
-                background: C.surface2,
-                color: C.text,
-                fontFamily: FONTS.ui,
-                marginBottom: 16
-              }
-            }
-          )
-        ] }),
-        /* @__PURE__ */ jsxs("div", { style: { display: "flex", flexDirection: "column", gap: 8 }, children: [
-          /* @__PURE__ */ jsx3(
-            "button",
-            {
-              onClick: () => pret && onConfirm?.(),
-              disabled: !pret,
-              className: "gr-focus",
-              style: {
-                padding: "14px",
-                borderRadius: 12,
-                border: "none",
-                minHeight: 48,
-                background: !pret ? C.surface2 : danger ? C.danger : C.primaryBtn,
-                color: !pret ? C.text3 : C.onPrimaryBtn,
-                fontWeight: 700,
-                fontSize: T.body,
-                fontFamily: FONTS.ui,
-                cursor: pret ? "pointer" : "not-allowed"
-              },
-              children: confirmLabel
-            }
-          ),
-          /* @__PURE__ */ jsx3(
-            "button",
-            {
-              onClick: () => onCancel?.(),
-              className: "gr-focus",
-              style: {
-                padding: "14px",
-                borderRadius: 12,
-                minHeight: 48,
-                background: "none",
-                border: `1.5px solid ${C.border}`,
-                color: C.text,
-                fontWeight: 600,
-                fontSize: T.body,
-                fontFamily: FONTS.ui,
-                cursor: "pointer"
-              },
-              children: cancelLabel
-            }
-          )
-        ] })
-      ] })
-    }
-  );
-}
-function BackButton({ onClick, label = "Retour", tint, style }) {
-  const C = useC();
-  return /* @__PURE__ */ jsx3(
-    "button",
-    {
-      type: "button",
-      onClick,
-      "aria-label": label,
-      className: "gr-focus",
-      style: {
-        width: 44,
-        height: 44,
-        flexShrink: 0,
-        borderRadius: 12,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: tint?.bg ?? C.surface,
-        border: `1.5px solid ${tint?.border ?? C.border}`,
-        cursor: "pointer",
-        padding: 0,
-        ...style
-      },
-      children: /* @__PURE__ */ jsx3(Ti_default, { name: "arrow-left", size: 18, color: tint?.icon ?? C.text })
-    }
-  );
-}
 
 // src/store/moduleTheme.js
 init_tokens();
 function buildModuleTheme(C) {
   return {
+    debut: { icon: "ti-sparkles", color: C.coral, colorL: C.coralL, colorD: C.coralD, colorBorder: C.coralBorder },
     neck: { icon: "ti-map-2", color: C.amber, colorL: C.amberL, colorD: C.amberD, colorBorder: C.amberBorder },
     scales: { icon: "ti-music", color: C.green, colorL: C.greenL, colorD: C.greenD, colorBorder: C.greenBorder },
     harmony: { icon: "ti-stack-2", color: C.purple, colorL: C.purpleL, colorD: C.purpleD, colorBorder: C.purpleBorder },
@@ -7002,6 +9386,8 @@ var MODULE_THEME = buildModuleTheme(LIGHT);
 var UNIT_CHECK_PASS_PCT = 70;
 var MODULE_ORDER = ["neck", "scales", "harmony", "rhythm", "impro"];
 var MAX_LEVEL = 9;
+var DEBUT_MODULE = "debut";
+var estModulePrelude = (course) => !!course?.prelude || course?.id === DEBUT_MODULE;
 var SPLIT_THRESHOLD = 8;
 var TARGET_UNIT_SIZE = 6;
 var UNIT_BONUS_PER_LESSON = 10;
@@ -7031,11 +9417,32 @@ function chunkEvenly(list, threshold = SPLIT_THRESHOLD, target = TARGET_UNIT_SIZ
 }
 function buildUnits(courses = [], state = null) {
   const order = moduleOrderFor(state);
-  const allLessons = courses.flatMap(
+  const units = [];
+  for (const c of courses.filter(estModulePrelude)) {
+    const lessons = (c.lessons || []).map((l) => ({ ...l, courseId: c.id, courseTitle: c.title, level: l.level ?? 0 }));
+    if (lessons.length === 0) continue;
+    const groupes = lessons.every((l) => Number.isInteger(l.unite)) ? [...new Set(lessons.map((l) => l.unite))].sort((a, b) => a - b).map((n) => lessons.filter((l) => l.unite === n)) : chunkEvenly(lessons);
+    groupes.forEach((chunk, idx) => {
+      const nom2 = c.unites?.[idx];
+      units.push({
+        id: `${c.id}-${idx + 1}`,
+        level: 0,
+        part: groupes.length > 1 ? idx + 1 : null,
+        parts: groupes.length,
+        title: nom2 ? `${c.title} \xB7 ${nom2}` : groupes.length > 1 ? `${c.title} \xB7 partie ${idx + 1}` : c.title,
+        prelude: true,
+        courseIds: [c.id],
+        lessons: chunk,
+        bonusXp: unitBonusXp(chunk.length),
+        checkSize: Math.max(3, unitCheckSize(chunk.length)),
+        quizPoolSize: new Set(chunk.flatMap((l) => l.quiz || [])).size
+      });
+    });
+  }
+  const allLessons = courses.filter((c) => !estModulePrelude(c)).flatMap(
     (c) => (c.lessons || []).map((l) => ({ ...l, courseId: c.id, courseTitle: c.title }))
   );
   for (const l of allLessons) if (l.level == null) l.level = MAX_LEVEL;
-  const units = [];
   for (let level = 1; level <= MAX_LEVEL; level++) {
     const lessons = allLessons.filter((l) => l.level === level);
     if (lessons.length === 0) continue;
@@ -7054,6 +9461,7 @@ function buildUnits(courses = [], state = null) {
         part: chunks.length > 1 ? partIdx + 1 : null,
         parts: chunks.length,
         title: chunks.length > 1 ? `Palier ${level} \xB7 partie ${partIdx + 1}` : `Palier ${level}`,
+        prelude: false,
         courseIds: [...new Set(chunk.map((l) => l.courseId))],
         lessons: chunk,
         bonusXp: unitBonusXp(chunk.length),
@@ -7064,6 +9472,20 @@ function buildUnits(courses = [], state = null) {
   }
   return units;
 }
+function debutFacultatif(state, units = null) {
+  const ob = state?.onboarding || {};
+  if (ob.experience === "debutant") return false;
+  if (ob.experience) return true;
+  const prelude = (units || []).filter((u) => u.prelude);
+  const leconsPrelude = new Set(prelude.flatMap((u) => u.lessons.map((l) => l.id)));
+  const unitesPrelude = new Set(prelude.map((u) => u.id));
+  const hors = (id, connus) => !connus.has(id) && !id.startsWith(`${DEBUT_MODULE}-`);
+  const autreLecon = Object.keys(state?.completedLessons || {}).some((id) => hors(id, leconsPrelude));
+  const autreVerif = Object.entries(state?.unitChecks || {}).some(([id, c]) => c?.passed && hors(id, unitesPrelude));
+  if (autreLecon || autreVerif) return true;
+  if (!ob.done) return false;
+  return !(ob.skipped && ob.overallTier === "A1");
+}
 function buildPath(content, state) {
   const completed = state?.completedLessons || {};
   const claimed = state?.claimedUnits || {};
@@ -7071,6 +9493,8 @@ function buildPath(content, state) {
   const units = buildUnits(content?.courses || [], state);
   const tier = state?.onboarding?.overallTier;
   const headstartCount = state?.onboarding?.done ? TIER_HEADSTART[tier] ?? 0 : 0;
+  const facultatif = debutFacultatif(state, units);
+  let palierIdx = 0;
   let prevPassable = true;
   let currentAssigned = false;
   return units.map((u, i) => {
@@ -7081,12 +9505,15 @@ function buildPath(content, state) {
     const checkPassed = !!check?.passed;
     const complete = lessonsComplete && checkPassed;
     const needsCheck = lessonsComplete && !checkPassed;
-    const headstart = i < headstartCount;
-    const unlocked = i === 0 || prevPassable || done > 0 || headstart;
-    const isCurrent = unlocked && !complete && !currentAssigned && (!headstart || done > 0);
+    const headstart = !u.prelude && palierIdx++ < headstartCount;
+    const optional = !!u.prelude && facultatif && !complete;
+    const unlocked = i === 0 || prevPassable || done > 0 || headstart || optional;
+    const isCurrent = unlocked && !complete && !currentAssigned && !optional && (!headstart || done > 0);
     if (isCurrent) currentAssigned = true;
-    prevPassable = complete || headstart;
+    prevPassable = complete || headstart || optional;
     return {
+      // Le titre reste nu : c'est l'écran (pastille « Facultatif » de
+      // CoursesScreen) qui signale `optional`, pas un suffixe de texte.
       ...u,
       index: i,
       done,
@@ -7094,6 +9521,7 @@ function buildPath(content, state) {
       complete,
       unlocked,
       isCurrent,
+      optional,
       lessonsComplete,
       needsCheck,
       check,
@@ -8081,7 +10509,7 @@ function PathConnector({ from, to, done }) {
 function CurrentUnitBanner({ stats, MODULE_THEME: MODULE_THEME2 }) {
   const C = useC();
   const u = stats.currentUnit;
-  const th = u ? MODULE_THEME2.palier : null;
+  const th = u ? u.prelude && MODULE_THEME2.debut ? MODULE_THEME2.debut : MODULE_THEME2.palier : null;
   return /* @__PURE__ */ jsxs4("div", { style: {
     background: `${C.surface}CC`,
     borderRadius: R.lg,
@@ -8119,33 +10547,50 @@ function CurrentUnitBanner({ stats, MODULE_THEME: MODULE_THEME2 }) {
 }
 function UnitHeader({ unit, th }) {
   const C = useC();
+  const opt = !!unit.optional;
+  const filet = { flex: 1, height: 0, borderTop: `1.5px ${opt ? "dashed" : "solid"} ${unit.unlocked ? `${th.color}44` : C.border}` };
   return /* @__PURE__ */ jsxs4("div", { style: {
     display: "flex",
+    flexDirection: "column",
     alignItems: "center",
-    gap: 10,
+    gap: 6,
     margin: unit.index === 0 ? "4px 0 16px" : "26px 0 16px"
   }, children: [
-    /* @__PURE__ */ jsx6("div", { style: { flex: 1, height: 1.5, background: unit.unlocked ? `${th.color}44` : C.border } }),
-    /* @__PURE__ */ jsxs4("div", { style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 7,
-      background: unit.unlocked ? th.colorL : C.surface2,
-      border: `1.5px solid ${unit.unlocked ? `${th.color}44` : C.border}`,
-      borderRadius: 999,
-      padding: "6px 14px"
-    }, children: [
-      /* @__PURE__ */ jsx6(Ti, { name: unit.unlocked ? th.icon.replace("ti-", "") : "lock", size: 13, color: unit.unlocked ? th.color : C.text3 }),
-      /* @__PURE__ */ jsx6("span", { style: {
-        fontSize: 11,
-        fontWeight: 700,
-        letterSpacing: ".08em",
-        textTransform: "uppercase",
-        color: unit.unlocked ? th.colorD : C.text3,
-        fontFamily: FONTS.ui
-      }, children: unit.title })
+    /* @__PURE__ */ jsxs4("div", { style: { display: "flex", alignItems: "center", gap: 10, width: "100%" }, children: [
+      /* @__PURE__ */ jsx6("div", { style: filet }),
+      /* @__PURE__ */ jsxs4("div", { style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 7,
+        minWidth: 0,
+        background: opt ? C.surface : unit.unlocked ? th.colorL : C.surface2,
+        border: `1.5px ${opt ? "dashed" : "solid"} ${unit.unlocked ? `${th.color}${opt ? "66" : "44"}` : C.border}`,
+        borderRadius: 999,
+        padding: "6px 14px"
+      }, children: [
+        /* @__PURE__ */ jsx6(Ti, { name: unit.unlocked ? th.icon.replace("ti-", "") : "lock", size: 13, color: unit.unlocked ? th.color : C.text3 }),
+        /* @__PURE__ */ jsx6("span", { style: {
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: ".08em",
+          textTransform: "uppercase",
+          color: unit.unlocked ? th.colorD : C.text3,
+          fontFamily: FONTS.ui
+        }, children: unit.title })
+      ] }),
+      /* @__PURE__ */ jsx6("div", { style: filet })
     ] }),
-    /* @__PURE__ */ jsx6("div", { style: { flex: 1, height: 1.5, background: unit.unlocked ? `${th.color}44` : C.border } })
+    opt && /* @__PURE__ */ jsx6("span", { style: {
+      fontSize: 10.5,
+      fontWeight: 700,
+      letterSpacing: ".04em",
+      color: C.text2,
+      background: C.surface,
+      border: `1px solid ${C.border}`,
+      borderRadius: 999,
+      padding: "2px 9px",
+      fontFamily: FONTS.ui
+    }, children: "Facultatif \xB7 tu peux passer \xE0 la suite" })
   ] });
 }
 function WelcomeModal({ state, tip, navigate, onClose }) {
@@ -8434,7 +10879,7 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
     ] }),
     /* @__PURE__ */ jsxs4("div", { style: { padding: "8px 20px 40px" }, children: [
       path.map((unit) => {
-        const th = MODULE_THEME2.palier;
+        const th = unit.prelude ? MODULE_THEME2.debut || MODULE_THEME2.palier : MODULE_THEME2.palier;
         const currentLessonId = unit.isCurrent ? unit.lessons.find((l) => !state.completedLessons[l.id])?.id ?? null : null;
         return /* @__PURE__ */ jsxs4("div", { children: [
           /* @__PURE__ */ jsx6(UnitHeader, { unit, th }),
@@ -8511,7 +10956,7 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
   ] });
 }
 function LessonView({ lesson, state, dispatch, onBack }) {
-  const { renderDiagramBlock, FretboardLesson: FretboardLesson2 } = useRenderers();
+  const { renderDiagramBlock: renderDiagramBlock2, FretboardLesson: FretboardLesson2 } = useRenderers();
   const C = useC();
   const [done, setDone] = useState4(!!state.completedLessons[lesson.id]);
   const [pop, setPop] = useState4(false);
@@ -8564,7 +11009,7 @@ function LessonView({ lesson, state, dispatch, onBack }) {
           b.caption && /* @__PURE__ */ jsx6("p", { style: { fontSize: 12, color: C.text3, marginTop: 8, fontStyle: "italic" }, children: b.caption })
         ] }, i);
         if (b.type === "ref") return /* @__PURE__ */ jsx6(GropiCoach, { variant: "ref", children: b.text }, i);
-        const diagram = renderDiagramBlock ? renderDiagramBlock(b, i) : null;
+        const diagram = renderDiagramBlock2 ? renderDiagramBlock2(b, i) : null;
         if (diagram) return diagram;
         if (b.type === "fretboard_interactive" && FretboardLesson2) return /* @__PURE__ */ jsx6("div", { children: /* @__PURE__ */ jsx6(FretboardLesson2, { block: b }) }, i);
         if (b.img) return /* @__PURE__ */ jsxs4("div", { style: { overflow: "hidden" }, children: [
@@ -8626,9 +11071,10 @@ __export(QuizScreen_exports, {
 init_tokens();
 init_ThemeContext();
 init_Ti();
-import { useState as useState5 } from "react";
+init_ui();
 init_Gropi();
 init_audioEngine();
+import { useState as useState5 } from "react";
 
 // src/music/shapeQuestions.js
 init_chordShapes();
@@ -8875,6 +11321,7 @@ function getReviewStats(allQuestions, reviewHistory, completedLessons) {
 // src/screens/QuizScreen.jsx
 import { Fragment as Fragment3, jsx as jsx7, jsxs as jsxs5 } from "react/jsx-runtime";
 var makeModules = (C) => [
+  { id: "debut", label: "Premiers pas", icon: "sparkles", color: C.coral, colorL: C.coralL, colorD: C.coralD, border: C.coralBorder },
   { id: "neck", label: "Manche", icon: "map-2", color: C.amber, colorL: C.amberL, colorD: C.amberD, border: C.amberBorder },
   { id: "scales", label: "Gammes", icon: "music", color: C.green, colorL: C.greenL, colorD: C.greenD, border: C.greenBorder },
   { id: "harmony", label: "Harmonie", icon: "stack-2", color: C.purple, colorL: C.purpleL, colorD: C.purpleD, border: C.purpleBorder },
@@ -9288,6 +11735,7 @@ import { useState as useState6, useEffect as useEffect5 } from "react";
 
 // src/store/generateurs.js
 init_notes();
+init_oreille();
 var N = (l, acc = 0) => ({ l, acc });
 var pc = (n) => ((NATUREL[n.l] + n.acc) % 12 + 12) % 12;
 var suffixe2 = (acc) => acc > 0 ? "#".repeat(acc) : "b".repeat(-acc);
@@ -9308,7 +11756,7 @@ var RACINES = {
   3: [N(0), N(4), N(3), N(1), N(5), N(6, -1), N(2), N(2, -1), N(6), N(5, -1), N(3, 1), N(1, -1)]
   // + Mib, Si, Lab, Fa#, Réb
 };
-var INTERVALLES = {
+var INTERVALLES2 = {
   seconde_maj: ["seconde majeure", 2, 2],
   tierce_min: ["tierce mineure", 3, 3],
   tierce_maj: ["tierce majeure", 3, 4],
@@ -9356,8 +11804,8 @@ var NOM_CORDE = { 6: "Mi grave", 5: "La", 4: "R\xE9", 3: "Sol", 2: "Si", 1: "Mi 
 var NOMS_PC = NOTES_DIESES_FR;
 var noteManche = (corde, cas) => NOMS_PC[(CORDE_MIDI2[corde] + cas) % 12];
 var estNaturelle = (corde, cas) => !noteManche(corde, cas).includes("#");
-var choisir = (rng, arr) => arr[Math.floor(rng() * arr.length)];
-function melanger(rng, arr) {
+var choisir2 = (rng, arr) => arr[Math.floor(rng() * arr.length)];
+function melanger2(rng, arr) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(rng() * (i + 1));
@@ -9376,7 +11824,7 @@ function qcm(rng, bonne, leurresCandidats) {
   const pcBonne = pcDeNom2(bonne);
   const leurres = [...new Set(leurresCandidats.filter((x) => x !== bonne && !RARES.has(x) && (pcBonne == null || pcDeNom2(x) !== pcBonne)))];
   if (leurres.length < 3) return null;
-  const o = melanger(rng, [bonne, ...melanger(rng, leurres).slice(0, 3)]);
+  const o = melanger2(rng, [bonne, ...melanger2(rng, leurres).slice(0, 3)]);
   return { o, a: o.indexOf(bonne) };
 }
 var liste = (notes) => notes.map(nom).join(" - ");
@@ -9405,7 +11853,7 @@ function familleCorde(corde, lecon, suffixeId) {
       const [a, b, nat] = plage[niv];
       const cases = [];
       for (let c = a; c <= b; c++) if (!nat || estNaturelle(corde, c)) cases.push(c);
-      const cas = choisir(rng, cases), bonne = noteManche(corde, cas);
+      const cas = choisir2(rng, cases), bonne = noteManche(corde, cas);
       const chemin = cheminManche(corde, cas);
       if (niv >= 2 && rng() < 0.5) {
         const positions = cases.filter((c) => noteManche(corde, c) === bonne);
@@ -9450,7 +11898,7 @@ var familleTonsDemiTons = {
   niveaux: ["au-dessus, depuis une note naturelle", "au-dessus ou en dessous", "depuis une note alt\xE9r\xE9e"],
   generer(niv, rng) {
     const departs = niv === 3 ? RACINES[3].filter((n) => n.acc !== 0) : [N(0), N(1), N(2), N(3), N(4), N(5), N(6)];
-    const d = choisir(rng, departs), pas = rng() < 0.5 ? 2 : 1, sens = niv >= 2 && rng() < 0.4 ? -1 : 1;
+    const d = choisir2(rng, departs), pas = rng() < 0.5 ? 2 : 1, sens = niv >= 2 && rng() < 0.4 ? -1 : 1;
     const r = voisin(d, pas, sens);
     if (!simple(r)) return null;
     const bonne = nom(r);
@@ -9472,12 +11920,12 @@ function familleIntervalles(id, lecon, titre, cles) {
     titre,
     niveaux: ["depuis Do, Sol ou Fa", "depuis Do, Sol, Fa, R\xE9, La, Mi, Sib", "depuis des notes alt\xE9r\xE9es"],
     generer(niv, rng) {
-      const cle2 = choisir(rng, cles), [nomI, num, dt] = INTERVALLES[cle2];
+      const cle2 = choisir2(rng, cles), [nomI, num, dt] = INTERVALLES2[cle2];
       if (niv === 1 && rng() < 0.35) {
         const res2 = qcm(rng, String(dt), [dt - 1, dt + 1, dt + 2, dt - 2].filter((x) => x > 0).map(String));
         return res2 && { q: `Combien de demi-tons contient une ${nomI} ?`, ...res2, exp: `${nomI[0].toUpperCase() + nomI.slice(1)} = ${dt} demi-tons, soit ${dt} cases sur une m\xEAme corde.` };
       }
-      const r = choisir(rng, RACINES[niv]), c = intervalle2(r, num, dt);
+      const r = choisir2(rng, RACINES[niv]), c = intervalle2(r, num, dt);
       if (!simple(c)) return null;
       const bonne = nom(c);
       const leurres = [intervalle2(r, num, dt - 1), intervalle2(r, num, dt + 1), intervalle2(r, num - 1, dt - 1), intervalle2(r, num + 1, dt + 1), intervalle2(r, num + 1, dt + 2)].filter(simple).map(nom);
@@ -9498,7 +11946,7 @@ var familleDegres = {
   niveaux: ["en Do, Sol, Fa", "7 tonalit\xE9s", "12 tonalit\xE9s, avec les noms des degr\xE9s"],
   generer(niv, rng) {
     const NOMS = ["tonique", "sus-tonique", "m\xE9diante", "sous-dominante", "dominante", "sus-dominante", "sensible"];
-    const r = choisir(rng, RACINES[niv]), g = gammeMajeure(r);
+    const r = choisir2(rng, RACINES[niv]), g = gammeMajeure(r);
     if (!g.every(simple)) return null;
     const k = 1 + Math.floor(rng() * 6), bonne = nom(g[k]);
     const res = qcm(rng, bonne, [...g.filter((_, i) => i !== k).map(nom), nom(intervalle2(g[k], 1, 1)), nom(intervalle2(g[k], 1, -1))].filter((x) => !/(##|bb)/.test(x)));
@@ -9518,7 +11966,7 @@ var familleArmures = {
   niveaux: ["Do, Sol, R\xE9, Fa", "jusqu'\xE0 4 alt\xE9rations", "toutes les tonalit\xE9s"],
   generer(niv, rng) {
     const pool = { 1: ["Do", "Sol", "R\xE9", "Fa"], 2: ["Do", "Sol", "R\xE9", "La", "Mi", "Fa", "Sib", "Mib", "Lab"], 3: Object.keys(ARMURES) }[niv];
-    const t = choisir(rng, pool), [n, s] = ARMURES[t];
+    const t = choisir2(rng, pool), [n, s] = ARMURES[t];
     const dire = (k, x) => k === 0 ? "Aucune alt\xE9ration" : `${k} ${x === "#" ? "di\xE8se" : "b\xE9mol"}${k > 1 ? "s" : ""}`;
     const bonne = dire(n, s);
     const res = qcm(rng, bonne, [dire(n + 1, s || "#"), dire(Math.max(0, n - 1), s || "b"), dire(n || 1, s === "#" ? "b" : "#"), dire(n + 2, s || "#")]);
@@ -9534,11 +11982,11 @@ var famillePenta = {
   niveaux: ["en La, Mi, R\xE9", "7 tonalit\xE9s", "12 tonalit\xE9s"],
   generer(niv, rng) {
     const pool = { 1: [N(5), N(2), N(1)], 2: [N(5), N(2), N(1), N(4), N(0), N(6), N(3, 1)], 3: RACINES[3].concat([N(5), N(2)]) }[niv];
-    const r = choisir(rng, pool), p = pentaMineure(r);
+    const r = choisir2(rng, pool), p = pentaMineure(r);
     if (!p.every(simple)) return null;
     const dedans = new Set(p.map(pc));
     const hors = [intervalle2(r, 2, 2), intervalle2(r, 3, 4), intervalle2(r, 6, 8), intervalle2(r, 7, 11), intervalle2(r, 2, 1), intervalle2(r, 6, 9)].filter((n) => simple(n) && !dedans.has(pc(n)));
-    const cible = choisir(rng, p.slice(1));
+    const cible = choisir2(rng, p.slice(1));
     const res = qcm(rng, nom(cible), hors.map(nom));
     return res && {
       q: `Laquelle de ces notes appartient \xE0 la pentatonique mineure de ${nom(r)} ?`,
@@ -9554,7 +12002,7 @@ var familleRelative = {
   titre: "Relatives mineures",
   niveaux: ["Do, Sol, Fa", "7 tonalit\xE9s", "12 tonalit\xE9s"],
   generer(niv, rng) {
-    const r = choisir(rng, RACINES[niv]), rel = intervalle2(r, 6, 9);
+    const r = choisir2(rng, RACINES[niv]), rel = intervalle2(r, 6, 9);
     if (!simple(rel)) return null;
     const bonne = `${nom(rel)} mineur`;
     const res = qcm(rng, bonne, [intervalle2(r, 3, 4), intervalle2(r, 5, 7), intervalle2(r, 6, 8), intervalle2(r, 2, 2), intervalle2(r, 4, 5)].filter(simple).map((n) => `${nom(n)} mineur`));
@@ -9573,7 +12021,7 @@ var familleTriades = {
   niveaux: ["triades majeures, tonalit\xE9s courantes", "majeures et mineures", "les 4 types, 12 fondamentales"],
   generer(niv, rng) {
     const types = { 1: ["maj"], 2: ["maj", "min"], 3: ["maj", "min", "dim", "aug"] }[niv];
-    const t = choisir(rng, types), r = choisir(rng, RACINES[Math.max(2, niv)]), notes = notesAccord(r, t);
+    const t = choisir2(rng, types), r = choisir2(rng, RACINES[Math.max(2, niv)]), notes = notesAccord(r, t);
     if (!notes.every(simple)) return null;
     const bonne = liste(notes);
     const autres = ["maj", "min", "dim", "aug"].filter((x) => x !== t).map((x) => notesAccord(r, x)).filter((ns) => ns.every(simple)).map(liste);
@@ -9601,7 +12049,7 @@ var familleSeptiemes = {
   niveaux: ["maj7, m7 et 7", "maj7, m7 et 7, plus de tonalit\xE9s", "les 5 types"],
   generer(niv, rng) {
     const types = niv < 3 ? ["maj7", "m7", "7"] : ["maj7", "m7", "7", "m7b5", "dim7"];
-    const t = choisir(rng, types), r = choisir(rng, RACINES[Math.max(1, niv)]), notes = notesAccord(r, t);
+    const t = choisir2(rng, types), r = choisir2(rng, RACINES[Math.max(1, niv)]), notes = notesAccord(r, t);
     if (!notes.every(simple)) return null;
     const bonne = liste(notes);
     const autres = ["maj7", "m7", "7", "m7b5"].filter((x) => x !== t).map((x) => notesAccord(r, x)).filter((ns) => ns.every(simple)).map(liste);
@@ -9620,7 +12068,7 @@ var familleGuideTones = {
   titre: "Guide tones (3e et 7e)",
   niveaux: ["accords 7", "accords 7, maj7 et m7", "12 fondamentales"],
   generer(niv, rng) {
-    const t = niv === 1 ? "7" : choisir(rng, ["7", "maj7", "m7"]), r = choisir(rng, RACINES[niv]), ns = notesAccord(r, t);
+    const t = niv === 1 ? "7" : choisir2(rng, ["7", "maj7", "m7"]), r = choisir2(rng, RACINES[niv]), ns = notesAccord(r, t);
     if (!ns.every(simple)) return null;
     const bonne = `${nom(ns[1])} et ${nom(ns[3])}`;
     const res = qcm(rng, bonne, [`${nom(ns[0])} et ${nom(ns[2])}`, `${nom(ns[0])} et ${nom(ns[1])}`, `${nom(ns[2])} et ${nom(ns[3])}`, `${nom(ns[1])} et ${nom(ns[2])}`]);
@@ -9639,7 +12087,7 @@ var familleHarmonisation = {
   niveaux: ["en Do, Sol, Fa", "7 tonalit\xE9s", "12 tonalit\xE9s"],
   generer(niv, rng) {
     const QUAL = ["majeur", "mineur", "mineur", "majeur", "majeur", "mineur", "diminu\xE9"];
-    const r = choisir(rng, RACINES[niv]), g = gammeMajeure(r);
+    const r = choisir2(rng, RACINES[niv]), g = gammeMajeure(r);
     if (!g.every(simple)) return null;
     const k = Math.floor(rng() * 7), bonne = `${nom(g[k])} ${QUAL[k]}`;
     const res = qcm(rng, bonne, [`${nom(g[k])} ${QUAL[k] === "majeur" ? "mineur" : "majeur"}`, `${nom(g[(k + 1) % 7])} ${QUAL[(k + 1) % 7]}`, `${nom(g[(k + 6) % 7])} ${QUAL[(k + 6) % 7]}`, `${nom(g[k])} diminu\xE9`, `${nom(g[(k + 2) % 7])} ${QUAL[(k + 2) % 7]}`]);
@@ -9659,7 +12107,7 @@ function familleMode(nomMode, lecon, num, dt, descr) {
     titre: `Note caract\xE9ristique : ${nomMode}`,
     niveaux: ["depuis des notes naturelles simples", "7 fondamentales", "12 fondamentales"],
     generer(niv, rng) {
-      const r = choisir(rng, RACINES[niv]), c = intervalle2(r, num, dt);
+      const r = choisir2(rng, RACINES[niv]), c = intervalle2(r, num, dt);
       if (!simple(c)) return null;
       const bonne = nom(c);
       const res = qcm(rng, bonne, [intervalle2(r, num, dt + (dt % 2 ? 1 : -1)), intervalle2(r, num, dt + 1), intervalle2(r, num, dt - 1), intervalle2(r, 3, 3), intervalle2(r, 5, 7)].filter(simple).map(nom));
@@ -9672,9 +12120,9 @@ function familleMode(nomMode, lecon, num, dt, descr) {
   };
 }
 var NOMS_TONE = NOTES_DIESES_EN;
-var midiVersTone = (m) => `${NOMS_TONE[m % 12]}${Math.floor(m / 12) - 1}`;
+var midiVersTone2 = (m) => `${NOMS_TONE[m % 12]}${Math.floor(m / 12) - 1}`;
 var nomMidi = (m) => NOMS_PC[m % 12];
-var entre = (rng, a, b) => a + Math.floor(rng() * (b - a + 1));
+var entre2 = (rng, a, b) => a + Math.floor(rng() * (b - a + 1));
 var familleHauteur = {
   id: "oreille-hauteur",
   module: "scales",
@@ -9683,15 +12131,15 @@ var familleHauteur = {
   ecoute: true,
   niveaux: ["plus haute ou plus basse", "ton ou demi-ton, en montant", "ton ou demi-ton, en montant ou en descendant"],
   generer(niv, rng) {
-    const base = entre(rng, 50, 62);
+    const base = entre2(rng, 50, 62);
     if (niv === 1) {
-      const ecart = entre(rng, 5, 12) * (rng() < 0.5 ? 1 : -1), deux2 = base + ecart;
+      const ecart = entre2(rng, 5, 12) * (rng() < 0.5 ? 1 : -1), deux2 = base + ecart;
       const o2 = ["Plus haute", "Plus basse"], a2 = ecart > 0 ? 0 : 1;
       return {
         q: "\xC9coute les deux notes. La deuxi\xE8me est-elle plus haute ou plus basse que la premi\xE8re ?",
         o: o2,
         a: a2,
-        audio: { type: "intervalle", notes: [midiVersTone(base), midiVersTone(deux2)], mode: "ascending" },
+        audio: { type: "intervalle", notes: [midiVersTone2(base), midiVersTone2(deux2)], mode: "ascending" },
         exp: `Tu as entendu ${nomMidi(base)} puis ${nomMidi(deux2)} : la deuxi\xE8me note est ${ecart > 0 ? "plus haute" : "plus basse"}, de ${Math.abs(ecart)} demi-tons.`
       };
     }
@@ -9702,7 +12150,7 @@ var familleHauteur = {
       q: niv === 2 ? "\xC9coute les deux notes. Sont-elles s\xE9par\xE9es d'un ton ou d'un demi-ton ?" : "\xC9coute les deux notes. Quel \xE9cart, et dans quel sens ?",
       o,
       a,
-      audio: { type: "intervalle", notes: [midiVersTone(base), midiVersTone(deux)], mode: "ascending" },
+      audio: { type: "intervalle", notes: [midiVersTone2(base), midiVersTone2(deux)], mode: "ascending" },
       exp: `${nomMidi(base)} puis ${nomMidi(deux)} : ${pas === 1 ? "un demi-ton, les deux notes sont coll\xE9es (1 case)" : "un ton, il y a une note entre les deux (2 cases)"}${niv === 3 ? `, en ${sens > 0 ? "montant" : "descendant"}` : ""}.`
     };
   }
@@ -9720,18 +12168,18 @@ var familleIntervallesOreille = {
       2: [["Seconde majeure", 2], ["Tierce majeure", 4], ["Quarte juste", 5], ["Quinte juste", 7]],
       3: [["Tierce mineure", 3], ["Tierce majeure", 4], ["Quarte juste", 5], ["Quinte juste", 7]]
     }[niv];
-    const [nomI, dt] = choisir(rng, choix), base = entre(rng, 45, 57), ensemble = niv === 3 && rng() < 0.4;
-    const o = melanger(rng, choix.map((c) => c[0]));
+    const [nomI, dt] = choisir2(rng, choix), base = entre2(rng, 45, 57), ensemble = niv === 3 && rng() < 0.4;
+    const o = melanger2(rng, choix.map((c) => c[0]));
     return {
       q: ensemble ? "\xC9coute les deux notes jou\xE9es ensemble. Quel intervalle ?" : "\xC9coute les deux notes. Quel intervalle entends-tu ?",
       o,
       a: o.indexOf(nomI),
-      audio: { type: "intervalle", notes: [midiVersTone(base), midiVersTone(base + dt)], mode: ensemble ? "harmonic" : "ascending" },
+      audio: { type: "intervalle", notes: [midiVersTone2(base), midiVersTone2(base + dt)], mode: ensemble ? "harmonic" : "ascending" },
       exp: `C'\xE9tait une ${nomI.toLowerCase()} : ${dt} demi-tons, de ${nomMidi(base)} \xE0 ${nomMidi(base + dt)}.`
     };
   }
 };
-var QUALITES = { maj: ["Majeur", [0, 4, 7]], min: ["Mineur", [0, 3, 7]], dim: ["Diminu\xE9", [0, 3, 6]], aug: ["Augment\xE9", [0, 4, 8]] };
+var QUALITES2 = { maj: ["Majeur", [0, 4, 7]], min: ["Mineur", [0, 3, 7]], dim: ["Diminu\xE9", [0, 3, 6]], aug: ["Augment\xE9", [0, 4, 8]] };
 var familleQualiteOreille = {
   id: "oreille-accords",
   module: "harmony",
@@ -9741,16 +12189,16 @@ var familleQualiteOreille = {
   niveaux: ["majeur ou mineur", "les 4 types de triades", "les 4 types, parfois arp\xE9g\xE9s"],
   generer(niv, rng) {
     const types = niv === 1 ? ["maj", "min"] : ["maj", "min", "dim", "aug"];
-    const t = choisir(rng, types), racine = entre(rng, 48, 55), arpege = niv === 3 && rng() < 0.5;
-    const notes = [...QUALITES[t][1], 12].map((i) => racine + i);
-    const o = types.map((x) => QUALITES[x][0]);
+    const t = choisir2(rng, types), racine = entre2(rng, 48, 55), arpege = niv === 3 && rng() < 0.5;
+    const notes = [...QUALITES2[t][1], 12].map((i) => racine + i);
+    const o = types.map((x) => QUALITES2[x][0]);
     const couleur = { maj: "tierce majeure : le son le plus stable et lumineux", min: "tierce mineure : plus sombre", dim: "tierce mineure et quinte diminu\xE9e : tendu, instable", aug: "tierce majeure et quinte augment\xE9e : suspendu, \xE9trange" }[t];
     return {
       q: arpege ? "\xC9coute l'accord jou\xE9 note \xE0 note. Quelle qualit\xE9 ?" : "\xC9coute l'accord. Quelle qualit\xE9 ?",
       o,
-      a: o.indexOf(QUALITES[t][0]),
-      audio: { type: "accord", notes: notes.map(midiVersTone), arpege },
-      exp: `${QUALITES[t][0]} (${couleur}). Notes : ${notes.slice(0, 3).map(nomMidi).join(" - ")}.`
+      a: o.indexOf(QUALITES2[t][0]),
+      audio: { type: "accord", notes: notes.map(midiVersTone2), arpege },
+      exp: `${QUALITES2[t][0]} (${couleur}). Notes : ${notes.slice(0, 3).map(nomMidi).join(" - ")}.`
     };
   }
 };
@@ -9769,8 +12217,8 @@ var familleDictee = {
     const pas = niv === 3 ? 4 : 2;
     const permises = niv === 1 ? ["noire", "croches"] : niv === 2 ? ["noire", "croches", "silence", "contretemps"] : ["noire", "croches", "doubles", "croche2d", "deuxdcroche"];
     const tirer = () => {
-      const m = Array.from({ length: 4 }, () => choisir(rng, permises));
-      if (niv === 2 || niv === 1) m[0] = choisir(rng, ["noire", "croches"]);
+      const m = Array.from({ length: 4 }, () => choisir2(rng, permises));
+      if (niv === 2 || niv === 1) m[0] = choisir2(rng, ["noire", "croches"]);
       return m;
     };
     const mesure = tirer();
@@ -9780,13 +12228,13 @@ var familleDictee = {
       const v = [...mesure];
       const nb = rng() < 0.6 ? 1 : 2;
       for (let k = 0; k < nb; k++) {
-        const i = niv <= 2 ? entre(rng, 1, 3) : entre(rng, 0, 3);
-        v[i] = choisir(rng, permises.filter((f) => f !== v[i]));
+        const i = niv <= 2 ? entre2(rng, 1, 3) : entre2(rng, 0, 3);
+        v[i] = choisir2(rng, permises.filter((f) => f !== v[i]));
       }
       variantes.set(cle2(v), v);
     }
     if (variantes.size < 4) return null;
-    const mesures = melanger(rng, [...variantes.values()]);
+    const mesures = melanger2(rng, [...variantes.values()]);
     const attaques = (m) => m.flatMap((f, t) => FIGURES[pas][f][1].map((c) => t * pas + c));
     const decrire = (m) => m.map((f) => FIGURES[pas][f][0]).join(" \xB7 ");
     return {
@@ -9818,7 +12266,7 @@ function tirerMesure(rng, cles) {
   while (reste > 1e-9 && essais++ < 40) {
     const possibles = cles.filter((k2) => VALEURS_MESURE[k2][0].duree <= reste + 1e-9);
     if (!possibles.length) return null;
-    const k = choisir(rng, possibles);
+    const k = choisir2(rng, possibles);
     jetons.push({ ...VALEURS_MESURE[k][0] });
     reste -= VALEURS_MESURE[k][0].duree;
   }
@@ -9847,7 +12295,7 @@ var familleLectureMesure = {
     const jetons = tirerMesure(rng, cles);
     if (!jetons || jetons.length < 2) return null;
     const bonne = jetons.filter((j) => !j.silence).length;
-    const o = melanger(rng, [.../* @__PURE__ */ new Set([bonne, Math.max(1, bonne - 1), bonne + 1, bonne + 2])]).map(String);
+    const o = melanger2(rng, [.../* @__PURE__ */ new Set([bonne, Math.max(1, bonne - 1), bonne + 1, bonne + 2])]).map(String);
     if (o.length < 4) return null;
     const nomsValeur = (j) => j.duree === 4 ? "une ronde" : j.duree === 2 ? "une blanche" : j.duree === 1 ? j.silence ? "un soupir" : "une noire" : j.silence ? "un demi-soupir" : "une croche";
     return {
@@ -9874,7 +12322,7 @@ var familleGeste = {
     const aDoubles = !!contexte?.completedLessons?.["rhy-c2-02"];
     const effectif = niv >= 2 && aDoubles ? niv : 1;
     const piege = effectif === 3 && rng() < 0.7;
-    const pas = effectif === 1 ? choisir(rng, [0, 2, 4, 6, 8, 10, 12, 14]) : piege ? choisir(rng, [1, 3, 5, 7, 9, 11, 13, 15]) : entre(rng, 0, 15);
+    const pas = effectif === 1 ? choisir2(rng, [0, 2, 4, 6, 8, 10, 12, 14]) : piege ? choisir2(rng, [1, 3, 5, 7, 9, 11, 13, 15]) : entre2(rng, 0, 15);
     const descend = pas % 2 === 0;
     const o = ["Vers le bas", "Vers le haut"];
     return {
@@ -9893,7 +12341,7 @@ var familleBinaire = {
   ecoute: true,
   niveaux: ["croches continues, tempo lent", "croches continues, tempo plus rapide", "avec des silences"],
   generer(niv, rng) {
-    const swing = rng() < 0.5, bpm = niv === 1 ? 80 : entre(rng, 96, 116);
+    const swing = rng() < 0.5, bpm = niv === 1 ? 80 : entre2(rng, 96, 116);
     let attaques = [0, 1, 2, 3, 4, 5, 6, 7];
     if (niv === 3) attaques = attaques.filter((i) => i % 2 === 0 || rng() < 0.6);
     const o = ["Binaire (croches \xE9gales)", "Ternaire (longue-courte, shuffle)"];
@@ -9915,17 +12363,17 @@ var familleOreilleManche = {
   niveaux: ["cases 3, 5, 7 ou 12", "notes naturelles, cases 1 \xE0 12", "toutes les cases, voisines proches"],
   generer(niv, rng) {
     const pool = { 1: [3, 5, 7, 12], 2: [1, 3, 5, 7, 8, 10, 12], 3: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] }[niv];
-    const cas = choisir(rng, pool);
+    const cas = choisir2(rng, pool);
     const leurres = niv === 3 ? [cas - 2, cas - 1, cas + 1, cas + 2].filter((c) => c >= 1 && c <= 12) : pool;
     const nb = niv === 1 ? 3 : 4;
-    const autres = melanger(rng, leurres.filter((c) => c !== cas)).slice(0, nb - 1);
+    const autres = melanger2(rng, leurres.filter((c) => c !== cas)).slice(0, nb - 1);
     if (autres.length < nb - 1) return null;
-    const o = melanger(rng, [cas, ...autres]).map((c) => `Case ${c}`);
+    const o = melanger2(rng, [cas, ...autres]).map((c) => `Case ${c}`);
     return {
       q: "Tu entends la corde 6 \xE0 vide, puis une note de la m\xEAme corde. \xC0 quelle case est-elle ?",
       o,
       a: o.indexOf(`Case ${cas}`),
-      audio: { type: "intervalle", notes: [midiVersTone(40), midiVersTone(40 + cas)], mode: "ascending" },
+      audio: { type: "intervalle", notes: [midiVersTone2(40), midiVersTone2(40 + cas)], mode: "ascending" },
       exp: `La corde \xE0 vide sonne Mi. La note entendue est ${noteManche(6, cas)}, ${cas} demi-tons plus haut : case ${cas}.${cas === 12 ? " C'est l'octave : la m\xEAme note, plus aigu\xEB." : ""}`
     };
   }
@@ -9941,7 +12389,7 @@ var familleFonctions = {
   generer(niv, rng, contexte) {
     const avecVi = niv === 3 && !!contexte?.completedLessons?.["harm-c6-02"];
     const choix = niv === 1 ? ["IV", "V"] : avecVi ? ["I", "IV", "V", "vi"] : ["I", "IV", "V"];
-    const d = choisir(rng, choix), tonique = niv === 3 ? entre(rng, 45, 55) : choisir(rng, [48, 50, 52]);
+    const d = choisir2(rng, choix), tonique = niv === 3 ? entre2(rng, 45, 55) : choisir2(rng, [48, 50, 52]);
     const accord = (deg) => {
       const [dec, pile] = DEGRES_ACCORDS[deg];
       return [...pile, 12].map((i) => tonique + dec + i);
@@ -9953,8 +12401,112 @@ var familleFonctions = {
       q: "\xC9coute : d'abord l'accord I (la tonique), puis un autre accord. Lequel ?",
       o,
       a: o.indexOf(DEGRES_ACCORDS[d][2]),
-      audio: { type: "suite", accords: [accord("I").map(midiVersTone), accord(d).map(midiVersTone)] },
+      audio: { type: "suite", accords: [accord("I").map(midiVersTone2), accord(d).map(midiVersTone2)] },
       exp: `C'\xE9tait le ${DEGRES_ACCORDS[d][2]} : ${pourquoi}. Ici, en ${nomT} majeur.`
+    };
+  }
+};
+var familleIntervallesComplets = {
+  id: "oreille-intervalles-complets",
+  module: "scales",
+  lecon: "scales-c1-06",
+  titre: "Oreille : les 12 intervalles",
+  ecoute: true,
+  niveaux: ["sixtes, septi\xE8mes et octave, en montant", "les 12 intervalles, en montant ou en descendant", "les 12 intervalles, parfois jou\xE9s ensemble"],
+  generer(niv, rng) {
+    const pool = niv === 1 ? [8, 9, 10, 11, 12] : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+    const dt = choisir2(rng, pool);
+    const mode = niv === 1 ? "ascending" : niv === 2 ? choisir2(rng, ["ascending", "descending"]) : choisir2(rng, ["ascending", "descending", "harmonic"]);
+    const voisins = melanger2(rng, pool.filter((x) => x !== dt && Math.abs(x - dt) <= 2));
+    const loin = melanger2(rng, pool.filter((x) => x !== dt && Math.abs(x - dt) > 2));
+    const o = melanger2(rng, [dt, ...[...voisins, ...loin].slice(0, 3)].map((x) => INTERVALLES[x].nom));
+    const base = entre2(rng, 45, 57);
+    const comment = { ascending: "en montant", descending: "en descendant", harmonic: "jou\xE9es ensemble" }[mode];
+    return {
+      q: `\xC9coute les deux notes (${comment}). Quel intervalle ?`,
+      o,
+      a: o.indexOf(INTERVALLES[dt].nom),
+      audio: { type: "intervalle", notes: [midiVersTone2(base), midiVersTone2(base + dt)], mode },
+      exp: `C'\xE9tait une ${INTERVALLES[dt].nom.toLowerCase()} : ${dt} demi-ton${dt > 1 ? "s" : ""}, de ${nomMidi(base)} \xE0 ${nomMidi(base + dt)}. Rep\xE8re : ${INTERVALLES[dt].repere}`
+    };
+  }
+};
+var familleSeptiemesOreille = {
+  id: "oreille-accords-7",
+  module: "harmony",
+  lecon: "harm-c3-02",
+  titre: "Oreille : accords de septi\xE8me",
+  ecoute: true,
+  niveaux: ["maj7, 7 ou m7", "maj7, 7, m7 ou demi-diminu\xE9", "les 5 types, parfois arp\xE9g\xE9s"],
+  generer(niv, rng) {
+    const types = niv === 1 ? ["maj7", "dom7", "min7"] : niv === 2 ? ["maj7", "dom7", "min7", "min7b5"] : ["maj7", "dom7", "min7", "min7b5", "dim7"];
+    const t = choisir2(rng, types), racine = entre2(rng, 48, 55), arpege = niv === 3 && rng() < 0.4;
+    const o = melanger2(rng, [t, ...melanger2(rng, types.filter((x) => x !== t)).slice(0, 3)]).map((x) => QUALITES[x].nom);
+    const notes = voicingAccord(racine, QUALITES[t].iv);
+    return {
+      q: arpege ? "\xC9coute l'accord jou\xE9 note \xE0 note. Quel accord de septi\xE8me ?" : "\xC9coute l'accord. Quel accord de septi\xE8me ?",
+      o,
+      a: o.indexOf(QUALITES[t].nom),
+      audio: { type: "accord", notes: notes.map(midiVersTone2), arpege },
+      exp: `${QUALITES[t].nom} : ${QUALITES[t].couleur}. Notes : ${notes.slice(0, 4).map(nomMidi).join(" - ")}.`
+    };
+  }
+};
+var familleDicteeMelodique = {
+  id: "oreille-dictee-melodique",
+  module: "scales",
+  lecon: "scales-c2-03",
+  titre: "Oreille : dict\xE9e m\xE9lodique",
+  ecoute: true,
+  niveaux: NIVEAUX_DICTEE.slice(0, 3).map((n) => n.libelle),
+  generer(niv, rng) {
+    const d = tirerDictee(rng, niv), max = NIVEAUX_DICTEE[niv - 1].degreMax;
+    const libelle = (degres) => degres.map((x) => d.touches[x].nom).join(" \u2013 ");
+    const variantes = /* @__PURE__ */ new Map([[libelle(d.degres), d.degres]]);
+    for (let essai = 0; essai < 80 && variantes.size < 4; essai++) {
+      const v = [...d.degres];
+      for (let k = 0; k < (rng() < 0.7 ? 1 : 2); k++) {
+        const i = entre2(rng, 1, v.length - 1);
+        const possibles = [];
+        for (let x = 0; x <= max; x++) if (x !== v[i] && x !== v[i - 1] && x !== v[i + 1]) possibles.push(x);
+        if (possibles.length) v[i] = choisir2(rng, possibles);
+      }
+      variantes.set(libelle(v), v);
+    }
+    if (variantes.size < 4) return null;
+    const o = melanger2(rng, [...variantes.keys()]);
+    return {
+      q: `Tonalit\xE9 : ${d.tonalite}. \xC9coute l'accord de r\xE9f\xE9rence, puis la m\xE9lodie : elle part de la tonique (${d.touches[0].nom}). Quelles notes ?`,
+      o,
+      a: o.indexOf(libelle(d.degres)),
+      audio: { type: "melodie", reference: d.reference.map(midiVersTone2), notes: d.midi.map(midiVersTone2) },
+      exp: `Tu as entendu ${libelle(d.degres)}, soit les degr\xE9s ${d.degres.map((x) => x + 1).join(" - ")}. Astuce : chante la tonique dans ta t\xEAte et compte les marches de la gamme.`
+    };
+  }
+};
+var MAJEURES = ["I-IV-V-I", "I-V-vi-IV", "I-vi-IV-V", "I-IV-vi-V", "I-vi-ii-V"];
+var MINEURES = ["i-iv-v-i", "i-VI-III-VII", "i-VI-VII-i"];
+var HARMONIQUES = ["i-iv-V-i", "i-VII-VI-V"];
+var familleProgressionsOreille = {
+  id: "oreille-progressions",
+  module: "harmony",
+  lecon: "harm-c5-02",
+  titre: "Oreille : suites d'accords",
+  ecoute: true,
+  niveaux: ["suites majeures", "suites majeures et mineures", "avec le mineur harmonique (V majeur)"],
+  generer(niv, rng, contexte) {
+    const harmonique = niv === 3 && !!contexte?.completedLessons?.["scales-c6-01"];
+    const pool = niv === 1 ? MAJEURES : harmonique ? [...MAJEURES, ...MINEURES, ...HARMONIQUES] : [...MAJEURES, ...MINEURES];
+    const cle2 = choisir2(rng, pool), p = tirerProgression(rng, cle2);
+    const meme = melanger2(rng, pool.filter((k) => k !== cle2 && PROGRESSIONS[k].mineur === p.mineur));
+    const autre = melanger2(rng, pool.filter((k) => k !== cle2 && PROGRESSIONS[k].mineur !== p.mineur));
+    const o = melanger2(rng, [cle2, ...[...meme, ...autre].slice(0, 3)]).map(romainDe);
+    return {
+      q: "\xC9coute la suite d'accords (le premier accord est la tonique). Quels degr\xE9s ?",
+      o,
+      a: o.indexOf(romainDe(cle2)),
+      audio: { type: "suite", accords: p.accords.map((a) => a.map(midiVersTone2)) },
+      exp: `${p.romain}, ici en ${p.tonalite} : ${p.noms.join(" \u2013 ")}.${p.mineur ? " Majuscule = accord majeur, minuscule = accord mineur." : ""}`
     };
   }
 };
@@ -9989,6 +12541,10 @@ var FAMILLES = [
   familleBinaire,
   familleOreilleManche,
   familleFonctions,
+  familleIntervallesComplets,
+  familleSeptiemesOreille,
+  familleDicteeMelodique,
+  familleProgressionsOreille,
   familleLectureMesure,
   familleGeste
 ];
@@ -10430,8 +12986,9 @@ __export(ExercisesScreen_exports, {
 init_tokens();
 init_ThemeContext();
 init_Ti();
-import { useState as useState7, useEffect as useEffect6, useRef as useRef4, useMemo as useMemo2 } from "react";
+init_ui();
 init_Gropi();
+import { useState as useState7, useEffect as useEffect6, useRef as useRef4, useMemo as useMemo2 } from "react";
 import { Fragment as Fragment5, jsx as jsx9, jsxs as jsxs7 } from "react/jsx-runtime";
 var LEVEL_LABELS = { 1: "Fondamentaux", 2: "Interm\xE9diaire", 3: "Avanc\xE9" };
 var makeLevelColors = (C) => ({ 1: { bg: C.greenL, border: C.greenBorder, text: C.greenD, dot: C.green }, 2: { bg: C.amberL, border: C.amberBorder, text: C.amberD, dot: C.amber }, 3: { bg: C.pinkL, border: C.pinkBorder, text: C.pinkD, dot: C.pink } });
@@ -10445,6 +13002,7 @@ function ExercisesScreen({ state, dispatch, content, embedded = false }) {
   const [active, setActive] = useState7(null);
   const cats = [
     { id: "all", label: "Tous" },
+    { id: "debut", label: "Premiers pas" },
     { id: "neck", label: "Manche" },
     { id: "scales", label: "Gammes" },
     { id: "harmony", label: "Harmonie" },
@@ -10862,15 +13420,32 @@ init_tokens();
 init_ThemeContext();
 init_Ti();
 init_Gropi();
+init_ui();
 init_audioEngine();
-import { useState as useState8, useEffect as useEffect7, useRef as useRef5, useCallback } from "react";
+import { useState as useState8, useEffect as useEffect7, useRef as useRef5, useCallback, useMemo as useMemo3 } from "react";
+init_oreille();
 import { Fragment as Fragment6, jsx as jsx10, jsxs as jsxs8 } from "react/jsx-runtime";
 var MODES = [
-  { key: "interval", label: "Intervalles", icon: "arrows-up-down", desc: "Identifie l'\xE9cart entre deux notes" },
-  { key: "chord_quality", label: "Qualit\xE9 d'accord", icon: "music", desc: "Majeur, mineur, dominant..." },
-  { key: "chord_full", label: "Accord complet", icon: "music-plus", desc: "Nomme l'accord : La mineur, Do7..." },
-  { key: "progression", label: "Suites d'accords", icon: "list-numbers", desc: "Nomme la suite enti\xE8re" }
+  { key: "interval", label: "Intervalles", icon: "arrows-up-down" },
+  { key: "chord_quality", label: "Qualit\xE9 d'accord", icon: "music" },
+  { key: "chord_full", label: "Accord en tonalit\xE9", icon: "music-plus" },
+  { key: "progression", label: "Suites d'accords", icon: "list-numbers" },
+  { key: "dictation", label: "Dict\xE9e m\xE9lodique", icon: "notebook" }
 ];
+var SENS2 = [
+  { key: "ascending", label: "En montant" },
+  { key: "descending", label: "En descendant" },
+  { key: "harmonic", label: "Ensemble" },
+  { key: "mix", label: "M\xE9lange" }
+];
+var VIVIERS = {
+  interval: { ordre: ORDRE_INTERVALLES, depart: DEPART_INTERVALLES, nom: (x) => INTERVALLES[x].nom, unite: "intervalles" },
+  chord_quality: { ordre: ORDRE_QUALITES, depart: DEPART_QUALITES, nom: (x) => QUALITES[x].nom, unite: "qualit\xE9s" },
+  chord_full: { ordre: ORDRE_DEGRES, depart: DEPART_DEGRES, nom: (x) => x, unite: "degr\xE9s" },
+  progression: { ordre: ORDRE_PROGRESSIONS, depart: DEPART_PROGRESSIONS, nom: (x) => romainDe(x), unite: "suites" }
+};
+var SESSION_LENGTH = 8;
+var XP_PAR_REPONSE = 25;
 function shade(hex, amount) {
   const h = hex.replace("#", "");
   const num = parseInt(h, 16);
@@ -10885,14 +13460,27 @@ function EarTraining({ onBack, dispatch, state }) {
   const [audioReady, setAudioReady] = useState8(isAudioLoaded());
   const [audioError, setAudioError] = useState8(false);
   const [mode, setMode] = useState8("interval");
+  const [sens, setSens] = useState8("ascending");
+  const [libre, setLibre] = useState8(false);
   const [question, setQuestion] = useState8(null);
   const [selected, setSelected] = useState8(null);
+  const [saisie, setSaisie] = useState8([]);
   const [isPlaying, setIsPlaying] = useState8(false);
   const [score, setScore] = useState8({ correct: 0, total: 0 });
   const [sessionDone, setSessionDone] = useState8(false);
   const [answers, setAnswers] = useState8([]);
   const finTimerRef = useRef5(null);
-  const SESSION_LENGTH = 8;
+  const precedentRef = useRef5(null);
+  const hist = useMemo3(() => state?.reviewHistory || {}, [state?.reviewHistory]);
+  const idMode = `ear-${mode}`;
+  const cfg = VIVIERS[mode] || null;
+  const vivier = useMemo3(() => {
+    if (!cfg) return null;
+    if (libre) return { pool: cfg.ordre, nouveau: null, total: cfg.ordre.length };
+    return poolAdaptatif(cfg.ordre, cfg.depart, hist, (x) => cleItem(mode, x));
+  }, [cfg, libre, hist, mode]);
+  const niveauDictee = niveauProgressif(hist["ear-dictation"], SEUILS_DICTEE);
+  const precisionMode = precision(hist[idMode]);
   const annulerFinTimer = useCallback(() => {
     if (finTimerRef.current) {
       clearTimeout(finTimerRef.current);
@@ -10912,8 +13500,15 @@ function EarTraining({ onBack, dispatch, state }) {
     }
     setIsPlaying(false);
     setSelected(null);
-    setQuestion(generateEarTrainingQuestion(mode));
-  }, [mode, annulerFinTimer]);
+    setSaisie([]);
+    if (mode === "dictation") {
+      setQuestion(generateEarTrainingQuestion("dictation", { niveau: niveauDictee }));
+      return;
+    }
+    const cible = choisirItem(Math.random, vivier.pool, hist, (x) => cleItem(mode, x), precedentRef.current);
+    precedentRef.current = cible;
+    setQuestion(generateEarTrainingQuestion(mode, { pool: vivier.pool, cible, sens, toutesOptions: true }));
+  }, [mode, sens, vivier, hist, niveauDictee, annulerFinTimer]);
   useEffect7(() => {
     if (audioReady && !question) nextQuestion();
   }, [audioReady, question, nextQuestion]);
@@ -10924,8 +13519,8 @@ function EarTraining({ onBack, dispatch, state }) {
     } catch {
     }
   }, [annulerFinTimer]);
-  const playQuestion = async () => {
-    if (!question || isPlaying) return;
+  const lancer = async (fn, dureeMs2) => {
+    if (!fn) return;
     annulerFinTimer();
     setIsPlaying(true);
     try {
@@ -10933,14 +13528,16 @@ function EarTraining({ onBack, dispatch, state }) {
     } catch {
     }
     try {
-      await question.play();
+      await fn();
     } catch {
     }
-    const duree = question.durationMs ?? 2e3;
     finTimerRef.current = setTimeout(() => {
       finTimerRef.current = null;
       setIsPlaying(false);
-    }, duree);
+    }, dureeMs2 ?? 2e3);
+  };
+  const playQuestion = () => {
+    if (question && !isPlaying) lancer(question.play, question.durationMs);
   };
   const stopPlayback = () => {
     annulerFinTimer();
@@ -10950,31 +13547,31 @@ function EarTraining({ onBack, dispatch, state }) {
     }
     setIsPlaying(false);
   };
-  const playRef = async () => {
-    if (!question?.playReference) return;
-    try {
-      await unlockAudio();
-    } catch {
-    }
-    try {
-      await question.playReference();
-    } catch {
-    }
+  const enregistrer = (correct, item) => {
+    let h = updateReviewHistory(hist, idMode, correct);
+    if (item != null && mode !== "dictation") h = updateReviewHistory(h, cleItem(mode, item), correct);
+    dispatch?.({ type: "REVIEW_ANSWER", questionId: idMode, id: idMode, history: h, correct, xp: correct ? XP_PAR_REPONSE : 0 });
+    const newScore = { correct: score.correct + (correct ? 1 : 0), total: score.total + 1 };
+    setScore(newScore);
+    setAnswers((prev) => [...prev, { correct }]);
+    if (newScore.total >= SESSION_LENGTH) setTimeout(() => setSessionDone(true), 1600);
   };
   const handleAnswer = (option) => {
     if (selected !== null) return;
-    const key = mode === "interval" ? option.semitones : option.key;
-    const correct = key === question.answer;
-    setSelected(key);
-    const newScore = { correct: score.correct + (correct ? 1 : 0), total: score.total + 1 };
-    setScore(newScore);
-    setAnswers((prev) => [...prev, { question: question.options.find((o) => (mode === "interval" ? o.semitones : o.key) === question.answer)?.label, correct }]);
-    const itemId = `ear-${mode}`;
-    const newHistory = updateReviewHistory(state?.reviewHistory, itemId, correct);
-    dispatch?.({ type: "REVIEW_ANSWER", questionId: itemId, id: itemId, history: newHistory, correct, xp: correct ? 25 : 0 });
-    if (newScore.total >= SESSION_LENGTH) {
-      setTimeout(() => setSessionDone(true), 1200);
+    setSelected(option.key);
+    enregistrer(option.key === question.answer, question.answer);
+  };
+  const taperNote = (degre) => {
+    if (selected !== null || !question) return;
+    const s = [...saisie, degre];
+    setSaisie(s);
+    if (s.length === question.degres.length) {
+      setSelected("dictee");
+      enregistrer(s.every((d, i) => d === question.degres[i]), null);
     }
+  };
+  const effacerNote = () => {
+    if (selected === null) setSaisie((s) => s.slice(0, -1));
   };
   const changeMode = (m) => {
     annulerFinTimer();
@@ -10982,39 +13579,60 @@ function EarTraining({ onBack, dispatch, state }) {
       stopAll();
     } catch {
     }
+    precedentRef.current = null;
     setIsPlaying(false);
     setMode(m);
     setQuestion(null);
     setSelected(null);
+    setSaisie([]);
     setScore({ correct: 0, total: 0 });
     setAnswers([]);
     setSessionDone(false);
   };
+  const changeSens = (s) => {
+    setSens(s);
+    setQuestion(null);
+  };
+  const basculerLibre = () => {
+    setLibre((v) => !v);
+    setQuestion(null);
+  };
+  const xpReelle = state?.lastGain?.kind === "review" ? state.lastGain.xp || 0 : 0;
   if (sessionDone) {
     const pct = Math.round(score.correct / score.total * 100);
     return /* @__PURE__ */ jsxs8("div", { style: { padding: "24px 16px 32px", display: "flex", flexDirection: "column", gap: 14 }, children: [
       /* @__PURE__ */ jsxs8("div", { style: { textAlign: "center", padding: "20px 0" }, children: [
         /* @__PURE__ */ jsx10("div", { style: { marginBottom: 10 }, children: /* @__PURE__ */ jsx10(Ti, { name: pct >= 75 ? "headphones" : pct >= 50 ? "ear" : "book-2", size: 44, color: pct >= 75 ? C.green : pct >= 50 ? C.amber : C.text3 }) }),
-        /* @__PURE__ */ jsx10("h1", { style: { margin: 0, fontSize: 22, fontWeight: 700, color: C.text, fontFamily: FONTS.title }, children: pct >= 75 ? "Belle oreille !" : pct >= 50 ? "Bon travail !" : "Continue l'entra\xEEnement !" })
+        /* @__PURE__ */ jsx10("h1", { style: { margin: 0, fontSize: 22, fontWeight: 700, color: C.text, fontFamily: FONTS.title }, children: pct >= 75 ? "Belle oreille !" : pct >= 50 ? "Bon travail !" : "Continue l'entra\xEEnement !" }),
+        cfg && vivier && /* @__PURE__ */ jsxs8("p", { style: { margin: "8px 0 0", fontSize: 12.5, color: C.text2, fontFamily: FONTS.ui }, children: [
+          "Ton vivier : ",
+          vivier.pool.length,
+          " ",
+          cfg.unite,
+          " sur ",
+          vivier.total,
+          "."
+        ] }),
+        mode === "dictation" && /* @__PURE__ */ jsxs8("p", { style: { margin: "8px 0 0", fontSize: 12.5, color: C.text2, fontFamily: FONTS.ui }, children: [
+          "Niveau ",
+          niveauDictee,
+          "/",
+          NIVEAUX_DICTEE.length,
+          " : ",
+          NIVEAUX_DICTEE[niveauDictee - 1].libelle,
+          "."
+        ] })
       ] }),
       /* @__PURE__ */ jsxs8("div", { style: { background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: "16px" }, children: [
         /* @__PURE__ */ jsxs8("div", { style: { display: "flex", justifyContent: "space-around" }, children: [
           /* @__PURE__ */ jsxs8("div", { style: { textAlign: "center" }, children: [
-            /* @__PURE__ */ jsx10("div", { style: { fontSize: 28, fontWeight: 700, color: C.green }, children: score.correct }),
+            /* @__PURE__ */ jsx10("div", { style: { fontSize: 28, fontWeight: 700, color: C.greenInk }, children: score.correct }),
             /* @__PURE__ */ jsx10("div", { style: { fontSize: 11, color: C.text3, fontFamily: FONTS.ui }, children: "Correctes" })
           ] }),
           /* @__PURE__ */ jsx10("div", { style: { width: 1, background: C.border } }),
           /* @__PURE__ */ jsxs8("div", { style: { textAlign: "center" }, children: [
-            /* @__PURE__ */ jsx10("div", { style: { fontSize: 28, fontWeight: 700, color: C.coral }, children: score.total - score.correct }),
+            /* @__PURE__ */ jsx10("div", { style: { fontSize: 28, fontWeight: 700, color: C.coralInk }, children: score.total - score.correct }),
             /* @__PURE__ */ jsx10("div", { style: { fontSize: 11, color: C.text3, fontFamily: FONTS.ui }, children: "Rat\xE9es" })
-          ] }),
-          /* @__PURE__ */ jsx10("div", { style: { width: 1, background: C.border } }),
-          /* @__PURE__ */ jsxs8("div", { style: { textAlign: "center" }, children: [
-            /* @__PURE__ */ jsxs8("div", { style: { fontSize: 28, fontWeight: 700, color: C.primary }, children: [
-              "+",
-              score.correct * 25
-            ] }),
-            /* @__PURE__ */ jsx10("div", { style: { fontSize: 11, color: C.text3, fontFamily: FONTS.ui }, children: "XP" })
           ] })
         ] }),
         /* @__PURE__ */ jsx10("div", { style: { marginTop: 14, height: 6, background: C.border, borderRadius: 3, overflow: "hidden" }, children: /* @__PURE__ */ jsx10("div", { style: { height: "100%", width: `${pct}%`, background: pct >= 75 ? C.green : pct >= 50 ? C.primary : C.coral, borderRadius: 3 } }) })
@@ -11025,38 +13643,106 @@ function EarTraining({ onBack, dispatch, state }) {
           setAnswers([]);
           setSessionDone(false);
           nextQuestion();
-        }, className: "gr-focus", style: { flex: 1, minHeight: 48, padding: "13px", borderRadius: R.md, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: FONTS.ui }, children: "Recommencer" }),
-        /* @__PURE__ */ jsx10("button", { onClick: onBack, className: "gr-focus", style: { flex: 1, minHeight: 48, padding: "13px", borderRadius: R.md, border: "none", background: C.primary, color: C.onPrimaryBtn, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }, children: "Retour" })
+        }, className: "gr-focus", style: { flex: 1, minHeight: 48, padding: "13px", borderRadius: R.md, border: `1px solid ${C.borderStrong}`, background: C.surface, color: C.text, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: FONTS.ui }, children: "Recommencer" }),
+        /* @__PURE__ */ jsx10("button", { onClick: onBack, className: "gr-focus", style: { flex: 1, minHeight: 48, padding: "13px", borderRadius: R.md, border: "none", background: C.primaryBtn, color: C.onPrimaryBtn, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }, children: "Retour" })
       ] })
     ] });
   }
+  const repondu = selected !== null;
+  const juste = mode === "dictation" ? repondu && question && saisie.every((d, i) => d === question.degres[i]) : repondu && selected === question?.answer;
+  const bonneOption = question?.options?.find((o) => o.key === question.answer);
+  const options = !question?.options ? [] : mode === "interval" ? [...question.options].sort((a, b) => a.key - b.key) : question.options;
+  const nbJustes = mode === "dictation" && repondu ? saisie.filter((d, i) => d === question.degres[i]).length : 0;
+  const chip = (actif) => ({
+    minHeight: 44,
+    padding: "8px 12px",
+    borderRadius: R.md,
+    cursor: "pointer",
+    fontFamily: FONTS.ui,
+    fontSize: 12.5,
+    border: `1.5px solid ${actif ? C.primary : C.borderStrong}`,
+    background: actif ? C.primaryL : C.surface,
+    color: actif ? C.primaryD : C.text2,
+    fontWeight: actif ? 700 : 500
+  });
   return /* @__PURE__ */ jsxs8("div", { style: { display: "flex", flexDirection: "column", minHeight: "100vh", background: C.bg }, children: [
-    /* @__PURE__ */ jsxs8("div", { style: { padding: "14px 16px 12px", display: "flex", alignItems: "center", gap: 10, borderBottom: `1px solid ${C.border}`, background: C.surface, position: "sticky", top: 0, zIndex: 10 }, children: [
-      /* @__PURE__ */ jsx10("button", { onClick: onBack, "aria-label": "Retour", className: "gr-focus", style: { width: 40, height: 40, margin: "-8px 0 -8px -8px", background: "none", border: "none", borderRadius: R.sm, cursor: "pointer", color: C.text2, padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }, children: /* @__PURE__ */ jsx10(Ti, { name: "chevron-left", size: 22 }) }),
-      /* @__PURE__ */ jsxs8("div", { style: { flex: 1 }, children: [
-        /* @__PURE__ */ jsx10("h1", { style: { margin: 0, fontSize: 16, fontWeight: 700, color: C.text, fontFamily: FONTS.title }, children: "Ear Training" }),
+    /* @__PURE__ */ jsxs8("div", { style: { padding: "12px 16px", display: "flex", alignItems: "center", gap: 10, borderBottom: `1px solid ${C.border}`, background: C.surface, position: "sticky", top: 0, zIndex: 10 }, children: [
+      /* @__PURE__ */ jsx10(BackButton, { onClick: onBack }),
+      /* @__PURE__ */ jsxs8("div", { style: { flex: 1, minWidth: 0 }, children: [
+        /* @__PURE__ */ jsx10("h1", { style: { margin: 0, fontSize: 16, fontWeight: 700, color: C.text, fontFamily: FONTS.title }, children: "Oreille" }),
         /* @__PURE__ */ jsxs8("div", { role: "status", "aria-live": "polite", style: { fontSize: 11, color: C.text3, fontFamily: FONTS.ui }, children: [
           score.total,
           "/",
           SESSION_LENGTH,
           " \xB7 ",
           score.correct,
-          " correctes"
+          " correcte",
+          score.correct > 1 ? "s" : ""
         ] })
       ] }),
-      /* @__PURE__ */ jsx10(Gropi, { pose: "listen", size: 46, anim: "bob" }),
-      /* @__PURE__ */ jsx10("div", { style: { fontSize: 13, fontWeight: 600, color: C.primary, fontFamily: FONTS.ui }, children: score.total > 0 ? `${Math.round(score.correct / score.total * 100)}%` : "" })
+      /* @__PURE__ */ jsx10(Gropi, { pose: "listen", size: 46, anim: "bob" })
     ] }),
     /* @__PURE__ */ jsxs8("div", { style: { padding: "14px 16px", display: "flex", flexDirection: "column", gap: 12 }, children: [
       /* @__PURE__ */ jsx10("div", { "aria-hidden": "true", style: { display: "flex", gap: 3 }, children: Array.from({ length: SESSION_LENGTH }).map((_, i) => {
         const ans = answers[i];
         return /* @__PURE__ */ jsx10("div", { style: { flex: 1, height: 5, borderRadius: 3, background: ans ? ans.correct ? C.green : C.coral : i === score.total ? C.primary : C.border, transition: "background 0.3s" } }, i);
       }) }),
-      /* @__PURE__ */ jsx10("div", { style: { display: "flex", background: C.surface2, borderRadius: R.lg, padding: 3, gap: 2 }, children: MODES.map((m) => /* @__PURE__ */ jsx10("button", { onClick: () => changeMode(m.key), "aria-pressed": mode === m.key, className: "gr-focus", style: { flex: 1, minHeight: 40, padding: "8px 10px", borderRadius: R.md, border: "none", cursor: "pointer", fontFamily: FONTS.ui, background: mode === m.key ? C.surface : "transparent", boxShadow: mode === m.key ? "0 1px 4px rgba(0,0,0,0.08)" : "none", color: mode === m.key ? C.text : C.text3, fontSize: 12, fontWeight: mode === m.key ? 600 : 400 }, children: m.label }, m.key)) }),
-      audioError && /* @__PURE__ */ jsx10("div", { role: "alert", style: { background: C.coralL, border: `1px solid ${C.coralBorder}`, borderRadius: R.md, padding: "12px 14px", fontSize: 12, color: C.coralD, fontFamily: FONTS.ui }, children: "Les \xE9chantillons audio n'ont pas \xE9t\xE9 trouv\xE9s. V\xE9rifie que les fichiers .mp3 sont dans public/audio/guitar/" }),
+      /* @__PURE__ */ jsx10("div", { role: "group", "aria-label": "Mode d'entra\xEEnement", style: { display: "flex", flexWrap: "wrap", gap: 6 }, children: MODES.map((m) => /* @__PURE__ */ jsxs8(
+        "button",
+        {
+          onClick: () => changeMode(m.key),
+          "aria-pressed": mode === m.key,
+          className: "gr-focus",
+          style: { ...chip(mode === m.key), display: "inline-flex", alignItems: "center", gap: 6, flex: "1 1 auto" },
+          children: [
+            /* @__PURE__ */ jsx10(Ti, { name: m.icon, size: 15, color: mode === m.key ? C.primaryD : C.text3 }),
+            m.label
+          ]
+        },
+        m.key
+      )) }),
+      mode === "interval" && /* @__PURE__ */ jsx10("div", { role: "group", "aria-label": "Sens de l'intervalle", style: { display: "flex", flexWrap: "wrap", gap: 6 }, children: SENS2.map((s) => /* @__PURE__ */ jsx10("button", { onClick: () => changeSens(s.key), "aria-pressed": sens === s.key, className: "gr-focus", style: { ...chip(sens === s.key), flex: "1 1 auto" }, children: s.label }, s.key)) }),
+      /* @__PURE__ */ jsxs8("div", { style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", background: C.surface2, borderRadius: R.md, padding: "8px 12px" }, children: [
+        /* @__PURE__ */ jsxs8("div", { style: { flex: 1, minWidth: 160, fontSize: 12, color: C.text2, fontFamily: FONTS.ui, lineHeight: 1.45 }, children: [
+          cfg && vivier && /* @__PURE__ */ jsxs8(Fragment6, { children: [
+            "Vivier : ",
+            /* @__PURE__ */ jsxs8("b", { style: { color: C.text }, children: [
+              vivier.pool.length,
+              "/",
+              vivier.total
+            ] }),
+            " ",
+            cfg.unite
+          ] }),
+          mode === "dictation" && /* @__PURE__ */ jsxs8(Fragment6, { children: [
+            "Niveau ",
+            /* @__PURE__ */ jsxs8("b", { style: { color: C.text }, children: [
+              niveauDictee,
+              "/",
+              NIVEAUX_DICTEE.length
+            ] }),
+            " \xB7 ",
+            NIVEAUX_DICTEE[niveauDictee - 1].libelle
+          ] }),
+          precisionMode != null && /* @__PURE__ */ jsxs8(Fragment6, { children: [
+            " \xB7 pr\xE9cision ",
+            precisionMode,
+            " %"
+          ] })
+        ] }),
+        cfg && /* @__PURE__ */ jsx10("button", { onClick: basculerLibre, "aria-pressed": libre, className: "gr-focus", style: { ...chip(libre), minHeight: 40, padding: "6px 10px", fontSize: 11.5 }, children: libre ? "Vivier complet" : "Tout d\xE9bloquer" })
+      ] }),
+      cfg && vivier?.nouveau != null && /* @__PURE__ */ jsxs8("div", { role: "status", style: { display: "flex", gap: 8, alignItems: "center", background: C.primaryL, border: `1px solid ${C.primaryBorder}`, borderRadius: R.md, padding: "8px 12px", fontSize: 12, color: C.primaryD, fontFamily: FONTS.ui }, children: [
+        /* @__PURE__ */ jsx10(Ti, { name: "sparkles", size: 15, color: C.primaryD }),
+        /* @__PURE__ */ jsxs8("span", { children: [
+          "Nouveau dans ton vivier : ",
+          /* @__PURE__ */ jsx10("b", { children: cfg.nom(vivier.nouveau) })
+        ] })
+      ] }),
+      audioError && /* @__PURE__ */ jsx10("div", { role: "alert", style: { background: C.coralL, border: `1px solid ${C.coralBorder}`, borderRadius: R.md, padding: "12px 14px", fontSize: 12, color: C.coralD, fontFamily: FONTS.ui }, children: "Les \xE9chantillons audio n'ont pas pu \xEAtre charg\xE9s. V\xE9rifie ta connexion, puis reviens sur cet \xE9cran." }),
       !audioReady && !audioError && /* @__PURE__ */ jsx10("div", { role: "status", "aria-live": "polite", style: { background: C.amberL, border: `1px solid ${C.amberBorder}`, borderRadius: R.md, padding: "12px 14px", fontSize: 12, color: C.amberD, fontFamily: FONTS.ui }, children: "Chargement des \xE9chantillons audio\u2026" }),
       audioReady && question && /* @__PURE__ */ jsxs8(Fragment6, { children: [
-        /* @__PURE__ */ jsxs8("div", { style: { textAlign: "center", padding: "16px 0 8px" }, children: [
+        /* @__PURE__ */ jsxs8("div", { style: { textAlign: "center", padding: "10px 0 4px" }, children: [
           /* @__PURE__ */ jsx10(
             "button",
             {
@@ -11080,67 +13766,131 @@ function EarTraining({ onBack, dispatch, state }) {
               children: /* @__PURE__ */ jsx10(Ti, { name: isPlaying ? "player-pause" : "player-play", size: 28, color: C.onPrimaryBtn })
             }
           ),
-          /* @__PURE__ */ jsx10("div", { style: { fontSize: 12, color: C.text3, fontFamily: FONTS.ui, marginTop: 10 }, children: mode === "interval" ? "Ecoute l'intervalle" : mode === "progression" ? "Ecoute la suite d'accords" : "Ecoute l'accord" }),
-          question.playReference && selected === null && /* @__PURE__ */ jsxs8("button", { onClick: playRef, className: "gr-focus", style: {
-            marginTop: 12,
-            minHeight: 40,
-            padding: "7px 14px",
-            borderRadius: 999,
-            border: `1.5px solid ${C.border}`,
-            background: C.surface,
-            color: C.text2,
-            fontSize: 11.5,
-            fontWeight: 700,
-            fontFamily: FONTS.ui,
-            cursor: "pointer",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6
-          }, children: [
-            /* @__PURE__ */ jsx10(Ti, { name: "volume", size: 13, color: C.text3 }),
-            "Entendre le ",
-            question.referenceLabel,
-            " de r\xE9f\xE9rence"
+          /* @__PURE__ */ jsx10("div", { style: { fontSize: 13, color: C.text2, fontFamily: FONTS.ui, marginTop: 10, lineHeight: 1.45 }, children: question.consigne }),
+          /* @__PURE__ */ jsxs8("div", { style: { display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap", marginTop: 10 }, children: [
+            question.playReference && /* @__PURE__ */ jsxs8("button", { onClick: () => lancer(question.playReference, 2600), className: "gr-focus", style: { ...chip(false), borderRadius: 999, display: "inline-flex", alignItems: "center", gap: 6 }, children: [
+              /* @__PURE__ */ jsx10(Ti, { name: "volume", size: 14, color: C.text3 }),
+              "Entendre ",
+              question.referenceLabel
+            ] }),
+            question.playArpege && /* @__PURE__ */ jsxs8("button", { onClick: () => lancer(question.playArpege, question.arpegeDurationMs), className: "gr-focus", style: { ...chip(false), borderRadius: 999, display: "inline-flex", alignItems: "center", gap: 6 }, children: [
+              /* @__PURE__ */ jsx10(Ti, { name: "stairs", size: 14, color: C.text3 }),
+              "\xC9couter note \xE0 note"
+            ] })
           ] }),
-          selected === null && /* @__PURE__ */ jsx10("div", { style: { fontSize: 11, color: C.text3, fontFamily: FONTS.ui, marginTop: 4, fontStyle: "italic" }, children: "Tu peux r\xE9\xE9couter autant de fois que tu veux" })
+          !repondu && /* @__PURE__ */ jsx10("div", { style: { fontSize: 11, color: C.text3, fontFamily: FONTS.ui, marginTop: 8, fontStyle: "italic" }, children: "Tu peux r\xE9\xE9couter autant de fois que tu veux" })
         ] }),
-        /* @__PURE__ */ jsx10("div", { style: { display: "flex", flexDirection: "column", gap: 8 }, children: question.options.map((opt, i) => {
-          const key = mode === "interval" ? opt.semitones : opt.key;
-          const isAnswer = key === question.answer;
-          const isSelected = key === selected;
-          let bg = C.surface, border = `1px solid ${C.border}`, col = C.text;
-          if (selected !== null) {
-            if (isAnswer) {
-              bg = C.greenL;
-              border = `1px solid ${C.green}`;
-              col = C.greenD;
-            } else if (isSelected) {
-              bg = C.coralL;
-              border = `1px solid ${C.coral}`;
-              col = C.coralD;
-            }
-          }
-          const suffixe3 = selected === null ? "" : isAnswer ? ", bonne r\xE9ponse" : isSelected ? ", ta r\xE9ponse, incorrecte" : "";
-          return /* @__PURE__ */ jsxs8(
+        mode === "dictation" ? /* @__PURE__ */ jsxs8(Fragment6, { children: [
+          /* @__PURE__ */ jsx10("div", { "aria-label": "Ta m\xE9lodie", style: { display: "flex", gap: 6, justifyContent: "center" }, children: question.degres.map((attendu, i) => {
+            const d = saisie[i];
+            const ok = repondu && d === attendu;
+            const ko = repondu && d !== attendu;
+            return /* @__PURE__ */ jsxs8("div", { style: {
+              flex: "1 1 0",
+              maxWidth: 76,
+              minHeight: 56,
+              borderRadius: R.md,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "4px 2px",
+              border: `1.5px ${d == null ? "dashed" : "solid"} ${ok ? C.green : ko ? C.coral : d == null ? C.borderStrong : C.primary}`,
+              background: ok ? C.greenL : ko ? C.coralL : C.surface
+            }, children: [
+              /* @__PURE__ */ jsx10("span", { style: { fontSize: 13.5, fontWeight: 700, color: ok ? C.greenD : ko ? C.coralD : C.text, fontFamily: FONTS.title }, children: d != null ? question.touches[d].nom : "\xB7" }),
+              ko && /* @__PURE__ */ jsx10("span", { style: { fontSize: 11, color: C.coralD, fontFamily: FONTS.ui }, children: question.touches[attendu].nom })
+            ] }, i);
+          }) }),
+          /* @__PURE__ */ jsx10("div", { role: "group", "aria-label": "Notes de la gamme", style: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }, children: question.touches.map((t) => /* @__PURE__ */ jsxs8(
             "button",
             {
-              onClick: () => handleAnswer(opt),
-              disabled: selected !== null,
-              "aria-label": suffixe3 ? `${opt.label}${suffixe3}` : void 0,
+              onClick: () => taperNote(t.degre),
+              disabled: repondu,
               className: "gr-focus",
-              style: { padding: "14px 16px", minHeight: 48, borderRadius: 12, border, background: bg, cursor: selected !== null ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", fontFamily: FONTS.title },
+              "aria-label": `${t.nom}, degr\xE9 ${t.numero}`,
+              style: {
+                minHeight: 52,
+                borderRadius: R.md,
+                border: `1.5px solid ${C.borderStrong}`,
+                background: C.surface,
+                cursor: repondu ? "default" : "pointer",
+                opacity: repondu ? 0.6 : 1,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 1,
+                padding: "4px 2px"
+              },
               children: [
-                /* @__PURE__ */ jsx10("span", { style: { fontSize: 14, fontWeight: 500, color: col }, children: opt.label }),
-                selected !== null && isAnswer && /* @__PURE__ */ jsx10(Ti, { name: "check", size: 18, color: C.green }),
-                selected !== null && isSelected && !isAnswer && /* @__PURE__ */ jsx10(Ti, { name: "x", size: 18, color: C.coral })
+                /* @__PURE__ */ jsx10("span", { style: { fontSize: 14, fontWeight: 700, color: C.text, fontFamily: FONTS.title }, children: t.nom }),
+                /* @__PURE__ */ jsx10("span", { style: { fontSize: 11, color: C.text3, fontFamily: FONTS.ui }, children: t.numero })
               ]
             },
-            i
-          );
-        }) }),
-        selected !== null && /* @__PURE__ */ jsxs8("div", { style: { marginTop: 4 }, children: [
-          /* @__PURE__ */ jsx10("div", { role: "status", "aria-live": "assertive", style: { background: selected === question.answer ? C.greenL : C.coralL, border: `1px solid ${selected === question.answer ? C.greenBorder : C.coralBorder}`, borderRadius: R.md, padding: "10px 14px", marginBottom: 10, fontSize: 12, color: selected === question.answer ? C.greenD : C.coralD, fontFamily: FONTS.ui, lineHeight: 1.5 }, children: selected === question.answer ? "Correct ! +25 XP" : `La bonne r\xE9ponse \xE9tait : ${question.options.find((o) => (mode === "interval" ? o.semitones : o.key) === question.answer)?.label}` }),
-          score.total < SESSION_LENGTH && /* @__PURE__ */ jsx10("button", { onClick: nextQuestion, style: { width: "100%", padding: "13px", borderRadius: R.md, border: "none", background: C.primary, color: C.onPrimaryBtn, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }, children: "Question suivante" })
+            t.degre
+          )) }),
+          !repondu && /* @__PURE__ */ jsxs8("button", { onClick: effacerNote, disabled: !saisie.length, className: "gr-focus", style: { ...chip(false), alignSelf: "center", opacity: saisie.length ? 1 : 0.5, display: "inline-flex", alignItems: "center", gap: 6 }, children: [
+            /* @__PURE__ */ jsx10(Ti, { name: "arrow-left", size: 15, color: C.text3 }),
+            "Effacer la derni\xE8re note"
+          ] })
+        ] }) : (
+          /* Réponse : choix */
+          /* @__PURE__ */ jsx10("div", { style: { display: "grid", gridTemplateColumns: options.length > 4 ? "repeat(2, 1fr)" : "1fr", gap: 8 }, children: options.map((opt) => {
+            const isAnswer = opt.key === question.answer;
+            const isSelected = opt.key === selected;
+            let bg = C.surface, border = `1px solid ${C.borderStrong}`, col = C.text;
+            if (repondu) {
+              if (isAnswer) {
+                bg = C.greenL;
+                border = `1px solid ${C.green}`;
+                col = C.greenD;
+              } else if (isSelected) {
+                bg = C.coralL;
+                border = `1px solid ${C.coral}`;
+                col = C.coralD;
+              }
+            }
+            const suffixe3 = !repondu ? "" : isAnswer ? ", bonne r\xE9ponse" : isSelected ? ", ta r\xE9ponse, incorrecte" : "";
+            return /* @__PURE__ */ jsxs8(
+              "button",
+              {
+                onClick: () => handleAnswer(opt),
+                disabled: repondu,
+                "aria-label": suffixe3 ? `${opt.label}${suffixe3}` : void 0,
+                className: "gr-focus",
+                style: { padding: "12px 14px", minHeight: 52, borderRadius: 12, border, background: bg, cursor: repondu ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, fontFamily: FONTS.title, textAlign: "left" },
+                children: [
+                  /* @__PURE__ */ jsx10("span", { style: { fontSize: 14, fontWeight: 500, color: col }, children: opt.label }),
+                  repondu && isAnswer && /* @__PURE__ */ jsx10(Ti, { name: "check", size: 18, color: C.green }),
+                  repondu && isSelected && !isAnswer && /* @__PURE__ */ jsx10(Ti, { name: "x", size: 18, color: C.coral })
+                ]
+              },
+              String(opt.key)
+            );
+          }) })
+        ),
+        repondu && /* @__PURE__ */ jsxs8("div", { style: { marginTop: 4 }, children: [
+          /* @__PURE__ */ jsxs8("div", { role: "status", "aria-live": "assertive", style: { background: juste ? C.greenL : C.coralL, border: `1px solid ${juste ? C.greenBorder : C.coralBorder}`, borderRadius: R.md, padding: "10px 14px", marginBottom: 10, fontSize: 12.5, color: juste ? C.greenD : C.coralD, fontFamily: FONTS.ui, lineHeight: 1.5 }, children: [
+            /* @__PURE__ */ jsxs8("div", { style: { fontWeight: 700 }, children: [
+              mode === "dictation" ? juste ? "M\xE9lodie juste !" : `${nbJustes} note${nbJustes > 1 ? "s" : ""} juste${nbJustes > 1 ? "s" : ""} sur ${question.degres.length}.` : juste ? "Correct !" : `La bonne r\xE9ponse \xE9tait : ${bonneOption?.label}`,
+              juste && xpReelle > 0 ? ` +${xpReelle} XP` : ""
+            ] }),
+            mode === "dictation" && /* @__PURE__ */ jsxs8("div", { children: [
+              "M\xE9lodie : ",
+              question.noms.join(" \u2013 "),
+              " (degr\xE9s ",
+              question.degres.map((d) => d + 1).join(" - "),
+              ")."
+            ] }),
+            mode === "interval" && /* @__PURE__ */ jsxs8("div", { children: [
+              question.detail,
+              ". Rep\xE8re : ",
+              question.repere
+            ] }),
+            mode !== "dictation" && mode !== "interval" && question.repere && /* @__PURE__ */ jsx10("div", { children: question.repere })
+          ] }),
+          score.total < SESSION_LENGTH && /* @__PURE__ */ jsx10("button", { onClick: nextQuestion, className: "gr-focus", style: { width: "100%", minHeight: 48, padding: "13px", borderRadius: R.md, border: "none", background: C.primaryBtn, color: C.onPrimaryBtn, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }, children: "Question suivante" })
         ] })
       ] })
     ] })
@@ -11152,11 +13902,12 @@ var JamSession_exports = {};
 __export(JamSession_exports, {
   JamSession: () => JamSession
 });
-import { useState as useState12, useMemo as useMemo4, useEffect as useEffect10, useEffectEvent as useEffectEvent3, useRef as useRef8, useCallback as useCallback3 } from "react";
+import { useState as useState12, useMemo as useMemo5, useEffect as useEffect10, useEffectEvent as useEffectEvent3, useRef as useRef8, useCallback as useCallback3 } from "react";
 init_tokens();
 init_ThemeContext();
 init_Ti();
 init_Gropi();
+init_ui();
 init_Fretboard();
 init_fretboardUtils();
 init_orthographe();
@@ -11182,6 +13933,8 @@ var COMP_PATTERNS = {
       { beat: 2.5, dur: "8n", vel: 0.55 },
       { beat: 3, dur: "4n", vel: 0.62 }
     ] },
+    // Freddie Green : quatre noires courtes et légères, le tapis du swing.
+    { id: "quatre", weight: 0.12, hits: [0, 1, 2, 3].map((b) => ({ beat: b, dur: "8n", vel: b % 2 === 1 ? 0.62 : 0.56 })) },
     { id: "respire", weight: 0.12, hits: [
       { beat: 0, dur: "2n", vel: 0.66 }
     ] }
@@ -11209,8 +13962,121 @@ var COMP_PATTERNS = {
     { id: "respire", weight: 0.08, hits: [
       { beat: 0, dur: "2n", vel: 0.64 }
     ] }
+  ],
+  // ── Rock : croches « étouffées » (durées courtes = palm mute) ─────────
+  rock8: [
+    { id: "croches", weight: 0.36, hits: [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5].map((b) => ({ beat: b, dur: "16n", vel: b % 1 === 0 ? 0.72 : 0.56 })) },
+    { id: "pousse", weight: 0.24, hits: [
+      { beat: 0, dur: "8n", vel: 0.74 },
+      { beat: 0.5, dur: "16n", vel: 0.56 },
+      { beat: 1, dur: "16n", vel: 0.62 },
+      { beat: 1.5, dur: "16n", vel: 0.56 },
+      { beat: 2, dur: "8n", vel: 0.72 },
+      { beat: 3.5, dur: "8n", vel: 0.68, anticipate: true }
+    ] },
+    { id: "temps", weight: 0.22, hits: [0, 1, 2, 3].map((b) => ({ beat: b, dur: "8n", vel: b % 2 === 0 ? 0.74 : 0.64 })) },
+    { id: "accents", weight: 0.18, hits: [
+      { beat: 0, dur: "4n", vel: 0.76 },
+      { beat: 1.5, dur: "16n", vel: 0.6 },
+      { beat: 2, dur: "16n", vel: 0.62 },
+      { beat: 2.5, dur: "16n", vel: 0.58 },
+      { beat: 3, dur: "8n", vel: 0.7 }
+    ] },
+    { id: "respire", weight: 0.08, hits: [
+      { beat: 0, dur: "2n", vel: 0.7 },
+      { beat: 2, dur: "2n", vel: 0.62 }
+    ] }
+  ],
+  // ── Funk 16 : « chank » secs en doubles-croches ──────────────────────
+  chank16: [
+    { id: "backbeat16", weight: 0.3, hits: [
+      { beat: 1, dur: "16n", vel: 0.74 },
+      { beat: 3, dur: "16n", vel: 0.74 },
+      { beat: 3.75, dur: "16n", vel: 0.56 }
+    ] },
+    { id: "syncope", weight: 0.28, hits: [
+      { beat: 0, dur: "16n", vel: 0.72 },
+      { beat: 0.75, dur: "16n", vel: 0.6 },
+      { beat: 1.5, dur: "16n", vel: 0.62 },
+      { beat: 2.25, dur: "16n", vel: 0.58 },
+      { beat: 3, dur: "16n", vel: 0.7 }
+    ] },
+    { id: "double", weight: 0.24, hits: [
+      { beat: 1, dur: "16n", vel: 0.72 },
+      { beat: 1.25, dur: "16n", vel: 0.56 },
+      { beat: 3, dur: "16n", vel: 0.72 },
+      { beat: 3.25, dur: "16n", vel: 0.56 }
+    ] },
+    { id: "anticipe", weight: 0.18, hits: [
+      { beat: 0, dur: "16n", vel: 0.7 },
+      { beat: 2, dur: "16n", vel: 0.6 },
+      { beat: 3.75, dur: "16n", vel: 0.66, anticipate: true }
+    ] },
+    { id: "respire", weight: 0.08, hits: [
+      { beat: 0, dur: "4n", vel: 0.64 }
+    ] }
+  ],
+  // ── Bossa : la « batida » de guitare, sur deux mesures ───────────────
+  // `phase` : 0 = 1re mesure du cycle, 1 = 2e. Ensemble, A puis B donnent
+  // la figure syncopée classique (x.x..x.x | .x..x.x.) ; l'anticipation du
+  // & du 4 annonce l'accord suivant.
+  bossa: [
+    { id: "batida-a", weight: 0.34, phase: 0, hits: [
+      { beat: 0, dur: "8n", vel: 0.64 },
+      { beat: 1, dur: "8n", vel: 0.58 },
+      { beat: 2.5, dur: "8n", vel: 0.62 },
+      { beat: 3.5, dur: "8n", vel: 0.6, anticipate: true }
+    ] },
+    { id: "batida-b", weight: 0.34, phase: 1, hits: [
+      { beat: 0.5, dur: "8n", vel: 0.6 },
+      { beat: 2, dur: "8n", vel: 0.62 },
+      { beat: 3, dur: "8n", vel: 0.58 }
+    ] },
+    { id: "batida-a2", weight: 0.16, phase: 0, hits: [
+      { beat: 0, dur: "4n", vel: 0.64 },
+      { beat: 1.5, dur: "8n", vel: 0.58 },
+      { beat: 3, dur: "8n", vel: 0.62 }
+    ] },
+    { id: "batida-b2", weight: 0.16, phase: 1, hits: [
+      { beat: 0.5, dur: "8n", vel: 0.6 },
+      { beat: 1.5, dur: "8n", vel: 0.56 },
+      { beat: 3, dur: "8n", vel: 0.6 },
+      { beat: 3.5, dur: "8n", vel: 0.6, anticipate: true }
+    ] },
+    { id: "respire", weight: 0.08, hits: [
+      { beat: 0, dur: "2n", vel: 0.62 }
+    ] }
+  ],
+  // ── Ballade : arpèges en croches ─────────────────────────────────────
+  // `voice` = indice de la note dans le voicing (grave → aigu), joué seul ;
+  // sans `voice`, l'accord entier.
+  arpeggio8: [
+    { id: "montant", weight: 0.32, hits: [0, 1, 2, 3, 2, 3, 2, 1].map((v, k) => ({ beat: k / 2, voice: v, dur: "4n", vel: k % 2 === 0 ? 0.66 : 0.54 })) },
+    { id: "vague", weight: 0.26, hits: [0, 2, 1, 2, 3, 2, 1, 2].map((v, k) => ({ beat: k / 2, voice: v, dur: "4n", vel: k % 2 === 0 ? 0.64 : 0.52 })) },
+    { id: "noires", weight: 0.22, hits: [0, 1, 2, 3].map((v, k) => ({ beat: k, voice: v, dur: "2n", vel: k === 0 ? 0.68 : 0.6 })) },
+    { id: "plaque-arpege", weight: 0.2, hits: [
+      { beat: 0, dur: "2n", vel: 0.66 },
+      { beat: 2, voice: 1, dur: "4n", vel: 0.6 },
+      { beat: 2.5, voice: 2, dur: "4n", vel: 0.54 },
+      { beat: 3, voice: 3, dur: "4n", vel: 0.6 },
+      { beat: 3.5, voice: 2, dur: "4n", vel: 0.52 }
+    ] },
+    { id: "respire", weight: 0.08, hits: [
+      { beat: 0, dur: "1n", vel: 0.64 }
+    ] }
   ]
 };
+var ALIASES = {
+  shuffleChank: "blues",
+  jazzComp: "jazz",
+  charleston: "jazz",
+  swing: "jazz"
+};
+function resolveCompStyle(style) {
+  const cle2 = ALIASES[style] || style;
+  return COMP_PATTERNS[cle2] ? cle2 : "jazz";
+}
+var COMP_STYLES = Object.keys(COMP_PATTERNS);
 function weightedPick(items, exclude, rng) {
   const pool = items.filter((i) => i.id !== exclude);
   const list = pool.length ? pool : items;
@@ -11223,7 +14089,7 @@ function weightedPick(items, exclude, rng) {
   return list[list.length - 1];
 }
 function createComper(style = "jazz", rng = Math.random) {
-  const vocab = COMP_PATTERNS[style] || COMP_PATTERNS.jazz;
+  const vocab = COMP_PATTERNS[resolveCompStyle(style)];
   let lastId = null;
   let barsSinceBreath = 0;
   return {
@@ -11240,7 +14106,8 @@ function createComper(style = "jazz", rng = Math.random) {
       if (forceBreath) {
         pattern = vocab.find((p) => p.id === "respire") || vocab[vocab.length - 1];
       } else {
-        const dense = vocab.filter((p) => p.id !== "respire");
+        const phase = (barIndex % 2 + 2) % 2;
+        const dense = vocab.filter((p) => p.id !== "respire" && (p.phase == null || p.phase === phase));
         pattern = weightedPick(dense, lastId, rng);
       }
       if (pattern.id === "respire") barsSinceBreath = 0;
@@ -11255,7 +14122,9 @@ function createComper(style = "jazz", rng = Math.random) {
           1,
           h.vel * (0.72 + energy * 0.07) + (rng() - 0.5) * 0.07
         )),
-        anticipate: !!h.anticipate
+        anticipate: !!h.anticipate,
+        // Arpège : indice de la note du voicing à jouer seule.
+        ...h.voice != null ? { voice: h.voice } : {}
       }));
     },
     reset() {
@@ -11447,9 +14316,180 @@ var makeContexts = (C) => [
     chords: [
       { degree: 0, quality: "dom7", bars: 2 },
       { degree: 10, quality: "maj", bars: 2 }
+    ],
+    // Joué par le pack rock, mais en accords pleins : un power chord
+    // effacerait la b7 qui fait entendre le mode.
+    compVoicing: "triad"
+  },
+  // ── Styles avec plusieurs grilles ────────────────────────────────────
+  // `grilles` : progressions au choix (la première par défaut, `chords` en
+  // est la copie) ; une grille peut proposer sa propre gamme (`scale`).
+  // `gammes` : gammes conseillées, au choix. `tonalites` : tonalités
+  // conseillées (valeurs internes en dièses).
+  {
+    id: "rock",
+    label: "Rock",
+    color: C.pink,
+    colorL: C.pinkL,
+    colorD: C.pinkD,
+    colorB: C.pinkBorder,
+    scale: "pentatonic_minor",
+    gammes: ["pentatonic_minor", "pentatonic_major"],
+    tonalites: ["E", "A", "D", "G"],
+    desc: "Croches droites, caisse claire sur 2 et 4, basse qui pousse. La penta mineure pour le mordant, la majeure pour chanter.",
+    targetDesc: "Fondamentale et quinte sur les temps forts, tierce de l'accord pour la couleur",
+    bpm: 112,
+    grilles: [
+      { id: "I-IV-V", label: "I\u2013IV\u2013V", chords: [
+        { degree: 0, quality: "maj", bars: 2 },
+        { degree: 5, quality: "maj", bars: 2 },
+        { degree: 7, quality: "maj", bars: 1 },
+        { degree: 5, quality: "maj", bars: 1 },
+        { degree: 0, quality: "maj", bars: 2 }
+      ] },
+      { id: "I-bVII-IV", label: "I\u2013\u266DVII\u2013IV", chords: [
+        { degree: 0, quality: "maj", bars: 2 },
+        { degree: 10, quality: "maj", bars: 1 },
+        { degree: 5, quality: "maj", bars: 1 }
+      ] },
+      { id: "vi-IV-I-V", label: "vi\u2013IV\u2013I\u2013V", scale: "pentatonic_major", chords: [
+        { degree: 9, quality: "min", bars: 1 },
+        { degree: 5, quality: "maj", bars: 1 },
+        { degree: 0, quality: "maj", bars: 1 },
+        { degree: 7, quality: "maj", bars: 1 }
+      ] }
+    ]
+  },
+  {
+    id: "jazz_swing",
+    label: "Jazz swing",
+    color: C.purple,
+    colorL: C.purpleL,
+    colorD: C.purpleD,
+    colorB: C.purpleBorder,
+    scale: "major",
+    gammes: ["major", "harmonic_minor", "blues"],
+    tonalites: ["C", "F", "A#", "G"],
+    desc: "Croches ternaires, ride \xAB ding-ding-a-ding \xBB, walking bass. Joue les arp\xE8ges : un mode par accord.",
+    targetDesc: "3e et 7e de chaque accord sur les temps forts (dorien sur ii, mixolydien sur V)",
+    bpm: 140,
+    grilles: [
+      { id: "251-majeur", label: "ii\u2013V\u2013I majeur", chords: [
+        { degree: 2, quality: "min7", bars: 2 },
+        { degree: 7, quality: "dom7", bars: 2 },
+        { degree: 0, quality: "maj7", bars: 2 },
+        { degree: 9, quality: "dom7", bars: 2 }
+      ] },
+      { id: "251-mineur", label: "ii\u2013V\u2013i mineur", scale: "harmonic_minor", chords: [
+        { degree: 2, quality: "min7b5", bars: 2 },
+        { degree: 7, quality: "dom7", bars: 2 },
+        { degree: 0, quality: "min7", bars: 4 }
+      ] },
+      { id: "anatole", label: "I\u2013VI\u2013ii\u2013V", chords: [
+        { degree: 0, quality: "maj7", bars: 1 },
+        { degree: 9, quality: "dom7", bars: 1 },
+        { degree: 2, quality: "min7", bars: 1 },
+        { degree: 7, quality: "dom7", bars: 1 }
+      ] },
+      { id: "blues-jazz", label: "Blues jazz", scale: "blues", chords: [
+        { degree: 0, quality: "dom7", bars: 1 },
+        { degree: 5, quality: "dom7", bars: 1 },
+        { degree: 0, quality: "dom7", bars: 2 },
+        { degree: 5, quality: "dom7", bars: 2 },
+        { degree: 0, quality: "dom7", bars: 1 },
+        { degree: 9, quality: "dom7", bars: 1 },
+        { degree: 2, quality: "min7", bars: 1 },
+        { degree: 7, quality: "dom7", bars: 1 },
+        { degree: 0, quality: "dom7", bars: 1 },
+        { degree: 7, quality: "dom7", bars: 1 }
+      ] }
+    ]
+  },
+  {
+    id: "bossa",
+    label: "Bossa nova",
+    color: C.teal,
+    colorL: C.tealL,
+    colorD: C.tealD,
+    colorB: C.tealBorder,
+    scale: "major",
+    gammes: ["major", "dorian"],
+    tonalites: ["C", "F", "D", "G"],
+    desc: "Binaire et syncop\xE9 : clave au cerclage, basse fondamentale-quinte, accords maj7 et 7(9). Joue doux, laisse respirer.",
+    targetDesc: "7e majeure sur Imaj7, 9e sur le V7(9), notes longues",
+    bpm: 132,
+    grilles: [
+      { id: "I-ii-V", label: "Imaj7\u2013ii7\u2013V7", chords: [
+        { degree: 0, quality: "maj7", bars: 2 },
+        { degree: 2, quality: "min7", bars: 1 },
+        { degree: 7, quality: "dom9", bars: 1 }
+      ] },
+      { id: "relatif", label: "Vers le relatif mineur", chords: [
+        { degree: 0, quality: "maj7", bars: 2 },
+        { degree: 11, quality: "min7b5", bars: 1 },
+        { degree: 4, quality: "dom7", bars: 1 },
+        { degree: 9, quality: "min7", bars: 2 },
+        { degree: 2, quality: "min7", bars: 1 },
+        { degree: 7, quality: "dom9", bars: 1 }
+      ] },
+      { id: "vamp-dorien", label: "Vamp dorien", scale: "dorian", chords: [
+        { degree: 0, quality: "min7", bars: 2 },
+        { degree: 5, quality: "dom9", bars: 2 }
+      ] }
+    ]
+  },
+  {
+    id: "ballade",
+    label: "Ballade pop",
+    color: C.blue,
+    colorL: C.blueL,
+    colorD: C.blueD,
+    colorB: C.blueBorder,
+    scale: "pentatonic_major",
+    gammes: ["pentatonic_major", "major"],
+    tonalites: ["C", "G", "D", "A"],
+    desc: "Lent et pos\xE9 : piano en arp\xE8ges, basse tenue. Chaque note compte \u2014 joue moins, fais-la chanter.",
+    targetDesc: "Tierce et fondamentale de l'accord, notes tenues sur le 1",
+    bpm: 72,
+    grilles: [
+      { id: "I-V-vi-IV", label: "I\u2013V\u2013vi\u2013IV", chords: [
+        { degree: 0, quality: "maj", bars: 1 },
+        { degree: 7, quality: "maj", bars: 1 },
+        { degree: 9, quality: "min", bars: 1 },
+        { degree: 5, quality: "maj", bars: 1 }
+      ] },
+      { id: "vi-IV-I-V", label: "vi\u2013IV\u2013I\u2013V", chords: [
+        { degree: 9, quality: "min", bars: 1 },
+        { degree: 5, quality: "maj", bars: 1 },
+        { degree: 0, quality: "maj", bars: 1 },
+        { degree: 7, quality: "maj", bars: 1 }
+      ] },
+      { id: "I-vi-IV-V", label: "I\u2013vi\u2013IV\u2013V", chords: [
+        { degree: 0, quality: "maj", bars: 1 },
+        { degree: 9, quality: "min", bars: 1 },
+        { degree: 5, quality: "maj", bars: 1 },
+        { degree: 7, quality: "maj", bars: 1 }
+      ] }
     ]
   }
-];
+].map((c) => c.grilles && !c.chords ? { ...c, chords: c.grilles[0].chords } : c);
+function appliquerChoix(ctx, grilleId, scaleKey) {
+  const grille = ctx.grilles?.find((g) => g.id === grilleId) || ctx.grilles?.[0] || null;
+  return {
+    ...ctx,
+    grilleId: grille?.id ?? null,
+    chords: grille?.chords ?? ctx.chords,
+    scale: scaleKey || grille?.scale || ctx.scale
+  };
+}
+function feelLabel(pack) {
+  if (!pack) return null;
+  const sub = pack.feel?.subdivision;
+  if (sub && sub % 3 === 0) return "Shuffle (ternaire)";
+  if ((pack.feel?.swing ?? 0) >= 0.5) return "Swing (croches ternaires)";
+  if (sub === 16) return "Binaire, doubles-croches";
+  return "Binaire";
+}
 
 // src/screens/jam/mixage.js
 var MIXAGE = {
@@ -11485,7 +14525,9 @@ var CHORD_TONES = {
   maj7: [0, 4, 7, 11],
   min7: [0, 3, 7, 10],
   min7b5: [0, 3, 6, 10],
-  dim7: [0, 3, 6, 9]
+  dim7: [0, 3, 6, 9],
+  dom9: [0, 4, 7, 10]
+  // la 9e reste au piano : la basse marche sur l'accord de 7e
 };
 var BASS_LOW = 28;
 var BASS_HIGH = 48;
@@ -11554,6 +14596,141 @@ function generateWalkingBar(opts) {
   notes.sort((a, b) => a.beat - b.beat);
   return notes;
 }
+var BASS_APPROACHES = ["walking", "shuffleWalk", "rootEighths", "syncopated16", "bossaRootFifth", "sustainedRoots"];
+var septieme = (quality) => ({ maj7: 11, dom7: 10, dom9: 10, min7: 10, min7b5: 10, dim7: 9 })[quality] ?? 7;
+var quinte = (quality) => quality === "min7b5" || quality === "dim7" ? 6 : 7;
+var FIGURES_ROCK = [
+  { id: "droit", weight: 0.34, notes: [0, 0, 0, 0, 0, 0, 0, 0] },
+  { id: "octave", weight: 0.24, notes: [0, 0, 12, 0, 0, 0, 12, 0] },
+  { id: "quinte", weight: 0.22, notes: [0, 0, 0, 0, 5, 5, 0, 0] },
+  { id: "relance", weight: 0.2, notes: [0, 0, 0, 0, 0, 0, 5, "A"] }
+];
+var FIGURES_FUNK = [
+  { id: "funk-a", weight: 0.36, notes: [
+    { beat: 0, i: 0, dur: "8n", v: 0.86 },
+    { beat: 0.75, i: 0, dur: "16n", v: 0.6 },
+    { beat: 1.5, i: 12, dur: "16n", v: 0.7 },
+    { beat: 2, i: 0, dur: "8n", v: 0.8 },
+    { beat: 2.75, i: 5, dur: "16n", v: 0.6 },
+    { beat: 3.5, i: "7", dur: "16n", v: 0.66 }
+  ] },
+  { id: "funk-b", weight: 0.34, notes: [
+    { beat: 0, i: 0, dur: "8n", v: 0.86 },
+    { beat: 1, i: -12, dur: "16n", v: 0.24, ghost: true },
+    { beat: 1.25, i: 0, dur: "16n", v: 0.64 },
+    { beat: 2.5, i: 0, dur: "8n", v: 0.76 },
+    { beat: 3, i: 5, dur: "16n", v: 0.64 },
+    { beat: 3.25, i: 12, dur: "16n", v: 0.7 },
+    { beat: 3.75, i: "A", dur: "16n", v: 0.6 }
+  ] },
+  { id: "funk-c", weight: 0.3, notes: [
+    { beat: 0, i: 0, dur: "4n", v: 0.86 },
+    { beat: 1.75, i: 0, dur: "16n", v: 0.62 },
+    { beat: 2, i: 5, dur: "8n", v: 0.72 },
+    { beat: 3, i: 12, dur: "16n", v: 0.7 },
+    { beat: 3.5, i: 0, dur: "16n", v: 0.62 }
+  ] }
+];
+function tirage(items, rng) {
+  const total = items.reduce((s, i) => s + i.weight, 0);
+  let r = rng() * total;
+  for (const i of items) {
+    r -= i.weight;
+    if (r <= 0) return i;
+  }
+  return items[items.length - 1];
+}
+function generateBassBar(opts) {
+  const {
+    approach = "walking",
+    rootName,
+    quality = "dom7",
+    nextRoot = rootName,
+    barIndex = 0,
+    energy = 3,
+    rng = Math.random,
+    ghostNotes = true,
+    octaveJumps = 0
+  } = opts;
+  if (approach === "walking" || approach === "shuffleWalk" || !BASS_APPROACHES.includes(approach)) {
+    const notes2 = generateWalkingBar({
+      rootName,
+      quality,
+      nextRoot,
+      barIndex,
+      energy,
+      rng,
+      style: approach === "shuffleWalk" ? "blues" : "jazz"
+    });
+    return ghostNotes ? notes2 : notes2.filter((n) => !n.ghost);
+  }
+  if (CHROMATIC3.indexOf(rootName) < 0) return [];
+  const rootMidi = clampToBass(midiOf2(rootName, 1));
+  const nextMidi = clampToBass(midiOf2(CHROMATIC3.includes(nextRoot) ? nextRoot : rootName, 1));
+  const changement = nextMidi !== rootMidi;
+  const audessus = (i) => {
+    if (i === 0) return rootMidi;
+    const m = clampToBass(rootMidi + i);
+    return m === rootMidi ? clampToBass(rootMidi + quinte(quality)) : m;
+  };
+  const approcheVers = () => clampToBass(rng() < 0.7 ? nextMidi - 1 : nextMidi + 1);
+  const notes = [];
+  if (approach === "rootEighths") {
+    const fig = tirage(FIGURES_ROCK, rng);
+    const pas = energy <= 2 ? 1 : 0.5;
+    for (let beat = 0; beat < 4; beat += pas) {
+      const k = Math.round(beat * 2);
+      let tok = fig.notes[k];
+      if (tok === 5) tok = quinte(quality);
+      let midi = tok === "A" ? changement ? approcheVers() : audessus(quinte(quality)) : audessus(tok);
+      if (tok === 0 && k % 2 === 1 && octaveJumps > 0 && rng() < octaveJumps) midi = audessus(12);
+      notes.push({
+        beat,
+        midi,
+        // Croches un peu courtes : la basse rock « pousse », elle ne s'étale pas.
+        dur: pas === 1 ? "4n" : "8n",
+        velocity: k === 0 ? 0.86 : k % 2 === 0 ? 0.78 : 0.64,
+        ...tok === "A" && changement ? { approach: true } : {}
+      });
+    }
+  } else if (approach === "syncopated16") {
+    const fig = tirage(FIGURES_FUNK, rng);
+    for (const n of fig.notes) {
+      if (n.ghost && !(ghostNotes && energy >= 3)) continue;
+      if (energy <= 2 && n.v < 0.62 && n.beat !== 0) continue;
+      let midi;
+      if (n.i === "A") midi = changement ? approcheVers() : audessus(12);
+      else if (n.i === "7") midi = audessus(septieme(quality));
+      else if (n.i === 5) midi = audessus(quinte(quality));
+      else if (n.i === -12) midi = clampToBass(rootMidi - 12);
+      else midi = audessus(n.i);
+      if (n.i === 0 && n.beat !== 0 && octaveJumps > 0 && rng() < octaveJumps) midi = audessus(12);
+      notes.push({ beat: n.beat, midi, dur: n.dur, velocity: n.v, ...n.ghost ? { ghost: true } : {} });
+    }
+  } else if (approach === "bossaRootFifth") {
+    const q = quinte(quality);
+    const fifth = rootMidi + q - 12 >= BASS_LOW ? rootMidi + q - 12 : audessus(q);
+    notes.push({ beat: 0, midi: rootMidi, dur: "4n.", velocity: 0.82 });
+    if (energy >= 2) notes.push({ beat: 1.5, midi: rootMidi, dur: "8n", velocity: 0.52 });
+    notes.push({ beat: 2, midi: fifth, dur: "4n.", velocity: 0.74 });
+    if (energy >= 2 || changement) {
+      notes.push(changement ? { beat: 3.5, midi: nextMidi, dur: "8n", velocity: 0.62, anticipate: true } : { beat: 3.5, midi: fifth, dur: "8n", velocity: 0.5 });
+    }
+  } else if (approach === "sustainedRoots") {
+    if (energy <= 2) {
+      notes.push({ beat: 0, midi: rootMidi, dur: "1n", velocity: 0.74 });
+    } else if (energy === 3) {
+      notes.push({ beat: 0, midi: rootMidi, dur: "2n", velocity: 0.78 });
+      notes.push({ beat: 2, midi: rng() < 0.7 ? rootMidi : audessus(quinte(quality)), dur: "2n", velocity: 0.66 });
+    } else {
+      notes.push({ beat: 0, midi: rootMidi, dur: "2n", velocity: 0.8 });
+      notes.push({ beat: 2, midi: audessus(quinte(quality)), dur: "4n", velocity: 0.68 });
+      notes.push(changement ? { beat: 3, midi: approcheVers(), dur: "4n", velocity: 0.64, approach: true } : { beat: 3, midi: audessus(12), dur: "4n", velocity: 0.6 });
+    }
+  }
+  notes.sort((a, b) => a.beat - b.beat);
+  return notes;
+}
 function toToneNote2(midi) {
   const SHARP_TO_FLAT3 = { "C#": "Db", "D#": "Eb", "F#": "Gb", "G#": "Ab", "A#": "Bb" };
   const n = nameOfMidi(midi);
@@ -11579,9 +14756,12 @@ var CHORD_INTERVALS = {
   min7: [0, 3, 7, 10],
   dom7: [0, 4, 7, 10],
   maj: [0, 4, 7],
-  min: [0, 3, 7]
+  min: [0, 3, 7],
+  // Jazz mineur (ii–V–i) et bossa (7(9)).
+  min7b5: [0, 3, 6, 10],
+  dom9: [0, 4, 7, 10, 14]
 };
-var QUALITE_LABEL = { maj7: "maj7", min7: "m7", dom7: "7", maj: "", min: "m" };
+var QUALITE_LABEL = { maj7: "maj7", min7: "m7", dom7: "7", maj: "", min: "m", min7b5: "m7b5", dom9: "9" };
 function notesAccord2(root, chord) {
   const r = transposeNote(root, chord.degree);
   return (CHORD_INTERVALS[chord.quality] || CHORD_INTERVALS.dom7).map((i) => transposeNote(r, i));
@@ -11610,16 +14790,39 @@ var VOICINGS = {
   // (Sol-Si♭-Ré-Fa) — deux notes étrangères au mode (Si♭ et Fa), sur
   // l'accord même qui doit le faire entendre.
   maj: { intervals: [0, 4, 7, 16], desc: "R-3-5-3" },
-  min: { intervals: [0, 3, 7, 15], desc: "R-b3-5-b3" }
+  min: { intervals: [0, 3, 7, 15], desc: "R-b3-5-b3" },
+  min7b5: { intervals: [0, 10, 15, 18], desc: "x-R-b7-b3-b5" },
+  // 7(9) sans fondamentale : b7-9-3, la couleur bossa / jazz par excellence.
+  dom9: { intervals: [0, 10, 14, 16], desc: "x-R-b7-9-3" }
 };
-function getVoicedChord(rootNote, quality, style = "jazz") {
+function degresDisposition(quality, disposition) {
+  const ch = CHORD_INTERVALS[quality] || CHORD_INTERVALS.dom7;
+  const tierce = ch[1], quinteAcc = ch[2], sept = ch[3];
+  switch (disposition) {
+    case "power":
+      return [0, quinteAcc, 12];
+    case "triad":
+      return ch.slice(0, 4);
+    case "shell":
+      return [tierce, sept ?? quinteAcc];
+    case "spread":
+      return [0, quinteAcc, sept ?? 12, 12 + tierce];
+    default:
+      return null;
+  }
+}
+function getVoicedChord(rootNote, quality, style = "jazz", opts = {}) {
   const iBlues = style === "blues" || style === "blues12";
   const voicing = iBlues && quality === "dom7" ? VOICINGS.dom7b : VOICINGS[quality] || VOICINGS.dom7;
   const rootIdx = CHROMATIC4.indexOf(rootNote);
   if (rootIdx < 0) return [];
+  const autre = degresDisposition(quality, opts.voicing);
+  if (autre) return placer(rootIdx, autre, opts.floor ?? 52);
   const rootless = voicing.intervals.filter((i) => i % 12 !== 0);
   const degrees = rootless.length ? rootless : voicing.intervals;
-  const COMP_MIN_MIDI = 52;
+  return placer(rootIdx, degrees, opts.floor ?? 52);
+}
+function placer(rootIdx, degrees, COMP_MIN_MIDI) {
   const lowestDegree = Math.min(...degrees);
   let base = 36 + rootIdx;
   while (base + lowestDegree < COMP_MIN_MIDI) base += 12;
@@ -11631,16 +14834,16 @@ function getVoicedChord(rootNote, quality, style = "jazz") {
     return `${SHARP_TO_FLAT2[name] || name}${oct}`;
   });
 }
-function getBassPattern(rootNote, quality, style, nextRoot, barIdx, energy = 3) {
+function getBassPattern(rootNote, quality, style, nextRoot, barIdx, energy = 3, bassStyle = null) {
   const bluesy = style === "blues" || style === "blues12";
-  const notes = generateWalkingBar({
+  const commun = {
     rootName: normalizeNote(rootNote),
     quality: quality || "dom7",
     nextRoot: normalizeNote(nextRoot || rootNote),
-    style: bluesy ? "blues" : "jazz",
     barIndex: barIdx || 0,
     energy
-  });
+  };
+  const notes = bassStyle?.approach ? generateBassBar({ ...bassStyle, ...commun }) : generateWalkingBar({ ...commun, style: bluesy ? "blues" : "jazz" });
   return notes.map((n) => ({
     note: toToneNote2(n.midi),
     time: toToneTime(n.beat),
@@ -11688,7 +14891,11 @@ var STYLE_PAR_CONTEXTE = {
   blues_12: "blues12",
   jazz_251: "jazz",
   modal_dorian: "funk",
-  modal_mixo: "rock"
+  modal_mixo: "rock",
+  rock: "rock",
+  jazz_swing: "jazz",
+  bossa: "bossa",
+  ballade: "ballade"
 };
 var getStyle = (contextId) => STYLE_PAR_CONTEXTE[contextId] || "rock";
 
@@ -11757,7 +14964,12 @@ var CONSTRAINTS = [
   { text: "4 notes maximum par phrase, et un silence entre chaque phrase.", level: "Facile" },
   { text: "Joue une phrase de 2 mesures, puis 2 mesures de silence : question-r\xE9ponse.", level: "Facile" },
   { text: "Fais entendre la sixte majeure au moins une fois par phrase : c'est elle qui signe le dorien.", level: "Facile", contextes: ["modal_dorian"] },
+  { text: "Joue des riffs de 2 notes maximum, cal\xE9s sur la caisse claire (2 et 4).", level: "Facile", contextes: ["rock"] },
+  { text: "Une seule note par accord, tenue toute la mesure : fais-la chanter.", level: "Facile", contextes: ["ballade"] },
   { text: "Reste uniquement sur les 3 cordes aigu\xEBs.", level: "Moyen" },
+  { text: "Joue en croches ternaires : \xAB dou-ba dou-ba \xBB, accent sur la croche faible.", level: "Moyen", contextes: ["jazz_swing"] },
+  { text: "D\xE9marre tes phrases sur le \xAB et \xBB d'un temps, jamais sur le 1 : laisse la syncope parler.", level: "Moyen", contextes: ["bossa"] },
+  { text: "Arp\xE8ge chaque accord (1-3-5-7) au moment o\xF9 il arrive.", level: "Difficile", contextes: ["jazz_swing", "bossa"] },
   { text: "Commence chaque phrase sur un temps fort (1 ou 3).", level: "Moyen" },
   { text: "Utilise le silence pendant au moins 50 % du temps.", level: "Moyen" },
   { text: "Monte progressivement en intensit\xE9 pendant 2 minutes, puis redescends.", level: "Moyen" },
@@ -11968,7 +15180,7 @@ function createDirector(pack, { phraseBars = 4 } = {}) {
       let fill = null;
       const fillsOk = (pack.fills || []).filter((f) => (f.minEnergy ?? 1) <= energy);
       if (isPhraseEnd && fillsOk.length && barIndex - lastFillBar >= 2) {
-        const probability = 0.18 + energy * 0.11;
+        const probability = (0.18 + energy * 0.11) * (pack.fillRate ?? 1);
         if (Math.random() < probability) {
           fill = weightedPick2(fillsOk, fillsOk.length > 1 ? lastFillId : null);
           lastFillId = fill.id;
@@ -11984,7 +15196,9 @@ function createDirector(pack, { phraseBars = 4 } = {}) {
         ghostNotes: energy >= 3,
         openHats: energy >= 4,
         isPhraseEnd,
-        phasePos: barInPhrase / phraseBars
+        phasePos: barInPhrase / phraseBars,
+        // Pour les motifs sur plusieurs mesures (clave de bossa sur 2 mesures).
+        barIndex
       };
     },
     reset() {
@@ -11997,6 +15211,16 @@ function createDirector(pack, { phraseBars = 4 } = {}) {
 }
 
 // src/jam/generators/drums.js
+var DRUM_ALIASES = {
+  rim: { instrument: "snare", gain: 0.42 },
+  shaker: { instrument: "hihat", gain: 0.5 },
+  pedalHat: { instrument: "hihat", gain: 0.62 }
+};
+function frappe(voix, time, velocity, open) {
+  const alias = DRUM_ALIASES[voix];
+  if (alias) return { instrument: alias.instrument, time, velocity: velocity * alias.gain, open: false, articulation: voix };
+  return { instrument: voix, time, velocity, open };
+}
 function generateDrumBar(pack, decision, opts) {
   const { barStartTime, secPerBeat, beatsPerBar = 4, bpm, energy = 3 } = opts;
   const barDuration = secPerBeat * beatsPerBar;
@@ -12005,7 +15229,15 @@ function generateDrumBar(pack, decision, opts) {
   const pattern = (pack.drumPatterns || []).find((p) => p.id === decision.patternId) || (pack.drumPatterns || [])[0];
   if (!pattern) return [];
   const events = [];
-  for (const [instrument, grid] of Object.entries(pattern.grid || {})) {
+  const nBars = Math.max(1, Math.floor(pattern.bars ?? 1));
+  const tranche = ((decision.barIndex ?? 0) % nBars + nBars) % nBars;
+  const grilleDeLaMesure = (g) => {
+    if (nBars === 1) return g;
+    const len = g.length / nBars;
+    return g.slice(tranche * len, (tranche + 1) * len);
+  };
+  for (const [instrument, gridEntier] of Object.entries(pattern.grid || {})) {
+    const grid = grilleDeLaMesure(gridEntier);
     const allowGhosts = decision.ghostNotes;
     for (const hit of parseGrid(grid)) {
       if (!allowGhosts && hit.velocity < 0.4) continue;
@@ -12013,12 +15245,12 @@ function generateDrumBar(pack, decision, opts) {
       if (instrument === "hihat" && decision.useRide) inst = "ride";
       if (hit.open && !decision.openHats) continue;
       const frac = stepPosition(hit.step, hit.stepsPerBar, swing, beatsPerBar, swingSteps);
-      events.push({
-        instrument: hit.open ? inst === "hihat" ? "hihatOpen" : inst : inst,
-        time: barStartTime + frac * barDuration,
-        velocity: hit.velocity,
-        open: hit.open
-      });
+      events.push(frappe(
+        hit.open ? inst === "hihat" ? "hihatOpen" : inst : inst,
+        barStartTime + frac * barDuration,
+        hit.velocity,
+        hit.open
+      ));
     }
   }
   if (decision.fill?.grid) {
@@ -12031,12 +15263,7 @@ function generateDrumBar(pack, decision, opts) {
       for (const hit of parseGrid(grid)) {
         const frac = stepPosition(hit.step, hit.stepsPerBar, swing, beatsPerBar, swingSteps);
         if (frac < fillStart) continue;
-        events.push({
-          instrument,
-          time: barStartTime + frac * barDuration,
-          velocity: hit.velocity,
-          open: false
-        });
+        events.push(frappe(instrument, barStartTime + frac * barDuration, hit.velocity, false));
       }
     }
   }
@@ -12240,13 +15467,416 @@ var funk_16_default = {
   compStyle: { instrument: "guitar-clean", rhythm: "chank16", register: [48, 64] }
 };
 
+// src/jam/packs/rock-8.json
+var rock_8_default = {
+  id: "rock-8",
+  name: "Rock",
+  tempoRange: [90, 140],
+  defaultTempo: 112,
+  feel: {
+    subdivision: 8,
+    swing: 0
+  },
+  instruments: ["drums", "bass", "comp"],
+  audioPack: "drums-vcsl",
+  energyLevels: {
+    "1": { instruments: ["drums"], velocityRange: [0.34, 0.54] },
+    "2": { instruments: ["drums", "bass"], velocityRange: [0.44, 0.66] },
+    "3": { instruments: ["drums", "bass", "comp"], velocityRange: [0.56, 0.82] },
+    "4": { instruments: ["drums", "bass", "comp"], velocityRange: [0.66, 0.94] },
+    "5": { instruments: ["drums", "bass", "comp"], velocityRange: [0.76, 1] }
+  },
+  drumPatterns: [
+    {
+      id: "rock-base",
+      weight: 0.5,
+      minEnergy: 1,
+      grid: {
+        kick: "x...x...",
+        snare: "..X...X.",
+        hihat: "Xx.xXx.x"
+      }
+    },
+    {
+      id: "rock-push",
+      weight: 0.3,
+      minEnergy: 2,
+      grid: {
+        kick: "x...xx..",
+        snare: "..X...X.",
+        hihat: "XxxxXxxx"
+      }
+    },
+    {
+      id: "rock-drive",
+      weight: 0.2,
+      minEnergy: 4,
+      grid: {
+        kick: "x..xx.x.",
+        snare: "..X..oX.",
+        hihat: "XxxxXxxO"
+      }
+    }
+  ],
+  fills: [
+    {
+      id: "rock-fill-snare",
+      weight: 0.4,
+      minEnergy: 2,
+      beats: 1,
+      grid: { snare: "............xxxX" }
+    },
+    {
+      id: "rock-fill-toms",
+      weight: 0.4,
+      minEnergy: 3,
+      beats: 2,
+      grid: {
+        snare: "........xx......",
+        tomMid: "..........xx....",
+        tomLow: "............xxxX"
+      }
+    },
+    {
+      id: "rock-fill-crash-kick",
+      weight: 0.2,
+      minEnergy: 4,
+      beats: 1,
+      grid: { snare: "......X.", tomLow: ".......X" }
+    }
+  ],
+  humanize: {
+    offsets: {
+      kick: -2,
+      snare: 2,
+      hihat: 0,
+      ride: 0,
+      crash: -2,
+      tomMid: 1,
+      tomLow: 1
+    },
+    jitterMs: 5,
+    velSigma: 0.05
+  },
+  bassStyle: { approach: "rootEighths", ghostNotes: false, octaveJumps: 0.2 },
+  compStyle: { instrument: "piano", rhythm: "rock8", voicing: "power", register: [52, 67] }
+};
+
+// src/jam/packs/jazz-swing.json
+var jazz_swing_default = {
+  id: "jazz-swing",
+  name: "Jazz swing",
+  tempoRange: [100, 200],
+  defaultTempo: 140,
+  feel: {
+    subdivision: 8,
+    swing: 0.95
+  },
+  instruments: ["drums", "bass", "comp"],
+  audioPack: "drums-vcsl",
+  energyLevels: {
+    "1": { instruments: ["drums"], velocityRange: [0.28, 0.46] },
+    "2": { instruments: ["drums", "bass"], velocityRange: [0.36, 0.56] },
+    "3": { instruments: ["drums", "bass", "comp"], velocityRange: [0.44, 0.68] },
+    "4": { instruments: ["drums", "bass", "comp"], velocityRange: [0.54, 0.8] },
+    "5": { instruments: ["drums", "bass", "comp"], velocityRange: [0.62, 0.9] }
+  },
+  drumPatterns: [
+    {
+      id: "spang-a-lang",
+      weight: 0.45,
+      minEnergy: 1,
+      grid: {
+        ride: "x.Xxx.Xx",
+        pedalHat: "..x...x.",
+        kick: "o.o.o.o."
+      }
+    },
+    {
+      id: "spang-comp",
+      weight: 0.3,
+      minEnergy: 2,
+      grid: {
+        ride: "x.Xxx.Xx",
+        pedalHat: "..x...x.",
+        kick: "o.o.o.o.",
+        snare: "...o...o"
+      }
+    },
+    {
+      id: "spang-bombs",
+      weight: 0.25,
+      minEnergy: 3,
+      grid: {
+        ride: "x.Xxx.Xx",
+        pedalHat: "..x...x.",
+        kick: "o.o.o.ox",
+        snare: ".o...o.."
+      }
+    }
+  ],
+  fills: [
+    {
+      id: "jazz-fill-triolets",
+      weight: 0.45,
+      minEnergy: 2,
+      beats: 1,
+      grid: { snare: ".........oxX" }
+    },
+    {
+      id: "jazz-fill-toms",
+      weight: 0.3,
+      minEnergy: 3,
+      beats: 2,
+      grid: {
+        snare: "......x.o...",
+        tomMid: ".........x..",
+        tomLow: "..........xX"
+      }
+    },
+    {
+      id: "jazz-fill-kick-snare",
+      weight: 0.25,
+      minEnergy: 2,
+      beats: 1,
+      grid: { snare: "......o.", kick: ".......x" }
+    }
+  ],
+  humanize: {
+    offsets: {
+      kick: 2,
+      snare: 6,
+      hihat: 3,
+      ride: -2,
+      crash: -1,
+      tomMid: 4,
+      tomLow: 4
+    },
+    jitterMs: 6,
+    velSigma: 0.06
+  },
+  bassStyle: { approach: "walking", ghostNotes: true },
+  compStyle: { instrument: "piano", rhythm: "jazzComp", voicing: "rootless", register: [52, 72] }
+};
+
+// src/jam/packs/bossa-nova.json
+var bossa_nova_default = {
+  id: "bossa-nova",
+  name: "Bossa nova",
+  tempoRange: [120, 150],
+  defaultTempo: 132,
+  feel: {
+    subdivision: 8,
+    swing: 0
+  },
+  instruments: ["drums", "bass", "comp"],
+  audioPack: "drums-vcsl",
+  fillRate: 0.6,
+  energyLevels: {
+    "1": { instruments: ["drums"], velocityRange: [0.26, 0.44] },
+    "2": { instruments: ["drums", "bass"], velocityRange: [0.34, 0.54] },
+    "3": { instruments: ["drums", "bass", "comp"], velocityRange: [0.42, 0.64] },
+    "4": { instruments: ["drums", "bass", "comp"], velocityRange: [0.5, 0.74] },
+    "5": { instruments: ["drums", "bass", "comp"], velocityRange: [0.58, 0.84] }
+  },
+  drumPatterns: [
+    {
+      id: "bossa-shaker",
+      weight: 0.45,
+      minEnergy: 1,
+      bars: 2,
+      grid: {
+        kick: "x..xx..xx..xx..x",
+        rim: "x..x..x...x..x..",
+        shaker: "xXxXxXxXxXxXxXxX"
+      }
+    },
+    {
+      id: "bossa-hat",
+      weight: 0.35,
+      minEnergy: 2,
+      bars: 2,
+      grid: {
+        kick: "x..xx..xx..xx..x",
+        rim: "x..x..x...x..x..",
+        hihat: "xoxoxoxoxoxoxoxo"
+      }
+    },
+    {
+      id: "bossa-plein",
+      weight: 0.2,
+      minEnergy: 3,
+      bars: 2,
+      grid: {
+        kick: "x..xx..xx..xx.ox",
+        rim: "x..x..x...x..x..",
+        hihat: "xxxxxxxxxxxxxxxx",
+        shaker: ".x.x.x.x.x.x.x.x"
+      }
+    }
+  ],
+  fills: [
+    {
+      id: "bossa-fill-rim",
+      weight: 0.5,
+      minEnergy: 2,
+      beats: 1,
+      grid: { rim: "......xx" }
+    },
+    {
+      id: "bossa-fill-toms",
+      weight: 0.5,
+      minEnergy: 3,
+      beats: 2,
+      grid: {
+        tomMid: "..........x.x...",
+        tomLow: "..............xx"
+      }
+    }
+  ],
+  humanize: {
+    offsets: {
+      kick: -1,
+      snare: 0,
+      hihat: 1,
+      ride: 0,
+      crash: -1,
+      tomMid: 1,
+      tomLow: 1
+    },
+    jitterMs: 5,
+    velSigma: 0.04
+  },
+  bassStyle: { approach: "bossaRootFifth", ghostNotes: false },
+  compStyle: { instrument: "piano", rhythm: "bossa", voicing: "rootless", register: [52, 72] }
+};
+
+// src/jam/packs/ballade-pop.json
+var ballade_pop_default = {
+  id: "ballade-pop",
+  name: "Ballade pop",
+  tempoRange: [60, 85],
+  defaultTempo: 72,
+  feel: {
+    subdivision: 8,
+    swing: 0
+  },
+  instruments: ["drums", "bass", "comp"],
+  audioPack: "drums-vcsl",
+  fillRate: 0.45,
+  energyLevels: {
+    "1": { instruments: ["drums"], velocityRange: [0.24, 0.42] },
+    "2": { instruments: ["drums", "bass"], velocityRange: [0.32, 0.52] },
+    "3": { instruments: ["drums", "bass", "comp"], velocityRange: [0.4, 0.64] },
+    "4": { instruments: ["drums", "bass", "comp"], velocityRange: [0.5, 0.76] },
+    "5": { instruments: ["drums", "bass", "comp"], velocityRange: [0.6, 0.88] }
+  },
+  drumPatterns: [
+    {
+      id: "ballade-cross",
+      weight: 0.45,
+      minEnergy: 1,
+      grid: {
+        kick: "x....x..",
+        rim: "..x...x.",
+        hihat: "xoxoxoxo"
+      }
+    },
+    {
+      id: "ballade-snare",
+      weight: 0.35,
+      minEnergy: 3,
+      grid: {
+        kick: "x....x..",
+        snare: "..x...x.",
+        hihat: "xoxoxoxo"
+      }
+    },
+    {
+      id: "ballade-lift",
+      weight: 0.2,
+      minEnergy: 4,
+      grid: {
+        kick: "x..x.x..",
+        snare: "..X...X.",
+        hihat: "xxxxxxxx"
+      }
+    }
+  ],
+  fills: [
+    {
+      id: "ballade-fill-toms",
+      weight: 0.6,
+      minEnergy: 2,
+      beats: 1,
+      grid: { tomMid: "......x.", tomLow: ".......x" }
+    },
+    {
+      id: "ballade-fill-snare",
+      weight: 0.4,
+      minEnergy: 3,
+      beats: 1,
+      grid: { snare: "............oxxX" }
+    }
+  ],
+  humanize: {
+    offsets: {
+      kick: -1,
+      snare: 3,
+      hihat: 0,
+      ride: 0,
+      crash: -1,
+      tomMid: 2,
+      tomLow: 2
+    },
+    jitterMs: 6,
+    velSigma: 0.05
+  },
+  bassStyle: { approach: "sustainedRoots", ghostNotes: false },
+  compStyle: { instrument: "piano", rhythm: "arpeggio8", voicing: "spread", register: [48, 72] }
+};
+
+// src/jam/styles.js
+var PACK_ID_PAR_STYLE = {
+  blues: "blues-shuffle",
+  blues12: "blues-shuffle",
+  funk: "funk-16",
+  rock: "rock-8",
+  jazz: "jazz-swing",
+  bossa: "bossa-nova",
+  ballade: "ballade-pop"
+};
+function packPourStyle(style, packs) {
+  const id = PACK_ID_PAR_STYLE[style];
+  return (packs || []).find((p) => p.id === id) || null;
+}
+function bassStylePour(pack, style) {
+  if (pack?.bassStyle?.approach) return { ghostNotes: true, octaveJumps: 0, ...pack.bassStyle };
+  return { approach: style === "blues" || style === "blues12" ? "shuffleWalk" : "walking", ghostNotes: true, octaveJumps: 0 };
+}
+function compStylePour(pack, style) {
+  const cs = pack?.compStyle || {};
+  const bluesy = style === "blues" || style === "blues12";
+  return {
+    rhythm: cs.rhythm || (bluesy ? "shuffleChank" : "jazzComp"),
+    voicing: cs.voicing || "rootless",
+    floor: Array.isArray(cs.register) ? cs.register[0] : 52,
+    // Léger étalement des notes (en ms) : un accord gratté, pas plaqué.
+    strumMs: cs.strumMs ?? (cs.voicing === "power" || cs.voicing === "triad" ? 9 : 0)
+  };
+}
+var AMBIANCES = {
+  jazz: { decay: 2.5, wet: 0.18, delay: true, pianoDb: -22 },
+  ballade: { decay: 3, wet: 0.22, delay: true, pianoDb: -19 },
+  bossa: { decay: 2.2, wet: 0.16, delay: false, pianoDb: -22 },
+  rock: { decay: 1.6, wet: 0.1, delay: false, pianoDb: -25 }
+};
+var AMBIANCE_DEFAUT = { decay: 1.8, wet: 0.12, delay: false, pianoDb: -25 };
+var ambiancePour = (style) => AMBIANCES[style] || AMBIANCE_DEFAUT;
+
 // src/screens/JamSession.jsx
 import { Fragment as Fragment11, jsx as jsx15, jsxs as jsxs13 } from "react/jsx-runtime";
-var PACK_PAR_STYLE = {
-  blues: blues_shuffle_default,
-  blues12: blues_shuffle_default,
-  funk: funk_16_default
-};
+var PACKS = [blues_shuffle_default, funk_16_default, rock_8_default, jazz_swing_default, bossa_nova_default, ballade_pop_default];
 function shade2(hex, amount) {
   const h = hex.replace("#", "");
   const num = parseInt(h, 16);
@@ -12394,12 +16024,13 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
     }
   });
   const arreterAuDemontage = useEffectEvent3(() => stopBacking());
-  const contexteRef = useRef8(context2.id);
+  const cleContexte = `${context2.id}:${context2.grilleId ?? ""}`;
+  const contexteRef = useRef8(cleContexte);
   useEffect10(() => {
-    if (contexteRef.current === context2.id) return;
-    contexteRef.current = context2.id;
+    if (contexteRef.current === cleContexte) return;
+    contexteRef.current = cleContexte;
     relancerSiJoue();
-  }, [context2.id]);
+  }, [cleContexte]);
   useEffect10(() => () => arreterAuDemontage(), []);
   const surCoupureSysteme = useEffectEvent3(() => {
     if (!playingRef.current) return;
@@ -12481,9 +16112,11 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
         attack: 3e-3,
         release: 0.25
       }).connect(limiteur);
+      const style = getStyle(context2.id);
+      const ambiance = ambiancePour(style);
       reverbRef.current = new Reverb({
-        decay: context2.id === "jazz_251" ? 2.5 : 1.8,
-        wet: context2.id === "jazz_251" ? 0.18 : 0.12,
+        decay: ambiance.decay,
+        wet: ambiance.wet,
         preDelay: 0.02
       });
       await reverbRef.current.generate();
@@ -12492,7 +16125,7 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
         return;
       }
       reverbRef.current.connect(compRef.current);
-      if (context2.id === "jazz_251") {
+      if (ambiance.delay) {
         delayRef.current = new FeedbackDelay({
           delayTime: "8n.",
           feedback: 0.15,
@@ -12553,7 +16186,7 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
           release: 1.4,
           // L'accompagnement se tient DERRIÈRE. Il pose l'harmonie et le rythme,
           // il ne doit jamais attirer l'oreille : c'est le guitariste le soliste.
-          volume: context2.id === "jazz_251" ? -22 : -25
+          volume: ambiance.pianoDb
         });
       } catch {
         if (perime()) {
@@ -12569,7 +16202,7 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
           samplerRef.current = new Sampler({
             urls: urlsDepuisBuffers(buffers, SAMPLE_URLS_LOCAL),
             release: 2,
-            volume: context2.id === "jazz_251" ? -8 : -10
+            volume: style === "jazz" ? -8 : -10
           });
         } catch {
           samplerRef.current = null;
@@ -12707,8 +16340,10 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
           volume: -26
         }).connect(compRef.current);
       }
-      const style = getStyle(context2.id);
-      const pack = PACK_PAR_STYLE[style] || null;
+      const pack = packPourStyle(style, PACKS);
+      const bassStyle = bassStylePour(pack, style);
+      const compStyle = compStylePour(pack, style);
+      const disposition = { voicing: context2.compVoicing || compStyle.voicing, floor: compStyle.floor };
       if (pack) {
         plannerRef.current = createPlanner({ baseEnergy: energieRef.current });
         directorRef.current = createDirector(pack);
@@ -12719,14 +16354,12 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
         for (let b = 0; b < chord.bars; b++) barMap.push(chord);
       }
       const totalBars2 = barMap.length;
-      comperRef.current = createComper(
-        style === "blues" || style === "blues12" ? "blues" : "jazz"
-      );
+      comperRef.current = createComper(compStyle.rhythm);
       seqRef.current = new Sequence((time, barIdx) => {
         const chord = barMap[barIdx % totalBars2];
         const rootNow = rootRef.current;
         const chordRoot = transposeNote(rootNow, chord.degree);
-        const voiced = getVoicedChord(chordRoot, chord.quality, style);
+        const voiced = getVoicedChord(chordRoot, chord.quality, style, disposition);
         const nextChord = barMap[(barIdx + 1) % totalBars2];
         const nextRoot = transposeNote(rootNow, nextChord.degree);
         mesureRef.current = barIdx;
@@ -12737,21 +16370,29 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
         }
         const energieMesure = section?.energy ?? energieRef.current;
         const coupe = coupesRef.current;
-        const bassPattern = getBassPattern(chordRoot, chord.quality, style, nextRoot, barIdx, energieMesure);
+        const bassPattern = getBassPattern(chordRoot, chord.quality, style, nextRoot, barIdx, energieMesure, bassStyle);
         const compHits = coupe.accords ? [] : comperRef.current?.nextBar(barIdx, energieMesure) || [];
-        const nextVoiced = getVoicedChord(nextRoot, nextChord.quality, style);
+        const nextVoiced = getVoicedChord(nextRoot, nextChord.quality, style, disposition);
         const bpmMesure = getTransport().bpm.value;
         const secParTemps = 60 / bpmMesure;
         const sw = pack ? companionSwing(pack, bpmMesure) : { ratio: 0.5, stepsPerBeat: 2 };
         const instant = (beatPos) => time + swingBeat(beatPos, sw.ratio, sw.stepsPerBeat) * secParTemps;
         for (const hit of compHits) {
           const humanize2 = (Math.random() - 0.5) * 8e-3;
-          samplerRef.current?.triggerAttackRelease(
-            hit.anticipate ? nextVoiced : voiced,
-            hit.dur,
-            instant(hit.beat) + humanize2,
-            hit.velocity
-          );
+          const accordJoue = hit.anticipate ? nextVoiced : voiced;
+          if (!accordJoue.length) continue;
+          const notes = hit.voice != null ? [accordJoue[hit.voice % accordJoue.length]] : accordJoue;
+          const t0 = instant(hit.beat) + humanize2;
+          if (compStyle.strumMs > 0 && notes.length > 1) {
+            notes.forEach((n, i) => samplerRef.current?.triggerAttackRelease(
+              n,
+              hit.dur,
+              t0 + i * compStyle.strumMs / 1e3,
+              hit.velocity * (1 - i * 0.04)
+            ));
+          } else {
+            samplerRef.current?.triggerAttackRelease(notes, hit.dur, t0, hit.velocity);
+          }
         }
         if (!coupe.basse) bassPattern.forEach(({ note: note2, beat: b, dur, velocity }) => {
           bassRef.current?.triggerAttackRelease(
@@ -13080,9 +16721,29 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
     ] })
   ] });
 }
+function ChoixPastilles({ C, ctx, titre, options, valeur, onChoix }) {
+  return /* @__PURE__ */ jsxs13("div", { role: "group", "aria-label": titre, style: { display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginTop: 8 }, children: [
+    /* @__PURE__ */ jsx15("span", { style: { fontSize: 11, fontWeight: 700, color: ctx.colorD, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.06em", minWidth: 62 }, children: titre }),
+    options.map((o) => {
+      const actif = o.id === valeur;
+      return /* @__PURE__ */ jsx15("button", { onClick: () => onChoix(o.id), "aria-pressed": actif, className: "gr-focus", style: {
+        minHeight: 32,
+        padding: "5px 10px",
+        borderRadius: R.pill,
+        cursor: "pointer",
+        fontFamily: FONTS.ui,
+        fontSize: 12,
+        fontWeight: actif ? 700 : 500,
+        border: `1.5px solid ${actif ? ctx.color : ctx.colorB}`,
+        background: actif ? C.surface : "transparent",
+        color: actif ? ctx.colorD : C.text2
+      }, children: o.label }, o.id);
+    })
+  ] });
+}
 function JamSession({ onBack, dispatch, state }) {
   const C = useC();
-  const CONTEXTS = useMemo4(() => makeContexts(C), [C]);
+  const CONTEXTS = useMemo5(() => makeContexts(C), [C]);
   const [contextId, setContextId] = useState12("blues_minor");
   const [root, setRoot] = useState12("A");
   const [displayMode, setDisplayMode] = useState12("notes");
@@ -13133,20 +16794,30 @@ function JamSession({ onBack, dispatch, state }) {
     setEnLecture(joue);
     if (!joue) enregistrerTemps();
   };
-  const ctx = CONTEXTS.find((c) => c.id === contextId);
+  const [grilleId, setGrilleId] = useState12(null);
+  const [gammeChoisie, setGammeChoisie] = useState12(null);
+  const ctxBase = CONTEXTS.find((c) => c.id === contextId);
+  const ctx = useMemo5(() => appliquerChoix(ctxBase, grilleId, gammeChoisie), [ctxBase, grilleId, gammeChoisie]);
+  const packDuStyle = packPourStyle(getStyle(ctx.id), PACKS);
   const rootFr = nomTonique(root, ctx.scale);
-  const activeNotes = useMemo4(() => getScaleNotes(root, ctx.scale), [root, ctx.scale]);
-  const nomsActifs = useMemo4(() => nomsGamme(root, ctx.scale), [root, ctx.scale]);
+  const activeNotes = useMemo5(() => getScaleNotes(root, ctx.scale), [root, ctx.scale]);
+  const nomsActifs = useMemo5(() => nomsGamme(root, ctx.scale), [root, ctx.scale]);
   const accordEnCours = accordIdx != null ? ctx.chords[accordIdx] : null;
-  const notesAccordAffichees = useMemo4(
+  const notesAccordAffichees = useMemo5(
     () => accordEnCours ? nomsNotesAccord(root, accordEnCours, ctx.scale) : [],
     [accordEnCours, root, ctx.scale]
   );
-  const notesDeLAccord = useMemo4(() => notesAccordAffichees.map((x) => x.note), [notesAccordAffichees]);
+  const notesDeLAccord = useMemo5(() => notesAccordAffichees.map((x) => x.note), [notesAccordAffichees]);
   const dansLaGamme = (n) => activeNotes.some((g) => normalizeNote(g) === normalizeNote(n));
   const choisirContexte = (c) => {
     setContextId(c.id);
     setBpm(c.bpm);
+    setGrilleId(null);
+    setGammeChoisie(null);
+  };
+  const choisirGrille = (g) => {
+    setGrilleId(g.id);
+    setGammeChoisie(null);
   };
   const transposeSemitone = (dir) => {
     const idx = CHROMATIC4.indexOf(root);
@@ -13179,7 +16850,50 @@ function JamSession({ onBack, dispatch, state }) {
         fontFamily: FONTS.ui,
         whiteSpace: "nowrap"
       }, children: c.label }, c.id)) }) }),
-      /* @__PURE__ */ jsx15("div", { style: { background: ctx.colorL, border: `1px solid ${ctx.colorB}`, borderRadius: R.lg, padding: "10px 14px" }, children: /* @__PURE__ */ jsx15("div", { style: { fontSize: 12, color: ctx.colorD, fontFamily: FONTS.title, lineHeight: 1.5 }, children: ctx.desc }) }),
+      /* @__PURE__ */ jsxs13("div", { style: { background: ctx.colorL, border: `1px solid ${ctx.colorB}`, borderRadius: R.lg, padding: "10px 14px" }, children: [
+        /* @__PURE__ */ jsx15("div", { style: { fontSize: 12, color: ctx.colorD, fontFamily: FONTS.title, lineHeight: 1.5 }, children: ctx.desc }),
+        packDuStyle && /* @__PURE__ */ jsxs13("div", { style: { fontSize: 11, color: ctx.colorD, fontFamily: FONTS.ui, marginTop: 6, opacity: 0.85 }, children: [
+          feelLabel(packDuStyle),
+          " \xB7 tempo conseill\xE9 ",
+          packDuStyle.tempoRange[0],
+          "\u2013",
+          packDuStyle.tempoRange[1],
+          " BPM"
+        ] }),
+        ctxBase.grilles?.length > 1 && /* @__PURE__ */ jsx15(
+          ChoixPastilles,
+          {
+            C,
+            ctx,
+            titre: "Grille",
+            valeur: ctx.grilleId,
+            options: ctxBase.grilles.map((g) => ({ id: g.id, label: g.label })),
+            onChoix: (id) => choisirGrille(ctxBase.grilles.find((g) => g.id === id))
+          }
+        ),
+        ctxBase.gammes?.length > 1 && /* @__PURE__ */ jsx15(
+          ChoixPastilles,
+          {
+            C,
+            ctx,
+            titre: "Gamme",
+            valeur: ctx.scale,
+            options: [.../* @__PURE__ */ new Set([...ctxBase.gammes, ctx.scale])].map((k) => ({ id: k, label: SCALES[k]?.name ?? k })),
+            onChoix: setGammeChoisie
+          }
+        ),
+        ctxBase.tonalites?.length > 0 && /* @__PURE__ */ jsx15(
+          ChoixPastilles,
+          {
+            C,
+            ctx,
+            titre: "Tonalit\xE9",
+            valeur: root,
+            options: ctxBase.tonalites.map((t) => ({ id: t, label: nomTonique(t, ctx.scale) })),
+            onChoix: setRoot
+          }
+        )
+      ] }),
       /* @__PURE__ */ jsx15(BackingTrackPlayer, { context: ctx, root, bpm, onBpmChange: setBpm, onChord: setAccordIdx, onSecondeJouee: unSecondeDePlus, onLecture: surLecture }),
       /* @__PURE__ */ jsx15(SuiviSeance, { chrono, sessionComptee, couleur: ctx.color }),
       /* @__PURE__ */ jsxs13("div", { style: { display: "flex", alignItems: "center", gap: 8 }, children: [
@@ -13299,7 +17013,8 @@ __export(ProgressScreen_exports, {
 init_tokens();
 init_ThemeContext();
 init_Ti();
-import { useMemo as useMemo5 } from "react";
+init_ui();
+import { useMemo as useMemo6 } from "react";
 
 // src/store/badges.js
 init_tokens();
@@ -13328,7 +17043,12 @@ var skillMastery = (state, content, courseId) => {
   if (exDone !== null && qzOk !== null) return Math.round((exDone * 0.6 + qzOk * 0.4) * 100);
   return Math.round((exDone ?? qzOk) * 100);
 };
-var allModulesMastered = (state, content) => content.courses.every((c) => {
+var estModuleInitiation = (c) => !!c.prelude || c.id === "debut";
+var debutTermine = (state, content) => {
+  const c = content.courses.find(estModuleInitiation);
+  return !!c && c.lessons.length > 0 && c.lessons.every((l) => state.completedLessons[l.id]);
+};
+var allModulesMastered = (state, content) => content.courses.filter((c) => !estModuleInitiation(c)).every((c) => {
   const total = c.lessons.length;
   const done = c.lessons.filter((l) => state.completedLessons[l.id]).length;
   return total > 0 && done === total;
@@ -13348,6 +17068,7 @@ var BADGES = [
   { id: "first_lesson", cat: "Premiers pas", tint: "primary", rarity: "commun", icon: "ti-flag", label: "Premi\xE8re le\xE7on", cond: (s) => Object.keys(s.completedLessons).length >= 1 },
   { id: "first_exercise", cat: "Premiers pas", tint: "green", rarity: "commun", icon: "ti-guitar-pick", label: "Premier exercice", cond: (s) => Object.keys(s.completedExercises).length >= 1 },
   { id: "first_quiz", cat: "Premiers pas", tint: "amber", rarity: "commun", icon: "ti-help-circle", label: "Premier quiz", cond: (s) => Object.keys(s.quizResults).length >= 1 },
+  { id: "debut_done", cat: "Premiers pas", tint: "blue", rarity: "commun", icon: "ti-guitar-pick", label: "Premiers pas franchis", cond: (s, ctx) => debutTermine(s, ctx) },
   // ── Streak
   { id: "streak_3", cat: "Streak", tint: "amber", rarity: "commun", icon: "ti-flame", label: "3 jours", cond: (s) => s.streak >= 3 },
   { id: "streak_7", cat: "Streak", tint: "coral", rarity: "rare", icon: "ti-flame", label: "7 jours", cond: (s) => s.streak >= 7 },
@@ -13437,22 +17158,26 @@ function ProgressScreen({ state, content, onOpenSettings }) {
   const BADGE_RARITIES2 = buildBadgeRarities(C);
   const { xpToNext, pct: lvlPct, totalForNext } = levelProgress(state.xp);
   const grade = gradeForLevel(state.level);
-  const maitrise = useMemo5(
+  const maitrise = useMemo6(
     () => masteryStats(content, state),
     [content, state]
   );
-  const aAncrer = useMemo5(
+  const aAncrer = useMemo6(
     () => prochainesAAncrer(content, state, 3),
     [content, state]
   );
-  const skills = useMemo5(() => [
-    { label: "Manche", id: "neck", color: C.amber, colorD: C.amberD },
-    { label: "Gammes", id: "scales", color: C.green, colorD: C.greenD },
-    { label: "Harmonie", id: "harmony", color: C.purple, colorD: C.purpleD },
-    { label: "Rythme", id: "rhythm", color: C.blue, colorD: C.blueD },
-    { label: "Impro", id: "impro", color: C.pink, colorD: C.pinkD }
-  ].map((s) => ({ ...s, pct: skillMastery(state, content, s.id) })), [state, content, C]);
-  const badgesByCategory = useMemo5(() => {
+  const skills = useMemo6(
+    () => [
+      { label: "Premiers pas", id: "debut", color: C.coral, colorD: C.coralD },
+      { label: "Manche", id: "neck", color: C.amber, colorD: C.amberD },
+      { label: "Gammes", id: "scales", color: C.green, colorD: C.greenD },
+      { label: "Harmonie", id: "harmony", color: C.purple, colorD: C.purpleD },
+      { label: "Rythme", id: "rhythm", color: C.blue, colorD: C.blueD },
+      { label: "Impro", id: "impro", color: C.pink, colorD: C.pinkD }
+    ].map((s) => ({ ...s, pct: skillMastery(state, content, s.id) })).filter((s) => s.id !== "debut" || s.pct > 0 || !debutFacultatif(state, buildUnits(content.courses, state))),
+    [state, content, C]
+  );
+  const badgesByCategory = useMemo6(() => {
     const map = {};
     BADGES.forEach((b) => {
       if (!map[b.cat]) map[b.cat] = [];
@@ -13750,6 +17475,7 @@ __export(SettingsScreen_exports, {
 init_tokens();
 init_Ti();
 import { useState as useState13 } from "react";
+init_ui();
 init_audioEngine();
 
 // stub:supa-stub
@@ -14229,19 +17955,22 @@ __export(ToolboxScreen_exports, {
 init_tokens();
 init_ThemeContext();
 init_Ti();
-import { useState as useState19, useRef as useRef14, useEffect as useEffect16, useCallback as useCallback8, lazy, Suspense } from "react";
-import { jsx as jsx25, jsxs as jsxs22 } from "react/jsx-runtime";
+init_ui();
+import { useState as useState20, useRef as useRef15, useEffect as useEffect17, useCallback as useCallback9, lazy, Suspense } from "react";
+import { jsx as jsx26, jsxs as jsxs23 } from "react/jsx-runtime";
 var Metronome2 = lazy(() => Promise.resolve().then(() => (init_Metronome(), Metronome_exports)).then((m) => ({ default: m.Metronome })));
 var Tuner2 = lazy(() => Promise.resolve().then(() => (init_Tuner(), Tuner_exports)).then((m) => ({ default: m.Tuner })));
 var ChordPlayer2 = lazy(() => Promise.resolve().then(() => (init_ChordPlayer(), ChordPlayer_exports)).then((m) => ({ default: m.ChordPlayer })));
 var TabEditor2 = lazy(() => Promise.resolve().then(() => (init_TabEditor(), TabEditor_exports)).then((m) => ({ default: m.TabEditor })));
+var Morceaux2 = lazy(() => Promise.resolve().then(() => (init_Morceaux(), Morceaux_exports)).then((m) => ({ default: m.Morceaux })));
 var FretboardExplorer2 = lazy(() => Promise.resolve().then(() => (init_FretboardExplorer(), FretboardExplorer_exports)).then((m) => ({ default: m.FretboardExplorer })));
 var ONGLETS_OUTILS = [
   { id: "metronome", label: "M\xE9tronome", icon: "clock" },
   { id: "tuner", label: "Accordeur", icon: "microphone" },
   { id: "chords", label: "Accords", icon: "music" },
   { id: "neck", label: "Manche", icon: "guitar-pick" },
-  { id: "tablature", label: "Tablature", icon: "notebook" }
+  { id: "tablature", label: "Tablature", icon: "notebook" },
+  { id: "morceaux", label: "Morceaux", icon: "headphones" }
 ];
 var LIENS_EXTERNES = [
   { id: "jam", label: "Jam Session", icon: "music-plus" },
@@ -14254,12 +17983,13 @@ var OUTIL_PAR_ID = {
   metronome: Metronome2,
   tuner: Tuner2,
   chords: ChordPlayer2,
-  tablature: TabEditor2
+  tablature: TabEditor2,
+  morceaux: Morceaux2
 };
 var comportementDefilement = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
 function ToolboxScreen({ onBack, navigate }) {
   const C = useC();
-  const [tab, setTabBrut] = useState19(() => {
+  const [tab, setTabBrut] = useState20(() => {
     try {
       const t = localStorage.getItem("groply:outil-actif");
       if (OUTILS_INTERNES.has(t)) return t;
@@ -14274,13 +18004,13 @@ function ToolboxScreen({ onBack, navigate }) {
     } catch {
     }
   };
-  const ongletsRef = useRef14(null);
-  const [finOnglets, setFinOnglets] = useState19(false);
-  const majFinOnglets = useCallback8(() => {
+  const ongletsRef = useRef15(null);
+  const [finOnglets, setFinOnglets] = useState20(false);
+  const majFinOnglets = useCallback9(() => {
     const el = ongletsRef.current;
     if (el) setFinOnglets(el.scrollLeft + el.clientWidth >= el.scrollWidth - 4);
   }, []);
-  useEffect16(() => {
+  useEffect17(() => {
     ongletsRef.current?.querySelector('[aria-selected="true"]')?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
     majFinOnglets();
     window.addEventListener("resize", majFinOnglets);
@@ -14320,8 +18050,8 @@ function ToolboxScreen({ onBack, navigate }) {
     lineHeight: 1.2
   });
   const Outil = OUTIL_PAR_ID[tab];
-  return /* @__PURE__ */ jsxs22("div", { style: { paddingBottom: 30 }, children: [
-    /* @__PURE__ */ jsxs22("div", { style: {
+  return /* @__PURE__ */ jsxs23("div", { style: { paddingBottom: 30 }, children: [
+    /* @__PURE__ */ jsxs23("div", { style: {
       backgroundColor: "#b7a0c8",
       backgroundImage: "url('/sunrise.jpg')",
       backgroundSize: "cover",
@@ -14330,9 +18060,9 @@ function ToolboxScreen({ onBack, navigate }) {
       position: "relative",
       overflow: "hidden"
     }, children: [
-      /* @__PURE__ */ jsx25("div", { style: { position: "absolute", inset: 0, background: "rgba(160,55,0,.5)" } }),
-      /* @__PURE__ */ jsxs22("div", { style: { position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 12 }, children: [
-        onBack && /* @__PURE__ */ jsx25(
+      /* @__PURE__ */ jsx26("div", { style: { position: "absolute", inset: 0, background: "rgba(160,55,0,.5)" } }),
+      /* @__PURE__ */ jsxs23("div", { style: { position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 12 }, children: [
+        onBack && /* @__PURE__ */ jsx26(
           BackButton,
           {
             onClick: onBack,
@@ -14340,17 +18070,17 @@ function ToolboxScreen({ onBack, navigate }) {
             tint: { bg: "rgba(255,255,255,.85)", border: "transparent", icon: C.primaryD }
           }
         ),
-        /* @__PURE__ */ jsxs22("div", { style: { flex: 1 }, children: [
-          /* @__PURE__ */ jsx25("div", { style: { fontSize: 24, fontWeight: 800, color: "#fff", letterSpacing: "-.4px" }, children: "Bo\xEEte \xE0 outils" }),
-          /* @__PURE__ */ jsx25("div", { style: { fontSize: 12, color: "rgba(255,255,255,.8)", marginTop: 1 }, children: "Tout ce qu'il faut pour pratiquer" })
+        /* @__PURE__ */ jsxs23("div", { style: { flex: 1 }, children: [
+          /* @__PURE__ */ jsx26("div", { style: { fontSize: 24, fontWeight: 800, color: "#fff", letterSpacing: "-.4px" }, children: "Bo\xEEte \xE0 outils" }),
+          /* @__PURE__ */ jsx26("div", { style: { fontSize: 12, color: "rgba(255,255,255,.8)", marginTop: 1 }, children: "Tout ce qu'il faut pour pratiquer" })
         ] })
       ] })
     ] }),
-    /* @__PURE__ */ jsxs22("div", { style: { position: "relative" }, children: [
-      /* @__PURE__ */ jsx25("div", { ref: ongletsRef, onScroll: majFinOnglets, style: { overflowX: "auto", WebkitOverflowScrolling: "touch", padding: "14px 20px 0" }, children: /* @__PURE__ */ jsxs22("div", { style: { display: "flex", gap: 8, width: "max-content", alignItems: "stretch" }, children: [
-        /* @__PURE__ */ jsx25("div", { role: "tablist", "aria-label": "Outils", onKeyDown: onKeyDownOnglets, style: { display: "flex", gap: 8, alignItems: "stretch" }, children: ONGLETS_OUTILS.map((t) => {
+    /* @__PURE__ */ jsxs23("div", { style: { position: "relative" }, children: [
+      /* @__PURE__ */ jsx26("div", { ref: ongletsRef, onScroll: majFinOnglets, style: { overflowX: "auto", WebkitOverflowScrolling: "touch", padding: "14px 20px 0" }, children: /* @__PURE__ */ jsxs23("div", { style: { display: "flex", gap: 8, width: "max-content", alignItems: "stretch" }, children: [
+        /* @__PURE__ */ jsx26("div", { role: "tablist", "aria-label": "Outils", onKeyDown: onKeyDownOnglets, style: { display: "flex", gap: 8, alignItems: "stretch" }, children: ONGLETS_OUTILS.map((t) => {
           const actif = tab === t.id;
-          return /* @__PURE__ */ jsxs22(
+          return /* @__PURE__ */ jsxs23(
             "button",
             {
               type: "button",
@@ -14363,15 +18093,15 @@ function ToolboxScreen({ onBack, navigate }) {
               className: "gr-focus",
               style: styleOnglet(actif),
               children: [
-                /* @__PURE__ */ jsx25(Ti, { name: t.icon, size: 15, color: actif ? C.primary : C.text3 }),
+                /* @__PURE__ */ jsx26(Ti, { name: t.icon, size: 15, color: actif ? C.primary : C.text3 }),
                 t.label
               ]
             },
             t.id
           );
         }) }),
-        /* @__PURE__ */ jsx25("div", { "aria-hidden": "true", style: { width: 1.5, background: C.border, margin: "6px 0" } }),
-        LIENS_EXTERNES.map((t) => /* @__PURE__ */ jsxs22(
+        /* @__PURE__ */ jsx26("div", { "aria-hidden": "true", style: { width: 1.5, background: C.border, margin: "6px 0" } }),
+        LIENS_EXTERNES.map((t) => /* @__PURE__ */ jsxs23(
           "button",
           {
             type: "button",
@@ -14380,15 +18110,15 @@ function ToolboxScreen({ onBack, navigate }) {
             className: "gr-focus",
             style: styleOnglet(false),
             children: [
-              /* @__PURE__ */ jsx25("span", { "aria-hidden": "true", style: { position: "absolute", top: 3, right: 6, fontSize: 10, color: C.text3 }, children: "\u2197" }),
-              /* @__PURE__ */ jsx25(Ti, { name: t.icon, size: 15, color: C.text3 }),
+              /* @__PURE__ */ jsx26("span", { "aria-hidden": "true", style: { position: "absolute", top: 3, right: 6, fontSize: 10, color: C.text3 }, children: "\u2197" }),
+              /* @__PURE__ */ jsx26(Ti, { name: t.icon, size: 15, color: C.text3 }),
               t.label
             ]
           },
           t.id
         ))
       ] }) }),
-      !finOnglets && /* @__PURE__ */ jsx25("div", { "aria-hidden": "true", style: {
+      !finOnglets && /* @__PURE__ */ jsx26("div", { "aria-hidden": "true", style: {
         position: "absolute",
         top: 14,
         right: 0,
@@ -14400,9 +18130,9 @@ function ToolboxScreen({ onBack, navigate }) {
         alignItems: "center",
         justifyContent: "flex-end",
         paddingRight: 6
-      }, children: /* @__PURE__ */ jsx25(Ti, { name: "chevron-right", size: 18, color: C.text2 }) })
+      }, children: /* @__PURE__ */ jsx26(Ti, { name: "chevron-right", size: 18, color: C.text2 }) })
     ] }),
-    /* @__PURE__ */ jsx25("div", { role: "tabpanel", id: ID_PANNEAU, "aria-labelledby": idOnglet(tab), style: { padding: "18px 20px 0" }, children: /* @__PURE__ */ jsx25(Suspense, { fallback: /* @__PURE__ */ jsx25("div", { role: "status", style: { minHeight: 240, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: C.text3, fontFamily: FONTS.ui }, children: "Chargement\u2026" }), children: Outil ? /* @__PURE__ */ jsx25(Outil, {}) : /* @__PURE__ */ jsx25(FretboardExplorer2, { embedded: true }) }) })
+    /* @__PURE__ */ jsx26("div", { role: "tabpanel", id: ID_PANNEAU, "aria-labelledby": idOnglet(tab), style: { padding: "18px 20px 0" }, children: /* @__PURE__ */ jsx26(Suspense, { fallback: /* @__PURE__ */ jsx26("div", { role: "status", style: { minHeight: 240, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: C.text3, fontFamily: FONTS.ui }, children: "Chargement\u2026" }), children: Outil ? /* @__PURE__ */ jsx26(Outil, {}) : /* @__PURE__ */ jsx26(FretboardExplorer2, { embedded: true }) }) })
   ] });
 }
 
@@ -14417,7 +18147,7 @@ __export(TrainingScreen_exports, {
 init_tokens();
 init_ThemeContext();
 init_Ti();
-import { useState as useState20, useMemo as useMemo9 } from "react";
+import { useState as useState21, useMemo as useMemo11 } from "react";
 
 // src/store/seance.js
 var DUREES = [5, 15, 30];
@@ -14539,7 +18269,7 @@ function indexJour(dateStr) {
 }
 
 // src/screens/TrainingScreen.jsx
-import { Fragment as Fragment13, jsx as jsx26, jsxs as jsxs23 } from "react/jsx-runtime";
+import { Fragment as Fragment13, jsx as jsx27, jsxs as jsxs24 } from "react/jsx-runtime";
 var CLE_DUREE = "groply:duree-seance";
 var lireDuree = (defaut) => {
   try {
@@ -14556,6 +18286,7 @@ var ecrireDuree = (v) => {
   }
 };
 var DOMAINES = [
+  { id: "Premiers pas", couleur: "coral", icone: "sparkles", modules: [DEBUT_MODULE], objectif: null, prelude: true, libre: { titre: "Accordeur", detail: "Dans la bo\xEEte \xE0 outils, onglet Accordeur", ecran: "toolbox" } },
   { id: "Manche", couleur: "amber", icone: "map-2", modules: ["neck"], objectif: "manche", libre: { titre: "Explorer le manche", detail: "Notes, gammes et accords sur tout le manche", ecran: "toolbox" } },
   { id: "Th\xE9orie", couleur: "green", icone: "stack-2", modules: ["scales", "harmony"], objectif: "theorie", libre: { titre: "Quiz par module", detail: "Toutes les questions de th\xE9orie, \xE0 ton rythme", quiz: true } },
   { id: "Oreille", couleur: "teal", icone: "ear", modules: [], objectif: null, libre: { titre: "Ear Training", detail: "Intervalles, accords, suites : sans limite", ecran: "ear" } },
@@ -14567,20 +18298,25 @@ var JOURS = ["L", "M", "M", "J", "V", "S", "D"];
 var NOMS_JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"];
 function TrainingScreen({ state, dispatch, content, navigate }) {
   const C = useC();
-  const [domaineOuvert, setDomaineOuvert] = useState20(null);
-  const [exerciceOuvert, setExerciceOuvert] = useState20(null);
-  const [quizOuvert, setQuizOuvert] = useState20(false);
-  const [duree, setDuree] = useState20(() => lireDuree(dureeParDefaut(state.onboarding?.timePerWeek)));
+  const [domaineOuvert, setDomaineOuvert] = useState21(null);
+  const [exerciceOuvert, setExerciceOuvert] = useState21(null);
+  const [quizOuvert, setQuizOuvert] = useState21(false);
+  const [duree, setDuree] = useState21(() => lireDuree(dureeParDefaut(state.onboarding?.timePerWeek)));
   const objectif = state.onboarding?.goal || "global";
   const today = todayStr();
-  const revisionDisponible = useMemo9(() => {
+  const revisionDisponible = useMemo11(() => {
     const st = getReviewStats([...content.quiz, ...itemsGeneres(state.completedLessons)], state.reviewHistory, state.completedLessons);
     return st.toReview + st.neverSeen;
   }, [content.quiz, state.reviewHistory, state.completedLessons]);
-  const seance = useMemo9(() => planSeance({ duree, objectif, state, content, today, revisionDisponible }), [duree, objectif, state, content, today, revisionDisponible]);
-  const progression = useMemo9(() => progressionFamilles(state), [state]);
-  const gMastery = useMemo9(() => masteryStats(content, state), [content, state]);
-  const uniteEnAttente = useMemo9(() => buildPath(content, state).find((u) => u.needsCheck) || null, [content, state]);
+  const seance = useMemo11(() => planSeance({ duree, objectif, state, content, today, revisionDisponible }), [duree, objectif, state, content, today, revisionDisponible]);
+  const progression = useMemo11(() => progressionFamilles(state), [state]);
+  const gMastery = useMemo11(() => masteryStats(content, state), [content, state]);
+  const afficherPrelude = useMemo11(() => {
+    const debut = content.courses.find((c) => c.id === DEBUT_MODULE);
+    if (!debut) return false;
+    return debut.lessons.some((l) => state.completedLessons?.[l.id]) || !debutFacultatif(state, buildUnits(content.courses, state));
+  }, [content.courses, state]);
+  const uniteEnAttente = useMemo11(() => buildPath(content, state).find((u) => u.needsCheck) || null, [content, state]);
   const lancerEtape = (e) => {
     if (e.aJour) return;
     if (e.id === "revision") navigate("review", { cible: e.questions, retour: "training" });
@@ -14588,11 +18324,11 @@ function TrainingScreen({ state, dispatch, content, navigate }) {
     else if (e.id === "jouer") navigate("jam", { retour: "training" });
   };
   if (exerciceOuvert) {
-    return /* @__PURE__ */ jsx26(ExerciseDetail, { ex: exerciceOuvert, state, dispatch, content, onBack: () => setExerciceOuvert(null) });
+    return /* @__PURE__ */ jsx27(ExerciseDetail, { ex: exerciceOuvert, state, dispatch, content, onBack: () => setExerciceOuvert(null) });
   }
   if (domaineOuvert) {
     const d = DOMAINES.find((x) => x.id === domaineOuvert);
-    return /* @__PURE__ */ jsx26(
+    return /* @__PURE__ */ jsx27(
       VueDomaine,
       {
         C,
@@ -14612,9 +18348,9 @@ function TrainingScreen({ state, dispatch, content, navigate }) {
       }
     );
   }
-  const domainesOrdonnes = [...DOMAINES].sort((a, b) => (b.objectif === objectif) - (a.objectif === objectif));
-  return /* @__PURE__ */ jsxs23("div", { children: [
-    /* @__PURE__ */ jsxs23("div", { style: {
+  const domainesOrdonnes = DOMAINES.filter((d) => !d.prelude || afficherPrelude).sort((a, b) => (b.objectif === objectif) - (a.objectif === objectif));
+  return /* @__PURE__ */ jsxs24("div", { children: [
+    /* @__PURE__ */ jsxs24("div", { style: {
       backgroundColor: "#36b3d7",
       backgroundImage: "url('/ocean.jpg')",
       backgroundSize: "cover",
@@ -14623,10 +18359,10 @@ function TrainingScreen({ state, dispatch, content, navigate }) {
       position: "relative",
       overflow: "hidden"
     }, children: [
-      /* @__PURE__ */ jsx26("div", { style: { position: "absolute", inset: 0, background: "rgba(0,60,80,.52)", pointerEvents: "none" } }),
-      /* @__PURE__ */ jsxs23("div", { style: { position: "relative", zIndex: 1 }, children: [
-        /* @__PURE__ */ jsx26("h1", { style: { margin: 0, fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: "-.4px" }, children: "Pratique" }),
-        /* @__PURE__ */ jsxs23("div", { style: { fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,.85)", marginTop: 2 }, children: [
+      /* @__PURE__ */ jsx27("div", { style: { position: "absolute", inset: 0, background: "rgba(0,60,80,.52)", pointerEvents: "none" } }),
+      /* @__PURE__ */ jsxs24("div", { style: { position: "relative", zIndex: 1 }, children: [
+        /* @__PURE__ */ jsx27("h1", { style: { margin: 0, fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: "-.4px" }, children: "Pratique" }),
+        /* @__PURE__ */ jsxs24("div", { style: { fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,.85)", marginTop: 2 }, children: [
           gMastery.comprises,
           " compris \xB7 ",
           gMastery.ancrees,
@@ -14638,13 +18374,13 @@ function TrainingScreen({ state, dispatch, content, navigate }) {
         ] })
       ] })
     ] }),
-    /* @__PURE__ */ jsxs23("div", { style: { padding: "16px 16px 24px", display: "flex", flexDirection: "column", gap: 14 }, children: [
-      seance.vide ? /* @__PURE__ */ jsxs23("section", { style: { background: C.surface, border: `1.5px solid ${C.primaryBorder}`, borderRadius: 22, padding: 16, display: "flex", flexDirection: "column", gap: 12 }, children: [
-        /* @__PURE__ */ jsx26("div", { style: { fontSize: 12, fontWeight: 700, color: C.primaryD, textTransform: "uppercase", letterSpacing: ".06em" }, children: "Ta s\xE9ance du jour" }),
-        /* @__PURE__ */ jsx26("h2", { style: { margin: 0, fontSize: 20, fontWeight: 800, color: C.text }, children: "Commence par une le\xE7on" }),
-        /* @__PURE__ */ jsx26("div", { style: { fontSize: 13, color: C.text2, lineHeight: 1.5 }, children: "Ta s\xE9ance se composera d'elle-m\xEAme d\xE8s ta premi\xE8re le\xE7on : r\xE9vision de ce que tu as appris, puis du jeu." }),
-        /* @__PURE__ */ jsx26("button", { onClick: () => navigate("home"), className: "gr-focus", style: { minHeight: 52, border: "none", borderRadius: 16, background: C.primaryBtn || C.primary, color: C.onPrimaryBtn, fontFamily: "inherit", fontSize: 16, fontWeight: 800, cursor: "pointer" }, children: "Aller au Parcours" })
-      ] }) : /* @__PURE__ */ jsx26(
+    /* @__PURE__ */ jsxs24("div", { style: { padding: "16px 16px 24px", display: "flex", flexDirection: "column", gap: 14 }, children: [
+      seance.vide ? /* @__PURE__ */ jsxs24("section", { style: { background: C.surface, border: `1.5px solid ${C.primaryBorder}`, borderRadius: 22, padding: 16, display: "flex", flexDirection: "column", gap: 12 }, children: [
+        /* @__PURE__ */ jsx27("div", { style: { fontSize: 12, fontWeight: 700, color: C.primaryD, textTransform: "uppercase", letterSpacing: ".06em" }, children: "Ta s\xE9ance du jour" }),
+        /* @__PURE__ */ jsx27("h2", { style: { margin: 0, fontSize: 20, fontWeight: 800, color: C.text }, children: "Commence par une le\xE7on" }),
+        /* @__PURE__ */ jsx27("div", { style: { fontSize: 13, color: C.text2, lineHeight: 1.5 }, children: "Ta s\xE9ance se composera d'elle-m\xEAme d\xE8s ta premi\xE8re le\xE7on : r\xE9vision de ce que tu as appris, puis du jeu." }),
+        /* @__PURE__ */ jsx27("button", { onClick: () => navigate("home"), className: "gr-focus", style: { minHeight: 52, border: "none", borderRadius: 16, background: C.primaryBtn || C.primary, color: C.onPrimaryBtn, fontFamily: "inherit", fontSize: 16, fontWeight: 800, cursor: "pointer" }, children: "Aller au Parcours" })
+      ] }) : /* @__PURE__ */ jsx27(
         SeanceDuJour,
         {
           C,
@@ -14657,21 +18393,21 @@ function TrainingScreen({ state, dispatch, content, navigate }) {
           onLancer: lancerEtape
         }
       ),
-      /* @__PURE__ */ jsx26(Semaine, { C, state, objectifJours: objectifJoursSemaine(state.onboarding?.timePerWeek) }),
-      uniteEnAttente && /* @__PURE__ */ jsxs23("section", { style: { background: C.amberL, border: `1.5px solid ${C.amberBorder}`, borderRadius: R.lg, padding: "12px 14px", display: "flex", alignItems: "center", gap: 12 }, children: [
-        /* @__PURE__ */ jsx26(Ti, { name: "lock", size: 22, color: C.amberD }),
-        /* @__PURE__ */ jsxs23("div", { style: { flex: 1, minWidth: 0 }, children: [
-          /* @__PURE__ */ jsx26("div", { style: { fontSize: 14, fontWeight: 700, color: C.amberD }, children: "V\xE9rification pr\xEAte" }),
-          /* @__PURE__ */ jsxs23("div", { style: { fontSize: 12, color: C.amberD }, children: [
+      /* @__PURE__ */ jsx27(Semaine, { C, state, objectifJours: objectifJoursSemaine(state.onboarding?.timePerWeek) }),
+      uniteEnAttente && /* @__PURE__ */ jsxs24("section", { style: { background: C.amberL, border: `1.5px solid ${C.amberBorder}`, borderRadius: R.lg, padding: "12px 14px", display: "flex", alignItems: "center", gap: 12 }, children: [
+        /* @__PURE__ */ jsx27(Ti, { name: "lock", size: 22, color: C.amberD }),
+        /* @__PURE__ */ jsxs24("div", { style: { flex: 1, minWidth: 0 }, children: [
+          /* @__PURE__ */ jsx27("div", { style: { fontSize: 14, fontWeight: 700, color: C.amberD }, children: "V\xE9rification pr\xEAte" }),
+          /* @__PURE__ */ jsxs24("div", { style: { fontSize: 12, color: C.amberD }, children: [
             uniteEnAttente.title,
             " : le\xE7ons finies, \xE0 valider"
           ] })
         ] }),
-        /* @__PURE__ */ jsx26("button", { onClick: () => navigate("home"), className: "gr-focus", style: { minHeight: 44, padding: "0 14px", borderRadius: R.md, border: `1.5px solid ${C.amber}`, background: C.surface, color: C.amberD, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }, children: "Valider" })
+        /* @__PURE__ */ jsx27("button", { onClick: () => navigate("home"), className: "gr-focus", style: { minHeight: 44, padding: "0 14px", borderRadius: R.md, border: `1.5px solid ${C.amber}`, background: C.surface, color: C.amberD, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }, children: "Valider" })
       ] }),
-      /* @__PURE__ */ jsxs23("section", { "aria-labelledby": "titre-domaines", style: { display: "flex", flexDirection: "column", gap: 10 }, children: [
-        /* @__PURE__ */ jsx26("h2", { id: "titre-domaines", style: { margin: "4px 4px 0", fontSize: 17, fontWeight: 800, color: C.text }, children: "S'entra\xEEner sur\u2026" }),
-        /* @__PURE__ */ jsx26("div", { style: { display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }, children: domainesOrdonnes.map((d) => /* @__PURE__ */ jsx26(CarteDomaine, { C, d, state, progression, onOuvrir: () => setDomaineOuvert(d.id) }, d.id)) })
+      /* @__PURE__ */ jsxs24("section", { "aria-labelledby": "titre-domaines", style: { display: "flex", flexDirection: "column", gap: 10 }, children: [
+        /* @__PURE__ */ jsx27("h2", { id: "titre-domaines", style: { margin: "4px 4px 0", fontSize: 17, fontWeight: 800, color: C.text }, children: "S'entra\xEEner sur\u2026" }),
+        /* @__PURE__ */ jsx27("div", { style: { display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }, children: domainesOrdonnes.map((d) => /* @__PURE__ */ jsx27(CarteDomaine, { C, d, state, content, progression, onOuvrir: () => setDomaineOuvert(d.id) }, d.id)) })
       ] })
     ] })
   ] });
@@ -14679,12 +18415,12 @@ function TrainingScreen({ state, dispatch, content, navigate }) {
 function SeanceDuJour({ C, seance, duree, onDuree, onLancer }) {
   const { etapes, prochaine, terminee, totalMinutes } = seance;
   const commencee = etapes.some((e) => e.fait);
-  return /* @__PURE__ */ jsxs23("section", { "aria-labelledby": "titre-seance", style: { background: C.surface, border: `1.5px solid ${C.primaryBorder}`, borderRadius: 22, padding: 16, display: "flex", flexDirection: "column", gap: 14, boxShadow: "0 6px 20px rgba(184,64,16,.10)" }, children: [
-    /* @__PURE__ */ jsxs23("div", { children: [
-      /* @__PURE__ */ jsx26("div", { style: { fontSize: 12, fontWeight: 700, color: C.primaryD, textTransform: "uppercase", letterSpacing: ".06em" }, children: "Ta s\xE9ance du jour" }),
-      /* @__PURE__ */ jsx26("h2", { id: "titre-seance", style: { margin: "4px 0 0", fontSize: 20, fontWeight: 800, color: C.text, letterSpacing: "-.3px" }, children: terminee ? "S\xE9ance termin\xE9e" : commencee ? "On continue ?" : "Compos\xE9e pour toi" })
+  return /* @__PURE__ */ jsxs24("section", { "aria-labelledby": "titre-seance", style: { background: C.surface, border: `1.5px solid ${C.primaryBorder}`, borderRadius: 22, padding: 16, display: "flex", flexDirection: "column", gap: 14, boxShadow: "0 6px 20px rgba(184,64,16,.10)" }, children: [
+    /* @__PURE__ */ jsxs24("div", { children: [
+      /* @__PURE__ */ jsx27("div", { style: { fontSize: 12, fontWeight: 700, color: C.primaryD, textTransform: "uppercase", letterSpacing: ".06em" }, children: "Ta s\xE9ance du jour" }),
+      /* @__PURE__ */ jsx27("h2", { id: "titre-seance", style: { margin: "4px 0 0", fontSize: 20, fontWeight: 800, color: C.text, letterSpacing: "-.3px" }, children: terminee ? "S\xE9ance termin\xE9e" : commencee ? "On continue ?" : "Compos\xE9e pour toi" })
     ] }),
-    !terminee && /* @__PURE__ */ jsx26("div", { role: "group", "aria-label": "Dur\xE9e de la s\xE9ance", style: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 6, background: C.surface2, padding: 4, borderRadius: 14 }, children: DUREES.map((v) => /* @__PURE__ */ jsxs23("button", { onClick: () => onDuree(v), "aria-pressed": v === duree, className: "gr-focus", style: {
+    !terminee && /* @__PURE__ */ jsx27("div", { role: "group", "aria-label": "Dur\xE9e de la s\xE9ance", style: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 6, background: C.surface2, padding: 4, borderRadius: 14 }, children: DUREES.map((v) => /* @__PURE__ */ jsxs24("button", { onClick: () => onDuree(v), "aria-pressed": v === duree, className: "gr-focus", style: {
       minHeight: 44,
       border: "none",
       borderRadius: 11,
@@ -14699,10 +18435,10 @@ function SeanceDuJour({ C, seance, duree, onDuree, onLancer }) {
       v,
       " min"
     ] }, v)) }),
-    /* @__PURE__ */ jsx26("ol", { style: { listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 8 }, children: etapes.map((e, i) => {
+    /* @__PURE__ */ jsx27("ol", { style: { listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 8 }, children: etapes.map((e, i) => {
       const estProchaine = prochaine?.id === e.id;
       const reste = e.id === "jouer" && !e.fait && e.secondesFaites > 0 ? ` \xB7 ${Math.floor(e.secondesFaites / 60)} min jou\xE9e${e.secondesFaites >= 120 ? "s" : ""} sur ${e.minutes}` : "";
-      return /* @__PURE__ */ jsx26("li", { children: /* @__PURE__ */ jsxs23(
+      return /* @__PURE__ */ jsx27("li", { children: /* @__PURE__ */ jsxs24(
         "button",
         {
           onClick: () => onLancer(e),
@@ -14723,7 +18459,7 @@ function SeanceDuJour({ C, seance, duree, onDuree, onLancer }) {
             border: `1.5px solid ${estProchaine ? C.primaryBorder : "transparent"}`
           },
           children: [
-            /* @__PURE__ */ jsx26("div", { style: {
+            /* @__PURE__ */ jsx27("div", { style: {
               width: 34,
               height: 34,
               flexShrink: 0,
@@ -14733,26 +18469,26 @@ function SeanceDuJour({ C, seance, duree, onDuree, onLancer }) {
               justifyContent: "center",
               background: e.fait ? C.green : C.primaryL,
               border: e.fait ? "none" : `1.5px solid ${C.primaryBorder}`
-            }, children: /* @__PURE__ */ jsx26(Ti, { name: e.fait ? "check" : ICONE_ETAPE[e.id], size: 17, color: e.fait ? C.onPrimaryBtn : C.primaryD }) }),
-            /* @__PURE__ */ jsxs23("div", { style: { flex: 1, minWidth: 0 }, children: [
-              /* @__PURE__ */ jsx26("div", { style: { fontSize: 14, fontWeight: 700, color: C.text, textDecorationLine: e.fait ? "line-through" : "none", textDecorationColor: C.text3 }, children: e.titre }),
-              /* @__PURE__ */ jsxs23("div", { style: { fontSize: 12, color: C.text2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, children: [
+            }, children: /* @__PURE__ */ jsx27(Ti, { name: e.fait ? "check" : ICONE_ETAPE[e.id], size: 17, color: e.fait ? C.onPrimaryBtn : C.primaryD }) }),
+            /* @__PURE__ */ jsxs24("div", { style: { flex: 1, minWidth: 0 }, children: [
+              /* @__PURE__ */ jsx27("div", { style: { fontSize: 14, fontWeight: 700, color: C.text, textDecorationLine: e.fait ? "line-through" : "none", textDecorationColor: C.text3 }, children: e.titre }),
+              /* @__PURE__ */ jsxs24("div", { style: { fontSize: 12, color: C.text2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, children: [
                 e.detail,
                 reste
               ] })
             ] }),
-            /* @__PURE__ */ jsx26("div", { style: { fontSize: 12, fontWeight: 700, color: C.text2, whiteSpace: "nowrap" }, children: e.aJour ? "\xE0 jour" : `${e.minutes} min` })
+            /* @__PURE__ */ jsx27("div", { style: { fontSize: 12, fontWeight: 700, color: C.text2, whiteSpace: "nowrap" }, children: e.aJour ? "\xE0 jour" : `${e.minutes} min` })
           ]
         }
       ) }, e.id);
     }) }),
-    terminee ? /* @__PURE__ */ jsxs23("div", { role: "status", style: { display: "flex", alignItems: "center", gap: 10, background: C.greenL, border: `1.5px solid ${C.greenBorder}`, borderRadius: 14, padding: "12px 14px", color: C.greenD, fontSize: 13, lineHeight: 1.5 }, children: [
-      /* @__PURE__ */ jsx26(Ti, { name: "trophy", size: 22, color: C.greenD }),
-      /* @__PURE__ */ jsxs23("div", { children: [
-        /* @__PURE__ */ jsx26("b", { children: "Bravo, c'est fait pour aujourd'hui." }),
+    terminee ? /* @__PURE__ */ jsxs24("div", { role: "status", style: { display: "flex", alignItems: "center", gap: 10, background: C.greenL, border: `1.5px solid ${C.greenBorder}`, borderRadius: 14, padding: "12px 14px", color: C.greenD, fontSize: 13, lineHeight: 1.5 }, children: [
+      /* @__PURE__ */ jsx27(Ti, { name: "trophy", size: 22, color: C.greenD }),
+      /* @__PURE__ */ jsxs24("div", { children: [
+        /* @__PURE__ */ jsx27("b", { children: "Bravo, c'est fait pour aujourd'hui." }),
         " Envie de continuer ? Choisis un domaine ci-dessous."
       ] })
-    ] }) : /* @__PURE__ */ jsxs23("button", { onClick: () => onLancer(prochaine), className: "gr-focus", style: {
+    ] }) : /* @__PURE__ */ jsxs24("button", { onClick: () => onLancer(prochaine), className: "gr-focus", style: {
       minHeight: 52,
       border: "none",
       borderRadius: 16,
@@ -14767,7 +18503,7 @@ function SeanceDuJour({ C, seance, duree, onDuree, onLancer }) {
       justifyContent: "center",
       gap: 10
     }, children: [
-      /* @__PURE__ */ jsx26(Ti, { name: "player-play", size: 18, color: C.onPrimaryBtn }),
+      /* @__PURE__ */ jsx27(Ti, { name: "player-play", size: 18, color: C.onPrimaryBtn }),
       commencee ? `Continuer : ${prochaine.titre}` : `Commencer \xB7 ${totalMinutes} min`
     ] })
   ] });
@@ -14777,11 +18513,11 @@ function Semaine({ C, state, objectifJours }) {
   const faits = new Set(jours.map(indexJour));
   const auj = indexJour(todayStr());
   const n = jours.length;
-  return /* @__PURE__ */ jsxs23("section", { "aria-labelledby": "titre-semaine", style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }, children: [
-    /* @__PURE__ */ jsxs23("div", { style: { display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }, children: [
-      /* @__PURE__ */ jsx26("h2", { id: "titre-semaine", style: { margin: 0, fontSize: 15, fontWeight: 800, color: C.text }, children: "Cette semaine" }),
-      /* @__PURE__ */ jsxs23("div", { style: { fontSize: 13, color: C.text2 }, children: [
-        /* @__PURE__ */ jsxs23("b", { style: { color: C.text }, children: [
+  return /* @__PURE__ */ jsxs24("section", { "aria-labelledby": "titre-semaine", style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }, children: [
+    /* @__PURE__ */ jsxs24("div", { style: { display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }, children: [
+      /* @__PURE__ */ jsx27("h2", { id: "titre-semaine", style: { margin: 0, fontSize: 15, fontWeight: 800, color: C.text }, children: "Cette semaine" }),
+      /* @__PURE__ */ jsxs24("div", { style: { fontSize: 13, color: C.text2 }, children: [
+        /* @__PURE__ */ jsxs24("b", { style: { color: C.text }, children: [
           n,
           " jour",
           n > 1 ? "s" : ""
@@ -14790,13 +18526,13 @@ function Semaine({ C, state, objectifJours }) {
         objectifJours
       ] })
     ] }),
-    /* @__PURE__ */ jsx26("ul", { "aria-label": `Jours de pratique : ${n} sur ${objectifJours} vis\xE9s`, style: { listStyle: "none", margin: 0, padding: 0, display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: 6 }, children: JOURS.map((l, i) => /* @__PURE__ */ jsxs23(
+    /* @__PURE__ */ jsx27("ul", { "aria-label": `Jours de pratique : ${n} sur ${objectifJours} vis\xE9s`, style: { listStyle: "none", margin: 0, padding: 0, display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: 6 }, children: JOURS.map((l, i) => /* @__PURE__ */ jsxs24(
       "li",
       {
         "aria-label": `${NOMS_JOURS[i]} : ${faits.has(i) ? "pratiqu\xE9" : i === auj ? "aujourd'hui" : "pas de pratique"}`,
         style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 4 },
         children: [
-          /* @__PURE__ */ jsx26("div", { style: {
+          /* @__PURE__ */ jsx27("div", { style: {
             width: 30,
             height: 30,
             borderRadius: 999,
@@ -14806,8 +18542,8 @@ function Semaine({ C, state, objectifJours }) {
             boxSizing: "border-box",
             background: faits.has(i) ? C.green : i === auj ? C.surface : C.surface2,
             border: !faits.has(i) && i === auj ? `2px solid ${C.primary}` : "none"
-          }, children: faits.has(i) && /* @__PURE__ */ jsx26(Ti, { name: "check", size: 14, color: C.onPrimaryBtn }) }),
-          /* @__PURE__ */ jsx26("div", { "aria-hidden": "true", style: { fontSize: 11, fontWeight: i === auj ? 800 : 600, color: i === auj ? C.primaryD : C.text2 }, children: l })
+          }, children: faits.has(i) && /* @__PURE__ */ jsx27(Ti, { name: "check", size: 14, color: C.onPrimaryBtn }) }),
+          /* @__PURE__ */ jsx27("div", { "aria-hidden": "true", style: { fontSize: 11, fontWeight: i === auj ? 800 : 600, color: i === auj ? C.primaryD : C.text2 }, children: l })
         ]
       },
       i
@@ -14820,13 +18556,15 @@ function familleDomaine(f) {
 function couleurs(C, nom2) {
   return { c: C[nom2], l: C[nom2 + "L"], d: C[nom2 + "D"], b: C[nom2 + "Border"], ink: C[nom2 + "Ink"] || C[nom2 + "D"] };
 }
-function CarteDomaine({ C, d, state, progression, onOuvrir }) {
+function CarteDomaine({ C, d, state, content, progression, onOuvrir }) {
   const k = couleurs(C, d.couleur);
   const miennes = progression.filter((p) => p.domaine === d.id);
   const commencees = miennes.filter((p) => p.commencee);
   const niveau = commencees.length ? Math.round(commencees.reduce((s, p) => s + p.niveau, 0) / commencees.length) : 0;
-  const detail = d.id === "Impro" ? `Jam Session \xB7 ${state.jam?.seances || 0} s\xE9ance${(state.jam?.seances || 0) > 1 ? "s" : ""}` : miennes.length ? `${miennes.length} comp\xE9tence${miennes.length > 1 ? "s" : ""}` : "\xC0 d\xE9bloquer dans le parcours";
-  return /* @__PURE__ */ jsxs23(
+  const lecons = d.prelude ? content.courses.find((c) => d.modules.includes(c.id))?.lessons || [] : [];
+  const leconsFaites = lecons.filter((l) => state.completedLessons?.[l.id]).length;
+  const detail = d.prelude ? `${leconsFaites}/${lecons.length} le\xE7on${lecons.length > 1 ? "s" : ""}` : d.id === "Impro" ? `Jam Session \xB7 ${state.jam?.seances || 0} s\xE9ance${(state.jam?.seances || 0) > 1 ? "s" : ""}` : miennes.length ? `${miennes.length} comp\xE9tence${miennes.length > 1 ? "s" : ""}` : "\xC0 d\xE9bloquer dans le parcours";
+  return /* @__PURE__ */ jsxs24(
     "button",
     {
       onClick: onOuvrir,
@@ -14834,17 +18572,17 @@ function CarteDomaine({ C, d, state, progression, onOuvrir }) {
       "aria-label": `${d.id} : ${detail}${commencees.length ? `, niveau moyen ${niveau} sur 3` : ""}`,
       style: { minHeight: 148, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10, padding: 14, borderRadius: 18, background: C.surface, border: `1.5px solid ${k.b}`, cursor: "pointer", textAlign: "left", fontFamily: "inherit" },
       children: [
-        /* @__PURE__ */ jsx26("div", { style: { width: 38, height: 38, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", background: k.l }, children: /* @__PURE__ */ jsx26(Ti, { name: d.icone, size: 20, color: k.c }) }),
-        /* @__PURE__ */ jsx26("div", { style: { fontSize: 15, fontWeight: 800, color: C.text }, children: d.id }),
-        d.id !== "Impro" && /* @__PURE__ */ jsx26("div", { "aria-hidden": "true", style: { display: "flex", gap: 4, width: "100%" }, children: [1, 2, 3].map((n) => /* @__PURE__ */ jsx26("div", { style: { flex: 1, height: 6, borderRadius: 3, background: n <= niveau ? k.c : C.border } }, n)) }),
-        /* @__PURE__ */ jsx26("div", { style: { fontSize: 12, color: C.text2 }, children: detail })
+        /* @__PURE__ */ jsx27("div", { style: { width: 38, height: 38, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", background: k.l }, children: /* @__PURE__ */ jsx27(Ti, { name: d.icone, size: 20, color: k.c }) }),
+        /* @__PURE__ */ jsx27("div", { style: { fontSize: 15, fontWeight: 800, color: C.text }, children: d.id }),
+        d.id !== "Impro" && !d.prelude && /* @__PURE__ */ jsx27("div", { "aria-hidden": "true", style: { display: "flex", gap: 4, width: "100%" }, children: [1, 2, 3].map((n) => /* @__PURE__ */ jsx27("div", { style: { flex: 1, height: 6, borderRadius: 3, background: n <= niveau ? k.c : C.border } }, n)) }),
+        /* @__PURE__ */ jsx27("div", { style: { fontSize: 12, color: C.text2 }, children: detail })
       ]
     }
   );
 }
 function VueDomaine({ C, d, state, dispatch, content, navigate, progression, quizOuvert, setQuizOuvert, onExercice, onRetour }) {
   const k = couleurs(C, d.couleur);
-  const lecons = useMemo9(() => new Map(content.courses.flatMap((c) => c.lessons).map((l) => [l.id, l.title])), [content.courses]);
+  const lecons = useMemo11(() => new Map(content.courses.flatMap((c) => c.lessons).map((l) => [l.id, l.title])), [content.courses]);
   const debloquees = progression.filter((p) => p.domaine === d.id);
   const verrouillees = FAMILLES.filter((f) => familleDomaine(f) === d.id && !state.completedLessons?.[f.lecon]);
   const exercices = (content.exercises || []).filter((e) => d.modules.includes(e.mod) && (!e.unlockedBy?.length || e.unlockedBy.every((id) => state.completedLessons?.[id])) && (!e.courseLink || state.completedLessons?.[e.courseLink]));
@@ -14854,11 +18592,11 @@ function VueDomaine({ C, d, state, dispatch, content, navigate, progression, qui
     if (d.libre.quiz) setQuizOuvert(true);
     else navigate(d.libre.ecran, d.libre.ecran === "toolbox" ? {} : { retour: "training" });
   };
-  return /* @__PURE__ */ jsxs23("div", { children: [
-    /* @__PURE__ */ jsxs23("div", { style: { background: k.l, borderBottom: `1.5px solid ${k.b}`, padding: "18px 16px", display: "flex", flexDirection: "column", gap: 14 }, children: [
-      /* @__PURE__ */ jsx26("button", { onClick: onRetour, "aria-label": "Retour \xE0 Pratique", className: "gr-focus", style: { width: 44, height: 44, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", background: C.surface, border: `1.5px solid ${k.b}`, cursor: "pointer" }, children: /* @__PURE__ */ jsx26(Ti, { name: "arrow-left", size: 18, color: k.d }) }),
-      /* @__PURE__ */ jsx26("h1", { style: { margin: 0, fontSize: 28, fontWeight: 800, letterSpacing: "-.5px", color: k.d }, children: d.id }),
-      peutReviser ? /* @__PURE__ */ jsxs23("button", { onClick: () => navigate("review", { domaine: d.id, cible: 10, retour: "training" }), className: "gr-focus", style: {
+  return /* @__PURE__ */ jsxs24("div", { children: [
+    /* @__PURE__ */ jsxs24("div", { style: { background: k.l, borderBottom: `1.5px solid ${k.b}`, padding: "18px 16px", display: "flex", flexDirection: "column", gap: 14 }, children: [
+      /* @__PURE__ */ jsx27("button", { onClick: onRetour, "aria-label": "Retour \xE0 Pratique", className: "gr-focus", style: { width: 44, height: 44, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", background: C.surface, border: `1.5px solid ${k.b}`, cursor: "pointer" }, children: /* @__PURE__ */ jsx27(Ti, { name: "arrow-left", size: 18, color: k.d }) }),
+      /* @__PURE__ */ jsx27("h1", { style: { margin: 0, fontSize: 28, fontWeight: 800, letterSpacing: "-.5px", color: k.d }, children: d.id }),
+      peutReviser ? /* @__PURE__ */ jsxs24("button", { onClick: () => navigate("review", { domaine: d.id, cible: 10, retour: "training" }), className: "gr-focus", style: {
         minHeight: 52,
         border: "none",
         borderRadius: 16,
@@ -14873,24 +18611,24 @@ function VueDomaine({ C, d, state, dispatch, content, navigate, progression, qui
         justifyContent: "center",
         gap: 10
       }, children: [
-        /* @__PURE__ */ jsx26(Ti, { name: "player-play", size: 18, color: C.onPrimaryBtn }),
-        " S'entra\xEEner sur ",
-        d.id === "Impro" ? "l'impro" : d.id === "Oreille" ? "l'oreille" : `le ${d.id.toLowerCase()}`
-      ] }) : d.id !== "Impro" && /* @__PURE__ */ jsx26("div", { style: { fontSize: 13, color: k.d }, children: "Rien \xE0 r\xE9viser pour l'instant : les comp\xE9tences de ce domaine se d\xE9bloquent avec les le\xE7ons du parcours." })
+        /* @__PURE__ */ jsx27(Ti, { name: "player-play", size: 18, color: C.onPrimaryBtn }),
+        " ",
+        d.prelude ? "R\xE9viser les premiers pas" : `S'entra\xEEner sur ${d.id === "Impro" ? "l'impro" : d.id === "Oreille" ? "l'oreille" : `le ${d.id.toLowerCase()}`}`
+      ] }) : d.id !== "Impro" && /* @__PURE__ */ jsx27("div", { style: { fontSize: 13, color: k.d }, children: d.prelude ? "Rien \xE0 r\xE9viser pour l'instant : les questions se d\xE9bloquent avec les le\xE7ons \xAB Premiers pas \xBB du parcours." : "Rien \xE0 r\xE9viser pour l'instant : les comp\xE9tences de ce domaine se d\xE9bloquent avec les le\xE7ons du parcours." })
     ] }),
-    /* @__PURE__ */ jsx26("div", { style: { padding: 16, display: "flex", flexDirection: "column", gap: 16 }, children: quizOuvert ? /* @__PURE__ */ jsxs23("section", { children: [
-      /* @__PURE__ */ jsx26("button", { onClick: () => setQuizOuvert(false), className: "gr-focus", style: { minHeight: 44, border: "none", background: "none", color: C.text2, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", padding: 0 }, children: "\u2190 Fermer les quiz" }),
-      /* @__PURE__ */ jsx26(QuizScreen, { state, dispatch, content, embedded: true })
-    ] }) : /* @__PURE__ */ jsxs23(Fragment13, { children: [
-      d.id === "Impro" ? /* @__PURE__ */ jsx26(Bloc, { C, titre: "Ta Jam Session", children: /* @__PURE__ */ jsx26(
+    /* @__PURE__ */ jsx27("div", { style: { padding: 16, display: "flex", flexDirection: "column", gap: 16 }, children: quizOuvert ? /* @__PURE__ */ jsxs24("section", { children: [
+      /* @__PURE__ */ jsx27("button", { onClick: () => setQuizOuvert(false), className: "gr-focus", style: { minHeight: 44, border: "none", background: "none", color: C.text2, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", padding: 0 }, children: "\u2190 Fermer les quiz" }),
+      /* @__PURE__ */ jsx27(QuizScreen, { state, dispatch, content, embedded: true })
+    ] }) : /* @__PURE__ */ jsxs24(Fragment13, { children: [
+      d.id === "Impro" ? /* @__PURE__ */ jsx27(Bloc, { C, titre: "Ta Jam Session", children: /* @__PURE__ */ jsx27(
         Ligne,
         {
           C,
           titre: `${state.jam?.seances || 0} s\xE9ance${(state.jam?.seances || 0) > 1 ? "s" : ""} compt\xE9e${(state.jam?.seances || 0) > 1 ? "s" : ""}`,
           detail: `${Math.floor((state.jam?.secondes || 0) / 60)} min de jeu \xB7 ${state.jam?.contraintes || 0} contrainte${(state.jam?.contraintes || 0) > 1 ? "s" : ""} tenue${(state.jam?.contraintes || 0) > 1 ? "s" : ""}`
         }
-      ) }) : /* @__PURE__ */ jsxs23(Bloc, { C, titre: "Tes comp\xE9tences", children: [
-        debloquees.map((p) => /* @__PURE__ */ jsx26(
+      ) }) : d.prelude ? null : /* @__PURE__ */ jsxs24(Bloc, { C, titre: "Tes comp\xE9tences", children: [
+        debloquees.map((p) => /* @__PURE__ */ jsx27(
           Ligne,
           {
             C,
@@ -14901,7 +18639,7 @@ function VueDomaine({ C, d, state, dispatch, content, navigate, progression, qui
           },
           p.id
         )),
-        verrouillees.map((f) => /* @__PURE__ */ jsx26(
+        verrouillees.map((f) => /* @__PURE__ */ jsx27(
           Ligne,
           {
             C,
@@ -14911,9 +18649,9 @@ function VueDomaine({ C, d, state, dispatch, content, navigate, progression, qui
           },
           f.id
         )),
-        !debloquees.length && !verrouillees.length && /* @__PURE__ */ jsx26(Ligne, { C, titre: "Aucune comp\xE9tence dans ce domaine", detail: "" })
+        !debloquees.length && !verrouillees.length && /* @__PURE__ */ jsx27(Ligne, { C, titre: "Aucune comp\xE9tence dans ce domaine", detail: "" })
       ] }),
-      exercices.length > 0 && /* @__PURE__ */ jsx26(Bloc, { C, titre: "Guitare en main", children: exercices.map((e) => /* @__PURE__ */ jsx26(
+      exercices.length > 0 && /* @__PURE__ */ jsx27(Bloc, { C, titre: "Guitare en main", children: exercices.map((e) => /* @__PURE__ */ jsx27(
         Ligne,
         {
           C,
@@ -14923,28 +18661,28 @@ function VueDomaine({ C, d, state, dispatch, content, navigate, progression, qui
         },
         e.id
       )) }),
-      /* @__PURE__ */ jsx26(Bloc, { C, titre: "En libre", children: /* @__PURE__ */ jsx26(Ligne, { C, titre: d.libre.titre, detail: d.libre.detail, onClick: ouvrirLibre }) })
+      /* @__PURE__ */ jsx27(Bloc, { C, titre: "En libre", children: /* @__PURE__ */ jsx27(Ligne, { C, titre: d.libre.titre, detail: d.libre.detail, onClick: ouvrirLibre }) })
     ] }) })
   ] });
 }
 function Bloc({ C, titre, children }) {
-  return /* @__PURE__ */ jsxs23("section", { style: { display: "flex", flexDirection: "column", gap: 8 }, children: [
-    /* @__PURE__ */ jsx26("h2", { style: { margin: "0 4px", fontSize: 16, fontWeight: 800, color: C.text }, children: titre }),
-    /* @__PURE__ */ jsx26("ul", { style: { listStyle: "none", margin: 0, padding: 0, background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: 18, overflow: "hidden" }, children })
+  return /* @__PURE__ */ jsxs24("section", { style: { display: "flex", flexDirection: "column", gap: 8 }, children: [
+    /* @__PURE__ */ jsx27("h2", { style: { margin: "0 4px", fontSize: 16, fontWeight: 800, color: C.text }, children: titre }),
+    /* @__PURE__ */ jsx27("ul", { style: { listStyle: "none", margin: 0, padding: 0, background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: 18, overflow: "hidden" }, children })
   ] });
 }
 function Ligne({ C, titre, detail, jauge, couleur, verrou, onClick }) {
-  const contenu = /* @__PURE__ */ jsxs23(Fragment13, { children: [
-    /* @__PURE__ */ jsxs23("div", { style: { flex: 1, minWidth: 0 }, children: [
-      /* @__PURE__ */ jsx26("div", { style: { fontSize: 14, fontWeight: 700, color: verrou ? C.text2 : C.text }, children: titre }),
-      detail && /* @__PURE__ */ jsx26("div", { style: { fontSize: 12, color: C.text2 }, children: detail })
+  const contenu = /* @__PURE__ */ jsxs24(Fragment13, { children: [
+    /* @__PURE__ */ jsxs24("div", { style: { flex: 1, minWidth: 0 }, children: [
+      /* @__PURE__ */ jsx27("div", { style: { fontSize: 14, fontWeight: 700, color: verrou ? C.text2 : C.text }, children: titre }),
+      detail && /* @__PURE__ */ jsx27("div", { style: { fontSize: 12, color: C.text2 }, children: detail })
     ] }),
-    verrou && /* @__PURE__ */ jsx26(Ti, { name: "lock", size: 17, color: C.text2, label: "Verrouill\xE9e" }),
-    jauge != null && !verrou && /* @__PURE__ */ jsx26("div", { role: "img", "aria-label": `niveau ${jauge} sur 3`, style: { display: "flex", gap: 3, flexShrink: 0 }, children: [1, 2, 3].map((n) => /* @__PURE__ */ jsx26("div", { style: { width: 14, height: 6, borderRadius: 3, background: n <= jauge ? couleur : C.border } }, n)) }),
-    onClick && /* @__PURE__ */ jsx26(Ti, { name: "chevron-right", size: 18, color: C.text2 })
+    verrou && /* @__PURE__ */ jsx27(Ti, { name: "lock", size: 17, color: C.text2, label: "Verrouill\xE9e" }),
+    jauge != null && !verrou && /* @__PURE__ */ jsx27("div", { role: "img", "aria-label": `niveau ${jauge} sur 3`, style: { display: "flex", gap: 3, flexShrink: 0 }, children: [1, 2, 3].map((n) => /* @__PURE__ */ jsx27("div", { style: { width: 14, height: 6, borderRadius: 3, background: n <= jauge ? couleur : C.border } }, n)) }),
+    onClick && /* @__PURE__ */ jsx27(Ti, { name: "chevron-right", size: 18, color: C.text2 })
   ] });
   const style = { display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", minHeight: 56, boxSizing: "border-box", borderTop: `1px solid ${C.surface2}` };
-  return /* @__PURE__ */ jsx26("li", { style: { borderTop: "none" }, children: onClick ? /* @__PURE__ */ jsx26("button", { onClick, className: "gr-focus", style: { ...style, width: "100%", background: "none", border: "none", borderTop: `1px solid ${C.surface2}`, textAlign: "left", cursor: "pointer", fontFamily: "inherit" }, children: contenu }) : /* @__PURE__ */ jsx26("div", { style, children: contenu }) });
+  return /* @__PURE__ */ jsx27("li", { style: { borderTop: "none" }, children: onClick ? /* @__PURE__ */ jsx27("button", { onClick, className: "gr-focus", style: { ...style, width: "100%", background: "none", border: "none", borderTop: `1px solid ${C.surface2}`, textAlign: "left", cursor: "pointer", fontFamily: "inherit" }, children: contenu }) : /* @__PURE__ */ jsx27("div", { style, children: contenu }) });
 }
 
 // src/screens/PracticeScreen.jsx
@@ -14955,7 +18693,8 @@ __export(PracticeScreen_exports, {
 init_tokens();
 init_ThemeContext();
 init_Ti();
-import { useState as useState21, useEffect as useEffect17, useRef as useRef15 } from "react";
+init_ui();
+import { useState as useState22, useEffect as useEffect18, useRef as useRef16 } from "react";
 
 // src/store/challenges.js
 var KEYS = ["A", "B", "C", "D", "E", "F", "G"];
@@ -14989,14 +18728,14 @@ var DAILY_CHALLENGES = [
 ];
 
 // src/screens/PracticeScreen.jsx
-import { jsx as jsx27, jsxs as jsxs24 } from "react/jsx-runtime";
+import { jsx as jsx28, jsxs as jsxs25 } from "react/jsx-runtime";
 function PracticeScreen({ dispatch }) {
   const C = useC();
-  const [tab, setTab] = useState21("impro");
-  const [current, setCurrent] = useState21(null);
-  const [pop, setPop] = useState21(false);
-  const timerRef = useRef15(null);
-  useEffect17(() => () => {
+  const [tab, setTab] = useState22("impro");
+  const [current, setCurrent] = useState22(null);
+  const [pop, setPop] = useState22(false);
+  const timerRef = useRef16(null);
+  useEffect18(() => () => {
     if (timerRef.current) clearTimeout(timerRef.current);
   }, []);
   const generateImpro = () => {
@@ -15030,12 +18769,12 @@ function PracticeScreen({ dispatch }) {
       setCurrent(null);
     }, 1e3);
   };
-  return /* @__PURE__ */ jsxs24("div", { style: { padding: "18px 16px 0" }, children: [
-    pop && /* @__PURE__ */ jsx27(XPPop, { amount: 50, onDone: () => {
+  return /* @__PURE__ */ jsxs25("div", { style: { padding: "18px 16px 0" }, children: [
+    pop && /* @__PURE__ */ jsx28(XPPop, { amount: 50, onDone: () => {
     } }),
-    /* @__PURE__ */ jsx27("h1", { style: { margin: 0, fontSize: 24, fontWeight: 700, fontFamily: FONTS.title, letterSpacing: "-0.01em", color: C.text }, children: "Practice libre" }),
-    /* @__PURE__ */ jsx27("p", { style: { fontSize: 13, color: C.text2, margin: "3px 0 14px", fontFamily: FONTS.ui }, children: "D\xE9fis g\xE9n\xE9r\xE9s \xE0 l'infini. Jamais 2 fois pareil." }),
-    /* @__PURE__ */ jsx27("div", { style: { display: "flex", gap: 6, marginBottom: 12 }, children: [{ id: "impro", label: "Impro" }, { id: "neck", label: "Manche" }, { id: "rhythm", label: "Rythme" }].map((t) => /* @__PURE__ */ jsx27("button", { onClick: () => {
+    /* @__PURE__ */ jsx28("h1", { style: { margin: 0, fontSize: 24, fontWeight: 700, fontFamily: FONTS.title, letterSpacing: "-0.01em", color: C.text }, children: "Practice libre" }),
+    /* @__PURE__ */ jsx28("p", { style: { fontSize: 13, color: C.text2, margin: "3px 0 14px", fontFamily: FONTS.ui }, children: "D\xE9fis g\xE9n\xE9r\xE9s \xE0 l'infini. Jamais 2 fois pareil." }),
+    /* @__PURE__ */ jsx28("div", { style: { display: "flex", gap: 6, marginBottom: 12 }, children: [{ id: "impro", label: "Impro" }, { id: "neck", label: "Manche" }, { id: "rhythm", label: "Rythme" }].map((t) => /* @__PURE__ */ jsx28("button", { onClick: () => {
       setTab(t.id);
       setCurrent(null);
     }, style: {
@@ -15050,15 +18789,15 @@ function PracticeScreen({ dispatch }) {
       cursor: "pointer",
       fontFamily: FONTS.ui
     }, children: t.label }, t.id)) }),
-    !current ? /* @__PURE__ */ jsxs24("div", { style: { background: C.coralL, border: `1px solid ${C.coralBorder}`, borderRadius: R.lg, padding: 20, textAlign: "center" }, children: [
-      /* @__PURE__ */ jsx27(Ti, { name: "dice-5", size: 36, color: C.coral }),
-      /* @__PURE__ */ jsx27("div", { style: { fontSize: 17, fontWeight: 700, color: C.coralD, marginTop: 10, marginBottom: 6, fontFamily: FONTS.title }, children: "G\xE9n\xE8re ton d\xE9fi" }),
-      /* @__PURE__ */ jsxs24("div", { style: { fontSize: 13, color: C.coralD, marginBottom: 14, lineHeight: 1.55, fontFamily: FONTS.ui }, children: [
+    !current ? /* @__PURE__ */ jsxs25("div", { style: { background: C.coralL, border: `1px solid ${C.coralBorder}`, borderRadius: R.lg, padding: 20, textAlign: "center" }, children: [
+      /* @__PURE__ */ jsx28(Ti, { name: "dice-5", size: 36, color: C.coral }),
+      /* @__PURE__ */ jsx28("div", { style: { fontSize: 17, fontWeight: 700, color: C.coralD, marginTop: 10, marginBottom: 6, fontFamily: FONTS.title }, children: "G\xE9n\xE8re ton d\xE9fi" }),
+      /* @__PURE__ */ jsxs25("div", { style: { fontSize: 13, color: C.coralD, marginBottom: 14, lineHeight: 1.55, fontFamily: FONTS.ui }, children: [
         tab === "impro" && "Tonalit\xE9, mode, tempo et contrainte tir\xE9s au sort.",
         tab === "neck" && "Un d\xE9fi de visualisation du manche.",
         tab === "rhythm" && "Un d\xE9fi de m\xE9tronome \xE0 un tempo donn\xE9."
       ] }),
-      /* @__PURE__ */ jsxs24("button", { onClick: tab === "impro" ? generateImpro : tab === "neck" ? generateNeck : generateRhythm, style: {
+      /* @__PURE__ */ jsxs25("button", { onClick: tab === "impro" ? generateImpro : tab === "neck" ? generateNeck : generateRhythm, style: {
         width: "100%",
         padding: "14px",
         borderRadius: R.md,
@@ -15075,21 +18814,21 @@ function PracticeScreen({ dispatch }) {
         gap: 6
       }, children: [
         "G\xE9n\xE9rer un d\xE9fi ",
-        /* @__PURE__ */ jsx27(Ti, { name: "dice-5", size: 16 })
+        /* @__PURE__ */ jsx28(Ti, { name: "dice-5", size: 16 })
       ] })
-    ] }) : /* @__PURE__ */ jsxs24("div", { children: [
-      /* @__PURE__ */ jsxs24("div", { style: { background: C.primaryL, border: `1px solid ${C.primaryBorder}`, borderRadius: R.lg, padding: 20, marginBottom: 12 }, children: [
-        /* @__PURE__ */ jsx27("div", { style: { fontSize: 11, fontWeight: 500, color: C.primaryD, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8, fontFamily: FONTS.ui }, children: "D\xE9fi en cours" }),
-        /* @__PURE__ */ jsx27("div", { style: { fontSize: 22, fontWeight: 700, color: C.primaryD, marginBottom: 8, fontFamily: FONTS.title }, children: current.title }),
-        /* @__PURE__ */ jsx27("div", { style: { fontSize: 14, color: C.primaryD, lineHeight: 1.55, fontFamily: FONTS.title }, children: current.sub }),
-        /* @__PURE__ */ jsxs24("div", { style: { fontSize: 11, color: C.primaryD, marginTop: 12, opacity: 0.7, fontFamily: FONTS.ui }, children: [
+    ] }) : /* @__PURE__ */ jsxs25("div", { children: [
+      /* @__PURE__ */ jsxs25("div", { style: { background: C.primaryL, border: `1px solid ${C.primaryBorder}`, borderRadius: R.lg, padding: 20, marginBottom: 12 }, children: [
+        /* @__PURE__ */ jsx28("div", { style: { fontSize: 11, fontWeight: 500, color: C.primaryD, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8, fontFamily: FONTS.ui }, children: "D\xE9fi en cours" }),
+        /* @__PURE__ */ jsx28("div", { style: { fontSize: 22, fontWeight: 700, color: C.primaryD, marginBottom: 8, fontFamily: FONTS.title }, children: current.title }),
+        /* @__PURE__ */ jsx28("div", { style: { fontSize: 14, color: C.primaryD, lineHeight: 1.55, fontFamily: FONTS.title }, children: current.sub }),
+        /* @__PURE__ */ jsxs25("div", { style: { fontSize: 11, color: C.primaryD, marginTop: 12, opacity: 0.7, fontFamily: FONTS.ui }, children: [
           "Dur\xE9e : ",
           current.time,
           " min"
         ] })
       ] }),
-      /* @__PURE__ */ jsxs24("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }, children: [
-        /* @__PURE__ */ jsxs24("button", { onClick: () => setCurrent(null), style: {
+      /* @__PURE__ */ jsxs25("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }, children: [
+        /* @__PURE__ */ jsxs25("button", { onClick: () => setCurrent(null), style: {
           padding: "12px",
           borderRadius: R.md,
           border: `1px solid ${C.border}`,
@@ -15105,9 +18844,9 @@ function PracticeScreen({ dispatch }) {
           gap: 5
         }, children: [
           "Autre d\xE9fi ",
-          /* @__PURE__ */ jsx27(Ti, { name: "dice-5", size: 14 })
+          /* @__PURE__ */ jsx28(Ti, { name: "dice-5", size: 14 })
         ] }),
-        /* @__PURE__ */ jsx27("button", { onClick: finish, style: {
+        /* @__PURE__ */ jsx28("button", { onClick: finish, style: {
           padding: "12px",
           borderRadius: R.md,
           border: "none",
@@ -15124,7 +18863,7 @@ function PracticeScreen({ dispatch }) {
         }, children: "Termin\xE9 \xB7 +50 XP" })
       ] })
     ] }),
-    /* @__PURE__ */ jsx27("div", { style: { height: 16 } })
+    /* @__PURE__ */ jsx28("div", { style: { height: 16 } })
   ] });
 }
 
@@ -15136,15 +18875,16 @@ __export(ChallengeScreen_exports, {
 init_tokens();
 init_ThemeContext();
 init_Ti();
-import { useState as useState22, useEffect as useEffect18, useRef as useRef16 } from "react";
-import { jsx as jsx28, jsxs as jsxs25 } from "react/jsx-runtime";
+init_ui();
+import { useState as useState23, useEffect as useEffect19, useRef as useRef17 } from "react";
+import { jsx as jsx29, jsxs as jsxs26 } from "react/jsx-runtime";
 function ChallengeScreen({ state, dispatch, navigate }) {
   const C = useC();
   const ch = DAILY_CHALLENGES[state.dailyChallengeIdx % DAILY_CHALLENGES.length];
   const done = state.dailyChallengeDone;
-  const [pop, setPop] = useState22(false);
-  const timerRef = useRef16(null);
-  useEffect18(() => () => {
+  const [pop, setPop] = useState23(false);
+  const timerRef = useRef17(null);
+  useEffect19(() => () => {
     if (timerRef.current) clearTimeout(timerRef.current);
   }, []);
   const finish = () => {
@@ -15153,29 +18893,29 @@ function ChallengeScreen({ state, dispatch, navigate }) {
     dispatch({ type: "MARK_STREAK" });
     timerRef.current = setTimeout(() => setPop(false), 1e3);
   };
-  return /* @__PURE__ */ jsxs25("div", { style: { padding: "14px 16px 0" }, children: [
-    pop && /* @__PURE__ */ jsx28(XPPop, { amount: 80, onDone: () => {
+  return /* @__PURE__ */ jsxs26("div", { style: { padding: "14px 16px 0" }, children: [
+    pop && /* @__PURE__ */ jsx29(XPPop, { amount: 80, onDone: () => {
     } }),
-    /* @__PURE__ */ jsxs25("button", { onClick: () => navigate("home"), style: { background: "none", border: "none", cursor: "pointer", color: C.text2, fontSize: 13, padding: "0 0 12px", fontFamily: FONTS.ui, display: "flex", alignItems: "center", gap: 4 }, children: [
-      /* @__PURE__ */ jsx28(Ti, { name: "chevron-left", size: 16 }),
+    /* @__PURE__ */ jsxs26("button", { onClick: () => navigate("home"), style: { background: "none", border: "none", cursor: "pointer", color: C.text2, fontSize: 13, padding: "0 0 12px", fontFamily: FONTS.ui, display: "flex", alignItems: "center", gap: 4 }, children: [
+      /* @__PURE__ */ jsx29(Ti, { name: "chevron-left", size: 16 }),
       " RETOUR"
     ] }),
-    /* @__PURE__ */ jsx28("h1", { style: { margin: "0 0 16px", fontSize: 24, fontWeight: 700, fontFamily: FONTS.title, letterSpacing: "-0.01em", color: C.text }, children: "D\xE9fi du jour" }),
-    /* @__PURE__ */ jsxs25("div", { style: {
+    /* @__PURE__ */ jsx29("h1", { style: { margin: "0 0 16px", fontSize: 24, fontWeight: 700, fontFamily: FONTS.title, letterSpacing: "-0.01em", color: C.text }, children: "D\xE9fi du jour" }),
+    /* @__PURE__ */ jsxs26("div", { style: {
       background: done ? C.greenL : C.amberL,
       borderRadius: R.lg,
       padding: 20,
       marginBottom: 14,
       border: `1px solid ${done ? C.greenBorder : C.amberBorder}`
     }, children: [
-      /* @__PURE__ */ jsxs25("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }, children: [
-        /* @__PURE__ */ jsx28(Ti, { name: done ? "trophy" : "bolt", size: 16, color: done ? C.green : C.amber }),
-        /* @__PURE__ */ jsx28("div", { style: { fontSize: 11, fontWeight: 500, color: done ? C.greenD : C.amberD, letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: FONTS.ui }, children: done ? "D\xE9fi compl\xE9t\xE9" : "Aujourd'hui" })
+      /* @__PURE__ */ jsxs26("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }, children: [
+        /* @__PURE__ */ jsx29(Ti, { name: done ? "trophy" : "bolt", size: 16, color: done ? C.green : C.amber }),
+        /* @__PURE__ */ jsx29("div", { style: { fontSize: 11, fontWeight: 500, color: done ? C.greenD : C.amberD, letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: FONTS.ui }, children: done ? "D\xE9fi compl\xE9t\xE9" : "Aujourd'hui" })
       ] }),
-      /* @__PURE__ */ jsx28("p", { style: { margin: "0 0 12px", fontSize: 16, fontWeight: 500, color: done ? C.greenD : C.amberD, lineHeight: 1.55, fontFamily: FONTS.title }, children: ch }),
-      /* @__PURE__ */ jsx28("div", { style: { fontSize: 12, color: done ? C.greenD : C.amberD, opacity: 0.7, fontFamily: FONTS.ui }, children: "R\xE9compense : +80 XP" })
+      /* @__PURE__ */ jsx29("p", { style: { margin: "0 0 12px", fontSize: 16, fontWeight: 500, color: done ? C.greenD : C.amberD, lineHeight: 1.55, fontFamily: FONTS.title }, children: ch }),
+      /* @__PURE__ */ jsx29("div", { style: { fontSize: 12, color: done ? C.greenD : C.amberD, opacity: 0.7, fontFamily: FONTS.ui }, children: "R\xE9compense : +80 XP" })
     ] }),
-    !done ? /* @__PURE__ */ jsxs25("button", { onClick: finish, style: {
+    !done ? /* @__PURE__ */ jsxs26("button", { onClick: finish, style: {
       width: "100%",
       padding: "14px",
       borderRadius: R.md,
@@ -15192,13 +18932,13 @@ function ChallengeScreen({ state, dispatch, navigate }) {
       gap: 6
     }, children: [
       "D\xE9fi relev\xE9 ",
-      /* @__PURE__ */ jsx28(Ti, { name: "check", size: 16 })
-    ] }) : /* @__PURE__ */ jsxs25("div", { style: { background: C.greenL, borderRadius: R.md, padding: 18, textAlign: "center", border: `1px solid ${C.greenBorder}` }, children: [
-      /* @__PURE__ */ jsx28(Ti, { name: "trophy", size: 32, color: C.green }),
-      /* @__PURE__ */ jsx28("div", { style: { fontWeight: 700, color: C.greenD, fontSize: 16, fontFamily: FONTS.title, marginTop: 8 }, children: "D\xE9fi compl\xE9t\xE9 !" }),
-      /* @__PURE__ */ jsx28("div", { style: { fontSize: 12, color: C.green, marginTop: 4, fontFamily: FONTS.ui }, children: "Reviens demain." })
+      /* @__PURE__ */ jsx29(Ti, { name: "check", size: 16 })
+    ] }) : /* @__PURE__ */ jsxs26("div", { style: { background: C.greenL, borderRadius: R.md, padding: 18, textAlign: "center", border: `1px solid ${C.greenBorder}` }, children: [
+      /* @__PURE__ */ jsx29(Ti, { name: "trophy", size: 32, color: C.green }),
+      /* @__PURE__ */ jsx29("div", { style: { fontWeight: 700, color: C.greenD, fontSize: 16, fontFamily: FONTS.title, marginTop: 8 }, children: "D\xE9fi compl\xE9t\xE9 !" }),
+      /* @__PURE__ */ jsx29("div", { style: { fontSize: 12, color: C.green, marginTop: 4, fontFamily: FONTS.ui }, children: "Reviens demain." })
     ] }),
-    /* @__PURE__ */ jsx28("div", { style: { height: 16 } })
+    /* @__PURE__ */ jsx29("div", { style: { height: 16 } })
   ] });
 }
 
@@ -15211,8 +18951,9 @@ init_tokens();
 init_ThemeContext();
 init_Ti();
 init_Gropi();
-import { useState as useState23, useEffect as useEffect19, useMemo as useMemo10 } from "react";
+init_ui();
 init_Fretboard();
+import { useState as useState24, useEffect as useEffect20, useMemo as useMemo12 } from "react";
 
 // src/store/placementEngine.js
 var TESTABLE_MODULES = ["neck", "scales", "harmony", "rhythm", "impro"];
@@ -15297,12 +19038,17 @@ function weakestModule(skillLevels, testedModules = TESTABLE_MODULES) {
 }
 
 // src/onboarding/OnboardingScreen.jsx
-import { Fragment as Fragment14, jsx as jsx29, jsxs as jsxs26 } from "react/jsx-runtime";
+import { Fragment as Fragment14, jsx as jsx30, jsxs as jsxs27 } from "react/jsx-runtime";
 var GOAL_OPTIONS = [
   { id: "impro", module: "impro", label: "Improviser librement", icon: "wand" },
   { id: "theorie", module: "harmony", label: "Comprendre la th\xE9orie en profondeur", icon: "stack-2" },
   { id: "manche", module: "neck", label: "Ma\xEEtriser le manche", icon: "map-2" },
   { id: "global", module: null, label: "Un peu de tout, en \xE9quilibre", icon: "sparkles" }
+];
+var EXPERIENCE_OPTIONS = [
+  { id: "debutant", label: "Je d\xE9bute compl\xE8tement", sub: "Jamais jou\xE9, ou presque", icon: "sparkles" },
+  { id: "quelques", label: "Je connais quelques accords", sub: "Je gratte un peu, sans trop de th\xE9orie", icon: "guitar-pick" },
+  { id: "confirme", label: "Je joue depuis un moment", sub: "Je veux progresser \xE0 partir de mon niveau", icon: "music" }
 ];
 var TIME_OPTIONS = [
   { id: "short", label: "15\u201330 min / semaine" },
@@ -15312,22 +19058,23 @@ var TIME_OPTIONS = [
 var ALL_PROFILE_MODULES = [.../* @__PURE__ */ new Set([...TESTABLE_MODULES, "impro"])];
 function OnboardingScreen({ content, onComplete, onEvent }) {
   const C = useC();
-  const [phase, setPhase] = useState23("welcome");
-  const [queue2, setQueue] = useState23(null);
-  const [qIdx, setQIdx] = useState23(0);
-  const [currentQ, setCurrentQ] = useState23(null);
-  const [selected, setSelected] = useState23(null);
-  const [answered, setAnswered] = useState23(false);
-  const [forceReveal, setForceReveal] = useState23(false);
-  const [usedIds] = useState23(() => /* @__PURE__ */ new Set());
-  const modulesTestes = useMemo10(() => availableModules(content?.quiz || []), [content]);
-  const nbQuestions = useMemo10(() => placementQuestionCount(content?.quiz || []), [content]);
-  const [results, setResults] = useState23(() => Object.fromEntries(TESTABLE_MODULES.map((m) => [m, 0])));
-  const [skillLevels, setSkillLevels] = useState23({ neck: null, scales: null, harmony: null, rhythm: null, impro: null });
-  const [overallTier, setOverallTier] = useState23(null);
-  const [weakest, setWeakest] = useState23(null);
-  const [goal, setGoal] = useState23(null);
-  const [timePerWeek, setTimePerWeek] = useState23(null);
+  const [phase, setPhase] = useState24("welcome");
+  const [experience, setExperience] = useState24(null);
+  const [queue2, setQueue] = useState24(null);
+  const [qIdx, setQIdx] = useState24(0);
+  const [currentQ, setCurrentQ] = useState24(null);
+  const [selected, setSelected] = useState24(null);
+  const [answered, setAnswered] = useState24(false);
+  const [forceReveal, setForceReveal] = useState24(false);
+  const [usedIds] = useState24(() => /* @__PURE__ */ new Set());
+  const modulesTestes = useMemo12(() => availableModules(content?.quiz || []), [content]);
+  const nbQuestions = useMemo12(() => placementQuestionCount(content?.quiz || []), [content]);
+  const [results, setResults] = useState24(() => Object.fromEntries(TESTABLE_MODULES.map((m) => [m, 0])));
+  const [skillLevels, setSkillLevels] = useState24({ neck: null, scales: null, harmony: null, rhythm: null, impro: null });
+  const [overallTier, setOverallTier] = useState24(null);
+  const [weakest, setWeakest] = useState24(null);
+  const [goal, setGoal] = useState24(null);
+  const [timePerWeek, setTimePerWeek] = useState24(null);
   const emit = (name, props) => {
     try {
       onEvent?.(name, props);
@@ -15404,7 +19151,7 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
     emit("placement_completed", { skillLevels: finalLevels, overallTier: overall, weakestModule: weak });
     setPhase("results");
   }
-  useEffect19(() => {
+  useEffect20(() => {
     if (phase === "testing" && queue2 && !currentQ) {
       const nextIdx = qIdx + 1;
       if (nextIdx < queue2.length) {
@@ -15413,9 +19160,23 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
       } else continueTest();
     }
   }, [phase, currentQ, queue2]);
+  function chooseExperience() {
+    emit("onboarding_experience", { experience });
+    if (experience === "debutant") {
+      setSkillLevels(Object.fromEntries(TESTABLE_MODULES.map((m) => [m, "A1"])));
+      setOverallTier("A1");
+      setWeakest(null);
+      setResults(Object.fromEntries(TESTABLE_MODULES.map((m) => [m, 0])));
+      setPhase("debutant");
+      emit("onboarding_step_view", { step: "debutant" });
+      return;
+    }
+    setPhase("testIntro");
+  }
   function finish() {
     const goalOpt = GOAL_OPTIONS.find((g) => g.id === goal);
-    const totalCorrect = modulesTestes.reduce((sum, m) => sum + (results[m] || 0), 0);
+    const debutant = experience === "debutant";
+    const totalCorrect = debutant ? 0 : modulesTestes.reduce((sum, m) => sum + (results[m] || 0), 0);
     const { startXp, startLevel } = startFromScore(totalCorrect, nbQuestions);
     const answers = {
       goal,
@@ -15426,14 +19187,20 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
       weakestModule: weakest,
       startXp,
       startLevel,
+      // `skipped` = test de placement sauté. `experience` est conservé
+      // par le reducer et décide seul si « Premiers pas » est obligatoire
+      // (pathEngine.debutFacultatif) ; `skipped` + niveau A1 ne sert plus
+      // que de repli pour les états sans `experience`.
+      skipped: debutant,
+      experience,
       completedAt: (/* @__PURE__ */ new Date()).toISOString()
     };
     emit("onboarding_completed", answers);
     onComplete(answers);
   }
   const questionNumber = qIdx + 1;
-  const progressPct = phase === "welcome" ? 0 : phase === "testIntro" ? 5 : phase === "testing" ? Math.round(5 + (questionNumber - (answered ? 0 : 1)) / Math.max(1, nbQuestions) * 65) : phase === "results" ? 75 : phase === "goal" ? 85 : phase === "time" ? 95 : 100;
-  return /* @__PURE__ */ jsxs26("div", { style: {
+  const progressPct = phase === "welcome" ? 0 : phase === "experience" ? 3 : phase === "debutant" ? 60 : phase === "testIntro" ? 5 : phase === "testing" ? Math.round(5 + (questionNumber - (answered ? 0 : 1)) / Math.max(1, nbQuestions) * 65) : phase === "results" ? 75 : phase === "goal" ? 85 : phase === "time" ? 95 : 100;
+  return /* @__PURE__ */ jsxs27("div", { style: {
     minHeight: "100dvh",
     display: "flex",
     flexDirection: "column",
@@ -15441,38 +19208,78 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
     fontFamily: FONTS.title,
     padding: "calc(env(safe-area-inset-top, 0px) + 12px) 0 24px"
   }, children: [
-    phase !== "welcome" && /* @__PURE__ */ jsx29("div", { style: { padding: "0 20px 4px" }, children: /* @__PURE__ */ jsx29(ProgressBar, { pct: progressPct }) }),
-    /* @__PURE__ */ jsxs26("div", { style: { flex: 1, display: "flex", flexDirection: "column", padding: "0 20px", maxWidth: 440, width: "100%", margin: "0 auto" }, children: [
-      phase === "welcome" && /* @__PURE__ */ jsxs26("div", { style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 18, minHeight: 0 }, children: [
-        /* @__PURE__ */ jsx29(Gropi, { pose: "wave", size: 110, anim: "bob" }),
-        /* @__PURE__ */ jsx29("h1", { style: { margin: 0, fontSize: 24, fontWeight: 800, color: C.text, letterSpacing: "-.3px" }, children: "Bienvenue sur Groply" }),
-        /* @__PURE__ */ jsx29("p", { style: { margin: 0, fontSize: 14.5, lineHeight: 1.6, color: C.text2, maxWidth: 300 }, children: "Avant de commencer, on va mesurer ton vrai niveau : pas celui que tu crois avoir, celui que tu as vraiment. 2 minutes, promis." }),
-        /* @__PURE__ */ jsx29(PrimaryButton, { C, onClick: () => {
+    phase !== "welcome" && /* @__PURE__ */ jsx30("div", { style: { padding: "0 20px 4px" }, children: /* @__PURE__ */ jsx30(ProgressBar, { pct: progressPct }) }),
+    /* @__PURE__ */ jsxs27("div", { style: { flex: 1, display: "flex", flexDirection: "column", padding: "0 20px", maxWidth: 440, width: "100%", margin: "0 auto" }, children: [
+      phase === "welcome" && /* @__PURE__ */ jsxs27("div", { style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 18, minHeight: 0 }, children: [
+        /* @__PURE__ */ jsx30(Gropi, { pose: "wave", size: 110, anim: "bob" }),
+        /* @__PURE__ */ jsx30("h1", { style: { margin: 0, fontSize: 24, fontWeight: 800, color: C.text, letterSpacing: "-.3px" }, children: "Bienvenue sur Groply" }),
+        /* @__PURE__ */ jsx30("p", { style: { margin: 0, fontSize: 14.5, lineHeight: 1.6, color: C.text2, maxWidth: 300 }, children: "Avant de commencer, dis-moi o\xF9 tu en es : ton Parcours s'adapte \xE0 ton vrai niveau, que tu n'aies jamais touch\xE9 une guitare ou que tu joues depuis des ann\xE9es. 2 minutes, promis." }),
+        /* @__PURE__ */ jsx30(PrimaryButton, { C, onClick: () => {
           emit("onboarding_started");
-          setPhase("testIntro");
+          setPhase("experience");
+          emit("onboarding_step_view", { step: "experience" });
         }, children: "Commencer" })
       ] }),
-      phase === "testIntro" && /* @__PURE__ */ jsxs26("div", { style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 16 }, children: [
-        /* @__PURE__ */ jsx29(Gropi, { pose: "think", size: 90, anim: "bob" }),
-        /* @__PURE__ */ jsx29("h2", { style: { margin: 0, fontSize: 20, fontWeight: 800, color: C.text }, children: "Le test de placement" }),
-        /* @__PURE__ */ jsx29("p", { style: { margin: 0, fontSize: 13.5, lineHeight: 1.6, color: C.text2, maxWidth: 300 }, children: "12 questions, 4 domaines (manche, gammes, harmonie, rythme). \xC7a commence simple, puis \xE7a monte en difficult\xE9. C'est normal de s\xE9cher sur les derni\xE8res." }),
-        /* @__PURE__ */ jsx29("p", { style: { margin: 0, fontSize: 12, color: C.text3, maxWidth: 280 }, children: "Pas de retour en arri\xE8re possible une fois lanc\xE9. R\xE9ponds au mieux : c'est fait pour r\xE9v\xE9ler o\xF9 tu es, pas pour te juger. Si tu ne sais pas, dis-le, \xE7a compte aussi." }),
-        /* @__PURE__ */ jsx29(PrimaryButton, { C, onClick: startTest, children: "Lancer le test" })
+      phase === "experience" && /* @__PURE__ */ jsxs27(
+        StepLayout,
+        {
+          C,
+          eyebrow: "Pour commencer",
+          title: "Tu as d\xE9j\xE0 jou\xE9 de la guitare ?",
+          subtitle: "Si tu d\xE9butes, pas de test : on commence ensemble par les tout premiers pas.",
+          children: [
+            EXPERIENCE_OPTIONS.map((opt) => /* @__PURE__ */ jsx30(OptionCard, { C, selected: experience === opt.id, onClick: () => setExperience(opt.id), children: /* @__PURE__ */ jsxs27("div", { style: { display: "flex", alignItems: "center", gap: 10 }, children: [
+              /* @__PURE__ */ jsx30(Ti, { name: opt.icon, size: 19, color: experience === opt.id ? C.primary : C.text2 }),
+              /* @__PURE__ */ jsxs27("div", { children: [
+                /* @__PURE__ */ jsx30("div", { style: { fontWeight: 700, fontSize: 14.5 }, children: opt.label }),
+                /* @__PURE__ */ jsx30("div", { style: { fontSize: 12.5, color: C.text2, marginTop: 2 }, children: opt.sub })
+              ] })
+            ] }) }, opt.id)),
+            /* @__PURE__ */ jsx30(PrimaryButton, { C, disabled: !experience, onClick: chooseExperience, children: "Continuer" })
+          ]
+        }
+      ),
+      phase === "debutant" && /* @__PURE__ */ jsxs27("div", { style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 16 }, children: [
+        /* @__PURE__ */ jsx30(Gropi, { pose: "celebrate", size: 100, anim: "cheer" }),
+        /* @__PURE__ */ jsx30("h2", { style: { margin: 0, fontSize: 21, fontWeight: 800, color: C.text }, children: "Bienvenue dans l'aventure !" }),
+        /* @__PURE__ */ jsxs27("p", { style: { margin: 0, fontSize: 13.5, lineHeight: 1.6, color: C.text2, maxWidth: 310 }, children: [
+          "Pas de test pour toi : ton Parcours commence par les ",
+          /* @__PURE__ */ jsx30("b", { style: { color: C.text }, children: "Premiers pas" }),
+          ". Tenir ta guitare, l'accorder, tes premiers accords, tes premi\xE8res rythmiques et la lecture des tablatures, \xE0 ton rythme."
+        ] }),
+        /* @__PURE__ */ jsx30(PrimaryButton, { C, onClick: () => {
+          setPhase("goal");
+          emit("onboarding_step_view", { step: "goal" });
+        }, children: "Continuer" })
       ] }),
-      phase === "testing" && currentQ && /* @__PURE__ */ jsxs26("div", { style: { flex: 1, display: "flex", flexDirection: "column", paddingTop: 24, gap: 14 }, children: [
-        /* @__PURE__ */ jsxs26("div", { style: { display: "flex", alignItems: "center", gap: 8 }, children: [
-          /* @__PURE__ */ jsx29(Ti, { name: MODULE[currentQ.moduleId]?.icon || "music", size: 16, color: C.primary }),
-          /* @__PURE__ */ jsxs26("span", { style: { fontSize: 11.5, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: C.primary, fontFamily: FONTS.ui }, children: [
+      phase === "testIntro" && /* @__PURE__ */ jsxs27("div", { style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 16 }, children: [
+        /* @__PURE__ */ jsx30(Gropi, { pose: "think", size: 90, anim: "bob" }),
+        /* @__PURE__ */ jsx30("h2", { style: { margin: 0, fontSize: 20, fontWeight: 800, color: C.text }, children: "Le test de placement" }),
+        /* @__PURE__ */ jsxs27("p", { style: { margin: 0, fontSize: 13.5, lineHeight: 1.6, color: C.text2, maxWidth: 300 }, children: [
+          nbQuestions,
+          " questions, ",
+          modulesTestes.length,
+          " domaines (",
+          modulesTestes.map((m) => MODULE[m]?.label?.toLowerCase() || m).join(", "),
+          "). \xC7a commence simple, puis \xE7a monte en difficult\xE9. C'est normal de s\xE9cher sur les derni\xE8res."
+        ] }),
+        /* @__PURE__ */ jsx30("p", { style: { margin: 0, fontSize: 12, color: C.text3, maxWidth: 280 }, children: "Pas de retour en arri\xE8re possible une fois lanc\xE9. R\xE9ponds au mieux : c'est fait pour r\xE9v\xE9ler o\xF9 tu es, pas pour te juger. Si tu ne sais pas, dis-le, \xE7a compte aussi." }),
+        /* @__PURE__ */ jsx30(PrimaryButton, { C, onClick: startTest, children: "Lancer le test" })
+      ] }),
+      phase === "testing" && currentQ && /* @__PURE__ */ jsxs27("div", { style: { flex: 1, display: "flex", flexDirection: "column", paddingTop: 24, gap: 14 }, children: [
+        /* @__PURE__ */ jsxs27("div", { style: { display: "flex", alignItems: "center", gap: 8 }, children: [
+          /* @__PURE__ */ jsx30(Ti, { name: MODULE[currentQ.moduleId]?.icon || "music", size: 16, color: C.primary }),
+          /* @__PURE__ */ jsxs27("span", { style: { fontSize: 11.5, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: C.primary, fontFamily: FONTS.ui }, children: [
             MODULE[currentQ.moduleId]?.label || currentQ.moduleId,
             " \xB7 Question ",
             questionNumber,
             "/",
-            PLACEMENT_QUESTION_COUNT
+            nbQuestions
           ] })
         ] }),
-        currentQ.type === "fretboard" ? /* @__PURE__ */ jsxs26(Fragment14, { children: [
-          /* @__PURE__ */ jsx29("div", { style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: 16 }, children: /* @__PURE__ */ jsx29("p", { style: { margin: 0, fontSize: 15, fontWeight: 600, lineHeight: 1.5, color: C.text }, children: currentQ.q }) }),
-          /* @__PURE__ */ jsx29(
+        currentQ.type === "fretboard" ? /* @__PURE__ */ jsxs27(Fragment14, { children: [
+          /* @__PURE__ */ jsx30("div", { style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: 16 }, children: /* @__PURE__ */ jsx30("p", { style: { margin: 0, fontSize: 15, fontWeight: 600, lineHeight: 1.5, color: C.text }, children: currentQ.q }) }),
+          /* @__PURE__ */ jsx30(
             FretboardQuizQuestion,
             {
               question: currentQ,
@@ -15481,9 +19288,9 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
               forceReveal
             }
           )
-        ] }) : /* @__PURE__ */ jsxs26(Fragment14, { children: [
-          /* @__PURE__ */ jsx29("div", { style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: 16 }, children: /* @__PURE__ */ jsx29("p", { style: { margin: 0, fontSize: 15, fontWeight: 600, lineHeight: 1.5, color: C.text }, children: currentQ.q }) }),
-          /* @__PURE__ */ jsx29("div", { style: { display: "flex", flexDirection: "column", gap: 8 }, children: currentQ.o.map((opt, i) => {
+        ] }) : /* @__PURE__ */ jsxs27(Fragment14, { children: [
+          /* @__PURE__ */ jsx30("div", { style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: 16 }, children: /* @__PURE__ */ jsx30("p", { style: { margin: 0, fontSize: 15, fontWeight: 600, lineHeight: 1.5, color: C.text }, children: currentQ.q }) }),
+          /* @__PURE__ */ jsx30("div", { style: { display: "flex", flexDirection: "column", gap: 8 }, children: currentQ.o.map((opt, i) => {
             let bg = C.surface, border = `1.5px solid ${C.border}`, col = C.text;
             if (answered) {
               if (i === currentQ.a) {
@@ -15496,7 +19303,7 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
                 col = C.coralD;
               }
             }
-            return /* @__PURE__ */ jsx29("button", { onClick: () => choose(i), disabled: answered, style: {
+            return /* @__PURE__ */ jsx30("button", { onClick: () => choose(i), disabled: answered, style: {
               textAlign: "left",
               minHeight: 48,
               padding: "12px 14px",
@@ -15512,7 +19319,7 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
             }, children: opt }, i);
           }) })
         ] }),
-        !answered && /* @__PURE__ */ jsx29(
+        !answered && /* @__PURE__ */ jsx30(
           "button",
           {
             onClick: currentQ.type === "fretboard" ? () => setForceReveal(true) : chooseDontKnow,
@@ -15532,8 +19339,8 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
             children: "Je ne sais pas"
           }
         ),
-        answered && /* @__PURE__ */ jsxs26(Fragment14, { children: [
-          currentQ.type !== "fretboard" && /* @__PURE__ */ jsxs26("p", { style: {
+        answered && /* @__PURE__ */ jsxs27(Fragment14, { children: [
+          currentQ.type !== "fretboard" && /* @__PURE__ */ jsxs27("p", { style: {
             margin: 0,
             fontSize: 12.5,
             color: C.text2,
@@ -15546,18 +19353,18 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
             selected === null ? "Pas de souci, tu la reverras. " : "",
             currentQ.exp
           ] }),
-          currentQ.type === "fretboard" && forceReveal && /* @__PURE__ */ jsx29("p", { style: { margin: 0, fontSize: 12.5, color: C.text2, lineHeight: 1.5 }, children: "Pas de souci, tu la reverras. Les bonnes positions sont affich\xE9es sur le manche." }),
-          /* @__PURE__ */ jsx29(PrimaryButton, { C, onClick: continueTest, children: "Continuer" })
+          currentQ.type === "fretboard" && forceReveal && /* @__PURE__ */ jsx30("p", { style: { margin: 0, fontSize: 12.5, color: C.text2, lineHeight: 1.5 }, children: "Pas de souci, tu la reverras. Les bonnes positions sont affich\xE9es sur le manche." }),
+          /* @__PURE__ */ jsx30(PrimaryButton, { C, onClick: continueTest, children: "Continuer" })
         ] })
       ] }),
       phase === "results" && overallTier && (() => {
         const totalCorrect = TESTABLE_MODULES.reduce((sum, m) => sum + (results[m] || 0), 0);
-        const { grade, level } = startFromScore(totalCorrect, PLACEMENT_QUESTION_COUNT);
-        return /* @__PURE__ */ jsxs26("div", { style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 14, paddingTop: 12 }, children: [
-          /* @__PURE__ */ jsx29(Gropi, { pose: "celebrate", size: 100, anim: "cheer" }),
-          /* @__PURE__ */ jsx29("div", { style: { fontSize: 12, fontWeight: 700, color: C.text2, textTransform: "uppercase", letterSpacing: ".08em" }, children: "Ton profil Groply" }),
-          /* @__PURE__ */ jsx29("h1", { style: { margin: 0, fontSize: 22, fontWeight: 800, color: C.text, letterSpacing: "-.2px" }, children: grade.label }),
-          /* @__PURE__ */ jsxs26("div", { style: {
+        const { grade, level } = startFromScore(totalCorrect, nbQuestions);
+        return /* @__PURE__ */ jsxs27("div", { style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 14, paddingTop: 12 }, children: [
+          /* @__PURE__ */ jsx30(Gropi, { pose: "celebrate", size: 100, anim: "cheer" }),
+          /* @__PURE__ */ jsx30("div", { style: { fontSize: 12, fontWeight: 700, color: C.text2, textTransform: "uppercase", letterSpacing: ".08em" }, children: "Ton profil Groply" }),
+          /* @__PURE__ */ jsx30("h1", { style: { margin: 0, fontSize: 22, fontWeight: 800, color: C.text, letterSpacing: "-.2px" }, children: grade.label }),
+          /* @__PURE__ */ jsxs27("div", { style: {
             fontSize: 11,
             fontWeight: 700,
             color: C.primary,
@@ -15570,13 +19377,13 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
             "Niveau ",
             level
           ] }),
-          /* @__PURE__ */ jsx29("p", { style: { margin: 0, fontSize: 13, color: C.text2, lineHeight: 1.55, maxWidth: 300 }, children: grade.blurb }),
-          /* @__PURE__ */ jsx29("div", { style: { width: "100%", display: "flex", flexDirection: "column", gap: 7, marginTop: 6 }, children: ALL_PROFILE_MODULES.map((m) => {
+          /* @__PURE__ */ jsx30("p", { style: { margin: 0, fontSize: 13, color: C.text2, lineHeight: 1.55, maxWidth: 300 }, children: grade.blurb }),
+          /* @__PURE__ */ jsx30("div", { style: { width: "100%", display: "flex", flexDirection: "column", gap: 7, marginTop: 6 }, children: ALL_PROFILE_MODULES.map((m) => {
             const tier = skillLevels[m];
             const value = TIER_VALUE[tier] || 0;
             const th = MODULE[m] || {};
             const isWeak = m === weakest;
-            return /* @__PURE__ */ jsxs26("div", { style: {
+            return /* @__PURE__ */ jsxs27("div", { style: {
               display: "flex",
               alignItems: "center",
               gap: 10,
@@ -15585,9 +19392,9 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
               borderRadius: R.md,
               padding: "10px 13px"
             }, children: [
-              /* @__PURE__ */ jsx29(Ti, { name: th.icon || "music", size: 16, color: C[th.color] || C.text2 }),
-              /* @__PURE__ */ jsx29("span", { style: { flex: 1, textAlign: "left", fontSize: 13, fontWeight: 700, color: C.text }, children: th.label || m }),
-              /* @__PURE__ */ jsx29("div", { style: { display: "flex", gap: 3 }, children: [1, 2, 3, 4].map((seg) => /* @__PURE__ */ jsx29("span", { style: {
+              /* @__PURE__ */ jsx30(Ti, { name: th.icon || "music", size: 16, color: C[th.color] || C.text2 }),
+              /* @__PURE__ */ jsx30("span", { style: { flex: 1, textAlign: "left", fontSize: 13, fontWeight: 700, color: C.text }, children: th.label || m }),
+              /* @__PURE__ */ jsx30("div", { style: { display: "flex", gap: 3 }, children: [1, 2, 3, 4].map((seg) => /* @__PURE__ */ jsx30("span", { style: {
                 width: 14,
                 height: 6,
                 borderRadius: 3,
@@ -15595,18 +19402,18 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
               } }, seg)) })
             ] }, m);
           }) }),
-          weakest && /* @__PURE__ */ jsxs26("p", { style: { margin: "2px 0 0", fontSize: 12.5, color: C.text2, lineHeight: 1.5, maxWidth: 300 }, children: [
+          weakest && /* @__PURE__ */ jsxs27("p", { style: { margin: "2px 0 0", fontSize: 12.5, color: C.text2, lineHeight: 1.5, maxWidth: 300 }, children: [
             "Gropi a rep\xE9r\xE9 que ",
-            /* @__PURE__ */ jsx29("b", { style: { color: C.text }, children: MODULE[weakest]?.label }),
+            /* @__PURE__ */ jsx30("b", { style: { color: C.text }, children: MODULE[weakest]?.label }),
             " m\xE9rite un coup de boost, on le met en priorit\xE9 dans ton Parcours."
           ] }),
-          /* @__PURE__ */ jsx29(PrimaryButton, { C, onClick: () => {
+          /* @__PURE__ */ jsx30(PrimaryButton, { C, onClick: () => {
             setPhase("goal");
             emit("onboarding_step_view", { step: "goal" });
           }, children: "Continuer" })
         ] });
       })(),
-      phase === "goal" && /* @__PURE__ */ jsxs26(
+      phase === "goal" && /* @__PURE__ */ jsxs27(
         StepLayout,
         {
           C,
@@ -15614,18 +19421,18 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
           title: "Quel est ton objectif principal ?",
           subtitle: "Le Parcours en tiendra compte, en plus de ton profil, sans jamais sauter les autres domaines.",
           children: [
-            GOAL_OPTIONS.map((opt) => /* @__PURE__ */ jsx29(OptionCard, { C, selected: goal === opt.id, onClick: () => setGoal(opt.id), children: /* @__PURE__ */ jsxs26("div", { style: { display: "flex", alignItems: "center", gap: 10 }, children: [
-              /* @__PURE__ */ jsx29(Ti, { name: opt.icon, size: 19, color: goal === opt.id ? C.primary : C.text2 }),
-              /* @__PURE__ */ jsx29("div", { style: { fontWeight: 700, fontSize: 14.5 }, children: opt.label })
+            GOAL_OPTIONS.map((opt) => /* @__PURE__ */ jsx30(OptionCard, { C, selected: goal === opt.id, onClick: () => setGoal(opt.id), children: /* @__PURE__ */ jsxs27("div", { style: { display: "flex", alignItems: "center", gap: 10 }, children: [
+              /* @__PURE__ */ jsx30(Ti, { name: opt.icon, size: 19, color: goal === opt.id ? C.primary : C.text2 }),
+              /* @__PURE__ */ jsx30("div", { style: { fontWeight: 700, fontSize: 14.5 }, children: opt.label })
             ] }) }, opt.id)),
-            /* @__PURE__ */ jsx29(PrimaryButton, { C, disabled: !goal, onClick: () => {
+            /* @__PURE__ */ jsx30(PrimaryButton, { C, disabled: !goal, onClick: () => {
               setPhase("time");
               emit("onboarding_step_view", { step: "time" });
             }, children: "Continuer" })
           ]
         }
       ),
-      phase === "time" && /* @__PURE__ */ jsxs26(
+      phase === "time" && /* @__PURE__ */ jsxs27(
         StepLayout,
         {
           C,
@@ -15633,8 +19440,8 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
           title: "Combien de temps veux-tu y consacrer ?",
           subtitle: "\xC7a r\xE8gle tes objectifs hebdo, modifiable \xE0 tout moment dans les r\xE9glages.",
           children: [
-            TIME_OPTIONS.map((opt) => /* @__PURE__ */ jsx29(OptionCard, { C, selected: timePerWeek === opt.id, onClick: () => setTimePerWeek(opt.id), children: /* @__PURE__ */ jsx29("div", { style: { fontWeight: 700, fontSize: 14.5 }, children: opt.label }) }, opt.id)),
-            /* @__PURE__ */ jsx29(PrimaryButton, { C, disabled: !timePerWeek, onClick: finish, children: "C'est parti" })
+            TIME_OPTIONS.map((opt) => /* @__PURE__ */ jsx30(OptionCard, { C, selected: timePerWeek === opt.id, onClick: () => setTimePerWeek(opt.id), children: /* @__PURE__ */ jsx30("div", { style: { fontWeight: 700, fontSize: 14.5 }, children: opt.label }) }, opt.id)),
+            /* @__PURE__ */ jsx30(PrimaryButton, { C, disabled: !timePerWeek, onClick: finish, children: "C'est parti" })
           ]
         }
       )
@@ -15642,15 +19449,15 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
   ] });
 }
 function StepLayout({ C, eyebrow, title, subtitle, children }) {
-  return /* @__PURE__ */ jsxs26("div", { style: { flex: 1, display: "flex", flexDirection: "column", paddingTop: 28, gap: 14 }, children: [
-    /* @__PURE__ */ jsx29("div", { style: { fontSize: 11.5, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: C.primary, fontFamily: FONTS.ui }, children: eyebrow }),
-    /* @__PURE__ */ jsx29("h2", { style: { margin: 0, fontSize: 21, fontWeight: 800, color: C.text, letterSpacing: "-.2px", lineHeight: 1.3 }, children: title }),
-    subtitle && /* @__PURE__ */ jsx29("p", { style: { margin: 0, fontSize: 13, color: C.text2, lineHeight: 1.5 }, children: subtitle }),
-    /* @__PURE__ */ jsx29("div", { style: { display: "flex", flexDirection: "column", gap: 10, marginTop: 6 }, children })
+  return /* @__PURE__ */ jsxs27("div", { style: { flex: 1, display: "flex", flexDirection: "column", paddingTop: 28, gap: 14 }, children: [
+    /* @__PURE__ */ jsx30("div", { style: { fontSize: 11.5, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: C.primary, fontFamily: FONTS.ui }, children: eyebrow }),
+    /* @__PURE__ */ jsx30("h2", { style: { margin: 0, fontSize: 21, fontWeight: 800, color: C.text, letterSpacing: "-.2px", lineHeight: 1.3 }, children: title }),
+    subtitle && /* @__PURE__ */ jsx30("p", { style: { margin: 0, fontSize: 13, color: C.text2, lineHeight: 1.5 }, children: subtitle }),
+    /* @__PURE__ */ jsx30("div", { style: { display: "flex", flexDirection: "column", gap: 10, marginTop: 6 }, children })
   ] });
 }
 function OptionCard({ C, selected, onClick, children }) {
-  return /* @__PURE__ */ jsx29(
+  return /* @__PURE__ */ jsx30(
     "button",
     {
       onClick,
@@ -15672,7 +19479,7 @@ function OptionCard({ C, selected, onClick, children }) {
   );
 }
 function PrimaryButton({ C, onClick, disabled, children }) {
-  return /* @__PURE__ */ jsx29(
+  return /* @__PURE__ */ jsx30(
     "button",
     {
       onClick,
@@ -15699,10 +19506,12 @@ function PrimaryButton({ C, onClick, disabled, children }) {
 
 // smoke/_entry.jsx
 init_Fretboard();
+init_diagrams();
 init_ThemeContext();
 export {
   ChallengeScreen_exports as ChallengeScreen,
   CoursesScreen_exports as CoursesScreen,
+  diagrams_exports as Diagrams,
   EarTraining_exports as EarTraining,
   ExercisesScreen_exports as ExercisesScreen,
   Fretboard_exports as Fretboard,

@@ -143,6 +143,9 @@ test("réviser un domaine : uniquement ses questions, écrites et générées", 
   const theorie = vivierDuDomaine(vivier, "Théorie");
   assert.ok(theorie.every(q => familleDe(q.id) ? domaineDe(familleDe(q.id)) === "Théorie" : ["scales", "harmony"].includes(q.courseId)));
   assert.deepEqual(vivierDuDomaine(vivier, "Inconnu"), []);
+  // « Premiers pas » : les questions écrites du module d'initiation, rien d'autre.
+  const debut = vivierDuDomaine(vivier, "Premiers pas");
+  assert.ok(debut.length > 0 && debut.every(q => !familleDe(q.id) && q.courseId === "debut"));
 });
 
 test("compte neuf : la séance renvoie au Parcours, pas vers une révision vide", () => {

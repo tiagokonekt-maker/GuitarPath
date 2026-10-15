@@ -9,6 +9,7 @@ import { BADGES, buildBadgeTints, buildBadgeRarities, skillMastery } from "../st
 import { levelProgress } from "../store/leveling.js";
 import { masteryStats, prochainesAAncrer, MASTERY_LABELS } from "../store/mastery.js";
 import { gradeForLevel } from "../store/grades.js";
+import { buildUnits, debutFacultatif } from "../store/pathEngine.js";
 import { Gropi, GropiTip } from "../design/Gropi.jsx";
 
 function ProgressScreen({ state, content, onOpenSettings }) {
@@ -31,12 +32,18 @@ function ProgressScreen({ state, content, onOpenSettings }) {
   );
 
   const skills = useMemo(() => [
+    { label:"Premiers pas", id:"debut", color:C.coral, colorD:C.coralD },
     { label:"Manche",   id:"neck",    color:C.amber,   colorD:C.amberD },
     { label:"Gammes",   id:"scales",  color:C.green,   colorD:C.greenD },
     { label:"Harmonie", id:"harmony", color:C.purple,  colorD:C.purpleD },
     { label:"Rythme",   id:"rhythm",  color:C.blue,    colorD:C.blueD },
     { label:"Impro",    id:"impro",   color:C.pink,    colorD:C.pinkD },
-  ].map(s => ({ ...s, pct: skillMastery(state, content, s.id) })), [state, content, C]);
+  ].map(s => ({ ...s, pct: skillMastery(state, content, s.id) }))
+    // « Premiers pas » : affiché au débutant (module obligatoire) ou dès qu'il
+    // y a progressé ; un joueur confirmé n'y voit pas un 0 % qui ne le
+    // concerne pas.
+    .filter(s => s.id !== "debut" || s.pct > 0 || !debutFacultatif(state, buildUnits(content.courses, state))),
+  [state, content, C]);
 
   const badgesByCategory = useMemo(() => {
     const map = {};

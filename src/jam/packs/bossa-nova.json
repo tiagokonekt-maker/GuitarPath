@@ -1,0 +1,97 @@
+{
+  "id": "bossa-nova",
+  "name": "Bossa nova",
+  "tempoRange": [120, 150],
+  "defaultTempo": 132,
+
+  "feel": {
+    "subdivision": 8,
+    "swing": 0
+  },
+
+  "instruments": ["drums", "bass", "comp"],
+  "audioPack": "drums-vcsl",
+  "fillRate": 0.6,
+
+  "energyLevels": {
+    "1": { "instruments": ["drums"],                 "velocityRange": [0.26, 0.44] },
+    "2": { "instruments": ["drums", "bass"],         "velocityRange": [0.34, 0.54] },
+    "3": { "instruments": ["drums", "bass", "comp"], "velocityRange": [0.42, 0.64] },
+    "4": { "instruments": ["drums", "bass", "comp"], "velocityRange": [0.50, 0.74] },
+    "5": { "instruments": ["drums", "bass", "comp"], "velocityRange": [0.58, 0.84] }
+  },
+
+  "drumPatterns": [
+    {
+      "id": "bossa-shaker",
+      "weight": 0.45,
+      "minEnergy": 1,
+      "bars": 2,
+      "grid": {
+        "kick":   "x..xx..xx..xx..x",
+        "rim":    "x..x..x...x..x..",
+        "shaker": "xXxXxXxXxXxXxXxX"
+      }
+    },
+    {
+      "id": "bossa-hat",
+      "weight": 0.35,
+      "minEnergy": 2,
+      "bars": 2,
+      "grid": {
+        "kick":  "x..xx..xx..xx..x",
+        "rim":   "x..x..x...x..x..",
+        "hihat": "xoxoxoxoxoxoxoxo"
+      }
+    },
+    {
+      "id": "bossa-plein",
+      "weight": 0.2,
+      "minEnergy": 3,
+      "bars": 2,
+      "grid": {
+        "kick":   "x..xx..xx..xx.ox",
+        "rim":    "x..x..x...x..x..",
+        "hihat":  "xxxxxxxxxxxxxxxx",
+        "shaker": ".x.x.x.x.x.x.x.x"
+      }
+    }
+  ],
+
+  "fills": [
+    {
+      "id": "bossa-fill-rim",
+      "weight": 0.5,
+      "minEnergy": 2,
+      "beats": 1,
+      "grid": { "rim": "......xx" }
+    },
+    {
+      "id": "bossa-fill-toms",
+      "weight": 0.5,
+      "minEnergy": 3,
+      "beats": 2,
+      "grid": {
+        "tomMid": "..........x.x...",
+        "tomLow": "..............xx"
+      }
+    }
+  ],
+
+  "humanize": {
+    "offsets": {
+      "kick": -1,
+      "snare": 0,
+      "hihat": 1,
+      "ride": 0,
+      "crash": -1,
+      "tomMid": 1,
+      "tomLow": 1
+    },
+    "jitterMs": 5,
+    "velSigma": 0.04
+  },
+
+  "bassStyle": { "approach": "bossaRootFifth", "ghostNotes": false },
+  "compStyle": { "instrument": "piano", "rhythm": "bossa", "voicing": "rootless", "register": [52, 72] }
+}

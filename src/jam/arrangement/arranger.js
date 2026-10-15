@@ -169,7 +169,9 @@ export function createDirector(pack, { phraseBars = 4 } = {}) {
       if (isPhraseEnd && fillsOk.length && barIndex - lastFillBar >= 2) {
         // Plus d'énergie = fills plus fréquents, mais jamais systématiques :
         // un fill à chaque phrase devient lui-même une boucle.
-        const probability = 0.18 + energy * 0.11;
+        // `fillRate` (pack) module cette fréquence : une ballade remplit
+        // peu, un rock davantage. Absent = 1, comportement historique.
+        const probability = (0.18 + energy * 0.11) * (pack.fillRate ?? 1);
         if (Math.random() < probability) {
           fill = weightedPick(fillsOk, fillsOk.length > 1 ? lastFillId : null);
           lastFillId  = fill.id;
@@ -187,6 +189,8 @@ export function createDirector(pack, { phraseBars = 4 } = {}) {
         openHats:   energy >= 4,
         isPhraseEnd,
         phasePos:   barInPhrase / phraseBars,
+        // Pour les motifs sur plusieurs mesures (clave de bossa sur 2 mesures).
+        barIndex,
       };
     },
 

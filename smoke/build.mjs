@@ -81,6 +81,7 @@ const cibles = [
   ["ChallengeScreen",   "src/screens/ChallengeScreen.jsx"],
   ["OnboardingScreen",  "src/onboarding/OnboardingScreen.jsx"],
   ["Fretboard",         "src/Fretboard.jsx"],
+  ["Diagrams",          "src/diagrams.jsx"],
 ];
 
 let entry = "";

@@ -37,8 +37,16 @@ const skillMastery = (state, content, courseId) => {
   if (exDone !== null && qzOk !== null) return Math.round((exDone * 0.6 + qzOk * 0.4) * 100);
   return Math.round((exDone ?? qzOk) * 100);
 };
+// Le module d'initiation « Premiers pas » (debut) est facultatif pour qui joue
+// déjà : il ne compte pas dans « 5 modules finis », sinon un joueur confirmé
+// devrait refaire « tenir sa guitare » pour obtenir le badge.
+const estModuleInitiation = (c) => !!c.prelude || c.id === "debut";
+const debutTermine = (state, content) => {
+  const c = content.courses.find(estModuleInitiation);
+  return !!c && c.lessons.length > 0 && c.lessons.every(l => state.completedLessons[l.id]);
+};
 const allModulesMastered = (state, content) =>
-  content.courses.every(c => {
+  content.courses.filter(c => !estModuleInitiation(c)).every(c => {
     const total = c.lessons.length;
     const done = c.lessons.filter(l => state.completedLessons[l.id]).length;
     return total > 0 && done === total;
@@ -63,6 +71,7 @@ const BADGES = [
   { id: "first_lesson",   cat: "Premiers pas", tint: "primary", rarity: "commun", icon: "ti-flag",          label: "Première leçon",   cond: s => Object.keys(s.completedLessons).length >= 1 },
   { id: "first_exercise", cat: "Premiers pas", tint: "green",   rarity: "commun", icon: "ti-guitar-pick",   label: "Premier exercice", cond: s => Object.keys(s.completedExercises).length >= 1 },
   { id: "first_quiz",     cat: "Premiers pas", tint: "amber",   rarity: "commun", icon: "ti-help-circle",   label: "Premier quiz",     cond: s => Object.keys(s.quizResults).length >= 1 },
+  { id: "debut_done",     cat: "Premiers pas", tint: "blue",    rarity: "commun", icon: "ti-guitar-pick",   label: "Premiers pas franchis", cond: (s, ctx) => debutTermine(s, ctx) },
 
   // ── Streak
   { id: "streak_3",  cat: "Streak", tint: "amber", rarity: "commun", icon: "ti-flame", label: "3 jours",  cond: s => s.streak >= 3 },

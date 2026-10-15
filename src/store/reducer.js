@@ -305,6 +305,10 @@ function reducer(state, action) {
         startXp: action.startXp || 0,
         startLevel: action.startLevel || levelFromXp(s.xp),
         skipped: !!action.skipped,
+        // Réponse à « Tu as déjà joué de la guitare ? » ("debutant",
+        // "quelques", "confirme") : décide seule si « Premiers pas » est
+        // facultatif (pathEngine.debutFacultatif).
+        experience: action.experience || null,
         completedAt: action.completedAt || today,
       };
       break;

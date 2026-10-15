@@ -94,7 +94,11 @@ export const isToneReady = () => Tone !== null;
 // autres modes fonctionnaient et que celui-là, spécifiquement, restait muet.
 import { CHORD_TYPES, normalizeNote, getScaleNotes, getChordNotes } from "./fretboardUtils.js";
 import { NOTES_DIESES_EN } from "./music/notes.js";
-import { symboleAccord, epelerDansTonalite, nomRacineGamme, simplifier, nomFr } from "./music/orthographe.js";
+import {
+  INTERVALLES, SENS, QUALITES, DEGRES_TONALITE, ORDRE_DEGRES, PROGRESSIONS, ORDRE_PROGRESSIONS,
+  tirerIntervalle, tirerAccord, tirerAccordEnTonalite, tirerProgression, tirerDictee,
+  accordDansLaTonalite, romainDe, midiVersTone, choisir as choisirO, melanger as melangerO,
+} from "./store/oreille.js";
 import { planifierTab } from "./tab/tabSon.js";
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -700,10 +704,49 @@ export async function playSuite(accords, secondesParAccord = 1.6) {
   } catch (e) { warn("playSuite:", e); }
 }
 
+// Dictée mélodique : accord de référence, puis la mélodie, note à note.
+const MELODIE_ECART = 0.7;          // secondes entre deux notes (~86 BPM)
+const MELODIE_DEPART = 1.6;         // la mélodie attend la fin du grattage de référence
+const MELODIE_NOTE = 0.6;           // durée tenue de chaque note
+
+/**
+ * Durée d'une dictée mélodique, en millisecondes (calendrier de playMelodie,
+ * relâchement compris). Pure : testée sans audio.
+ */
+export function dureeMelodieMs(nbNotes, avecReference = true) {
+  const depart = avecReference ? MELODIE_DEPART : 0;
+  return Math.round((depart + Math.max(0, nbNotes - 1) * MELODIE_ECART + MELODIE_NOTE) * 1000) + QUEUE_AUDIBLE_MS;
+}
+
+/**
+ * Joue une mélodie (notes Tone.js), précédée d'un accord de référence qui
+ * installe la tonalité. Tout est planifié dans le temps audio, sur le bus
+ * de la lecture : l'écart entre les notes est exact, et stopAll() coupe net,
+ * même entre deux notes.
+ * @returns la durée totale en millisecondes
+ */
+export async function playMelodie(notes, { reference = null } = {}) {
+  if (!await ensureLoaded()) return 0;
+  stopAll();
+  reveillerSortie();
+  const avecRef = !!reference?.length;
+  try {
+    const s = nouvelleLecture();
+    const t0 = departLecture();
+    if (avecRef) strumInto(reference, MELODIE_DEPART * 0.85, t0, "down", 0.03, s);
+    const debut = t0 + (avecRef ? MELODIE_DEPART : 0);
+    notes.forEach((note, i) => {
+      try { s.triggerAttackRelease(note, MELODIE_NOTE, debut + i * MELODIE_ECART, 0.85); } catch { /* noop */ }
+    });
+  } catch (e) { warn("playMelodie:", e); }
+  return dureeMelodieMs(notes.length, avecRef);
+}
+
 /** Point d'entrée unique pour les questions d'écoute générées. */
 export async function jouerEcoute(spec) {
   if (!spec) return;
   if (spec.type === "suite") return playSuite(spec.accords);
+  if (spec.type === "melodie") return playMelodie(spec.notes, { reference: spec.reference });
   if (spec.type === "intervalle") return playInterval(spec.notes[0], spec.notes[1], spec.mode || "ascending");
   if (spec.type === "accord") return spec.arpege ? playScale(spec.notes, 150) : playChord(spec.notes, "2n");
   if (spec.type === "rythme") return playRythme(spec);
@@ -1261,228 +1304,161 @@ export const stopEverything = stopAll;
 const dureeMs = (finDerniereAttaque, dureeNote) =>
   Math.round((finDerniereAttaque + secondes(dureeNote)) * 1000) + QUEUE_AUDIBLE_MS;
 
-export function generateEarTrainingQuestion(type = "interval") {
-  // Valeurs INTERNES (dièses) : elles servent au son et aux clés de réponse.
-  // Les libellés montrés à l'élève passent par music/orthographe.js.
-  const NOTES = NOTES_DIESES_EN;
-  const INTERVAL_NAMES = {
-    3:  "Tierce mineure",
-    4:  "Tierce majeure",
-    5:  "Quarte juste",
-    7:  "Quinte juste",
-    9:  "Sixte majeure",
-    10: "Septième mineure",
-    12: "Octave",
-  };
+// Ancien vivier de l'écran (avant la progressivité) : reste celui des
+// appelants qui ne précisent rien (QuizScreen via makeEarQuizQuestion).
+const INTERVALLES_HISTORIQUES = [3, 4, 5, 7, 9, 10, 12];
+const QUALITES_HISTORIQUES = ["maj", "min", "dom7", "min7"];
+
+/** Bonne réponse + jusqu'à 3 leurres du vivier (ou tout le vivier). */
+function optionsDe(rng, pool, bonne, toutes) {
+  if (toutes) return [...pool];
+  return melangerO(rng, [bonne, ...melangerO(rng, pool.filter(x => x !== bonne)).slice(0, 3)]);
+}
+
+/**
+ * Question d'oreille pour l'écran Ear Training (et le quiz).
+ *
+ * Les hauteurs viennent de store/oreille.js (logique pure, testée) ; ce
+ * module n'y ajoute que la lecture et sa durée.
+ *
+ * @param type  "interval" | "chord_quality" | "chord_full" | "progression" | "dictation"
+ * @param opts.pool          vivier d'éléments proposés (sinon : vivier historique)
+ * @param opts.cible         élément à faire entendre (sinon : tiré dans le vivier)
+ * @param opts.sens          intervalles : "ascending" | "descending" | "harmonic" | "mix"
+ * @param opts.niveau        dictée : niveau 1 à 5
+ * @param opts.toutesOptions true = une option par élément du vivier (écran
+ *                           Ear Training) ; sinon 4 options au plus (quiz)
+ * @param opts.rng           générateur aléatoire (tests)
+ */
+export function generateEarTrainingQuestion(type = "interval", opts = {}) {
+  const rng = opts.rng || Math.random;
+  const toutes = !!opts.toutesOptions;
 
   if (type === "interval") {
-    const intervals   = [3, 4, 5, 7, 9, 10, 12];
-    const semitones   = intervals[Math.floor(Math.random() * intervals.length)];
-    const rootIdx     = Math.floor(Math.random() * 12);
-    const root        = NOTES[rootIdx];
-    const topIdx      = (rootIdx + semitones) % 12;
-    const top         = NOTES[topIdx];
-    const octaveTop   = rootIdx + semitones >= 12 ? 4 : 3;
-    const note1       = toToneNote(root, 3);
-    const note2       = toToneNote(top, octaveTop);
-
-    const distractors = intervals.filter(i => i !== semitones)
-      .sort(() => Math.random() - 0.5).slice(0, 3);
-    const options = [semitones, ...distractors]
-      .sort(() => Math.random() - 0.5)
-      .map(i => ({ semitones: i, label: INTERVAL_NAMES[i] }));
-
+    const pool = opts.pool?.length ? opts.pool : INTERVALLES_HISTORIQUES;
+    const dt = opts.cible ?? choisirO(rng, pool);
+    const sens = !opts.sens || opts.sens === "mix"
+      ? (opts.sens === "mix" ? choisirO(rng, ["ascending", "descending", "harmonic"]) : "ascending")
+      : opts.sens;
+    const { midi } = tirerIntervalle(rng, dt, sens);
+    const note1 = midiVersTone(midi[0]), note2 = midiVersTone(midi[1]);
+    const options = optionsDe(rng, pool, dt, toutes)
+      .map(i => ({ key: i, semitones: i, label: INTERVALLES[i].nom }));
     return {
       type: "interval",
+      mode: sens,
       note1, note2,
-      answer: semitones,
+      answer: dt,
       options,
-      play: () => playInterval(note1, note2, "ascending"),
-      // La 2e note attaque à 0,65 s, elle dure "4n" (0,5 s au tempo par défaut).
-      durationMs: dureeMs(0.65, "4n"),
+      repere: INTERVALLES[dt].repere,
+      consigne: `Écoute l'intervalle (${SENS[sens]})`,
+      detail: `${dt} demi-ton${dt > 1 ? "s" : ""}, ${SENS[sens]}`,
+      play: () => playInterval(note1, note2, sens),
+      // Mélodique : la 2e note attaque à 0,65 s et dure « 4n » (0,5 s).
+      // Harmonique : les deux notes ensemble, « 2n ».
+      durationMs: sens === "harmonic" ? dureeMs(0, "2n") : dureeMs(ECART_INTERVALLE_MS / 1000, "4n"),
     };
   }
 
   if (type === "chord_quality") {
-    const qualities = [
-      { key: "maj",  label: "Major",    intervals: [0,4,7]    },
-      { key: "min",  label: "Minor",    intervals: [0,3,7]    },
-      { key: "dom7", label: "Dom7",     intervals: [0,4,7,10] },
-      { key: "min7", label: "Minor 7",  intervals: [0,3,7,10] },
-    ];
-    const rootIdx = Math.floor(Math.random() * 12);
-    const quality = qualities[Math.floor(Math.random() * qualities.length)];
-    const notes   = quality.intervals.map((i, idx) => {
-      return toToneNote(NOTES[(rootIdx + i) % 12], idx === 0 ? 2 : 3);
-    });
-
+    const pool = opts.pool?.length ? opts.pool : QUALITES_HISTORIQUES;
+    const q = opts.cible ?? choisirO(rng, pool);
+    const notes = tirerAccord(rng, q).midi.map(midiVersTone);
+    const options = optionsDe(rng, pool, q, toutes).map(k => ({ key: k, label: QUALITES[k].nom }));
+    const ARPEGE_BPM = 150, pas = 60 / ARPEGE_BPM;
     return {
-      type:    "chord_quality",
+      type: "chord_quality",
       notes,
-      answer:  quality.key,
-      options: qualities.map(q => ({ key: q.key, label: q.label })),
-      play:    () => playChord(notes, "2n", { spread: 0.065 }),
+      answer: q,
+      options,
+      repere: `${QUALITES[q].nom} : ${QUALITES[q].couleur}.`,
+      consigne: "Écoute l'accord",
+      play: () => playChord(notes, "2n", { spread: 0.065 }),
       // Grattage étalé : la dernière corde attaque à (n-1) × 0,065 s.
       durationMs: dureeMs((notes.length - 1) * 0.065, "2n"),
+      // Le même accord, note à note : on entend chaque intervalle.
+      playArpege: () => playScale(notes, ARPEGE_BPM),
+      arpegeDurationMs: dureeMs((notes.length - 1) * pas, pas * 0.85),
     };
   }
 
   if (type === "chord_full") {
-    // Identifier l'accord COMPLET : fondamentale ET qualite ("La mineur"),
-    // pas seulement la qualite. Nettement plus exigeant que chord_quality,
-    // qui demande juste "majeur ou mineur ?" sans jamais dire lequel.
-    //
-    // Pour que ce soit faisable, on donne d'abord un repere tonal : la
-    // tonique est jouee seule avant l'accord. Sans ce repere, identifier
-    // une fondamentale absolue releve de l'oreille absolue — une capacite
-    // rare, qui ne s'entraine pas de cette facon.
-    const qualities = [
-      { key: "maj",  suffix: "",    intervals: [0,4,7]    },
-      { key: "min",  suffix: "m",   intervals: [0,3,7]    },
-      { key: "dom7", suffix: "7",        intervals: [0,4,7,10] },
-      { key: "min7", suffix: "m7",       intervals: [0,3,7,10] },
-    ];
-
-    const rootIdx = Math.floor(Math.random() * 12);
-    const root    = NOTES[rootIdx];
-    const quality = qualities[Math.floor(Math.random() * qualities.length)];
-    const notes   = quality.intervals.map((i, idx) =>
-      toToneNote(NOTES[(rootIdx + i) % 12], idx === 0 ? 2 : 3)
-    );
-    const answerKey = root + "|" + quality.key;
-
-    // Distracteurs choisis pour etre discriminants : on melange des
-    // variantes de qualite sur la MEME fondamentale (le piege utile) et
-    // des fondamentales voisines. Tirer 3 accords au hasard dans les 48
-    // possibles rendrait la question triviale par elimination.
-    const candidates = [];
-    for (const q of qualities) {
-      if (q.key !== quality.key) candidates.push({ root, quality: q });
-    }
-    for (const shift of [2, 5, 7, 9]) {
-      const r = NOTES[(rootIdx + shift) % 12];
-      candidates.push({ root: r, quality });
-    }
-    const distractors = candidates.sort(() => Math.random() - 0.5).slice(0, 3);
-
-    const options = [{ root, quality }, ...distractors]
-      .sort(() => Math.random() - 0.5)
-      .map(c => ({
-        key: c.root + "|" + c.quality.key,
-        // Libellé orthographié, en notation française comme le reste de
-        // l'app (« Sibm », « Mib7 », pas « A#m » ni « D#7 ») ; la clé, elle,
-        // reste en dièses.
-        label: symboleAccord(c.root, c.quality.key),
-      }));
-
-    // Note de reference FIXE (Do), et non la fondamentale de la reponse.
-    // Ma premiere version jouait toToneNote(root, 3) — c'est-a-dire la
-    // fondamentale de l'accord a identifier. Une reference doit etre un
-    // point d'ancrage connu et invariable ; utiliser la note qu'on demande
-    // de trouver n'a aucun sens. Elle est en plus OPTIONNELLE : l'accord
-    // se joue directement, la reference n'arrive que si on la demande.
-    const referenceNote = toToneNote("C", 3);
-
+    // ACCORD EN TONALITÉ. L'ancienne version demandait de nommer un accord
+    // dans l'absolu (« La mineur ») : c'est l'oreille absolue, qui ne
+    // s'entraîne pas ainsi — la note de référence Do, facultative, n'y
+    // changeait presque rien. Désormais la tonalité est annoncée, l'accord de
+    // tonique sonne d'abord, puis l'accord à reconnaître : on le situe par
+    // rapport à la tonique, ce que l'oreille relative sait faire.
+    const pool = opts.pool?.length ? opts.pool : ORDRE_DEGRES.slice(0, 4);
+    const degre = opts.cible ?? choisirO(rng, pool);
+    const t = tirerAccordEnTonalite(rng, degre);
+    const ref = t.reference.map(midiVersTone), cible = t.midi.map(midiVersTone);
+    const SEC = 1.6;
+    const options = optionsDe(rng, pool, degre, toutes).map(d => ({
+      key: d,
+      label: `${accordDansLaTonalite(t.toniquePc, DEGRES_TONALITE[d].semi, DEGRES_TONALITE[d].type)} (${d})`,
+    }));
     return {
-      type:    "chord_full",
-      notes,
-      root,
-      answer:  answerKey,
+      type: "chord_full",
+      notes: cible,
+      reference: ref,
+      tonalite: t.tonalite,
+      answer: degre,
       options,
-      // Action principale : l'accord, directement.
-      play:    () => playChord(notes, "2n", { spread: 0.065 }),
-      durationMs: dureeMs((notes.length - 1) * 0.065, "2n"),
-      // Aide optionnelle, declenchee par un bouton distinct.
-      playReference: () => playNote(referenceNote, "2n"),
-      referenceDurationMs: dureeMs(0, "2n"),
-      referenceLabel: "Do",
+      repere: `${t.nom} est ${DEGRES_TONALITE[degre].fonction}.`,
+      consigne: `Tonalité : ${t.tonalite}. Écoute la tonique, puis l'accord`,
+      play: () => playSuite([ref, cible], SEC),
+      // Le 2e accord attaque à 1,6 s (+ étalement du grattage) et sonne 90 %.
+      durationMs: dureeMs(SEC + 6 * 0.026, SEC * 0.9),
+      playReference: () => playChord(ref, "2n"),
+      referenceLabel: "l'accord de tonique",
     };
   }
 
   if (type === "progression") {
-    // Une seule source pour la cadence : l'écran ne doit pas la redéclarer.
     const SEC_PAR_ACCORD = 1.6;
-    // Suites d'accords courantes, en degres plutot qu'en notes fixes : la
-    // question est transposee dans une tonalite aleatoire a chaque fois,
-    // donc on ne peut pas la reussir en memorisant des hauteurs absolues.
-    // C'est ce qui distingue la reconnaissance d'une PROGRESSION de celle
-    // d'un accord isole : on ecoute les rapports entre accords, pas les
-    // notes elles-memes.
-    const progressions = [
-      { key: "I-V-vi-IV",  label: "I - V - vi - IV",   degrees: [[0,"maj"],[7,"maj"],[9,"min"],[5,"maj"]] },
-      { key: "ii-V-I",     label: "ii - V - I",        degrees: [[2,"min7"],[7,"dom7"],[0,"maj7"]] },
-      { key: "I-IV-V",     label: "I - IV - V",        degrees: [[0,"maj"],[5,"maj"],[7,"maj"]] },
-      { key: "i-iv-v",     label: "i - iv - v (mineur)", degrees: [[0,"min"],[5,"min"],[7,"min"]] },
-      { key: "I-vi-IV-V",  label: "I - vi - IV - V",   degrees: [[0,"maj"],[9,"min"],[5,"maj"],[7,"maj"]] },
-      // i - VI - III - VII : la suite "epique" (Zeppelin, metal, folk nordique).
-      // En contexte mineur ces degres s'ecrivent en bemols (Abm, Eb, Bb en
-      // Do mineur), mais l'affichage se fait en chiffres romains — donc
-      // aucune ambiguite d'ecriture pour l'utilisateur.
-      { key: "i-VI-III-VII", label: "i - VI - III - VII", degrees: [[0,"min"],[8,"maj"],[3,"maj"],[10,"maj"]] },
-      // Deux suites ajoutees pour equilibrer les groupes : il faut au moins
-      // 4 suites de MEME longueur pour pouvoir proposer 4 options qui ont
-      // toutes le meme nombre d'accords que ce qui a ete joue.
-      { key: "I-vi-ii-V",  label: "I - vi - ii - V",  degrees: [[0,"maj"],[9,"min"],[2,"min7"],[7,"dom7"]] },
-      { key: "vi-IV-I",    label: "vi - IV - I",      degrees: [[9,"min"],[5,"maj"],[0,"maj"]] },
-    ];
-
-    const rootIdx = Math.floor(Math.random() * 12);
-    const chosen  = progressions[Math.floor(Math.random() * progressions.length)];
-    const chords  = chosen.degrees.map(([semi, type]) => ({
-      root: NOTES[(rootIdx + semi) % 12],
-      type,
-    }));
-
-    // Distracteurs de MEME LONGUEUR que la suite jouee. Sans ce filtre,
-    // une suite de 3 accords pouvait avoir des options a 4 accords — le
-    // simple comptage des accords entendus suffisait alors a eliminer des
-    // reponses, sans rien ecouter d'harmonique.
-    const sameLength = progressions.filter(
-      p => p.key !== chosen.key && p.degrees.length === chosen.degrees.length
-    );
-    const distractors = sameLength.sort(() => Math.random() - 0.5).slice(0, 3);
-    // Libelles NOMMES plutot qu'en chiffres romains : "La mineur - Fa - Do
-    // - Sol" au lieu de "i - VI - III - VII". Les degres sont justes mais
-    // demandent de connaitre la tonique pour etre utiles ; nommer les
-    // accords rend la reponse directement lisible et verifiable a la
-    // guitare. La tonalite etant tiree au hasard, chaque option doit etre
-    // recalculee dans cette meme tonalite — sinon la bonne reponse serait
-    // reconnaissable a sa seule tonique.
-    const SUFFIX = { maj:"", min:"m", dom7:"7", maj7:"maj7", min7:"m7" };
-    // Chaque accord est orthographié DANS la tonalité de la suite : en Do
-    // mineur, i - VI - III - VII s'écrit Dom - Lab - Mib - Sib (et non
-    // Sol# - Ré# - La#). La couleur de la suite (majeure ou mineure) fixe la
-    // gamme de référence.
-    const gammeDe = (p) => (p.key.startsWith("i-") ? "natural_minor" : "major");
-    const nameProg = (p) => p.degrees
-      .map(([semi, t]) => {
-        const n = epelerDansTonalite((rootIdx + semi) % 12, NOTES[rootIdx], gammeDe(p));
-        return (n ? nomFr(simplifier(n)) : NOTES[(rootIdx + semi) % 12]) + SUFFIX[t];
-      })
-      .join(" - ");
-
-    const options = [chosen, ...distractors]
-      .sort(() => Math.random() - 0.5)
-      .map(p => ({ key: p.key, label: nameProg(p), roman: p.label }));
-
+    const pool = opts.pool?.length ? opts.pool : ORDRE_PROGRESSIONS.slice(0, 4);
+    const cle = opts.cible ?? choisirO(rng, pool);
+    const p = tirerProgression(rng, cle);
+    const accords = p.accords.map(a => a.map(midiVersTone));
+    const options = optionsDe(rng, pool, cle, toutes).map(k => ({ key: k, label: romainDe(k) }));
     return {
-      type:    "progression",
-      chords,
-      tonic:   NOTES[rootIdx],
-      tonicFr: nomRacineGamme(NOTES[rootIdx], gammeDe(chosen)),
-      roman:   chosen.label,
-      answer:  chosen.key,
+      type: "progression",
+      accords,
+      // Fondamentales (dièses, valeurs internes) et types : forme historique.
+      chords: PROGRESSIONS[cle].degres.map(([semi, type]) => ({ root: NOTES_DIESES_EN[(p.toniquePc + semi) % 12], type })),
+      tonic: NOTES_DIESES_EN[p.toniquePc],
+      tonicFr: p.tonalite,
+      tonalite: p.tonalite,
+      roman: p.romain,
+      noms: p.noms,
+      answer: cle,
       options,
-      // 1,6 s par accord : assez pour entendre chaque couleur sans perdre
-      // le fil de la suite. Plus lent, la coherence harmonique se dissout.
-      play:    (onStep) => playProgression(chords, SEC_PAR_ACCORD, onStep),
-      // Le dernier accord attaque à (n-1) × 1,6 s et sonne 90 % de l'intervalle.
-      // L'ancien calcul de l'écran (n × 1600 + 400) ignorait la queue de
-      // relâchement : le bouton repassait en « play » avec du son encore
-      // audible, et on ne pouvait plus l'arrêter.
-      durationMs: dureeMs(
-        (chords.length - 1) * SEC_PAR_ACCORD + SEC_PAR_ACCORD * 0.9, 0
-      ),
+      // Les degrés en chiffres romains se lisent dans toutes les tonalités ;
+      // l'orthographe des accords (Dom – Lab – Mib – Sib) vient avec la
+      // correction, une fois la tonalité dévoilée.
+      repere: `En ${p.tonalite} : ${p.noms.join(" – ")}.`,
+      consigne: "Écoute la suite (le premier accord est la tonique)",
+      play: () => playSuite(accords, SEC_PAR_ACCORD),
+      durationMs: dureeMs((accords.length - 1) * SEC_PAR_ACCORD + 6 * 0.026, SEC_PAR_ACCORD * 0.9),
+    };
+  }
+
+  if (type === "dictation") {
+    const d = tirerDictee(rng, opts.niveau || 1);
+    const notes = d.midi.map(midiVersTone), reference = d.reference.map(midiVersTone);
+    return {
+      type: "dictation",
+      ...d,
+      notes,
+      referenceNotes: reference,
+      answer: d.degres.join("-"),
+      options: [],
+      consigne: `Tonalité : ${d.tonalite}. La mélodie part de la tonique (${d.touches[0].nom})`,
+      play: () => playMelodie(notes, { reference }),
+      durationMs: dureeMelodieMs(notes.length, true),
+      playReference: () => playMelodie([notes[0]], { reference }),
+      referenceLabel: "la tonique",
     };
   }
 

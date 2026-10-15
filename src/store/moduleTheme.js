@@ -5,6 +5,7 @@ import { LIGHT } from "../design/tokens.js";
 // Construit les thèmes à partir d'un objet C (LIGHT ou DARK)
 function buildModuleTheme(C) {
   return {
+    debut:   { icon: "ti-sparkles",  color: C.coral,   colorL: C.coralL,   colorD: C.coralD,   colorBorder: C.coralBorder },
     neck:    { icon: "ti-map-2",     color: C.amber,   colorL: C.amberL,   colorD: C.amberD,   colorBorder: C.amberBorder },
     scales:  { icon: "ti-music",     color: C.green,   colorL: C.greenL,   colorD: C.greenD,   colorBorder: C.greenBorder },
     harmony: { icon: "ti-stack-2",   color: C.purple,  colorL: C.purpleL,  colorD: C.purpleD,  colorBorder: C.purpleBorder },

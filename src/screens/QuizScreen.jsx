@@ -18,6 +18,7 @@ import { useRenderers } from "../renderers.jsx";
 
 // ── Données modules quiz ──────────────────────────────────────────────────────
 const makeModules = (C) => [
+  { id:"debut",   label:"Premiers pas", icon:"sparkles", color:C.coral, colorL:C.coralL, colorD:C.coralD, border:C.coralBorder },
   { id:"neck",    label:"Manche",   icon:"map-2",    color:C.amber,  colorL:C.amberL,  colorD:C.amberD,  border:C.amberBorder },
   { id:"scales",  label:"Gammes",   icon:"music",    color:C.green,  colorL:C.greenL,  colorD:C.greenD,  border:C.greenBorder },
   { id:"harmony", label:"Harmonie", icon:"stack-2",  color:C.purple, colorL:C.purpleL, colorD:C.purpleD, border:C.purpleBorder },

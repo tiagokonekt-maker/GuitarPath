@@ -6,7 +6,7 @@
 import { normalizeNote } from "../../fretboardUtils.js";
 import { NOTES_DIESES_EN, NOTES_DIESES_FR } from "../../music/notes.js";
 import { epelerDansTonalite, epelerAccord, simplifier, nomFr, nomRacineGamme } from "../../music/orthographe.js";
-import { generateWalkingBar, toToneNote as toToneNoteFromMidi, toToneTime } from "../../music/walkingBass.js";
+import { generateWalkingBar, generateBassBar, toToneNote as toToneNoteFromMidi, toToneTime } from "../../music/walkingBass.js";
 
 // Toniques proposées : naturelles d'abord, altérées ensuite. `en` est la
 // valeur interne (dièses) ; `fr` le nom sans contexte. Pour l'AFFICHAGE,
@@ -32,8 +32,11 @@ const CHORD_INTERVALS = {
   dom7:  [0, 4, 7, 10],
   maj:   [0, 4, 7],
   min:   [0, 3, 7],
+  // Jazz mineur (ii–V–i) et bossa (7(9)).
+  min7b5:[0, 3, 6, 10],
+  dom9:  [0, 4, 7, 10, 14],
 };
-const QUALITE_LABEL = { maj7: "maj7", min7: "m7", dom7: "7", maj: "", min: "m" };
+const QUALITE_LABEL = { maj7: "maj7", min7: "m7", dom7: "7", maj: "", min: "m", min7b5: "m7b5", dom9: "9" };
 
 /** Notes (noms anglais) d'un accord de la grille, transposé dans la tonalité. */
 export function notesAccord(root, chord) {
@@ -81,9 +84,37 @@ const VOICINGS = {
   // l'accord même qui doit le faire entendre.
   maj:   { intervals: [0, 4, 7, 16],   desc: "R-3-5-3"    },
   min:   { intervals: [0, 3, 7, 15],   desc: "R-b3-5-b3"  },
+  min7b5:{ intervals: [0, 10, 15, 18], desc: "x-R-b7-b3-b5" },
+  // 7(9) sans fondamentale : b7-9-3, la couleur bossa / jazz par excellence.
+  dom9:  { intervals: [0, 10, 14, 16], desc: "x-R-b7-9-3" },
 };
 
-export function getVoicedChord(rootNote, quality, style = "jazz") {
+/**
+ * Autres dispositions, choisies par le pack (compStyle.voicing) :
+ *   rootless (défaut) → ci-dessus, sans fondamentale
+ *   power   → R-5-R : power chord du rock
+ *   triad   → accord plein, fondamentale comprise
+ *   shell   → 3e + 7e seules (Freddie Green, comping minimal)
+ *   spread  → R-5-(7)-3 écarté, pour les arpèges de ballade
+ * Renvoie les intervalles depuis la fondamentale.
+ */
+function degresDisposition(quality, disposition) {
+  const ch = CHORD_INTERVALS[quality] || CHORD_INTERVALS.dom7;
+  const tierce = ch[1], quinteAcc = ch[2], sept = ch[3];
+  switch (disposition) {
+    case "power":  return [0, quinteAcc, 12];
+    case "triad":  return ch.slice(0, 4);
+    case "shell":  return [tierce, sept ?? quinteAcc];
+    case "spread": return [0, quinteAcc, sept ?? 12, 12 + tierce];
+    default:       return null;
+  }
+}
+
+/**
+ * @param opts.voicing  disposition (voir degresDisposition), défaut rootless
+ * @param opts.floor    plancher MIDI de l'accompagnement (compStyle.register[0])
+ */
+export function getVoicedChord(rootNote, quality, style = "jazz", opts = {}) {
   const iBlues = style === "blues" || style === "blues12";
   const voicing = iBlues && quality === "dom7"
     ? VOICINGS.dom7b
@@ -91,6 +122,9 @@ export function getVoicedChord(rootNote, quality, style = "jazz") {
 
   const rootIdx = CHROMATIC.indexOf(rootNote);
   if (rootIdx < 0) return [];
+
+  const autre = degresDisposition(quality, opts.voicing);
+  if (autre) return placer(rootIdx, autre, opts.floor ?? 52);
 
   // ── Voicing SANS FONDAMENTALE ────────────────────────────────────
   // En groupe, un pianiste ne joue pas la fondamentale : c'est le
@@ -102,10 +136,14 @@ export function getVoicedChord(rootNote, quality, style = "jazz") {
   // couleur : tierce, septième, quinte, extensions.
   const rootless = voicing.intervals.filter(i => i % 12 !== 0);
   const degrees = rootless.length ? rootless : voicing.intervals;
+  return placer(rootIdx, degrees, opts.floor ?? 52);
+}
 
+/** Place des intervalles au-dessus du plancher, en noms Tone.js triés. */
+function placer(rootIdx, degrees, COMP_MIN_MIDI) {
   // Position du voicing : la note la plus grave doit rester AU-DESSUS de
-  // la plage de la basse (qui monte jusqu'à MIDI 48).
-  const COMP_MIN_MIDI = 52;    // Mi3 — plancher de l'accompagnement
+  // la plage de la basse (qui monte jusqu'à MIDI 48). Plancher par défaut :
+  // Mi3 (52).
   const lowestDegree = Math.min(...degrees);
   let base = 36 + rootIdx;
   // On remonte par octaves jusqu'à dégager la basse, sans jamais partir
@@ -121,7 +159,13 @@ export function getVoicedChord(rootNote, quality, style = "jazz") {
   });
 }
 
-export function getBassPattern(rootNote, quality, style, nextRoot, barIdx, energy = 3) {
+/**
+ * @param bassStyle  `bassStyle` du pack du style ({ approach, ghostNotes,
+ *                   octaveJumps }) : choisit le générateur (walking, croches
+ *                   rock, bossa, rondes de ballade…). Absent = walking bass,
+ *                   blues ou jazz selon le style (comportement historique).
+ */
+export function getBassPattern(rootNote, quality, style, nextRoot, barIdx, energy = 3, bassStyle = null) {
   // Délègue au générateur de walking bass. L'ancienne version répétait le
   // même arpège (R-5-6-b7) à chaque mesure, indéfiniment : c'était la
   // cause principale du rendu mécanique, bien avant la qualité des
@@ -129,14 +173,16 @@ export function getBassPattern(rootNote, quality, style, nextRoot, barIdx, energ
   // l'accord suivant, un contour alterné et des variations de mesure en
   // mesure.
   const bluesy = style === "blues" || style === "blues12";
-  const notes = generateWalkingBar({
+  const commun = {
     rootName: normalizeNote(rootNote),
     quality: quality || "dom7",
     nextRoot: normalizeNote(nextRoot || rootNote),
-    style: bluesy ? "blues" : "jazz",
     barIndex: barIdx || 0,
     energy,
-  });
+  };
+  const notes = bassStyle?.approach
+    ? generateBassBar({ ...bassStyle, ...commun })
+    : generateWalkingBar({ ...commun, style: bluesy ? "blues" : "jazz" });
   return notes.map(n => ({
     note: toToneNoteFromMidi(n.midi),
     time: toToneTime(n.beat),
@@ -189,5 +235,9 @@ const STYLE_PAR_CONTEXTE = {
   jazz_251:     "jazz",
   modal_dorian: "funk",
   modal_mixo:   "rock",
+  rock:         "rock",
+  jazz_swing:   "jazz",
+  bossa:        "bossa",
+  ballade:      "ballade",
 };
 export const getStyle = (contextId) => STYLE_PAR_CONTEXTE[contextId] || "rock";

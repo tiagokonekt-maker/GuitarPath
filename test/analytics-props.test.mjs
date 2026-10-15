@@ -58,9 +58,9 @@ test("hors liste blanche : seules les primitives courtes passent, 12 clés au pl
 test("onboarding_completed : le profil de niveau (objet) et la date ne partent pas", () => {
   const p = nettoyerProps("onboarding_completed", {
     goal: "fun", timePerWeek: "1-2h", skillLevels: { neck: 2 }, overallTier: "debutant",
-    startXp: 120, completedAt: new Date().toISOString(),
+    startXp: 120, completedAt: new Date().toISOString(), experience: "quelques",
   });
-  assert.deepEqual(p, { goal: "fun", timePerWeek: "1-2h", overallTier: "debutant" });
+  assert.deepEqual(p, { goal: "fun", timePerWeek: "1-2h", overallTier: "debutant", experience: "quelques" });
 });
 
 test("props invalides → objet vide ; nom d'événement contrôlé", () => {

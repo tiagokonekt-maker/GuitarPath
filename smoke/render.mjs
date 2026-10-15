@@ -44,9 +44,11 @@ const unitPrete = path.find(u => u.needsCheck) || path[0];
 const lecon = path[0].lessons[0];
 const noop = () => {};
 
-// Les composants de rendu du manche, fournis par contexte comme dans l'app
+// Les composants de rendu du manche, fournis par contexte comme dans l'app.
+// Les diagrammes (diagrams.jsx, SVG pur) sont les vrais : c'est ce qui
+// permet de vérifier qu'un bloc `tab` est bien rendu en tablature.
 const renderers = {
-  renderDiagramBlock: () => null,
+  renderDiagramBlock: M.Diagrams.renderDiagramBlock,
   FretboardLesson: () => null,
   FretboardQuizQuestion: () => null,
   FretboardExercise: () => null,
@@ -95,6 +97,11 @@ const cas = [
       .find(l => (l.blocks || []).some(b => b.type === "fretboard_interactive" || b.type === "diagram"))
       || lecon,
     state, dispatch: noop, onBack: noop }],
+  // Bloc `tab` (module « Premiers pas ») : doit passer par TabBlock, pas
+  // retomber en paragraphe — vérifié après la boucle.
+  ["LessonView (tablature)", M.CoursesScreen.LessonView, {
+    lesson: COURSES.flatMap(c => c.lessons || []).find(l => (l.content || []).some(b => b.type === "tab")) || lecon,
+    state, dispatch: noop, onBack: noop }],
 ];
 
 let ok = 0;
@@ -109,6 +116,9 @@ for (const [nom, Comp, props] of cas) {
     );
     const html = renderToStaticMarkup(arbre);
     if (!html || html.length < 20) throw new Error("rendu vide");
+    if (nom === "LessonView (tablature)" && !/role="img"[^>]*>\s*<pre aria-hidden="true"/.test(html)) {
+      throw new Error("bloc tab non rendu en tablature (pre masqué + role=img attendus)");
+    }
     ok++;
     console.log(`  ✓ ${nom.padEnd(20)} ${String(html.length).padStart(6)} caractères`);
   } catch (e) {

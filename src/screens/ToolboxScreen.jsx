@@ -1,6 +1,6 @@
 // Groply — src/screens/ToolboxScreen.jsx
 // Boîte à outils : métronome, accordeur, lecteur d'accords, manche,
-// éditeur de tablature, et accès à Jam Session / Ear Training.
+// éditeur de tablature, lecteur de morceaux, et accès à Jam Session / Ear Training.
 //
 // Chaque outil vit dans son propre module (src/screens/toolbox/) et n'est
 // chargé qu'à l'ouverture de son onglet : ouvrir « Outils » ne télécharge
@@ -15,6 +15,7 @@ const Metronome   = lazy(() => import("./toolbox/Metronome.jsx").then(m => ({ de
 const Tuner       = lazy(() => import("./toolbox/Tuner.jsx").then(m => ({ default: m.Tuner })));
 const ChordPlayer = lazy(() => import("./toolbox/ChordPlayer.jsx").then(m => ({ default: m.ChordPlayer })));
 const TabEditor   = lazy(() => import("./toolbox/TabEditor.jsx").then(m => ({ default: m.TabEditor })));
+const Morceaux    = lazy(() => import("./toolbox/Morceaux.jsx").then(m => ({ default: m.Morceaux })));
 const FretboardExplorer = lazy(() => import("./FretboardExplorer.jsx").then(m => ({ default: m.FretboardExplorer })));
 
 // Les vrais onglets : ils changent le contenu affiché sous la rangée.
@@ -24,6 +25,7 @@ const ONGLETS_OUTILS = [
   { id:"chords",    label:"Accords",      icon:"music" },
   { id:"neck",      label:"Manche",       icon:"guitar-pick" },
   { id:"tablature", label:"Tablature",    icon:"notebook" },
+  { id:"morceaux",  label:"Morceaux",     icon:"headphones" },
 ];
 // Jam Session et Ear Training ouvrent une autre page : ce ne sont PAS des
 // onglets (un lecteur d'écran annoncerait « onglet 6 sur 7 » puis quitterait
@@ -41,6 +43,7 @@ const OUTIL_PAR_ID = {
   tuner:     Tuner,
   chords:    ChordPlayer,
   tablature: TabEditor,
+  morceaux:  Morceaux,
 };
 
 /** Respecte « réduire les animations » pour les défilements déclenchés en JS. */
@@ -127,7 +130,7 @@ function ToolboxScreen({ onBack, navigate }) {
       </div>
 
       {/* Onglets — en défilement horizontal, pas en répartition égale :
-          à 7 entrées, flex:1 chacune serait devenue trop étroite pour que le
+          à 8 entrées, flex:1 chacune serait devenue trop étroite pour que le
           libellé tienne proprement sur mobile. Le tablist ne contient que
           les vrais onglets ; Jam Session et Ear Training suivent dans la
           même rangée, après un séparateur, comme boutons ordinaires qui

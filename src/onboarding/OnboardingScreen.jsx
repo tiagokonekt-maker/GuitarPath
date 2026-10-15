@@ -21,7 +21,7 @@ import { ProgressBar } from "../design/ui.jsx";
 import { FretboardQuizQuestion } from "../Fretboard.jsx";
 import {
   TESTABLE_MODULES, startFromScore, TIER_VALUE,
-  buildPlacementQueue, pickPlacementQuestion, PLACEMENT_QUESTION_COUNT,
+  buildPlacementQueue, pickPlacementQuestion,
   computeModuleTier, inferMissingTier, computeOverallTier, weakestModule,
   availableModules, placementQuestionCount,
 } from "../store/placementEngine.js";
@@ -31,6 +31,18 @@ const GOAL_OPTIONS = [
   { id: "theorie", module: "harmony", label: "Comprendre la théorie en profondeur", icon: "stack-2" },
   { id: "manche",  module: "neck",    label: "Maîtriser le manche",                 icon: "map-2" },
   { id: "global",  module: null,      label: "Un peu de tout, en équilibre",        icon: "sparkles" },
+];
+
+// Première question : « Tu joues déjà ? ». Le débutant complet saute le test
+// de placement (15 questions de théorie n'auraient aucun sens pour lui) et
+// démarre au module « Premiers pas ». Les deux autres réponses passent le
+// test ; ces joueurs voient « Premiers pas » comme facultatif. La règle qui
+// en découle côté Parcours est `debutFacultatif` (store/pathEngine.js) :
+// débutant = test sauté (`skipped`) + niveau A1.
+const EXPERIENCE_OPTIONS = [
+  { id: "debutant", label: "Je débute complètement",       sub: "Jamais joué, ou presque",                    icon: "sparkles" },
+  { id: "quelques", label: "Je connais quelques accords",  sub: "Je gratte un peu, sans trop de théorie",    icon: "guitar-pick" },
+  { id: "confirme", label: "Je joue depuis un moment",     sub: "Je veux progresser à partir de mon niveau", icon: "music" },
 ];
 
 const TIME_OPTIONS = [
@@ -47,11 +59,13 @@ const ALL_PROFILE_MODULES = [...new Set([...TESTABLE_MODULES, "impro"])];
 export function OnboardingScreen({ content, onComplete, onEvent }) {
   const C = useC();
 
-  // phase : "welcome" → "testIntro" → "testing" → "results" → "goal" → "time"
+  // phase : "welcome" → "experience" → "testIntro" → "testing" → "results" → "goal" → "time"
+  //                                  ↘ "debutant" (test sauté) ────────────↗
   const [phase, setPhase] = useState("welcome");
+  const [experience, setExperience] = useState(null);
 
   // ── Test de placement ────────────────────────────────────────────────
-  // File fixe des 12 questions (facile×4 → intermédiaire×4 → difficile×4),
+  // File fixe (facile → intermédiaire → difficile, une question par module),
   // construite une seule fois au lancement du test.
   const [queue, setQueue] = useState(null);
   const [qIdx, setQIdx] = useState(0);
@@ -184,9 +198,27 @@ export function OnboardingScreen({ content, onComplete, onEvent }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, currentQ, queue]);
 
+  // Débutant complet : pas de test. Profil A1 partout (aucune valeur
+  // inventée : c'est ce qu'il a déclaré), départ au niveau 1, et le
+  // Parcours commence par le module « Premiers pas ».
+  function chooseExperience() {
+    emit("onboarding_experience", { experience });
+    if (experience === "debutant") {
+      setSkillLevels(Object.fromEntries(TESTABLE_MODULES.map(m => [m, "A1"])));
+      setOverallTier("A1");
+      setWeakest(null);
+      setResults(Object.fromEntries(TESTABLE_MODULES.map(m => [m, 0])));
+      setPhase("debutant");
+      emit("onboarding_step_view", { step: "debutant" });
+      return;
+    }
+    setPhase("testIntro");
+  }
+
   function finish() {
     const goalOpt = GOAL_OPTIONS.find(g => g.id === goal);
-    const totalCorrect = modulesTestes.reduce((sum, m) => sum + (results[m] || 0), 0);
+    const debutant = experience === "debutant";
+    const totalCorrect = debutant ? 0 : modulesTestes.reduce((sum, m) => sum + (results[m] || 0), 0);
     // Le dénominateur est le nombre de questions RÉELLEMENT posées, pas une
     // constante : sinon un module écarté faisait chuter le score de départ.
     const { startXp, startLevel } = startFromScore(totalCorrect, nbQuestions);
@@ -199,6 +231,12 @@ export function OnboardingScreen({ content, onComplete, onEvent }) {
       weakestModule: weakest,
       startXp,
       startLevel,
+      // `skipped` = test de placement sauté. `experience` est conservé
+      // par le reducer et décide seul si « Premiers pas » est obligatoire
+      // (pathEngine.debutFacultatif) ; `skipped` + niveau A1 ne sert plus
+      // que de repli pour les états sans `experience`.
+      skipped: debutant,
+      experience,
       completedAt: new Date().toISOString(),
     };
     emit("onboarding_completed", answers);
@@ -208,6 +246,8 @@ export function OnboardingScreen({ content, onComplete, onEvent }) {
   const questionNumber = qIdx + 1;
   const progressPct =
     phase === "welcome"   ? 0  :
+    phase === "experience" ? 3 :
+    phase === "debutant"  ? 60 :
     phase === "testIntro" ? 5  :
     phase === "testing"   ? Math.round(5 + ((questionNumber - (answered ? 0 : 1)) / Math.max(1, nbQuestions)) * 65) :
     phase === "results"   ? 75 :
@@ -236,10 +276,47 @@ export function OnboardingScreen({ content, onComplete, onEvent }) {
               Bienvenue sur Groply
             </h1>
             <p style={{ margin: 0, fontSize: 14.5, lineHeight: 1.6, color: C.text2, maxWidth: 300 }}>
-              Avant de commencer, on va mesurer ton vrai niveau : pas celui que tu crois avoir, celui que tu as vraiment. 2 minutes, promis.
+              Avant de commencer, dis-moi où tu en es : ton Parcours s'adapte à ton vrai niveau, que tu n'aies jamais touché une guitare ou que tu joues depuis des années. 2 minutes, promis.
             </p>
-            <PrimaryButton C={C} onClick={() => { emit("onboarding_started"); setPhase("testIntro"); }}>
+            <PrimaryButton C={C} onClick={() => { emit("onboarding_started"); setPhase("experience"); emit("onboarding_step_view", { step: "experience" }); }}>
               Commencer
+            </PrimaryButton>
+          </div>
+        )}
+
+        {/* ── Tu joues déjà ? ───────────────────────────────────────── */}
+        {phase === "experience" && (
+          <StepLayout C={C} eyebrow="Pour commencer" title="Tu as déjà joué de la guitare ?"
+            subtitle="Si tu débutes, pas de test : on commence ensemble par les tout premiers pas.">
+            {EXPERIENCE_OPTIONS.map(opt => (
+              <OptionCard key={opt.id} C={C} selected={experience === opt.id} onClick={() => setExperience(opt.id)}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <Ti name={opt.icon} size={19} color={experience === opt.id ? C.primary : C.text2} />
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 14.5 }}>{opt.label}</div>
+                    <div style={{ fontSize: 12.5, color: C.text2, marginTop: 2 }}>{opt.sub}</div>
+                  </div>
+                </div>
+              </OptionCard>
+            ))}
+            <PrimaryButton C={C} disabled={!experience} onClick={chooseExperience}>
+              Continuer
+            </PrimaryButton>
+          </StepLayout>
+        )}
+
+        {/* ── Débutant complet : pas de test ───────────────────────── */}
+        {phase === "debutant" && (
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 16 }}>
+            <Gropi pose="celebrate" size={100} anim="cheer" />
+            <h2 style={{ margin: 0, fontSize: 21, fontWeight: 800, color: C.text }}>
+              Bienvenue dans l'aventure !
+            </h2>
+            <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.6, color: C.text2, maxWidth: 310 }}>
+              Pas de test pour toi : ton Parcours commence par les <b style={{ color: C.text }}>Premiers pas</b>. Tenir ta guitare, l'accorder, tes premiers accords, tes premières rythmiques et la lecture des tablatures, à ton rythme.
+            </p>
+            <PrimaryButton C={C} onClick={() => { setPhase("goal"); emit("onboarding_step_view", { step: "goal" }); }}>
+              Continuer
             </PrimaryButton>
           </div>
         )}
@@ -252,7 +329,7 @@ export function OnboardingScreen({ content, onComplete, onEvent }) {
               Le test de placement
             </h2>
             <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.6, color: C.text2, maxWidth: 300 }}>
-              12 questions, 4 domaines (manche, gammes, harmonie, rythme). Ça commence simple, puis ça monte en difficulté. C'est normal de sécher sur les dernières.
+              {nbQuestions} questions, {modulesTestes.length} domaines ({modulesTestes.map(m => MODULE[m]?.label?.toLowerCase() || m).join(", ")}). Ça commence simple, puis ça monte en difficulté. C'est normal de sécher sur les dernières.
             </p>
             <p style={{ margin: 0, fontSize: 12, color: C.text3, maxWidth: 280 }}>
               Pas de retour en arrière possible une fois lancé. Réponds au mieux : c'est fait pour révéler où tu es, pas pour te juger. Si tu ne sais pas, dis-le, ça compte aussi.
@@ -267,7 +344,7 @@ export function OnboardingScreen({ content, onComplete, onEvent }) {
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <Ti name={MODULE[currentQ.moduleId]?.icon || "music"} size={16} color={C.primary} />
               <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: C.primary, fontFamily: FONTS.ui }}>
-                {MODULE[currentQ.moduleId]?.label || currentQ.moduleId} · Question {questionNumber}/{PLACEMENT_QUESTION_COUNT}
+                {MODULE[currentQ.moduleId]?.label || currentQ.moduleId} · Question {questionNumber}/{nbQuestions}
               </span>
             </div>
 
@@ -350,7 +427,7 @@ export function OnboardingScreen({ content, onComplete, onEvent }) {
         {/* ── Résultat du test ──────────────────────────────────────── */}
         {phase === "results" && overallTier && (() => {
           const totalCorrect = TESTABLE_MODULES.reduce((sum, m) => sum + (results[m] || 0), 0);
-          const { grade, level } = startFromScore(totalCorrect, PLACEMENT_QUESTION_COUNT);
+          const { grade, level } = startFromScore(totalCorrect, nbQuestions);
           return (
           <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 14, paddingTop: 12 }}>
             <Gropi pose="celebrate" size={100} anim="cheer" />

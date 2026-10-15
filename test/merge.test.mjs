@@ -122,3 +122,17 @@ test("un état cloud vide ou corrompu ne casse rien", () => {
   assert.equal(mergeStates(base({ xp: 300 }), {}).xp, 300);
   assert.equal(mergeStates(base({ xp: 300 }), { xp: Infinity }).xp, 300);
 });
+
+test("onboarding : `experience` survit à la synchro", () => {
+  const ob = (over) => ({ ...defaultState().onboarding, done: true, completedAt: "2026-10-01", ...over });
+  // Fait sur l'autre appareil seulement : on récupère tout, experience compris.
+  const m1 = mergeStates(base(), base({ onboarding: ob({ experience: "confirme" }) }));
+  assert.equal(m1.onboarding.done, true);
+  assert.equal(m1.onboarding.experience, "confirme");
+  // Le côté retenu (local) date d'avant la question : l'autre la complète.
+  const ancien = { ...ob({}) }; delete ancien.experience;
+  const m2 = mergeStates(base({ onboarding: ancien }), base({ onboarding: ob({ experience: "debutant" }) }));
+  assert.equal(m2.onboarding.experience, "debutant");
+  // Aucun des deux ne la connaît : null, pas undefined.
+  assert.equal(mergeStates(base({ onboarding: ancien }), base({ onboarding: ancien })).onboarding.experience, null);
+});

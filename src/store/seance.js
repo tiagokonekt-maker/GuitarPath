@@ -20,7 +20,9 @@ import { familleDe, domaineDe } from "./generateurs.js";
 
 export const DUREES = [5, 15, 30];
 
-const MODULES_DOMAINE = { "Manche": ["neck"], "Théorie": ["scales", "harmony"], "Oreille": [], "Rythme": ["rhythm"], "Impro": ["impro"] };
+// « Premiers pas » (module d'initiation debut) n'a pas de compétences
+// générées : seules ses questions écrites composent son vivier.
+const MODULES_DOMAINE = { "Premiers pas": ["debut"], "Manche": ["neck"], "Théorie": ["scales", "harmony"], "Oreille": [], "Rythme": ["rhythm"], "Impro": ["impro"] };
 /**
  * Questions d'un seul domaine : les compétences générées selon leur domaine,
  * les questions écrites selon leur module. (L'oreille n'a pas de module de

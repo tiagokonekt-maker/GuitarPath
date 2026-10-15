@@ -31,10 +31,26 @@
 //      • `weakestModule` puis `preferredModule` passent en tête de l'ordre
 //        interne d'un palier ;
 //      • `timePerWeek` dimensionne la session du jour (dailyTarget).
+//
+// 5. MODULE D'INITIATION « PREMIERS PAS » (debut). Ses leçons ne sont pas
+//    rangées par palier : elles forment leurs propres unités (une par valeur
+//    du champ `unite` des leçons), placées AVANT le palier 1. Pour un
+//    débutant complet, elles sont obligatoires et ouvrent la suite comme
+//    n'importe quelle unité. Pour quelqu'un qui joue déjà, elles sont
+//    FACULTATIVES : ouvertes, consultables, mais jamais bloquantes ni
+//    « courantes ». La règle exacte est dans `debutFacultatif` ci-dessous.
 
 export const UNIT_CHECK_PASS_PCT = 70;
 export const MODULE_ORDER = ["neck", "scales", "harmony", "rhythm", "impro"];
 export const MAX_LEVEL = 9;
+
+/**
+ * Module d'initiation (posture, accordage, premiers accords, tablature).
+ * Un module marqué `prelude: true` dans ses infos, ou portant cet
+ * identifiant, est découpé en unités propres placées avant les paliers.
+ */
+export const DEBUT_MODULE = "debut";
+export const estModulePrelude = (course) => !!course?.prelude || course?.id === DEBUT_MODULE;
 
 /** Au-delà de ce nombre de leçons, un palier est scindé en plusieurs unités. */
 const SPLIT_THRESHOLD = 8;
@@ -101,14 +117,42 @@ function chunkEvenly(list, threshold = SPLIT_THRESHOLD, target = TARGET_UNIT_SIZ
  */
 export function buildUnits(courses = [], state = null) {
   const order = moduleOrderFor(state);
-  const allLessons = courses.flatMap(c =>
+  const units = [];
+
+  // ── Unités d'initiation, avant le palier 1 ────────────────────────────
+  // Regroupées par le champ `unite` des leçons (1, 2, 3…) ; sans ce champ,
+  // découpage automatique comme un palier. Ids : `debut-1`, `debut-2`…
+  for (const c of courses.filter(estModulePrelude)) {
+    const lessons = (c.lessons || []).map(l => ({ ...l, courseId: c.id, courseTitle: c.title, level: l.level ?? 0 }));
+    if (lessons.length === 0) continue;
+    const groupes = lessons.every(l => Number.isInteger(l.unite))
+      ? [...new Set(lessons.map(l => l.unite))].sort((a, b) => a - b).map(n => lessons.filter(l => l.unite === n))
+      : chunkEvenly(lessons);
+    groupes.forEach((chunk, idx) => {
+      const nom = c.unites?.[idx];
+      units.push({
+        id: `${c.id}-${idx + 1}`,
+        level: 0,
+        part: groupes.length > 1 ? idx + 1 : null,
+        parts: groupes.length,
+        title: nom ? `${c.title} · ${nom}` : groupes.length > 1 ? `${c.title} · partie ${idx + 1}` : c.title,
+        prelude: true,
+        courseIds: [c.id],
+        lessons: chunk,
+        bonusXp: unitBonusXp(chunk.length),
+        checkSize: Math.max(3, unitCheckSize(chunk.length)),
+        quizPoolSize: new Set(chunk.flatMap(l => l.quiz || [])).size,
+      });
+    });
+  }
+
+  const allLessons = courses.filter(c => !estModulePrelude(c)).flatMap(c =>
     (c.lessons || []).map(l => ({ ...l, courseId: c.id, courseTitle: c.title }))
   );
   // Leçons sans level explicite (contenu importé, oubli) : rattachées au
   // dernier palier plutôt qu'exclues silencieusement du Parcours.
   for (const l of allLessons) if (l.level == null) l.level = MAX_LEVEL;
 
-  const units = [];
   for (let level = 1; level <= MAX_LEVEL; level++) {
     const lessons = allLessons.filter(l => l.level === level);
     if (lessons.length === 0) continue;
@@ -143,6 +187,7 @@ export function buildUnits(courses = [], state = null) {
         part: chunks.length > 1 ? partIdx + 1 : null,
         parts: chunks.length,
         title: chunks.length > 1 ? `Palier ${level} · partie ${partIdx + 1}` : `Palier ${level}`,
+        prelude: false,
         courseIds: [...new Set(chunk.map(l => l.courseId))],
         lessons: chunk,
         bonusXp: unitBonusXp(chunk.length),
@@ -152,6 +197,42 @@ export function buildUnits(courses = [], state = null) {
     });
   }
   return units;
+}
+
+/**
+ * Les unités « Premiers pas » sont-elles FACULTATIVES pour cet utilisateur ?
+ * (Facultatives = ouvertes, franchissables, jamais courantes ; sinon elles
+ * sont obligatoires et ouvrent le parcours comme n'importe quelle unité.)
+ *
+ *   1. `onboarding.experience`, s'il est enregistré, décide seul :
+ *      "debutant" → obligatoires, toute autre valeur → facultatives.
+ *   2. Une progression HORS du module d'initiation (leçon complétée,
+ *      vérification réussie) → facultatives : un utilisateur existant n'est
+ *      jamais renvoyé en arrière ni bloqué par un module ajouté après coup.
+ *   3. Onboarding pas encore fait, aucune progression → obligatoires : le
+ *      parcours par défaut est celui du débutant.
+ *   4. Onboarding fait : obligatoires seulement pour le débutant déclaré,
+ *      soit test de placement sauté (`skipped`) ET niveau A1 — exactement
+ *      ce qu'enregistre OnboardingScreen quand on répond « je débute
+ *      complètement ». Tout le reste (test passé, quel que soit le score ;
+ *      onboarding fait avant l'arrivée de ce module ; ancien compte migré,
+ *      `skipped` sans niveau) → facultatives.
+ */
+export function debutFacultatif(state, units = null) {
+  const ob = state?.onboarding || {};
+  if (ob.experience === "debutant") return false;
+  if (ob.experience) return true;
+
+  const prelude = (units || []).filter(u => u.prelude);
+  const leconsPrelude = new Set(prelude.flatMap(u => u.lessons.map(l => l.id)));
+  const unitesPrelude = new Set(prelude.map(u => u.id));
+  const hors = (id, connus) => !connus.has(id) && !id.startsWith(`${DEBUT_MODULE}-`);
+  const autreLecon = Object.keys(state?.completedLessons || {}).some(id => hors(id, leconsPrelude));
+  const autreVerif = Object.entries(state?.unitChecks || {}).some(([id, c]) => c?.passed && hors(id, unitesPrelude));
+  if (autreLecon || autreVerif) return true;
+
+  if (!ob.done) return false;
+  return !(ob.skipped && ob.overallTier === "A1");
 }
 
 /**
@@ -165,9 +246,13 @@ export function buildUnits(courses = [], state = null) {
  *     vérification réussie) ;
  *   • une unité contenant déjà une leçon complétée reste ouverte (reprise
  *     d'une progression existante — personne ne perd son avancement) ;
- *   • les N premières unités sont ouvertes d'emblée si le test de placement
- *     a établi un niveau élevé (`headstart`). Elles ne sont PAS marquées
- *     comme faites : l'utilisateur peut les survoler ou les travailler.
+ *   • les N premières unités DE PALIER sont ouvertes d'emblée si le test de
+ *     placement a établi un niveau élevé (`headstart`). Elles ne sont PAS
+ *     marquées comme faites : l'utilisateur peut les survoler ou les
+ *     travailler ;
+ *   • les unités « Premiers pas » (prelude) sont, selon `debutFacultatif`,
+ *     obligatoires (chaîne normale, en tête du parcours) ou facultatives
+ *     (`optional` : ouvertes, franchissables, jamais « courantes »).
  */
 export function buildPath(content, state) {
   const completed = state?.completedLessons || {};
@@ -177,6 +262,8 @@ export function buildPath(content, state) {
 
   const tier = state?.onboarding?.overallTier;
   const headstartCount = state?.onboarding?.done ? (TIER_HEADSTART[tier] ?? 0) : 0;
+  const facultatif = debutFacultatif(state, units);
+  let palierIdx = 0;
 
   // `prevPassable` plutôt que `prevComplete` : une unité ouverte par le
   // placement est franchissable sans être faite, sinon le déblocage
@@ -193,17 +280,25 @@ export function buildPath(content, state) {
     const checkPassed = !!check?.passed;
     const complete = lessonsComplete && checkPassed;
     const needsCheck = lessonsComplete && !checkPassed;
-    const headstart = i < headstartCount;
-    const unlocked = i === 0 || prevPassable || done > 0 || headstart;
+    // Le headstart compte les unités DE PALIER : les unités d'initiation
+    // placées devant elles ne décalent pas ce que le placement ouvre.
+    const headstart = !u.prelude && palierIdx++ < headstartCount;
+    const optional = !!u.prelude && facultatif && !complete;
+    const unlocked = i === 0 || prevPassable || done > 0 || headstart || optional;
     // « Unité courante » = la première ouverte non terminée qui n'est pas un
     // simple palier ouvert par le placement : on ne veut pas envoyer un
-    // joueur testé B2 travailler le palier 1.
-    const isCurrent = unlocked && !complete && !currentAssigned && (!headstart || done > 0);
+    // joueur testé B2 travailler le palier 1. Une unité d'initiation
+    // facultative ne devient jamais courante, même entamée : un joueur qui
+    // y jette un œil ne doit pas voir « Continuer » le ramener aux bases.
+    const isCurrent = unlocked && !complete && !currentAssigned && !optional && (!headstart || done > 0);
     if (isCurrent) currentAssigned = true;
-    prevPassable = complete || headstart;
+    prevPassable = complete || headstart || optional;
 
     return {
-      ...u, index: i, done, total, complete, unlocked, isCurrent,
+      // Le titre reste nu : c'est l'écran (pastille « Facultatif » de
+      // CoursesScreen) qui signale `optional`, pas un suffixe de texte.
+      ...u,
+      index: i, done, total, complete, unlocked, isCurrent, optional,
       lessonsComplete, needsCheck, check, headstart,
       bonusClaimable: complete && !claimed[u.id],
       bonusClaimed: !!claimed[u.id],
@@ -329,7 +424,9 @@ export function getNextLesson(content, state) {
   // Priorité à l'unité courante (celle que l'app considère « en cours »),
   // pour ne pas renvoyer un joueur expérimenté vers un palier ouvert par le
   // placement mais volontairement survolé.
-  const ordered = [...path.filter(u => u.isCurrent), ...path];
+  // Les unités d'initiation facultatives passent en dernier : elles ne
+  // sont jamais proposées avant le contenu du parcours lui-même.
+  const ordered = [...path.filter(u => u.isCurrent), ...path.filter(u => !u.optional), ...path.filter(u => u.optional)];
   const seen = new Set();
 
   for (const u of ordered) {

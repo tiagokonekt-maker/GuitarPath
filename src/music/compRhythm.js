@@ -41,6 +41,10 @@ const COMP_PATTERNS = {
       { beat: 2.5, dur: "8n",  vel: 0.55 },
       { beat: 3,   dur: "4n",  vel: 0.62 },
     ]},
+    // Freddie Green : quatre noires courtes et légères, le tapis du swing.
+    { id: "quatre", weight: 0.12, hits: [0, 1, 2, 3].map(b => (
+      { beat: b, dur: "8n", vel: b % 2 === 1 ? 0.62 : 0.56 }
+    ))},
     { id: "respire", weight: 0.12, hits: [
       { beat: 0,   dur: "2n",  vel: 0.66 },
     ]},
@@ -69,7 +73,135 @@ const COMP_PATTERNS = {
       { beat: 0,   dur: "2n", vel: 0.64 },
     ]},
   ],
+
+  // ── Rock : croches « étouffées » (durées courtes = palm mute) ─────────
+  rock8: [
+    { id: "croches", weight: 0.36, hits: [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5].map(b => (
+      { beat: b, dur: "16n", vel: b % 1 === 0 ? 0.72 : 0.56 }
+    ))},
+    { id: "pousse", weight: 0.24, hits: [
+      { beat: 0,   dur: "8n",  vel: 0.74 },
+      { beat: 0.5, dur: "16n", vel: 0.56 },
+      { beat: 1,   dur: "16n", vel: 0.62 },
+      { beat: 1.5, dur: "16n", vel: 0.56 },
+      { beat: 2,   dur: "8n",  vel: 0.72 },
+      { beat: 3.5, dur: "8n",  vel: 0.68, anticipate: true },
+    ]},
+    { id: "temps", weight: 0.22, hits: [0, 1, 2, 3].map(b => (
+      { beat: b, dur: "8n", vel: b % 2 === 0 ? 0.74 : 0.64 }
+    ))},
+    { id: "accents", weight: 0.18, hits: [
+      { beat: 0,   dur: "4n",  vel: 0.76 },
+      { beat: 1.5, dur: "16n", vel: 0.6 },
+      { beat: 2,   dur: "16n", vel: 0.62 },
+      { beat: 2.5, dur: "16n", vel: 0.58 },
+      { beat: 3,   dur: "8n",  vel: 0.7 },
+    ]},
+    { id: "respire", weight: 0.08, hits: [
+      { beat: 0, dur: "2n", vel: 0.7 },
+      { beat: 2, dur: "2n", vel: 0.62 },
+    ]},
+  ],
+
+  // ── Funk 16 : « chank » secs en doubles-croches ──────────────────────
+  chank16: [
+    { id: "backbeat16", weight: 0.30, hits: [
+      { beat: 1,    dur: "16n", vel: 0.74 },
+      { beat: 3,    dur: "16n", vel: 0.74 },
+      { beat: 3.75, dur: "16n", vel: 0.56 },
+    ]},
+    { id: "syncope", weight: 0.28, hits: [
+      { beat: 0,    dur: "16n", vel: 0.72 },
+      { beat: 0.75, dur: "16n", vel: 0.6 },
+      { beat: 1.5,  dur: "16n", vel: 0.62 },
+      { beat: 2.25, dur: "16n", vel: 0.58 },
+      { beat: 3,    dur: "16n", vel: 0.7 },
+    ]},
+    { id: "double", weight: 0.24, hits: [
+      { beat: 1,    dur: "16n", vel: 0.72 },
+      { beat: 1.25, dur: "16n", vel: 0.56 },
+      { beat: 3,    dur: "16n", vel: 0.72 },
+      { beat: 3.25, dur: "16n", vel: 0.56 },
+    ]},
+    { id: "anticipe", weight: 0.18, hits: [
+      { beat: 0,    dur: "16n", vel: 0.7 },
+      { beat: 2,    dur: "16n", vel: 0.6 },
+      { beat: 3.75, dur: "16n", vel: 0.66, anticipate: true },
+    ]},
+    { id: "respire", weight: 0.08, hits: [
+      { beat: 0, dur: "4n", vel: 0.64 },
+    ]},
+  ],
+
+  // ── Bossa : la « batida » de guitare, sur deux mesures ───────────────
+  // `phase` : 0 = 1re mesure du cycle, 1 = 2e. Ensemble, A puis B donnent
+  // la figure syncopée classique (x.x..x.x | .x..x.x.) ; l'anticipation du
+  // & du 4 annonce l'accord suivant.
+  bossa: [
+    { id: "batida-a", weight: 0.34, phase: 0, hits: [
+      { beat: 0,   dur: "8n", vel: 0.64 },
+      { beat: 1,   dur: "8n", vel: 0.58 },
+      { beat: 2.5, dur: "8n", vel: 0.62 },
+      { beat: 3.5, dur: "8n", vel: 0.6, anticipate: true },
+    ]},
+    { id: "batida-b", weight: 0.34, phase: 1, hits: [
+      { beat: 0.5, dur: "8n", vel: 0.6 },
+      { beat: 2,   dur: "8n", vel: 0.62 },
+      { beat: 3,   dur: "8n", vel: 0.58 },
+    ]},
+    { id: "batida-a2", weight: 0.16, phase: 0, hits: [
+      { beat: 0,   dur: "4n", vel: 0.64 },
+      { beat: 1.5, dur: "8n", vel: 0.58 },
+      { beat: 3,   dur: "8n", vel: 0.62 },
+    ]},
+    { id: "batida-b2", weight: 0.16, phase: 1, hits: [
+      { beat: 0.5, dur: "8n", vel: 0.6 },
+      { beat: 1.5, dur: "8n", vel: 0.56 },
+      { beat: 3,   dur: "8n", vel: 0.6 },
+      { beat: 3.5, dur: "8n", vel: 0.6, anticipate: true },
+    ]},
+    { id: "respire", weight: 0.08, hits: [
+      { beat: 0, dur: "2n", vel: 0.62 },
+    ]},
+  ],
+
+  // ── Ballade : arpèges en croches ─────────────────────────────────────
+  // `voice` = indice de la note dans le voicing (grave → aigu), joué seul ;
+  // sans `voice`, l'accord entier.
+  arpeggio8: [
+    { id: "montant", weight: 0.32, hits: [0, 1, 2, 3, 2, 3, 2, 1].map((v, k) => (
+      { beat: k / 2, voice: v, dur: "4n", vel: k % 2 === 0 ? 0.66 : 0.54 }
+    ))},
+    { id: "vague", weight: 0.26, hits: [0, 2, 1, 2, 3, 2, 1, 2].map((v, k) => (
+      { beat: k / 2, voice: v, dur: "4n", vel: k % 2 === 0 ? 0.64 : 0.52 }
+    ))},
+    { id: "noires", weight: 0.22, hits: [0, 1, 2, 3].map((v, k) => (
+      { beat: k, voice: v, dur: "2n", vel: k === 0 ? 0.68 : 0.6 }
+    ))},
+    { id: "plaque-arpege", weight: 0.20, hits: [
+      { beat: 0,   dur: "2n", vel: 0.66 },
+      { beat: 2,   voice: 1, dur: "4n", vel: 0.6 },
+      { beat: 2.5, voice: 2, dur: "4n", vel: 0.54 },
+      { beat: 3,   voice: 3, dur: "4n", vel: 0.6 },
+      { beat: 3.5, voice: 2, dur: "4n", vel: 0.52 },
+    ]},
+    { id: "respire", weight: 0.08, hits: [
+      { beat: 0, dur: "1n", vel: 0.64 },
+    ]},
+  ],
 };
+
+// Noms de rythme des packs (compStyle.rhythm) → vocabulaire.
+const ALIASES = {
+  shuffleChank: "blues", jazzComp: "jazz", charleston: "jazz", swing: "jazz",
+};
+
+/** Vocabulaire réellement utilisé pour un nom de style ou de rythme. */
+export function resolveCompStyle(style) {
+  const cle = ALIASES[style] || style;
+  return COMP_PATTERNS[cle] ? cle : "jazz";
+}
+export const COMP_STYLES = Object.keys(COMP_PATTERNS);
 
 /** Tirage pondéré, en évitant si possible de répéter le motif précédent. */
 function weightedPick(items, exclude, rng) {
@@ -88,7 +220,7 @@ function weightedPick(items, exclude, rng) {
  * comme la boucle qu'on cherche à éviter.
  */
 export function createComper(style = "jazz", rng = Math.random) {
-  const vocab = COMP_PATTERNS[style] || COMP_PATTERNS.jazz;
+  const vocab = COMP_PATTERNS[resolveCompStyle(style)];
   let lastId = null;
   let barsSinceBreath = 0;
 
@@ -115,7 +247,10 @@ export function createComper(style = "jazz", rng = Math.random) {
       } else {
         // On exclut la respiration du tirage aléatoire : elle n'arrive que
         // lorsqu'on la décide, pas par hasard.
-        const dense = vocab.filter(p => p.id !== "respire");
+        // Vocabulaire sur deux mesures (bossa) : on ne tire que les motifs
+        // de la bonne moitié du cycle, sinon la figure se casse.
+        const phase = ((barIndex % 2) + 2) % 2;
+        const dense = vocab.filter(p => p.id !== "respire" && (p.phase == null || p.phase === phase));
         pattern = weightedPick(dense, lastId, rng);
       }
       // Le compteur se remet à zéro dès qu'une respiration est jouée, quelle
@@ -135,6 +270,8 @@ export function createComper(style = "jazz", rng = Math.random) {
           h.vel * (0.72 + energy * 0.07) + (rng() - 0.5) * 0.07
         )),
         anticipate: !!h.anticipate,
+        // Arpège : indice de la note du voicing à jouer seule.
+        ...(h.voice != null ? { voice: h.voice } : {}),
       }));
     },
 

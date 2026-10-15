@@ -11,8 +11,15 @@ content/
   exercices/<module>.js     les exercices du module
 ```
 
-Modules : `neck` (manche), `scales` (gammes), `harmony` (harmonie),
-`rhythm` (rythme), `impro` (improvisation).
+Modules : `debut` (Premiers pas), `neck` (manche), `scales` (gammes),
+`harmony` (harmonie), `rhythm` (rythme), `impro` (improvisation).
+
+`debut` est un module d'initiation (`prelude: true` dans son index) : ses
+leçons ne sont pas rangées par palier mais en unités propres, placées avant
+le palier 1. Chaque leçon porte `unite: 1|2|3` (le numéro de son unité) et
+`level: 0` ; les titres des unités sont dans `unites` de l'index. Il n'entre
+pas dans le test de placement, et il est facultatif pour qui joue déjà
+(voir `debutFacultatif` dans `src/store/pathEngine.js`).
 
 ## Modifier une leçon
 
@@ -31,7 +38,10 @@ Blocs de `content` les plus courants : `p` (paragraphe), `h` (intertitre),
 `tip` (conseil), `ref` (écoute de référence), et les diagrammes
 (`chord_diagram`, `fretboard`, `scale_pattern`, `rhythm_grid`…) rendus par
 `src/diagrams.jsx` et `src/Fretboard.jsx`. Copier un bloc existant est le
-plus sûr. Un paragraphe peut porter une image : `img`, `imgAlt`, `imgSide`.
+plus sûr. Le bloc `tab` (`data.lines` = 6 lignes ASCII, corde 1 en haut,
+`text` = la même tab dite en mots, `caption` = légende) sert aux leçons de
+tablature : `src/diagrams.jsx` (TabBlock) l'affiche en police à chasse fixe,
+défilable horizontalement, et donne `text` aux lecteurs d'écran. Un paragraphe peut porter une image : `img`, `imgAlt`, `imgSide`.
 
 ## Ajouter une leçon
 

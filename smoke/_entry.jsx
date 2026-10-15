@@ -15,5 +15,6 @@ export * as PracticeScreen from "../src/screens/PracticeScreen.jsx";
 export * as ChallengeScreen from "../src/screens/ChallengeScreen.jsx";
 export * as OnboardingScreen from "../src/onboarding/OnboardingScreen.jsx";
 export * as Fretboard from "../src/Fretboard.jsx";
+export * as Diagrams from "../src/diagrams.jsx";
 export * as Renderers from "../src/renderers.jsx";
 export * as Theme from "../src/design/ThemeContext.jsx";

@@ -31,6 +31,10 @@ const NOMS_DEGRES = ["tonique", "sus-tonique", "médiante", "sous-dominante", "d
 const TONE = { C: 0, "C#": 1, D: 2, "D#": 3, E: 4, F: 5, "F#": 6, G: 7, "G#": 8, A: 9, "A#": 10, B: 11 };
 const midi = (t) => { const m = /^([A-G]#?)(-?\d)$/.exec(t); return TONE[m[1]] + 12 * (+m[2] + 1); };
 const DT_NOM = { "Seconde majeure": 2, "Tierce mineure": 3, "Tierce majeure": 4, "Quarte juste": 5, "Quinte juste": 7, "Octave": 12 };
+const DT_12 = { "Seconde mineure": 1, "Seconde majeure": 2, "Tierce mineure": 3, "Tierce majeure": 4, "Quarte juste": 5, "Triton": 6, "Quinte juste": 7, "Sixte mineure": 8, "Sixte majeure": 9, "Septième mineure": 10, "Septième majeure": 11, "Octave": 12 };
+const IV_7 = { "Majeur 7 (maj7)": "0,4,7,11", "Septième (7)": "0,4,7,10", "Mineur 7 (m7)": "0,3,7,10", "Demi-diminué (m7♭5)": "0,3,6,10", "Diminué 7 (dim7)": "0,3,6,9" };
+// Degrés depuis la tonique : en majeur (I ii iii IV V vi) et en mineur naturel (i iv v VI III VII).
+const ROMAIN = { maj: { I: 0, II: 2, III: 4, IV: 5, V: 7, VI: 9, VII: 11 }, min: { I: 0, II: 2, III: 3, IV: 5, V: 7, VI: 8, VII: 10 } };
 const QUAL = { Majeur: [0, 4, 7], Mineur: [0, 3, 7], "Diminué": [0, 3, 6], "Augmenté": [0, 4, 8] };
 
 /** Renvoie null si la question est juste, sinon la raison. */
@@ -153,6 +157,44 @@ function verifier(fid, niv, q) {
     else { const m2 = /^(e|et|a) du (\d)$/.exec(txt); const sub = { e: 1, et: 2, a: 3 }[m2[1]]; pas = (+m2[2] - 1) * 4 + sub; }
     const attendu = pas % 2 === 0 ? "Vers le bas" : "Vers le haut";
     return bonne === attendu ? null : `position ${txt} (pas ${pas}) ≠ ${bonne}`;
+  }
+  if (fid === "oreille-intervalles-complets") {
+    const [a1, a2] = q.audio.notes.map(midi), d = a2 - a1;
+    if (d !== DT_12[bonne]) return `${d} demi-tons ≠ ${bonne}`;
+    if (niv === 1 && (d < 8 || q.audio.mode !== "ascending")) return "niveau 1 : sixtes, septièmes, octave, en montant seulement";
+    if (niv === 2 && q.audio.mode === "harmonic") return "niveau 2 : pas d'intervalle harmonique";
+    return null;
+  }
+  if (fid === "oreille-accords-7") {
+    const ns = q.audio.notes.map(midi), rel = ns.slice(0, 4).map(n => n - ns[0]).join(",");
+    if (rel !== IV_7[bonne]) return `${rel} ≠ ${bonne}`;
+    return q.audio.arpege && niv < 3 ? "arpège avant le niveau 3" : null;
+  }
+  if (fid === "oreille-dictee-melodique") {
+    const t = lire(/Tonalité : (\S+) majeur/.exec(q.q)[1]), ns = q.audio.notes.map(midi);
+    const noms = bonne.split(" – ");
+    if (noms.length !== ns.length || ns.length !== [3, 4, 4][niv - 1]) return "nombre de notes";
+    if (ns[0] % 12 !== t.pc) return "la mélodie ne part pas de la tonique";
+    const ref = q.audio.reference.map(midi);
+    if (ref.slice(0, 3).map(n => n - ref[0]).join(",") !== "0,4,7" || ref[0] % 12 !== t.pc) return "référence : pas l'accord de tonique";
+    for (let i = 0; i < ns.length; i++) {
+      const aigu = noms[i].endsWith(" aigu"), n = lire(noms[i].replace(" aigu", "")), ecart = ns[i] - ns[0];
+      if (n.pc !== ns[i] % 12) return `note ${i + 1} : ${noms[i]} ≠ ${ns[i]}`;
+      if (!MAJ.includes(((ecart % 12) + 12) % 12) || ecart < 0 || ecart > 12) return `note ${i + 1} hors gamme ou hors octave`;
+      if (aigu !== (ecart === 12)) return "octave mal nommée";
+      // Orthographe : une lettre par degré (Fa# en Ré majeur, jamais Solb).
+      if (n.l !== (t.l + MAJ.indexOf(ecart % 12)) % 7) return `orthographe de ${noms[i]}`;
+    }
+    return null;
+  }
+  if (fid === "oreille-progressions") {
+    const acc = q.audio.accords.map(a => a.map(midi)), b0 = acc[0][0];
+    const entendu = acc.map(a => [(((a[0] - b0) % 12) + 12) % 12, a.slice(0, 3).map(n => n - a[0]).join(",")]);
+    const table = ROMAIN[bonne.startsWith("i ") ? "min" : "maj"];
+    const attendu = bonne.split(" – ").map(r => [table[r.toUpperCase()], r === r.toUpperCase() ? "0,4,7" : "0,3,7"]);
+    if (JSON.stringify(entendu) !== JSON.stringify(attendu)) return `${JSON.stringify(entendu)} ≠ ${bonne}`;
+    if (niv === 1 && bonne.startsWith("i ")) return "suite mineure au niveau 1";
+    return null;
   }
   return `famille non couverte par l'oracle : ${fid}`;
 }

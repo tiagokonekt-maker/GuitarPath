@@ -4,10 +4,14 @@ import { readFileSync } from "fs";
 import { createPlanner, createDirector } from "../src/jam/arrangement/arranger.js";
 import { generateDrumBar } from "../src/jam/generators/drums.js";
 
+// Éléments réellement échantillonnés (public/audio/drums) : rim, shaker et
+// pedalHat des packs doivent avoir été résolus vers l'un d'eux.
+const ECHANTILLONS = new Set(["kick", "snare", "hihat", "hihatOpen", "ride", "crash", "tomMid", "tomLow"]);
+
 let pass = 0, fail = 0;
 const ok = (c, l) => { if (c) pass++; else { fail++; console.log("  ECHEC:", l); } };
 
-for (const name of ["blues-shuffle", "funk-16"]) {
+for (const name of ["blues-shuffle", "funk-16", "rock-8", "jazz-swing", "bossa-nova", "ballade-pop"]) {
   const pack = JSON.parse(readFileSync(new URL(`../src/jam/packs/${name}.json`, import.meta.url)));
   const d = createDirector(pack);
   const planner = createPlanner({ baseEnergy: 3 });
@@ -15,14 +19,14 @@ for (const name of ["blues-shuffle", "funk-16"]) {
   const spb = 60 / pack.defaultTempo;
 
   const sigs = [];
-  let total = 0, velOk = true, sorted = true;
+  let total = 0, velOk = true, sorted = true, instOk = true;
   for (let bar = 0; bar < 300; bar++) {
     const s = planner.sectionAt(bar);
     const dec = d.decideBar(bar, s, s.energy);
     const evs = generateDrumBar(pack, dec, { barStartTime: 0, secPerBeat: spb, beatsPerBar: 4, bpm: pack.defaultTempo, energy: s.energy });
     total += evs.length;
     for (let i = 1; i < evs.length; i++) if (evs[i].time < evs[i-1].time) sorted = false;
-    for (const e of evs) if (e.velocity < 0 || e.velocity > 1) velOk = false;
+    for (const e of evs) { if (e.velocity < 0 || e.velocity > 1) velOk = false; if (!ECHANTILLONS.has(e.instrument)) instOk = false; }
     sigs.push(evs.map(e => `${e.instrument}@${Math.round(e.time/0.008)}v${Math.round(e.velocity*8)}`).join("|"));
   }
   const uniq = new Set(sigs).size;
@@ -30,6 +34,7 @@ for (const name of ["blues-shuffle", "funk-16"]) {
   console.log(`  ${total} évènements / 300 mesures — ${uniq} mesures distinctes (${(uniq/300*100).toFixed(1)} %)`);
   ok(sorted, `${name}: tri chronologique`);
   ok(velOk, `${name}: dynamiques valides`);
+  ok(instOk, `${name}: chaque frappe a un échantillon (public/audio/drums)`);
   ok(uniq / 300 > 0.95, `${name}: non répétitif`);
   ok(total > 300 * 8, `${name}: densité suffisante`);
 }

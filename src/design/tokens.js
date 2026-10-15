@@ -248,6 +248,9 @@ export const TAP = {
 };
 
 export const MODULE = {
+  // Module d'initiation (prelude) : corail, la seule famille de la palette
+  // qu'aucun autre module ni domaine d'entraînement n'utilise.
+  debut:   { icon: "sparkles",  color: "coral",  label: "Premiers pas" },
   neck:    { icon: "map-2",     color: "amber",  label: "Manche"   },
   scales:  { icon: "music",     color: "green",  label: "Gammes"   },
   harmony: { icon: "stack-2",   color: "purple", label: "Harmonie" },

@@ -412,7 +412,7 @@ function PathConnector({ from, to, done }) {
 function CurrentUnitBanner({ stats, MODULE_THEME }) {
   const C = useC();
   const u = stats.currentUnit;
-  const th = u ? (MODULE_THEME.palier) : null;
+  const th = u ? (u.prelude && MODULE_THEME.debut ? MODULE_THEME.debut : MODULE_THEME.palier) : null;
 
   return (
     <div style={{
@@ -447,29 +447,46 @@ function CurrentUnitBanner({ stats, MODULE_THEME }) {
 }
 
 // ── En-tête d'unité (séparateur sur le parcours) ─────────────────────────────
+// Unité facultative (« Premiers pas » pour qui joue déjà, pathEngine
+// `optional`) : style adouci (fond neutre, bordure et filets en pointillés)
+// et pastille « Facultatif » sous l'en-tête — sous et non à côté, pour que
+// les titres longs tiennent sur une ligne à 375 px.
 function UnitHeader({ unit, th }) {
   const C = useC();
+  const opt = !!unit.optional;
+  const filet = {flex:1,height:0,borderTop:`1.5px ${opt?"dashed":"solid"} ${unit.unlocked?`${th.color}44`:C.border}`};
   return (
     <div style={{
-      display:"flex",alignItems:"center",gap:10,
+      display:"flex",flexDirection:"column",alignItems:"center",gap:6,
       margin:unit.index===0?"4px 0 16px":"26px 0 16px",
     }}>
-      <div style={{flex:1,height:1.5,background:unit.unlocked?`${th.color}44`:C.border}}/>
-      <div style={{
-        display:"flex",alignItems:"center",gap:7,
-        background:unit.unlocked?th.colorL:C.surface2,
-        border:`1.5px solid ${unit.unlocked?`${th.color}44`:C.border}`,
-        borderRadius:999,padding:"6px 14px",
-      }}>
-        <Ti name={unit.unlocked?th.icon.replace("ti-",""):"lock"} size={13} color={unit.unlocked?th.color:C.text3}/>
-        <span style={{
-          fontSize:11,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",
-          color:unit.unlocked?th.colorD:C.text3,fontFamily:FONTS.ui,
+      <div style={{display:"flex",alignItems:"center",gap:10,width:"100%"}}>
+        <div style={filet}/>
+        <div style={{
+          display:"flex",alignItems:"center",gap:7,minWidth:0,
+          background:opt?C.surface:unit.unlocked?th.colorL:C.surface2,
+          border:`1.5px ${opt?"dashed":"solid"} ${unit.unlocked?`${th.color}${opt?"66":"44"}`:C.border}`,
+          borderRadius:999,padding:"6px 14px",
         }}>
-          {unit.title}
-        </span>
+          <Ti name={unit.unlocked?th.icon.replace("ti-",""):"lock"} size={13} color={unit.unlocked?th.color:C.text3}/>
+          <span style={{
+            fontSize:11,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",
+            color:unit.unlocked?th.colorD:C.text3,fontFamily:FONTS.ui,
+          }}>
+            {unit.title}
+          </span>
+        </div>
+        <div style={filet}/>
       </div>
-      <div style={{flex:1,height:1.5,background:unit.unlocked?`${th.color}44`:C.border}}/>
+      {opt&&(
+        <span style={{
+          fontSize:10.5,fontWeight:700,letterSpacing:".04em",
+          color:C.text2,background:C.surface,border:`1px solid ${C.border}`,
+          borderRadius:999,padding:"2px 9px",fontFamily:FONTS.ui,
+        }}>
+          Facultatif · tu peux passer à la suite
+        </span>
+      )}
     </div>
   );
 }
@@ -838,7 +855,9 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
       {/* ── Le parcours ── */}
       <div style={{padding:"8px 20px 40px"}}>
         {path.map(unit=>{
-          const th = MODULE_THEME.palier;
+          // Une unité d'initiation ne mélange pas les disciplines : elle
+          // prend le thème de son module (« Premiers pas »).
+          const th = unit.prelude ? (MODULE_THEME.debut || MODULE_THEME.palier) : MODULE_THEME.palier;
           // Leçon courante = première non complétée de l'unité courante
           const currentLessonId = unit.isCurrent
             ? (unit.lessons.find(l=>!state.completedLessons[l.id])?.id ?? null)

@@ -33,6 +33,7 @@ const CHORD_TONES = {
   min7:  [0, 3, 7, 10],
   min7b5:[0, 3, 6, 10],
   dim7:  [0, 3, 6, 9],
+  dom9:  [0, 4, 7, 10],   // la 9e reste au piano : la basse marche sur l'accord de 7e
 };
 
 /**
@@ -151,6 +152,169 @@ export function generateWalkingBar(opts) {
   // ── Ghost note : très légère, purement rythmique ───────────────────
   if (energy >= 4 && rng() < 0.15) {
     notes.push({ beat: 3.5, midi: clampToBass(rootMidi - 12), dur: "16n", velocity: 0.22, ghost: true });
+  }
+
+  notes.sort((a, b) => a.beat - b.beat);
+  return notes;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// BASSE SELON LE STYLE (bassStyle des packs src/jam/packs/*.json)
+// Une walking bass sur un rock ou une ballade sonne faux : chaque style a sa
+// façon de tenir les fondamentales. `approach` choisit le générateur :
+//   walking        → walking bass jazz (ci-dessus)
+//   shuffleWalk    → walking bass blues (approches chromatiques par dessous)
+//   rootEighths    → rock : fondamentale en croches, octave et quinte
+//   syncopated16   → funk : doubles-croches syncopées, octaves
+//   bossaRootFifth → bossa : fondamentale (1) / quinte (3), avec l'anticipation
+//   sustainedRoots → ballade : fondamentales tenues (rondes, blanches)
+// Même format de sortie que generateWalkingBar : `beat` DROIT, le swing est
+// appliqué au rendu (companionSwing), comme pour la batterie.
+// ─────────────────────────────────────────────────────────────────────────
+
+export const BASS_APPROACHES = ["walking", "shuffleWalk", "rootEighths", "syncopated16", "bossaRootFifth", "sustainedRoots"];
+
+/** Septième utile à la basse selon la qualité (la quinte pour une triade). */
+const septieme = (quality) => ({ maj7: 11, dom7: 10, dom9: 10, min7: 10, min7b5: 10, dim7: 9 }[quality] ?? 7);
+/** Quinte de l'accord (diminuée pour m7b5 et dim7). */
+const quinte = (quality) => (quality === "min7b5" || quality === "dim7" ? 6 : 7);
+
+// Figures rock, une valeur par croche : intervalle depuis la fondamentale,
+// ou "A" = note d'approche vers l'accord suivant.
+const FIGURES_ROCK = [
+  { id: "droit",   weight: 0.34, notes: [0, 0, 0, 0, 0, 0, 0, 0] },
+  { id: "octave",  weight: 0.24, notes: [0, 0, 12, 0, 0, 0, 12, 0] },
+  { id: "quinte",  weight: 0.22, notes: [0, 0, 0, 0, 5, 5, 0, 0] },
+  { id: "relance", weight: 0.20, notes: [0, 0, 0, 0, 0, 0, 5, "A"] },
+];
+
+// Figures funk, en doubles-croches : { beat, i (intervalle | "7" | "A"), dur, v }.
+const FIGURES_FUNK = [
+  { id: "funk-a", weight: 0.36, notes: [
+    { beat: 0, i: 0, dur: "8n", v: 0.86 }, { beat: 0.75, i: 0, dur: "16n", v: 0.6 },
+    { beat: 1.5, i: 12, dur: "16n", v: 0.7 }, { beat: 2, i: 0, dur: "8n", v: 0.8 },
+    { beat: 2.75, i: 5, dur: "16n", v: 0.6 }, { beat: 3.5, i: "7", dur: "16n", v: 0.66 },
+  ]},
+  { id: "funk-b", weight: 0.34, notes: [
+    { beat: 0, i: 0, dur: "8n", v: 0.86 }, { beat: 1, i: -12, dur: "16n", v: 0.24, ghost: true },
+    { beat: 1.25, i: 0, dur: "16n", v: 0.64 }, { beat: 2.5, i: 0, dur: "8n", v: 0.76 },
+    { beat: 3, i: 5, dur: "16n", v: 0.64 }, { beat: 3.25, i: 12, dur: "16n", v: 0.7 },
+    { beat: 3.75, i: "A", dur: "16n", v: 0.6 },
+  ]},
+  { id: "funk-c", weight: 0.30, notes: [
+    { beat: 0, i: 0, dur: "4n", v: 0.86 }, { beat: 1.75, i: 0, dur: "16n", v: 0.62 },
+    { beat: 2, i: 5, dur: "8n", v: 0.72 }, { beat: 3, i: 12, dur: "16n", v: 0.7 },
+    { beat: 3.5, i: 0, dur: "16n", v: 0.62 },
+  ]},
+];
+
+function tirage(items, rng) {
+  const total = items.reduce((s, i) => s + i.weight, 0);
+  let r = rng() * total;
+  for (const i of items) { r -= i.weight; if (r <= 0) return i; }
+  return items[items.length - 1];
+}
+
+/**
+ * Une mesure de basse dans le style demandé.
+ * @param opts  mêmes champs que generateWalkingBar + `approach`,
+ *              `ghostNotes`, `octaveJumps` (champs de bassStyle du pack)
+ */
+export function generateBassBar(opts) {
+  const {
+    approach = "walking", rootName, quality = "dom7", nextRoot = rootName,
+    barIndex = 0, energy = 3, rng = Math.random,
+    ghostNotes = true, octaveJumps = 0,
+  } = opts;
+
+  if (approach === "walking" || approach === "shuffleWalk" || !BASS_APPROACHES.includes(approach)) {
+    const notes = generateWalkingBar({
+      rootName, quality, nextRoot, barIndex, energy, rng,
+      style: approach === "shuffleWalk" ? "blues" : "jazz",
+    });
+    return ghostNotes ? notes : notes.filter(n => !n.ghost);
+  }
+
+  if (CHROMATIC.indexOf(rootName) < 0) return [];
+  const rootMidi = clampToBass(midiOf(rootName, 1));
+  const nextMidi = clampToBass(midiOf(CHROMATIC.includes(nextRoot) ? nextRoot : rootName, 1));
+  const changement = nextMidi !== rootMidi;
+  // Une note au-dessus de la fondamentale, ramenée dans la tessiture ; si le
+  // repli la confond avec la fondamentale, on prend la quinte.
+  const audessus = (i) => {
+    if (i === 0) return rootMidi;
+    const m = clampToBass(rootMidi + i);
+    return m === rootMidi ? clampToBass(rootMidi + quinte(quality)) : m;
+  };
+  // Approche chromatique par dessous (ou par dessus), la plus naturelle hors jazz.
+  const approcheVers = () => clampToBass(rng() < 0.7 ? nextMidi - 1 : nextMidi + 1);
+  const notes = [];
+
+  if (approach === "rootEighths") {
+    const fig = tirage(FIGURES_ROCK, rng);
+    // Calme : des noires ; à partir de 3, les croches qui « poussent ».
+    const pas = energy <= 2 ? 1 : 0.5;
+    for (let beat = 0; beat < 4; beat += pas) {
+      const k = Math.round(beat * 2);
+      let tok = fig.notes[k];
+      if (tok === 5) tok = quinte(quality);
+      let midi = tok === "A" ? (changement ? approcheVers() : audessus(quinte(quality))) : audessus(tok);
+      // Sauts d'octave occasionnels sur les croches faibles (bassStyle.octaveJumps).
+      if (tok === 0 && k % 2 === 1 && octaveJumps > 0 && rng() < octaveJumps) midi = audessus(12);
+      notes.push({
+        beat, midi,
+        // Croches un peu courtes : la basse rock « pousse », elle ne s'étale pas.
+        dur: pas === 1 ? "4n" : "8n",
+        velocity: k === 0 ? 0.86 : k % 2 === 0 ? 0.78 : 0.64,
+        ...(tok === "A" && changement ? { approach: true } : {}),
+      });
+    }
+  } else if (approach === "syncopated16") {
+    const fig = tirage(FIGURES_FUNK, rng);
+    for (const n of fig.notes) {
+      if (n.ghost && !(ghostNotes && energy >= 3)) continue;
+      if (energy <= 2 && n.v < 0.62 && n.beat !== 0) continue;
+      let midi;
+      if (n.i === "A") midi = changement ? approcheVers() : audessus(12);
+      else if (n.i === "7") midi = audessus(septieme(quality));
+      else if (n.i === 5) midi = audessus(quinte(quality));
+      else if (n.i === -12) midi = clampToBass(rootMidi - 12);
+      else midi = audessus(n.i);
+      if (n.i === 0 && n.beat !== 0 && octaveJumps > 0 && rng() < octaveJumps) midi = audessus(12);
+      notes.push({ beat: n.beat, midi, dur: n.dur, velocity: n.v, ...(n.ghost ? { ghost: true } : {}) });
+    }
+  } else if (approach === "bossaRootFifth") {
+    // « 1 . . & 3 . . & » : fondamentale (noire pointée) + rappel sur le &
+    // du 2, quinte (noire pointée) + croche sur le & du 4. Cette dernière
+    // ANTICIPE l'accord suivant quand il change : la basse de bossa
+    // annonce l'harmonie une croche avant la barre de mesure.
+    const q = quinte(quality);
+    // Quinte en dessous quand la tessiture le permet (son typique de la
+    // bossa, la basse « se balance »), sinon au-dessus.
+    const fifth = rootMidi + q - 12 >= BASS_LOW ? rootMidi + q - 12 : audessus(q);
+    notes.push({ beat: 0,   midi: rootMidi, dur: "4n.", velocity: 0.82 });
+    if (energy >= 2) notes.push({ beat: 1.5, midi: rootMidi, dur: "8n", velocity: 0.52 });
+    notes.push({ beat: 2,   midi: fifth,    dur: "4n.", velocity: 0.74 });
+    if (energy >= 2 || changement) {
+      notes.push(changement
+        ? { beat: 3.5, midi: nextMidi, dur: "8n", velocity: 0.62, anticipate: true }
+        : { beat: 3.5, midi: fifth,    dur: "8n", velocity: 0.5 });
+    }
+  } else if (approach === "sustainedRoots") {
+    // Ballade : la basse TIENT. Ronde à faible énergie, blanches ensuite,
+    // et seulement à forte énergie un petit mouvement vers l'accord suivant.
+    if (energy <= 2) {
+      notes.push({ beat: 0, midi: rootMidi, dur: "1n", velocity: 0.74 });
+    } else if (energy === 3) {
+      notes.push({ beat: 0, midi: rootMidi, dur: "2n", velocity: 0.78 });
+      notes.push({ beat: 2, midi: rng() < 0.7 ? rootMidi : audessus(quinte(quality)), dur: "2n", velocity: 0.66 });
+    } else {
+      notes.push({ beat: 0, midi: rootMidi, dur: "2n", velocity: 0.8 });
+      notes.push({ beat: 2, midi: audessus(quinte(quality)), dur: "4n", velocity: 0.68 });
+      notes.push(changement
+        ? { beat: 3, midi: approcheVers(), dur: "4n", velocity: 0.64, approach: true }
+        : { beat: 3, midi: audessus(12), dur: "4n", velocity: 0.6 });
+    }
   }
 
   notes.sort((a, b) => a.beat - b.beat);

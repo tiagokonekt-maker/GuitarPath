@@ -1,0 +1,90 @@
+{
+  "id": "ballade-pop",
+  "name": "Ballade pop",
+  "tempoRange": [60, 85],
+  "defaultTempo": 72,
+
+  "feel": {
+    "subdivision": 8,
+    "swing": 0
+  },
+
+  "instruments": ["drums", "bass", "comp"],
+  "audioPack": "drums-vcsl",
+  "fillRate": 0.45,
+
+  "energyLevels": {
+    "1": { "instruments": ["drums"],                 "velocityRange": [0.24, 0.42] },
+    "2": { "instruments": ["drums", "bass"],         "velocityRange": [0.32, 0.52] },
+    "3": { "instruments": ["drums", "bass", "comp"], "velocityRange": [0.40, 0.64] },
+    "4": { "instruments": ["drums", "bass", "comp"], "velocityRange": [0.50, 0.76] },
+    "5": { "instruments": ["drums", "bass", "comp"], "velocityRange": [0.60, 0.88] }
+  },
+
+  "drumPatterns": [
+    {
+      "id": "ballade-cross",
+      "weight": 0.45,
+      "minEnergy": 1,
+      "grid": {
+        "kick":  "x....x..",
+        "rim":   "..x...x.",
+        "hihat": "xoxoxoxo"
+      }
+    },
+    {
+      "id": "ballade-snare",
+      "weight": 0.35,
+      "minEnergy": 3,
+      "grid": {
+        "kick":  "x....x..",
+        "snare": "..x...x.",
+        "hihat": "xoxoxoxo"
+      }
+    },
+    {
+      "id": "ballade-lift",
+      "weight": 0.2,
+      "minEnergy": 4,
+      "grid": {
+        "kick":  "x..x.x..",
+        "snare": "..X...X.",
+        "hihat": "xxxxxxxx"
+      }
+    }
+  ],
+
+  "fills": [
+    {
+      "id": "ballade-fill-toms",
+      "weight": 0.6,
+      "minEnergy": 2,
+      "beats": 1,
+      "grid": { "tomMid": "......x.", "tomLow": ".......x" }
+    },
+    {
+      "id": "ballade-fill-snare",
+      "weight": 0.4,
+      "minEnergy": 3,
+      "beats": 1,
+      "grid": { "snare": "............oxxX" }
+    }
+  ],
+
+  "humanize": {
+    "offsets": {
+      "kick": -1,
+      "snare": 3,
+      "hihat": 0,
+      "ride": 0,
+      "crash": -1,
+      "tomMid": 2,
+      "tomLow": 2
+    },
+    "jitterMs": 6,
+    "velSigma": 0.05
+  },
+
+  "bassStyle": { "approach": "sustainedRoots", "ghostNotes": false },
+  "compStyle": { "instrument": "piano", "rhythm": "arpeggio8", "voicing": "spread", "register": [48, 72] }
+}

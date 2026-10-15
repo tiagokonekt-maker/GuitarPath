@@ -35,6 +35,7 @@ function ExercisesScreen({ state, dispatch, content, embedded = false }) {
 
   const cats = [
     { id:"all",     label:"Tous" },
+    { id:"debut",   label:"Premiers pas" },
     { id:"neck",    label:"Manche" },
     { id:"scales",  label:"Gammes" },
     { id:"harmony", label:"Harmonie" },

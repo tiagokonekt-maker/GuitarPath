@@ -23,6 +23,7 @@
 // Lettres, demi-tons naturels et noms chromatiques : définis une seule fois
 // dans music/notes.js (partagés avec le manche, la Jam, la boîte à outils).
 import { LETTRES_FR, LETTRES_EN, NATUREL, NOTES_DIESES_FR, NOTES_DIESES_EN } from "../music/notes.js";
+import { INTERVALLES as INTERVALLES_OREILLE, QUALITES as QUALITES_OREILLE, PROGRESSIONS, NIVEAUX_DICTEE, voicingAccord, tirerDictee, tirerProgression, romainDe } from "./oreille.js";
 
 // ─────────────────────────────────────────────────────────────────────────
 // THÉORIE : notes orthographiées (lettre + altération)
@@ -599,6 +600,91 @@ const familleFonctions = {
   },
 };
 
+// ── Oreille, suite : les données viennent de store/oreille.js, partagées avec
+// l'écran Ear Training (mêmes noms, mêmes hauteurs, mêmes tonalités).
+const familleIntervallesComplets = {
+  id: "oreille-intervalles-complets", module: "scales", lecon: "scales-c1-06", titre: "Oreille : les 12 intervalles", ecoute: true,
+  niveaux: ["sixtes, septièmes et octave, en montant", "les 12 intervalles, en montant ou en descendant", "les 12 intervalles, parfois joués ensemble"],
+  generer(niv, rng) {
+    const pool = niv === 1 ? [8, 9, 10, 11, 12] : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+    const dt = choisir(rng, pool);
+    const mode = niv === 1 ? "ascending" : niv === 2 ? choisir(rng, ["ascending", "descending"]) : choisir(rng, ["ascending", "descending", "harmonic"]);
+    // Leurres VOISINS de préférence (±1 ou ±2 demi-tons) : c'est entre
+    // voisins que l'oreille hésite, pas entre une seconde et une octave.
+    const voisins = melanger(rng, pool.filter(x => x !== dt && Math.abs(x - dt) <= 2));
+    const loin = melanger(rng, pool.filter(x => x !== dt && Math.abs(x - dt) > 2));
+    const o = melanger(rng, [dt, ...[...voisins, ...loin].slice(0, 3)].map(x => INTERVALLES_OREILLE[x].nom));
+    const base = entre(rng, 45, 57);
+    const comment = { ascending: "en montant", descending: "en descendant", harmonic: "jouées ensemble" }[mode];
+    return { q: `Écoute les deux notes (${comment}). Quel intervalle ?`, o, a: o.indexOf(INTERVALLES_OREILLE[dt].nom),
+      audio: { type: "intervalle", notes: [midiVersTone(base), midiVersTone(base + dt)], mode },
+      exp: `C'était une ${INTERVALLES_OREILLE[dt].nom.toLowerCase()} : ${dt} demi-ton${dt > 1 ? "s" : ""}, de ${nomMidi(base)} à ${nomMidi(base + dt)}. Repère : ${INTERVALLES_OREILLE[dt].repere}` };
+  },
+};
+
+const familleSeptiemesOreille = {
+  id: "oreille-accords-7", module: "harmony", lecon: "harm-c3-02", titre: "Oreille : accords de septième", ecoute: true,
+  niveaux: ["maj7, 7 ou m7", "maj7, 7, m7 ou demi-diminué", "les 5 types, parfois arpégés"],
+  generer(niv, rng) {
+    const types = niv === 1 ? ["maj7", "dom7", "min7"] : niv === 2 ? ["maj7", "dom7", "min7", "min7b5"] : ["maj7", "dom7", "min7", "min7b5", "dim7"];
+    const t = choisir(rng, types), racine = entre(rng, 48, 55), arpege = niv === 3 && rng() < 0.4;
+    const o = melanger(rng, [t, ...melanger(rng, types.filter(x => x !== t)).slice(0, 3)]).map(x => QUALITES_OREILLE[x].nom);
+    const notes = voicingAccord(racine, QUALITES_OREILLE[t].iv);
+    return { q: arpege ? "Écoute l'accord joué note à note. Quel accord de septième ?" : "Écoute l'accord. Quel accord de septième ?", o, a: o.indexOf(QUALITES_OREILLE[t].nom),
+      audio: { type: "accord", notes: notes.map(midiVersTone), arpege },
+      exp: `${QUALITES_OREILLE[t].nom} : ${QUALITES_OREILLE[t].couleur}. Notes : ${notes.slice(0, 4).map(nomMidi).join(" - ")}.` };
+  },
+};
+
+const familleDicteeMelodique = {
+  id: "oreille-dictee-melodique", module: "scales", lecon: "scales-c2-03", titre: "Oreille : dictée mélodique", ecoute: true,
+  niveaux: NIVEAUX_DICTEE.slice(0, 3).map(n => n.libelle),
+  generer(niv, rng) {
+    const d = tirerDictee(rng, niv), max = NIVEAUX_DICTEE[niv - 1].degreMax;
+    const libelle = (degres) => degres.map(x => d.touches[x].nom).join(" – ");
+    const variantes = new Map([[libelle(d.degres), d.degres]]);
+    // Leurres : la même mélodie avec une ou deux notes changées (jamais la
+    // première, qui est la tonique annoncée).
+    for (let essai = 0; essai < 80 && variantes.size < 4; essai++) {
+      const v = [...d.degres];
+      for (let k = 0; k < (rng() < 0.7 ? 1 : 2); k++) {
+        const i = entre(rng, 1, v.length - 1);
+        const possibles = [];
+        for (let x = 0; x <= max; x++) if (x !== v[i] && x !== v[i - 1] && x !== v[i + 1]) possibles.push(x);
+        if (possibles.length) v[i] = choisir(rng, possibles);
+      }
+      variantes.set(libelle(v), v);
+    }
+    if (variantes.size < 4) return null;
+    const o = melanger(rng, [...variantes.keys()]);
+    return { q: `Tonalité : ${d.tonalite}. Écoute l'accord de référence, puis la mélodie : elle part de la tonique (${d.touches[0].nom}). Quelles notes ?`, o, a: o.indexOf(libelle(d.degres)),
+      audio: { type: "melodie", reference: d.reference.map(midiVersTone), notes: d.midi.map(midiVersTone) },
+      exp: `Tu as entendu ${libelle(d.degres)}, soit les degrés ${d.degres.map(x => x + 1).join(" - ")}. Astuce : chante la tonique dans ta tête et compte les marches de la gamme.` };
+  },
+};
+
+const MAJEURES = ["I-IV-V-I", "I-V-vi-IV", "I-vi-IV-V", "I-IV-vi-V", "I-vi-ii-V"];
+const MINEURES = ["i-iv-v-i", "i-VI-III-VII", "i-VI-VII-i"];
+const HARMONIQUES = ["i-iv-V-i", "i-VII-VI-V"];
+const familleProgressionsOreille = {
+  id: "oreille-progressions", module: "harmony", lecon: "harm-c5-02", titre: "Oreille : suites d'accords", ecoute: true,
+  niveaux: ["suites majeures", "suites majeures et mineures", "avec le mineur harmonique (V majeur)"],
+  generer(niv, rng, contexte) {
+    // Le mineur harmonique n'arrive qu'une fois sa leçon faite.
+    const harmonique = niv === 3 && !!contexte?.completedLessons?.["scales-c6-01"];
+    const pool = niv === 1 ? MAJEURES : harmonique ? [...MAJEURES, ...MINEURES, ...HARMONIQUES] : [...MAJEURES, ...MINEURES];
+    const cle = choisir(rng, pool), p = tirerProgression(rng, cle);
+    // Leurres de même couleur de préférence : distinguer majeur et mineur
+    // est le plus facile, c'est l'ordre des degrés qui s'entraîne.
+    const meme = melanger(rng, pool.filter(k => k !== cle && PROGRESSIONS[k].mineur === p.mineur));
+    const autre = melanger(rng, pool.filter(k => k !== cle && PROGRESSIONS[k].mineur !== p.mineur));
+    const o = melanger(rng, [cle, ...[...meme, ...autre].slice(0, 3)]).map(romainDe);
+    return { q: "Écoute la suite d'accords (le premier accord est la tonique). Quels degrés ?", o, a: o.indexOf(romainDe(cle)),
+      audio: { type: "suite", accords: p.accords.map(a => a.map(midiVersTone)) },
+      exp: `${p.romain}, ici en ${p.tonalite} : ${p.noms.join(" – ")}.${p.mineur ? " Majuscule = accord majeur, minuscule = accord mineur." : ""}` };
+  },
+};
+
 export const FAMILLES = [
   familleCorde(6, "neck-c2-01", "6"),
   familleCorde(5, "neck-c2-02", "5"),
@@ -630,6 +716,10 @@ export const FAMILLES = [
   familleBinaire,
   familleOreilleManche,
   familleFonctions,
+  familleIntervallesComplets,
+  familleSeptiemesOreille,
+  familleDicteeMelodique,
+  familleProgressionsOreille,
   familleLectureMesure,
   familleGeste,
 ];

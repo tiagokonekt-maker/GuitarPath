@@ -8,7 +8,7 @@ import { Ti } from "../design/Ti.jsx";
 import { Gropi } from "../design/Gropi.jsx";
 import { BackButton } from "../design/ui.jsx";
 import { Fretboard } from "../Fretboard.jsx";
-import { getScaleNotes, normalizeNote } from "../fretboardUtils.js";
+import { getScaleNotes, normalizeNote, SCALES } from "../fretboardUtils.js";
 import { nomsGamme } from "../music/orthographe.js";
 import { createComper } from "../music/compRhythm.js";
 import { companionSwing, swingBeat } from "../jam/music/groove.js";
@@ -16,7 +16,7 @@ import { activerSessionAudio } from "../audioEngine.js";
 import * as Tone from "tone";
 // Sous-modules de l'écran (src/screens/jam) : données et fonctions pures,
 // et les blocs qui suivent le temps de jeu chaque seconde.
-import { makeContexts } from "./jam/contextes.js";
+import { makeContexts, appliquerChoix, feelLabel } from "./jam/contextes.js";
 import { MIXAGE } from "./jam/mixage.js";
 import {
   ROOTS_FR, CHROMATIC, transposeNote, nomsNotesAccord, nomAccord, nomTonique,
@@ -38,23 +38,19 @@ import { CarteContrainte } from "./jam/CarteContrainte.jsx";
 import { createPlanner, createDirector } from "../jam/arrangement/arranger.js";
 import { generateDrumBar } from "../jam/generators/drums.js";
 
-// Chemin des packs à vérifier : je n'ai pas de confirmation directe de
-// l'emplacement réel de ces deux fichiers dans le dépôt (aucun en-tête n'y
-// fait référence, contrairement aux modules .js). Si l'import échoue au
-// build, c'est le seul détail à corriger — le reste de cette intégration
-// n'en dépend pas.
 import BLUES_SHUFFLE_PACK from "../jam/packs/blues-shuffle.json";
 import FUNK_16_PACK from "../jam/packs/funk-16.json";
+import ROCK_8_PACK from "../jam/packs/rock-8.json";
+import JAZZ_SWING_PACK from "../jam/packs/jazz-swing.json";
+import BOSSA_NOVA_PACK from "../jam/packs/bossa-nova.json";
+import BALLADE_POP_PACK from "../jam/packs/ballade-pop.json";
+import { packPourStyle, bassStylePour, compStylePour, ambiancePour } from "../jam/styles.js";
 
-// Seuls les styles qui ont un vrai pack passent sur le nouveau moteur. Pour
-// "jazz" et "rock", aucun pack n'existe aujourd'hui : plutôt que d'en
-// fabriquer un sans les données ou l'oreille pour le valider, ces deux
-// styles gardent le système statique existant, plus bas — inchangé.
-const PACK_PAR_STYLE = {
-  blues:   BLUES_SHUFFLE_PACK,
-  blues12: BLUES_SHUFFLE_PACK,
-  funk:    FUNK_16_PACK,
-};
+// Chaque style a son pack (src/jam/styles.js fait la correspondance) : la
+// batterie, mais aussi la BASSE (`bassStyle`) et l'ACCOMPAGNEMENT
+// (`compStyle`) en sont tirés. Un style sans pack retomberait sur le motif
+// de batterie statique et la walking bass, plus bas.
+const PACKS = [BLUES_SHUFFLE_PACK, FUNK_16_PACK, ROCK_8_PACK, JAZZ_SWING_PACK, BOSSA_NOVA_PACK, BALLADE_POP_PACK];
 
 // Assombrit une couleur hex d'une quantité fixe, quel que soit le thème.
 // Les boutons de lecture utilisaient `colorD` (celui de `context`, ou
@@ -236,12 +232,14 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
     if (playingRef.current) { stopBacking(); startBacking(); }
   });
   const arreterAuDemontage = useEffectEvent(() => stopBacking());
-  const contexteRef = useRef(context.id);
+  // Changer de GRILLE (rock I–IV–V → vi–IV–I–V…) relance aussi.
+  const cleContexte = `${context.id}:${context.grilleId ?? ""}`;
+  const contexteRef = useRef(cleContexte);
   useEffect(() => {
-    if (contexteRef.current === context.id) return;
-    contexteRef.current = context.id;
+    if (contexteRef.current === cleContexte) return;
+    contexteRef.current = cleContexte;
     relancerSiJoue();
-  }, [context.id]);
+  }, [cleContexte]);
   useEffect(() => () => arreterAuDemontage(), []);
 
   // ── Coupure par le système ──────────────────────────────────────────────
@@ -335,17 +333,21 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
         threshold: -18, ratio: 4, attack: 0.003, release: 0.25,
       }).connect(limiteur);
 
+      // Ambiance du style (src/jam/styles.js) : pièce plus grande et écho
+      // discret pour le jazz et la ballade, plus sèche pour le rock.
+      const style    = getStyle(context.id);
+      const ambiance = ambiancePour(style);
       reverbRef.current = new Tone.Reverb({
-        decay: context.id === "jazz_251" ? 2.5 : 1.8,
-        wet: context.id === "jazz_251" ? 0.18 : 0.12,
+        decay: ambiance.decay,
+        wet: ambiance.wet,
         preDelay: 0.02,
       });
       await reverbRef.current.generate();
       if (perime()) { libererAudio(); return; }
       reverbRef.current.connect(compRef.current);
 
-      // Delay subtil pour le jazz
-      if (context.id === "jazz_251") {
+      // Delay subtil (jazz, ballade)
+      if (ambiance.delay) {
         delayRef.current = new Tone.FeedbackDelay({
           delayTime: "8n.", feedback: 0.15, wet: 0.08,
         });
@@ -403,7 +405,7 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
           release: 1.4,
           // L'accompagnement se tient DERRIÈRE. Il pose l'harmonie et le rythme,
           // il ne doit jamais attirer l'oreille : c'est le guitariste le soliste.
-          volume: context.id === "jazz_251" ? -22 : -25,
+          volume: ambiance.pianoDb,
         });
       } catch {
         if (perime()) { libererAudio(); return; }
@@ -416,7 +418,7 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
           samplerRef.current = new Tone.Sampler({
             urls: urlsDepuisBuffers(buffers, SAMPLE_URLS_LOCAL),
             release: 2.0,
-            volume: context.id === "jazz_251" ? -8 : -10,
+            volume: style === "jazz" ? -8 : -10,
           });
         } catch {
           // Ni piano ni guitare : on joue sans accompagnement plutôt que pas du tout.
@@ -583,8 +585,15 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
       }
 
       // ── Séquenceur principal (accords + basse) ────────────────────────
-      const style      = getStyle(context.id);
-      const pack       = PACK_PAR_STYLE[style] || null;
+      const pack       = packPourStyle(style, PACKS);
+      // Basse et accompagnement DU PACK : walking bass pour le jazz, croches
+      // rock, fondamentale-quinte de bossa, rondes de ballade ; comping
+      // Charleston, croches étouffées, batida, arpèges…
+      const bassStyle  = bassStylePour(pack, style);
+      const compStyle  = compStylePour(pack, style);
+      // Un contexte peut imposer sa disposition (mixolydien : accords
+      // pleins, pas de power chords qui effaceraient la b7).
+      const disposition = { voicing: context.compVoicing || compStyle.voicing, floor: compStyle.floor };
       if (pack) {
         plannerRef.current  = createPlanner({ baseEnergy: energieRef.current });
         directorRef.current = createDirector(pack);
@@ -598,15 +607,13 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
 
       // Accompagnateur avec mémoire : sans elle, le tirage aléatoire
       // répéterait le même motif plusieurs mesures de suite.
-      comperRef.current = createComper(
-        (style === "blues" || style === "blues12") ? "blues" : "jazz"
-      );
+      comperRef.current = createComper(compStyle.rhythm);
 
       seqRef.current = new Tone.Sequence((time, barIdx) => {
         const chord     = barMap[barIdx % totalBars];
         const rootNow   = rootRef.current;
         const chordRoot = transposeNote(rootNow, chord.degree);
-        const voiced    = getVoicedChord(chordRoot, chord.quality, style);
+        const voiced    = getVoicedChord(chordRoot, chord.quality, style, disposition);
         // L'accord SUIVANT est indispensable : c'est lui qui détermine la
         // note d'approche du 4e temps, le geste qui fait qu'une walking bass
         // avance au lieu de tourner en rond.
@@ -623,7 +630,7 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
         }
         const energieMesure = section?.energy ?? energieRef.current;
         const coupe = coupesRef.current;
-        const bassPattern = getBassPattern(chordRoot, chord.quality, style, nextRoot, barIdx, energieMesure);
+        const bassPattern = getBassPattern(chordRoot, chord.quality, style, nextRoot, barIdx, energieMesure, bassStyle);
 
         // ── Accompagnement rythmé ──────────────────────────────────
         // Avant : un seul accord tenu sur la mesure entière ("1m"). C'est
@@ -634,7 +641,7 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
         const compHits = coupe.accords ? [] : (comperRef.current?.nextBar(barIdx, energieMesure) || []);
         // L'anticipation joue l'accord de la mesure SUIVANTE une croche
         // avant : le geste le plus caractéristique du comping.
-        const nextVoiced = getVoicedChord(nextRoot, nextChord.quality, style);
+        const nextVoiced = getVoicedChord(nextRoot, nextChord.quality, style, disposition);
         // Même swing que la batterie (src/jam/music/groove.js) : sans lui,
         // le Transport étant à swing 0 avec un pack, les croches faibles de
         // l'accompagnement et de la basse tombaient droites pendant que la
@@ -645,12 +652,19 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
         const instant = (beatPos) => time + swingBeat(beatPos, sw.ratio, sw.stepsPerBeat) * secParTemps;
         for (const hit of compHits) {
           const humanize = (Math.random() - 0.5) * 0.008;
-          samplerRef.current?.triggerAttackRelease(
-            hit.anticipate ? nextVoiced : voiced,
-            hit.dur,
-            instant(hit.beat) + humanize,
-            hit.velocity
-          );
+          const accordJoue = hit.anticipate ? nextVoiced : voiced;
+          if (!accordJoue.length) continue;
+          // Arpège : une seule note du voicing (indice `voice`, grave → aigu).
+          const notes = hit.voice != null ? [accordJoue[hit.voice % accordJoue.length]] : accordJoue;
+          const t0 = instant(hit.beat) + humanize;
+          if (compStyle.strumMs > 0 && notes.length > 1) {
+            // Accord gratté (rock) : les notes s'égrènent du grave à l'aigu.
+            notes.forEach((n, i) => samplerRef.current?.triggerAttackRelease(
+              n, hit.dur, t0 + i * compStyle.strumMs / 1000, hit.velocity * (1 - i * 0.04)
+            ));
+          } else {
+            samplerRef.current?.triggerAttackRelease(notes, hit.dur, t0, hit.velocity);
+          }
         }
 
         // Basse walking — la dynamique compte autant que les notes : une
@@ -707,8 +721,9 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
       }, Array.from({ length: totalBars }, (_, i) => i), "1m");
 
       // ── Séquenceur batterie — SEULEMENT si aucun pack n'existe pour ce
-      // style (jazz, rock aujourd'hui). Sinon la batterie est déjà générée
-      // ci-dessus, bar par bar, dans la boucle principale.
+      // style (repli : tous les styles actuels ont un pack). Sinon la
+      // batterie est déjà générée ci-dessus, bar par bar, dans la boucle
+      // principale.
       let beatPart = null;
       if (!pack) {
         const drumPattern = getDrumPattern(style);
@@ -982,6 +997,27 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
   );
 }
 
+/** Rangée de pastilles à choix unique (grille, gamme, tonalité d'un style). */
+function ChoixPastilles({ C, ctx, titre, options, valeur, onChoix }) {
+  return (
+    <div role="group" aria-label={titre} style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
+      <span style={{ fontSize: 11, fontWeight: 700, color: ctx.colorD, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.06em", minWidth: 62 }}>{titre}</span>
+      {options.map(o => {
+        const actif = o.id === valeur;
+        return (
+          <button key={o.id} onClick={() => onChoix(o.id)} aria-pressed={actif} className="gr-focus" style={{
+            minHeight: 32, padding: "5px 10px", borderRadius: R.pill, cursor: "pointer", fontFamily: FONTS.ui,
+            fontSize: 12, fontWeight: actif ? 700 : 500,
+            border: `1.5px solid ${actif ? ctx.color : ctx.colorB}`,
+            background: actif ? C.surface : "transparent",
+            color: actif ? ctx.colorD : C.text2,
+          }}>{o.label}</button>
+        );
+      })}
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 // COMPOSANT PRINCIPAL
 // ─────────────────────────────────────────────────────────────────────────
@@ -1055,7 +1091,13 @@ export function JamSession({ onBack, dispatch, state }) {
   }, [enregistrerTemps]);
   const surLecture = (joue) => { setEnLecture(joue); if (!joue) enregistrerTemps(); };
 
-  const ctx    = CONTEXTS.find(c => c.id === contextId);
+  // Grille et gamme choisies pour les styles qui en proposent plusieurs
+  // (null = celles par défaut du style).
+  const [grilleId, setGrilleId] = useState(null);
+  const [gammeChoisie, setGammeChoisie] = useState(null);
+  const ctxBase = CONTEXTS.find(c => c.id === contextId);
+  const ctx    = useMemo(() => appliquerChoix(ctxBase, grilleId, gammeChoisie), [ctxBase, grilleId, gammeChoisie]);
+  const packDuStyle = packPourStyle(getStyle(ctx.id), PACKS);
   // Tonique et gamme orthographiées pour l'affichage (Sib, pas La#) ; les
   // notes internes (dièses) restent celles qu'on compare et qu'on joue.
   const rootFr = nomTonique(root, ctx.scale);
@@ -1076,7 +1118,10 @@ export function JamSession({ onBack, dispatch, state }) {
   );
   const notesDeLAccord = useMemo(() => notesAccordAffichees.map(x => x.note), [notesAccordAffichees]);
   const dansLaGamme = (n) => activeNotes.some(g => normalizeNote(g) === normalizeNote(n));
-  const choisirContexte = (c) => { setContextId(c.id); setBpm(c.bpm); };
+  const choisirContexte = (c) => { setContextId(c.id); setBpm(c.bpm); setGrilleId(null); setGammeChoisie(null); };
+  // Une grille peut proposer sa gamme (vi–IV–I–V → penta majeure) : on
+  // reprend alors celle-ci plutôt qu'un choix fait sur la grille précédente.
+  const choisirGrille = (g) => { setGrilleId(g.id); setGammeChoisie(null); };
 
   const transposeSemitone = (dir) => {
     const idx = CHROMATIC.indexOf(root);
@@ -1116,9 +1161,30 @@ export function JamSession({ onBack, dispatch, state }) {
           </div>
         </div>
 
-        {/* Description */}
+        {/* Description + fiche du style : tempo conseillé, feel, grilles,
+            gammes et tonalités proposées */}
         <div style={{ background: ctx.colorL, border: `1px solid ${ctx.colorB}`, borderRadius: R.lg, padding: "10px 14px" }}>
           <div style={{ fontSize: 12, color: ctx.colorD, fontFamily: FONTS.title, lineHeight: 1.5 }}>{ctx.desc}</div>
+          {packDuStyle && (
+            <div style={{ fontSize: 11, color: ctx.colorD, fontFamily: FONTS.ui, marginTop: 6, opacity: 0.85 }}>
+              {feelLabel(packDuStyle)} · tempo conseillé {packDuStyle.tempoRange[0]}–{packDuStyle.tempoRange[1]} BPM
+            </div>
+          )}
+          {ctxBase.grilles?.length > 1 && (
+            <ChoixPastilles C={C} ctx={ctx} titre="Grille" valeur={ctx.grilleId}
+              options={ctxBase.grilles.map(g => ({ id: g.id, label: g.label }))}
+              onChoix={(id) => choisirGrille(ctxBase.grilles.find(g => g.id === id))} />
+          )}
+          {ctxBase.gammes?.length > 1 && (
+            <ChoixPastilles C={C} ctx={ctx} titre="Gamme" valeur={ctx.scale}
+              options={[...new Set([...ctxBase.gammes, ctx.scale])].map(k => ({ id: k, label: SCALES[k]?.name ?? k }))}
+              onChoix={setGammeChoisie} />
+          )}
+          {ctxBase.tonalites?.length > 0 && (
+            <ChoixPastilles C={C} ctx={ctx} titre="Tonalité" valeur={root}
+              options={ctxBase.tonalites.map(t => ({ id: t, label: nomTonique(t, ctx.scale) }))}
+              onChoix={setRoot} />
+          )}
         </div>
 
         {/* Backing track player */}

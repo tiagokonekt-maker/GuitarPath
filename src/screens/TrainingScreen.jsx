@@ -12,7 +12,10 @@
 //   3. La vérification d'unité, seulement quand elle est due.
 //   4. « S'entraîner sur… » — un domaine (Manche, Théorie, Oreille, Rythme,
 //      Impro) qui réunit ses compétences, ses exercices et son outil libre :
-//      Ear Training rejoint l'Oreille, la Jam Session l'Impro.
+//      Ear Training rejoint l'Oreille, la Jam Session l'Impro. Le module
+//      d'initiation « Premiers pas » y a aussi sa carte (ses exercices et ses
+//      questions n'étaient accessibles nulle part ailleurs), mais seulement
+//      pour qui en a besoin : obligatoire pour lui, ou déjà entamé.
 
 import { useState, useMemo } from "react";
 import { R } from "../design/tokens.js";
@@ -21,7 +24,7 @@ import { Ti } from "../design/Ti.jsx";
 import { ExerciseDetail } from "./ExercisesScreen.jsx";
 import { QuizScreen } from "./QuizScreen.jsx";
 import { masteryStats } from "../store/mastery.js";
-import { buildPath } from "../store/pathEngine.js";
+import { buildPath, buildUnits, debutFacultatif, DEBUT_MODULE } from "../store/pathEngine.js";
 // todayStr / weekStr en heure LOCALE — ne jamais réimplémenter avec
 // `new Date().toISOString()` (bug UTC déjà corrigé ailleurs dans l'app).
 import { todayStr, weekStr } from "../store/state.js";
@@ -34,7 +37,10 @@ const lireDuree = (defaut) => { try { const v = Number(localStorage.getItem(CLE_
 const ecrireDuree = (v) => { try { localStorage.setItem(CLE_DUREE, String(v)); } catch { /* stockage indisponible */ } };
 
 // Domaines : couleur du module, icône, modules d'exercices, outil libre.
+// `prelude` : domaine du module d'initiation — pas de compétences générées
+// ni de jauge de niveau, seulement ses leçons, exercices et questions.
 const DOMAINES = [
+  { id: "Premiers pas", couleur: "coral", icone: "sparkles", modules: [DEBUT_MODULE], objectif: null, prelude: true, libre: { titre: "Accordeur", detail: "Dans la boîte à outils, onglet Accordeur", ecran: "toolbox" } },
   { id: "Manche",  couleur: "amber",  icone: "map-2",     modules: ["neck"],              objectif: "manche",  libre: { titre: "Explorer le manche", detail: "Notes, gammes et accords sur tout le manche", ecran: "toolbox" } },
   { id: "Théorie", couleur: "green",  icone: "stack-2",   modules: ["scales", "harmony"], objectif: "theorie", libre: { titre: "Quiz par module", detail: "Toutes les questions de théorie, à ton rythme", quiz: true } },
   { id: "Oreille", couleur: "teal",   icone: "ear",       modules: [],                    objectif: null,      libre: { titre: "Ear Training", detail: "Intervalles, accords, suites : sans limite", ecran: "ear" } },
@@ -63,6 +69,12 @@ export function TrainingScreen({ state, dispatch, content, navigate }) {
   const seance = useMemo(() => planSeance({ duree, objectif, state, content, today, revisionDisponible }), [duree, objectif, state, content, today, revisionDisponible]);
   const progression = useMemo(() => progressionFamilles(state), [state]);
   const gMastery = useMemo(() => masteryStats(content, state), [content, state]);
+  const afficherPrelude = useMemo(() => {
+    const debut = content.courses.find(c => c.id === DEBUT_MODULE);
+    if (!debut) return false;
+    return debut.lessons.some(l => state.completedLessons?.[l.id])
+      || !debutFacultatif(state, buildUnits(content.courses, state));
+  }, [content.courses, state]);
   const uniteEnAttente = useMemo(() => buildPath(content, state).find(u => u.needsCheck) || null, [content, state]);
 
   const lancerEtape = (e) => {
@@ -84,8 +96,10 @@ export function TrainingScreen({ state, dispatch, content, navigate }) {
     );
   }
 
-  // L'objectif de l'élève passe en tête des domaines.
-  const domainesOrdonnes = [...DOMAINES].sort((a, b) => (b.objectif === objectif) - (a.objectif === objectif));
+  // L'objectif de l'élève passe en tête des domaines. « Premiers pas »
+  // n'apparaît que s'il est obligatoire ou déjà entamé : un joueur confirmé
+  // qui ne l'a jamais ouvert n'a pas à le voir ici.
+  const domainesOrdonnes = DOMAINES.filter(d => !d.prelude || afficherPrelude).sort((a, b) => (b.objectif === objectif) - (a.objectif === objectif));
 
   return (
     <div>
@@ -138,7 +152,7 @@ export function TrainingScreen({ state, dispatch, content, navigate }) {
           <h2 id="titre-domaines" style={{ margin: "4px 4px 0", fontSize: 17, fontWeight: 800, color: C.text }}>S'entraîner sur…</h2>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
             {domainesOrdonnes.map(d => (
-              <CarteDomaine key={d.id} C={C} d={d} state={state} progression={progression} onOuvrir={() => setDomaineOuvert(d.id)} />
+              <CarteDomaine key={d.id} C={C} d={d} state={state} content={content} progression={progression} onOuvrir={() => setDomaineOuvert(d.id)} />
             ))}
           </div>
         </section>
@@ -260,12 +274,16 @@ function Semaine({ C, state, objectifJours }) {
 function familleDomaine(f) { return domaineDe(f); }
 function couleurs(C, nom) { return { c: C[nom], l: C[nom + "L"], d: C[nom + "D"], b: C[nom + "Border"], ink: C[nom + "Ink"] || C[nom + "D"] }; }
 
-function CarteDomaine({ C, d, state, progression, onOuvrir }) {
+function CarteDomaine({ C, d, state, content, progression, onOuvrir }) {
   const k = couleurs(C, d.couleur);
   const miennes = progression.filter(p => p.domaine === d.id);
   const commencees = miennes.filter(p => p.commencee);
   const niveau = commencees.length ? Math.round(commencees.reduce((s, p) => s + p.niveau, 0) / commencees.length) : 0;
-  const detail = d.id === "Impro"
+  const lecons = d.prelude ? (content.courses.find(c => d.modules.includes(c.id))?.lessons || []) : [];
+  const leconsFaites = lecons.filter(l => state.completedLessons?.[l.id]).length;
+  const detail = d.prelude
+    ? `${leconsFaites}/${lecons.length} leçon${lecons.length > 1 ? "s" : ""}`
+    : d.id === "Impro"
     ? `Jam Session · ${state.jam?.seances || 0} séance${(state.jam?.seances || 0) > 1 ? "s" : ""}`
     : miennes.length ? `${miennes.length} compétence${miennes.length > 1 ? "s" : ""}` : "À débloquer dans le parcours";
   return (
@@ -275,7 +293,7 @@ function CarteDomaine({ C, d, state, progression, onOuvrir }) {
         <Ti name={d.icone} size={20} color={k.c} />
       </div>
       <div style={{ fontSize: 15, fontWeight: 800, color: C.text }}>{d.id}</div>
-      {d.id !== "Impro" && (
+      {d.id !== "Impro" && !d.prelude && (
         <div aria-hidden="true" style={{ display: "flex", gap: 4, width: "100%" }}>
           {[1, 2, 3].map(n => <div key={n} style={{ flex: 1, height: 6, borderRadius: 3, background: n <= niveau ? k.c : C.border }} />)}
         </div>
@@ -313,10 +331,12 @@ function VueDomaine({ C, d, state, dispatch, content, navigate, progression, qui
             minHeight: 52, border: "none", borderRadius: 16, background: k.ink, color: C.onPrimaryBtn, fontFamily: "inherit", fontSize: 15, fontWeight: 800, cursor: "pointer",
             display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
           }}>
-            <Ti name="player-play" size={18} color={C.onPrimaryBtn} /> S'entraîner sur {d.id === "Impro" ? "l'impro" : d.id === "Oreille" ? "l'oreille" : `le ${d.id.toLowerCase()}`}
+            <Ti name="player-play" size={18} color={C.onPrimaryBtn} /> {d.prelude ? "Réviser les premiers pas" : `S'entraîner sur ${d.id === "Impro" ? "l'impro" : d.id === "Oreille" ? "l'oreille" : `le ${d.id.toLowerCase()}`}`}
           </button>
         ) : d.id !== "Impro" && (
-          <div style={{ fontSize: 13, color: k.d }}>Rien à réviser pour l'instant : les compétences de ce domaine se débloquent avec les leçons du parcours.</div>
+          <div style={{ fontSize: 13, color: k.d }}>{d.prelude
+            ? "Rien à réviser pour l'instant : les questions se débloquent avec les leçons « Premiers pas » du parcours."
+            : "Rien à réviser pour l'instant : les compétences de ce domaine se débloquent avec les leçons du parcours."}</div>
         )}
       </div>
 
@@ -334,7 +354,7 @@ function VueDomaine({ C, d, state, dispatch, content, navigate, progression, qui
               <Ligne C={C} titre={`${state.jam?.seances || 0} séance${(state.jam?.seances || 0) > 1 ? "s" : ""} comptée${(state.jam?.seances || 0) > 1 ? "s" : ""}`}
                 detail={`${Math.floor((state.jam?.secondes || 0) / 60)} min de jeu · ${state.jam?.contraintes || 0} contrainte${(state.jam?.contraintes || 0) > 1 ? "s" : ""} tenue${(state.jam?.contraintes || 0) > 1 ? "s" : ""}`} />
             </Bloc>
-          ) : (
+          ) : d.prelude ? null : (
             <Bloc C={C} titre="Tes compétences">
               {debloquees.map(p => (
                 <Ligne key={p.id} C={C} titre={p.titre.replace(/^[^:]+ : /, "")}

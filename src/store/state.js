@@ -77,6 +77,9 @@ export const defaultState = () => ({
     startXp: 0,
     startLevel: 1,
     skipped: false,
+    // Réponse à « Tu as déjà joué de la guitare ? » — null si l'onboarding
+    // a été fait avant l'arrivée de cette question.
+    experience: null,
     completedAt: "",
   },
 });
@@ -340,9 +343,18 @@ export const mergeStates = (local, cloud) => {
   m.gropiTipDate = maxStr(L.gropiTipDate, C.gropiTipDate);
 
   // Onboarding : fait quelque part = fait partout
-  m.onboarding = (L.onboarding?.done || C.onboarding?.done)
-    ? (L.onboarding?.done ? L.onboarding : C.onboarding)
-    : (L.onboarding || C.onboarding || defaultState().onboarding);
+  m.onboarding = {
+    ...defaultState().onboarding,
+    ...((L.onboarding?.done || C.onboarding?.done)
+      ? (L.onboarding?.done ? L.onboarding : C.onboarding)
+      : (L.onboarding || C.onboarding || {})),
+  };
+  // `experience` décide du caractère facultatif de « Premiers pas » : si le
+  // côté retenu ne la connaît pas (onboarding fait avant cette question),
+  // on reprend celle de l'autre appareil plutôt que de la perdre.
+  if (!m.onboarding.experience) {
+    m.onboarding.experience = L.onboarding?.experience || C.onboarding?.experience || null;
+  }
 
   return m;
 };

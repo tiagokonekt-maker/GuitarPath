@@ -38,8 +38,8 @@ export const PROPS_AUTORISEES = {
   // Onboarding & placement (émis par OnboardingScreen)
   onboarding_step_view:        ["step"],
   onboarding_step_back:        ["step"],
-  onboarding_completed:        ["goal", "preferredModule", "timePerWeek", "overallTier", "weakestModule", "startLevel", "skipped"],
-  complete_onboarding:         ["goal", "preferredModule", "timePerWeek", "overallTier", "weakestModule", "startLevel", "skipped"],
+  onboarding_completed:        ["goal", "preferredModule", "timePerWeek", "overallTier", "weakestModule", "startLevel", "skipped", "experience"],
+  complete_onboarding:         ["goal", "preferredModule", "timePerWeek", "overallTier", "weakestModule", "startLevel", "skipped", "experience"],
   placement_question_answered: ["module", "questionId", "correct", "fretboard", "dontKnow"],
   placement_module_result:     ["module", "tier", "correctCount"],
   placement_completed:         ["overallTier", "weakestModule"],
