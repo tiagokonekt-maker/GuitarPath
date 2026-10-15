@@ -207,3 +207,18 @@ test("filtrerMorceaux : par niveau et par type", () => {
   assert.ok(riffsInter.every(m => m.niveau === "intermediaire" && m.type === "riff"));
   assert.equal(filtrerMorceaux(MORCEAUX).length, MORCEAUX.length);
 });
+
+// Deux chiffres collés se lisent comme UNE case (« 24 » = case 24) : une
+// écriture rythmique serrée (croche pointée + double) a ainsi produit des
+// notes aberrantes dans le blues. Aucun morceau débutant/intermédiaire ne
+// monte au-delà de la case 15.
+test("aucune case aberrante (chiffres collés lus comme une seule case)", () => {
+  for (const m of MORCEAUX) {
+    const { evenements } = analyserMorceau(m);
+    for (const e of evenements) {
+      for (const c of [e.fret, e.toFret, e.bendTo, e.releaseFret].filter(x => x != null)) {
+        assert.ok(c <= 15, `${m.id} : case ${c} (corde ${e.string}, colonne ${e.col})`);
+      }
+    }
+  }
+});
