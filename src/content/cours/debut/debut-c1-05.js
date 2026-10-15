@@ -1,22 +1,41 @@
 // Leçon du module « debut » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
 
 export default {
   id: "debut-c1-05", level: 0, unite: 1,
   title: "Les cordes et l'accordeur",
   duration: 7,
   gropiTip: "Avant de tourner une mécanique, suis la corde du doigt jusqu'à sa clé : tendre la mauvaise corde en croyant accorder l'autre, c'est l'erreur classique qui finit par la casser.",
-  content: [
-    { type: "p", text: "Une guitare désaccordée sonne faux même si tes doigts sont parfaitement placés. C'est frustrant, et c'est la cause n°1 des « je n'y arrive pas » des débutants. Bonne nouvelle : accorder prend une minute, et l'app a un accordeur intégré. Mais d'abord, il faut connaître le nom de tes cordes." },
-    { type: "h", text: "Mi, La, Ré, Sol, Si, Mi" },
-    { type: "p", text: "Les cordes sont numérotées de la plus fine à la plus grosse. La corde 1 est la plus fine (la plus aiguë), la plus proche du sol quand tu joues. La corde 6 est la plus grosse (la plus grave), la plus proche de ton visage. En partant de la plus grosse, elles s'appellent : Mi (corde 6), La (corde 5), Ré (corde 4), Sol (corde 3), Si (corde 2), Mi (corde 1). Il y a donc deux Mi : le Mi grave et le Mi aigu, à deux octaves d'écart." },
-    { type: "p", text: "Une phrase pour s'en souvenir, de la plus grosse à la plus fine : « Mon Lapin Ronge Sept Salades Mûres ». Et comme beaucoup d'accordeurs utilisent la notation anglaise, retiens aussi la correspondance : Mi = E, La = A, Ré = D, Sol = G, Si = B. Les cordes à vide donnent donc E A D G B E." },
-    { type: "h", text: "Accorder avec l'accordeur de l'app" },
-    { type: "p", text: "Ouvre Outils, puis Accordeur, et autorise le micro. Joue une seule corde à vide et laisse-la sonner. L'accordeur affiche la note qu'il entend et te dit si elle est trop basse ou trop haute. Trop basse : tourne la mécanique (la clé de la tête du manche) pour tendre la corde. Trop haute : détends-la. Va doucement, un petit quart de tour change déjà beaucoup la note." },
-    { type: "p", text: "Vérifie toujours que l'accordeur affiche la BONNE note pour la corde : si tu accordes la corde 5 et qu'il affiche Si (B) ou Sol (G), tu es loin du compte. Ne tends jamais une corde au hasard en espérant tomber juste : une corde trop tendue peut casser." },
-    { type: "tip", text: "Astuce de pro : approche toujours la note par en dessous. Si tu dépasses, redescends un peu en dessous puis remonte jusqu'à la note. Une corde accordée en montant tient mieux l'accord qu'une corde accordée en descendant." },
-    { type: "h", text: "Quand réaccorder ?" },
-    { type: "p", text: "Au début de chaque séance, systématiquement. Après un changement de cordes : des cordes neuves se détendent pendant plusieurs jours, il faut les réaccorder souvent. Après un changement de température ou d'humidité (la guitare rapportée du froid, une pièce surchauffée). Et dès que tes accords sonnent faux alors que tes doigts sont bien placés : vérifie l'accordage avant de douter de toi." },
+  cartes: [
+    { type: "idee", titre: "Accordée, sinon rien ne sonne", texte: [
+      "Désaccordée, une guitare sonne faux même avec des doigts parfaits : la cause n°1 des « je n'y arrive pas ».",
+      "Accorder prend une minute. Mais d'abord, le nom de tes cordes.",
+    ] },
+    { type: "idee", titre: "Mi, La, Ré, Sol, Si, Mi", texte: [
+      "La corde 1 est la plus fine (aiguë) ; la corde 6, la plus grosse (grave), est la plus proche de ton visage.",
+      "De la 6 à la 1 : Mi, La, Ré, Sol, Si, Mi. Deux Mi, à deux octaves d'écart. Pour t'en souvenir : « Mon Lapin Ronge Sept Salades Mûres ».",
+    ] },
+    { type: "question", quizId: "q-debut-14" },
+    { type: "idee", titre: "Les lettres de l'accordeur", texte: [
+      "Beaucoup d'accordeurs écrivent les notes en anglais : Mi = E, La = A, Ré = D, Sol = G, Si = B.",
+      "Tes cordes à vide donnent donc, de la 6 à la 1 : E A D G B E.",
+    ] },
+    { type: "question", quizId: "q-debut-17" },
+    { type: "idee", titre: "Trop basse ? On tend", texte: [
+      "Joue une corde à vide. Trop basse : tourne la mécanique (la clé sur la tête du manche) pour la tendre. Trop haute : détends-la. Un quart de tour change déjà beaucoup.",
+      "Vérifie que l'accordeur affiche la BONNE note : une corde trop tendue peut casser.",
+    ] },
+    { type: "question", quizId: "q-debut-16" },
+    { type: "a-toi", titre: "Accorde ta guitare", consigne: "Ouvre Outils → Accordeur et autorise le micro. Accorde les six cordes, de la 6 à la 1. Astuce de pro : arrive à la note par en dessous ; si tu dépasses, redescends puis remonte. L'accord tient mieux." },
+    { type: "idee", titre: "Quand réaccorder ?", texte: [
+      "À chaque séance, souvent après des cordes neuves, et après un coup de froid ou de chaleur.",
+      "Et dès que tes accords sonnent faux alors que tes doigts sont bien placés : vérifie l'accordage avant de douter de toi.",
+    ] },
+    { type: "recap", points: [
+      "De la corde 6 à la 1 : Mi La Ré Sol Si Mi, soit E A D G B E.",
+      "Trop basse : on tend ; trop haute : on détend, doucement.",
+      "On arrive à la note par en dessous, et on accorde à chaque séance.",
+    ] },
   ],
   quiz: ["q-debut-14", "q-debut-15", "q-debut-16", "q-debut-17"],
 };

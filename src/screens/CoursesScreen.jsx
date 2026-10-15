@@ -30,6 +30,7 @@ import { useWakeLock } from "../hooks/useWakeLock.js";
 import { pickTip, contexteGropi } from "../store/gropiTips.js";
 import { getReviewStats } from "../store/reviewEngine.js";
 import { POSE_ROLE } from "../design/gropiPoses.js";
+import { LeconCartes } from "../lecon/LeconCartes.jsx";
 import { gradeForLevel } from "../store/grades.js";
 import { lessonMastery } from "../store/mastery.js";
 
@@ -844,7 +845,7 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
 
   if(activeLesson) return (
     <LessonView lesson={activeLesson} state={state} dispatch={dispatch}
-      onBack={()=>setActiveLesson(null)}/>
+      quiz={content.quiz} onBack={()=>setActiveLesson(null)}/>
   );
 
   if(checkingUnit) return (
@@ -995,7 +996,11 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
 }
 
 // ── Contenu d'une leçon ───────────────────────────────────────────────────────
-function LessonView({ lesson, state, dispatch, onBack }) {
+// Deux rendus : la leçon « en cartes » (champ `cartes`, voir src/lecon/ et
+// src/content/README.md) ou, à défaut, l'article historique (`content`).
+// `quiz` (toutes les questions) sert aux cartes question liées au quiz
+// (quizId) ; `carteInitiale` force la carte de départ (rendu de contrôle).
+function LessonView({ lesson, state, dispatch, onBack, quiz, carteInitiale }) {
   const { renderDiagramBlock, FretboardLesson } = useRenderers();
   const C = useC();
   const [done,setDone] = useState(!!state.completedLessons[lesson.id]);
@@ -1044,6 +1049,15 @@ function LessonView({ lesson, state, dispatch, onBack }) {
     }
   };
 
+  if (lesson.cartes?.length) return (
+    <div>
+      {pop&&<XPPop amount={30} onDone={()=>{}}/>}
+      <LeconCartes key={lesson.id} lesson={lesson} state={state} dispatch={dispatch} onBack={onBack}
+        quiz={quiz} carteInitiale={carteInitiale} done={done} onFinish={finish}/>
+    </div>
+  );
+
+  const blocs = lesson.content || [];
   return (
     <div>
       {pop&&<XPPop amount={30} onDone={()=>{}}/>}
@@ -1057,7 +1071,7 @@ function LessonView({ lesson, state, dispatch, onBack }) {
           {lesson.duration} MIN · {(lesson.quiz||[]).length} QUESTIONS
         </p>
         <div style={{display:"flex",flexDirection:"column",gap:14,marginBottom:20}}>
-          {lesson.content.map((b,i)=>{
+          {blocs.map((b,i)=>{
             if(b.type==="h") return <h3 key={i} style={{margin:"8px 0 0",fontSize:17,fontWeight:800,color:C.primary,letterSpacing:"-.2px"}}>{b.text}</h3>;
             if(b.type==="tip") return <GropiCoach key={i} variant="tip">{b.text}</GropiCoach>;
             if(b.type==="img") return (
@@ -1092,7 +1106,7 @@ function LessonView({ lesson, state, dispatch, onBack }) {
               pas une seconde mascotte juste en dessous. */}
           {lesson.gropiTip && (
             <GropiCoach variant="tip" eyebrow="Le conseil de Gropi"
-              mascotte={!["tip","ref"].includes(lesson.content[lesson.content.length-1]?.type)}>
+              mascotte={!["tip","ref"].includes(blocs[blocs.length-1]?.type)}>
               {lesson.gropiTip}
             </GropiCoach>
           )}

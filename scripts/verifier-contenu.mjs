@@ -16,8 +16,26 @@ import { TESTABLE_MODULES, PLACEMENT_LEVELS, availableModules } from "../src/sto
 import { buildUnits, getUnitQuizPool } from "../src/store/pathEngine.js";
 import { LESSON_XP } from "../src/store/xp.js";
 import { GROPI_CATALOGUE } from "../src/store/gropiCatalogue.js";
+import { validerCartes, texteDeCarte } from "../src/lecon/cartes.js";
 import { readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+
+/**
+ * Tous les blocs d'une leçon soumis aux contrôles musicaux : ceux de
+ * `content` (leçon article) et ceux des `cartes` (leçon en cartes) — le
+ * diagramme d'une carte, plus son texte sous forme de pseudo-bloc pour le
+ * contrôle des positions « note (corde X case Y) ». `i` sert d'étiquette.
+ */
+function blocsDe(l) {
+  const out = (l.content || []).map((b, i) => ({ b, i }));
+  (l.cartes || []).forEach((c, k) => {
+    const i = `carte ${k + 1}`;
+    if (c?.bloc) out.push({ b: c.bloc, i });
+    const texte = [texteDeCarte(c), c?.q, ...(c?.o || []), c?.exp].filter(t => typeof t === "string").join(" ");
+    if (texte.trim()) out.push({ b: { type: "texte-carte", text: texte }, i });
+  });
+  return out;
+}
 
 let alertes = 0;
 const ko = (m) => { alertes++; console.log("  ⚠ " + m); };
@@ -213,7 +231,7 @@ function racineEtTypeAccord(nomBrut) {
   return { racine: pc, type: m[3] };
 }
 let diagrammesVerifies = 0;
-for (const c of COURSES) for (const l of c.lessons) (l.content || []).forEach((b, i) => {
+for (const c of COURSES) for (const l of c.lessons) blocsDe(l).forEach(({ b, i }) => {
   if (b.type !== "chord_diagram" || !Array.isArray(b.data?.frets)) return;
   const info = racineEtTypeAccord(b.data.name || "");
   if (!info) return;   // nom non reconnu : on ne peut rien recalculer, on passe
@@ -251,7 +269,7 @@ function racineDepuisLegende(cap) {
   return m ? pcDeNom(m[1]) : null;
 }
 let gammesVerifiees = 0;
-for (const c of COURSES) for (const l of c.lessons) (l.content || []).forEach((b, i) => {
+for (const c of COURSES) for (const l of c.lessons) blocsDe(l).forEach(({ b, i }) => {
   if (b.type !== "scale_pattern" || !Array.isArray(b.data?.strings)) return;
   const racine = racineDepuisLegende(b.caption), formule = formuleDepuisLegende(b.caption);
   if (racine == null || !formule) return;   // légende non reconnue : pas de faux négatif
@@ -280,7 +298,7 @@ function verifierEtiquette(lid, i, corde, fret, label, ou) {
   const reel = noteDeCorde(corde, fret);
   if (dit !== reel) ko(`${lid}/${i} ${ou} — c${corde} case ${fret} étiquetée « ${label} », en réalité ${NOMS_PC[reel]}`);
 }
-for (const c of COURSES) for (const l of c.lessons) (l.content || []).forEach((b, i) => {
+for (const c of COURSES) for (const l of c.lessons) blocsDe(l).forEach(({ b, i }) => {
   if ((b.type === "fretboard" || b.type === "caged_form") && Array.isArray(b.data?.notes)) {
     for (const n of b.data.notes) verifierEtiquette(l.id, i, n.string, n.fret, n.label, b.type);
   }
@@ -323,7 +341,7 @@ function controlerTexte(id, texte) {
     if (dit !== reel) ko(`${id} — « ${m[0]} » : corde ${corde} case ${fret} = ${NOMS_PC[reel]}, pas ${note}${alt || ""}`);
   }
 }
-for (const c of COURSES) for (const l of c.lessons) (l.content || []).forEach((b, i) => {
+for (const c of COURSES) for (const l of c.lessons) blocsDe(l).forEach(({ b, i }) => {
   for (const t of [b.text, b.caption]) if (t) controlerTexte(`${l.id}/${i}`, t);
 });
 for (const q of QUIZ) controlerTexte(q.id, `${q.q} ${(q.o || []).join(" ")} ${q.exp || ""}`);
@@ -333,6 +351,30 @@ for (const c of COURSES) for (const l of c.lessons) if (l.gropiTip) controlerTex
 for (const t of GROPI_CATALOGUE) if (typeof t.text === "string") controlerTexte(`gropi:${t.id}`, t.text);
 
 console.log(`  ${diagrammesVerifies} diagramme(s) d'accord, ${gammesVerifiees} schéma(s) de gamme, ${etiquettesVerifiees} étiquette(s) de note, ${positionsVerifiees} position(s) en texte libre — tous RECALCULÉS, pas seulement relus.`);
+
+// ── Leçons en cartes ─────────────────────────────────────────────────────
+// Format `cartes` (src/content/README.md, « Leçons en cartes ») : types de
+// carte connus, champs requis, réponse dans les bornes, quizId existant,
+// structure (une question, un « À toi de jouer », le récap en dernier).
+// Les diagrammes des cartes passent aussi par les contrôles musicaux
+// ci-dessus (blocsDe). Une idée de plus de 70 mots, un nombre de cartes hors
+// 6–10 ou une longue suite d'idées sans question : simple avertissement.
+titre("Leçons en cartes");
+{
+  const quizParId = new Map(QUIZ.map(q => [q.id, q]));
+  const enCartes = lecons.filter(l => l.cartes !== undefined);
+  let nbCartes = 0, nbAvert = 0;
+  for (const l of enCartes) {
+    const { erreurs, alertes: avert } = validerCartes(l, quizParId);
+    erreurs.forEach(ko);
+    for (const a of avert) { nbAvert++; console.log("  ℹ " + a); }
+    nbCartes += Array.isArray(l.cartes) ? l.cartes.length : 0;
+    for (const c of l.cartes || []) {
+      if (c?.quizId && !(l.quiz || []).includes(c.quizId)) console.log(`  ℹ ${l.id} : la carte question ${c.quizId} n'est pas dans le quiz de la leçon`);
+    }
+  }
+  console.log(`  ${enCartes.length} leçon(s) en cartes · ${nbCartes} cartes${nbAvert ? ` · ${nbAvert} avertissement(s)` : ""}`);
+}
 
 // ── Conseils de Gropi ───────────────────────────────────────────────────
 // Intégrité du catalogue (ids uniques, types connus, modules connus) : ça,

@@ -102,6 +102,10 @@ const cas = [
   ["LessonView (tablature)", M.CoursesScreen.LessonView, {
     lesson: COURSES.flatMap(c => c.lessons || []).find(l => (l.content || []).some(b => b.type === "tab")) || lecon,
     state, dispatch: noop, onBack: noop }],
+  // Leçon au format cartes (Premiers pas) : première carte rendue.
+  ["LessonView (cartes)", M.CoursesScreen.LessonView, {
+    lesson: COURSES.flatMap(c => c.lessons || []).find(l => Array.isArray(l.cartes)) || lecon,
+    quiz: QUIZ, state, dispatch: noop, onBack: noop }],
 ];
 
 let ok = 0;

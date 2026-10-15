@@ -1,18 +1,20 @@
 // Leçon du module « debut » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
 
 export default {
   id: "debut-c1-04", level: 0, unite: 1,
   title: "S'échauffer et jouer détendu",
   duration: 6,
   gropiTip: "Variante : fais l'exercice à l'envers, cases 4-3-2-1, en remontant de la corde 1 à la corde 6. Garde l'auriculaire tout près des cordes au lieu de le laisser s'envoler.",
-  content: [
-    { type: "p", text: "La guitare est une activité physique, à petite échelle : des petits muscles, des tendons, des gestes répétés. Deux minutes d'échauffement et un peu d'attention à la détente, et tu joues plus longtemps, plus proprement, sans douleur. C'est une habitude à prendre dès le premier jour." },
-    { type: "h", text: "Avant de jouer : 1 minute sans guitare" },
-    { type: "p", text: "Ouvre grand les mains puis ferme les poings, dix fois, lentement. Fais tourner doucement les poignets dans un sens puis dans l'autre. Laisse tomber les épaules et roule-les vers l'arrière trois ou quatre fois. Rien de sportif : le but est de réveiller la circulation, pas de t'étirer au maximum." },
-    { type: "h", text: "L'exercice 1-2-3-4" },
-    { type: "p", text: "Sur la corde 6 (Mi grave), pose l'index en case 1 et joue la note. Puis le majeur en case 2, l'annulaire en case 3, l'auriculaire en case 4 : un doigt par case, toujours juste derrière la frette. Passe ensuite à la corde 5 et recommence, jusqu'à la corde 1. Lentement, avec une note bien nette à chaque fois." },
-    {
+  cartes: [
+    { type: "idee", titre: "Deux minutes qui changent tout", texte: [
+      "La guitare sollicite de petits muscles et des tendons, avec des gestes répétés. Deux minutes d'échauffement et un peu d'attention à la détente : tu joues plus longtemps, plus proprement, sans douleur.",
+    ] },
+    { type: "a-toi", titre: "Une minute sans guitare", consigne: "Ouvre grand les mains puis ferme les poings, dix fois, lentement. Fais tourner les poignets dans les deux sens. Laisse tomber les épaules et roule-les vers l'arrière trois ou quatre fois. Rien de sportif : on réveille la circulation.", minuteur: 60 },
+    { type: "idee", titre: "L'exercice 1-2-3-4", texte: [
+      "Corde 6 : index en case 1, majeur en case 2, annulaire en case 3, auriculaire en case 4. Un doigt par case, juste derrière la frette, une note nette à chaque fois.",
+      "Puis la corde 5, et ainsi de suite jusqu'à la corde 1.",
+    ], bloc: {
       type: "fretboard",
       caption: "L'exercice 1-2-3-4 : un doigt par case, ici sur la corde 6 (chiffres = doigts)",
       data: {
@@ -24,11 +26,22 @@ export default {
           { string: 6, fret: 4, label: "4", color: "coral" },
         ],
       },
-    },
-    { type: "p", text: "Cet exercice fait tout en même temps : il réveille les doigts, apprend à chaque doigt sa case, muscle l'auriculaire (le plus paresseux de la bande) et synchronise les deux mains. Garde-le comme rituel de début de séance." },
-    { type: "h", text: "Repérer la crispation" },
-    { type: "p", text: "La tension s'installe sans prévenir. Toutes les quelques minutes, fais un rapide tour du propriétaire : les épaules sont-elles remontées ? La mâchoire serrée ? Retiens-tu ta respiration sur les passages difficiles ? Le pouce gauche écrase-t-il le manche ? Chaque fois que tu repères une tension, relâche-la avant de continuer." },
-    { type: "tip", text: "Plusieurs petites séances valent mieux qu'une longue. Au début, 15 à 20 minutes par jour te feront progresser plus vite qu'une heure et demie le dimanche, et tes doigts auront le temps de s'endurcir sans souffrir." },
+    } },
+    { type: "question", quizId: "q-debut-11" },
+    { type: "a-toi", titre: "1-2-3-4 au clic", consigne: "Une note par clic, de la corde 6 à la corde 1, l'auriculaire près des cordes. Lent et net plutôt que rapide et brouillon. Fais-en ton rituel de début de séance : il muscle aussi le petit doigt.", bpm: 60 },
+    { type: "idee", titre: "Repère la crispation", texte: [
+      "La tension s'installe sans prévenir. Toutes les quelques minutes, fais le tour : épaules remontées ? Mâchoire serrée ? Respiration bloquée ? Pouce qui écrase le manche ?",
+      "Chaque tension repérée, relâche-la avant de continuer.",
+    ] },
+    { type: "question", quizId: "q-debut-13" },
+    { type: "idee", titre: "Court, mais souvent", texte: [
+      "Au début, 15 à 20 minutes par jour te font progresser plus vite qu'une heure et demie le dimanche. Et tes doigts ont le temps de s'endurcir sans souffrir.",
+    ] },
+    { type: "recap", points: [
+      "Une minute d'échauffement sans guitare avant de jouer.",
+      "1-2-3-4 : un doigt par case, sur chaque corde, lentement.",
+      "Traque la crispation (épaules, mâchoire, souffle, pouce) et joue un peu chaque jour.",
+    ] },
   ],
   quiz: ["q-debut-11", "q-debut-12", "q-debut-13"],
 };

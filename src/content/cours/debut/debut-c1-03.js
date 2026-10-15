@@ -1,23 +1,39 @@
 // Leçon du module « debut » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
+
+const QUATRE_COUPS = { type: "strum_pattern", caption: "Ton premier geste : 4 coups vers le bas, un par temps", data: { pattern: ["B", "B", "B", "B"], beats: 4, style: "folk", bpm: 60 } };
 
 export default {
   id: "debut-c1-03", level: 0, unite: 1,
   title: "La main droite : médiator ou doigts",
   duration: 6,
   gropiTip: "Joue tes 4 coups vers le bas face à un miroir et regarde ton coude : il doit rester posé sur la caisse pendant que ton poignet fait le travail.",
-  content: [
-    { type: "p", text: "La main gauche choisit les notes, la main droite les fait sonner. C'est elle qui donne le rythme, le volume et le caractère de ce que tu joues. Tu peux jouer avec un médiator (le petit triangle en plastique, qu'on appelle aussi plectre ou « mediator ») ou directement avec les doigts. Les deux sont utiles : commence par le médiator pour gratter tes premiers accords." },
-    { type: "h", text: "Tenir le médiator" },
-    { type: "p", text: "Plie légèrement l'index. Pose le médiator à plat sur le côté de la dernière phalange de l'index, pointe dirigée vers les cordes, puis referme le pouce par-dessus. Seuls 2 ou 3 millimètres de pointe dépassent. Trop de pointe et le médiator accroche les cordes ; pas assez et tu les rates." },
-    { type: "p", text: "La bonne pression : assez pour qu'il ne tourne pas entre tes doigts, pas plus. Pour débuter en grattant des accords, choisis un médiator fin ou médium (entre 0,5 et 0,7 mm environ) : il plie un peu et pardonne les attaques maladroites." },
-    { type: "h", text: "Le geste : le poignet, pas tout le bras" },
-    { type: "p", text: "Ton avant-bras reste posé sur la caisse. Le mouvement vient surtout du poignet, un peu comme si tu secouais un thermomètre ou que tu faisais sécher tes doigts mouillés, avec l'aide de l'avant-bras. Gratter avec tout le bras depuis l'épaule fatigue vite et manque de précision." },
-    { type: "strum_pattern", caption: "Ton premier geste : 4 coups vers le bas, un par temps", data: { pattern: ["B", "B", "B", "B"], beats: 4, style: "folk", bpm: 60 } },
-    { type: "p", text: "Essaie sur les cordes à vide (sans main gauche) : 4 coups vers le bas, réguliers, en comptant « 1, 2, 3, 4 » à voix haute. Vise un son égal sur toutes les cordes, ni trop fort ni trop timide." },
-    { type: "h", text: "Jouer aux doigts" },
-    { type: "p", text: "Sans médiator, le pouce s'occupe des trois cordes graves (6, 5 et 4) et l'index, le majeur et l'annulaire des trois cordes aiguës (3, 2 et 1), un doigt par corde. On note souvent p, i, m, a (pouce, index, majeur, annulaire). Tu peux aussi gratter simplement avec le pouce, ou avec l'ongle de l'index en allers-retours : c'est plus doux qu'un médiator, parfait pour jouer tard le soir." },
-    { type: "tip", text: "Le piège n°1 de la main droite : la crispation. Si ton poignet est raide, ton rythme sera raide. Toutes les deux minutes, arrête-toi et secoue la main droite comme pour l'égoutter, puis reprends. Le médiator doit être tenu, pas étranglé." },
+  cartes: [
+    { type: "idee", titre: "Médiator ou doigts", texte: [
+      "La main droite fait sonner les notes : rythme, volume, caractère.",
+      "Tu peux jouer au médiator (le petit triangle en plastique, ou plectre) ou aux doigts. Pour tes premiers accords, commence au médiator.",
+    ] },
+    { type: "idee", titre: "Tenir le médiator", texte: [
+      "Index légèrement plié, médiator à plat sur le côté de sa dernière phalange, pointe vers les cordes. Referme le pouce par-dessus : seuls 2 à 3 mm de pointe dépassent.",
+      "Serre juste assez pour qu'il ne tourne pas. Pour débuter, prends-le fin ou médium (0,5 à 0,7 mm) : il pardonne les maladresses.",
+    ] },
+    { type: "question", quizId: "q-debut-08" },
+    { type: "idee", titre: "Le geste vient du poignet", texte: [
+      "Ton avant-bras reste posé sur la caisse. Le mouvement vient surtout du poignet, comme pour secouer un thermomètre ou sécher des doigts mouillés.",
+      "Gratter depuis l'épaule fatigue vite et manque de précision.",
+    ] },
+    { type: "question", quizId: "q-debut-09" },
+    { type: "a-toi", titre: "4 coups vers le bas", consigne: "Cordes à vide, sans main gauche : 4 coups vers le bas, un par clic, en comptant « 1, 2, 3, 4 » à voix haute. Vise un son égal sur toutes les cordes. Toutes les deux minutes, secoue la main droite pour la détendre.", bloc: QUATRE_COUPS, bpm: 60 },
+    { type: "idee", titre: "Jouer aux doigts", texte: [
+      "Le pouce joue les trois cordes graves (6, 5 et 4) ; index, majeur et annulaire se partagent les cordes 3, 2 et 1, un doigt par corde. On les note p, i, m, a.",
+      "Gratter au pouce ou à l'ongle de l'index, c'est plus doux : parfait pour jouer tard le soir.",
+    ] },
+    { type: "question", quizId: "q-debut-10" },
+    { type: "recap", points: [
+      "Médiator à plat sur l'index, pouce par-dessus, 2 à 3 mm de pointe.",
+      "Le geste vient du poignet, avant-bras posé sur la caisse.",
+      "Aux doigts : le pouce pour les cordes 6, 5 et 4 ; i, m, a pour les cordes 3, 2 et 1.",
+    ] },
   ],
   quiz: ["q-debut-08", "q-debut-09", "q-debut-10"],
 };

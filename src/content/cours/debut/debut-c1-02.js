@@ -1,22 +1,25 @@
 // Leçon du module « debut » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
 
 export default {
   id: "debut-c1-02", level: 0, unite: 1,
   title: "La main gauche : pouce, doigts, frettes",
   duration: 7,
   gropiTip: "Mini-exercice : joue la case 1 de la corde 1 avec chaque doigt tour à tour (1, 2, 3 puis 4), en cherchant à chaque fois la pression minimale qui donne une note nette.",
-  content: [
-    { type: "p", text: "Ta main gauche choisit les notes : elle appuie les cordes contre le manche pour en changer la hauteur. Bien placée, elle travaille sans effort et chaque note sonne claire. Mal placée, elle se fatigue vite et les notes frisent. Trois réglages suffisent pour bien démarrer." },
-    { type: "h", text: "Les doigts ont un numéro" },
-    { type: "p", text: "Sur tous les diagrammes et toutes les méthodes, les doigts de la main gauche sont numérotés : 1 = index, 2 = majeur, 3 = annulaire, 4 = auriculaire (le petit doigt). Le pouce ne compte pas, il reste derrière le manche. Retiens ces numéros dès maintenant, tu vas les croiser dans chaque accord." },
-    { type: "h", text: "Réglage 1 : le pouce derrière le manche" },
-    { type: "p", text: "Pose la pulpe du pouce au dos du manche, à peu près en face de ton majeur, vers le milieu de la largeur du manche. Le pouce ne serre pas : il sert d'appui pour que les doigts puissent presser les cordes. Si ta paume colle au manche, éloigne-la : il doit y avoir un petit espace entre le manche et le creux de ta main." },
-    { type: "h", text: "Réglage 2 : des doigts arrondis, le bout sur la corde" },
-    { type: "p", text: "Appuie avec le bout du doigt, pas avec la pulpe à plat. Tes doigts forment un petit pont arrondi, comme si tu tenais une balle de tennis. C'est ce qui évite de toucher les cordes voisines par accident et d'étouffer leur son. Pour ça, il faut des ongles courts côté main gauche : un ongle qui dépasse t'empêche d'appuyer avec le bout." },
-    { type: "h", text: "Réglage 3 : juste derrière la frette" },
-    { type: "p", text: "Les frettes sont les barrettes de métal du manche. La case 1 est l'espace entre le sillet (la pièce blanche en haut du manche) et la première frette, la case 2 l'espace suivant, etc. Pour jouer une case, pose le doigt tout près de la frette qui la ferme, du côté de la case. Au milieu de la case, il faut appuyer beaucoup plus fort ; posé sur la frette elle-même, le son est étouffé." },
-    {
+  cartes: [
+    { type: "idee", titre: "Les doigts ont un numéro", texte: [
+      "Ta main gauche choisit les notes. Partout, ses doigts sont numérotés : 1 = index, 2 = majeur, 3 = annulaire, 4 = auriculaire.",
+      "Le pouce n'a pas de numéro : il reste derrière le manche.",
+    ] },
+    { type: "question", quizId: "q-debut-04" },
+    { type: "idee", titre: "Pouce derrière, doigts arrondis", texte: [
+      "Pouce au dos du manche, en face du majeur : il sert d'appui, il ne serre pas. La paume ne colle pas au manche.",
+      "Appuie avec le bout des doigts, arrondis comme autour d'une balle : ils épargnent les cordes voisines. D'où des ongles courts à gauche.",
+    ] },
+    { type: "idee", titre: "Juste derrière la frette", texte: [
+      "Les frettes sont les barrettes de métal. La case 1 est entre le sillet (la pièce blanche en haut du manche) et la première frette.",
+      "Pose le doigt tout près de la frette qui ferme la case. Au milieu, il faut appuyer plus fort ; sur la frette, le son est étouffé.",
+    ], bloc: {
       type: "note_grid",
       caption: "Corde 1 (Mi aigu) : case 1 = Fa, case 3 = Sol — appuie tout près de la frette, côté case",
       data: {
@@ -27,10 +30,19 @@ export default {
           { fret: 3, label: "Sol", color: "green" },
         ],
       },
-    },
-    { type: "h", text: "Combien appuyer ?" },
-    { type: "p", text: "Moins que tu ne le crois. Essaie : pose l'index sur la corde 1, case 1, et joue la corde. Relâche petit à petit la pression jusqu'à ce que la note se mette à friser, puis rajoute juste un peu de pression pour qu'elle sonne nette. C'est ça, la bonne dose. Serrer plus ne rend pas la note plus juste, ça te fatigue et ça peut même la faire monter légèrement." },
-    { type: "tip", text: "Le bout des doigts qui chauffe les deux ou trois premières semaines, c'est normal : la peau s'endurcit et forme de la corne. En revanche, une douleur au poignet, au pouce ou dans l'avant-bras n'est pas normale. Arrête-toi, secoue la main, et vérifie ta posture : souvent, le pouce serre trop fort." },
+    } },
+    { type: "question", quizId: "q-debut-05" },
+    { type: "a-toi", titre: "Trouve la pression minimale", consigne: "Index sur la corde 1, case 1 : joue la note. Relâche peu à peu jusqu'à ce qu'elle frise, puis rajoute juste assez de pression pour qu'elle sonne nette. C'est la bonne dose : serrer plus ne fait que fatiguer. Refais-le avec les doigts 2, 3 et 4." },
+    { type: "idee", titre: "Bout des doigts ou poignet ?", texte: [
+      "Le bout des doigts qui chauffe les premières semaines, c'est normal : la corne se forme.",
+      "Une douleur au poignet, au pouce ou dans l'avant-bras, non. Arrête-toi, secoue la main et vérifie ta posture : souvent, le pouce serre trop.",
+    ] },
+    { type: "question", quizId: "q-debut-07" },
+    { type: "recap", points: [
+      "1 index, 2 majeur, 3 annulaire, 4 auriculaire ; le pouce reste derrière le manche.",
+      "Le bout des doigts, arrondis, tout près de la frette, côté case.",
+      "Juste assez de pression pour une note nette. Mal au poignet : pause et correction.",
+    ] },
   ],
   quiz: ["q-debut-04", "q-debut-05", "q-debut-06", "q-debut-07"],
 };

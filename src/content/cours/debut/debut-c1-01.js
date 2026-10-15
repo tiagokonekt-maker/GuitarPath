@@ -1,22 +1,41 @@
 // Leçon du module « debut » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
 
 export default {
   id: "debut-c1-01", level: 0, unite: 1,
   title: "Tenir ta guitare",
   duration: 6,
   gropiTip: "Fais le test de profil : prends-toi en photo avec ton téléphone en position assise. La guitare doit être presque verticale et la tête du manche à hauteur d'épaule, pas plus bas que la caisse.",
-  content: [
-    { type: "p", text: "Bienvenue ! Avant la toute première note, on règle la chose la plus sous-estimée de la guitare : la façon de la tenir. Une bonne posture, c'est un instrument qui tient tout seul, des épaules relâchées et deux mains libres de faire leur travail. Une mauvaise posture, c'est des douleurs au poignet au bout de dix minutes et des accords qui sonnent mal sans que tu comprennes pourquoi." },
-    { type: "h", text: "Assis : la position de départ" },
-    { type: "p", text: "Assieds-toi sur une chaise sans accoudoirs, le dos droit mais pas raide, les deux pieds à plat. Pose le creux de la guitare sur ta cuisse droite (si tu es droitier). Le dos de la caisse vient contre ton ventre et ta poitrine, la guitare est presque verticale : elle ne doit pas être couchée sur tes genoux, cordes vers le plafond." },
-    { type: "p", text: "Ton avant-bras droit se pose sur le haut de la caisse, à peu près au niveau du coude. C'est lui qui stabilise la guitare. Le manche part vers la gauche, légèrement relevé : la tête de la guitare arrive à peu près à hauteur de ton épaule, jamais plus bas que la caisse." },
-    { type: "h", text: "Debout : la même chose, avec une sangle" },
-    { type: "p", text: "Debout, c'est la sangle qui porte la guitare. Règle-la pour que l'instrument se retrouve à peu près à la même hauteur qu'en position assise. Une guitare portée très bas a l'air cool, mais elle tord le poignet gauche : garde ça pour plus tard. Si tu passes souvent d'assis à debout, vérifie que tes mains retrouvent la même position dans les deux cas." },
-    { type: "h", text: "Les trois pièges du débutant" },
-    { type: "p", text: "Premier piège : pencher la guitare vers toi pour voir les cordes. Ça déplace tout l'angle du poignet gauche. Penche plutôt un peu la tête. Deuxième piège : remonter l'épaule droite ou gauche sans t'en rendre compte. Fais régulièrement le point : épaules basses, mâchoire détendue. Troisième piège : retenir le manche avec la main gauche. La main gauche est faite pour appuyer sur les cordes, pas pour porter l'instrument." },
-    { type: "tip", text: "Le test du lâcher : installe-toi, puis lâche complètement le manche avec ta main gauche. La guitare doit rester en place, tenue par ta cuisse, ton ventre et ton avant-bras droit. Si elle pique du nez, rapproche-la de ton corps et appuie un peu plus l'avant-bras sur la caisse." },
-    { type: "ref", text: "Tu es gaucher ? Deux options : une guitare pour gaucher (tout est inversé, tu poses la guitare sur ta cuisse gauche), ou une guitare de droitier, que beaucoup de gauchers jouent très bien. Dans les deux cas, cette leçon reste valable en miroir. Choisis une option et tiens-t'y dès le départ." },
+  cartes: [
+    { type: "idee", titre: "Bien tenue, la guitare tient seule", texte: [
+      "Avant la première note, on règle ta posture. Bien installée, la guitare tient toute seule, tes épaules sont relâchées et tes deux mains restent libres.",
+      "Mal installée, c'est le poignet qui souffre et des accords qui sonnent mal.",
+    ] },
+    { type: "idee", titre: "Assis : sur la cuisse droite", texte: [
+      "Chaise sans accoudoirs, dos droit, pieds à plat. Le creux de la guitare sur ta cuisse droite (si tu es droitier), la caisse contre ton ventre.",
+      "Elle est presque verticale, pas couchée. Ton avant-bras droit, posé sur la caisse, la stabilise ; la tête du manche arrive à hauteur d'épaule.",
+    ] },
+    { type: "question", quizId: "q-debut-01" },
+    { type: "idee", titre: "Debout : la sangle porte tout", texte: [
+      "Règle la sangle pour retrouver la hauteur de la position assise.",
+      "Une guitare portée très bas a l'air cool, mais elle tord le poignet gauche. Garde ça pour plus tard.",
+    ] },
+    { type: "idee", titre: "Trois pièges à éviter", texte: [
+      "Pencher la guitare pour voir les cordes : ça tord le poignet gauche. Penche plutôt la tête.",
+      "Remonter les épaules : garde-les basses, mâchoire détendue. Et porter le manche de la main gauche : elle appuie sur les cordes, elle ne tient pas la guitare.",
+    ] },
+    { type: "question", quizId: "q-debut-03" },
+    { type: "a-toi", titre: "Le test du lâcher", consigne: "Installe-toi, puis lâche complètement le manche. La guitare doit rester en place, tenue par ta cuisse, ton ventre et ton avant-bras droit. Elle pique du nez ? Rapproche-la de ton corps et appuie un peu plus l'avant-bras sur la caisse." },
+    { type: "question", quizId: "q-debut-02" },
+    { type: "idee", titre: "Et si tu es gaucher ?", texte: [
+      "Deux options : une guitare pour gaucher (tout est inversé, elle se pose sur ta cuisse gauche) ou une guitare de droitier, que beaucoup de gauchers jouent très bien.",
+      "Cette leçon vaut en miroir. Choisis et tiens-t'y dès le départ.",
+    ] },
+    { type: "recap", points: [
+      "Assis : creux de la guitare sur la cuisse droite, caisse contre le ventre, guitare presque verticale.",
+      "Ta cuisse, ton ventre et ton avant-bras droit tiennent la guitare, pas ta main gauche.",
+      "Épaules basses, poignet droit : penche la tête plutôt que la guitare.",
+    ] },
   ],
   quiz: ["q-debut-01", "q-debut-02", "q-debut-03"],
 };

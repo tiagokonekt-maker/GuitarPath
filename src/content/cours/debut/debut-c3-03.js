@@ -1,5 +1,5 @@
 // Leçon du module « debut » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
 //
 // Bloc `tab` : voir debut-c3-01.js. Mélodies choisies dans le domaine
 // public (airs traditionnels, Beethoven) : notes seules, sans paroles.
@@ -9,9 +9,11 @@ export default {
   title: "Premières mélodies en tablature",
   duration: 8,
   gropiTip: "Frère Jacques est un canon : enregistre-toi avec ton téléphone, puis rejoue l'air par-dessus en démarrant quand l'enregistrement attaque Mi Fa Sol. Deux voix, une seule guitare !",
-  content: [
-    { type: "p", text: "Place à la pratique ! Trois airs que tout le monde connaît, tous du domaine public, écrits en tablature sur les deux cordes aiguës. Cinq notes suffisent : Do (corde 2, case 1), Ré (corde 2, case 3), Mi (corde 1 à vide), Fa (corde 1, case 1) et Sol (corde 1, case 3)." },
-    {
+  cartes: [
+    { type: "idee", titre: "Cinq notes, trois airs", texte: [
+      "Trois airs du domaine public, sur les deux cordes aiguës, avec cinq notes : Do (corde 2, case 1), Ré (corde 2, case 3), Mi (corde 1 à vide), Fa (corde 1, case 1) et Sol (corde 1, case 3).",
+      "Index pour la case 1, annulaire pour la case 3 : ta main reste en place.",
+    ], bloc: {
       type: "fretboard",
       caption: "Les 5 notes des mélodies, sur les cordes 2 et 1 (plus Mi, corde 1 à vide)",
       data: {
@@ -23,10 +25,9 @@ export default {
           { string: 1, fret: 3, label: "Sol", color: "pink" },
         ],
       },
-    },
-    { type: "p", text: "Doigté conseillé : index pour la case 1, annulaire pour la case 3. Ta main reste en place, seuls les doigts bougent." },
-    { type: "h", text: "1. Frère Jacques (air traditionnel)" },
-    {
+    } },
+    { type: "question", quizId: "q-debut-50" },
+    { type: "a-toi", titre: "Frère Jacques (air traditionnel)", consigne: "D'abord lentement, en disant le nom des notes à voix haute : Do Ré Mi Do, deux fois, puis Mi Fa Sol, deux fois. Écoute la tab avec le bouton si besoin.", bloc: {
       type: "tab",
       caption: "Frère Jacques — début de l'air",
       text: "Tab — Do Ré Mi Do, deux fois (corde 2 : 1, 3 ; corde 1 : 0 ; corde 2 : 1), puis Mi Fa Sol, deux fois (corde 1 : 0, 1, 3).",
@@ -38,9 +39,9 @@ export default {
         "A|-------------|-------------|----------|----------|",
         "E|-------------|-------------|----------|----------|",
       ] },
-    },
-    { type: "h", text: "2. Au clair de la lune (air traditionnel)" },
-    {
+    } },
+    { type: "question", quizId: "q-debut-51" },
+    { type: "a-toi", titre: "Au clair de la lune (air traditionnel)", consigne: "Ici, la tab montre sa limite : dans la deuxième et la dernière mesure, les notes sont longues, mais rien ne l'indique. Chante l'air dans ta tête en jouant : c'est ta mémoire qui donne le rythme.", bloc: {
       type: "tab",
       caption: "Au clair de la lune — première phrase",
       text: "Tab — Do Do Do Ré (corde 2 : 1, 1, 1, 3), Mi Ré (corde 1 : 0 ; corde 2 : 3), Do Mi Ré Ré (corde 2 : 1 ; corde 1 : 0 ; corde 2 : 3, 3), Do (corde 2 : 1).",
@@ -52,10 +53,9 @@ export default {
         "A|-------------|-------|-------------|----|",
         "E|-------------|-------|-------------|----|",
       ] },
-    },
-    { type: "p", text: "Ici, la tab montre bien sa limite : dans la deuxième et la dernière mesure, les notes sont longues, mais rien ne l'indique précisément. Chante l'air dans ta tête en jouant : c'est ta mémoire qui donne le rythme." },
-    { type: "h", text: "3. L'Ode à la joie (Beethoven)" },
-    {
+    } },
+    { type: "question", quizId: "q-debut-52" },
+    { type: "a-toi", titre: "L'Ode à la joie (Beethoven)", consigne: "Trois étapes : lentement en nommant les notes, puis sans t'arrêter même avec une erreur, enfin de mémoire, sans regarder la tab. Et l'air est à toi.", bloc: {
       type: "tab",
       caption: "Ode à la joie — première phrase",
       text: "Tab — Mi Mi Fa Sol, Sol Fa Mi Ré, Do Do Ré Mi, Mi Ré Ré. Corde 1 : 0, 0, 1, 3, 3, 1, 0 ; corde 2 : 3, 1, 1, 3 ; corde 1 : 0, 0 ; corde 2 : 3, 3.",
@@ -67,10 +67,16 @@ export default {
         "A|-------------|-------------|-------------|----------|",
         "E|-------------|-------------|-------------|----------|",
       ] },
-    },
-    { type: "h", text: "Et ensuite ?" },
-    { type: "p", text: "Tu sais maintenant tenir ta guitare, l'accorder, jouer cinq accords, enchaîner une progression avec une vraie rythmique et lire une tablature. C'est exactement le bagage qu'il faut pour attaquer des morceaux. Dans Outils → Morceaux, tu trouveras des morceaux à jouer avec tout ça. Et la suite du parcours t'emmène découvrir le manche, les gammes, l'harmonie et le rythme en profondeur." },
-    { type: "tip", text: "Pour chaque mélodie : d'abord lentement, en disant le nom des notes à voix haute. Puis sans t'arrêter, même avec une erreur. Enfin, joue-la de mémoire, sans regarder la tab. Trois étapes, et l'air est à toi." },
+    } },
+    { type: "idee", titre: "Et ensuite ?", texte: [
+      "Tenir ta guitare, l'accorder, cinq accords, une progression rythmée, la tab : tu as le bagage pour attaquer des morceaux.",
+      "Va voir Outils → Morceaux. Ensuite, le parcours t'emmène vers le manche, les gammes, l'harmonie et le rythme.",
+    ] },
+    { type: "recap", points: [
+      "Do et Ré sur la corde 2 (cases 1 et 3) ; Mi, Fa, Sol sur la corde 1 (à vide, cases 1 et 3).",
+      "Lentement en nommant les notes, puis sans t'arrêter, puis de mémoire.",
+      "La tab ne note pas les durées : chante l'air dans ta tête.",
+    ] },
   ],
   quiz: ["q-debut-50", "q-debut-51", "q-debut-52"],
 };

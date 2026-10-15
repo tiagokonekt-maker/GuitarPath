@@ -26,7 +26,8 @@ pas dans le test de placement, et il est facultatif pour qui joue déjà
 Ouvrir `cours/<module>/<id>.js`. Le fichier contient :
 
 - `export default { … }` : la leçon (`id`, `level`, `title`, `duration`,
-  `content` = les blocs affichés, `quiz` = les questions proposées à la fin) ;
+  `content` = les blocs affichés — ou `cartes`, voir « Leçons en cartes »
+  plus bas —, `quiz` = les questions rattachées à la leçon) ;
 - `export const quiz = [ … ]` : les questions **rattachées** à cette leçon
   (`lessonId` = l'id de la leçon).
 
@@ -42,6 +43,76 @@ plus sûr. Le bloc `tab` (`data.lines` = 6 lignes ASCII, corde 1 en haut,
 `text` = la même tab dite en mots, `caption` = légende) sert aux leçons de
 tablature : `src/diagrams.jsx` (TabBlock) l'affiche en police à chasse fixe,
 défilable horizontalement, et donne `text` aux lecteurs d'écran. Un paragraphe peut porter une image : `img`, `imgAlt`, `imgSide`.
+
+## Leçons en cartes
+
+Une leçon peut remplacer `content` par `cartes` : une carte par écran, la
+guitare en main, avec des questions et des moments « À toi de jouer » au fil
+de la leçon (écran : `src/lecon/LeconCartes.jsx`, logique pure et contrôles :
+`src/lecon/cartes.js`). Une leçon sans `cartes` garde son rendu article.
+Les 15 leçons de `debut` sont dans ce format ; on n'y garde plus `content`
+(une seule version du texte, que le vérificateur contrôle vraiment).
+
+```js
+export default {
+  id: "debut-c2-02", level: 0, unite: 2,
+  title: "Tes deux premiers accords : Mi mineur et La mineur",
+  duration: 7,
+  gropiTip: "…",                       // affiché sur la carte récap
+  cartes: [
+    // Une idée : un titre court, 1 à 3 paragraphes (≈ 60 mots en tout,
+    // avertissement au-delà de 70), et au plus UN diagramme (tout bloc de
+    // renderDiagramBlock : chord_diagram, strum_pattern, tab… avec son
+    // bouton d'écoute).
+    { type: "idee", titre: "Mi mineur (Em)", texte: [
+      "Majeur (2) sur la corde 5, case 2 ; annulaire (3) sur la corde 4, case 2.",
+      "Ses trois notes : Mi, Sol et Si.",
+    ], bloc: { type: "chord_diagram", caption: "…", data: { name: "Em", frets: [0, 2, 2, 0, 0, 0] } } },
+
+    // Une question liée au quiz : énoncé, choix et explication viennent de
+    // la question q-debut-25 (rien à recopier), et la réponse alimente la
+    // révision espacée (REVIEW_ANSWER, sans XP, une fois par jour).
+    { type: "question", quizId: "q-debut-25" },
+
+    // …ou une question propre à la carte (ne passe pas en révision).
+    { type: "question", q: "Combien de cordes gratte-t-on ?", o: ["5", "6"], a: 1, exp: "Les six." },
+
+    // À toi de jouer : une consigne, un diagramme facultatif, un clic de
+    // métronome facultatif (bpm, 30–240) et/ou un minuteur (secondes, 10–600).
+    { type: "a-toi", titre: "Une minute de changements",
+      consigne: "Mi mineur, La mineur… le plus de changements possible.",
+      bloc: { type: "chord_diagram", caption: "…", data: { name: "Am", frets: [-1, 0, 2, 2, 1, 0] } },
+      bpm: 60, minuteur: 60 },
+
+    // Le récap, toujours en dernier : exactement 3 points à retenir.
+    { type: "recap", points: ["…", "…", "…"] },
+  ],
+  quiz: ["q-debut-25", "q-debut-26", "q-debut-27", "q-debut-28"],   // inchangé
+};
+```
+
+Règles vérifiées par `npm test` (`scripts/verifier-contenu.mjs`) :
+
+- **Bloquant** : type de carte inconnu, champ requis manquant, `a` hors des
+  choix, `quizId` inexistant, `quizId` accompagné d'un `q`/`o`/`a`/`exp`
+  réécrit, bloc de diagramme inconnu ou sans `data`, récap absent ou pas en
+  dernier, aucune question ou aucun « À toi de jouer ».
+- **Avertissement** : idée de plus de 70 mots, moins de 6 ou plus de 10
+  cartes, plus de 3 idées d'affilée sans question.
+- Les diagrammes et le texte des cartes passent par les mêmes contrôles
+  musicaux que `content` (accords recalculés, « Note (corde X case Y) »…).
+
+Conseils d'écriture : une idée par carte ; une question toutes les 2 ou 3
+idées ; au moins un « À toi de jouer » avec de quoi jouer (accords à 60 BPM,
+rythmique avec son `strum_pattern`, tab à lire) ; un même diagramme réutilisé
+se déclare une fois en constante en tête de fichier.
+
+À l'écran : barre de progression (« 3 / 9 »), bouton principal « Continuer »
+(« Passer » sur une question pas encore répondue, « C'est fait » sur un « À
+toi de jouer », « Terminer la leçon » sur le récap), « Retour », balayage
+gauche/droite, flèches du clavier. La carte en cours est mémorisée dans
+`localStorage` (`groply:lecon-carte:<id>`) : on reprend là où on s'était
+arrêté.
 
 ## Ajouter une leçon
 

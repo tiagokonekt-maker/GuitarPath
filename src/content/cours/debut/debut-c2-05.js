@@ -1,25 +1,40 @@
 // Leçon du module « debut » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
+
+const PASSE_PARTOUT = { type: "strum_pattern", caption: "Bas, bas-haut, haut-bas-haut — la main ne s'arrête jamais", data: { pattern: ["B", "-", "B", "H", "-", "H", "B", "H"], beats: 4, style: "folk", bpm: 70 } };
 
 export default {
   id: "debut-c2-05", level: 0, unite: 2,
   title: "Tes premières rythmiques",
   duration: 7,
   gropiTip: "Exercice muet : pose la main gauche à plat sur les cordes, sans appuyer, et joue la rythmique passe-partout. Sans les notes, tu n'entends plus que le rythme : idéal pour vérifier ton balancier.",
-  content: [
-    { type: "p", text: "Un accord, c'est une couleur. La rythmique, c'est ce qui le fait danser. Avec trois rythmiques simples, tes accords vont commencer à ressembler à de la vraie musique. On travaille sur un seul accord (Mi mineur, par exemple) pour que la main gauche se fasse oublier." },
-    { type: "h", text: "Rythmique 1 : quatre coups vers le bas" },
-    { type: "strum_pattern", caption: "4 noires vers le bas — compte « 1, 2, 3, 4 »", data: { pattern: ["B", "B", "B", "B"], beats: 4, style: "folk", bpm: 60 } },
-    { type: "p", text: "Un coup vers le bas sur chaque temps. Compte à voix haute « 1, 2, 3, 4 » et gratte en même temps que tu dis chaque chiffre. Simple, mais c'est la base de tout : un rythme régulier, sans accélérer." },
-    { type: "h", text: "Rythmique 2 : bas-haut en continu" },
-    { type: "strum_pattern", caption: "8 croches — bas sur les temps, haut sur les « et »", data: { pattern: ["B", "H", "B", "H", "B", "H", "B", "H"], beats: 4, style: "folk", bpm: 60 } },
-    { type: "p", text: "On ajoute un coup vers le haut entre chaque temps. Compte « 1 et 2 et 3 et 4 et » : vers le bas sur les chiffres, vers le haut sur les « et ». Le coup vers le haut peut être plus léger et ne toucher que les cordes aiguës, c'est normal et ça sonne bien." },
-    { type: "h", text: "Rythmique 3 : la rythmique « passe-partout »" },
-    { type: "strum_pattern", caption: "Bas, bas-haut, haut-bas-haut — la main ne s'arrête jamais", data: { pattern: ["B", "-", "B", "H", "-", "H", "B", "H"], beats: 4, style: "folk", bpm: 70 } },
-    { type: "p", text: "Bas, bas-haut, haut-bas-haut. Le secret : ta main continue exactement le même mouvement de balancier que dans la rythmique 2, bas sur les temps, haut sur les « et ». Simplement, elle ne touche pas les cordes à deux endroits : sur le « et » du 1 et sur le temps 3, elle passe dans le vide. C'est ce qui crée le petit balancement, et c'est une des rythmiques les plus utilisées en pop et en folk." },
-    { type: "h", text: "La règle d'or : le balancier ne s'arrête jamais" },
-    { type: "p", text: "Ta main droite est un pendule : elle descend sur les temps et remonte sur les « et », que tu touches les cordes ou non. Si tu t'arrêtes pour « attendre » le prochain coup, tu perds le rythme. Garde le mouvement régulier et contente-toi de rater les cordes quand il le faut." },
-    { type: "tip", text: "Utilise le métronome (Outils → Métronome), réglé lentement : 60 à 70 BPM. Joue chaque rythmique pendant une minute sans t'arrêter avant d'accélérer. Quand c'est fluide sur un accord, essaie en changeant d'accord toutes les deux mesures." },
+  cartes: [
+    { type: "idee", titre: "Faire danser les accords", texte: [
+      "Un accord, c'est une couleur ; la rythmique le fait danser.",
+      "On reste sur un seul accord, Mi mineur, pour que la main gauche se fasse oublier.",
+    ] },
+    { type: "a-toi", titre: "Rythmique 1 : quatre coups vers le bas", consigne: "Un coup vers le bas sur chaque temps, en disant « 1, 2, 3, 4 » à voix haute. Lance le clic et reste régulier, sans accélérer. Simple, mais c'est la base de tout.", bloc: { type: "strum_pattern", caption: "4 noires vers le bas — compte « 1, 2, 3, 4 »", data: { pattern: ["B", "B", "B", "B"], beats: 4, style: "folk", bpm: 60 } }, bpm: 60 },
+    { type: "idee", titre: "Rythmique 2 : bas-haut", texte: [
+      "On ajoute un coup vers le haut entre les temps. Compte « 1 et 2 et 3 et 4 et » : vers le bas sur les chiffres, vers le haut sur les « et ».",
+      "Le coup vers le haut peut ne toucher que les cordes aiguës : c'est normal.",
+    ], bloc: { type: "strum_pattern", caption: "8 croches — bas sur les temps, haut sur les « et »", data: { pattern: ["B", "H", "B", "H", "B", "H", "B", "H"], beats: 4, style: "folk", bpm: 60 } } },
+    { type: "question", quizId: "q-debut-36" },
+    { type: "idee", titre: "La rythmique passe-partout", texte: [
+      "Bas, bas-haut, haut-bas-haut : une des rythmiques les plus utilisées en pop et en folk.",
+      "Le secret : ta main garde le balancier de la rythmique 2, mais passe dans le vide sur le « et » du 1 et sur le temps 3.",
+    ], bloc: PASSE_PARTOUT },
+    { type: "question", quizId: "q-debut-37" },
+    { type: "idee", titre: "Le balancier ne s'arrête jamais", texte: [
+      "Ta main droite est un pendule : elle descend sur les temps et remonte sur les « et », qu'elle touche les cordes ou non.",
+      "Si elle s'arrête pour « attendre », tu perds le rythme.",
+    ] },
+    { type: "a-toi", titre: "La passe-partout au clic", consigne: "Joue la passe-partout sur Mi mineur pendant une minute, sans t'arrêter, avec le clic à 60 BPM. Quand c'est fluide, essaie à 70. Ensuite, change d'accord toutes les deux mesures.", bloc: PASSE_PARTOUT, bpm: 60, minuteur: 60 },
+    { type: "question", quizId: "q-debut-38" },
+    { type: "recap", points: [
+      "Bas sur les temps, haut sur les « et ».",
+      "La passe-partout : bas, bas-haut, haut-bas-haut.",
+      "Le balancier ne s'arrête jamais : on rate les cordes, on ne s'arrête pas.",
+    ] },
   ],
   quiz: ["q-debut-36", "q-debut-37", "q-debut-38"],
 };

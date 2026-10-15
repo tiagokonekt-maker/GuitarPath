@@ -1,22 +1,39 @@
 // Leçon du module « debut » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
+
+const EM = { type: "chord_diagram", caption: "Mi mineur (Em) — exemple de diagramme", data: { name: "Em", frets: [0, 2, 2, 0, 0, 0], fingers: [0, 2, 3, 0, 0, 0], startFret: 1 } };
 
 export default {
   id: "debut-c2-01", level: 0, unite: 2,
   title: "Lire un diagramme d'accord",
   duration: 5,
   gropiTip: "Mini-défi : écris Mi mineur en chiffres sans regarder (022000), puis devine ce que donne 000000. Réponse : les six cordes à vide, Mi La Ré Sol Si Mi !",
-  content: [
-    { type: "p", text: "Un accord, c'est plusieurs notes jouées en même temps. Pour savoir où poser les doigts, les guitaristes utilisent un petit schéma : le diagramme d'accord. Tu en verras partout, dans cette app, dans les recueils de chansons, sur les sites de partitions. Une fois qu'on sait le lire, c'est une affaire de secondes." },
-    { type: "h", text: "Le manche vu de face" },
-    { type: "p", text: "Imagine ta guitare posée debout devant toi, cordes face à toi. Les lignes verticales sont les 6 cordes : la corde 6 (Mi grave) à gauche, la corde 1 (Mi aigu) à droite. Les lignes horizontales sont les frettes. Le trait épais tout en haut, c'est le sillet : la case 1 est juste en dessous, puis la case 2, et ainsi de suite." },
-    { type: "chord_diagram", caption: "Mi mineur (Em) — exemple de diagramme", data: { name: "Em", frets: [0, 2, 2, 0, 0, 0], fingers: [0, 2, 3, 0, 0, 0], startFret: 1 } },
-    { type: "h", text: "Les symboles" },
-    { type: "p", text: "Un rond plein sur une corde = un doigt à poser à cet endroit. Le chiffre dans le rond = le doigt à utiliser (1 index, 2 majeur, 3 annulaire, 4 auriculaire). Un petit cercle vide au-dessus du sillet = la corde se joue à vide, sans doigt, et doit sonner. Une croix au-dessus d'une corde = cette corde ne doit pas être jouée." },
-    { type: "p", text: "Lis le diagramme de Mi mineur ci-dessus : majeur (2) sur la corde 5, case 2 ; annulaire (3) sur la corde 4, case 2 ; les quatre autres cordes à vide. On gratte les six cordes." },
-    { type: "h", text: "La notation en chiffres" },
-    { type: "p", text: "On écrit souvent un accord en une ligne de six caractères, de la corde 6 à la corde 1 : un chiffre = la case, 0 = corde à vide, x = corde non jouée. Mi mineur s'écrit donc 022000. Pratique pour noter un accord sans dessin." },
-    { type: "tip", text: "Les noms d'accords existent en français et en anglais : Do = C, Ré = D, Mi = E, Fa = F, Sol = G, La = A, Si = B. Un petit « m » après le nom signifie mineur : Em = Mi mineur, Am = La mineur. Tu peux écouter n'importe quel accord dans Outils → Accords avant de le jouer." },
+  cartes: [
+    { type: "idee", titre: "Un accord, un schéma", texte: [
+      "Un accord, c'est plusieurs notes jouées ensemble. Le diagramme d'accord montre où poser les doigts.",
+      "C'est ta guitare debout devant toi, cordes face à toi.",
+    ] },
+    { type: "idee", titre: "Cordes et frettes", texte: [
+      "Les lignes verticales sont les 6 cordes : la 6 (Mi grave) à gauche, la 1 (Mi aigu) à droite. Les lignes horizontales sont les frettes.",
+      "Le trait épais en haut, c'est le sillet : la case 1 est juste en dessous.",
+    ], bloc: EM },
+    { type: "question", quizId: "q-debut-23" },
+    { type: "idee", titre: "Ronds, cercles et croix", texte: [
+      "Un rond plein = un doigt à poser ; le chiffre dedans = le doigt à utiliser (1 index, 2 majeur, 3 annulaire, 4 auriculaire).",
+      "Un petit cercle au-dessus du sillet = corde jouée à vide. Une croix = corde à ne pas jouer.",
+    ] },
+    { type: "question", quizId: "q-debut-22" },
+    { type: "idee", titre: "L'accord en chiffres", texte: [
+      "On écrit aussi un accord en six caractères, de la corde 6 à la corde 1 : un chiffre = la case, 0 = à vide, x = corde non jouée. Mi mineur s'écrit 022000.",
+      "Noms anglais : Do = C, Ré = D, Mi = E, Fa = F, Sol = G, La = A, Si = B. Un « m » = mineur : Em = Mi mineur.",
+    ] },
+    { type: "question", quizId: "q-debut-24" },
+    { type: "a-toi", titre: "Lis et pose Mi mineur", consigne: "Majeur (2) sur la corde 5 en case 2, annulaire (3) sur la corde 4 en case 2, le reste à vide. Écoute-le avec le bouton, puis pose l'accord et gratte les six cordes.", bloc: EM },
+    { type: "recap", points: [
+      "Le diagramme montre le manche debout, vu de face : corde 6 à gauche, sillet en haut.",
+      "Rond = doigt (avec son numéro), cercle = corde à vide, croix = corde muette.",
+      "En chiffres, de la corde 6 à la 1 : Mi mineur = 022000.",
+    ] },
   ],
   quiz: ["q-debut-22", "q-debut-23", "q-debut-24"],
 };
