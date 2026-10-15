@@ -4,7 +4,7 @@ import { MORCEAUX, morceauParId } from "../src/morceaux/catalogue.js";
 import { FORMES_ACCORDS } from "../src/morceaux/accords.js";
 import {
   analyserMorceau, melodieJouee, bpmEffectif, dureeColonnes, tempsDeMesure,
-  extraireSegment, ajouterDecompte, preparerLecture, filtrerMorceaux, compterMesures,
+  extraireSegment, ajouterDecompte, preparerLecture, positionCourante, filtrerMorceaux, compterMesures,
   texteEvenement, NIVEAUX, TYPES,
 } from "../src/morceaux/morceaux.js";
 import { planifierTab } from "../src/tab/tabSon.js";
@@ -221,4 +221,26 @@ test("aucune case aberrante (chiffres collés lus comme une seule case)", () => 
       }
     }
   }
+});
+
+test("reprise exacte : depuisCol retire ce qui est déjà joué et garde le rythme de la suite", () => {
+  const m = MORCEAUX.find(x => x.id === "ode-a-la-joie");
+  const a = analyserMorceau(m);
+  const entier = preparerLecture(a, { tempo: m.tempo, signature: m.mesure, pourcent: 100 });
+  const pos = 37.5;   // entre deux notes, au milieu de la 3e mesure
+  const reprise = preparerLecture(a, { tempo: m.tempo, signature: m.mesure, pourcent: 100, depuisCol: pos });
+  const attendues = entier.evenements.filter(e => e.colMorceau >= pos);
+  assert.equal(reprise.evenements.length, attendues.length);
+  // Même note, même écart à la position de reprise.
+  reprise.evenements.forEach((e, i) => {
+    assert.equal(e.colMorceau, attendues[i].colMorceau);
+    assert.ok(Math.abs(e.col - (attendues[i].col - pos)) < 1e-9);
+  });
+  assert.ok(Math.abs(reprise.colonnes - (entier.colonnes - pos)) < 1e-9);
+});
+
+test("reprise exacte : la position avance avec le temps écoulé, au tempo de la lecture", () => {
+  // 60 BPM : une double-croche = 0,25 s ; 1 s après la note → 4 colonnes plus loin.
+  assert.equal(positionCourante({ col: 10, t: 1000, bpm: 60 }, 2000), 14);
+  assert.equal(positionCourante(null, 2000), null);
 });

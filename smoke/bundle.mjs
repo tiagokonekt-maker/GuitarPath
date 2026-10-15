@@ -8402,6 +8402,11 @@ function bpmEffectif(tempo, pourcent) {
   const p = Math.max(VITESSE_MIN, Math.min(VITESSE_MAX, Number(pourcent) || VITESSE_MAX));
   return Math.max(20, Math.round(tempo * p / 100));
 }
+function positionCourante(derniere, maintenant) {
+  if (!derniere) return null;
+  const ecoule = Math.max(0, (maintenant - derniere.t) / 1e3);
+  return derniere.col + ecoule / dureeColonnes(1, derniere.bpm);
+}
 function tempsDeMesure(signature, colsParMesure) {
   const [num, den] = String(signature || "4/4").split("/").map(Number);
   if (den === 8 && num % 3 === 0) {
@@ -8417,6 +8422,14 @@ function extraireSegment(evenements, colsParMesure, debut, fin) {
     const out = { ...e, col: e.col - decalage, colMorceau: e.col };
     if (e.releaseCol != null) out.releaseCol = e.releaseCol - decalage;
     if (e.toCol != null) out.toCol = e.toCol - decalage;
+    return out;
+  });
+}
+function decaler2(evenements, delta) {
+  return evenements.map((e) => {
+    const out = { ...e, col: e.col + delta };
+    if (e.releaseCol != null) out.releaseCol = e.releaseCol + delta;
+    if (e.toCol != null) out.toCol = e.toCol + delta;
     return out;
   });
 }
@@ -8438,6 +8451,11 @@ function preparerLecture(analyse, opts) {
   const fin = Math.max(debut, Math.min(dernier, opts.fin ?? dernier));
   let evenements = extraireSegment(analyse.evenements, W, debut, fin);
   let colonnes = (fin - debut + 1) * W;
+  const ecart = opts.depuisCol == null ? 0 : opts.depuisCol - debut * W;
+  if (ecart > 0 && ecart < colonnes) {
+    evenements = decaler2(evenements.filter((e) => e.col >= ecart - 1e-6), -ecart);
+    colonnes -= ecart;
+  }
   if (decompte) {
     evenements = ajouterDecompte(evenements, W, tempsDeMesure(signature, W));
     colonnes += W;
@@ -8704,7 +8722,8 @@ function LecteurMorceau({ morceau, onRetour, C }) {
   const lectureRef = useRef13(0);
   const etatRef = useRef13("arret");
   const enLecture = (id) => id === lectureRef.current && etatRef.current === "lecture";
-  const colRef = useRef13(null);
+  const derniereRef = useRef13(null);
+  const repriseRef = useRef13(null);
   const timerBoucleRef = useRef13(null);
   const timerReglageRef = useRef13(null);
   const titreRef = useRef13(null);
@@ -8723,25 +8742,27 @@ function LecteurMorceau({ morceau, onRetour, C }) {
     clearTimeout(timerReglageRef.current);
     etatRef.current = "arret";
     setEtat("arret");
-    colRef.current = null;
+    derniereRef.current = null;
+    repriseRef.current = null;
     setColCourante(null);
   }, [couper]);
-  const mesureDeReprise = useCallback8(() => {
+  const dansLePassage = useCallback8((pos) => {
+    if (pos == null) return null;
     const { debut: d, fin: f } = reglagesRef.current;
-    if (colRef.current == null) return d;
-    const m = Math.floor(colRef.current / analyse.colsParMesure);
-    return m >= d && m <= f ? m : d;
+    const W = analyse.colsParMesure;
+    return pos >= d * W && pos < (f + 1) * W ? pos : null;
   }, [analyse]);
   const lancerRef = useRef13(null);
-  const lancer = useCallback8(async ({ depuis, avecDecompte }) => {
+  const lancer = useCallback8(async ({ depuisCol, avecDecompte }) => {
     const r = reglagesRef.current;
     const plan = preparerLecture(analyse, {
       tempo: morceau.tempo,
       signature: morceau.mesure,
       pourcent: r.vitesse,
-      debut: depuis ?? r.debut,
+      debut: r.debut,
       fin: r.fin,
-      decompte: avecDecompte && r.decompte
+      decompte: avecDecompte && r.decompte,
+      depuisCol
     });
     if (!plan.evenements.length) return;
     couper();
@@ -8757,7 +8778,7 @@ function LecteurMorceau({ morceau, onRetour, C }) {
           return;
         }
         setClic(null);
-        colRef.current = ev.colMorceau;
+        derniereRef.current = { col: ev.colMorceau, t: performance.now(), bpm: plan.bpm };
         setColCourante(ev.colMorceau);
       },
       onDone: () => {
@@ -8787,19 +8808,22 @@ function LecteurMorceau({ morceau, onRetour, C }) {
   const lireOuPause = () => {
     if (etat === "lecture") {
       clearTimeout(timerReglageRef.current);
+      repriseRef.current = positionCourante(derniereRef.current, performance.now());
       couper();
       etatRef.current = "pause";
       setEtat("pause");
       return;
     }
     unlockAudio();
-    lancer(etat === "pause" ? { depuis: mesureDeReprise(), avecDecompte: true } : { avecDecompte: true });
+    lancer(etat === "pause" ? { depuisCol: dansLePassage(repriseRef.current), avecDecompte: true } : { avecDecompte: true });
   };
   const appliquerEnDirect = (delai = 0) => {
     if (etatRef.current !== "lecture") return;
     clearTimeout(timerReglageRef.current);
     timerReglageRef.current = setTimeout(() => {
-      if (etatRef.current === "lecture") lancer({ depuis: mesureDeReprise(), avecDecompte: false });
+      if (etatRef.current !== "lecture") return;
+      const pos = positionCourante(derniereRef.current, performance.now());
+      lancer({ depuisCol: dansLePassage(pos), avecDecompte: false });
     }, delai);
   };
   const changerVitesse = (v, delai = 0) => {

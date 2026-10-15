@@ -19,7 +19,7 @@ import { MORCEAUX, morceauParId } from "../../morceaux/catalogue.js";
 import { FORMES_ACCORDS, nomAccord } from "../../morceaux/accords.js";
 import {
   NIVEAUX, TYPES, VITESSE_MIN, VITESSE_MAX,
-  analyserMorceau, preparerLecture, bpmEffectif, filtrerMorceaux, texteEvenement, tempsDeMesure,
+  analyserMorceau, preparerLecture, positionCourante, bpmEffectif, filtrerMorceaux, texteEvenement, tempsDeMesure,
 } from "../../morceaux/morceaux.js";
 
 const CORDES_LABELS = ["e", "B", "G", "D", "A", "E"];   // corde 1 en haut, comme à l'écrit
@@ -279,7 +279,10 @@ function LecteurMorceau({ morceau, onRetour, C }) {
   const lectureRef = useRef(0);
   const etatRef = useRef("arret");
   const enLecture = (id) => id === lectureRef.current && etatRef.current === "lecture";
-  const colRef = useRef(null);                     // dernière colonne jouée (morceau entier)
+  // Dernière note entendue : { col, t, bpm } — de quoi calculer où en est la
+  // lecture à tout instant, entre deux notes.
+  const derniereRef = useRef(null);
+  const repriseRef = useRef(null);                 // position mémorisée à la pause
   const timerBoucleRef = useRef(null);
   const timerReglageRef = useRef(null);
   const titreRef = useRef(null);
@@ -299,26 +302,26 @@ function LecteurMorceau({ morceau, onRetour, C }) {
     couper();
     clearTimeout(timerReglageRef.current);
     etatRef.current = "arret"; setEtat("arret");
-    colRef.current = null; setColCourante(null);
+    derniereRef.current = null; repriseRef.current = null; setColCourante(null);
   }, [couper]);
 
-  // Mesure où reprendre : celle de la dernière note jouée, si elle est dans
-  // le passage A–B ; sinon le début du passage.
-  const mesureDeReprise = useCallback(() => {
+  // Où reprendre : la position exacte (calculée), si elle est dans le
+  // passage A–B ; sinon null, c'est-à-dire le début du passage.
+  const dansLePassage = useCallback((pos) => {
+    if (pos == null) return null;
     const { debut: d, fin: f } = reglagesRef.current;
-    if (colRef.current == null) return d;
-    const m = Math.floor(colRef.current / analyse.colsParMesure);
-    return m >= d && m <= f ? m : d;
+    const W = analyse.colsParMesure;
+    return pos >= d * W && pos < (f + 1) * W ? pos : null;
   }, [analyse]);
 
   const lancerRef = useRef(null);
-  // depuis : mesure de départ de ce passage (par défaut le début A) ;
+  // depuisCol : colonne exacte où reprendre (par défaut le début A) ;
   // avecDecompte : décompte joué devant (si l'option est active).
-  const lancer = useCallback(async ({ depuis, avecDecompte }) => {
+  const lancer = useCallback(async ({ depuisCol, avecDecompte }) => {
     const r = reglagesRef.current;
     const plan = preparerLecture(analyse, {
       tempo: morceau.tempo, signature: morceau.mesure, pourcent: r.vitesse,
-      debut: depuis ?? r.debut, fin: r.fin, decompte: avecDecompte && r.decompte,
+      debut: r.debut, fin: r.fin, decompte: avecDecompte && r.decompte, depuisCol,
     });
     if (!plan.evenements.length) return;
     couper();
@@ -332,7 +335,7 @@ function LecteurMorceau({ morceau, onRetour, C }) {
         if (!enLecture(id)) return;
         if (ev.decompte) { setClic(ev.decompte); return; }
         setClic(null);
-        colRef.current = ev.colMorceau;
+        derniereRef.current = { col: ev.colMorceau, t: performance.now(), bpm: plan.bpm };
         setColCourante(ev.colMorceau);
       },
       onDone: () => {
@@ -362,27 +365,30 @@ function LecteurMorceau({ morceau, onRetour, C }) {
   }, []);
 
   const lireOuPause = () => {
-    if (etat === "lecture") {                 // pause : on garde la position
+    if (etat === "lecture") {                 // pause : on garde la position exacte
       clearTimeout(timerReglageRef.current);
+      repriseRef.current = positionCourante(derniereRef.current, performance.now());
       couper();
       etatRef.current = "pause"; setEtat("pause");
       return;
     }
     unlockAudio();   // dans le geste : indispensable sur iOS
     lancer(etat === "pause"
-      ? { depuis: mesureDeReprise(), avecDecompte: true }
+      ? { depuisCol: dansLePassage(repriseRef.current), avecDecompte: true }
       : { avecDecompte: true });
   };
 
   // Un réglage changé PENDANT la lecture s'applique tout de suite : on
-  // relance depuis la mesure en cours (sans décompte, pour ne pas casser le
-  // fil). Le curseur de vitesse envoie une valeur à chaque cran : on attend
-  // qu'il se stabilise.
+  // relance exactement là où on en est (sans décompte, pour ne pas casser
+  // le fil). Le curseur de vitesse envoie une valeur à chaque cran : on
+  // attend qu'il se stabilise. En pause, la position mémorisée reste valable.
   const appliquerEnDirect = (delai = 0) => {
     if (etatRef.current !== "lecture") return;
     clearTimeout(timerReglageRef.current);
     timerReglageRef.current = setTimeout(() => {
-      if (etatRef.current === "lecture") lancer({ depuis: mesureDeReprise(), avecDecompte: false });
+      if (etatRef.current !== "lecture") return;
+      const pos = positionCourante(derniereRef.current, performance.now());
+      lancer({ depuisCol: dansLePassage(pos), avecDecompte: false });
     }, delai);
   };
 

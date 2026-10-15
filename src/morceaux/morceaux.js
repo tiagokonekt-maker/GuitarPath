@@ -99,6 +99,18 @@ export function bpmEffectif(tempo, pourcent) {
 export const dureeColonnes = (nbCols, bpm) => nbCols * (60 / bpm) / 4;
 
 /**
+ * Position de lecture (colonne du morceau, fractionnaire) à l'instant `maintenant`
+ * (ms), d'après la dernière note entendue : sa colonne, l'instant où elle a
+ * sonné et le tempo de la lecture. Sert à reprendre exactement là où on en
+ * est, et non au début de la mesure.
+ */
+export function positionCourante(derniere, maintenant) {
+  if (!derniere) return null;
+  const ecoule = Math.max(0, (maintenant - derniere.t) / 1000);
+  return derniere.col + ecoule / dureeColonnes(1, derniere.bpm);
+}
+
+/**
  * Colonnes des temps d'une mesure, pour le décompte : 4/4 → 0 4 8 12,
  * 3/4 → 0 4 8, 6/8 (deux temps pointés) → 0 6.
  */
@@ -129,6 +141,16 @@ export function extraireSegment(evenements, colsParMesure, debut, fin) {
     });
 }
 
+/** Décale les colonnes d'un ensemble d'évènements (bends, slides compris). */
+function decaler(evenements, delta) {
+  return evenements.map(e => {
+    const out = { ...e, col: e.col + delta };
+    if (e.releaseCol != null) out.releaseCol = e.releaseCol + delta;
+    if (e.toCol != null) out.toCol = e.toCol + delta;
+    return out;
+  });
+}
+
 /**
  * Ajoute une mesure de décompte (notes étouffées sur les temps) devant les
  * évènements, décalés d'une mesure. Chaque clic porte `decompte: n` (1, 2…).
@@ -147,7 +169,10 @@ export function ajouterDecompte(evenements, colsParMesure, temps) {
 /**
  * Prépare une lecture : segment A–B, décompte éventuel, tempo réduit.
  * @param analyse  sortie d'analyserMorceau
- * @param opts { tempo, signature, pourcent, debut, fin, decompte }
+ * @param opts { tempo, signature, pourcent, debut, fin, decompte, depuisCol }
+ *   depuisCol : colonne du morceau (fractionnaire possible) où reprendre —
+ *   pause, ou réglage changé en pleine lecture. Les notes d'avant sont
+ *   retirées et la suite est recalée pour démarrer là, au même rythme.
  * @returns { evenements, bpm, colonnes, duree }
  *   colonnes / duree : longueur de ce qui est joué (décompte compris), en
  *   colonnes et en secondes — mesures entières, pour boucler sur la pulsation.
@@ -160,6 +185,11 @@ export function preparerLecture(analyse, opts) {
   const fin = Math.max(debut, Math.min(dernier, opts.fin ?? dernier));
   let evenements = extraireSegment(analyse.evenements, W, debut, fin);
   let colonnes = (fin - debut + 1) * W;
+  const ecart = opts.depuisCol == null ? 0 : opts.depuisCol - debut * W;
+  if (ecart > 0 && ecart < colonnes) {
+    evenements = decaler(evenements.filter(e => e.col >= ecart - 1e-6), -ecart);
+    colonnes -= ecart;
+  }
   if (decompte) {
     evenements = ajouterDecompte(evenements, W, tempsDeMesure(signature, W));
     colonnes += W;
