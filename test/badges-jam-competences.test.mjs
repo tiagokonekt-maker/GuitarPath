@@ -7,7 +7,7 @@ import { reducer } from "../src/store/reducer.js";
 // Les trois compteurs des badges (le compteur de jam porte aussi le temps du
 // jour, pour la séance du jour : on ne fige pas la liste complète des champs).
 const compteurs = (j) => ({ seances: j.seances, secondes: j.secondes, contraintes: j.contraintes });
-import { COURSES, QUIZ, EXERCISES } from "../src/content.js";
+import { COURSES, QUIZ, EXERCISES } from "../src/content/index.js";
 
 const content = { courses: COURSES, quiz: QUIZ, exercises: EXERCISES };
 const debloques = (state) => computeNewBadges({ ...defaultState(), ...state }, content);

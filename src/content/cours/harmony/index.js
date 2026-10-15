@@ -1,0 +1,66 @@
+// ═══════════════════════════════════════════════════════════════════════
+// MODULE 3 — HARMONIE
+// ═══════════════════════════════════════════════════════════════════════
+// Ordre des leçons = ordre de cette liste.
+import * as harmony03 from "./harmony-03.js";
+import * as harmC101 from "./harm-c1-01.js";
+import * as harmC102 from "./harm-c1-02.js";
+import * as harmC201 from "./harm-c2-01.js";
+import * as harmC202 from "./harm-c2-02.js";
+import * as harmC203 from "./harm-c2-03.js";
+import * as harmC204 from "./harm-c2-04.js";
+import * as harmC301 from "./harm-c3-01.js";
+import * as harmC302 from "./harm-c3-02.js";
+import * as harmC303 from "./harm-c3-03.js";
+import * as harmC304 from "./harm-c3-04.js";
+import * as harmC401 from "./harm-c4-01.js";
+import * as harmC402 from "./harm-c4-02.js";
+import * as harmC501 from "./harm-c5-01.js";
+import * as harmC502 from "./harm-c5-02.js";
+import * as harmC503 from "./harm-c5-03.js";
+import * as harmC601 from "./harm-c6-01.js";
+import * as harmC602 from "./harm-c6-02.js";
+import * as harmC603 from "./harm-c6-03.js";
+import * as harmC604 from "./harm-c6-04.js";
+import * as harmC701 from "./harm-c7-01.js";
+import * as harmC702 from "./harm-c7-02.js";
+import * as harmC703 from "./harm-c7-03.js";
+import * as harmC801 from "./harm-c8-01.js";
+import * as harmC802 from "./harm-c8-02.js";
+
+export const LECONS = [
+  harmony03,
+  harmC101,
+  harmC102,
+  harmC201,
+  harmC202,
+  harmC203,
+  harmC204,
+  harmC301,
+  harmC302,
+  harmC303,
+  harmC304,
+  harmC401,
+  harmC402,
+  harmC501,
+  harmC502,
+  harmC503,
+  harmC601,
+  harmC602,
+  harmC603,
+  harmC604,
+  harmC701,
+  harmC702,
+  harmC703,
+  harmC801,
+  harmC802,
+];
+
+export default {
+  id: "harmony",
+  title: "Harmonie",
+  icon: "🎵",
+  color: "#7F77DD",
+  colorL: "#EEEDFE",
+  desc: "Triades, accords 7, progressions, ciblage en impro",
+};

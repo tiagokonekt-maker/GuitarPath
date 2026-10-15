@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { FAMILLES, genererQuestion, niveauFamille, avantNiveauSuivant, famillesDisponibles, questionsGenereesPour, progressionFamilles, idQuestion } from "../src/store/generateurs.js";
-import { COURSES } from "../src/content.js";
+import { COURSES } from "../src/content/index.js";
 import { buildReviewSession, updateReviewHistory } from "../src/store/reviewEngine.js";
 
 // ── Oracle INDÉPENDANT : il relit l'énoncé et recalcule, sans le générateur ──

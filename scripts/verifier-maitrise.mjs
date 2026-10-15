@@ -18,7 +18,7 @@ const RACINE = resolve(ICI, "..");
 // correctement dans les deux cas.
 const versUrl = (chemin) => pathToFileURL(chemin).href;
 
-const { COURSES, QUIZ } = await import(versUrl(resolve(RACINE, "src/content.js")));
+const { COURSES, QUIZ } = await import(versUrl(resolve(RACINE, "src/content/index.js")));
 const { masteryStats } = await import(versUrl(resolve(RACINE, "src/store/mastery.js")));
 
 const content = { courses: COURSES, quiz: QUIZ };

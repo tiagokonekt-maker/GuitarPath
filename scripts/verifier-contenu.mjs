@@ -1,23 +1,42 @@
 #!/usr/bin/env node
 // Groply — scripts/verifier-contenu.mjs
 // Contrôles d'intégrité du contenu pédagogique. À lancer après chaque import
-// de pack ou modification de content.js.
+// de pack ou modification du contenu (src/content/).
 //
 //     node scripts/verifier-contenu.mjs
 //
 // Vérifie : identifiants uniques, index de bonne réponse valide, quiz orphelins
 // référencés par une leçon, couverture par module et par palier de difficulté,
-// et volumétrie d'XP face à la courbe de niveaux.
+// volumétrie d'XP face à la courbe de niveaux, et fichiers de leçon
+// cohérents avec les index (aucun fichier oublié, nom = identifiant).
 
-import { COURSES, QUIZ, EXERCISES } from "../src/content.js";
+import { COURSES, QUIZ, EXERCISES } from "../src/content/index.js";
 import { totalXpForLevel } from "../src/store/leveling.js";
 import { TESTABLE_MODULES, PLACEMENT_LEVELS, availableModules } from "../src/store/placementEngine.js";
 import { buildUnits, getUnitQuizPool } from "../src/store/pathEngine.js";
 import { LESSON_XP } from "../src/store/xp.js";
+import { readdirSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 let alertes = 0;
 const ko = (m) => { alertes++; console.log("  ⚠ " + m); };
 const titre = (t) => console.log("\n=== " + t + " ===");
+
+// ── Fichiers ───────────────────────────────────────────────────────────────
+// Une leçon = un fichier cours/<module>/<id>.js, importé par l'index du
+// module. Un fichier créé mais oublié dans l'index n'apparaîtrait nulle
+// part, sans aucune erreur : on le signale ici.
+titre("Fichiers");
+const DOSSIER_COURS = fileURLToPath(new URL("../src/content/cours/", import.meta.url));
+for (const c of COURSES) {
+  const fichiers = readdirSync(DOSSIER_COURS + c.id).filter(n => n.endsWith(".js") && n !== "index.js").map(n => n.slice(0, -3));
+  const ids = new Set((c.lessons || []).map(l => l.id));
+  for (const n of fichiers) if (!ids.has(n)) ko(`cours/${c.id}/${n}.js n'est pas importé par cours/${c.id}/index.js (ou son id diffère du nom du fichier)`);
+}
+for (const q of QUIZ) {
+  const c = COURSES.find(c => (c.lessons || []).some(l => l.id === q.lessonId));
+  if (!c) ko(`quiz ${q.id} : leçon ${q.lessonId} introuvable`);
+}
 
 // ── Identifiants ──────────────────────────────────────────────────────────
 titre("Identifiants");

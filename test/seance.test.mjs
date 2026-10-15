@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { vivierDuDomaine, planSeance, choisirExercice, dureeParDefaut, objectifJoursSemaine, questionsPour, joursDeLaSemaine, indexJour } from "../src/store/seance.js";
 import { reducer } from "../src/store/reducer.js";
 import { defaultState, mergeStates, todayStr, weekStr } from "../src/store/state.js";
-import { COURSES, QUIZ, EXERCISES } from "../src/content.js";
+import { COURSES, QUIZ, EXERCISES } from "../src/content/index.js";
 
 const content = { courses: COURSES, quiz: QUIZ, exercises: EXERCISES };
 const today = todayStr();

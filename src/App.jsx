@@ -3,7 +3,7 @@
 // Point d'entrée : auth, routing, chargement du contenu, synchronisation.
 //
 // ── Ce qui change ─────────────────────────────────────────────────────────
-// §3.1 VRAI CODE SPLITTING. Avant : `Promise.all([15 imports])` + content.js,
+// §3.1 VRAI CODE SPLITTING. Avant : `Promise.all([15 imports])` + le contenu,
 //      donc rien ne s'affichait avant que TOUTE l'application soit
 //      téléchargée. Ce n'était pas du lazy loading, c'était un chargement
 //      monolithique avec une étape en plus. Maintenant : React.lazy par
@@ -83,7 +83,7 @@ const PRELOAD = {
 
 // ── Contenu pédagogique ───────────────────────────────────────────────────
 // Chargé en parallèle du premier rendu, pas avant lui.
-const chargerContenu = () => import("./content.js");
+const chargerContenu = () => import("./content/index.js");
 
 // ── Navigation ────────────────────────────────────────────────────────────
 // « Parcours » disparaît en tant qu'onglet séparé : l'Accueil EST le

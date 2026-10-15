@@ -4,7 +4,7 @@
 import { createElement as h } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import * as M from "./bundle.mjs";
-import { COURSES, QUIZ, EXERCISES } from "../src/content.js";
+import { COURSES, QUIZ, EXERCISES } from "../src/content/index.js";
 import { defaultState } from "../src/store/state.js";
 import { buildPath } from "../src/store/pathEngine.js";
 

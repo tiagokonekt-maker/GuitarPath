@@ -39,7 +39,7 @@ VITE_SUPABASE_ANON_KEY=...
 src/
   App.jsx              point d'entrée, routing, auth, chargement du contenu
   main.jsx             montage React + error boundary de secours
-  content.js           tout le contenu pédagogique (cours, quiz, exercices)
+  content/             le contenu pédagogique : un fichier par leçon (voir content/README.md)
   diagrams.jsx         rendu des diagrammes de leçon (gammes, accords, rythme...)
   Fretboard.jsx         manche interactif (quiz tactile, explorateur, exercices)
   design/              design system (tokens, thème clair/sombre, icônes, mascotte Gropi)
