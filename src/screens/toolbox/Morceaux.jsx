@@ -262,89 +262,144 @@ function LecteurMorceau({ morceau, onRetour, C }) {
   const [fin, setFin] = useState(derniere);
   const [boucle, setBoucle] = useState(false);
   const [decompte, setDecompte] = useState(true);
-  const [jouant, setJouant] = useState(false);
+  // "arret" | "lecture" | "pause". En pause, le curseur reste où il était
+  // et « Reprendre » repart au début de cette mesure.
+  const [etat, setEtat] = useState("arret");
+  const jouant = etat === "lecture";
   const [colCourante, setColCourante] = useState(null);
   const [clic, setClic] = useState(null);         // temps du décompte en cours (1, 2…)
 
   // Miroir des réglages, lu par les rappels de lecture (minuterie de boucle,
-  // onDone) : un changement de vitesse ou de passage s'applique au tour
-  // suivant, sans couper la lecture en cours. Mis à jour dans les
-  // gestionnaires d'évènement, jamais pendant le rendu.
+  // onDone). Mis à jour dans les gestionnaires d'évènement, jamais pendant
+  // le rendu.
   const reglagesRef = useRef({ vitesse, debut, fin, boucle, decompte });
   const majReglages = (champs) => { reglagesRef.current = { ...reglagesRef.current, ...champs }; };
-  const enLectureRef = useRef(false);
+  // Numéro de la lecture en cours : un rappel (note, fin, boucle) venu d'une
+  // lecture qu'on a remplacée (pause, nouveau réglage) est ignoré.
+  const lectureRef = useRef(0);
+  const etatRef = useRef("arret");
+  const enLecture = (id) => id === lectureRef.current && etatRef.current === "lecture";
+  const colRef = useRef(null);                     // dernière colonne jouée (morceau entier)
   const timerBoucleRef = useRef(null);
+  const timerReglageRef = useRef(null);
   const titreRef = useRef(null);
 
   useEffect(() => { titreRef.current?.focus(); }, []);
 
-  const arreter = useCallback(() => {
-    enLectureRef.current = false;
+  // Coupe le son et invalide les rappels de la lecture en cours.
+  const couper = useCallback(() => {
+    lectureRef.current++;
     clearTimeout(timerBoucleRef.current); timerBoucleRef.current = null;
     stopAll();
-    setJouant(false); setColCourante(null); setClic(null);
+    setClic(null);
   }, []);
 
+  // Arrêt complet : retour au début du passage.
+  const arreter = useCallback(() => {
+    couper();
+    clearTimeout(timerReglageRef.current);
+    etatRef.current = "arret"; setEtat("arret");
+    colRef.current = null; setColCourante(null);
+  }, [couper]);
+
+  // Mesure où reprendre : celle de la dernière note jouée, si elle est dans
+  // le passage A–B ; sinon le début du passage.
+  const mesureDeReprise = useCallback(() => {
+    const { debut: d, fin: f } = reglagesRef.current;
+    if (colRef.current == null) return d;
+    const m = Math.floor(colRef.current / analyse.colsParMesure);
+    return m >= d && m <= f ? m : d;
+  }, [analyse]);
+
   const lancerRef = useRef(null);
-  const lancer = useCallback(async (premierPassage) => {
+  // depuis : mesure de départ de ce passage (par défaut le début A) ;
+  // avecDecompte : décompte joué devant (si l'option est active).
+  const lancer = useCallback(async ({ depuis, avecDecompte }) => {
     const r = reglagesRef.current;
     const plan = preparerLecture(analyse, {
       tempo: morceau.tempo, signature: morceau.mesure, pourcent: r.vitesse,
-      debut: r.debut, fin: r.fin, decompte: premierPassage && r.decompte,
+      debut: depuis ?? r.debut, fin: r.fin, decompte: avecDecompte && r.decompte,
     });
     if (!plan.evenements.length) return;
-    enLectureRef.current = true;
-    setJouant(true);
-    clearTimeout(timerBoucleRef.current); timerBoucleRef.current = null;
+    couper();
+    const id = lectureRef.current;
+    etatRef.current = "lecture"; setEtat("lecture");
     // ATTENDRE playTab : au premier lancement, il charge les échantillons
     // avant de jouer ; la minuterie de boucle ne doit partir qu'ensuite.
     await playTab(plan.evenements, {
       bpm: plan.bpm,
       onEvent: (ev) => {
-        if (!enLectureRef.current) return;
+        if (!enLecture(id)) return;
         if (ev.decompte) { setClic(ev.decompte); return; }
         setClic(null);
+        colRef.current = ev.colMorceau;
         setColCourante(ev.colMorceau);
       },
       onDone: () => {
-        if (!enLectureRef.current) return;
-        if (!reglagesRef.current.boucle) arreter();
+        if (enLecture(id) && !reglagesRef.current.boucle) arreter();
       },
     });
-    if (!enLectureRef.current) return;   // arrêtée pendant le chargement
-    // En boucle, on repart à la fin de la DERNIÈRE MESURE du passage (et
-    // non de la dernière note) : la boucle reste calée sur la pulsation.
+    if (!enLecture(id)) return;   // arrêtée ou remplacée pendant le chargement
+    // En boucle, on repart du début A à la fin de la DERNIÈRE MESURE du
+    // passage (et non de la dernière note) : la boucle reste calée sur la
+    // pulsation.
     if (r.boucle) {
       timerBoucleRef.current = setTimeout(() => {
         timerBoucleRef.current = null;
-        if (!enLectureRef.current) return;
-        if (reglagesRef.current.boucle) lancerRef.current?.(false);
+        if (!enLecture(id)) return;
+        if (reglagesRef.current.boucle) lancerRef.current?.({ avecDecompte: false });
         else arreter();
       }, plan.duree * 1000);
     }
-  }, [analyse, morceau, arreter]);
+  }, [analyse, morceau, arreter, couper]);
   useEffect(() => { lancerRef.current = lancer; }, [lancer]);
 
   // On quitte le morceau (retour à la liste, autre onglet) : silence.
-  useEffect(() => () => { enLectureRef.current = false; clearTimeout(timerBoucleRef.current); stopAll(); }, []);
+  useEffect(() => () => {
+    lectureRef.current++; etatRef.current = "arret";
+    clearTimeout(timerBoucleRef.current); clearTimeout(timerReglageRef.current);
+    stopAll();
+  }, []);
 
-  const basculerLecture = () => {
-    if (jouant) { arreter(); return; }
+  const lireOuPause = () => {
+    if (etat === "lecture") {                 // pause : on garde la position
+      clearTimeout(timerReglageRef.current);
+      couper();
+      etatRef.current = "pause"; setEtat("pause");
+      return;
+    }
     unlockAudio();   // dans le geste : indispensable sur iOS
-    lancer(true);
+    lancer(etat === "pause"
+      ? { depuis: mesureDeReprise(), avecDecompte: true }
+      : { avecDecompte: true });
   };
 
-  const changerVitesse = (v) => { setVitesse(v); majReglages({ vitesse: v }); };
+  // Un réglage changé PENDANT la lecture s'applique tout de suite : on
+  // relance depuis la mesure en cours (sans décompte, pour ne pas casser le
+  // fil). Le curseur de vitesse envoie une valeur à chaque cran : on attend
+  // qu'il se stabilise.
+  const appliquerEnDirect = (delai = 0) => {
+    if (etatRef.current !== "lecture") return;
+    clearTimeout(timerReglageRef.current);
+    timerReglageRef.current = setTimeout(() => {
+      if (etatRef.current === "lecture") lancer({ depuis: mesureDeReprise(), avecDecompte: false });
+    }, delai);
+  };
+
+  const changerVitesse = (v, delai = 0) => { setVitesse(v); majReglages({ vitesse: v }); appliquerEnDirect(delai); };
   const changerDebut = (d) => {
     const f = Math.max(d, fin);
-    setDebut(d); setFin(f); majReglages({ debut: d, fin: f });
+    setDebut(d); setFin(f); majReglages({ debut: d, fin: f }); appliquerEnDirect();
   };
   const changerFin = (f) => {
     const d = Math.min(debut, f);
-    setDebut(d); setFin(f); majReglages({ debut: d, fin: f });
+    setDebut(d); setFin(f); majReglages({ debut: d, fin: f }); appliquerEnDirect();
   };
-  const toutLeMorceau = () => { setDebut(0); setFin(derniere); majReglages({ debut: 0, fin: derniere }); };
-  const basculerBoucle = () => { const b = !boucle; setBoucle(b); majReglages({ boucle: b }); };
+  const toutLeMorceau = () => { setDebut(0); setFin(derniere); majReglages({ debut: 0, fin: derniere }); appliquerEnDirect(); };
+  // La boucle se décide à la fin du passage : relancer pour (re)programmer
+  // le retour au début A.
+  const basculerBoucle = () => { const b = !boucle; setBoucle(b); majReglages({ boucle: b }); appliquerEnDirect(); };
+  // Le décompte ne sert qu'au démarrage : rien à relancer.
   const basculerDecompte = () => { const d = !decompte; setDecompte(d); majReglages({ decompte: d }); };
 
   const bpm = bpmEffectif(morceau.tempo, vitesse);
@@ -365,7 +420,7 @@ function LecteurMorceau({ morceau, onRetour, C }) {
 
   const statut = jouant
     ? (clic ? `Décompte : ${clic}` : `Lecture ${passageEntier ? "du morceau" : `des mesures ${debut + 1} à ${fin + 1}`} à ${vitesse} %${boucle ? ", en boucle" : ""}.`)
-    : "";
+    : etat === "pause" ? `En pause, mesure ${mesureCourante != null ? mesureCourante + 1 : debut + 1}.` : "";
 
   return (
     <div>
@@ -397,14 +452,24 @@ function LecteurMorceau({ morceau, onRetour, C }) {
       </div>
 
       {/* ── Lecture ── */}
-      <button type="button" onClick={basculerLecture} className="gr-focus" style={{
-        width: "100%", minHeight: TAP.comfy, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-        borderRadius: R.lg, border: "none", background: jouant ? C.surface2 : C.primaryBtn,
-        color: jouant ? C.text : C.onPrimaryBtn, fontWeight: 800, fontSize: T.body, cursor: "pointer", fontFamily: FONTS.ui,
-      }}>
-        <Ti name={jouant ? "player-stop" : "player-play"} size={18} color={jouant ? C.text : C.onPrimaryBtn} />
-        {jouant ? "Arrêter" : "Écouter"}
-      </button>
+      <div style={{ display: "flex", gap: 8 }}>
+        <button type="button" onClick={lireOuPause} className="gr-focus" style={{
+          flex: 1, minHeight: TAP.comfy, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+          borderRadius: R.lg, border: "none", background: jouant ? C.surface2 : C.primaryBtn,
+          color: jouant ? C.text : C.onPrimaryBtn, fontWeight: 800, fontSize: T.body, cursor: "pointer", fontFamily: FONTS.ui,
+        }}>
+          <Ti name={jouant ? "player-pause" : "player-play"} size={18} color={jouant ? C.text : C.onPrimaryBtn} />
+          {jouant ? "Pause" : etat === "pause" ? "Reprendre" : "Écouter"}
+        </button>
+        {etat !== "arret" && (
+          <button type="button" onClick={arreter} aria-label="Arrêter et revenir au début du passage" className="gr-focus" style={{
+            minWidth: TAP.comfy, minHeight: TAP.comfy, display: "flex", alignItems: "center", justifyContent: "center",
+            borderRadius: R.lg, border: `1.5px solid ${C.borderStrong}`, background: C.surface, cursor: "pointer",
+          }}>
+            <Ti name="player-stop" size={18} color={C.text} />
+          </button>
+        )}
+      </div>
       <div role="status" aria-live="polite" style={{ minHeight: 20, fontSize: T.micro, color: C.text2, marginTop: 4, textAlign: "center" }}>{statut}</div>
 
       {/* ── Vitesse ── */}
@@ -414,7 +479,7 @@ function LecteurMorceau({ morceau, onRetour, C }) {
           <span style={{ color: C.primaryInk }}>{vitesse} % · {bpm} BPM</span>
         </label>
         <input id={idVitesse} type="range" min={VITESSE_MIN} max={VITESSE_MAX} step={5} value={vitesse}
-          onChange={e => changerVitesse(Number(e.target.value))}
+          onChange={e => changerVitesse(Number(e.target.value), 350)}
           aria-valuetext={`${vitesse} % du tempo, ${bpm} battements par minute`}
           className="gr-focus"
           style={{ width: "100%", height: TAP.min, accentColor: C.primary, margin: 0 }} />
@@ -423,7 +488,6 @@ function LecteurMorceau({ morceau, onRetour, C }) {
             <Puce key={v} actif={vitesse === v} onClick={() => changerVitesse(v)} C={C}>{v} %</Puce>
           ))}
         </div>
-        {jouant && <div style={{ fontSize: T.micro, color: C.text3, marginTop: 6 }}>Appliquée au prochain passage.</div>}
       </div>
 
       {/* ── Passage A–B, boucle, décompte ── */}

@@ -8693,111 +8693,145 @@ function LecteurMorceau({ morceau, onRetour, C }) {
   const [fin, setFin] = useState18(derniere);
   const [boucle, setBoucle] = useState18(false);
   const [decompte, setDecompte] = useState18(true);
-  const [jouant, setJouant] = useState18(false);
+  const [etat, setEtat] = useState18("arret");
+  const jouant = etat === "lecture";
   const [colCourante, setColCourante] = useState18(null);
   const [clic, setClic] = useState18(null);
   const reglagesRef = useRef13({ vitesse, debut, fin, boucle, decompte });
   const majReglages = (champs) => {
     reglagesRef.current = { ...reglagesRef.current, ...champs };
   };
-  const enLectureRef = useRef13(false);
+  const lectureRef = useRef13(0);
+  const etatRef = useRef13("arret");
+  const enLecture = (id) => id === lectureRef.current && etatRef.current === "lecture";
+  const colRef = useRef13(null);
   const timerBoucleRef = useRef13(null);
+  const timerReglageRef = useRef13(null);
   const titreRef = useRef13(null);
   useEffect15(() => {
     titreRef.current?.focus();
   }, []);
-  const arreter = useCallback8(() => {
-    enLectureRef.current = false;
+  const couper = useCallback8(() => {
+    lectureRef.current++;
     clearTimeout(timerBoucleRef.current);
     timerBoucleRef.current = null;
     stopAll();
-    setJouant(false);
-    setColCourante(null);
     setClic(null);
   }, []);
+  const arreter = useCallback8(() => {
+    couper();
+    clearTimeout(timerReglageRef.current);
+    etatRef.current = "arret";
+    setEtat("arret");
+    colRef.current = null;
+    setColCourante(null);
+  }, [couper]);
+  const mesureDeReprise = useCallback8(() => {
+    const { debut: d, fin: f } = reglagesRef.current;
+    if (colRef.current == null) return d;
+    const m = Math.floor(colRef.current / analyse.colsParMesure);
+    return m >= d && m <= f ? m : d;
+  }, [analyse]);
   const lancerRef = useRef13(null);
-  const lancer = useCallback8(async (premierPassage) => {
+  const lancer = useCallback8(async ({ depuis, avecDecompte }) => {
     const r = reglagesRef.current;
     const plan = preparerLecture(analyse, {
       tempo: morceau.tempo,
       signature: morceau.mesure,
       pourcent: r.vitesse,
-      debut: r.debut,
+      debut: depuis ?? r.debut,
       fin: r.fin,
-      decompte: premierPassage && r.decompte
+      decompte: avecDecompte && r.decompte
     });
     if (!plan.evenements.length) return;
-    enLectureRef.current = true;
-    setJouant(true);
-    clearTimeout(timerBoucleRef.current);
-    timerBoucleRef.current = null;
+    couper();
+    const id = lectureRef.current;
+    etatRef.current = "lecture";
+    setEtat("lecture");
     await playTab(plan.evenements, {
       bpm: plan.bpm,
       onEvent: (ev) => {
-        if (!enLectureRef.current) return;
+        if (!enLecture(id)) return;
         if (ev.decompte) {
           setClic(ev.decompte);
           return;
         }
         setClic(null);
+        colRef.current = ev.colMorceau;
         setColCourante(ev.colMorceau);
       },
       onDone: () => {
-        if (!enLectureRef.current) return;
-        if (!reglagesRef.current.boucle) arreter();
+        if (enLecture(id) && !reglagesRef.current.boucle) arreter();
       }
     });
-    if (!enLectureRef.current) return;
+    if (!enLecture(id)) return;
     if (r.boucle) {
       timerBoucleRef.current = setTimeout(() => {
         timerBoucleRef.current = null;
-        if (!enLectureRef.current) return;
-        if (reglagesRef.current.boucle) lancerRef.current?.(false);
+        if (!enLecture(id)) return;
+        if (reglagesRef.current.boucle) lancerRef.current?.({ avecDecompte: false });
         else arreter();
       }, plan.duree * 1e3);
     }
-  }, [analyse, morceau, arreter]);
+  }, [analyse, morceau, arreter, couper]);
   useEffect15(() => {
     lancerRef.current = lancer;
   }, [lancer]);
   useEffect15(() => () => {
-    enLectureRef.current = false;
+    lectureRef.current++;
+    etatRef.current = "arret";
     clearTimeout(timerBoucleRef.current);
+    clearTimeout(timerReglageRef.current);
     stopAll();
   }, []);
-  const basculerLecture = () => {
-    if (jouant) {
-      arreter();
+  const lireOuPause = () => {
+    if (etat === "lecture") {
+      clearTimeout(timerReglageRef.current);
+      couper();
+      etatRef.current = "pause";
+      setEtat("pause");
       return;
     }
     unlockAudio();
-    lancer(true);
+    lancer(etat === "pause" ? { depuis: mesureDeReprise(), avecDecompte: true } : { avecDecompte: true });
   };
-  const changerVitesse = (v) => {
+  const appliquerEnDirect = (delai = 0) => {
+    if (etatRef.current !== "lecture") return;
+    clearTimeout(timerReglageRef.current);
+    timerReglageRef.current = setTimeout(() => {
+      if (etatRef.current === "lecture") lancer({ depuis: mesureDeReprise(), avecDecompte: false });
+    }, delai);
+  };
+  const changerVitesse = (v, delai = 0) => {
     setVitesse(v);
     majReglages({ vitesse: v });
+    appliquerEnDirect(delai);
   };
   const changerDebut = (d) => {
     const f = Math.max(d, fin);
     setDebut(d);
     setFin(f);
     majReglages({ debut: d, fin: f });
+    appliquerEnDirect();
   };
   const changerFin = (f) => {
     const d = Math.min(debut, f);
     setDebut(d);
     setFin(f);
     majReglages({ debut: d, fin: f });
+    appliquerEnDirect();
   };
   const toutLeMorceau = () => {
     setDebut(0);
     setFin(derniere);
     majReglages({ debut: 0, fin: derniere });
+    appliquerEnDirect();
   };
   const basculerBoucle = () => {
     const b = !boucle;
     setBoucle(b);
     majReglages({ boucle: b });
+    appliquerEnDirect();
   };
   const basculerDecompte = () => {
     const d = !decompte;
@@ -8835,7 +8869,7 @@ function LecteurMorceau({ morceau, onRetour, C }) {
     alignItems: "center",
     gap: 6
   });
-  const statut = jouant ? clic ? `D\xE9compte : ${clic}` : `Lecture ${passageEntier ? "du morceau" : `des mesures ${debut + 1} \xE0 ${fin + 1}`} \xE0 ${vitesse} %${boucle ? ", en boucle" : ""}.` : "";
+  const statut = jouant ? clic ? `D\xE9compte : ${clic}` : `Lecture ${passageEntier ? "du morceau" : `des mesures ${debut + 1} \xE0 ${fin + 1}`} \xE0 ${vitesse} %${boucle ? ", en boucle" : ""}.` : etat === "pause" ? `En pause, mesure ${mesureCourante != null ? mesureCourante + 1 : debut + 1}.` : "";
   return /* @__PURE__ */ jsxs21("div", { children: [
     /* @__PURE__ */ jsxs21("div", { style: { display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 10 }, children: [
       /* @__PURE__ */ jsx24(BackButton, { onClick: onRetour, label: "Retour \xE0 la liste des morceaux" }),
@@ -8857,24 +8891,37 @@ function LecteurMorceau({ morceau, onRetour, C }) {
     ] }),
     /* @__PURE__ */ jsx24(TabLecture, { morceau, analyse, colCourante, debut, fin, C }),
     /* @__PURE__ */ jsx24("div", { "aria-hidden": "true", style: { height: 28, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginTop: 6 }, children: clic && Array.from({ length: clic }, (_, i) => /* @__PURE__ */ jsx24("span", { style: { fontSize: 20, fontWeight: 800, color: i === clic - 1 ? C.primary : C.text3 }, children: i + 1 }, i)) }),
-    /* @__PURE__ */ jsxs21("button", { type: "button", onClick: basculerLecture, className: "gr-focus", style: {
-      width: "100%",
-      minHeight: TAP.comfy,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 8,
-      borderRadius: R.lg,
-      border: "none",
-      background: jouant ? C.surface2 : C.primaryBtn,
-      color: jouant ? C.text : C.onPrimaryBtn,
-      fontWeight: 800,
-      fontSize: T.body,
-      cursor: "pointer",
-      fontFamily: FONTS.ui
-    }, children: [
-      /* @__PURE__ */ jsx24(Ti, { name: jouant ? "player-stop" : "player-play", size: 18, color: jouant ? C.text : C.onPrimaryBtn }),
-      jouant ? "Arr\xEAter" : "\xC9couter"
+    /* @__PURE__ */ jsxs21("div", { style: { display: "flex", gap: 8 }, children: [
+      /* @__PURE__ */ jsxs21("button", { type: "button", onClick: lireOuPause, className: "gr-focus", style: {
+        flex: 1,
+        minHeight: TAP.comfy,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+        borderRadius: R.lg,
+        border: "none",
+        background: jouant ? C.surface2 : C.primaryBtn,
+        color: jouant ? C.text : C.onPrimaryBtn,
+        fontWeight: 800,
+        fontSize: T.body,
+        cursor: "pointer",
+        fontFamily: FONTS.ui
+      }, children: [
+        /* @__PURE__ */ jsx24(Ti, { name: jouant ? "player-pause" : "player-play", size: 18, color: jouant ? C.text : C.onPrimaryBtn }),
+        jouant ? "Pause" : etat === "pause" ? "Reprendre" : "\xC9couter"
+      ] }),
+      etat !== "arret" && /* @__PURE__ */ jsx24("button", { type: "button", onClick: arreter, "aria-label": "Arr\xEAter et revenir au d\xE9but du passage", className: "gr-focus", style: {
+        minWidth: TAP.comfy,
+        minHeight: TAP.comfy,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: R.lg,
+        border: `1.5px solid ${C.borderStrong}`,
+        background: C.surface,
+        cursor: "pointer"
+      }, children: /* @__PURE__ */ jsx24(Ti, { name: "player-stop", size: 18, color: C.text }) })
     ] }),
     /* @__PURE__ */ jsx24("div", { role: "status", "aria-live": "polite", style: { minHeight: 20, fontSize: T.micro, color: C.text2, marginTop: 4, textAlign: "center" }, children: statut }),
     /* @__PURE__ */ jsxs21("div", { style: { marginTop: 10, padding: "12px 14px", borderRadius: R.md, background: C.surface, border: `1.5px solid ${C.border}` }, children: [
@@ -8896,7 +8943,7 @@ function LecteurMorceau({ morceau, onRetour, C }) {
           max: VITESSE_MAX,
           step: 5,
           value: vitesse,
-          onChange: (e) => changerVitesse(Number(e.target.value)),
+          onChange: (e) => changerVitesse(Number(e.target.value), 350),
           "aria-valuetext": `${vitesse} % du tempo, ${bpm} battements par minute`,
           className: "gr-focus",
           style: { width: "100%", height: TAP.min, accentColor: C.primary, margin: 0 }
@@ -8905,8 +8952,7 @@ function LecteurMorceau({ morceau, onRetour, C }) {
       /* @__PURE__ */ jsx24("div", { style: { display: "flex", gap: 6, flexWrap: "wrap" }, children: [50, 75, 100].map((v) => /* @__PURE__ */ jsxs21(Puce, { actif: vitesse === v, onClick: () => changerVitesse(v), C, children: [
         v,
         " %"
-      ] }, v)) }),
-      jouant && /* @__PURE__ */ jsx24("div", { style: { fontSize: T.micro, color: C.text3, marginTop: 6 }, children: "Appliqu\xE9e au prochain passage." })
+      ] }, v)) })
     ] }),
     /* @__PURE__ */ jsxs21("div", { style: { marginTop: 10, padding: "12px 14px", borderRadius: R.md, background: C.surface, border: `1.5px solid ${C.border}` }, children: [
       /* @__PURE__ */ jsx24("div", { style: { fontSize: T.small, fontWeight: 800, color: C.text, marginBottom: 8 }, children: "Passage \xE0 travailler" }),
