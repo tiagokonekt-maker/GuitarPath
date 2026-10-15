@@ -46,6 +46,12 @@ drop policy if exists "progress_select_own" on public.progress;
 drop policy if exists "progress_insert_own" on public.progress;
 drop policy if exists "progress_update_own" on public.progress;
 drop policy if exists "progress_delete_own" on public.progress;
+-- Anciennes policies d'avant l'audit (rôle public), trouvées en production.
+-- Les policies permissives s'additionnent : une seule trop large suffirait
+-- à annuler celles-ci.
+drop policy if exists "users can read own progress"   on public.progress;
+drop policy if exists "users can update own progress" on public.progress;
+drop policy if exists "users can upsert own progress" on public.progress;
 
 -- Chaque utilisateur ne voit et ne touche QUE sa propre ligne.
 -- `(select auth.uid())` plutôt que `auth.uid()` : Postgres peut alors
@@ -91,6 +97,7 @@ create index if not exists analytics_events_event_created_idx
 alter table public.analytics_events enable row level security;
 
 drop policy if exists "analytics_insert_own" on public.analytics_events;
+drop policy if exists "insert own events"    on public.analytics_events;   -- ancienne, en doublon
 
 -- Écriture de ses propres événements uniquement. AUCUNE policy de lecture :
 -- le client ne relit jamais les événements, l'analyse se fait via le SQL
