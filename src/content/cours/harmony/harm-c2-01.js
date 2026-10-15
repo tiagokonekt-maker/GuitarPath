@@ -5,6 +5,7 @@ export default {
   id: "harm-c2-01", level: 5,
   title: "Les 4 types de triades",
   duration: 11,
+  gropiTip: "Pour passer de majeur à mineur, baisse juste la tierce d'une case. Sur Mi ouvert, lève le doigt de la corde 3 (case 1) : tu obtiens Mim, et toute l'ambiance bascule.",
   content: [
     { type: "p", text: "Une triade, c'est 3 notes empilées par tierces (1-3-5). C'est l'unité de base de l'harmonie tonale. Il existe 4 types de triades, chacun avec sa couleur sonore unique. Les maîtriser, c'est comprendre la structure de tous les accords que tu joueras dans ta vie." },
     { type: "h", text: "Triade majeure (1-3-5)" },

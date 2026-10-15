@@ -5,6 +5,7 @@ export default {
   id: "impro-04", level: 9,
   title: "Jouer sur les changements d'accords",
   duration: 18,
+  gropiTip: "Fredonne l'autre ligne de guide tones du ii-V-I : Fa sur Dm7, Fa sur G7, Mi sur Cmaj7. Une seule note qui descend d'un demi-ton : si tu l'entends, tu entends le changement.",
   content: [
     { type: "p", text: "La vraie improvisation commence quand tu joues SUR les accords. La différence : le guitariste amateur joue La pentatonique sur tout un blues. Le pro entend chaque accord changer et adapte ses cibles — même s'il reste dans la même gamme, ses phrases reflètent les changements harmoniques." },
     { type: "h", text: "Le ii-V-I : la progression universelle" },

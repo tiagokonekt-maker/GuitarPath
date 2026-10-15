@@ -12,6 +12,9 @@
 import { useState } from "react";
 import { FONTS, R } from "./tokens.js";
 import { useC } from "./ThemeContext.jsx";
+// Rôle → pose (conseil = idea, anecdote = histoire, verrouillé = mystere…) :
+// voir gropiPoses.js, réexporté ici pour les écrans.
+export { POSE_ROLE, POSE_PAR_TYPE } from "./gropiPoses.js";
 
 // ── Images WebP (dans le dossier public), exportées à 2× la plus grande taille affichée ──
 const POSE_SRC = {
@@ -158,23 +161,25 @@ const COACH = {
   note: { pose: "think",  tint: "green",   eyebrow: "Gropi précise" },
 };
 
-export function GropiCoach({ variant = "tip", eyebrow, children }) {
+// mascotte={false} : bulle seule (quand une autre bulle de Gropi précède
+// immédiatement, pour ne pas empiler deux mascottes).
+export function GropiCoach({ variant = "tip", eyebrow, mascotte = true, children }) {
   const C = useC();
   const cfg = COACH[variant] || COACH.tip;
   const { light, border, deep } = useTintColors(cfg.tint);
   return (
     <div style={{ display: "flex", gap: 9, alignItems: "flex-end", margin: "2px 0" }}>
-      <Gropi pose={cfg.pose} size={54} anim="bob" style={{ marginBottom: 2 }} />
+      {mascotte && <Gropi pose={cfg.pose} size={54} anim="bob" style={{ marginBottom: 2 }} />}
       <div style={{
         position: "relative", flex: 1,
         background: light, border: `1.5px solid ${border}`,
-        borderRadius: R.lg, borderBottomLeftRadius: 4, padding: "10px 13px",
+        borderRadius: R.lg, borderBottomLeftRadius: mascotte ? 4 : R.lg, padding: "10px 13px",
       }}>
-        <span style={{
+        {mascotte && <span style={{
           position: "absolute", left: -7, bottom: 13, width: 0, height: 0,
           borderTop: "7px solid transparent", borderBottom: "7px solid transparent",
           borderRight: `7px solid ${light}`,
-        }} />
+        }} />}
         <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: deep, fontFamily: FONTS.ui, marginBottom: 3 }}>
           {eyebrow || cfg.eyebrow}
         </div>

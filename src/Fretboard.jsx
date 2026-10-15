@@ -42,7 +42,13 @@ import {
   noteToFr,
   normalizeNote,
 } from "./fretboardUtils.js";
-import { carteNoms, lireNote, nomFr, nomEn, nomRacineGamme, nomRacineAccord } from "./music/orthographe.js";
+import { carteNoms, lireNote, nomFr, nomEn, nomRacineGamme, nomRacineAccord, pcDeNom } from "./music/orthographe.js";
+// Son des blocs de leçon (fretboard_interactive) : même lecteur que les
+// diagrammes (un seul joue à la fois, bouton en haut à droite).
+import { playSequence } from "./audioEngine.js";
+import { BoutonEcoute } from "./fretboard/LecteurDiagramme.jsx";
+import { useLecteurDiagramme } from "./fretboard/useLecteurDiagramme.js";
+import { sequenceLecon } from "./fretboard/diagrammesSon.js";
 
 // ───────────────────────────────────────────────────────────────────────────
 // ORTHOGRAPHE DES PASTILLES
@@ -585,6 +591,19 @@ export function FretboardLesson({ block }) {
   const [displayMode, setDisplayMode] = useState(defaultDisplay);
   const [quizDone, setQuizDone] = useState(false);
 
+  // Son : gamme montante puis descendante, accord arpégé puis gratté, ou
+  // notes surlignées — chaque note sonnante s'allume sur tout le manche
+  // (flashNotes). Pas de son en mode quiz : il n'y a rien à écouter, juste
+  // des positions à trouver.
+  const lecteur = useLecteurDiagramme();
+  const lecon = useMemo(() => sequenceLecon(block, {
+    racinePc: block.root ? pcDeNom(normalizeNote(block.root)) : null,
+    intervallesGamme: SCALES[block.scale]?.intervals,
+    intervallesAccord: CHORD_TYPES[block.chord]?.intervals,
+    pcsNotes: (block.notes || []).map(n => pcDeNom(normalizeNote(n))),
+  }), [block]);
+  const flashNotes = lecteur.etat !== "repos" ? lecteur.pas : null;
+
   const modeMap = {
     "scale":     { mode: "scale",     root: block.root, scale: block.scale },
     "chord":     { mode: "chord",     root: block.root, chord: block.chord },
@@ -652,6 +671,7 @@ export function FretboardLesson({ block }) {
           )}
         </div>
 
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }}>
         {/* Sélecteur de mode d'affichage (sauf quiz et highlight) */}
         {block.mode !== "quiz" && block.mode !== "highlight" && (
           <div style={{ display: "flex", gap: 4 }}>
@@ -680,6 +700,17 @@ export function FretboardLesson({ block }) {
             ))}
           </div>
         )}
+        {lecon && (
+          <BoutonEcoute
+            joue={lecteur.action === "lecon" && lecteur.etat !== "repos"}
+            charge={lecteur.action === "lecon" && lecteur.etat === "chargement"}
+            label={block.mode === "scale" ? `Écouter la gamme ${modeLabel} de ${rootLabel}, en montant puis en descendant`
+              : block.mode === "chord" ? `Écouter l'accord ${rootLabel} ${modeLabel}, arpégé puis gratté`
+              : "Écouter ces notes"}
+            onClick={() => lecteur.basculer("lecon", ({ onStep, onDone }) => playSequence(lecon, { onStep, onDone }))}
+          />
+        )}
+        </div>
       </div>
 
       {/* Fretboard */}
@@ -689,6 +720,7 @@ export function FretboardLesson({ block }) {
           displayMode={displayMode}
           lang={block.lang || "fr"}
           compact={block.compact ?? true}
+          flashNotes={flashNotes}
           onQuizComplete={block.mode === "quiz" ? () => setQuizDone(true) : undefined}
         />
       </div>

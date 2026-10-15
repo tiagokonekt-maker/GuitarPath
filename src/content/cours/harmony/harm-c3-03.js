@@ -5,6 +5,7 @@ export default {
   id: "harm-c3-03", level: 7,
   title: "Les guide tones : 3e et 7e",
   duration: 10,
+  gropiTip: "Dans un accord 7 (dominante), la 3e et la 7e sont toujours à un triton d'écart. Sur G7 : Si et Fa. Sur C7 : Mi et Sib. Sur D7 : Fa# et Do. Trouve l'une, l'autre est à 6 demi-tons.",
   content: [
     { type: "p", text: "Dans un accord de septième, toutes les notes ne jouent pas le même rôle. La fondamentale et la quinte sont 'génériques' — elles définissent la hauteur et l'ancrage. Mais la 3e et la 7e sont les notes qui définissent la QUALITÉ de l'accord (majeur, mineur, dominante, etc.). On les appelle les 'guide tones', et ce sont elles que tu cibles en improvisation pour 'sonner sur l'accord'." },
     { type: "h", text: "Pourquoi la 3e et la 7e ?" },

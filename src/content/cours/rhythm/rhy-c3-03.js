@@ -5,6 +5,7 @@ export default {
   id: "rhy-c3-03", level: 6,
   title: "Le groove : qu'est-ce qui fait qu'un rythme 'sent bon' ?",
   duration: 11,
+  gropiTip: "Joue des croches sur Am en ne faisant vraiment sonner que les temps 2 et 4, comme la caisse claire, et effleure à peine les autres coups. Le flux reste continu et le groove apparaît.",
   content: [
     { type: "p", text: "Le groove, c'est ce qui fait qu'une musique te donne envie de bouger. C'est difficile à définir avec des mots, mais immédiatement reconnaissable à l'oreille. Il n'existe pas de recette magique pour créer du groove, mais plusieurs composantes y contribuent systématiquement. Cette leçon les analyse.", img: "/mascotte-zen.webp", imgAlt: "Gropi les yeux fermés, à l'écoute", imgSide: "right" },
     { type: "h", text: "Définition" },

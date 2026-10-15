@@ -5,6 +5,7 @@ export default {
   id: "scales-c5-07", level: 8,
   title: "Locrien — le mode interdit",
   duration: 9,
+  gropiTip: "Pour l'entendre sans te perdre : joue l'accord Bm7♭5 (Si-Ré-Fa-La), puis promène-toi dans les notes de Do majeur en partant de Si. Tu sentiras vite que le Fa empêche de se poser.",
   content: [
     { type: "p", text: "Voici le 7e mode, et le plus mystérieux : le locrien. C'est le seul mode dont la fondamentale est diminuée (la quinte est diminuée). Conséquence : il sonne extrêmement instable. Pendant des siècles, il a été considéré comme 'inutilisable'. Aujourd'hui, il existe — mais reste rarement employé. À connaître par culture, à utiliser avec parcimonie.", img: "/mascotte-mystere.webp", imgAlt: "Gropi qui jette un œil, curieux et espiègle", imgSide: "right" },
     { type: "h", text: "Construction" },

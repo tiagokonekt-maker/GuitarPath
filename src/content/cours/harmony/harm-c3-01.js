@@ -5,6 +5,7 @@ export default {
   id: "harm-c3-01", level: 7,
   title: "Pourquoi ajouter une 7e ?",
   duration: 9,
+  gropiTip: "Pour trouver la 7e mineure sans calcul, descends d'un ton depuis la fondamentale à l'octave : depuis Do, ça donne Sib. Un demi-ton seulement sous l'octave, c'est la 7e majeure (Si).",
   content: [
     { type: "p", text: "Une triade a 3 notes (1-3-5). Un accord de septième a 4 notes (1-3-5-7). Cette 4e note transforme radicalement la couleur de l'accord : il devient plus riche, plus sophistiqué, plus 'coloré'. Les accords de 7e sont la base du jazz, de la bossa nova, de la soul et de la pop moderne. Ils sont partout dès qu'on cherche un son un peu plus élaboré." },
     { type: "h", text: "La 7e note : laquelle ?" },

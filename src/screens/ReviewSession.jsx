@@ -5,6 +5,7 @@ import { FONTS, R } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { Gropi } from "../design/Gropi.jsx";
+import { POSE_ROLE } from "../design/gropiPoses.js";
 import { updateReviewHistory } from "../store/reviewEngine.js";
 import { todayStr } from "../store/dates.js";
 import { familleDe, niveauFamille, avantNiveauSuivant } from "../store/generateurs.js";
@@ -362,8 +363,10 @@ export function ReviewSession({ questions, state, dispatch, onDone }) {
               <div style={{
                 background: isCorrect ? C.greenL : C.coralL,
                 borderRadius: R.md, padding: "12px 14px", marginTop: 10, marginBottom: 12,
-                border: `1px solid ${isCorrect ? C.greenBorder : C.coralBorder}`,
+                border: `1px solid ${isCorrect ? C.greenBorder : C.coralBorder}`, overflow: "hidden",
               }}>
+                {/* Gropi réagit en un clin d'œil (0,4 s, 32 px) : rien n'attend. */}
+                <Gropi key={isCorrect ? "ok" : "ko"} pose={isCorrect ? POSE_ROLE.bonne : POSE_ROLE.erreur} size={32} anim="pop" style={{ float: "right", marginLeft: 8 }} />
                 <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
                   <Ti name={isCorrect ? "check" : "alert-circle"} size={14} color={isCorrect ? C.green : C.coral} />
                   <div style={{ fontSize: 12, fontWeight: 500, color: isCorrect ? C.greenD : C.coralD, fontFamily: FONTS.ui }}>
@@ -411,8 +414,10 @@ export function ReviewSession({ questions, state, dispatch, onDone }) {
               <div style={{
                 background: isCorrect ? C.greenL : C.coralL,
                 borderRadius: R.md, padding: "12px 14px", marginTop: 4, marginBottom: 12,
-                border: `1px solid ${isCorrect ? C.greenBorder : C.coralBorder}`,
+                border: `1px solid ${isCorrect ? C.greenBorder : C.coralBorder}`, overflow: "hidden",
               }}>
+                {/* Gropi réagit en un clin d'œil (0,4 s, 32 px) : rien n'attend. */}
+                <Gropi key={isCorrect ? "ok" : "ko"} pose={isCorrect ? POSE_ROLE.bonne : POSE_ROLE.erreur} size={32} anim="pop" style={{ float: "right", marginLeft: 8 }} />
                 <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
                   <Ti name={isCorrect ? "check" : "alert-circle"} size={14} color={isCorrect ? C.green : C.coral} />
                   <div style={{ fontSize: 12, fontWeight: 500, color: isCorrect ? C.greenD : C.coralD, fontFamily: FONTS.ui }}>

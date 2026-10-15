@@ -5,6 +5,7 @@ export default {
   id: "rhy-c3-02", level: 6,
   title: "L'anticipation : jouer avant le temps",
   duration: 9,
+  gropiTip: "Piège classique : jouer le nouvel accord sur le « et » du 4, puis le rejouer sur le 1. Laisse-le sonner sans rien rejouer sur le 1 : c'est cette tenue qui fait l'anticipation.",
   content: [
     { type: "p", text: "L'anticipation est une forme spécifique de syncope : jouer une note 'avant' le temps où elle serait attendue, et la tenir sur ce temps. C'est l'une des techniques rythmiques les plus utilisées en jazz, en bossa nova, et en pop moderne. Elle crée une sensation de 'fluidité', comme si la musique 'glissait' par-dessus les barres de mesure." },
     { type: "h", text: "Définition" },

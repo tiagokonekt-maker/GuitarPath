@@ -5,6 +5,7 @@ export default {
   id: "scales-c5-03", level: 8,
   title: "Phrygien — l'âme andalouse",
   duration: 11,
+  gropiTip: "Fais le test sur la corde 1 : joue Mi-Fa-Mi (cases 0-1-0), puis Mi-Fa#-Mi (cases 0-2-0). Le premier sonne andalou, le second bien plus neutre : un seul demi-ton change tout.",
   content: [
     { type: "p", text: "Le phrygien est le mode qui sonne le plus 'exotique' à une oreille occidentale. Espagnol, oriental, dramatique, parfois inquiétant. Il porte en lui des siècles de musique flamenco, des modes arabes, et l'imaginaire de la péninsule ibérique sous influence maure. C'est aussi le mode favori des guitaristes metal/néo-classique." },
     { type: "h", text: "Construction" },

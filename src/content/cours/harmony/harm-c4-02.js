@@ -5,6 +5,7 @@ export default {
   id: "harm-c4-02", level: 9,
   title: "Tensions et résolutions : comment les extensions fonctionnent",
   duration: 9,
+  gropiTip: "Tiens un accord de Do et fais sonner un Fa par-dessus pendant 4 temps, puis un Ré. Le Fa frotte avec le Mi, le Ré se fond dans l'accord : note évitée contre extension libre.",
   content: [
     { type: "p", text: "Les extensions ne sont pas juste des 'décorations'. Elles obéissent à une logique précise de tensions et résolutions. Comprendre cette logique te permet d'utiliser les extensions intelligemment : pas au hasard, mais avec une intention harmonique claire." },
     { type: "h", text: "Le principe de tension-résolution" },

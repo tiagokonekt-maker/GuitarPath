@@ -5,6 +5,7 @@ export default {
   id: "rhy-c1-02", level: 2,
   title: "La mesure à 4/4 : le temps de référence",
   duration: 9,
+  gropiTip: "Quand tu grattes en 4/4, appuie un peu plus le coup du temps 1 que les trois autres. Ton oreille apprend à repérer le début de chaque mesure, et tu ne te perds plus dans la grille.",
   content: [
     { type: "p", text: "La mesure est la façon dont on organise la pulsation en groupes réguliers. La mesure la plus courante en musique populaire est le 4/4 : 4 temps par mesure, la noire comme unité de temps. Comprendre le 4/4, c'est comprendre le cadre rythmique de la majeure partie de la musique que tu écoutes." },
     { type: "h", text: "Lire une signature rythmique" },

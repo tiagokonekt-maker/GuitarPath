@@ -5,6 +5,7 @@ export default {
   id: "debut-c1-04", level: 0, unite: 1,
   title: "S'échauffer et jouer détendu",
   duration: 6,
+  gropiTip: "Variante : fais l'exercice à l'envers, cases 4-3-2-1, en remontant de la corde 1 à la corde 6. Garde l'auriculaire tout près des cordes au lieu de le laisser s'envoler.",
   content: [
     { type: "p", text: "La guitare est une activité physique, à petite échelle : des petits muscles, des tendons, des gestes répétés. Deux minutes d'échauffement et un peu d'attention à la détente, et tu joues plus longtemps, plus proprement, sans douleur. C'est une habitude à prendre dès le premier jour." },
     { type: "h", text: "Avant de jouer : 1 minute sans guitare" },

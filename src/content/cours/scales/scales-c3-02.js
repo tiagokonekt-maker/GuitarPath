@@ -5,6 +5,7 @@ export default {
   id: "scales-c3-02", level: 6,
   title: "Les 5 positions de la pentatonique",
   duration: 14,
+  gropiTip: "La position 5 (case 3) se rejoue 12 cases plus haut, case 15, juste après la position 4 ; puis la position 1 revient case 17. Les 5 formes tournent en boucle toutes les 12 cases.",
   content: [
     { type: "p", text: "La pentatonique a 5 notes, donc 5 positions différentes sur le manche. Chaque position démarre sur une note différente de la gamme. Une fois les 5 connectées, tu peux jouer la pentatonique partout sur la guitare, du grave à l'aigu." },
     { type: "h", text: "Pourquoi 5 positions" },

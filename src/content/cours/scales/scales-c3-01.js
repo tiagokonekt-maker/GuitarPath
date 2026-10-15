@@ -5,6 +5,7 @@ export default {
   id: "scales-c3-01", level: 6,
   title: "La pentatonique mineure : la gamme universelle",
   duration: 11,
+  gropiTip: "Improvise 4 notes dans la position 1, puis termine toujours sur un La (case 5 corde 6, case 7 corde 4 ou case 5 corde 1). Ton oreille sentira qu'elle est rentrée à la maison.",
   content: [
     { type: "p", text: "Si la gamme majeure est la matrice théorique de la musique occidentale, la pentatonique mineure est sa version 'simplifiée et radioactive'. C'est la gamme la plus utilisée dans le monde entier : blues, rock, pop, soul, funk, et même musique chinoise traditionnelle. 5 notes, et une efficacité redoutable." },
     { type: "h", text: "Pourquoi 'pentatonique' ?" },

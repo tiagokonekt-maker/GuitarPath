@@ -5,6 +5,7 @@ export default {
   id: "neck-c1-03", level: 3,
   title: "Les amers visuels du manche",
   duration: 7,
+  gropiTip: "Bonne nouvelle : la corde 1 porte exactement les mêmes notes que la corde 6, deux octaves plus haut. Tes repères Sol (3), La (5), Si (7) et Mi (12) valent pour les deux cordes de Mi.",
   content: [
     { type: "p", text: "Tu as sûrement remarqué que ta guitare a des points (ou parfois des incrustations plus élaborées) à certaines cases du manche. Ce ne sont pas des décorations : ce sont tes amers de navigation. Sans eux, tu serais perdu sur un manche de 22 cases. Avec eux, tu navigues à l'aise." },
     { type: "h", text: "Les positions des points" },

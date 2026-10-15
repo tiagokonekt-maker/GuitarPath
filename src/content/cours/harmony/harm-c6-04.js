@@ -5,6 +5,7 @@ export default {
   id: "harm-c6-04", level: 8,
   title: "Les progressions modales",
   duration: 9,
+  gropiTip: "Sur une vamp Lam7-Ré7 (La dorien), insiste sur le Fa# : c'est la note qui distingue le dorien du La mineur naturel. Sans elle, ton impro perd la couleur dorienne.",
   content: [
     { type: "p", text: "Toutes les progressions d'accords ne suivent pas la logique tonale classique (I-IV-V, ii-V-I). Il existe aussi les progressions 'modales' : des suites d'accords qui gravitent autour d'un mode plutôt que d'une tonalité. Ces progressions sont la base du jazz modal, du rock psychédélique, et d'une grande partie de la musique folk et celtique.", img: "/illus-palette-couleurs.webp", imgAlt: "Une palette de peintre avec plusieurs touches de couleurs", imgSide: "right" },
     { type: "h", text: "Qu'est-ce qu'une progression modale ?" },

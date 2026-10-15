@@ -5,6 +5,7 @@ export default {
   id: "neck-05", level: 5,
   title: "Triades — l'unité minimale d'harmonie",
   duration: 14,
+  gropiTip: "Pour passer d'une triade majeure à mineure, baisse seulement la tierce d'une case. Do sur cordes 3-2-1 (cases 5, 5, 3) devient Do mineur en reculant la corde 2 en case 4 (Mi♭).",
   content: [
     { type: "p", text: "Une triade = 3 notes empilées par tierces (1-3-5). C'est la plus petite cellule harmonique 'complète'. Sur la guitare, jouer des triades sur 3 cordes adjacentes ouvre un monde de voicings funk, R&B, jazz, pop indé." },
     { type: "h", text: "Les 4 types de triades" },

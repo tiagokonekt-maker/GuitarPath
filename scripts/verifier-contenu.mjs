@@ -15,6 +15,7 @@ import { totalXpForLevel } from "../src/store/leveling.js";
 import { TESTABLE_MODULES, PLACEMENT_LEVELS, availableModules } from "../src/store/placementEngine.js";
 import { buildUnits, getUnitQuizPool } from "../src/store/pathEngine.js";
 import { LESSON_XP } from "../src/store/xp.js";
+import { GROPI_CATALOGUE } from "../src/store/gropiCatalogue.js";
 import { readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
@@ -327,8 +328,35 @@ for (const c of COURSES) for (const l of c.lessons) (l.content || []).forEach((b
 });
 for (const q of QUIZ) controlerTexte(q.id, `${q.q} ${(q.o || []).join(" ")} ${q.exp || ""}`);
 for (const e of EXERCISES) if (Array.isArray(e.steps)) controlerTexte(e.id, e.steps.join(" "));
+// Les conseils de Gropi citent aussi des positions : même contrôle.
+for (const c of COURSES) for (const l of c.lessons) if (l.gropiTip) controlerTexte(`${l.id}/gropiTip`, l.gropiTip);
+for (const t of GROPI_CATALOGUE) if (typeof t.text === "string") controlerTexte(`gropi:${t.id}`, t.text);
 
 console.log(`  ${diagrammesVerifies} diagramme(s) d'accord, ${gammesVerifiees} schéma(s) de gamme, ${etiquettesVerifiees} étiquette(s) de note, ${positionsVerifiees} position(s) en texte libre — tous RECALCULÉS, pas seulement relus.`);
+
+// ── Conseils de Gropi ───────────────────────────────────────────────────
+// Intégrité du catalogue (ids uniques, types connus, modules connus) : ça,
+// c'est bloquant. Une leçon sans gropiTip, en revanche, n'est qu'un rappel
+// (pas une anomalie) : le parcours retombe sur un message générique.
+titre("Conseils de Gropi");
+{
+  const ids = GROPI_CATALOGUE.map(t => t.id);
+  const doublons = ids.filter((id, i) => ids.indexOf(id) !== i);
+  if (doublons.length) ko(`catalogue Gropi : ids en double → ${[...new Set(doublons)].join(", ")}`);
+  const MODULES_OK = new Set(["all", ...COURSES.map(c => c.id)]);
+  const idsLecons = new Set(lecons.map(l => l.id));
+  for (const t of GROPI_CATALOGUE) {
+    if (!["tip", "anecdote", "progress"].includes(t.type)) ko(`gropi:${t.id} : type inconnu « ${t.type} »`);
+    for (const m of t.modules || []) if (!MODULES_OK.has(m)) ko(`gropi:${t.id} : module inconnu « ${m} »`);
+    for (const l of t.lecons || []) if (!idsLecons.has(l)) ko(`gropi:${t.id} : leçon inconnue « ${l} »`);
+  }
+  const parType = GROPI_CATALOGUE.reduce((a, t) => ({ ...a, [t.type]: (a[t.type] || 0) + 1 }), {});
+  console.log(`  catalogue : ${GROPI_CATALOGUE.length} entrées (${Object.entries(parType).map(([k, v]) => `${k} ${v}`).join(" · ")})`);
+  const sansTip = lecons.filter(l => typeof l.gropiTip !== "string" || !l.gropiTip.trim());
+  console.log(sansTip.length
+    ? `  ℹ ${sansTip.length} leçon(s) sans gropiTip (rappel, non bloquant) : ${sansTip.map(l => l.id).join(", ")}`
+    : `  ${lecons.length} leçons, toutes avec un gropiTip`);
+}
 
 console.log(alertes === 0 ? "\n✓ Aucune anomalie." : `\n${alertes} anomalie(s) à traiter.`);
 process.exit(alertes === 0 ? 0 : 1);

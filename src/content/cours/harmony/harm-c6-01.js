@@ -5,6 +5,7 @@ export default {
   id: "harm-c6-01", level: 7,
   title: "I-IV-V : le blues et le rock",
   duration: 10,
+  gropiTip: "Astuce de manche : I = barré avec la fondamentale sur la corde 6, IV = même case mais fondamentale sur la corde 5, V = deux cases plus loin sur la corde 5. En La : cases 5, 5 et 7.",
   content: [
     { type: "p", text: "I-IV-V est la progression la plus ancienne, la plus universelle, et la plus jouée dans l'histoire de la musique populaire. Blues, rock'n'roll, country, folk, R&B — ils reposent tous sur cette fondation à 3 accords. La comprendre, c'est comprendre l'ADN de la musique populaire depuis 100 ans." },
     { type: "h", text: "La formule" },

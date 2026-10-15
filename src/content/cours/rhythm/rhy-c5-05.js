@@ -5,6 +5,7 @@ export default {
   id: "rhy-c5-05", level: 9,
   title: "Gypsy jazz : la pompe Django",
   duration: 10,
+  gropiTip: "Pour le « chunk » de la pompe, relâche la pression de la main gauche juste après le coup, sans lever les doigts des cordes : l'accord se coupe net, sans bruit de corde à vide.",
   content: [
     { type: "p", text: "Le gypsy jazz est un style musical créé dans les années 30 par le guitariste manouche Django Reinhardt à Paris. Sa guitare rythmique caractéristique — la 'pompe' — est l'une des plus distinctives et des plus exigeantes de toute la guitare. La pompe n'est pas juste un pattern : c'est une philosophie du rythme entier." },
     { type: "h", text: "Origines et Django" },

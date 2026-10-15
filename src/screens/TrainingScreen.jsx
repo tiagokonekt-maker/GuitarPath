@@ -21,6 +21,8 @@ import { useState, useMemo } from "react";
 import { R } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
+import { Gropi } from "../design/Gropi.jsx";
+import { POSE_ROLE } from "../design/gropiPoses.js";
 import { ExerciseDetail } from "./ExercisesScreen.jsx";
 import { QuizScreen } from "./QuizScreen.jsx";
 import { masteryStats } from "../store/mastery.js";
@@ -149,7 +151,11 @@ export function TrainingScreen({ state, dispatch, content, navigate }) {
         )}
 
         <section aria-labelledby="titre-domaines" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <h2 id="titre-domaines" style={{ margin: "4px 4px 0", fontSize: 17, fontWeight: 800, color: C.text }}>S'entraîner sur…</h2>
+          {/* Gropi « choix » : c'est ici qu'on choisit son chemin du jour. */}
+          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 10, margin: "4px 4px 0" }}>
+            <h2 id="titre-domaines" style={{ margin: 0, fontSize: 17, fontWeight: 800, color: C.text }}>S'entraîner sur…</h2>
+            <Gropi pose={POSE_ROLE.choix} size={40} />
+          </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
             {domainesOrdonnes.map(d => (
               <CarteDomaine key={d.id} C={C} d={d} state={state} content={content} progression={progression} onOuvrir={() => setDomaineOuvert(d.id)} />
@@ -220,7 +226,7 @@ function SeanceDuJour({ C, seance, duree, onDuree, onLancer }) {
 
       {terminee ? (
         <div role="status" style={{ display: "flex", alignItems: "center", gap: 10, background: C.greenL, border: `1.5px solid ${C.greenBorder}`, borderRadius: 14, padding: "12px 14px", color: C.greenD, fontSize: 13, lineHeight: 1.5 }}>
-          <Ti name="trophy" size={22} color={C.greenD} />
+          <Gropi pose={POSE_ROLE.reussite} size={40} anim="pop" />
           <div><b>Bravo, c'est fait pour aujourd'hui.</b> Envie de continuer ? Choisis un domaine ci-dessous.</div>
         </div>
       ) : (

@@ -5,6 +5,7 @@ export default {
   id: "harm-c5-01", level: 7,
   title: "Harmoniser la gamme majeure",
   duration: 12,
+  gropiTip: "Chaque accord majeur de la gamme a son relatif mineur dans la même gamme : I et vi, IV et ii, V et iii. En Do : Do/Lam, Fa/Rém, Sol/Mim. Seul le vii° reste à part.",
   content: [
     { type: "p", text: "Harmoniser une gamme, c'est construire un accord sur chaque note de cette gamme en utilisant uniquement les notes appartenant à la gamme. Le résultat : 7 accords 'diatoniques' qui forment la palette harmonique de la tonalité. C'est la base de toute l'harmonie tonale, et la clé pour comprendre pourquoi tel accord 'va' avec tel autre." },
     { type: "h", text: "Le principe : empiler des tierces diatoniques" },

@@ -5,6 +5,7 @@ export default {
   id: "scales-c3-03", level: 6,
   title: "Pentatonique majeure et son lien avec la mineure",
   duration: 9,
+  gropiTip: "Raccourci : pour une pentatonique majeure, place la forme mineure position 1 trois cases plus bas. Ré majeur (case 10 corde 6) ? Forme mineure case 7, et pose tes phrases sur Ré.",
   content: [
     { type: "p", text: "Il existe aussi une pentatonique majeure, sœur lumineuse de la pentatonique mineure. Et le secret le plus utile de la guitare : ces deux gammes partagent les mêmes notes. Comprendre ce lien double instantanément tes outils d'improvisation." },
     { type: "h", text: "La pentatonique majeure : formule" },

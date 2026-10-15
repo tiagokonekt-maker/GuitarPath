@@ -5,6 +5,7 @@ export default {
   id: "harm-c1-02", level: 2,
   title: "Consonance et dissonance",
   duration: 9,
+  gropiTip: "Joue le triton Si-Fa : Si (corde 5 case 2) et Fa (corde 4 case 3). Glisse ensuite vers Do (corde 5 case 3) et Mi (corde 4 case 2). Deux doigts bougent d'une case, et toute la tension se pose.",
   content: [
     { type: "p", text: "Pourquoi certains accords sonnent 'bien' et d'autres sonnent 'tendus' ou même 'faux' ? La réponse est dans deux concepts fondamentaux : la consonance (les sons qui s'accordent naturellement) et la dissonance (les sons qui créent une tension). Comprendre cette dualité, c'est comprendre comment la musique crée des émotions." },
     { type: "h", text: "La consonance : quand les sons s'accordent" },

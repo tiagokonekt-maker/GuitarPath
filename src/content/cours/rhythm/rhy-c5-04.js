@@ -5,6 +5,7 @@ export default {
   id: "rhy-c5-04", level: 9,
   title: "Bossa nova : le pattern classique",
   duration: 10,
+  gropiTip: "Écoute ton pouce : la basse doit tomber sur chaque temps comme une horloge, en alternant fondamentale et quinte. Sur Am7, c'est La (corde 5 à vide) puis Mi (corde 6 à vide).",
   content: [
     { type: "p", text: "La bossa nova est un genre musical brésilien né à la fin des années 50 à Rio de Janeiro, créé par João Gilberto, Tom Jobim et Vinicius de Moraes. Son rythme caractéristique est l'un des plus sophistiqués et des plus difficiles à maîtriser en guitare. Mais quand c'est réussi, il est d'une élégance absolue." },
     { type: "h", text: "Origines et contexte" },

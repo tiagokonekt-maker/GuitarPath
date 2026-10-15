@@ -5,6 +5,7 @@ export default {
   id: "harm-c2-04", level: 6,
   title: "Les inversions de triades et leur usage",
   duration: 10,
+  gropiTip: "Joue Do, puis Sol/Si (x20003), puis Lam : grâce à la 1re inversion de Sol, la basse descend Do-Si-La par degrés conjoints. Un enchaînement très courant à garder sous les doigts.",
   content: [
     { type: "p", text: "Tu connais maintenant les triades en 'état fondamental' (1-3-5, fondamentale à la basse). Mais une triade peut aussi être jouée dans 2 autres configurations : 1ère inversion (3-5-1) et 2e inversion (5-1-3). Ces inversions sont des outils essentiels pour la composition, le voice-leading et les transitions fluides entre accords." },
     { type: "h", text: "État fondamental : 1 à la basse" },

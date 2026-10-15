@@ -5,6 +5,7 @@ export default {
   id: "scales-c5-02", level: 8,
   title: "Dorien — le mode caméléon",
   duration: 12,
+  gropiTip: "Raccourci : ta gamme mineure naturelle avec la 6 montée d'un demi-ton, c'est le dorien. La mineur devient La dorien en changeant juste Fa en Fa# (case 7 corde 2, position case 5).",
   content: [
     { type: "p", text: "Le dorien est le mode mineur le plus polyvalent et le plus utilisé après l'éolien (mineur naturel). Il a une couleur mineure de base, mais avec une touche de lumière qui le rend unique. C'est le mode du jazz modal, du funk, du rock progressif, et de beaucoup de musiques traditionnelles européennes." },
     { type: "h", text: "Construction" },

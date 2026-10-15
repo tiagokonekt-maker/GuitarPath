@@ -8,6 +8,7 @@ export default {
   id: "debut-c3-03", level: 0, unite: 3,
   title: "Premières mélodies en tablature",
   duration: 8,
+  gropiTip: "Frère Jacques est un canon : enregistre-toi avec ton téléphone, puis rejoue l'air par-dessus en démarrant quand l'enregistrement attaque Mi Fa Sol. Deux voix, une seule guitare !",
   content: [
     { type: "p", text: "Place à la pratique ! Trois airs que tout le monde connaît, tous du domaine public, écrits en tablature sur les deux cordes aiguës. Cinq notes suffisent : Do (corde 2, case 1), Ré (corde 2, case 3), Mi (corde 1 à vide), Fa (corde 1, case 1) et Sol (corde 1, case 3)." },
     {

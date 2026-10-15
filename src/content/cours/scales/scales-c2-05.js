@@ -5,6 +5,7 @@ export default {
   id: "scales-c2-05", level: 5,
   title: "Jouer la gamme majeure sur le manche",
   duration: 12,
+  gropiTip: "Piège fréquent : jouer Fa au lieu de Fa# en Sol majeur. Dans la position 1, le Fa# est case 4 corde 4 et case 2 corde 1 : vise-les exprès en montant et en descendant.",
   content: [
     { type: "p", text: "Maintenant qu'on connaît la théorie, mettons-la dans nos doigts. Jouer la gamme majeure sur la guitare, c'est la première vraie compétence pratique. On va voir 3 positions essentielles, à mémoriser dans cet ordre." },
     { type: "h", text: "Position 1 : fondamentale sur la corde 6" },

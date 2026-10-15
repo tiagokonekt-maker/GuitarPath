@@ -5,6 +5,7 @@ export default {
   id: "neck-04", level: 9,
   title: "Le système CAGED — théorie complète",
   duration: 16,
+  gropiTip: "Après la forme D de Do (case 10), la forme C revient en case 12, pile une octave au-dessus de la position ouverte. Le cycle C-A-G-E-D se répète toutes les 12 cases.",
   content: [
     { type: "p", text: "CAGED est la grille de lecture du manche. 5 lettres pour 5 formes d'accords ouverts (C, A, G, E, D) qui, transposées et enchaînées, couvrent l'intégralité du manche pour n'importe quel accord." },
     { type: "h", text: "Pourquoi exactement 5 formes ?" },

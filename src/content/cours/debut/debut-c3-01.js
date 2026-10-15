@@ -9,6 +9,7 @@ export default {
   id: "debut-c3-01", level: 0, unite: 3,
   title: "Lire une tablature",
   duration: 7,
+  gropiTip: "Méfie-toi des nombres à deux chiffres : « 12 » sur une ligne veut dire case 12, pas case 1 puis case 2. Un nombre collé se lit toujours d'un bloc.",
   content: [
     { type: "p", text: "La tablature (ou « tab ») est la façon la plus répandue d'écrire de la musique pour guitare. Pas besoin de lire le solfège : elle te dit simplement sur quelle corde et sur quelle case poser le doigt. En cinq minutes, tu sauras la lire." },
     { type: "h", text: "Six lignes = six cordes" },

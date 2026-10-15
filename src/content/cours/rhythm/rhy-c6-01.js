@@ -5,6 +5,7 @@ export default {
   id: "rhy-c6-01", level: 9,
   title: "Jouer laid-back, on-top, in-the-pocket",
   duration: 10,
+  gropiTip: "Enregistre une minute de noires sur un clic à 60 BPM, puis réécoute. Si le clic disparaît presque, c'est que tu es pile dessus : ta note le masque. S'il ressort, tu es devant ou derrière.",
   content: [
     { type: "p", text: "Le micro-timing est la dimension la plus subtile de la rythmique. Deux musiciens peuvent jouer exactement les mêmes notes au même tempo, et pourtant sonner complètement différemment. La raison : l'un joue laid-back, l'autre on-top, le troisième in-the-pocket. Ces nuances de placement infinitésimal par rapport au temps définissent le 'feel' d'un musicien.", img: "/mascotte-zen.webp", imgAlt: "Gropi les yeux fermés, à l'écoute", imgSide: "left" },
     { type: "h", text: "In-the-pocket : le 'temps parfait'" },

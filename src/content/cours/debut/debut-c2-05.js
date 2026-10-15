@@ -5,6 +5,7 @@ export default {
   id: "debut-c2-05", level: 0, unite: 2,
   title: "Tes premières rythmiques",
   duration: 7,
+  gropiTip: "Exercice muet : pose la main gauche à plat sur les cordes, sans appuyer, et joue la rythmique passe-partout. Sans les notes, tu n'entends plus que le rythme : idéal pour vérifier ton balancier.",
   content: [
     { type: "p", text: "Un accord, c'est une couleur. La rythmique, c'est ce qui le fait danser. Avec trois rythmiques simples, tes accords vont commencer à ressembler à de la vraie musique. On travaille sur un seul accord (Mi mineur, par exemple) pour que la main gauche se fasse oublier." },
     { type: "h", text: "Rythmique 1 : quatre coups vers le bas" },

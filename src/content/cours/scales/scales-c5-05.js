@@ -5,6 +5,7 @@ export default {
   id: "scales-c5-05", level: 8,
   title: "Mixolydien — le roi du rock",
   duration: 11,
+  gropiTip: "Repère la ♭7 vite : elle est un ton (2 cases) sous l'octave de la fondamentale. Dans la position Sol case 3, le Sol de la corde 4 est case 5, et le Fa juste en dessous, case 3.",
   content: [
     { type: "p", text: "Le mixolydien est le mode du rock, du blues, du country, du funk. C'est le mode des guitaristes par excellence. Si tu écoutes Hendrix, les Stones, Zeppelin, AC/DC, ZZ Top — beaucoup de leurs riffs et solos sont en mixolydien. Ce mode est fait pour la guitare." },
     { type: "h", text: "Construction" },

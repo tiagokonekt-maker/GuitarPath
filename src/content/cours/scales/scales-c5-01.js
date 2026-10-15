@@ -5,6 +5,7 @@ export default {
   id: "scales-c5-01", level: 7,
   title: "Ionien — la lumière pure (= majeur)",
   duration: 8,
+  gropiTip: "Improvise en Do ionien sur une boucle Do-Fa-Sol et termine chaque phrase sur une note de l'accord de Do (Do, Mi ou Sol). C'est ce repos qui donne à l'ionien sa stabilité.",
   content: [
     { type: "p", text: "Le mode ionien, c'est tout simplement... la gamme majeure que tu connais déjà. Pas de surprise, pas de note caractéristique exotique. Mais l'aborder en tant que 'mode' permet de bien le situer dans la famille des 7 modes, et de comprendre ce qui le rend unique.", img: "/illus-lever-soleil.webp", imgAlt: "Un lever de soleil stylisé", imgSide: "left" },
     { type: "h", text: "Formule" },

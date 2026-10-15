@@ -5,6 +5,7 @@ export default {
   id: "harm-c1-01", level: 1,
   title: "Qu'est-ce que l'harmonie ?",
   duration: 8,
+  gropiTip: "Fredonne un La pendant que tu grattes Lam, puis Fa, puis Ré : la même note change de couleur selon l'accord en dessous. C'est exactement ça, l'harmonie.",
   content: [
     { type: "p", text: "La mélodie, tu connais : c'est la ligne musicale que tu chantes ou que tu joues seul. Le rythme, tu connais aussi : c'est la pulsation, le groove. Mais l'harmonie ? C'est le troisième pilier de la musique, et souvent le moins bien compris. Cette leçon va t'en donner une définition claire, et te montrer pourquoi la maîtriser transforme ta façon de jouer." },
     { type: "h", text: "Définition simple" },

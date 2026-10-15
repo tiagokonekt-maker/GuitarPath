@@ -5,6 +5,7 @@ export default {
   id: "neck-c1-02", level: 2,
   title: "La logique des octaves",
   duration: 8,
+  gropiTip: "Avant-goût du chapitre 3 : depuis la corde 6, l'octave la plus proche est deux cordes plus haut et deux cases plus loin. La corde 6 case 5 (La) → La corde 4 case 7.",
   content: [
     { type: "p", text: "Le manche de la guitare est organisé autour des octaves. Comprendre cette logique te donne instantanément accès à toutes les notes du manche, sans avoir à toutes les mémoriser une par une. C'est l'une des révélations les plus puissantes pour un guitariste." },
     { type: "h", text: "Le principe : une octave = 12 cases" },

@@ -5,6 +5,7 @@ export default {
   id: "rhy-c4-02", level: 4,
   title: "Patterns de strumming : folk, pop, rock",
   duration: 12,
+  gropiTip: "Chante le pattern pop avant de le jouer : « bas, bas-haut, haut-bas-haut ». Le piège : sur le 3, ta main doit quand même descendre dans le vide, sinon le haut qui suit tombe à côté.",
   content: [
     { type: "p", text: "Un pattern de strumming, c'est une séquence organisée de coups bas (B) et hauts (H) qui se répète sur plusieurs mesures. Chaque genre musical a ses patterns caractéristiques. En apprendre quelques-uns te donne un vocabulaire rythmique immédiatement utilisable." },
     { type: "h", text: "Notation des patterns" },

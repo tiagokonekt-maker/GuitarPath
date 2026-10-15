@@ -5,6 +5,7 @@ export default {
   id: "rhy-c5-02", level: 8,
   title: "Reggae et ska : jouer sur les contretemps",
   duration: 10,
+  gropiTip: "Tape du pied sur 1-2-3-4 et dis « pied-tchk » à chaque temps : ton accord ne sonne que sur le « tchk », jamais en même temps que ton pied. Si les deux se rejoignent, ralentis.",
   content: [
     { type: "p", text: "Le reggae et le ska sont des musiques jamaïcaines qui ont révolutionné la guitare rythmique en plaçant les accents là où personne ne les attendait : sur les contretemps. La guitare joue 'en négatif' — là où les autres instruments ne jouent pas. Cette approche radicalement différente crée une musique hypnotique et unique." },
     { type: "h", text: "Le skank reggae : jouer sur les 'et'" },

@@ -228,6 +228,23 @@ function toToneNote(note, octave) {
 }
 
 const CHROMATIC = NOTES_DIESES_EN;
+
+/**
+ * Notes (noms sans octave) → notes Tone.js empilées en MONTANT à partir de
+ * `octave` : l'octave augmente dès qu'une note n'est pas plus haute que la
+ * précédente. L'ancienne règle (« les 5 premières à l'octave 3 ») ne montait
+ * que pour une gamme partant de Do : la pentatonique de La sortait A3 puis
+ * C3, qui redescend.
+ */
+export function empilerAscendant(notes, octave = 3) {
+  let oct = octave, precedente = -1;
+  return notes.map(n => {
+    const pc = CHROMATIC.indexOf(normalizeNote(n));
+    if (pc <= precedente) oct++;
+    precedente = pc;
+    return toToneNote(normalizeNote(n), oct);
+  });
+}
 const OPEN_STRINGS = { 1:"E4", 2:"B3", 3:"G3", 4:"D3", 5:"A2", 6:"E2" };
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -742,6 +759,63 @@ export async function playMelodie(notes, { reference = null } = {}) {
   return dureeMelodieMs(notes.length, avecRef);
 }
 
+/**
+ * Joue une séquence libre d'évènements — ce qu'utilisent les diagrammes des
+ * leçons (accord gratté ou arpégé, gamme, pattern de grattage, grille
+ * rythmique…). Les séquences sont calculées par des fonctions PURES
+ * (fretboard/diagrammesSon.js, testées sans audio) ; ici on ne fait que les
+ * planifier.
+ *
+ * Comme playScale : tout est planifié d'avance dans le temps audio, sur le
+ * bus de la lecture — aucune gigue entre deux notes, et stopAll() coupe net.
+ *
+ * @param evenements [{ t, notes, duree, velocite, strum, ecart, step }]
+ *   t         instant de départ, en secondes depuis le début de la séquence
+ *   notes     note Tone.js ("E2", "Bb3") ou tableau de notes
+ *   duree     durée tenue, en secondes (ou valeur Tone : "4n"…)
+ *   velocite  0 → 1 (0,8 par défaut)
+ *   strum     "down" | "up" : les notes sont étalées comme un coup de
+ *             médiator (du grave vers l'aigu, ou l'inverse) ; sinon plaquées
+ *   ecart     écart entre deux cordes d'un grattage, en secondes (0,022)
+ *   step      si défini, onStep(step, ev) est appelé à l'instant de l'évènement
+ * @param opts.onStep(step, ev)  rappel visuel synchronisé sur l'horloge audio
+ * @param opts.onDone()          appelé à la fin de la dernière note tenue
+ * @returns la durée de la séquence en millisecondes (fin de la dernière note
+ *          tenue, sans la queue de relâchement), 0 si l'audio est indisponible
+ */
+export async function playSequence(evenements, { onStep, onDone } = {}) {
+  if (!await ensureLoaded()) return 0;
+  stopAll();
+  reveillerSortie();
+  let fin = 0;
+  try {
+    const s = nouvelleLecture();
+    const t0 = departLecture();
+    for (const ev of evenements || []) {
+      const notes = Array.isArray(ev.notes) ? ev.notes : ev.notes ? [ev.notes] : [];
+      const duree = secondes(ev.duree ?? 0.5);
+      const vel = Math.max(0.05, Math.min(1, ev.velocite ?? 0.8));
+      const t = t0 + Math.max(0, ev.t || 0);
+      if (ev.strum && notes.length > 1) {
+        const ordre = ev.strum === "up" ? [...notes].reverse() : notes;
+        const ecart = ev.ecart ?? 0.022;
+        ordre.forEach((n, i) => {
+          // Même geste que strumInto : la corde du milieu sonne un peu plus fort.
+          const courbe = Math.sin(((i + 0.6) / ordre.length) * Math.PI);
+          const v = Math.max(0.05, Math.min(1, vel * (0.82 + 0.18 * courbe)));
+          try { s.triggerAttackRelease(n, duree, t + i * ecart, v); } catch { /* noop */ }
+        });
+      } else if (notes.length) {
+        try { s.triggerAttackRelease(notes.length === 1 ? notes[0] : notes, duree, t, vel); } catch { /* noop */ }
+      }
+      if (onStep && ev.step !== undefined && ev.step !== null) visuelA(t, () => onStep(ev.step, ev));
+      fin = Math.max(fin, (ev.t || 0) + duree);
+    }
+    if (onDone) visuelA(t0 + fin, () => onDone());
+  } catch (e) { warn("playSequence:", e); }
+  return Math.round(fin * 1000);
+}
+
 /** Point d'entrée unique pour les questions d'écoute générées. */
 export async function jouerEcoute(spec) {
   if (!spec) return;
@@ -778,7 +852,7 @@ export async function playInterval(note1, note2, mode = "ascending") {
 export async function playScaleFromRoot(root, scaleKey, bpm = 80, onStep) {
   const notes = getScaleNotes(root, scaleKey);
   if (!notes.length) return;
-  const toneNotes = notes.map((note, i) => toToneNote(note, i < 5 ? 3 : 4));
+  const toneNotes = empilerAscendant(notes, 3);
   // On renvoie le NOM de la note (Do, Ré...), pas la note Tone.js avec son
   // octave : c'est le nom qui permet d'illuminer toutes ses positions sur
   // le manche.
@@ -798,9 +872,8 @@ export async function playScaleFromRoot(root, scaleKey, bpm = 80, onStep) {
 export async function playArpeggioFromRoot(root, chordType, bpm = 132, onStep) {
   const names = getChordNotes(root, chordType);
   if (!names.length) return;
-  // Empilement ascendant sur deux octaves pour rester dans une tessiture
-  // confortable, quel que soit le nombre de notes de l'accord.
-  const toneNotes = names.map((n, i) => toToneNote(n, i < 3 ? 3 : 4));
+  // Empilement ascendant à partir de l'octave 3, quel que soit l'accord.
+  const toneNotes = empilerAscendant(names, 3);
   await playScale(toneNotes, bpm, onStep ? (i) => onStep(i, names[i] ?? null) : undefined);
   return names;
 }

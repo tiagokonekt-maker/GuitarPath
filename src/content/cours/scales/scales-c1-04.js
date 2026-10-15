@@ -5,6 +5,7 @@ export default {
   id: "scales-c1-04", level: 3,
   title: "Les enharmonies : pourquoi Do# = Réb ?",
   duration: 7,
+  gropiTip: "Repère les 5 cases altérées de la corde 6 (2, 4, 6, 9, 11) et donne à chacune ses deux noms : Fa#/Sol♭, Sol#/La♭, La#/Si♭, Do#/Ré♭, Ré#/Mi♭.",
   content: [
     { type: "p", text: "Petite leçon courte mais utile. Tu as peut-être remarqué quelque chose de bizarre : la note entre Do et Ré peut s'appeler 'Do#' (Do dièse) OU 'Ré♭' (Ré bémol). C'est exactement le même son, la même touche du piano, la même case de ta guitare. Pourquoi deux noms ?", img: "/illus-prisme-lumiere.webp", imgAlt: "Un prisme qui décompose un rayon de lumière blanche en plusieurs couleurs", imgSide: "left" },
     { type: "h", text: "Le concept d'enharmonie" },

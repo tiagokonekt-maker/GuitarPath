@@ -5,6 +5,7 @@ export default {
   id: "rhy-c2-02", level: 4,
   title: "Croches et doubles-croches",
   duration: 10,
+  gropiTip: "Dis les syllabes à voix haute avant de jouer : « 1 e et a » à 60 BPM. Ta main descend sur le chiffre et le « et », remonte sur le « e » et le « a ». Toujours dans cet ordre.",
   content: [
     { type: "p", text: "Les croches et doubles-croches sont les valeurs les plus utilisées en musique populaire. Elles permettent de créer le groove, les riffs, les fills rythmiques. Maîtriser leur placement et leur comptage, c'est débloquer l'accès à la quasi-totalité des patterns rythmiques de la guitare pop, rock et blues." },
     { type: "h", text: "La croche : 1/2 temps" },

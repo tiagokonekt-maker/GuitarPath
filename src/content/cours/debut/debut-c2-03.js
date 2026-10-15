@@ -5,6 +5,7 @@ export default {
   id: "debut-c2-03", level: 0, unite: 2,
   title: "Trois accords majeurs : Do, Sol et Ré",
   duration: 8,
+  gropiTip: "Dans Ré, ton majeur (corde 1, case 2) joue Fa#, la note qui rend l'accord majeur. Recule-le en case 1 : il joue Fa, et tu obtiens Ré mineur (xx0231).",
   content: [
     { type: "p", text: "Avec Mi mineur et La mineur, tu as deux accords mineurs, à la couleur plutôt douce ou mélancolique. Voici trois accords majeurs, plus lumineux. Avec ces cinq accords, tu peux accompagner un nombre énorme de chansons." },
     { type: "h", text: "Do (C)" },

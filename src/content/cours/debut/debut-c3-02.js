@@ -7,6 +7,7 @@ export default {
   id: "debut-c3-02", level: 0, unite: 3,
   title: "Les symboles de la tablature",
   duration: 7,
+  gropiTip: "Rejoue le riff de la leçon en remplaçant le 2h3 par un glissé 2/3 : mêmes notes, autre couleur. Tu entends tout de suite la différence entre frapper la note et la faire glisser.",
   content: [
     { type: "p", text: "Au-delà des chiffres, une tab utilise quelques lettres et signes pour dire COMMENT jouer une note. Tu n'as pas besoin de maîtriser ces techniques tout de suite, mais tu dois savoir les reconnaître pour lire n'importe quelle tab sans être perdu." },
     { type: "h", text: "Les liaisons : h et p" },

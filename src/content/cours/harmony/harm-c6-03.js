@@ -5,6 +5,7 @@ export default {
   id: "harm-c6-03", level: 8,
   title: "ii-V-I : le moteur du jazz",
   duration: 12,
+  gropiTip: "Chasse aux ii-V cachés : dès qu'un accord m7 est suivi d'un accord 7 dont la fondamentale est une quarte plus haut (Am7-D7, Em7-A7), tu en tiens un. Entoure-les sur tes grilles.",
   content: [
     { type: "p", text: "La progression ii-V-I est à la musique jazz ce que I-IV-V est au blues : une fondation absolue. Une grande partie des standards de jazz repose sur des enchaînements ii-V-I, dans différentes tonalités. Maîtriser ii-V-I, c'est avoir accès à un immense répertoire et comprendre le langage harmonique le plus sophistiqué de la musique populaire." },
     { type: "h", text: "La formule en majeur" },

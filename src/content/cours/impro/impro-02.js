@@ -5,6 +5,7 @@ export default {
   id: "impro-02", level: 7,
   title: "Cibler les notes d'accord",
   duration: 15,
+  gropiTip: "Avant d'improviser sur Am7, égrène La, Do, Mi, Sol en noires à 60 BPM, en montant puis en descendant, dans une seule position. Ces 4 notes dans les doigts, tes atterrissages deviennent réflexes.",
   content: [
     { type: "p", text: "La différence entre 'jouer sur un accord' et 'jouer à côté' tient à une chose : est-ce que tu cibles les notes de l'accord sur les temps forts ? Ce concept — le chord tone targeting — est le secret n°1 des improvisateurs professionnels." },
     { type: "h", text: "Les chord tones" },

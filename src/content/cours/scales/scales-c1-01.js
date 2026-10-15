@@ -5,6 +5,7 @@ export default {
   id: "scales-c1-01", level: 1,
   title: "L'alphabet musical : les 7 notes naturelles",
   duration: 8,
+  gropiTip: "Sur la corde 5, joue La à vide puis les cases 2, 3, 5, 7, 8 et 10 : Si, Do, Ré, Mi, Fa, Sol. Nomme chaque note à voix haute, et la case 12 te ramène sur La.",
   content: [
     { type: "p", text: "Avant d'aborder les gammes, les modes ou l'harmonie, il faut faire connaissance avec la matière première de la musique : les notes. Et bonne nouvelle, il n'y en a pas autant qu'on le croit. La musique occidentale repose sur seulement 7 notes naturelles, qui se répètent à l'infini sur ton instrument.", img: "/illus-escalier-notes.webp", imgAlt: "Escalier avec les 7 notes Do Ré Mi Fa Sol La Si sur chaque marche", imgSide: "right" },
     { type: "h", text: "Les 7 notes" },

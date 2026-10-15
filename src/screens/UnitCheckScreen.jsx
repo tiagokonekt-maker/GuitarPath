@@ -12,6 +12,7 @@ import { FONTS, R } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { Gropi } from "../design/Gropi.jsx";
+import { POSE_ROLE } from "../design/gropiPoses.js";
 import { UNIT_CHECK_PASS_PCT } from "../store/pathEngine.js";
 // Logique de composition de l'échantillon : voir store/unitCheckSampler.js.
 // Extraite dans un module pur pour deux raisons — elle n'a rien de
@@ -173,7 +174,9 @@ export function UnitCheckScreen({ unit, content, dispatch, onDone, state }) {
 
       {answered && (
         <>
-          <div style={{ background: sel === q.a ? C.greenL : C.coralL, borderRadius: R.md, padding: "12px 14px", marginBottom: 12, border: `1.5px solid ${sel === q.a ? C.greenBorder : C.coralBorder}` }}>
+          <div style={{ background: sel === q.a ? C.greenL : C.coralL, borderRadius: R.md, padding: "12px 14px", marginBottom: 12, border: `1.5px solid ${sel === q.a ? C.greenBorder : C.coralBorder}`, overflow: "hidden" }}>
+            {/* Réaction éclair de Gropi (0,4 s, 32 px), sans bloquer « Continuer ». */}
+            <Gropi key={sel === q.a ? "ok" : "ko"} pose={sel === q.a ? POSE_ROLE.bonne : POSE_ROLE.erreur} size={32} anim="pop" style={{ float: "right", marginLeft: 8 }} />
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
               <Ti name={sel === q.a ? "check" : "alert-circle"} size={14} color={sel === q.a ? C.green : C.coral} />
               <div style={{ fontSize: 12, fontWeight: 700, color: sel === q.a ? C.greenD : C.coralD }}>

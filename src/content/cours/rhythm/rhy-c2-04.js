@@ -5,6 +5,7 @@ export default {
   id: "rhy-c2-04", level: 4,
   title: "Les silences : la musique dans le vide",
   duration: 8,
+  gropiTip: "Un silence se joue aussi précisément qu'une note : sur le pattern du cours, étouffe l'accord pile sur le « et » du 2, et relance pile sur le 3. Compte le silence à voix basse.",
   content: [
     { type: "p", text: "En musique, les silences ne sont pas l'absence de musique. Ils SONT de la musique. Un silence bien placé a autant d'impact qu'une note bien placée. C'est ce qu'on appelle 'l'espace' en jazz — la capacité à ne pas jouer est aussi importante que la capacité à jouer. Une idée souvent attribuée à Miles Davis : les notes qu'on ne joue pas comptent autant que celles qu'on joue." },
     { type: "h", text: "Les symboles de silence" },

@@ -5,6 +5,7 @@ export default {
   id: "debut-c2-02", level: 0, unite: 2,
   title: "Tes deux premiers accords : Mi mineur et La mineur",
   duration: 7,
+  gropiTip: "Ton La mineur grogne dans le grave ? C'est sûrement la corde 6 qui sonne. Démarre ton coup de médiator sur la corde 5, à vide : c'est le La qui donne son nom à l'accord.",
   content: [
     { type: "p", text: "On commence par les deux accords les plus faciles de la guitare. Deux doigts pour le premier, trois pour le second, et une forme presque identique. À la fin de cette leçon, tu sauras déjà jouer de la musique." },
     { type: "h", text: "Mi mineur (Em)" },

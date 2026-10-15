@@ -5,6 +5,7 @@ export default {
   id: "rhy-c6-02", level: 9,
   title: "Construire un riff rythmique personnel",
   duration: 11,
+  gropiTip: "Pour ton premier riff, impose-toi une contrainte : une seule corde, trois notes maximum. Sans pouvoir te cacher derrière les notes, c'est le rythme qui fait tout le travail.",
   content: [
     { type: "p", text: "Cette leçon de synthèse te donne les outils pour créer tes propres riffs rythmiques. Un riff rythmique personnel, c'est ta signature musicale — quelques notes ou accords organisés dans un pattern distinctif que tu as inventé. Tous les grands guitaristes ont leurs riffs caractéristiques.", img: "/mascotte-histoire.webp", imgAlt: "Gropi qui raconte une histoire, livre ouvert devant lui", imgSide: "right" },
     { type: "h", text: "Les ingrédients d'un bon riff" },

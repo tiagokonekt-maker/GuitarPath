@@ -5,6 +5,7 @@ export default {
   id: "harm-c5-02", level: 7,
   title: "Le chiffrage romain et le système Nashville",
   duration: 9,
+  gropiTip: "Joue 1-5-6m-4 en Sol (Sol-Ré-Mim-Do), puis enchaîne les mêmes chiffres en La : La-Mi-Fa#m-Ré. Quand ça vient sans réfléchir, tu penses déjà en Nashville.",
   content: [
     { type: "p", text: "Le chiffrage romain est le langage universel des musiciens pour parler d'harmonie sans mentionner de tonalité spécifique. Le système Nashville (NNS) est sa version simplifiée, utilisée par les musiciens de studio à Nashville depuis les années 50. Comprendre ces deux systèmes te rend capable de communiquer musicalement avec n'importe quel musicien." },
     { type: "h", text: "Le chiffrage romain : rappel" },

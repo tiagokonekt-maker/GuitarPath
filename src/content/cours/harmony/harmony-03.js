@@ -5,6 +5,7 @@ export default {
   id: "harmony-03", level: 7,
   title: "Arpèges — l'accord en mélodie",
   duration: 12,
+  gropiTip: "Sur Cmaj7, joue l'arpège de Mim (Mi-Sol-Si) : tu obtiens la 3e, la 5e et la 7e de l'accord, sans la fondamentale. Un son plus moderne, parfait quand la basse joue déjà le Do.",
   content: [
     { type: "p", text: "Un arpège = les notes d'un accord jouées une par une, en succession mélodique. C'est le pont entre harmonie (vertical) et mélodie (horizontal). En impro, les arpèges te font 'sonner sur l'accord' à coup sûr." },
     { type: "h", text: "Pourquoi les arpèges sont essentiels" },

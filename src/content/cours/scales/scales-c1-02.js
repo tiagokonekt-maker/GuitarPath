@@ -5,6 +5,7 @@ export default {
   id: "scales-c1-02", level: 2,
   title: "Les altérations : dièses et bémols",
   duration: 9,
+  gropiTip: "Remonte la corde 6 case par case en nommant les notes avec des dièses, puis redescends en les nommant avec des bémols (Mi♭, Ré♭, Si♭...). Même case, autre nom.",
   content: [
     { type: "p", text: "7 notes, c'est bien. Mais entre certaines de ces notes, il existe des notes 'intermédiaires' : ce sont les altérations. Au total, la musique occidentale compte donc 12 sons différents avant que la boucle ne recommence à l'octave. Tu vois ces 12 sons à chaque case de ta guitare." },
     { type: "h", text: "Le dièse (#) — augmenter d'un cran" },

@@ -5,6 +5,7 @@ export default {
   id: "debut-c1-03", level: 0, unite: 1,
   title: "La main droite : médiator ou doigts",
   duration: 6,
+  gropiTip: "Joue tes 4 coups vers le bas face à un miroir et regarde ton coude : il doit rester posé sur la caisse pendant que ton poignet fait le travail.",
   content: [
     { type: "p", text: "La main gauche choisit les notes, la main droite les fait sonner. C'est elle qui donne le rythme, le volume et le caractère de ce que tu joues. Tu peux jouer avec un médiator (le petit triangle en plastique, qu'on appelle aussi plectre ou « mediator ») ou directement avec les doigts. Les deux sont utiles : commence par le médiator pour gratter tes premiers accords." },
     { type: "h", text: "Tenir le médiator" },

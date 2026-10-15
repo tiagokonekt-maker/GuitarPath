@@ -5,6 +5,7 @@ export default {
   id: "scales-c6-02", level: 9,
   title: "La gamme mineure mélodique",
   duration: 9,
+  gropiTip: "Pour la retenir : c'est la gamme majeure avec la tierce abaissée. La majeur (La-Si-Do#-Ré-Mi-Fa#-Sol#) devient La mineur mélodique dès que Do# redevient Do.",
   content: [
     { type: "p", text: "Encore une variante de la mineure : la mineure mélodique. Cette gamme a une histoire particulière (deux versions selon le contexte) et un usage essentiel en jazz moderne." },
     { type: "h", text: "Formule (version 'jazz moderne')" },

@@ -5,6 +5,7 @@ export default {
   id: "scales-c6-03", level: 9,
   title: "Comment choisir une gamme en improvisation",
   duration: 12,
+  gropiTip: "Mini-routine : sur une vamp Am7, joue 2 tours en pentatonique mineure, 2 en éolien, puis 2 en dorien. Note la couleur que ton oreille préfère : c'est comme ça que l'instinct se construit.",
   content: [
     { type: "p", text: "Tu connais maintenant beaucoup de gammes. La question pratique : quelle gamme choisir face à une chanson, une grille d'accords, une situation d'improvisation ? C'est le sujet de cette leçon de synthèse, et c'est là que tu transformes la théorie en pratique.", img: "/mascotte-choix.webp", imgAlt: "Gropi qui réfléchit, boussole à la main", imgSide: "left" },
     { type: "h", text: "Étape 1 : identifier la tonalité" },

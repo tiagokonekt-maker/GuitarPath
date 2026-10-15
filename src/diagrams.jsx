@@ -20,8 +20,23 @@
 //
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useC } from "./design/ThemeContext.jsx";
+// ── Son ──────────────────────────────────────────────────────────────────
+// Chaque diagramme peut s'écouter : bouton rond en haut à droite du cadre
+// (BarreEcoute), un seul diagramme à la fois (useLecteurDiagramme). CE QUI
+// est joué est calculé par des fonctions pures (fretboard/diagrammesSon.js,
+// testées sur tous les blocs du contenu) ; audioEngine ne fait que planifier.
+import { playSequence, playTab } from "./audioEngine.js";
+import { parseTab } from "./tab/tabParser.js";
+import { BoutonEcoute, BarreEcoute } from "./fretboard/LecteurDiagramme.jsx";
+import { useLecteurDiagramme } from "./fretboard/useLecteurDiagramme.js";
+import {
+  cordesDeFrets, cagedVersCordes, sequenceGrattage, sequenceArpege, nomAccordFr,
+  scaleBlockToNotes, monteeDescente, sequenceMelodique, fretboardBlockToNotes, noteGridToNotes,
+  strumBlockToEvents, rhythmBlockToEvents, decalageLigneTab,
+  sequenceIntervalles, degreeBoxToNotes, contexteDegres, sequenceDegres, accordDuCercle,
+} from "./fretboard/diagrammesSon.js";
 
 const FONT = '"Josefin Sans", "Roboto", sans-serif';
 const STRING_NAMES = ["Mi", "Si", "Sol", "Ré", "La", "Mi"]; // c1→c6, affiché c6→c1
@@ -42,7 +57,9 @@ function getNoteColors(DC) {
 }
 
 // ─── Wrapper commun ────────────────────────────────────────────────────────
-function DiagramCard({ caption, children, accent }) {
+// `actions` : boutons d'écoute, en haut à droite du cadre (toujours au même
+// endroit, quel que soit le diagramme).
+function DiagramCard({ caption, children, accent, actions }) {
   const DC = useC();
   const dotColor = accent || DC.primary;
   return (
@@ -52,6 +69,7 @@ function DiagramCard({ caption, children, accent }) {
       overflow: "hidden",
       marginBottom: 0,
     }}>
+      {actions && <BarreEcoute>{actions}</BarreEcoute>}
       <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
         {children}
       </div>
@@ -89,7 +107,36 @@ function DiagramCard({ caption, children, accent }) {
 //   markerFrets: [3,5,7,9,12], // cases avec points d'incrustation
 // }
 // ═══════════════════════════════════════════════════════════════════════════
+/** Une séquence de diagrammesSon.js → la fonction `jouer` attendue par useLecteurDiagramme. */
+const jouerSequence = (evenements) => ({ onStep, onDone }) => playSequence(evenements, { onStep, onDone });
+
+/** État visuel d'un bouton d'écoute pour une action donnée. */
+const etatBouton = (lecteur, action) => ({
+  joue: lecteur.action === action && lecteur.etat !== "repos",
+  charge: lecteur.action === action && lecteur.etat === "chargement",
+});
+
+const pluriel = (n, mot) => `${n} ${mot}${n > 1 ? "s" : ""}`;
+
 export function FretboardDiagram({ data, caption }) {
+  // Bloc « fretboard » : on joue les notes dans l'ordre écrit par l'auteur
+  // (souvent pédagogique : doigts 1-2-3-4, paires d'octaves…).
+  const lecteur = useLecteurDiagramme();
+  const notes = useMemo(() => fretboardBlockToNotes(data), [data]);
+  const actions = notes.length > 0 && (
+    <BoutonEcoute
+      {...etatBouton(lecteur, "notes")}
+      label={notes.length === 1 ? "Écouter la note" : `Écouter les ${notes.length} notes, dans l'ordre`}
+      onClick={() => lecteur.basculer("notes", jouerSequence(sequenceMelodique(notes, { ecart: 0.5, duree: 0.9 })))}
+    />
+  );
+  const actifs = lecteur.pas != null ? new Set([lecteur.pas]) : null;
+  return <FretboardDiagramVue data={data} caption={caption} actions={actions} actifs={actifs} />;
+}
+
+// Rendu du manche, sans état. `actifs` : Set de clés "corde-case" à
+// surligner (note en train de sonner).
+function FretboardDiagramVue({ data, caption, actions, actifs }) {
   const DC = useC();
   const NOTE_COLORS = useMemo(() => getNoteColors(DC), [DC]);
   const {
@@ -122,7 +169,7 @@ export function FretboardDiagram({ data, caption }) {
   const displayFrets = Array.from({ length: frets }, (_, i) => startFret + i + 1);
 
   return (
-    <DiagramCard caption={caption} accent={DC.amber}>
+    <DiagramCard caption={caption} accent={DC.amber} actions={actions}>
       <svg
         width="100%"
         viewBox={`0 0 ${svgW} ${svgH}`}
@@ -193,6 +240,8 @@ export function FretboardDiagram({ data, caption }) {
         {notes.map((n, i) => {
           const { string: s, fret: f, label = "", color = "primary", root = false, open: isOpen = false, muted: isMuted = false } = n;
           const col = NOTE_COLORS[color] || NOTE_COLORS.primary;
+          const sonne = !!actifs?.has(`${s}-${isOpen ? 0 : f}`);
+          const halo = sonne ? <circle cx={f === 0 || isOpen ? LEFT_PAD - 16 : LEFT_PAD + (f - startFret - 1) * FRET_SPACING + FRET_SPACING / 2} cy={sy(s)} r={NOTE_R + 4} fill="none" stroke={DC.text} strokeWidth={2.5} /> : null;
 
           if (isMuted) {
             const x = LEFT_PAD - 16; const y = sy(s);
@@ -200,7 +249,7 @@ export function FretboardDiagram({ data, caption }) {
           }
           if (isOpen) {
             const x = LEFT_PAD - 16; const y = sy(s);
-            return <circle key={i} cx={x} cy={y} r={NOTE_R - 2} fill="none" stroke={col.stroke || DC.primary} strokeWidth={2} />;
+            return <g key={i}>{halo}<circle cx={x} cy={y} r={NOTE_R - 2} fill="none" stroke={col.stroke || DC.primary} strokeWidth={2} /></g>;
           }
 
           // fret 0 (corde à vide jouée) : affichée à gauche du sillet, colorée
@@ -208,6 +257,7 @@ export function FretboardDiagram({ data, caption }) {
             const x = LEFT_PAD - 16; const y = sy(s);
             return (
               <g key={i}>
+                {halo}
                 <circle cx={x} cy={y} r={NOTE_R - 2} fill={col.fill} stroke={col.fill} strokeWidth={2} />
                 {label && (
                   <text x={x} y={y + 4} textAnchor="middle"
@@ -231,6 +281,7 @@ export function FretboardDiagram({ data, caption }) {
 
           return (
             <g key={i}>
+              {halo}
               <circle cx={x} cy={y} r={NOTE_R}
                 fill={col.fill}
                 stroke={root ? col.fill : "none"}
@@ -288,6 +339,18 @@ export function ScalePattern({ data, caption }) {
   } = data;
   const aDesAccents = strings.some(st => (st.accent || []).length);
 
+  // Son : la gamme en montant (corde 6 → corde 1) puis en descendant, la
+  // case qui sonne cerclée.
+  const lecteur = useLecteurDiagramme();
+  const notesGamme = useMemo(() => scaleBlockToNotes(data), [data]);
+  const ecouter = () => lecteur.basculer("gamme",
+    jouerSequence(sequenceMelodique(monteeDescente(notesGamme), { ecart: 0.32, duree: 0.6 })));
+  const actions = notesGamme.length > 0 && (
+    <BoutonEcoute {...etatBouton(lecteur, "gamme")}
+      label={`Écouter la gamme (${notesGamme.length} notes), en montant puis en descendant`}
+      onClick={ecouter} />
+  );
+
   const STRINGS = 6;
   const displayFrets = endFret - startFret + 1;
   const LEFT_PAD = 32;
@@ -306,7 +369,7 @@ export function ScalePattern({ data, caption }) {
   const stringsArr = strings.length === 6 ? strings : Array(6).fill({ frets: [], root: [] });
 
   return (
-    <DiagramCard caption={caption} accent={NOTE_COLORS[rootColor]?.fill || DC.amber}>
+    <DiagramCard caption={caption} accent={NOTE_COLORS[rootColor]?.fill || DC.amber} actions={actions}>
       <svg
         width="100%"
         viewBox={`0 0 ${svgW} ${svgH}`}
@@ -366,8 +429,10 @@ export function ScalePattern({ data, caption }) {
             const label = noteMap[key] || (isRoot ? "R" : "");
             const x = fx(f);
             const y = sy(s);
+            const sonne = lecteur.pas === key;
             return (
               <g key={`${s}-${f}`}>
+                {sonne && <circle cx={x} cy={y} r={NOTE_R + 4} fill="none" stroke={DC.text} strokeWidth={2.5} />}
                 <circle cx={x} cy={y} r={NOTE_R}
                   fill={col.fill}
                   stroke={isAccent ? DC.text : "none"} strokeWidth={isAccent ? 1.5 : 0}
@@ -422,13 +487,49 @@ export function CircleOfFifths({ data, caption }) {
     return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
   };
 
+  // Son : toucher une tonalité fait entendre son accord de tonique ; le
+  // bouton joue les tonalités mises en avant, dans l'ordre du cercle.
+  const lecteur = useLecteurDiagramme();
+  const [focusClavier, setFocusClavier] = useState(null);
+  const ecouterTon = (nom) => {
+    const notes = accordDuCercle(nom);
+    if (notes) lecteur.basculer(`ton:${nom}`, jouerSequence([{ t: 0, notes, duree: 2, velocite: 0.85, strum: "down", ecart: 0.03, step: nom }]));
+  };
+  const parcours = FIFTHS_MAJORS.filter(n => !highlight.length || highlight.includes(n));
+  const ecouterTout = () => lecteur.basculer("cercle", jouerSequence(parcours.map((nom, i) => ({
+    t: i * 1.15, notes: accordDuCercle(nom) || [], duree: 1.2, velocite: 0.82, strum: "down", ecart: 0.028, step: nom,
+  }))));
+  const nomLisible = (nom) => nom.endsWith("m") ? `${nom.slice(0, -1)} mineur` : `${nom} majeur`;
+  // Une tonalité du cercle se comporte comme un bouton (clic, Entrée, Espace).
+  const propsTouche = (nom) => ({
+    role: "button", tabIndex: 0,
+    "aria-label": `Écouter l'accord de ${nomLisible(nom)}`,
+    "aria-pressed": etatBouton(lecteur, `ton:${nom}`).joue,
+    style: { cursor: "pointer", outline: "none", WebkitTapHighlightColor: "transparent" },
+    onClick: () => ecouterTon(nom),
+    onKeyDown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); ecouterTon(nom); } },
+    onFocus: (e) => { let v = false; try { v = e.currentTarget.matches(":focus-visible"); } catch { v = true; } if (v) setFocusClavier(nom); },
+    onBlur: () => setFocusClavier(f => (f === nom ? null : f)),
+  });
+  const anneauFocus = (nom, x, y, r) => focusClavier === nom
+    ? <circle cx={x} cy={y} r={r + 4} fill="none" stroke="var(--gr-focus)" strokeWidth={2.5} />
+    : null;
+  const anneauSon = (nom, x, y, r) => lecteur.pas === nom && lecteur.etat !== "repos"
+    ? <circle cx={x} cy={y} r={r + 2.5} fill="none" stroke={DC.text} strokeWidth={2} />
+    : null;
+
   return (
-    <DiagramCard caption={caption || "Cercle des quintes"} accent={DC.primary}>
+    <DiagramCard caption={caption || "Cercle des quintes"} accent={DC.primary} actions={
+      <BoutonEcoute {...etatBouton(lecteur, "cercle")}
+        label={`Écouter les accords de ${parcours.length > 1 ? parcours.join(", ") : parcours[0]} majeur, dans l'ordre du cercle`}
+        onClick={ecouterTout} />
+    }>
       <svg
         width="100%"
         viewBox={`0 0 ${svgSize} ${svgSize}`}
         style={{ display: "block", minWidth: 220, maxWidth: 280, margin: "0 auto" }}
-        aria-label={caption || "Cercle des quintes"}
+        role="group"
+        aria-label={`${caption || "Cercle des quintes"} — touche une tonalité pour entendre son accord`}
       >
         <circle cx={cx} cy={cy} r={rMaj} fill="none" stroke={DC.border} strokeWidth={1} />
         {showMinors && <circle cx={cx} cy={cy} r={rMin} fill="none" stroke={DC.border} strokeWidth={1} />}
@@ -437,7 +538,9 @@ export function CircleOfFifths({ data, caption }) {
           const { x, y } = pos(rMaj, i);
           const isHi = highlight.includes(name);
           return (
-            <g key={name}>
+            <g key={name} {...propsTouche(name)}>
+              {anneauFocus(name, x, y, 15)}
+              {anneauSon(name, x, y, 15)}
               <circle cx={x} cy={y} r={15}
                 fill={isHi ? DC.primary : DC.surface}
                 stroke={isHi ? DC.primary : DC.border}
@@ -455,7 +558,9 @@ export function CircleOfFifths({ data, caption }) {
           const { x, y } = pos(rMin, i);
           const isHi = highlight.includes(FIFTHS_MAJORS[i]);
           return (
-            <g key={name}>
+            <g key={name} {...propsTouche(name)}>
+              {anneauFocus(name, x, y, 13)}
+              {anneauSon(name, x, y, 13)}
               <circle cx={x} cy={y} r={13}
                 fill={isHi ? DC.primaryL : DC.bg}
                 stroke={isHi ? DC.primary : DC.border}
@@ -488,29 +593,59 @@ export function DegreeChart({ data, caption }) {
   const DC = useC();
   const NOTE_COLORS = useMemo(() => getNoteColors(DC), [DC]);
   const { boxes = [] } = data || {};
+  // Son : chaque ligne se touche (la note du degré, ou son accord) ; le
+  // bouton les enchaîne toutes, dans l'ordre du tableau.
+  const lecteur = useLecteurDiagramme();
+  const ctx = useMemo(() => contexteDegres(data, caption), [data, caption]);
+  const sons = useMemo(() => boxes.map(b => degreeBoxToNotes(b, ctx)), [boxes, ctx]);
+  const ecouterCase = (i) => {
+    const r = sons[i];
+    if (!r) return;
+    lecteur.basculer(`case:${i}`, jouerSequence(r.type === "note"
+      ? [{ t: 0, notes: r.notes[0], duree: 1, velocite: 0.85, step: i }]
+      : [{ t: 0, notes: r.notes, duree: 1.8, velocite: 0.85, strum: "down", ecart: 0.028, step: i }]));
+  };
+  const quoi = ctx.modeNote ? "les notes" : "les accords";
   return (
-    <DiagramCard caption={caption || "Les degrés de la gamme"} accent={DC.primary}>
+    <DiagramCard caption={caption || "Les degrés de la gamme"} accent={DC.primary} actions={sons.some(Boolean) && (
+      <BoutonEcoute {...etatBouton(lecteur, "tout")}
+        label={`Écouter ${quoi} du tableau, dans l'ordre`}
+        onClick={() => lecteur.basculer("tout", jouerSequence(sequenceDegres(data, caption)))} />
+    )}>
       <div style={{ padding: "10px 12px" }}>
         {boxes.map((b, i) => {
           const col = NOTE_COLORS[b.tint] || NOTE_COLORS.neutral;
+          const son = sons[i];
+          const sonne = lecteur.pas === i && lecteur.etat !== "repos";
+          const Ligne = son ? "button" : "div";
           return (
-            <div key={i} style={{
-              display: "flex", alignItems: "center", gap: 10,
+            <Ligne key={i}
+              {...(son ? {
+                type: "button", className: "gr-focus",
+                onClick: () => ecouterCase(i),
+                "aria-pressed": etatBouton(lecteur, `case:${i}`).joue,
+                "aria-label": `Écouter ${son.type === "note" ? "la note" : "l'accord"} : ${b.top}, ${b.label}${b.sub ? `, ${b.sub}` : ""}`,
+              } : {})}
+              style={{
+              display: "flex", alignItems: "center", gap: 10, width: "100%",
               padding: "6px 8px", borderRadius: 8, marginBottom: 3,
+              minHeight: 36, textAlign: "left", font: "inherit",
               background: col.fill + "18",
+              border: `1.5px solid ${sonne ? DC.text : "transparent"}`,
+              cursor: son ? "pointer" : "default",
             }}>
-              <div style={{
+              <span style={{
                 minWidth: 28, height: 22, padding: "0 4px", borderRadius: 6,
                 background: col.fill,
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: 10, fontWeight: 700, fontFamily: FONT,
                 color: col.text, flexShrink: 0,
-              }}>{b.top}</div>
-              <div style={{ flex: 1, fontSize: 11.5, fontFamily: FONT, color: DC.text, fontWeight: 600 }}>{b.label}</div>
+              }}>{b.top}</span>
+              <span style={{ flex: 1, fontSize: 11.5, fontFamily: FONT, color: DC.text, fontWeight: 600 }}>{b.label}</span>
               {b.sub && (
-                <div style={{ fontSize: 10, fontFamily: FONT, color: DC.text3, flexShrink: 0 }}>{b.sub}</div>
+                <span style={{ fontSize: 10, fontFamily: FONT, color: DC.text3, flexShrink: 0 }}>{b.sub}</span>
               )}
-            </div>
+            </Ligne>
           );
         })}
       </div>
@@ -546,43 +681,62 @@ export function IntervalChart({ data, caption }) {
   const NOTE_COLORS = useMemo(() => getNoteColors(DC), [DC]);
   const { highlight = [], showOnGuitar = false } = data || {};
 
+  // Son : chaque ligne se touche (Do 4 puis la note de l'intervalle) ; le
+  // bouton enchaîne les intervalles mis en avant (tous, s'il n'y en a pas).
+  const lecteur = useLecteurDiagramme();
+  const enAvant = INTERVALS.filter(iv => !highlight.length || highlight.includes(iv.symbol));
+  const ecouter = (iv) => lecteur.basculer(`iv:${iv.symbol}`,
+    jouerSequence(sequenceIntervalles([{ demiTons: iv.semitones, step: iv.symbol }])));
+  const ecouterTout = () => lecteur.basculer("tout",
+    jouerSequence(sequenceIntervalles(enAvant.map(iv => ({ demiTons: iv.semitones, step: iv.symbol })))));
+
   return (
-    <DiagramCard caption={caption || "Les 12 intervalles"} accent={DC.primary}>
+    <DiagramCard caption={caption || "Les 12 intervalles"} accent={DC.primary} actions={
+      <BoutonEcoute {...etatBouton(lecteur, "tout")}
+        label={`Écouter ${highlight.length ? "les intervalles en surbrillance" : "les 12 intervalles"} depuis Do, l'un après l'autre`}
+        onClick={ecouterTout} />
+    }>
       <div style={{ padding: "10px 12px" }}>
         {INTERVALS.map(iv => {
           const isHighlighted = highlight.includes(iv.symbol);
           const col = NOTE_COLORS[iv.color] || NOTE_COLORS.neutral;
+          const sonne = lecteur.pas === iv.symbol && lecteur.etat !== "repos";
           return (
-            <div key={iv.symbol} style={{
-              display: "flex", alignItems: "center", gap: 10,
+            <button key={iv.symbol} type="button" className="gr-focus"
+              onClick={() => ecouter(iv)}
+              aria-pressed={etatBouton(lecteur, `iv:${iv.symbol}`).joue}
+              aria-label={`Écouter : ${iv.name} (${pluriel(iv.semitones, "demi-ton")}) depuis Do — ${iv.character}`}
+              style={{
+              display: "flex", alignItems: "center", gap: 10, width: "100%",
               padding: "6px 8px", borderRadius: 8, marginBottom: 3,
+              minHeight: 36, textAlign: "left", font: "inherit", cursor: "pointer",
               background: isHighlighted ? col.fill + "18" : "transparent",
-              border: isHighlighted ? `1px solid ${col.fill}40` : "1px solid transparent",
+              border: sonne ? `1.5px solid ${DC.text}` : isHighlighted ? `1.5px solid ${col.fill}40` : "1.5px solid transparent",
             }}>
               {/* Badge demi-tons */}
-              <div style={{
+              <span style={{
                 width: 22, height: 22, borderRadius: 6,
                 background: isHighlighted ? col.fill : DC.surface2,
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: 9, fontWeight: 700, fontFamily: FONT,
                 color: isHighlighted ? col.text : DC.text3,
                 flexShrink: 0,
-              }}>{iv.semitones}</div>
+              }}>{iv.semitones}</span>
 
               {/* Symbole */}
-              <div style={{
+              <span style={{
                 width: 28, fontSize: 11, fontWeight: 700, fontFamily: FONT,
                 color: isHighlighted ? col.fill : DC.text, flexShrink: 0,
-              }}>{iv.symbol}</div>
+              }}>{iv.symbol}</span>
 
               {/* Nom */}
-              <div style={{ flex: 1, fontSize: 11, fontFamily: FONT, color: DC.text2 }}>{iv.name}</div>
+              <span style={{ flex: 1, fontSize: 11, fontFamily: FONT, color: DC.text2 }}>{iv.name}</span>
 
               {/* Caractère */}
-              <div style={{ fontSize: 10, fontFamily: FONT, color: isHighlighted ? col.fill : DC.text3, textAlign: "right", flexShrink: 0 }}>
+              <span style={{ fontSize: 10, fontFamily: FONT, color: isHighlighted ? col.fill : DC.text3, textAlign: "right", flexShrink: 0 }}>
                 {iv.character}
-              </div>
-            </div>
+              </span>
+            </button>
           );
         })}
 
@@ -625,6 +779,24 @@ export function ChordDiagram({ data, caption }) {
   const DC = useC();
   const { name = "", frets = [], fingers = [], startFret = 1, barre } = data;
 
+  // Son : l'accord tel que dessiné (cases réelles × accordage standard),
+  // gratté — ou arpégé corde par corde, la corde qui sonne cerclée.
+  const lecteur = useLecteurDiagramme();
+  const cordes = useMemo(() => cordesDeFrets(frets), [frets]);
+  const nomFr = nomAccordFr(name) || "dessiné";
+  const pasLecture = lecteur.etat !== "repos" ? lecteur.pas : null;
+  const cordeSonne = (i) => pasLecture === "tout" ? cordes.some(c => c.index === i) : cordes[pasLecture]?.index === i;
+  const actions = cordes.length > 0 && (
+    <>
+      <BoutonEcoute {...etatBouton(lecteur, "arpege")} texte="Arpège"
+        label={`Écouter l'accord ${nomFr} en arpège, corde par corde`}
+        onClick={() => lecteur.basculer("arpege", jouerSequence(sequenceArpege(cordes)))} />
+      <BoutonEcoute {...etatBouton(lecteur, "accord")}
+        label={`Écouter l'accord ${nomFr}`}
+        onClick={() => lecteur.basculer("accord", jouerSequence(sequenceGrattage(cordes)))} />
+    </>
+  );
+
   const STRINGS  = 6;
   const FRET_ROWS = 4;
   const COL_W    = 32;
@@ -642,7 +814,7 @@ export function ChordDiagram({ data, caption }) {
   const fy = (f) => TOP_PAD + (f - startFret + 0.5) * ROW_H;
 
   return (
-    <DiagramCard caption={caption || name} accent={DC.primary}>
+    <DiagramCard caption={caption || name} accent={DC.primary} actions={actions}>
       <svg
         width="100%"
         viewBox={`0 0 ${svgW} ${svgH}`}
@@ -719,7 +891,7 @@ export function ChordDiagram({ data, caption }) {
             // Corde à vide — ○ au-dessus
             return (
               <circle key={i} cx={x} cy={TOP_PAD - 12}
-                r={6} fill="none"
+                r={cordeSonne(i) ? 7.5 : 6} fill={cordeSonne(i) ? DC.green : "none"}
                 stroke={DC.green} strokeWidth={1.5}
               />
             );
@@ -737,6 +909,7 @@ export function ChordDiagram({ data, caption }) {
           const finger = fingers[i] || 0;
           return (
             <g key={i}>
+              {cordeSonne(i) && <circle cx={x} cy={y} r={NOTE_R + 3.5} fill="none" stroke={DC.text} strokeWidth={2.5} />}
               <circle cx={x} cy={y} r={NOTE_R} fill={DC.primary} />
               {finger > 0 && (
                 <text x={x} y={y + 4}
@@ -776,6 +949,24 @@ export function CAGEDForm({ data, caption }) {
   // Badge form
   const enhancedCaption = caption || `Forme ${form} — ${root} (case ${rootFret})`;
 
+  // Son : la forme jouée comme un accord (une note par corde, du grave vers
+  // l'aigu), grattée ou arpégée — la case qui sonne cerclée.
+  const lecteur = useLecteurDiagramme();
+  const cordes = useMemo(() => cagedVersCordes(data), [data]);
+  const pasLecture = lecteur.etat !== "repos" ? lecteur.pas : null;
+  const actifs = pasLecture === "tout" ? new Set(cordes.map(c => c.cle))
+    : cordes[pasLecture] ? new Set([cordes[pasLecture].cle]) : null;
+  const actions = cordes.length > 0 && (
+    <>
+      <BoutonEcoute {...etatBouton(lecteur, "arpege")} texte="Arpège"
+        label={`Écouter la forme ${form} de ${root} en arpège, corde par corde`}
+        onClick={() => lecteur.basculer("arpege", jouerSequence(sequenceArpege(cordes)))} />
+      <BoutonEcoute {...etatBouton(lecteur, "accord")}
+        label={`Écouter la forme ${form} de ${root}`}
+        onClick={() => lecteur.basculer("accord", jouerSequence(sequenceGrattage(cordes)))} />
+    </>
+  );
+
   return (
     <div>
       <div style={{
@@ -791,9 +982,11 @@ export function CAGEDForm({ data, caption }) {
           <div style={{ fontSize: 10, color: DC.text3, fontFamily: FONT }}>Fondamentale case {rootFret}</div>
         </div>
       </div>
-      <FretboardDiagram
+      <FretboardDiagramVue
         data={{ frets, startFret, notes, showStringNames: true, showFretNumbers: true }}
         caption={enhancedCaption}
+        actions={actions}
+        actifs={actifs}
       />
     </div>
   );
@@ -829,8 +1022,18 @@ export function NoteGrid({ data, caption }) {
   const hlMap = {};
   highlights.forEach(h => { hlMap[h.fret] = h; });
 
+  // Son : les notes surlignées, de la case la plus basse à la plus haute.
+  const lecteur = useLecteurDiagramme();
+  const notesCorde = useMemo(() => noteGridToNotes(data), [data]);
+  const caseSonne = lecteur.etat !== "repos" ? lecteur.pas : null;
+  const actions = notesCorde.length > 0 && (
+    <BoutonEcoute {...etatBouton(lecteur, "notes")}
+      label={`Écouter les ${notesCorde.length} notes de la corde ${strNum}, de la case ${notesCorde[0].case} à la case ${notesCorde[notesCorde.length - 1].case}`}
+      onClick={() => lecteur.basculer("notes", jouerSequence(sequenceMelodique(notesCorde, { ecart: 0.42, duree: 0.7 })))} />
+  );
+
   return (
-    <DiagramCard caption={caption || `Notes sur la corde ${strNum} (${stringName})`} accent={DC.amber}>
+    <DiagramCard caption={caption || `Notes sur la corde ${strNum} (${stringName})`} accent={DC.amber} actions={actions}>
       <svg
         width="100%"
         viewBox={`0 0 ${svgW} ${H}`}
@@ -866,6 +1069,7 @@ export function NoteGrid({ data, caption }) {
           const y = STRING_Y;
           return (
             <g key={h.fret}>
+              {caseSonne === h.fret && <circle cx={x} cy={y} r={NOTE_R + 3.5} fill="none" stroke={DC.text} strokeWidth={2.5} />}
               <circle cx={x} cy={y} r={NOTE_R} fill={col.fill}
                 style={{ filter: `drop-shadow(0 0 3px ${col.fill}80)` }}
               />
@@ -913,26 +1117,57 @@ export function NoteGrid({ data, caption }) {
 // ═══════════════════════════════════════════════════════════════════════════
 const MONO = 'ui-monospace, "SF Mono", Menlo, Consolas, "Roboto Mono", monospace';
 
+// Tempo de lecture des tabs de leçon : une colonne = une double-croche à 90.
+const TAB_BPM = 90;
+const TAB_SUBDIVISION = 0.25;
+
 export function TabBlock({ data, caption, text }) {
   const DC = useC();
-  const lines = Array.isArray(data?.lines) ? data.lines : [];
+  const lines = useMemo(() => (Array.isArray(data?.lines) ? data.lines : []), [data]);
+  // Son : la tab passe par le même lecteur que la boîte à outils (tabParser
+  // → playTab), avec un curseur qui suit la colonne jouée.
+  const lecteur = useLecteurDiagramme();
+  const evenements = useMemo(() => (lines.length ? parseTab(lines.join("\n")).evenements : []), [lines]);
+  // Curseur : seulement pour une tab d'un seul système (6 lignes), où la
+  // colonne de l'analyseur = position du caractère après « e| ».
+  const decalage = lines.length === 6 ? decalageLigneTab(lines[0]) : null;
+  const curseur = lecteur.etat !== "repos" && lecteur.pas && decalage != null ? lecteur.pas : null;
+  const ecouter = () => lecteur.basculer("tab", ({ onStep }) => {
+    playTab(evenements, {
+      bpm: TAB_BPM, subdivision: TAB_SUBDIVISION,
+      onEvent: (ev) => onStep({ col: ev.col, largeur: String(ev.fret ?? ev.fromFret ?? "").length || 1 }),
+    });
+    const spc = (60 / TAB_BPM) * TAB_SUBDIVISION;
+    const dernier = Math.max(...evenements.map(e => e.toCol ?? e.col));
+    return (dernier + 2) * spc * 1000 + 600;   // + avance de playTab et résonance de la dernière note
+  });
   if (lines.length === 0) {
     return text ? <p style={{ margin: 0, fontSize: 15, lineHeight: 1.7, color: DC.text }}>{text}</p> : null;
   }
   return (
-    <DiagramCard caption={caption} accent={DC.primary}>
+    <DiagramCard caption={caption} accent={DC.primary} actions={evenements.length > 0 && (
+      <BoutonEcoute {...etatBouton(lecteur, "tab")} label="Écouter la tablature" onClick={ecouter} />
+    )}>
       <div role="img" aria-label={text || caption || "Tablature"} style={{ padding: "12px 14px", width: "max-content", minWidth: "100%", boxSizing: "border-box" }}>
         <pre aria-hidden="true" style={{
           margin: 0, fontFamily: MONO, fontSize: 14, lineHeight: 1.45,
-          whiteSpace: "pre", color: DC.text3, fontWeight: 600,
+          whiteSpace: "pre", color: DC.text3, fontWeight: 600, position: "relative",
         }}>
+          {curseur && (
+            <span style={{
+              position: "absolute", top: -2, bottom: -2,
+              left: `${decalage + curseur.col}ch`, width: `${curseur.largeur}ch`,
+              background: DC.primaryL, borderRadius: 3,
+              boxShadow: `0 0 0 2px ${DC.primary}`,
+            }} />
+          )}
           {lines.map((ligne, i) => {
             // Nom de corde (« e| ») en secondaire, chiffres (cases) mis en
             // valeur, tirets et barres en tertiaire.
             const m = /^([A-Za-z]{1,2}\|)?(.*)$/.exec(String(ligne));
             const morceaux = (m[2] || "").split(/(\d+)/);
             return (
-              <span key={i} style={{ display: "block" }}>
+              <span key={i} style={{ display: "block", position: "relative" }}>
                 {m[1] && <span style={{ color: DC.text2, fontWeight: 700 }}>{m[1]}</span>}
                 {morceaux.map((t, j) => (j % 2 === 1
                   ? <span key={j} style={{ color: DC.primaryInk || DC.primary, fontWeight: 800 }}>{t}</span>
@@ -1005,6 +1240,18 @@ export function RhythmGrid({ data, caption }) {
   const svgW = LEFT_PAD * 2 + total * CELL_W;
   const svgH = TOP_PAD + CELL_H + 28;
 
+  // Son : deux mesures, attaques tenues jusqu'à la suivante, la case jouée
+  // cerclée. Un clic léger marque les temps quand la grille distingue des
+  // attaques (ronde, syncope…), pour qu'on sente la pulsation dessous.
+  const lecteur = useLecteurDiagramme();
+  const rythme = useMemo(() => rhythmBlockToEvents(data), [data]);
+  const caseSonne = lecteur.etat !== "repos" ? lecteur.pas : null;
+  const actions = rythme.evenements.length > 0 && (
+    <BoutonEcoute {...etatBouton(lecteur, "rythme")}
+      label={`Écouter le rythme : 2 mesures à ${rythme.bpm} BPM`}
+      onClick={() => lecteur.basculer("rythme", jouerSequence(rythme.evenements))} />
+  );
+
   const getColor = (i) => {
     if (highlights.includes(i)) return { bg: DC.primary, text: "#fff" };
     if (accents.includes(i)) return { bg: DC.amber, text: "#fff" };
@@ -1031,7 +1278,7 @@ export function RhythmGrid({ data, caption }) {
   };
 
   return (
-    <DiagramCard caption={caption || label} accent={DC.green}>
+    <DiagramCard caption={caption || label} accent={DC.green} actions={actions}>
       <svg
         width="100%"
         viewBox={`0 0 ${svgW} ${svgH}`}
@@ -1066,6 +1313,7 @@ export function RhythmGrid({ data, caption }) {
             <g key={i}>
               <rect x={x + 1} y={TOP_PAD} width={CELL_W - 2} height={CELL_H}
                 fill={col.bg} rx={4}
+                stroke={caseSonne === i ? DC.text : "none"} strokeWidth={caseSonne === i ? 2.5 : 0}
               />
               <text x={x + CELL_W / 2} y={TOP_PAD + CELL_H / 2 + 4}
                 textAnchor="middle" fontSize={10} fill={col.text}
@@ -1144,8 +1392,19 @@ export function StrumPattern({ data, caption }) {
   const svgH = TOP_PAD + CELL_H + 24;
   const accent = STYLE_COLORS[style] || DC.primary;
 
+  // Son : deux mesures du pattern sur un accord typique du style (Sol en
+  // folk, Mi5 en rock…), coups bas / haut / étouffés, la case jouée cerclée.
+  const lecteur = useLecteurDiagramme();
+  const grattage = useMemo(() => strumBlockToEvents(data), [data]);
+  const caseSonne = lecteur.etat !== "repos" ? lecteur.pas : null;
+  const actions = grattage.evenements.some(e => e.notes?.length) && (
+    <BoutonEcoute {...etatBouton(lecteur, "grattage")}
+      label={`Écouter le pattern de grattage : 2 mesures à ${grattage.bpm} BPM`}
+      onClick={() => lecteur.basculer("grattage", jouerSequence(grattage.evenements))} />
+  );
+
   return (
-    <DiagramCard caption={caption || `Pattern ${style}${bpm ? ` · ${bpm} BPM` : ""}`} accent={accent}>
+    <DiagramCard caption={caption || `Pattern ${style}${bpm ? ` · ${bpm} BPM` : ""}`} accent={accent} actions={actions}>
       <svg
         width="100%"
         viewBox={`0 0 ${svgW} ${svgH}`}
@@ -1171,6 +1430,7 @@ export function StrumPattern({ data, caption }) {
             <g key={i}>
               <rect x={x + 2} y={TOP_PAD} width={CELL_W - 4} height={CELL_H}
                 fill={col.bg} rx={6}
+                stroke={caseSonne === i ? DC.text : "none"} strokeWidth={caseSonne === i ? 2.5 : 0}
               />
               <text x={x + CELL_W / 2} y={TOP_PAD + CELL_H / 2 + 5}
                 textAnchor="middle"

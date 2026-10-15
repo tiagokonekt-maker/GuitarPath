@@ -5,6 +5,7 @@ export default {
   id: "debut-c1-02", level: 0, unite: 1,
   title: "La main gauche : pouce, doigts, frettes",
   duration: 7,
+  gropiTip: "Mini-exercice : joue la case 1 de la corde 1 avec chaque doigt tour à tour (1, 2, 3 puis 4), en cherchant à chaque fois la pression minimale qui donne une note nette.",
   content: [
     { type: "p", text: "Ta main gauche choisit les notes : elle appuie les cordes contre le manche pour en changer la hauteur. Bien placée, elle travaille sans effort et chaque note sonne claire. Mal placée, elle se fatigue vite et les notes frisent. Trois réglages suffisent pour bien démarrer." },
     { type: "h", text: "Les doigts ont un numéro" },

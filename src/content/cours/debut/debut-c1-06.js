@@ -5,6 +5,7 @@ export default {
   id: "debut-c1-06", level: 0, unite: 1,
   title: "Accorder à l'oreille : la méthode de la 5e case",
   duration: 8,
+  gropiTip: "Le La de ta corde 5 à vide vibre à 110 Hz, deux octaves sous le La 440 du diapason. La corde 6 en case 5 donne exactement ce même La : c'est pour ça que la méthode marche.",
   content: [
     { type: "p", text: "Pas d'accordeur sous la main, pas de batterie, pas de réseau ? Tu peux accorder ta guitare avec elle-même. Le principe : sur une corde, une case précise donne exactement la même note que la corde suivante jouée à vide. Il suffit de comparer les deux sons et d'ajuster. En prime, c'est un excellent entraînement pour l'oreille." },
     { type: "h", text: "Le principe" },

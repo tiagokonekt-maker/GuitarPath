@@ -5,6 +5,7 @@ export default {
   id: "harm-c4-01", level: 9,
   title: "La 9e, la 11e, la 13e : les extensions",
   duration: 10,
+  gropiTip: "Pour nommer une extension, ajoute 7 au degré : 2 + 7 = 9, 4 + 7 = 11, 6 + 7 = 13. Sur Do, la 9e est donc Ré, la 11e Fa et la 13e La.",
   content: [
     { type: "p", text: "On a vu les triades (1-3-5) et les accords de 7e (1-3-5-7). Mais on peut aller plus loin : ajouter une 9e, une 11e, ou une 13e. Ces notes supplémentaires s'appellent des 'extensions' — elles enrichissent la couleur de l'accord sans en changer la fonction fondamentale. C'est le territoire du jazz avancé, de la bossa nova et de la soul moderne." },
     { type: "h", text: "Comment compter les extensions" },

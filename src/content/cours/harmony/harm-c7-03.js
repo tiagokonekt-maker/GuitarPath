@@ -5,6 +5,7 @@ export default {
   id: "harm-c7-03", level: 9,
   title: "Les modulations : changer de tonalité",
   duration: 10,
+  gropiTip: "Pour moduler vers une tonalité, glisse son accord V7 juste avant : de Do vers Mi, passe par Si7 ; de Do vers Fa, par Do7. Un seul accord, et l'oreille suit.",
   content: [
     { type: "p", text: "Une modulation, c'est le changement de tonalité pendant un morceau. C'est l'une des techniques les plus expressives en composition : elle peut créer une montée d'énergie, une surprise, ou un changement d'ambiance radical. Les modulations sont présentes dans presque toute la musique, du classique à la pop en passant par le jazz." },
     { type: "h", text: "Pourquoi moduler ?" },

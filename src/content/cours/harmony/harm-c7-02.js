@@ -5,6 +5,7 @@ export default {
   id: "harm-c7-02", level: 9,
   title: "La substitution tritonique",
   duration: 9,
+  gropiTip: "Moyen mnémotechnique : la substitution tritonique a sa fondamentale un demi-ton au-dessus de l'accord visé. Vers Do : Réb7. Vers Sol : Lab7. Vers Fa : Solb7.",
   content: [
     { type: "p", text: "La substitution tritonique est l'une des techniques harmoniques les plus sophistiquées et les plus utilisées du jazz moderne. Elle permet de remplacer un accord de dominante par un autre accord de dominante situé un triton plus loin — créant ainsi des lignes de basse chromatiques élégantes et une couleur harmonique inattendue." },
     { type: "h", text: "Le principe" },

@@ -5,6 +5,7 @@ export default {
   id: "impro-03", level: 8,
   title: "Tension et résolution",
   duration: 15,
+  gropiTip: "Une note d'approche ne se tient pas : joue Si ou Do# sur le contretemps, puis pose Do sur le temps fort. Si tu t'attardes sur l'approche, la tension sonne comme une fausse note.",
   content: [
     { type: "p", text: "La musique est une manipulation de la tension et de la résolution. Tu crées de la tension (dissonance, instabilité) puis tu la résous (consonance, repos). Plus la tension est grande avant la résolution, plus la résolution est satisfaisante. C'est le moteur de toute musique tonale." },
     { type: "h", text: "Les approach notes" },

@@ -5,6 +5,7 @@ export default {
   id: "rhy-c5-01", level: 6,
   title: "Blues shuffle : le feel ternaire appliqué",
   duration: 11,
+  gropiTip: "Erreur fréquente : un shuffle trop sautillant. La note courte tombe sur la 3e note du triolet, pas sur la dernière double-croche du temps : compte « 1-trip-let » et joue sur « 1 » et « let ».",
   content: [
     { type: "p", text: "Le shuffle blues est le feel rythmique fondamental du blues. Quand tu entends B.B. King, Stevie Ray Vaughan, Eric Clapton dans leur répertoire blues, c'est le shuffle que tu entends. Ce feel ternaire transforme un rythme 'carré' en quelque chose qui 'swingue' et qui 'danse'. Comprendre et jouer le shuffle est une étape incontournable pour tout guitariste rock/blues." },
     { type: "h", text: "Rappel : le feel shuffle" },

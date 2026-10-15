@@ -17,6 +17,7 @@ import { FONTS, R, MODULE } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { Gropi } from "../design/Gropi.jsx";
+import { POSE_ROLE } from "../design/gropiPoses.js";
 import { ProgressBar } from "../design/ui.jsx";
 import { FretboardQuizQuestion } from "../Fretboard.jsx";
 import {
@@ -286,7 +287,7 @@ export function OnboardingScreen({ content, onComplete, onEvent }) {
 
         {/* ── Tu joues déjà ? ───────────────────────────────────────── */}
         {phase === "experience" && (
-          <StepLayout C={C} eyebrow="Pour commencer" title="Tu as déjà joué de la guitare ?"
+          <StepLayout C={C} pose={POSE_ROLE.choix} eyebrow="Pour commencer" title="Tu as déjà joué de la guitare ?"
             subtitle="Si tu débutes, pas de test : on commence ensemble par les tout premiers pas.">
             {EXPERIENCE_OPTIONS.map(opt => (
               <OptionCard key={opt.id} C={C} selected={experience === opt.id} onClick={() => setExperience(opt.id)}>
@@ -490,7 +491,7 @@ export function OnboardingScreen({ content, onComplete, onEvent }) {
 
         {/* ── Objectif ──────────────────────────────────────────────── */}
         {phase === "goal" && (
-          <StepLayout C={C} eyebrow="Presque fini" title="Quel est ton objectif principal ?"
+          <StepLayout C={C} pose={POSE_ROLE.choix} eyebrow="Presque fini" title="Quel est ton objectif principal ?"
             subtitle="Le Parcours en tiendra compte, en plus de ton profil, sans jamais sauter les autres domaines.">
             {GOAL_OPTIONS.map(opt => (
               <OptionCard key={opt.id} C={C} selected={goal === opt.id} onClick={() => setGoal(opt.id)}>
@@ -527,15 +528,22 @@ export function OnboardingScreen({ content, onComplete, onEvent }) {
 
 // ── Sous-composants ─────────────────────────────────────────────────────
 
-function StepLayout({ C, eyebrow, title, subtitle, children }) {
+// `pose` (facultatif) : un petit Gropi à droite du titre — « choix » sur
+// les questions où l'on choisit son chemin.
+function StepLayout({ C, eyebrow, title, subtitle, pose, children }) {
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", paddingTop: 28, gap: 14 }}>
-      <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: C.primary, fontFamily: FONTS.ui }}>
-        {eyebrow}
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 12 }}>
+        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 14 }}>
+          <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: C.primary, fontFamily: FONTS.ui }}>
+            {eyebrow}
+          </div>
+          <h2 style={{ margin: 0, fontSize: 21, fontWeight: 800, color: C.text, letterSpacing: "-.2px", lineHeight: 1.3 }}>
+            {title}
+          </h2>
+        </div>
+        {pose && <Gropi pose={pose} size={48} anim="pop" />}
       </div>
-      <h2 style={{ margin: 0, fontSize: 21, fontWeight: 800, color: C.text, letterSpacing: "-.2px", lineHeight: 1.3 }}>
-        {title}
-      </h2>
       {subtitle && (
         <p style={{ margin: 0, fontSize: 13, color: C.text2, lineHeight: 1.5 }}>{subtitle}</p>
       )}

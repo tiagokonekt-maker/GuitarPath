@@ -5,6 +5,7 @@ export default {
   id: "scales-c2-04", level: 6,
   title: "Le cycle des quintes : la carte des tonalités",
   duration: 10,
+  gropiTip: "Pour lire une armure en dièses, prends le dernier dièse et monte d'un demi-ton : Fa#, Do#, Sol# → le dernier est Sol#, donc La majeur.",
   content: [
     { type: "p", text: "Le cycle des quintes est un schéma qui organise les 12 tonalités majeures (et leurs équivalents mineurs) dans un ordre logique. Comprendre ce cycle = avoir une carte mentale de toute la musique tonale, qui te permet de moduler, transposer, et naviguer entre tonalités." },
     { type: "h", text: "Le principe : monter de quinte en quinte" },

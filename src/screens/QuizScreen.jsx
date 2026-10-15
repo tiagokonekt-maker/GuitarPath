@@ -5,6 +5,7 @@ import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { ProgressBar, XPPop } from "../design/ui.jsx";
 import { Gropi } from "../design/Gropi.jsx";
+import { POSE_ROLE } from "../design/gropiPoses.js";
 import { makeEarQuizQuestion, loadAudio } from "../audioEngine.js";
 import { makeShapeQuestion } from "../music/shapeQuestions.js";
 import { buildReviewSession } from "../store/reviewEngine.js";
@@ -466,7 +467,12 @@ function QuizPlayer({ pool, title, state, dispatch, content, onDone }) {
 function FeedbackBox({ ok, xp, exp, lesson }) {
   const C = useC();
   return (
-    <div style={{ background:ok?C.greenL:C.coralL, borderRadius:R.md, padding:"12px 14px", marginBottom:12, border:`1.5px solid ${ok?C.greenBorder:C.coralBorder}` }}>
+    <div style={{ background:ok?C.greenL:C.coralL, borderRadius:R.md, padding:"12px 14px", marginBottom:12, border:`1.5px solid ${ok?C.greenBorder:C.coralBorder}`, display:"flex", gap:10, alignItems:"flex-start" }}>
+      {/* Gropi réagit sans ralentir : petite taille, apparition de 0,4 s,
+          aucune attente avant « Suivant ». Content si c'est juste, pensif
+          sinon — jamais moqueur. */}
+      <Gropi key={ok ? "ok" : "ko"} pose={ok ? POSE_ROLE.bonne : POSE_ROLE.erreur} size={36} anim="pop" />
+      <div style={{ flex:1, minWidth:0 }}>
       <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:4 }}>
         <Ti name={ok?"check":"alert-circle"} size={14} color={ok?C.green:C.coral} />
         <div style={{ fontSize:12, fontWeight:700, color:ok?C.greenD:C.coralD }}>
@@ -475,6 +481,7 @@ function FeedbackBox({ ok, xp, exp, lesson }) {
       </div>
       <div style={{ fontSize:12, color:ok?C.greenD:C.coralD, lineHeight:1.55 }}>{exp}</div>
       {lesson && <div style={{ fontSize:11, color:C.primary, marginTop:6 }}>Pour approfondir : <em>{lesson.title}</em></div>}
+      </div>
     </div>
   );
 }

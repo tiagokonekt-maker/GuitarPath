@@ -5,6 +5,7 @@ export default {
   id: "impro-05", level: 9,
   title: "Construire un solo",
   duration: 15,
+  gropiTip: "Garde ta meilleure idée pour le climax : choisis un lick qui t'enthousiasme et interdis-toi de le jouer avant le dernier tiers du solo. Sa première apparition n'en aura que plus d'impact.",
   content: [
     { type: "p", text: "Un solo n'est pas une collection de licks bout à bout — c'est une narration musicale avec un début, un développement et une conclusion. Les meilleurs solos de l'histoire suivent tous une structure narrative claire." },
     { type: "h", text: "La structure en 3 actes" },

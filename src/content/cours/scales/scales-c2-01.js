@@ -5,6 +5,7 @@ export default {
   id: "scales-c2-01", level: 5,
   title: "Qu'est-ce qu'une gamme (vraiment) ?",
   duration: 8,
+  gropiTip: "Applique la formule T-T-DT-T-T-T-DT sur la seule corde 5 depuis La à vide : cases 0, 2, 4, 5, 7, 9, 11, 12. Tu viens de construire La majeur sans connaître ses notes.",
   content: [
     { type: "p", text: "Tu entends parler de gammes depuis que tu joues : gamme majeure, mineure, blues, pentatonique... Mais qu'est-ce qu'une gamme, au fond ? La réponse est simple, et une fois que tu l'as comprise, tout devient lumineux.", img: "/illus-escalier-notes.webp", imgAlt: "Escalier avec les 7 notes Do Ré Mi Fa Sol La Si sur chaque marche", imgSide: "right" },
     { type: "h", text: "Définition" },

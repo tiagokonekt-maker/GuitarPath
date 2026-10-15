@@ -5,6 +5,7 @@ export default {
   id: "neck-06", level: 9,
   title: "Connexions accords-gammes-arpèges",
   duration: 14,
+  gropiTip: "Teste les guide tones sur Rém7 → Sol7 : la 7e de Rém7 (Do) descend d'un demi-ton vers Si, tierce de Sol7, et le Fa reste en place. Deux notes suffisent pour entendre l'enchaînement.",
   content: [
     { type: "p", text: "Voir uniquement la gamme isolée, c'est jouer 'à côté' de l'harmonie. Voir l'accord, sa gamme et son arpège ensemble, c'est jouer 'dans' l'harmonie. C'est la différence entre un guitariste correct et un musicien." },
     { type: "h", text: "Le triangle accord-arpège-gamme" },

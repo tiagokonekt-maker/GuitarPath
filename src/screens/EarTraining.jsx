@@ -25,6 +25,7 @@ import { FONTS, R } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { Gropi } from "../design/Gropi.jsx";
+import { POSE_ROLE } from "../design/gropiPoses.js";
 import { BackButton } from "../design/ui.jsx";
 import { loadAudio, isAudioLoaded, generateEarTrainingQuestion, stopAll, unlockAudio } from "../audioEngine.js";
 import { updateReviewHistory } from "../store/reviewEngine.js";
@@ -225,8 +226,8 @@ export function EarTraining({ onBack, dispatch, state }) {
     return (
       <div style={{ padding: "24px 16px 32px", display: "flex", flexDirection: "column", gap: 14 }}>
         <div style={{ textAlign: "center", padding: "20px 0" }}>
-          <div style={{ marginBottom: 10 }}>
-            <Ti name={pct >= 75 ? "headphones" : pct >= 50 ? "ear" : "book-2"} size={44} color={pct >= 75 ? C.green : pct >= 50 ? C.amber : C.text3} />
+          <div style={{ marginBottom: 10, display: "flex", justifyContent: "center" }}>
+            <Gropi pose={pct >= 75 ? POSE_ROLE.reussite : pct >= 50 ? POSE_ROLE.ecoute : POSE_ROLE.calme} size={88} anim={pct >= 75 ? "cheer" : "pop"} />
           </div>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: C.text, fontFamily: FONTS.title }}>
             {pct >= 75 ? "Belle oreille !" : pct >= 50 ? "Bon travail !" : "Continue l'entraînement !"}
@@ -297,7 +298,14 @@ export function EarTraining({ onBack, dispatch, state }) {
           <h1 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: C.text, fontFamily: FONTS.title }}>Oreille</h1>
           <div role="status" aria-live="polite" style={{ fontSize: 11, color: C.text3, fontFamily: FONTS.ui }}>{score.total}/{SESSION_LENGTH} · {score.correct} correcte{score.correct > 1 ? "s" : ""}</div>
         </div>
-        <Gropi pose="listen" size={46} anim="bob" />
+        {/* Gropi écoute pendant la question ; après la réponse, il sourit si
+            c'est juste, ou passe en mode zen si c'est raté : on respire, on
+            réécoute, sans pression. */}
+        {(() => {
+          const derniere = selected !== null ? answers[answers.length - 1] : null;
+          const pose = !derniere ? POSE_ROLE.ecoute : derniere.correct ? POSE_ROLE.bonne : POSE_ROLE.calme;
+          return <Gropi key={pose} pose={pose} size={46} anim={derniere ? "pop" : "bob"} />;
+        })()}
       </div>
 
       <div style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: 12 }}>

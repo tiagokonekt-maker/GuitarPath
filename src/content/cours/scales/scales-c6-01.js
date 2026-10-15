@@ -5,6 +5,7 @@ export default {
   id: "scales-c6-01", level: 9,
   title: "La gamme mineure harmonique",
   duration: 10,
+  gropiTip: "Joue Mi-Fa-Sol#-La sur la corde 2 (cases 5, 6, 9) puis La case 5 corde 1. Le saut de 3 cases entre Fa et Sol# te donne tout de suite la couleur orientale de la gamme.",
   content: [
     { type: "p", text: "Au-delà des 7 modes de la gamme majeure, il existe d'autres familles de gammes. La plus importante est la gamme mineure harmonique, créée pour résoudre un problème spécifique de l'harmonie tonale. Elle est utilisée en classique, en jazz, en métal néoclassique, et dans la musique gitane." },
     { type: "h", text: "Le problème à résoudre" },

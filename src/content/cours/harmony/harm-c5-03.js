@@ -5,6 +5,7 @@ export default {
   id: "harm-c5-03", level: 8,
   title: "Les familles fonctionnelles",
   duration: 10,
+  gropiTip: "Deux accords qui partagent deux notes ont souvent la même fonction : Do et Lam partagent Do et Mi, Fa et Rém partagent Fa et La. Pratique pour deviner une substitution.",
   content: [
     { type: "p", text: "Les 7 accords diatoniques ne sont pas tous égaux. Ils se regroupent en 3 familles selon leur 'fonction' harmonique : ce qu'ils 'font' dans la musique, l'effet qu'ils créent. Comprendre ces 3 familles, c'est comprendre la grammaire de la musique tonale — pourquoi certains enchaînements sonnent 'logiques' et d'autres non." },
     { type: "h", text: "Famille Tonique (T) : le repos" },

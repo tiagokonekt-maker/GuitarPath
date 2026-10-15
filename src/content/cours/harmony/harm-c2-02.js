@@ -5,6 +5,7 @@ export default {
   id: "harm-c2-02", level: 5,
   title: "Construire une triade depuis n'importe quelle note",
   duration: 10,
+  gropiTip: "Repère la quinte sans compter : depuis une fondamentale sur la corde 6 ou 5, elle est sur la corde voisine plus aiguë, deux cases plus loin (la forme du power chord). Il ne reste qu'à placer la tierce.",
   content: [
     { type: "p", text: "Maintenant que tu connais les 4 types de triades et leurs formules, on va apprendre à les construire depuis n'importe quelle note. C'est la compétence qui te rend vraiment libre : plus besoin de mémoriser chaque accord comme un cas isolé, tu les construis à la demande." },
     { type: "h", text: "La méthode : formule + demi-tons" },

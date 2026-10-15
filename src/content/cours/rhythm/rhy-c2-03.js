@@ -5,6 +5,7 @@ export default {
   id: "rhy-c2-03", level: 6,
   title: "Les triolets : le feel ternaire",
   duration: 10,
+  gropiTip: "Pour sentir le triolet, dis « cho-co-lat » sur chaque clic du métronome à 60 BPM : trois syllabes égales par temps, l'appui sur « cho ». Dès qu'une syllabe traîne, ce n'est plus un triolet.",
   content: [
     { type: "p", text: "Un triolet, c'est 3 notes égales jouées dans le temps d'une valeur binaire (2 notes). En d'autres termes : diviser un temps en 3 au lieu de 2. Ce 'feel ternaire' est à la base du blues, du jazz swing, du shuffle, et de la bossa nova. Sans comprendre les triolets, impossible de vraiment swinguer." },
     { type: "h", text: "Définition visuelle" },

@@ -5,6 +5,7 @@ export default {
   id: "rhy-c5-03", level: 8,
   title: "Funk : les 16e notes et les ghost notes",
   duration: 12,
+  gropiTip: "Commence ta séance funk sans accord : étouffe toutes les cordes de la main gauche et joue 16 doubles-croches par mesure à 70 BPM. Quand le flux est régulier, ajoute un seul accent sur le 1.",
   content: [
     { type: "p", text: "Le funk est le genre qui pousse la guitare rythmique à son point de perfectionnement maximal. La guitare funk n'est pas un instrument harmonique — c'est un instrument de percussion. Chaque note, chaque silence, chaque ghost note est une pièce d'un puzzle rythmique précis. Comprendre le funk, c'est comprendre comment la guitare peut 'drummer'." },
     { type: "h", text: "Les 16e notes : la matière première du funk" },

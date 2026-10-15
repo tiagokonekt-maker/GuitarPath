@@ -16,6 +16,7 @@ import { todayStr, weekStr, daysBetween, defaultState } from "./state.js";
 import { levelFromXp, sanitizeXp } from "./leveling.js";
 import { xpPreview, rollDaily, LESSON_XP, DAILY_PRACTICE_CAP } from "./xp.js";
 import { DAILY_CHALLENGES } from "./challenges.js";
+import { ajouterVu } from "./gropiHistorique.js";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 const MAX_FREEZES = 2;
@@ -281,6 +282,18 @@ function reducer(state, action) {
     case "DISMISS_GROPI_TIP":
       s.gropiTipDate = today;
       break;
+
+    case "GROPI_TIP_VU": {
+      // Un conseil de Gropi vient d'être montré : il devient le conseil du
+      // jour (stable jusqu'à demain ou « Un autre conseil ») et entre dans
+      // l'historique, pour ne pas revenir avant d'avoir épuisé le pool.
+      if (typeof action.id !== "string" || !action.id) break;
+      const jour = typeof action.jour === "string" && action.jour ? action.jour : today;
+      if (s.gropiJour?.date === jour && s.gropiJour?.id === action.id) return state;   // déjà noté : pas de rendu inutile
+      s.gropiJour = { date: jour, id: action.id };
+      s.gropiVus = ajouterVu(Array.isArray(s.gropiVus) ? s.gropiVus : [], action.id);
+      break;
+    }
 
     case "SET_THEME":
       if (["auto", "light", "dark"].includes(action.theme)) s.theme = action.theme;

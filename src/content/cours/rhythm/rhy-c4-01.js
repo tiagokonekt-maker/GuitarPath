@@ -5,6 +5,7 @@ export default {
   id: "rhy-c4-01", level: 3,
   title: "La main droite : mouvement pendulaire et continuité",
   duration: 10,
+  gropiTip: "Ne laisse pas ta main droite s'arrêter quand la gauche change d'accord : mieux vaut un coup dans le vide ou sur des cordes à vide qu'un trou dans le rythme.",
   content: [
     { type: "p", text: "Tout le rythme de la guitare passe par la main droite. C'est elle qui donne vie aux accords et aux riffs. Pourtant, c'est souvent la main la plus négligée dans l'apprentissage — on se concentre sur les doigts de la main gauche (les notes) en oubliant que sans une main droite solide et régulière, rien ne groove. Cette leçon remet la main droite au centre." },
     { type: "h", text: "Le mouvement pendulaire : la base absolue" },

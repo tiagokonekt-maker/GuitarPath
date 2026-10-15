@@ -5,6 +5,7 @@ export default {
   id: "scales-c5-04", level: 8,
   title: "Lydien — l'évasion onirique",
   duration: 10,
+  gropiTip: "Trouve la #4 en une seconde : c'est un triton (6 cases) au-dessus de la fondamentale sur la même corde. Fa case 1 corde 6 → Si case 7 corde 6. Le diabolus in musica, en version féerique !",
   content: [
     { type: "p", text: "Le lydien, c'est le mode du rêve, de l'espace ouvert, du mystère bienveillant. Il est utilisé par les compositeurs de musiques de film pour évoquer la magie, le voyage, l'évasion. Visuellement, le lydien c'est un grand ciel bleu, une lumière dorée. C'est le mode le plus brillant des sept." },
     { type: "h", text: "Construction" },

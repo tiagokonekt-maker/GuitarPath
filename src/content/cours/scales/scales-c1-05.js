@@ -5,6 +5,7 @@ export default {
   id: "scales-c1-05", level: 3,
   title: "Les intervalles simples : seconde, tierce, quarte, quinte",
   duration: 11,
+  gropiTip: "Erreur fréquente : oublier de compter la note de départ. Do→Sol, c'est Do-Ré-Mi-Fa-Sol : 5 notes, donc une quinte, même s'il n'y a que 4 pas entre elles.",
   content: [
     { type: "p", text: "Un intervalle, c'est la distance entre deux notes. Tu sais déjà mesurer cette distance en demi-tons. Maintenant on va lui donner un nom 'musical' : seconde, tierce, quarte, quinte... Ces noms sont essentiels parce que toute la musique en parle." },
     { type: "h", text: "Comment compter un intervalle" },

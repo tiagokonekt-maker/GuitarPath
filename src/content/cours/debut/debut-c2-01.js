@@ -5,6 +5,7 @@ export default {
   id: "debut-c2-01", level: 0, unite: 2,
   title: "Lire un diagramme d'accord",
   duration: 5,
+  gropiTip: "Mini-défi : écris Mi mineur en chiffres sans regarder (022000), puis devine ce que donne 000000. Réponse : les six cordes à vide, Mi La Ré Sol Si Mi !",
   content: [
     { type: "p", text: "Un accord, c'est plusieurs notes jouées en même temps. Pour savoir où poser les doigts, les guitaristes utilisent un petit schéma : le diagramme d'accord. Tu en verras partout, dans cette app, dans les recueils de chansons, sur les sites de partitions. Une fois qu'on sait le lire, c'est une affaire de secondes." },
     { type: "h", text: "Le manche vu de face" },

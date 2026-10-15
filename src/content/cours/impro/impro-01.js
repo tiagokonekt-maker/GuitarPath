@@ -5,6 +5,7 @@ export default {
   id: "impro-01", level: 6,
   title: "Penser en phrases musicales",
   duration: 12,
+  gropiTip: "Pour savoir où finit ta phrase, respire avec elle : commence à jouer en expirant et arrête-toi quand tu dois reprendre ton souffle. Ton solo se met à respirer comme un chanteur.",
   content: [
     { type: "p", text: "L'improvisation n'est pas une suite de notes aléatoires — c'est une conversation musicale. Comme une phrase parlée, une phrase musicale a un début, un développement et une fin. Les grands improvisateurs (Miles Davis, Jimi Hendrix, Django Reinhardt) pensent tous en phrases, pas en gammes." },
     { type: "h", text: "La règle du silence" },

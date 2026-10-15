@@ -5,6 +5,7 @@ export default {
   id: "harm-c2-03", level: 6,
   title: "Les 12 triades majeures — mémorisation",
   duration: 9,
+  gropiTip: "Retiens par familles : Do, Fa et Sol ont leurs trois notes naturelles ; Ré, Mi et La n'ont que leur tierce diésée (Fa#, Sol#, Do#). Six triades en une seule phrase.",
   content: [
     { type: "p", text: "Il y a 12 notes dans la gamme chromatique, donc 12 triades majeures. Les mémoriser toutes paraît intimidant, mais avec la bonne méthode, c'est accessible en quelques semaines. Cette leçon te donne la stratégie la plus efficace." },
     { type: "h", text: "Groupe 1 : les triades sans altérations ou 1 altération" },

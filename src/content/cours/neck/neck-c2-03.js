@@ -5,6 +5,7 @@ export default {
   id: "neck-c2-03", level: 4,
   title: "Les notes de la corde de Ré (corde 4)",
   duration: 8,
+  gropiTip: "Tu connais déjà la case 5 de la corde 4 : c'est le Sol qui sert à accorder la corde 3 à l'oreille. Pars de là pour remonter : La en case 7, Si en 9, Do en 10.",
   content: [
     { type: "p", text: "La corde 4 (Ré) est moins utilisée comme ancre que les cordes 6 et 5, mais elle est essentielle pour les accords ouverts (Ré, Sol, Do) et pour certaines fondamentales d'accords avancés. La connaître complète ta cartographie." },
     { type: "h", text: "Les notes case par case" },

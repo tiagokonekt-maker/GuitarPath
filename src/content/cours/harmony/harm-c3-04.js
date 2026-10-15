@@ -5,6 +5,7 @@ export default {
   id: "harm-c3-04", level: 8,
   title: "Les voicings shell : économe et efficace",
   duration: 8,
+  gropiTip: "Depuis le G7 shell (cases 3-2-3), monte le doigt de la corde 4 d'une case (Fa → Fa#) : Gmaj7. Recule plutôt celui de la corde 5 (Si → Sib) : Gm7. Un doigt, un nouveau type.",
   content: [
     { type: "p", text: "Un 'voicing' c'est une manière spécifique de disposer les notes d'un accord sur le manche. Les voicings shell (de l'anglais 'coque, squelette') sont des voicings minimalistes : seulement 2 ou 3 notes, mais les bonnes. Sur la guitare, ces voicings sont la base du jeu jazz et du comping moderne." },
     { type: "h", text: "Définition d'un shell voicing" },

@@ -5,6 +5,7 @@ export default {
   id: "impro-06", level: 8,
   title: "Vocabulaire blues et jazz",
   duration: 18,
+  gropiTip: "La note bleue Ré# se joue surtout en passage : glisse Ré→Ré#→Mi plutôt que de t'arrêter dessus. Elle sonne alors blues, et non fausse, sur la grille en La.",
   content: [
     { type: "p", text: "Le vocabulaire musical, c'est comme le vocabulaire d'une langue. Un bon improvisateur a un répertoire de licks, patterns et gestes musicaux qu'il déploie et adapte. Tu n'inventes pas — tu empruntes, transformes, combines." },
     { type: "h", text: "Les licks blues essentiels" },

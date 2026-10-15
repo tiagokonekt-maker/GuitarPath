@@ -5,6 +5,7 @@ export default {
   id: "rhy-c1-03", level: 2,
   title: "Le métronome : ton meilleur ennemi",
   duration: 9,
+  gropiTip: "Note dans un carnet le tempo propre de chaque exercice, avec la date. En relisant ton mois (60, 65, 70 BPM…), tu verras noir sur blanc que les petits paliers finissent par payer.",
   content: [
     { type: "p", text: "Tout le monde sait qu'il faut s'entraîner au métronome. Beaucoup le font mal ou pas assez. Cette leçon te donne les techniques avancées d'utilisation du métronome — celles que les pros utilisent — pour développer un sens du temps interne solide comme un roc." },
     { type: "h", text: "Pourquoi le métronome est indispensable" },

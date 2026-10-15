@@ -11,6 +11,7 @@ import { masteryStats, prochainesAAncrer, MASTERY_LABELS } from "../store/master
 import { gradeForLevel } from "../store/grades.js";
 import { buildUnits, debutFacultatif } from "../store/pathEngine.js";
 import { Gropi, GropiTip } from "../design/Gropi.jsx";
+import { POSE_ROLE } from "../design/gropiPoses.js";
 
 function ProgressScreen({ state, content, onOpenSettings }) {
   const C = useC();
@@ -147,7 +148,7 @@ function ProgressScreen({ state, content, onOpenSettings }) {
         {/* ── GROPI contextuel ─────────────────────────────────────────────── */}
         <div style={{ marginBottom:20 }}>
           <GropiTip
-            pose={state.streak >= 7 ? "rocker" : state.streak >= 3 ? "happy" : state.streak === 0 ? "pride" : "wave"}
+            pose={state.streak >= 3 ? POSE_ROLE.serie : state.streak === 0 ? POSE_ROLE.calme : POSE_ROLE.progression}
             tint={state.streak >= 7 ? "green" : state.streak === 0 ? "primary" : "primary"}
             eyebrow="Gropi te parle"
           >

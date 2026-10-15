@@ -5,6 +5,7 @@ export default {
   id: "scales-c4-02", level: 7,
   title: "Qu'est-ce qu'un mode (la grande révélation)",
   duration: 12,
+  gropiTip: "Pour trouver la gamme parente d'un mode, remonte jusqu'au degré I : La dorien est le IIe degré, donc la gamme parente commence un ton plus bas, sur Sol. La dorien = notes de Sol majeur.",
   content: [
     { type: "p", text: "Voilà. Tu y es. Tu as toutes les briques nécessaires pour comprendre les modes — ce concept qui terrorise tant de guitaristes intermédiaires. Mais en réalité, après ce que tu viens d'apprendre dans la leçon précédente, les modes vont te paraître évidents. Promis." },
     { type: "h", text: "La définition simple" },

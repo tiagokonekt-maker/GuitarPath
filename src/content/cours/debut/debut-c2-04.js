@@ -5,6 +5,7 @@ export default {
   id: "debut-c2-04", level: 0, unite: 2,
   title: "Changer d'accord sans s'arrêter",
   duration: 7,
+  gropiTip: "Pendant que tu grattes un accord, dis déjà dans ta tête le nom du suivant : ton cerveau prépare le trajet des doigts avant même que ta main bouge.",
   content: [
     { type: "p", text: "Savoir poser un accord, c'est la moitié du chemin. L'autre moitié, la plus difficile au début, c'est de passer d'un accord à l'autre sans casser le rythme. Bonne nouvelle : ça se travaille, avec quelques astuces et un exercice redoutablement efficace." },
     { type: "h", text: "Astuce 1 : les doigts pivots" },

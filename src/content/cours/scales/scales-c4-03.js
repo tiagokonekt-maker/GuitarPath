@@ -5,6 +5,7 @@ export default {
   id: "scales-c4-03", level: 7,
   title: "Comment l'oreille perçoit un mode (le rôle du drone)",
   duration: 8,
+  gropiTip: "Drone gratuit : pour Mi phrygien, laisse sonner la corde 6 à vide et joue les notes de Do majeur sur les cordes aiguës. Insiste sur le Fa (case 1 corde 1) pour entendre la ♭2.",
   content: [
     { type: "p", text: "Un mode existe seulement si l'oreille perçoit une fondamentale stable. Sans cette ancre, ton cerveau retombe sur la fondamentale par défaut (la tonique de la gamme majeure parente). Comprendre ce phénomène, c'est comprendre comment 'faire sonner' un mode quand on improvise.", img: "/mascotte-zen.webp", imgAlt: "Gropi les yeux fermés, à l'écoute", imgSide: "right" },
     { type: "h", text: "Le piège : sans ancre, pas de mode" },

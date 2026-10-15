@@ -5,6 +5,7 @@ export default {
   id: "neck-c3-02", level: 5,
   title: "Pattern octave 2 : corde 5 → corde 3",
   duration: 8,
+  gropiTip: "Tu utilises déjà ce pattern sans le savoir : dans La mineur (x02210), la corde 5 à vide et la corde 3 case 2 sont deux La à une octave d'écart.",
   content: [
     { type: "p", text: "Le deuxième pattern d'octaves fonctionne de la même façon que le premier : corde 5 vers corde 3, +2 cases. C'est le miroir du pattern précédent, mais une corde plus haut." },
     { type: "h", text: "Le pattern : c5 → c3, +2 cases" },

@@ -5,6 +5,7 @@ export default {
   id: "harm-c8-02", level: 9,
   title: "Construire un solo qui suit les accords",
   duration: 11,
+  gropiTip: "Enregistre-toi 2 minutes sur une boucle ii-V-I, puis réécoute en notant deux choses : où sont tes silences, et as-tu répété un motif ? Corrige l'un des deux à la prise suivante.",
   content: [
     { type: "p", text: "Cette leçon de synthèse réunit tout ce que tu as appris en harmonie et l'applique à l'improvisation. Construire un solo qui 'suit les accords', ce n'est pas jouer toutes les notes d'accord à la suite — c'est faire des choix mélodiques qui reflètent l'harmonie de façon naturelle et musicale.", img: "/mascotte-choix.webp", imgAlt: "Gropi qui réfléchit, boussole à la main", imgSide: "right" },
     { type: "h", text: "Les 3 niveaux d'un bon solo" },

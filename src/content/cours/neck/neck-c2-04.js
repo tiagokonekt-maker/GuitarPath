@@ -5,6 +5,7 @@ export default {
   id: "neck-c2-04", level: 4,
   title: "Les notes de la corde de Sol (corde 3)",
   duration: 8,
+  gropiTip: "Le Si de la case 4 est le repère « bizarre » de la corde 3 : c'est le même Si que la corde 2 à vide, celui qui sert à accorder à l'oreille. Joue les deux ensemble pour les entendre fusionner.",
   content: [
     { type: "p", text: "La corde 3 (Sol) est la dernière des cordes 'basses-médium'. Elle est très utilisée pour les solos blues/rock (le bend de Sol case 7 est iconique chez B.B. King) et pour les triades sur cordes 3-2-1." },
     { type: "h", text: "Les notes case par case" },

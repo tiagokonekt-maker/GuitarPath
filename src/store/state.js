@@ -4,6 +4,7 @@
 
 import { levelFromXp, sanitizeXp } from "./leveling.js";
 import { defaultDailyXp } from "./xp.js";
+import { fusionnerVus, GROPI_VUS_MAX } from "./gropiHistorique.js";
 // Les dates vivent maintenant dans dates.js (heure LOCALE, pas UTC).
 // Réexportées ici pour ne casser aucun import existant.
 import { todayStr, weekStr, dayStr, daysAgoStr, daysBetween, normalizeWeek, compareWeeks } from "./dates.js";
@@ -45,6 +46,12 @@ export const defaultState = () => ({
   derniereRevision: "",
   sessionHistory: [],
   gropiTipDate: "",
+  // Conseils de Gropi : historique des ids montrés (le plus récent en fin,
+  // plafonné à GROPI_VUS_MAX) et conseil retenu pour la journée. Voir
+  // store/gropiTips.js : pas de répétition avant d'avoir épuisé le pool,
+  // même conseil toute la journée.
+  gropiVus: [],
+  gropiJour: { date: "", id: "" },
 
   // Compteur quotidien d'XP d'entretien (plafonne le farming — voir xp.js)
   dailyXp: defaultDailyXp(),
@@ -107,6 +114,8 @@ function migrate(parsed) {
   if (!Array.isArray(s.wrongQuiz)) s.wrongQuiz = [];
   if (!Array.isArray(s.unlockedBadges)) s.unlockedBadges = [];
   if (!Array.isArray(s.sessionHistory)) s.sessionHistory = [];
+  s.gropiVus = Array.isArray(s.gropiVus) ? s.gropiVus.filter(id => typeof id === "string").slice(-GROPI_VUS_MAX) : [];
+  if (!s.gropiJour || typeof s.gropiJour !== "object" || typeof s.gropiJour.date !== "string") s.gropiJour = { date: "", id: "" };
   s.jam = { ...defaultState().jam, ...(s.jam && typeof s.jam === "object" ? s.jam : {}) };
   if (!s.semaine || typeof s.semaine !== "object" || !Array.isArray(s.semaine.jours)) s.semaine = defaultState().semaine;
   if (typeof s.derniereRevision !== "string") s.derniereRevision = "";
@@ -341,6 +350,10 @@ export const mergeStates = (local, cloud) => {
   // Préférences : le local gagne (c'est l'appareil qu'on a en main)
   m.theme = L.theme || C.theme || "auto";
   m.gropiTipDate = maxStr(L.gropiTipDate, C.gropiTipDate);
+  // Conseils de Gropi : union de l'historique (l'ordre local fait foi), et
+  // conseil du jour de l'appareil le plus récent — à date égale, le local.
+  m.gropiVus = fusionnerVus(L.gropiVus, C.gropiVus);
+  m.gropiJour = (C.gropiJour?.date || "") > (L.gropiJour?.date || "") ? { ...C.gropiJour } : { ...L.gropiJour };
 
   // Onboarding : fait quelque part = fait partout
   m.onboarding = {

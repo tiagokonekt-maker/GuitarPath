@@ -5,6 +5,7 @@ export default {
   id: "harm-c6-02", level: 7,
   title: "I-V-vi-IV : la progression pop",
   duration: 9,
+  gropiTip: "Joue la boucle en Sol (Sol-Ré-Mim-Do) avec un capodaste en case 2 : mêmes doigtés, mais tu sonnes en La (La-Mi-Fa#m-Ré). Le réflexe idéal pour s'adapter à la voix d'un chanteur.",
   content: [
     { type: "p", text: "Si I-IV-V est l'ADN du blues, I-V-vi-IV est l'ADN de la pop moderne. Cette progression simple mais redoutablement efficace est présente dans des centaines de chansons parmi les plus écoutées des 40 dernières années. Connaître I-V-vi-IV, c'est tenir la clé d'une immense partie du répertoire pop." },
     { type: "h", text: "La formule" },

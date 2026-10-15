@@ -5,6 +5,7 @@ export default {
   id: "neck-c3-03", level: 5,
   title: "Patterns octaves 3 et 4 : l'asymétrie corde 2-3",
   duration: 9,
+  gropiTip: "Le pattern 3 se cache dans Ré ouvert (xx0232) : corde 4 à vide = Ré, corde 2 case 3 = Ré, une octave pile à +3 cases. Et dans Sol (320003), corde 3 à vide et corde 1 case 3 font le pattern 4.",
   content: [
     { type: "p", text: "Les deux derniers patterns d'octaves utilisent les cordes les plus aiguës (c3, c2, c1). Mais ATTENTION : ici, l'asymétrie de l'accordage (la fameuse 'cassure' entre c3 et c2) change la règle. Tu dois ajouter +3 cases au lieu de +2. Comprendre pourquoi te fait gagner du temps." },
     { type: "h", text: "Le pattern 3 : c4 → c2, +3 cases" },

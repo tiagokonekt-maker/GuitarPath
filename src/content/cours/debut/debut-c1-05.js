@@ -5,6 +5,7 @@ export default {
   id: "debut-c1-05", level: 0, unite: 1,
   title: "Les cordes et l'accordeur",
   duration: 7,
+  gropiTip: "Avant de tourner une mécanique, suis la corde du doigt jusqu'à sa clé : tendre la mauvaise corde en croyant accorder l'autre, c'est l'erreur classique qui finit par la casser.",
   content: [
     { type: "p", text: "Une guitare désaccordée sonne faux même si tes doigts sont parfaitement placés. C'est frustrant, et c'est la cause n°1 des « je n'y arrive pas » des débutants. Bonne nouvelle : accorder prend une minute, et l'app a un accordeur intégré. Mais d'abord, il faut connaître le nom de tes cordes." },
     { type: "h", text: "Mi, La, Ré, Sol, Si, Mi" },

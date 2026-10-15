@@ -5,6 +5,7 @@ export default {
   id: "impro-intro-01", level: 6,
   title: "Ta première improvisation : 3 notes, en rythme",
   duration: 8,
+  gropiTip: "Choisis un motif noire-noire-blanche et place La, Do et Mi une fois chacun : il existe 6 ordres possibles, donc déjà 6 phrases différentes sur le même rythme.",
   content: [
     { type: "p", text: "Improviser ne veut pas dire connaître toute la pentatonique par cœur, ni jouer vite. Ça veut dire faire des choix — même avec très peu de matière — et les assumer. Cette leçon te donne ta toute première impro, avec seulement 3 notes." },
     { type: "h", text: "Le piège du débutant" },

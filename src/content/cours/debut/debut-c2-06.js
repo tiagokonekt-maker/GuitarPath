@@ -5,6 +5,7 @@ export default {
   id: "debut-c2-06", level: 0, unite: 2,
   title: "Ta première progression : Sol, Ré, Mi mineur, Do",
   duration: 8,
+  gropiTip: "Dans le module Harmonie, tu verras cette boucle notée I-V-vi-IV : ce sont les degrés des accords dans la tonalité. Le même code fonctionne dans toutes les tonalités.",
   content: [
     { type: "p", text: "Une progression, c'est une suite d'accords qui tourne en boucle. Celle-ci est sans doute la plus célèbre de la musique populaire : Sol, Ré, Mi mineur, Do. Elle accompagne des centaines de chansons pop, rock et folk. Avec tout ce que tu as appris, tu as les moyens de la jouer en entier." },
     { type: "h", text: "Les quatre accords" },

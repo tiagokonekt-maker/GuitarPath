@@ -5,6 +5,7 @@ export default {
   id: "rhy-c1-01", level: 1,
   title: "Qu'est-ce que le rythme ?",
   duration: 8,
+  gropiTip: "Mets le métronome à 60 BPM, compte 4 temps avec lui, puis coupe le son et continue à taper du pied. Rallume-le au bout de 8 temps : tombes-tu encore pile sur le clic ?",
   content: [
     { type: "p", text: "Le rythme est le premier langage musical de l'être humain. Bien avant les notes, bien avant les gammes, il y avait le battement du cœur, les pas de marche, les mains qui frappent. Le rythme précède la mélodie de plusieurs millénaires dans l'histoire de l'humanité. Et pourtant, c'est souvent la dimension la plus négligée par les guitaristes qui se concentrent sur les notes." },
     { type: "h", text: "Définition : 3 concepts à distinguer" },

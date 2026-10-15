@@ -5,6 +5,7 @@ export default {
   id: "impro-intro-02", level: 6,
   title: "Question et réponse : ta première vraie phrase",
   duration: 9,
+  gropiTip: "Chante ta question à voix basse avant de la jouer : si tu peux la fredonner, tu sauras lui répondre. Astuce : ta réponse peut reprendre le début de la question et changer seulement la fin.",
   content: [
     { type: "p", text: "Tu sais maintenant placer 3 notes rythmiquement. L'étape suivante, c'est le phrasé : traiter ton improvisation comme une conversation — une courte 'question' musicale, suivie d'une 'réponse' qui lui répond." },
     { type: "h", text: "Le principe du 'question-réponse'" },

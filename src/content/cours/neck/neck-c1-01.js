@@ -5,6 +5,7 @@ export default {
   id: "neck-c1-01", level: 1,
   title: "Architecture du manche",
   duration: 8,
+  gropiTip: "La case 12 est pile au milieu de la corde : mesure du sillet à la 12e frette, puis de la 12e frette au chevalet, c'est (presque) la même longueur. Moitié de corde = une octave.",
   content: [
     { type: "p", text: "Avant de mémoriser quoi que ce soit, il faut comprendre comment le manche de la guitare est construit. Cette compréhension va te faire gagner des semaines d'apprentissage : tu vas voir que le manche n'est pas un labyrinthe, mais une structure logique qui obéit à quelques règles simples." },
     { type: "h", text: "Les cordes et leur accordage standard" },

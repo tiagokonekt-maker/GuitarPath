@@ -5,6 +5,7 @@ export default {
   id: "rhy-c3-01", level: 5,
   title: "La syncope : décaler l'accent",
   duration: 11,
+  gropiTip: "Tape du pied sur 1-2-3-4 et frappe dans tes mains uniquement sur les « et ». Si ton pied se met à suivre tes mains, ralentis à 60 BPM : c'est lui qui doit tenir la pulsation.",
   content: [
     { type: "p", text: "La syncope est l'un des concepts rythmiques les plus importants en musique populaire. C'est elle qui fait qu'un rythme 'groove', qu'il te donne envie de bouger. Sans syncope, la musique sonne 'carrée' et monotone. Avec elle, elle prend vie. Comprendre la syncope, c'est comprendre le secret du funk, du jazz, du reggae et du R&B." },
     { type: "h", text: "Définition" },

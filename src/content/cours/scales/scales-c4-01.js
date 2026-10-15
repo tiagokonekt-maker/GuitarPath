@@ -5,6 +5,7 @@ export default {
   id: "scales-c4-01", level: 7,
   title: "Mineur naturel et majeur : deux faces d'une même pièce",
   duration: 10,
+  gropiTip: "Pour comparer les deux formules : la mineure naturelle, c'est la majeure avec la 3, la 6 et la 7 abaissées d'un demi-ton. Do majeur devient Do mineur avec Mi♭, La♭ et Si♭.",
   content: [
     { type: "p", text: "Avant d'attaquer les modes, on fait une étape essentielle : comprendre la relation entre majeur et mineur. Cette relation est plus profonde que tu ne le penses, et elle est la clé pour saisir ce qui se passera dans les leçons suivantes. Spoiler : majeur et mineur ne sont pas opposés. Ce sont deux manières d'écouter les MÊMES notes." },
     { type: "h", text: "La gamme mineure naturelle" },

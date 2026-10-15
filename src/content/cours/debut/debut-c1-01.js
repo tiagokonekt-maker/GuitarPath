@@ -5,6 +5,7 @@ export default {
   id: "debut-c1-01", level: 0, unite: 1,
   title: "Tenir ta guitare",
   duration: 6,
+  gropiTip: "Fais le test de profil : prends-toi en photo avec ton téléphone en position assise. La guitare doit être presque verticale et la tête du manche à hauteur d'épaule, pas plus bas que la caisse.",
   content: [
     { type: "p", text: "Bienvenue ! Avant la toute première note, on règle la chose la plus sous-estimée de la guitare : la façon de la tenir. Une bonne posture, c'est un instrument qui tient tout seul, des épaules relâchées et deux mains libres de faire leur travail. Une mauvaise posture, c'est des douleurs au poignet au bout de dix minutes et des accords qui sonnent mal sans que tu comprennes pourquoi." },
     { type: "h", text: "Assis : la position de départ" },

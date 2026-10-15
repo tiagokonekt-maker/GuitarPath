@@ -5,6 +5,7 @@ export default {
   id: "scales-c2-02", level: 5,
   title: "La gamme majeure : la matrice de tout",
   duration: 12,
+  gropiTip: "Moyen mnémotechnique : la gamme majeure, c'est deux blocs T-T-DT séparés par un ton. Do-Ré-Mi-Fa, puis Sol-La-Si-Do. Retiens un bloc de 4 notes, tu as la gamme.",
   content: [
     { type: "p", text: "Si tu ne devais retenir qu'une seule gamme dans ta vie de musicien, ce serait celle-ci. La gamme majeure n'est pas qu'une gamme parmi d'autres : c'est la matrice à partir de laquelle se déduisent les modes, l'harmonie tonale, et une grande partie de la musique populaire occidentale. La maîtriser, c'est avoir la clé de tout." },
     { type: "h", text: "La formule magique" },

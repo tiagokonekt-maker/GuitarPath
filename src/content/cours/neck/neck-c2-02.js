@@ -5,6 +5,7 @@ export default {
   id: "neck-c2-02", level: 3,
   title: "Les notes de la corde de La (corde 5)",
   duration: 9,
+  gropiTip: "Sur la corde 5, les points des cases 3, 5 et 7 donnent Do, Ré et Mi, trois notes qui se suivent. Joue-les en remontant : un petit Do-Ré-Mi sous tes yeux, facile à retenir.",
   content: [
     { type: "p", text: "La corde 5 (La) est ta deuxième ancre principale. Elle porte la fondamentale des accords barrés en 'forme A' (comme Ré barré case 5, Mi barré case 7). La maîtriser après la corde 6 te donne l'essentiel du manche en tête." },
     { type: "h", text: "Les notes case par case" },

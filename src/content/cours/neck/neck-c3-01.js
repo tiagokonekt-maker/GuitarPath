@@ -5,6 +5,7 @@ export default {
   id: "neck-c3-01", level: 5,
   title: "Pattern octave 1 : corde 6 → corde 4",
   duration: 9,
+  gropiTip: "Pour des octaves doublées propres : index sur la corde 6, annulaire sur la corde 4, et laisse l'index effleurer la corde 5 pour l'étouffer. Tu peux alors gratter sans faire sonner celle du milieu.",
   content: [
     { type: "p", text: "Tu connais maintenant les notes des 6 cordes. Mais mémoriser les positions une par une est lent et inefficace. Heureusement, il existe des 'patterns d'octaves' qui te permettent de trouver la même note dans plusieurs zones du manche, instantanément. Ces patterns sont la clé de la navigation rapide." },
     { type: "h", text: "Le pattern numéro 1 : c6 → c4, +2 cases" },

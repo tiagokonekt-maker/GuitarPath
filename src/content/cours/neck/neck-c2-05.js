@@ -5,6 +5,7 @@ export default {
   id: "neck-c2-05", level: 4,
   title: "Les notes des cordes Si et Mi aigu (cordes 2 et 1)",
   duration: 9,
+  gropiTip: "Pour la corde 2, retranche 7 aux cases de la corde 6 : Do (case 8) → case 1, Ré (10) → case 3, Mi (12) → case 5. Même nom de note, à une autre octave.",
   content: [
     { type: "p", text: "On termine la cartographie avec les cordes 2 (Si) et 1 (Mi aigu). Ces deux cordes sont les plus utilisées pour les mélodies, les solos aigus, et les triades. Leur connaissance est essentielle pour tout jeu mélodique." },
     { type: "h", text: "Corde 2 (Si) — case par case" },

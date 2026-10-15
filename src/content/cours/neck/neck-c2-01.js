@@ -5,6 +5,7 @@ export default {
   id: "neck-c2-01", level: 3,
   title: "Les notes de la corde de Mi grave (corde 6)",
   duration: 10,
+  gropiTip: "Repère imparable : sur la corde 6, le point de la case 7 tombe sur Si, et la case juste après donne Do. « Point 7 = Si, case 8 = Do » : plus jamais de doute sur le Do grave.",
   content: [
     { type: "p", text: "On commence l'apprentissage des notes par la corde 6 (Mi grave), qui est ton ancre principale. Cette corde porte la fondamentale de la plupart des accords barrés que tu joues : Sol, La, Si, etc. La maîtriser, c'est déjà avoir une bonne partie du manche en tête." },
     { type: "h", text: "Les notes case par case (0 à 12)" },

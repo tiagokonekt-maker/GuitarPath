@@ -5,6 +5,7 @@ export default {
   id: "scales-c5-06", level: 8,
   title: "Éolien — la mélancolie naturelle",
   duration: 9,
+  gropiTip: "Écoute la ♭6 : dans la position case 5, joue Fa (case 6 corde 2) puis redescends sur Mi (case 5). Ce demi-ton qui retombe sur la quinte, c'est le soupir typique de l'éolien.",
   content: [
     { type: "p", text: "L'éolien est le mode mineur 'standard' — la gamme mineure naturelle que tu connais déjà sans le savoir. C'est le mode des ballades tristes, des chansons mélancoliques, des morceaux introspectifs. Il porte en lui plus de mille ans de musique européenne." },
     { type: "h", text: "Construction" },

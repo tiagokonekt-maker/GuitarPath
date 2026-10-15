@@ -5,6 +5,7 @@ export default {
   id: "scales-c3-04", level: 6,
   title: "La gamme blues : l'ajout de la blue note",
   duration: 10,
+  gropiTip: "Fais chanter la blue note au bend : sur la corde 3, tire le Ré (case 7) d'un demi-ton pour atteindre Ré#, ou d'un ton pour arriver sur Mi. Écoute bien la justesse.",
   content: [
     { type: "p", text: "La gamme blues, c'est la pentatonique mineure avec un 'plus' qui change tout : une note supplémentaire, la fameuse 'blue note', qui crée la couleur dramatique du blues. 6 notes, et tu as accès à la palette sonore d'un siècle entier de musique afro-américaine." },
     { type: "h", text: "La formule" },

@@ -27,7 +27,9 @@ import { Gropi, GropiCoach, GropiBubble } from "../design/Gropi.jsx";
 import { useRenderers } from "../renderers.jsx";
 import { playLessonComplete, playChestOpen } from "../audioEngine.js";
 import { useWakeLock } from "../hooks/useWakeLock.js";
-import { pickTip, TIP_LABELS } from "../store/gropiTips.js";
+import { pickTip, contexteGropi } from "../store/gropiTips.js";
+import { getReviewStats } from "../store/reviewEngine.js";
+import { POSE_ROLE } from "../design/gropiPoses.js";
 import { gradeForLevel } from "../store/grades.js";
 import { lessonMastery } from "../store/mastery.js";
 
@@ -287,18 +289,17 @@ function PathNode({ lesson, state, th, onSelect, isCurrent, isLocked, gropiTip, 
         </div>
       )}
 
-      {/* Gropi compagnon — uniquement sur le nœud en cours, cliquable
-          au même titre que la carte pour accéder à la leçon. */}
-      {isCurrent && (
-        <div
-          onClick={() => onSelect(lesson)}
-          style={{ marginTop: 10, alignSelf: textSide === "left" ? "flex-start" : "flex-end", cursor: "pointer" }}
-        >
+      {/* Gropi compagnon — uniquement sur le nœud en cours. Le toucher
+          ouvre sa bulle (le conseil de la leçon) ; la carte et le nœud
+          juste au-dessus donnent déjà accès à la leçon. Avant, un clic sur
+          Gropi ouvrait AUSSI la leçon : la bulle n'était jamais lisible. */}
+      {isCurrent && gropiTip && (
+        <div style={{ marginTop: 10, alignSelf: textSide === "left" ? "flex-start" : "flex-end" }}>
           <GropiBubble
-            pose="wave"
-            size={68}
+            pose={lesson.gropiTip ? POSE_ROLE.conseil : POSE_ROLE.accueil}
+            size={56}
             tint="primary"
-            eyebrow={`Gropi · ${lesson.title}`}
+            eyebrow={lesson.gropiTip ? "Le conseil de Gropi" : `Gropi · ${lesson.title}`}
             side={textSide}
           >
             {gropiTip}
@@ -451,7 +452,7 @@ function CurrentUnitBanner({ stats, MODULE_THEME }) {
 // `optional`) : style adouci (fond neutre, bordure et filets en pointillés)
 // et pastille « Facultatif » sous l'en-tête — sous et non à côté, pour que
 // les titres longs tiennent sur une ligne à 375 px.
-function UnitHeader({ unit, th }) {
+function UnitHeader({ unit, th, teaser = false }) {
   const C = useC();
   const opt = !!unit.optional;
   const filet = {flex:1,height:0,borderTop:`1.5px ${opt?"dashed":"solid"} ${unit.unlocked?`${th.color}44`:C.border}`};
@@ -487,6 +488,17 @@ function UnitHeader({ unit, th }) {
           Facultatif · tu peux passer à la suite
         </span>
       )}
+      {/* Teaser de la PREMIÈRE unité verrouillée seulement (une seule
+          mascotte « mystère » sur tout le chemin) : donne envie d'aller
+          voir la suite sans encombrer les unités lointaines. */}
+      {teaser&&(
+        <div style={{display:"flex",alignItems:"center",gap:8,maxWidth:280}}>
+          <Gropi pose={POSE_ROLE.verrouille} size={34}/>
+          <span style={{fontSize:12,lineHeight:1.4,color:C.text2,fontFamily:FONTS.body}}>
+            {unit.total} leçon{unit.total>1?"s":""} t'attendent ici. Termine l'unité en cours pour lever le mystère.
+          </span>
+        </div>
+      )}
     </div>
   );
 }
@@ -517,7 +529,7 @@ function UnitHeader({ unit, th }) {
 //
 // Une fois par jour (state.gropiTipDate), comme l'était déjà le conseil de
 // Gropi avant toutes ces itérations.
-function WelcomeModal({ state, tip, navigate, onClose }) {
+function WelcomeModal({ state, tip, navigate, onClose, onAutreConseil }) {
   const C = useC();
   const dateStr = new Date().toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long" });
   const grade = gradeForLevel(state.level);
@@ -623,13 +635,31 @@ function WelcomeModal({ state, tip, navigate, onClose }) {
 
           {/* Conseil du jour */}
           <div style={{ display:"flex", gap:10, alignItems:"flex-start", marginBottom:14 }}>
-            <Gropi pose="wave" size={38} anim="wiggle"/>
+            {/* La pose suit le type : ampoule pour un conseil, livre pour
+                une anecdote, fierté (ou rocker pour la série) pour un
+                rappel de progression. `key` relance l'apparition quand on
+                demande un autre conseil. */}
+            <Gropi key={tip.id} pose={tip.pose} size={44} anim="pop"/>
             <div style={{ flex:1, minWidth:0 }}>
               <div style={{
                 fontSize:11, fontWeight:700, letterSpacing:".1em", textTransform:"uppercase",
                 color:C.primaryD, fontFamily:FONTS.ui, marginBottom:3,
-              }}>{TIP_LABELS[tip.type] || "Conseil de Gropi"}</div>
+              }}>{tip.label}</div>
               <p style={{ margin:0, fontSize:12.5, lineHeight:1.45, fontWeight:500, color:C.text }}>{tip.text}</p>
+              {onAutreConseil && (
+                <button
+                  onClick={onAutreConseil}
+                  className="gr-focus"
+                  style={{
+                    marginTop:6, background:"none", border:0, padding:"6px 0", minHeight:32,
+                    display:"inline-flex", alignItems:"center", gap:5,
+                    fontSize:12, fontWeight:700, color:C.primaryD, cursor:"pointer", fontFamily:FONTS.ui,
+                  }}
+                >
+                  <Ti name="refresh" size={13} color={C.primaryD}/>
+                  Un autre conseil
+                </button>
+              )}
             </div>
           </div>
 
@@ -683,10 +713,6 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
     setTipDismissed(true);
     dispatch({ type: "DISMISS_GROPI_TIP" });   // conservé : sans effet sur l'affichage désormais, mais gardé pour compatibilité avec le reste de l'état
   };
-  // `pickTip` est déterministe (choix selon le jour) et peu coûteux, mais ses
-  // conditions lisent des champs variés de l'état : dépendre de `state` entier
-  // est la seule liste exacte.
-  const tip = useMemo(() => pickTip(state), [state]);
   // Identifiant de la leçon sur laquelle on a scrollé la dernière fois. Sert à
   // ne pas re-scroller à chaque rendu, tout en re-scrollant bien quand la
   // cible change — c'est-à-dire au retour d'une leçon terminée.
@@ -701,6 +727,32 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
   // désormais de `state` entier, seule liste exacte de ce que lit buildPath.
   const path  = useMemo(()=>buildPath(content, state), [content, state]);
   const stats = useMemo(()=>getPathStats(content, state), [content, state]);
+
+  // ── Conseil de Gropi (popup d'accueil) ───────────────────────────────────
+  // Contexte d'étude = la prochaine leçon de l'unité courante : Gropi parle
+  // de ce qu'on travaille. pickTip est pur ; c'est GROPI_TIP_VU qui le fige
+  // pour la journée (state.gropiJour) et l'ajoute à l'historique — dispatché
+  // seulement quand le popup est réellement affiché.
+  const jour = todayStr();
+  const toReview = useMemo(
+    () => getReviewStats(content.quiz || [], state.reviewHistory, state.completedLessons).toReview,
+    [content.quiz, state.reviewHistory, state.completedLessons],
+  );
+  const ctxGropi = useMemo(() => contexteGropi(path, state, { toReview, jour }), [path, state, toReview, jour]);
+  const tip = useMemo(() => pickTip(state, ctxGropi), [state, ctxGropi]);
+  const popupVisible = variant === "home" && !tipDismissed;
+  useEffect(() => {
+    if (!popupVisible || tip.id === "defaut") return;
+    if (state.gropiJour?.date === jour && state.gropiJour?.id === tip.id) return;
+    dispatch({ type: "GROPI_TIP_VU", id: tip.id, jour });
+  }, [popupVisible, tip.id, jour, state.gropiJour, dispatch]);
+  const autreConseil = () => {
+    const suivant = pickTip(state, { ...ctxGropi, nouveau: true });
+    if (suivant.id !== "defaut") dispatch({ type: "GROPI_TIP_VU", id: suivant.id, jour });
+  };
+
+  // Première unité verrouillée : la seule qui reçoit le teaser « mystère ».
+  const premiereVerrouillee = path.find(u => !u.unlocked)?.id ?? null;
 
   // Tracés de chemin, calculés une fois par unité. `useMemo` sur le contenu
   // seulement : le dessin ne doit PAS bouger quand la progression change,
@@ -812,10 +864,10 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
           l'endroit où on en est — le mécanisme de cadrage automatique
           (plus bas, `focus` + scrollIntoView) fait ce travail-là tout
           seul, indépendamment de ce popup. */}
-      {variant === "home" && !tipDismissed && (
+      {popupVisible && (
         <WelcomeModal
           state={state} tip={tip} navigate={navigate}
-          onClose={fermerPopup}
+          onClose={fermerPopup} onAutreConseil={autreConseil}
         />
       )}
 
@@ -865,7 +917,7 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
 
           return (
             <div key={unit.id}>
-              <UnitHeader unit={unit} th={th}/>
+              <UnitHeader unit={unit} th={th} teaser={unit.id===premiereVerrouillee}/>
 
               {unit.lessons.map((lesson,li)=>{
                 const isCurrent = lesson.id===currentLessonId;
@@ -1034,6 +1086,16 @@ function LessonView({ lesson, state, dispatch, onBack }) {
             );
             return <p key={i} style={{margin:0,fontSize:15,lineHeight:1.7,color:C.text}}>{b.text}</p>;
           })}
+          {/* Le conseil de Gropi propre à la leçon, en fin de lecture : un
+              geste concret pour mettre en pratique ce qu'on vient de lire.
+              Si le dernier bloc est déjà une bulle de Gropi, on ne remet
+              pas une seconde mascotte juste en dessous. */}
+          {lesson.gropiTip && (
+            <GropiCoach variant="tip" eyebrow="Le conseil de Gropi"
+              mascotte={!["tip","ref"].includes(lesson.content[lesson.content.length-1]?.type)}>
+              {lesson.gropiTip}
+            </GropiCoach>
+          )}
         </div>
         {(lesson.quiz||[]).length>0&&(
           <div style={{background:C.primaryL,border:`1.5px solid ${C.primaryBorder}`,borderRadius:R.md,padding:"11px 14px",marginBottom:14,display:"flex",gap:10,alignItems:"center"}}>

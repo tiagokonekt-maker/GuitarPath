@@ -5,6 +5,7 @@ export default {
   id: "harm-c3-02", level: 7,
   title: "Les 5 types d'accords de septième",
   duration: 12,
+  gropiTip: "Pars de Cmaj7 et baisse une note d'un demi-ton à chaque fois : la 7e (C7), puis la tierce (Cm7), puis la quinte (Cm7b5), puis encore la 7e (Cdim7). Les 5 types en un seul chemin.",
   content: [
     { type: "p", text: "Il existe 5 types fondamentaux d'accords de septième. Chacun a une couleur unique et un usage spécifique en harmonie. Maîtriser ces 5 types, c'est avoir accès à la grande majorité des accords que tu rencontreras en pop, rock, jazz, bossa et soul." },
     { type: "h", text: "1. Accord Maj7 — le rêveur" },

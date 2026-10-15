@@ -5,6 +5,7 @@ export default {
   id: "rhy-c2-01", level: 3,
   title: "Rondes, blanches, noires : les valeurs de base",
   duration: 9,
+  gropiTip: "Retiens la blanche pointée : 2 temps + la moitié (1 temps) = 3 temps, soit une mesure entière de 3/4. Tiens-en une en comptant « 1-2-3 » à voix haute pour la sentir.",
   content: [
     { type: "p", text: "Avant de pouvoir lire un rythme ou en composer un, il faut connaître les 'valeurs rythmiques' : les unités qui servent à mesurer la durée des sons. Comme un cuisiner a besoin de mesures (grammes, litres, cuillères), un musicien a besoin de valeurs rythmiques pour organiser le temps." },
     { type: "h", text: "La noire : l'unité de référence" },

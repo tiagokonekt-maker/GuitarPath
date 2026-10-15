@@ -5,6 +5,7 @@ export default {
   id: "scales-c1-03", level: 2,
   title: "Tons et demi-tons : la mesure des distances",
   duration: 10,
+  gropiTip: "Vérifie les demi-tons naturels sur la corde 2 : Si à vide, Do case 1, puis Mi case 5, Fa case 6. Une seule case d'écart à chaque fois, alors que Do→Ré en demande deux.",
   content: [
     { type: "p", text: "Maintenant qu'on connaît les 12 sons, il faut apprendre à mesurer les distances entre eux. C'est ici que naissent les concepts de 'ton' et 'demi-ton' — les deux unités fondamentales de toute la théorie musicale. Sans eux, impossible de comprendre une seule gamme." },
     { type: "h", text: "Le demi-ton : la plus petite distance" },

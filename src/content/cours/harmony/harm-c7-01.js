@@ -5,6 +5,7 @@ export default {
   id: "harm-c7-01", level: 9,
   title: "Les accords empruntés",
   duration: 10,
+  gropiTip: "En Do majeur, un accord qui contient Mib, Lab ou Sib vient en général de Do mineur : Fam (Lab), Sib (Sib), Lab (Lab, Mib). Écoute comme ces notes assombrissent la couleur.",
   content: [
     { type: "p", text: "Jusqu'ici, on a joué avec les 7 accords diatoniques d'une tonalité. Mais les compositeurs ne se limitent pas à ces 7 accords — ils 'empruntent' des accords venant d'autres tonalités pour enrichir leurs progressions. Cette technique, appelée 'modal mixture' ou 'emprunt au mineur parallèle', est l'une des plus utilisées en pop, rock et jazz." },
     { type: "h", text: "Le principe de l'emprunt" },

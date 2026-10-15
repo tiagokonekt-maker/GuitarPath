@@ -5,6 +5,7 @@ export default {
   id: "scales-c2-03", level: 5,
   title: "Les degrés et leurs noms",
   duration: 10,
+  gropiTip: "Chante Do-Ré-Mi-Fa-Sol-La-Si et arrête-toi net sur le Si. Tu sens l'envie d'entendre Do ? C'est la Sensible (VII) qui tire vers la Tonique.",
   content: [
     { type: "p", text: "Dans une gamme, chaque note a un numéro et un nom. Ces numéros (les degrés) sont l'outil le plus puissant pour analyser la musique. Avec eux, tu pourras parler de musique sans même mentionner les notes : c'est universel et ça marche dans toutes les tonalités." },
     { type: "h", text: "Les 7 degrés numérotés" },

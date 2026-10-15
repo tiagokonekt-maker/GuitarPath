@@ -5,6 +5,7 @@ export default {
   id: "scales-c1-06", level: 4,
   title: "Les intervalles complets : sixtes, septièmes, octave",
   duration: 9,
+  gropiTip: "Astuce de calcul : un intervalle et son renversement font toujours 12 demi-tons. Do→La = sixte majeure (9), La→Do = tierce mineure (3). Et le triton (6) se renverse en triton !",
   content: [
     { type: "p", text: "On termine le tour des intervalles avec les plus grands. Ces intervalles peuvent sembler abstraits au début, mais tu vas voir qu'ils apparaissent partout dès que tu te mets à improviser ou à harmoniser." },
     { type: "h", text: "Sixtes : la couleur vocale" },

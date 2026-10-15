@@ -5,6 +5,7 @@ export default {
   id: "rhy-c4-03", level: 6,
   title: "Le palm mute : étouffer pour créer du groove",
   duration: 9,
+  gropiTip: "Si ton palm mute tue complètement la note, recule un peu la paume vers le chevalet. Tu dois encore entendre la hauteur de la note, juste raccourcie, pas un simple « tchk ».",
   content: [
     { type: "p", text: "Le palm mute est l'une des techniques rythmiques les plus importantes de la guitare électrique et acoustique. Il consiste à étouffer partiellement les cordes avec la paume de la main droite, créant un son 'percussif', 'étouffé', qu'on associe immédiatement au rock, au metal et au funk. Maîtriser le palm mute, c'est ajouter une couleur rythmique essentielle à ton jeu." },
     { type: "h", text: "La technique" },

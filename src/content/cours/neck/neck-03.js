@@ -5,6 +5,7 @@ export default {
   id: "neck-03", level: 4,
   title: "Intervalles : entendre les distances",
   duration: 14,
+  gropiTip: "Entends la tierce changer de couleur : joue Mi mineur (022000), puis pose l'index corde 3 case 1 pour obtenir Mi majeur. Sol devient Sol# : de m3 à M3, de mélancolique à joyeux.",
   content: [
     { type: "p", text: "Un intervalle = la distance entre deux notes. C'est la brique fondamentale de la musique. Tout — accords, gammes, modes, mélodies — est une combinaison d'intervalles." },
     { type: "h", text: "Les 12 intervalles dans l'octave" },

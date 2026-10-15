@@ -5,6 +5,7 @@ export default {
   id: "harm-c8-01", level: 7,
   title: "Cibler les notes d'accord en temps réel",
   duration: 11,
+  gropiTip: "Sur un blues en La, passe du Do# (3e de La7) au Do (7e de Ré7) pile au changement d'accord. Un seul demi-ton, et tout le monde entend que l'harmonie a bougé.",
   content: [
     { type: "p", text: "On arrive au cœur de l'application pratique de l'harmonie : improviser en 'suivant' les accords. Cette technique, appelée 'ciblage harmonique', transforme un solo générique en solo musical, connecté à l'harmonie. C'est la différence entre un guitariste qui 'joue des notes' et un musicien qui 'parle avec son instrument'.", img: "/mascotte-choix.webp", imgAlt: "Gropi qui réfléchit, boussole à la main", imgSide: "left" },
     { type: "h", text: "Le problème du solo générique" },
