@@ -709,6 +709,10 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
         }
 
         Tone.getDraw().schedule(() => {
+          // Affichage déjà programmé par une lecture qu'on vient de remplacer
+          // (changement de grille, de style) : il porterait l'index de
+          // l'ANCIENNE grille.
+          if (perime()) return;
           setBeat(barIdx % totalBars);
           const chordIdx = progression.reduce((acc, c, i) => {
             const start = progression.slice(0, i).reduce((s, x) => s + x.bars, 0);
@@ -816,7 +820,10 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
   // On joue guitare en main, téléphone posé à un mètre : l'accord en cours
   // doit se lire de loin (grand), l'accord suivant doit s'anticiper, et les
   // mesures restantes dans l'accord doivent se voir d'un coup d'œil.
-  const idx       = playing ? currentChord : 0;
+  // Ramené dans la grille : en changeant de grille pendant la lecture, l'index
+  // de l'ancienne (plus longue) restait affiché un instant et pointait hors de
+  // la nouvelle → accord indéfini → l'écran plantait (« reading 'degree' »).
+  const idx       = playing && currentChord < progression.length ? currentChord : 0;
   const accord    = progression[idx];
   const suivant   = progression[(idx + 1) % progression.length];
   const debutAcc  = progression.slice(0, idx).reduce((s, c) => s + c.bars, 0);
@@ -1111,7 +1118,8 @@ export function JamSession({ onBack, dispatch, state }) {
   // notes présentes dans la gamme affichée ; celles qui en sortent (la
   // tierce majeure du IV7 sur un blues, par exemple) sont signalées à part,
   // parce que c'est justement là que se joue le changement.
-  const accordEnCours = accordIdx != null ? ctx.chords[accordIdx] : null;
+  // Même garde : l'index peut venir de la grille précédente.
+  const accordEnCours = accordIdx != null ? (ctx.chords[accordIdx] ?? null) : null;
   const notesAccordAffichees = useMemo(
     () => (accordEnCours ? nomsNotesAccord(root, accordEnCours, ctx.scale) : []),
     [accordEnCours, root, ctx.scale]

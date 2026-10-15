@@ -16420,6 +16420,7 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
           getDraw().schedule(() => onBpmRef.current?.(nb), time);
         }
         getDraw().schedule(() => {
+          if (perime()) return;
           setBeat(barIdx % totalBars2);
           const chordIdx = progression2.reduce((acc, c, i) => {
             const start2 = progression2.slice(0, i).reduce((s, x) => s + x.bars, 0);
@@ -16533,7 +16534,7 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
   const toggle = () => playing ? stopBacking() : startBacking();
   const progression = context2.chords;
   const totalBars = progression.reduce((s, c) => s + c.bars, 0);
-  const idx = playing ? currentChord : 0;
+  const idx = playing && currentChord < progression.length ? currentChord : 0;
   const accord = progression[idx];
   const suivant = progression[(idx + 1) % progression.length];
   const debutAcc = progression.slice(0, idx).reduce((s, c) => s + c.bars, 0);
@@ -16802,7 +16803,7 @@ function JamSession({ onBack, dispatch, state }) {
   const rootFr = nomTonique(root, ctx.scale);
   const activeNotes = useMemo5(() => getScaleNotes(root, ctx.scale), [root, ctx.scale]);
   const nomsActifs = useMemo5(() => nomsGamme(root, ctx.scale), [root, ctx.scale]);
-  const accordEnCours = accordIdx != null ? ctx.chords[accordIdx] : null;
+  const accordEnCours = accordIdx != null ? ctx.chords[accordIdx] ?? null : null;
   const notesAccordAffichees = useMemo5(
     () => accordEnCours ? nomsNotesAccord(root, accordEnCours, ctx.scale) : [],
     [accordEnCours, root, ctx.scale]
