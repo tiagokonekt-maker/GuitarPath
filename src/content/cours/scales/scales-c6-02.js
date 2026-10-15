@@ -15,7 +15,7 @@ export default {
     { type: "h", text: "Couleur sonore" },
     { type: "p", text: "Mineure mais lumineuse, presque ambiguë. Le caractère mineur est subtil (juste la ♭3). Le reste de la gamme est 'majeur'. Très utilisé en jazz moderne pour les solos sur accords mineurs maj7 (Im(maj7)) — un accord rare et sophistiqué qui contient à la fois la ♭3 et la 7 majeure." },
     { type: "h", text: "Les modes de la mélodique : un univers à part" },
-    { type: "p", text: "Comme la gamme majeure a 7 modes, la mineure mélodique en a 7 aussi. Et plusieurs sont essentiels en jazz moderne. Le 4e mode (Lydien ♭7) est utilisé sur les dominantes 7 'altérées'. Le 7e mode (mode 'altéré') est THE gamme à utiliser sur les V7 qui résolvent (ex : G7alt → Cmaj7). Le 6e mode (Locrien #2) est utilisé sur les m7b5. Tout un monde." },
+    { type: "p", text: "Comme la gamme majeure a 7 modes, la mineure mélodique en a 7 aussi. Et plusieurs sont essentiels en jazz moderne. Le 4e mode (lydien ♭7, ou « lydien dominant ») s'utilise sur les dominantes 7 qui ne résolvent pas vers une tonique : le IV7 d'un blues, le substitut tritonique ♭II7, les accords 7(#11). Le 7e mode (mode 'altéré') est LA gamme à utiliser sur les V7 qui résolvent (ex : G7alt → Cmaj7). Le 6e mode (Locrien #2) est utilisé sur les m7b5. Tout un monde." },
     { type: "h", text: "Quand utiliser la mélodique" },
     { type: "p", text: "1) Sur un Im(maj7) — accord rare mais 'jazz moderne'. 2) Pour le mode altéré (sur les V7 résolvants). 3) Pour le lydien ♭7 (sur les V7 non résolvants). 4) Pour le locrien #2 (sur les m7b5). Si tu n'as pas encore intégré la mineure harmonique, mets la mélodique de côté pour l'instant." },
     {
@@ -26,17 +26,17 @@ export default {
         rootColor: "amber", noteColor: "primary",
         strings: [
           { frets: [5, 7, 8], root: [5] },
-          { frets: [5, 7], root: [] },
-          { frets: [6, 7], root: [] },
-          { frets: [4, 7, 9], root: [] },
+          { frets: [5, 7, 9], root: [] },
+          { frets: [6, 7, 9], root: [7] },
+          { frets: [5, 7, 9], root: [] },
           { frets: [5, 7, 9], root: [] },
           { frets: [5, 7, 8], root: [5] },
         ],
         noteMap: {
           "5,0":"La","7,0":"Si","8,0":"Do",
-          "5,1":"Ré","7,1":"Mi",
-          "6,2":"Sol#","7,2":"La",
-          "4,3":"Si","7,3":"Ré","9,3":"Mi",
+          "5,1":"Ré","7,1":"Mi","9,1":"Fa#",
+          "6,2":"Sol#","7,2":"La","9,2":"Si",
+          "5,3":"Do","7,3":"Ré","9,3":"Mi",
           "5,4":"Mi","7,4":"Fa#","9,4":"Sol#",
           "5,5":"La","7,5":"Si","8,5":"Do",
         }

@@ -623,8 +623,9 @@ function AppInner({ onThemeChange }) {
       // Anciennes routes conservées : « Exercices » et « Quiz » ont fusionné
       // en « Pratique », mais l'app mémorise le dernier écran visité.
       case "training":
-      case "exercises":
       case "quiz":      return <TrainingScreen {...props} />;
+      // « exercises » ouvre directement la liste des exercices de Pratique.
+      case "exercises": return <TrainingScreen key="exercices" {...props} vueInitiale="exercices" />;
       case "progress":  return <ProgressScreen state={state} content={content} onOpenSettings={ouvrirReglages} />;
       case "ear":       return <EarTraining onBack={() => navigate(retourEcran || "toolbox")} dispatch={dispatch} state={state} />;
       case "explorer":  return <FretboardExplorer onBack={() => navigate("home")} />;

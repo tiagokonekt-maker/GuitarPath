@@ -16,6 +16,11 @@
 //      d'initiation « Premiers pas » y a aussi sa carte (ses exercices et ses
 //      questions n'étaient accessibles nulle part ailleurs), mais seulement
 //      pour qui en a besoin : obligatoire pour lui, ou déjà entamé.
+//   5. « Exercices » — les exercices guitare en main débloqués par les leçons
+//      faites (même règle que la séance : unlockedBy + courseLink), avec leur
+//      état (à faire, en cours, fait). Un aperçu ici, la liste complète par
+//      domaine en un geste ; chaque carte de domaine rappelle aussi son compte.
+//      (L'ancien écran Exercices n'était plus atteignable depuis l'interface.)
 
 import { useState, useMemo } from "react";
 import { R } from "../design/tokens.js";
@@ -32,7 +37,7 @@ import { buildPath, buildUnits, debutFacultatif, DEBUT_MODULE } from "../store/p
 import { todayStr, weekStr } from "../store/state.js";
 import { FAMILLES, domaineDe, progressionFamilles, itemsGeneres } from "../store/generateurs.js";
 import { getReviewStats } from "../store/reviewEngine.js";
-import { DUREES, dureeParDefaut, objectifJoursSemaine, planSeance, joursDeLaSemaine, indexJour } from "../store/seance.js";
+import { exercicesDesModules, DUREES, dureeParDefaut, objectifJoursSemaine, planSeance, joursDeLaSemaine, indexJour } from "../store/seance.js";
 
 const CLE_DUREE = "groply:duree-seance";
 const lireDuree = (defaut) => { try { const v = Number(localStorage.getItem(CLE_DUREE)); return DUREES.includes(v) ? v : defaut; } catch { return defaut; } };
@@ -49,13 +54,20 @@ const DOMAINES = [
   { id: "Rythme",  couleur: "blue",   icone: "metronome", modules: ["rhythm"],            objectif: null,      libre: { titre: "Métronome", detail: "Dans la boîte à outils", ecran: "toolbox" } },
   { id: "Impro",   couleur: "pink",   icone: "wand",      modules: ["impro"],             objectif: "impro",   libre: { titre: "Jam Session", detail: "Un groupe qui suit les accords, et des contraintes à tenir", ecran: "jam" } },
 ];
+/** Exercices d'un domaine : débloqués et verrouillés (règle partagée avec la séance). */
+const exercicesDe = (d, content, state) => exercicesDesModules(content, state, d.modules);
+const exerciceFait = (state, e) => !!state.completedExercises?.[e.id];
+const pluriel = (n, mot) => `${n} ${mot}${n > 1 ? "s" : ""}`;
+
 const ICONE_ETAPE = { revision: "refresh", guitare: "guitar-pick", jouer: "music" };
 const JOURS = ["L", "M", "M", "J", "V", "S", "D"];
 const NOMS_JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"];
 
-export function TrainingScreen({ state, dispatch, content, navigate }) {
+export function TrainingScreen({ state, dispatch, content, navigate, vueInitiale = null }) {
   const C = useC();
   const [domaineOuvert, setDomaineOuvert] = useState(null);
+  // Liste complète des exercices. L'ancienne route « exercises » y mène directement.
+  const [exercicesOuverts, setExercicesOuverts] = useState(vueInitiale === "exercices");
   const [exerciceOuvert, setExerciceOuvert] = useState(null);
   const [quizOuvert, setQuizOuvert] = useState(false);
   const [duree, setDuree] = useState(() => lireDuree(dureeParDefaut(state.onboarding?.timePerWeek)));
@@ -89,6 +101,12 @@ export function TrainingScreen({ state, dispatch, content, navigate }) {
   if (exerciceOuvert) {
     return <ExerciseDetail ex={exerciceOuvert} state={state} dispatch={dispatch} content={content} onBack={() => setExerciceOuvert(null)} />;
   }
+  // Domaines visibles : « Premiers pas » seulement s'il est obligatoire ou entamé.
+  const domainesVisibles = DOMAINES.filter(d => !d.prelude || afficherPrelude);
+  if (exercicesOuverts) {
+    return <VueExercices C={C} domaines={domainesVisibles} state={state} content={content}
+      onExercice={setExerciceOuvert} onRetour={() => setExercicesOuverts(false)} />;
+  }
   if (domaineOuvert) {
     const d = DOMAINES.find(x => x.id === domaineOuvert);
     return (
@@ -101,7 +119,7 @@ export function TrainingScreen({ state, dispatch, content, navigate }) {
   // L'objectif de l'élève passe en tête des domaines. « Premiers pas »
   // n'apparaît que s'il est obligatoire ou déjà entamé : un joueur confirmé
   // qui ne l'a jamais ouvert n'a pas à le voir ici.
-  const domainesOrdonnes = DOMAINES.filter(d => !d.prelude || afficherPrelude).sort((a, b) => (b.objectif === objectif) - (a.objectif === objectif));
+  const domainesOrdonnes = [...domainesVisibles].sort((a, b) => (b.objectif === objectif) - (a.objectif === objectif));
 
   return (
     <div>
@@ -149,6 +167,9 @@ export function TrainingScreen({ state, dispatch, content, navigate }) {
             </button>
           </section>
         )}
+
+        <ApercuExercices C={C} domaines={domainesVisibles} state={state} content={content}
+          onExercice={setExerciceOuvert} onTout={() => setExercicesOuverts(true)} />
 
         <section aria-labelledby="titre-domaines" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {/* Gropi « choix » : c'est ici qu'on choisit son chemin du jour. */}
@@ -287,13 +308,18 @@ function CarteDomaine({ C, d, state, content, progression, onOuvrir }) {
   const niveau = commencees.length ? Math.round(commencees.reduce((s, p) => s + p.niveau, 0) / commencees.length) : 0;
   const lecons = d.prelude ? (content.courses.find(c => d.modules.includes(c.id))?.lessons || []) : [];
   const leconsFaites = lecons.filter(l => state.completedLessons?.[l.id]).length;
+  const { dispo, verrouilles } = exercicesDe(d, content, state);
+  const exosFaits = dispo.filter(e => exerciceFait(state, e)).length;
+  const detailExos = dispo.length
+    ? `${exosFaits}/${pluriel(dispo.length, "exercice")} fait${exosFaits > 1 ? "s" : ""}`
+    : verrouilles.length ? `${pluriel(verrouilles.length, "exercice")} à débloquer` : null;
   const detail = d.prelude
     ? `${leconsFaites}/${lecons.length} leçon${lecons.length > 1 ? "s" : ""}`
     : d.id === "Impro"
     ? `Jam Session · ${state.jam?.seances || 0} séance${(state.jam?.seances || 0) > 1 ? "s" : ""}`
     : miennes.length ? `${miennes.length} compétence${miennes.length > 1 ? "s" : ""}` : "À débloquer dans le parcours";
   return (
-    <button onClick={onOuvrir} className="gr-focus" aria-label={`${d.id} : ${detail}${commencees.length ? `, niveau moyen ${niveau} sur 3` : ""}`}
+    <button onClick={onOuvrir} className="gr-focus" aria-label={`${d.id} : ${detail}${commencees.length ? `, niveau moyen ${niveau} sur 3` : ""}${detailExos ? `, ${detailExos}` : ""}`}
       style={{ minHeight: 148, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10, padding: 14, borderRadius: 18, background: C.surface, border: `1.5px solid ${k.b}`, cursor: "pointer", textAlign: "left", fontFamily: "inherit" }}>
       <div style={{ width: 38, height: 38, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", background: k.l }}>
         <Ti name={d.icone} size={20} color={k.c} />
@@ -305,6 +331,11 @@ function CarteDomaine({ C, d, state, content, progression, onOuvrir }) {
         </div>
       )}
       <div style={{ fontSize: 12, color: C.text2 }}>{detail}</div>
+      {detailExos && (
+        <div aria-hidden="true" style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 600, color: C.text2, marginTop: -4 }}>
+          <Ti name="guitar-pick" size={13} color={k.c} /> {detailExos}
+        </div>
+      )}
     </button>
   );
 }
@@ -314,9 +345,7 @@ function VueDomaine({ C, d, state, dispatch, content, navigate, progression, qui
   const lecons = useMemo(() => new Map(content.courses.flatMap(c => c.lessons).map(l => [l.id, l.title])), [content.courses]);
   const debloquees = progression.filter(p => p.domaine === d.id);
   const verrouillees = FAMILLES.filter(f => familleDomaine(f) === d.id && !state.completedLessons?.[f.lecon]);
-  const exercices = (content.exercises || []).filter(e => d.modules.includes(e.mod) &&
-    (!e.unlockedBy?.length || e.unlockedBy.every(id => state.completedLessons?.[id])) &&
-    (!e.courseLink || state.completedLessons?.[e.courseLink]));
+  const { dispo: exercices, verrouilles: exosVerrouilles } = exercicesDe(d, content, state);
   const quizDispo = (content.quiz || []).some(q => d.modules.includes(q.courseId) && state.completedLessons?.[q.lessonId]);
   const peutReviser = debloquees.length > 0 || quizDispo;
 
@@ -375,13 +404,9 @@ function VueDomaine({ C, d, state, dispatch, content, navigate, progression, qui
             </Bloc>
           )}
 
-          {exercices.length > 0 && (
-            <Bloc C={C} titre="Guitare en main">
-              {exercices.map(e => (
-                <Ligne key={e.id} C={C} titre={e.title} detail={`${e.dur ?? "?"} min${state.completedExercises?.[e.id] ? " · déjà fait" : ""}`}
-                  onClick={() => onExercice(e)} />
-              ))}
-            </Bloc>
+          {(exercices.length > 0 || exosVerrouilles.length > 0) && (
+            <BlocExercices C={C} titre="Exercices" exercices={exercices} verrouilles={exosVerrouilles}
+              state={state} lecons={lecons} onExercice={onExercice} />
           )}
 
           <Bloc C={C} titre="En libre">
@@ -426,6 +451,120 @@ function Ligne({ C, titre, detail, jauge, couleur, verrou, onClick }) {
       {onClick
         ? <button onClick={onClick} className="gr-focus" style={{ ...style, width: "100%", background: "none", border: "none", borderTop: `1px solid ${C.surface2}`, textAlign: "left", cursor: "pointer", fontFamily: "inherit" }}>{contenu}</button>
         : <div style={style}>{contenu}</div>}
+    </li>
+  );
+}
+
+// ── Exercices ──────────────────────────────────────────────────────────────
+/** Aperçu sur l'écran Pratique : les prochains exercices à faire, et l'accès à la liste complète. */
+function ApercuExercices({ C, domaines, state, content, onExercice, onTout }) {
+  const groupes = domaines.map(d => exercicesDe(d, content, state));
+  const dispo = groupes.flatMap(g => g.dispo);
+  const nbVerrouilles = groupes.reduce((n, g) => n + g.verrouilles.length, 0);
+  const faits = dispo.filter(e => exerciceFait(state, e)).length;
+  // À faire d'abord : ceux entamés, puis les plus faciles.
+  const enCours = (e) => (state.exerciseProgress?.[e.id]?.length || 0) > 0;
+  const suivants = dispo.filter(e => !exerciceFait(state, e))
+    .sort((a, b) => (enCours(b) - enCours(a)) || ((a.lvl || 1) - (b.lvl || 1)))
+    .slice(0, 2);
+  return (
+    <section aria-labelledby="titre-exercices" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8, margin: "4px 4px 0" }}>
+        <h2 id="titre-exercices" style={{ margin: 0, fontSize: 17, fontWeight: 800, color: C.text }}>Exercices</h2>
+        {dispo.length > 0 && <div style={{ fontSize: 13, color: C.text2 }}><b style={{ color: C.text }}>{faits}/{dispo.length}</b> fait{faits > 1 ? "s" : ""}</div>}
+      </div>
+      <ul style={{ listStyle: "none", margin: 0, padding: 0, background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: 18, overflow: "hidden" }}>
+        {dispo.length === 0 ? (
+          <Ligne C={C} titre="Pas encore d'exercice" detail={nbVerrouilles ? `${pluriel(nbVerrouilles, "exercice")} se débloquent avec les leçons du parcours` : "Les exercices arrivent avec les leçons du parcours"} />
+        ) : suivants.length === 0 ? (
+          <Ligne C={C} titre="Tout est fait !" detail="Refais-les quand tu veux : la répétition ancre le geste." />
+        ) : suivants.map(e => <LigneExercice key={e.id} C={C} e={e} state={state} onClick={() => onExercice(e)} />)}
+        {dispo.length > 0 && (
+          <li>
+            <button onClick={onTout} className="gr-focus" style={{
+              width: "100%", minHeight: 48, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+              background: "none", border: "none", borderTop: `1px solid ${C.surface2}`, cursor: "pointer",
+              fontFamily: "inherit", fontSize: 14, fontWeight: 700, color: C.primaryInk || C.primaryD,
+            }}>
+              Voir tous les exercices ({dispo.length}) <Ti name="arrow-right" size={16} color={C.primaryInk || C.primaryD} />
+            </button>
+          </li>
+        )}
+      </ul>
+    </section>
+  );
+}
+
+/** Liste complète, par domaine. */
+function VueExercices({ C, domaines, state, content, onExercice, onRetour }) {
+  const lecons = useMemo(() => new Map(content.courses.flatMap(c => c.lessons).map(l => [l.id, l.title])), [content.courses]);
+  const groupes = domaines.map(d => ({ d, ...exercicesDe(d, content, state) })).filter(g => g.dispo.length || g.verrouilles.length);
+  const dispo = groupes.flatMap(g => g.dispo);
+  const faits = dispo.filter(e => exerciceFait(state, e)).length;
+  return (
+    <div>
+      <div style={{ background: C.primaryL, borderBottom: `1.5px solid ${C.primaryBorder}`, padding: "18px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+        <button onClick={onRetour} aria-label="Retour à Pratique" className="gr-focus" style={{ width: 44, height: 44, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", background: C.surface, border: `1.5px solid ${C.primaryBorder}`, cursor: "pointer" }}>
+          <Ti name="arrow-left" size={18} color={C.primaryD} />
+        </button>
+        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, letterSpacing: "-.5px", color: C.primaryD }}>Exercices</h1>
+        <div style={{ fontSize: 13, color: C.primaryD, lineHeight: 1.5 }}>
+          {dispo.length
+            ? `${faits} fait${faits > 1 ? "s" : ""} sur ${pluriel(dispo.length, "exercice")} disponible${dispo.length > 1 ? "s" : ""}. Guitare en main, étape par étape.`
+            : "Aucun exercice disponible pour l'instant : ils se débloquent avec les leçons du parcours."}
+        </div>
+      </div>
+      <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 16 }}>
+        {groupes.map(({ d, dispo: liste, verrouilles }) => (
+          <BlocExercices key={d.id} C={C} titre={d.id} exercices={liste} verrouilles={verrouilles}
+            state={state} lecons={lecons} onExercice={onExercice} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Bloc d'exercices d'un domaine : les débloqués, puis le prochain verrouillé et le compte des autres. */
+function BlocExercices({ C, titre, exercices, verrouilles, state, lecons, onExercice }) {
+  const faites = state.completedLessons || {};
+  const faits = exercices.filter(e => exerciceFait(state, e)).length;
+  const prochain = verrouilles[0];
+  const leconRequise = prochain && [...(prochain.unlockedBy || []), prochain.courseLink].find(id => id && !faites[id]);
+  return (
+    <Bloc C={C} titre={exercices.length ? `${titre} · ${faits}/${exercices.length}` : titre}>
+      {exercices.map(e => <LigneExercice key={e.id} C={C} e={e} state={state} onClick={() => onExercice(e)} />)}
+      {prochain && (
+        <Ligne C={C} verrou titre={verrouilles.length > 1 ? `${pluriel(verrouilles.length, "exercice")} à débloquer` : prochain.title}
+          detail={`${verrouilles.length > 1 ? `Prochain : « ${prochain.title} », avec` : "Se débloque avec"} la leçon « ${lecons.get(leconRequise) || "du parcours"} »`} />
+      )}
+    </Bloc>
+  );
+}
+
+function LigneExercice({ C, e, state, onClick }) {
+  const fait = exerciceFait(state, e);
+  const enCours = !fait && (state.exerciseProgress?.[e.id]?.length || 0) > 0;
+  const statut = fait ? "fait" : enCours ? "en cours" : "à faire";
+  const detail = [`${e.dur ?? "?"} min`, e.bpm ? `${e.bpm} BPM` : null, fait ? "Fait · à refaire quand tu veux" : enCours ? "En cours" : `+${e.xp} XP`].filter(Boolean).join(" · ");
+  return (
+    <li>
+      <button onClick={onClick} className="gr-focus" aria-label={`Exercice « ${e.title} », ${e.dur ?? "?"} minutes, ${statut}`} style={{
+        width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", minHeight: 56, boxSizing: "border-box",
+        background: "none", border: "none", borderTop: `1px solid ${C.surface2}`, textAlign: "left", cursor: "pointer", fontFamily: "inherit",
+      }}>
+        <div aria-hidden="true" style={{
+          width: 34, height: 34, flexShrink: 0, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box",
+          background: fait ? C.green : enCours ? C.amberL : C.surface2,
+          border: enCours ? `1.5px solid ${C.amberBorder}` : "none",
+        }}>
+          <Ti name={fait ? "check" : enCours ? "player-pause" : "guitar-pick"} size={17} color={fait ? C.onPrimaryBtn : enCours ? C.amberD : C.text2} />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: C.text }}>{e.title}</div>
+          <div style={{ fontSize: 12, color: fait ? C.greenD : C.text2 }}>{detail}</div>
+        </div>
+        <Ti name="chevron-right" size={18} color={C.text2} />
+      </button>
     </li>
   );
 }

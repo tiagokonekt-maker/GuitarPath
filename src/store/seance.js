@@ -58,6 +58,28 @@ const DUREE_EXERCICE_IDEALE = 12;
 export const questionsPour = (minutes) => Math.max(3, Math.round(minutes * 1.4));
 
 /**
+ * Un exercice est jouable quand toutes ses leçons requises sont faites :
+ * `unlockedBy` (liste) et `courseLink` (la leçon liée). Règle unique,
+ * partagée par la séance et la liste d'exercices de l'onglet Pratique.
+ */
+export function exerciceDebloque(e, faites = {}) {
+  return (!e.unlockedBy?.length || e.unlockedBy.every(id => faites[id])) && (!e.courseLink || !!faites[e.courseLink]);
+}
+
+/**
+ * Exercices de certains modules : débloqués (niveau croissant, ordre du
+ * contenu à niveau égal) et encore verrouillés (ordre du contenu).
+ */
+export function exercicesDesModules(content, state, modules) {
+  const faites = state.completedLessons || {};
+  const tous = (content.exercises || []).filter(e => modules.includes(e.mod));
+  return {
+    dispo: tous.filter(e => exerciceDebloque(e, faites)).sort((a, b) => (a.lvl || 1) - (b.lvl || 1)),
+    verrouilles: tous.filter(e => !exerciceDebloque(e, faites)),
+  };
+}
+
+/**
  * Exercice de l'étape « Guitare en main » : débloqué, lié à une leçon déjà
  * faite, jamais fait de préférence (sinon le plus ancien), dans le module de
  * l'objectif si possible, et pas trop long.
@@ -66,9 +88,7 @@ export function choisirExercice(state, content, objectif) {
   const faites = state.completedLessons || {};
   const fait = state.completedExercises || {};
   const prefere = MODULES_OBJECTIF[objectif] || [];
-  const candidats = (content.exercises || []).filter(e =>
-    (!e.unlockedBy?.length || e.unlockedBy.every(id => faites[id])) &&
-    (!e.courseLink || faites[e.courseLink]));
+  const candidats = (content.exercises || []).filter(e => exerciceDebloque(e, faites));
   if (!candidats.length) return null;
   const cle = (e) => [
     fait[e.id] ? 1 : 0,                                   // jamais fait d'abord

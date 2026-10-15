@@ -34,7 +34,7 @@ export default {
     { type: "h", text: "Application : compléter ta vision" },
     { type: "p", text: "Avec les 2 patterns (c6→c4 et c5→c3), tu as déjà 4 cordes 'connectées' par octaves. Tu peux jouer une note basse sur c6 ou c5, et trouver instantanément son octave dans les cordes médium (c4 ou c3). C'est la base de tout jeu en octaves doublées." },
     { type: "h", text: "Combo : pattern 1 + pattern 2" },
-    { type: "p", text: "Tu peux enchaîner les patterns. Si tu joues Sol sur c6 case 3, son octave est sur c4 case 5 (pattern 1). À partir du Sol c4, son octave SUIVANTE est sur c2 case 8 (pattern 2 décalé : c4→c2 +2 cases). Tu obtiens 3 Sol à 3 octaves d'écart, sur 3 cordes différentes. Ça te donne 3 timbres pour la même note." },
+    { type: "p", text: "Tu peux enchaîner les patterns. Si tu joues Sol sur c6 case 3, son octave est sur c4 case 5 (pattern 1). À partir du Sol c4, son octave SUIVANTE est sur c2 case 8 (c4→c2 : +3 cases, car la corde de Si décale tout d'une case). Tu obtiens 3 Sol, chacun une octave au-dessus du précédent, sur 3 cordes différentes. Ça te donne 3 timbres pour la même note." },
     { type: "ref", text: "Wes Montgomery, le légendaire guitariste de jazz, utilisait massivement ces patterns d'octaves. Son style 'octaves' est instantanément reconnaissable. Écoute son album 'The Incredible Jazz Guitar' (1960) : de nombreux thèmes y sont joués en octaves." },
     { type: "tip", text: "Drill combiné : choisis une note, trouve-la sur c5, son octave sur c3 (pattern 2). Puis trouve-la sur c6, son octave sur c4 (pattern 1). 4 positions de la même note. Refais avec 5 notes. Tu commences à 'voir' le manche en 3D." },
   ],

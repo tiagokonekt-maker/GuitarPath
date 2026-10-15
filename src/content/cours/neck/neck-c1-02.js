@@ -32,7 +32,7 @@ export default {
       },
     },
     { type: "h", text: "Application concrète" },
-    { type: "p", text: "Ce qui est cool : tu peux jouer la même note dans plusieurs zones du manche, ce qui te donne le choix du timbre. La note Mi peut être jouée sur la corde 6 case 0 (très grave, sourd), corde 5 case 7 (médium-grave), corde 4 case 14 (médium), corde 3 case 9 (médium-aigu), corde 2 case 5 (aigu), ou corde 1 case 0 (très aigu). Six 'Mi' différents, six couleurs différentes." },
+    { type: "p", text: "Ce qui est cool : tu peux jouer la même note dans plusieurs zones du manche, ce qui te donne le choix du timbre. La note Mi peut être jouée sur la corde 6 case 0 (le Mi grave, sourd et puissant), puis une octave plus haut sur la corde 5 case 7 ou la corde 4 case 2 (médium), puis encore une octave plus haut sur la corde 3 case 9, la corde 2 case 5 ou la corde 1 à vide (aigu). Six positions, trois hauteurs : et même à hauteur égale, chaque corde a sa propre couleur." },
     { type: "h", text: "Pourquoi c'est si utile" },
     { type: "p", text: "1) Pour les solos : pouvoir jouer la même phrase dans plusieurs régions du manche varie le timbre et l'intensité. 2) Pour les accords : un même accord (Do par exemple) peut être joué dans plusieurs zones, avec des sonorités différentes. 3) Pour comprendre la guitare : voir le manche comme un ensemble cohérent au lieu d'un labyrinthe aléatoire." },
     { type: "ref", text: "David Gilmour (Pink Floyd) est un maître de l'utilisation des octaves. Dans le solo de 'Comfortably Numb', il joue la même phrase mélodique d'abord dans le médium, puis une octave plus haut pour le climax. C'est le contraste d'octaves qui crée la montée émotionnelle." },

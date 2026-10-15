@@ -12,6 +12,8 @@ export default {
     { type: "p", text: "N'importe quel accord V7 peut être remplacé par un autre accord V7 situé 6 demi-tons (1 triton) plus haut. G7 (dominante de Do) peut être remplacé par Db7 (= Ré♭7). Pourquoi ? Parce que G7 et Db7 partagent les mêmes guide tones (3e et 7e), juste interverties." },
     { type: "h", text: "La preuve par les guide tones" },
     { type: "p", text: "G7 : guide tones = Si (3e) et Fa (7e). Db7 : guide tones = Fa (3e) et Do♭ = Si (enharmonique) (7e). G7 a Si et Fa. Db7 a Fa et Si. Les mêmes 2 notes, inversées dans leur rôle (3e et 7e). Comme ces notes définissent la qualité de l'accord, les deux accords 'résolvent' de la même façon vers Cmaj7." },
+    { type: "chord_diagram", caption: "G7 « shell » (3x34xx) — Sol à la basse, Fa (7e) et Si (3e) au-dessus", data: {name: "G7", frets: [3,-1,3,4,-1,-1], fingers: [1,0,2,3,0,0], startFret: 1} },
+    { type: "chord_diagram", caption: "Db7 « shell » (x434xx) — seule la basse bouge : Fa et Si (Dob) restent sur les mêmes cases", data: {name: "Db7", frets: [-1,4,3,4,-1,-1], fingers: [0,2,1,3,0,0], startFret: 1} },
     { type: "h", text: "La ligne de basse chromatique" },
     { type: "p", text: "L'avantage majeur de la substitution tritonique : la ligne de basse chromatique. Dm7 (Ré) → G7 (Sol) → Cmaj7 (Do) = saut de quarte, puis quarte. Dm7 (Ré) → Db7 (Réb) → Cmaj7 (Do) = descente chromatique : Ré → Réb → Do. Cette descente d'un demi-ton à chaque accord est beaucoup plus élégante et 'jazz'." },
     { type: "h", text: "Substitution tritonique vs substitution ordinaire" },

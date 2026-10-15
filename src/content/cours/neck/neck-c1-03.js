@@ -33,7 +33,7 @@ export default {
     { type: "h", text: "Sur la corde de La (5e)" },
     { type: "p", text: "Mêmes amers visuels (cases 3, 5, 7, 9, 12), mais notes différentes. Case 3 = Do, case 5 = Ré, case 7 = Mi, case 12 = La (octave). Mémorise ces 4 notes aussi : ce sont les fondamentales des accords majeurs ouverts les plus utilisés." },
     { type: "h", text: "Méthode pédagogique : ancrer 4 notes par corde" },
-    { type: "p", text: "Au lieu d'essayer de mémoriser les 12 notes de chaque corde d'un coup (impossible), apprends 4 notes par corde aux cases 0, 5, 7 et 12. Ces 4 notes par corde × 6 cordes = 24 notes ancrées. À partir de ces ancres, tu déduis le reste par voisinage (case d'à côté = +1 ou -1 demi-ton). C'est la méthode la plus efficace." },
+    { type: "p", text: "Au lieu d'essayer de mémoriser les 12 notes de chaque corde d'un coup (impossible), apprends 4 notes par corde aux cases 3, 5, 7 et 12 (celles qui portent un point). Ces 4 notes par corde × 6 cordes = 24 notes ancrées. À partir de ces ancres, tu déduis le reste par voisinage (case d'à côté = +1 ou -1 demi-ton). C'est la méthode la plus efficace." },
     { type: "ref", text: "Sur la plupart des guitares de qualité (Gibson, Fender, Martin, Taylor...), les amers ont des designs spécifiques selon le luthier. Les Les Paul ont des trapèzes de nacre, les Stratocaster des points blancs, les Telecaster aussi. Mais dans tous les cas, leur emplacement est identique : cases 3, 5, 7, 9, 12, 15, 17, 19, 21." },
     { type: "tip", text: "Drill quotidien (1 minute) : ferme les yeux, mets ton index sur une case au hasard. Ouvre les yeux et nomme la note instantanément. Refais 10 fois. En 2 semaines, ton cerveau aura cartographié le manche." },
   ],

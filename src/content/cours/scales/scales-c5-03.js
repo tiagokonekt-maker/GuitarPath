@@ -19,7 +19,7 @@ export default {
     { type: "h", text: "Phrygien dominant : la variante essentielle" },
     { type: "p", text: "Il existe une variante très utilisée : le phrygien dominant. Formule : 1-♭2-3-4-5-♭6-♭7 (la tierce devient majeure). En Mi : Mi-Fa-Sol#-La-Si-Do-Ré. Cette gamme n'est PAS un mode de la gamme majeure, mais un mode de la gamme mineure harmonique (qu'on verra plus tard). C'est le mode du flamenco authentique, du klezmer juif, et de la musique du Moyen-Orient. Ultra-caractérisé." },
     { type: "h", text: "Sur quels accords l'utiliser" },
-    { type: "p", text: "Sur des accords Im (mineur simple) dans un contexte espagnol ou modal sombre. La cadence flamenco classique : Am-G-F-E (en La phrygien). Très utilisé dans les solos métal néoclassique (Yngwie Malmsteen, Steve Vai). Pour le rock, fonctionne sur des riffs en mineur où tu veux ajouter une touche 'sombre' et 'orientale'." },
+    { type: "p", text: "Sur des accords Im (mineur simple) dans un contexte espagnol ou modal sombre. La cadence flamenco classique, dite « cadence andalouse » : Lam-Sol-Fa-Mi. Elle se pose sur Mi : c'est donc du Mi phrygien (et comme l'accord final est souvent Mi majeur, on glisse vers le Mi phrygien dominant). Très utilisé dans les solos métal néoclassique (Yngwie Malmsteen, Steve Vai). Pour le rock, fonctionne sur des riffs en mineur où tu veux ajouter une touche 'sombre' et 'orientale'." },
     {
       type: "scale_pattern",
       caption: "Mi phrygien — case 0. Note caractéristique : Fa, la seconde mineure (case 1 c6, case 1 c1)",

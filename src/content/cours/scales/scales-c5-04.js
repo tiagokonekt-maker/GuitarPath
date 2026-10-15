@@ -17,7 +17,7 @@ export default {
     { type: "h", text: "Couleur sonore" },
     { type: "p", text: "Brillant, flottant, magique, ouvert, parfois mystérieux. Si le ionien est 'lumineux et stable', le lydien est 'lumineux et flottant'. Il évoque l'envol, la rêverie. C'est le mode de Steven Spielberg, de John Williams, des bandes-son de fantasy." },
     { type: "h", text: "Sur quels accords l'utiliser" },
-    { type: "p", text: "Sur tout accord Maj7 dans un contexte non-tonal classique (pas de résolution V-I). Particulièrement sur des vamps Maj7-Maj7 distantes d'un ton (ex : Cmaj7-Dmaj7 = Do lydien). Très utilisé en jazz fusion (Pat Metheny adore le lydien) et en composition cinématographique." },
+    { type: "p", text: "Sur tout accord Maj7 dans un contexte non-tonal classique (pas de résolution V-I). Particulièrement sur des vamps Maj7-Maj7 distantes d'un ton (ex : Do-Ré en accords majeurs = Do lydien, le Fa# du Ré venant colorer le Do). Très utilisé en jazz fusion (Pat Metheny adore le lydien) et en composition cinématographique." },
     {
       type: "scale_pattern",
       caption: "Fa lydien — fondamentale case 8 c5. Note clé : Si naturel, la quarte augmentée (case 7 c6, case 9 c4, case 7 c1)",
@@ -45,7 +45,7 @@ export default {
     { type: "h", text: "Histoire" },
     { type: "p", text: "Le lydien doit son nom au royaume antique de Lydie (actuelle Turquie occidentale). C'était un mode 'sacré' dans la Grèce antique. Au XXe siècle, il a été massivement adopté par le jazz (George Russell, 'The Lydian Chromatic Concept', 1953). John Williams en a fait sa marque de fabrique pour Star Wars, E.T., Indiana Jones." },
     { type: "ref", text: "Exemples emblématiques : Le thème de 'E.T.' (John Williams, 1982) commence sur la #4 en Fa lydien — c'est cette note qui donne instantanément l'effet 'magie'. La musique de 'Princesse Mononoké' (Joe Hisaishi) utilise le lydien. 'Joy' (Bach, BWV 147 — 'Jésus que ma joie demeure') a des passages en lydien. 'Flying in a Blue Dream' (Joe Satriani) est en mi lydien. Le morceau 'Dreams' de Fleetwood Mac est en La lydien." },
-    { type: "tip", text: "Pour expérimenter le lydien : prends un accord Cmaj7 et tiens-le en arrière-plan. Joue uniquement Si naturel (la #4 de Fa lydien... mais en Cmaj7, ça serait la 7). Mauvais exemple. Reprends : tiens un accord Fmaj7. Joue uniquement Si naturel par-dessus. Tu entends la magie ? C'est le lydien." },
+    { type: "tip", text: "Pour expérimenter le lydien : enregistre (ou fais tourner) un accord Fmaj7 en boucle. Par-dessus, joue Fa, puis Si naturel, et laisse le Si sonner longtemps sans le résoudre. Tu entends cette lumière suspendue ? C'est la #4, la signature du lydien." },
   ],
   quiz: ["q-scales-10","q-scales-11","q-scales-19","q-impro-11"],
 };

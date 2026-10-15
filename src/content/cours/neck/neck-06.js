@@ -23,7 +23,6 @@ export default {
           { string: 6, fret: 8,  label: "Do",  color: "primary", root: true  },
           { string: 6, fret: 10, label: "Ré",  color: "green"  },
           { string: 5, fret: 10, label: "Sol",  color: "primary" },
-          { string: 4, fret: 9, label: "Si",   color: "green"   },
           { string: 4, fret: 9,  label: "Si",  color: "primary" },
           { string: 4, fret: 10, label: "Do",  color: "primary", root: true  },
           { string: 3, fret: 9,  label: "Mi",  color: "primary" },
