@@ -36,10 +36,11 @@ export default {
     { type: "ref", text: "Exercice immédiat : sur la corde de Mi grave, monte case par case en disant à voix haute : 'Mi (case 0) - Fa (case 1, +1/2 ton) - Sol (case 3, +1 ton) - La (case 5, +1 ton) - Si (case 7, +1 ton) - Do (case 8, +1/2 ton) - Ré (case 10, +1 ton) - Mi (case 12, +1 ton)'. Tu viens de jouer la gamme majeure de Mi en parlant à haute voix le pattern T-T-DT-T-T-T-DT." },
     { type: "tip", text: "Mnémonique pour ne jamais oublier les demi-tons naturels : 'Mi-Fa Si-Do, ce sont eux qui se collent'. Cette phrase pourrait sauver ta vie de musicien." },
   ],
-  quiz: ["q-base-11","q-base-12"],
+  quiz: ["q-base-11","q-base-12","q-scales-51"],
 };
 
 export const quiz = [
   {id:"q-base-11",courseId:"scales",lessonId:"scales-c1-03",lvl:1,q:"Un ton entier représente combien de demi-tons ?",o:["1","3","2","4"],a:2,exp:"Un ton = 2 demi-tons = 2 cases sur la guitare. Le demi-ton reste la plus petite unité du système occidental.",xp:30},
   {id:"q-base-12",courseId:"scales",lessonId:"scales-c1-03",lvl:1,q:"Entre lesquelles de ces paires de notes naturelles n'y a-t-il qu'un demi-ton ?",o:["Do et Ré","Sol et La","La et Si","Mi et Fa"],a:3,exp:"Mi-Fa et Si-Do sont les deux seules paires naturelles séparées d'un simple demi-ton. Toutes les autres sont à un ton entier.",xp:30},
+  {id:"q-scales-51",courseId:"scales",lessonId:"scales-c1-03",lvl:2,q:"De Mi à Sol en montant, quelle est la distance ?",o:["Un ton et demi","Deux tons","Un ton","Deux tons et demi"],a:0,exp:"Mi → Fa = un demi-ton (demi-ton naturel), Fa → Sol = un ton. Total : un ton et demi, soit 3 demi-tons — 3 cases sur une même corde.",xp:40},
 ];

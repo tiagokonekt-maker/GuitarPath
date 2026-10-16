@@ -33,10 +33,11 @@ export default {
     { type: "ref", text: "YouTube : cherche 'Axis of Awesome 4 chords'. C'est une vidéo culte où le groupe joue des dizaines de chansons différentes sur la même progression I-V-vi-IV sans s'arrêter. Écouter ça en entier est à la fois comique et profondément éclairant sur la nature de la pop music." },
     { type: "tip", text: "Exercice de composition : utilise I-V-vi-IV comme base. Mais au lieu de plaquer les accords bêtement, essaie différentes rythmiques (arpèges, strumming, picking), différents registres (graves, medium, aigus), différentes vitesses (lente et mélancolique, rapide et énergique). Même progression, 10 morceaux différents possibles." },
   ],
-  quiz: ["q-harm-30", "q-harm-31"],
+  quiz: ["q-harm-30", "q-harm-31", "q-harm-59"],
 };
 
 export const quiz = [
   {id:"q-harm-30",courseId:"harmony",lessonId:"harm-c6-02",lvl:1,q:"En Do majeur, que donne la progression I-V-vi-IV ?",o:["Do-Fa-Sol-La m", "Do-Sol-La m-Fa", "Do-La m-Fa-Sol", "Do-Sol-Fa-Mi m"],a:1,exp:"I = Do, V = Sol, vi = La mineur, IV = Fa.",xp:30},
   {id:"q-harm-31",courseId:"harmony",lessonId:"harm-c6-02",lvl:2,q:"Dans I-V-vi-IV, quel rôle joue l'accord vi ?",o:["Il crée la tension principale", "Il change de tonalité", "Il apporte une touche mélancolique", "Il remplace la tonique à la fin de la grille"],a:2,exp:"Le vi, relatif mineur, ajoute une couleur mélancolique sans casser l'ambiance majeure du morceau.",xp:40},
+  {id:"q-harm-59",courseId:"harmony",lessonId:"harm-c6-02",lvl:2,q:"En Ré majeur, que donne la progression I-V-vi-IV ?",o:["Ré - La - Si m - Sol","Ré - Sol - Si m - La","Ré - La - Fa# m - Sol","Ré - Mi m - Si m - Sol"],a:0,exp:"Ré majeur : I = Ré, V = La, vi = Si mineur, IV = Sol. C'est la grille de « With Or Without You » (U2).",xp:40},
 ];

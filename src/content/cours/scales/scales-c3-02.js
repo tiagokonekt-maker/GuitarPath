@@ -73,9 +73,12 @@ export default {
     { type: "ref", text: "Pour visualiser : David Gilmour (Pink Floyd) utilise les 5 positions dans le solo de 'Comfortably Numb'. Il commence en position 1, monte en position 2, atteint un climax en position 4 (aigu), puis redescend en position 5. C'est une démonstration parfaite de l'utilisation pédagogique des 5 positions." },
     { type: "tip", text: "Plan d'apprentissage 5 semaines : 1 semaine par position. Chaque jour : 10 min de la position du moment. À la fin de la semaine 5, tu connais les 5 positions. À la fin de la semaine 7, tu les connectes fluide. C'est l'investissement le plus rentable pour un guitariste rock/blues." },
   ],
-  quiz: ["q-impro-18","q-logic-01","q-scales-02"],
+  quiz: ["q-impro-18","q-neck-23","q-scales-63","q-scales-64"],
 };
 
 export const quiz = [
   {id:"q-impro-18",courseId:"impro",lessonId:"scales-c3-02",lvl:1,q:"Pourquoi la pentatonique est-elle plus facile à improviser que la gamme majeure ?",o:["Elle se joue à une vitesse plus élevée","Elle retire les deux notes les plus instables","Elle ne possède qu'une seule position","Elle n'a pas de tonique définie"],a:1,exp:"Cinq notes au lieu de sept : on a retiré la quarte et la septième, celles qui demandent une résolution. Moins de notes à surveiller, donc plus d'attention disponible pour le placement rythmique.",xp:25},
+  {id:"q-neck-23",courseId:"scales",lessonId:"scales-c3-02",lvl:3,q:"Dans la position 1 de La pentatonique mineure, le bend le plus naturel se joue sur la corde 3, à quelle case ?",o:["Case 5","Case 7","Case 9","Case 3"],a:1,exp:"Ré (corde 3 case 7), tiré d'un ton jusqu'au Mi : les deux notes sont dans la gamme, le bend sonne juste.",xp:45},
+  {id:"q-scales-63",courseId:"scales",lessonId:"scales-c3-02",lvl:1,q:"En La pentatonique mineure, sur quelle note démarre la position 2 ?",o:["Do","Ré","Mi","Sol"],a:0,exp:"Chaque position démarre sur une note de la gamme : position 1 sur La, position 2 sur Do (la ♭3, case 8 de la corde 6), puis Ré, Mi et Sol.",xp:30},
+  {id:"q-scales-64",courseId:"scales",lessonId:"scales-c3-02",lvl:2,q:"Quelle case sert de passage entre les positions 1 et 2 de La pentatonique mineure ?",o:["Case 8","Case 5","Case 10","Case 12"],a:0,exp:"La position 1 s'étend des cases 5 à 8, la position 2 des cases 8 à 10 : elles partagent les notes de la case 8, dont le Do de la corde 6. Glisser l'index sur ce pivot relie les deux formes.",xp:40},
 ];

@@ -2,7 +2,7 @@
 // Format décrit dans src/content/README.md.
 
 export default {
-  id: "scales-c5-01", level: 7,
+  id: "scales-c5-01", level: 8,
   title: "Ionien — la lumière pure (= majeur)",
   duration: 8,
   gropiTip: "Improvise en Do ionien sur une boucle Do-Fa-Sol et termine chaque phrase sur une note de l'accord de Do (Do, Mi ou Sol). C'est ce repos qui donne à l'ionien sa stabilité.",
@@ -23,10 +23,11 @@ export default {
     { type: "ref", text: "Exemples emblématiques : 'Let It Be' (Beatles) en Do ionien. 'Twist and Shout' (Beatles), 'Can't Help Falling in Love' (Elvis), 'Imagine' (John Lennon) — tous en mode ionien. C'est le langage par défaut de la pop." },
     { type: "tip", text: "Si tu sais déjà improviser en gamme majeure, tu sais improviser en ionien. Le seul changement, c'est ta façon de penser : au lieu de te dire 'je joue la gamme majeure', dis-toi 'je joue le mode ionien'. Cette nuance prépare ton cerveau aux 6 autres modes." },
   ],
-  quiz: ["q-scales-38", "q-scales-39"],
+  quiz: ["q-scales-38", "q-scales-39", "q-scales-60"],
 };
 
 export const quiz = [
   {id:"q-scales-38",courseId:"scales",lessonId:"scales-c5-01",lvl:1,q:"À quoi correspond le mode ionien ?",o:["À la gamme mineure naturelle", "À la pentatonique majeure", "À la gamme blues", "À la gamme majeure"],a:3,exp:"Ionien = gamme majeure : 1-2-3-4-5-6-7. En Do : Do-Ré-Mi-Fa-Sol-La-Si.",xp:30},
-  {id:"q-scales-39",courseId:"scales",lessonId:"scales-c5-01",lvl:2,q:"Du plus lumineux au plus sombre, quel mode est juste devant l'ionien ?",o:["Le lydien", "Le mixolydien", "Le dorien", "Le phrygien"],a:0,exp:"Le lydien, avec sa quarte augmentée, est encore plus brillant que l'ionien.",xp:40},
+  {id:"q-scales-39",courseId:"scales",lessonId:"scales-c5-01",lvl:2,q:"Du plus lumineux au plus sombre, quel mode vient juste après l'ionien ?",o:["Le mixolydien","Le lydien","Le dorien","L'éolien"],a:0,exp:"Lydien (#4) > ionien > mixolydien (♭7) > dorien (♭3) > éolien (♭6) > phrygien (♭2) > locrien (♭5). Le mixolydien ne diffère de l'ionien que par sa 7e mineure.",xp:40},
+  {id:"q-scales-60",courseId:"scales",lessonId:"scales-c5-01",lvl:1,q:"Sur quel type d'accord le mode ionien est-il le choix naturel ?",o:["Un accord maj7","Un accord m7","Un accord 7","Un accord m7♭5"],a:0,exp:"Ionien = gamme majeure, avec tierce majeure et 7e majeure : il épouse un accord maj7 (Cmaj7 pour Do ionien). Sur un accord 7 de dominante, sa 7e majeure frotterait : c'est le terrain du mixolydien.",xp:30},
 ];

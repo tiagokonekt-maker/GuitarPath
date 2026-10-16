@@ -19,10 +19,11 @@ export default {
     { type: "fretboard_interactive", mode: "chord", root: "G", chord: "dom7", caption: "G7 — guide tones : Si (3e) et Fa (7e mineure)", displayMode: "intervals", lang: "fr", compact: true },
     { type: "tip", text: "Exercice quotidien : sur un accord tenu (Am pendant 4 mesures), joue des phrases qui finissent TOUJOURS sur La, Do, Mi ou Sol. Force-toi à atterrir sur ces notes. Au bout de 10 minutes, tu entends la différence." },
   ],
-  quiz: ["q-impro-25","q-impro-26","q-impro-04","q-impro-05"],
+  quiz: ["q-impro-25","q-impro-26","q-impro-22","q-impro-04"],
 };
 
 export const quiz = [
   {id:"q-impro-25",courseId:"impro",lessonId:"impro-02",lvl:2,q:"Sur un blues en La, on peut jouer La pentatonique mineure sur les trois accords. Pourquoi ?",o:["Parce que la gamme sert la tonalité entière", "Parce que le blues ne suit aucune règle", "Parce que les trois accords sont mineurs", "Parce que le tempo d'un blues reste toujours lent"],a:0,exp:"On improvise sur la tonalité, pas sur chaque accord. C'est ce qui rend le blues abordable — et suivre les accords un par un, en ciblant leurs notes, est justement l'étape suivante.",xp:30},
-  {id:"q-impro-26",courseId:"impro",lessonId:"impro-02",lvl:3,q:"Que sont les « guide tones » d'un accord ?",o:["Les notes jouées à vide","La tierce et la septième","La fondamentale et la quinte","Les notes les plus aiguës du voicing"],a:1,exp:"Tierce et septième portent l'identité de l'accord : la tierce dit majeur ou mineur, la septième dit la fonction. Fondamentale et quinte, elles, ne distinguent presque rien — d'où l'intérêt de viser les premières quand la grille bouge.",xp:40},
+  {id:"q-impro-26",courseId:"impro",lessonId:"impro-02",lvl:2,q:"Blues en La : l'accord passe de A7 à D7. Quelle note est la tierce de D7 ?",o:["Fa#","Fa","Do#","La"],a:0,exp:"D7 = Ré Fa# La Do. Sa tierce, Fa#, n'existe ni dans A7 ni dans La pentatonique mineure : la viser quand D7 arrive fait entendre le changement, tout comme le Do (sa 7e), qui remplace le Do# de A7. Ce sont les guide tones de D7.",xp:40},
+  {id:"q-impro-22",courseId:"impro",lessonId:"impro-02",lvl:2,q:"Pendant un solo, poser une note de l'accord en cours produit…",o:["Une tension à résoudre","Une sensation de stabilité","Une dissonance marquée","Un effet de surprise"],a:1,exp:"Les notes de l'accord sont les points de repos. Celles qui n'en font pas partie créent du mouvement. Savoir alterner les deux est la mécanique de base du phrasé, bien avant tout vocabulaire.",xp:30},
 ];

@@ -2,7 +2,7 @@
 // Format décrit dans src/content/README.md.
 
 export default {
-  id: "scales-c4-03", level: 7,
+  id: "scales-c4-03", level: 8,
   title: "Comment l'oreille perçoit un mode (le rôle du drone)",
   duration: 8,
   gropiTip: "Drone gratuit : pour Mi phrygien, laisse sonner la corde 6 à vide et joue les notes de Do majeur sur les cordes aiguës. Insiste sur le Fa (case 1 corde 1) pour entendre la ♭2.",
@@ -23,10 +23,11 @@ export default {
     { type: "ref", text: "Démonstration : 'So What' (Miles Davis, 1959) est joué sur une vamp Dm7 (qui agit comme un drone harmonique). Toute la pièce reste en Ré dorien pendant 16 mesures. Aucune ambiguïté : l'oreille s'installe dans le dorien et y reste. Sans le drone harmonique de Dm7, le morceau aurait sonné comme du Do majeur ordinaire." },
     { type: "tip", text: "Quand tu pratiques un mode, lance toujours un drone ou une vamp d'accord modal. Sans support harmonique, tu travailles dans le vide — ton oreille ne perçoit pas la couleur du mode." },
   ],
-  quiz: ["q-scales-36", "q-scales-37"],
+  quiz: ["q-scales-36", "q-scales-37", "q-scales-59"],
 };
 
 export const quiz = [
   {id:"q-scales-36",courseId:"scales",lessonId:"scales-c4-03",lvl:2,q:"Sans drone ni accord de soutien, les notes de Ré dorien jouées seules sonnent souvent comme…",o:["Ré mineur harmonique", "Do majeur", "La mineur", "Sol mixolydien"],a:1,exp:"Sans ancre, l'oreille retombe sur la gamme parente qu'elle connaît le mieux : Do majeur. Le mode dorien s'évanouit.",xp:40},
   {id:"q-scales-37",courseId:"scales",lessonId:"scales-c4-03",lvl:2,q:"Quelle est la note caractéristique du mode dorien ?",o:["La seconde mineure", "La quarte augmentée", "La sixte majeure", "La septième majeure"],a:2,exp:"Dorien = mineur avec une sixte majeure. C'est la note à mettre en valeur pour que le mode s'entende.",xp:40},
+  {id:"q-scales-59",courseId:"scales",lessonId:"scales-c4-03",lvl:2,q:"Tu veux faire entendre La dorien. Quel accord tenir en boucle sous ton impro ?",o:["Am7","Cmaj7","G7","Fmaj7"],a:0,exp:"Un mode n'existe que si l'oreille entend sa fondamentale. Am7 ancre La ; les notes de La dorien (celles de Sol majeur) prennent alors leur couleur dorienne. Sur Cmaj7, l'oreille se poserait sur Do.",xp:40},
 ];

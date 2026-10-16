@@ -33,11 +33,11 @@ export default {
     { type: "ref", text: "'Creep' (Radiohead, 1992) utilise la progression I-III-IV-iv (en Sol : Sol-Si-Do-Do mineur). Le Do mineur (iv) est emprunté à Sol mineur. Ce passage entre Do majeur et Do mineur est le moment émotionnellement le plus fort de la chanson — l'emprunt crée la surprise harmonique qui accompagne le pivot textuel 'I'm a creep'." },
     { type: "tip", text: "Expérimente l'emprunt : prends I-IV-V-I en Do (Do-Fa-Sol-Do). Remplace le IV par iv (Do-Fa mineur-Sol-Do). Entends la différence. C'est ça, l'emprunt : 1 accord différent, tout l'effet change. Essaie aussi de remplacer le V par ♭VII (Do-Fa-Sib-Do) pour un effet rock." },
   ],
-  quiz: ["q-harm-44", "q-harm-45", "q-harm-46", "q-harm-25", "q-impro-03"],
+  quiz: ["q-harm-44", "q-harm-45", "q-harm-46", "q-impro-03"],
 };
 
 export const quiz = [
   {id:"q-harm-44",courseId:"harmony",lessonId:"harm-c7-01",lvl:1,q:"En Do majeur, quel est l'accord ♭VII emprunté à Do mineur ?",o:["Si diminué","Si mineur","Si♭ majeur","La♭ majeur"],a:2,exp:"Le VII de Do majeur est Si diminué ; emprunté à Do mineur, le ♭VII devient Si♭ majeur (Si♭-Ré-Fa).",xp:30},
-  {id:"q-harm-45",courseId:"harmony",lessonId:"harm-c7-01",lvl:2,q:"D'où vient l'accord Fa mineur dans une chanson en Do majeur ?",o:["De La mineur, la relative de Do","De Fa majeur, la sous-dominante","D'une simple erreur de transcription","De Do mineur (tonalité parallèle)"],a:3,exp:"Fa mineur est le iv de Do mineur, la tonalité parallèle (même tonique) : c'est un accord emprunté.",xp:40},
+  {id:"q-harm-45",courseId:"harmony",lessonId:"harm-c7-01",lvl:2,q:"D'où vient l'accord Fa mineur dans une chanson en Do majeur ?",o:["De La mineur, la relative de Do","De Fa majeur, la sous-dominante","D'une simple erreur de transcription","De Do mineur, la tonalité parallèle"],a:3,exp:"Fa mineur est le iv de Do mineur, la tonalité parallèle (même tonique) : c'est un accord emprunté.",xp:40},
   {id:"q-harm-46",courseId:"harmony",lessonId:"harm-c7-01",lvl:2,q:"En Do majeur, quel accord prépare Dm comme une dominante ?",o:["A7","G7","E7","D7"],a:0,exp:"A7 est la dominante de Ré : une dominante secondaire, qui fait de Dm une mini-résolution.",xp:40},
 ];

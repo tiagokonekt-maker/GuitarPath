@@ -30,7 +30,7 @@ export default {
 };
 
 export const quiz = [
-  {id:"q-scales-46",courseId:"scales",lessonId:"scales-c6-03",lvl:1,q:"Une chanson tient Dm7 pendant 8 mesures. Quel mode privilégier ?",o:["Ré dorien","Ré éolien","Ré phrygien","Ré mixolydien"],a:0,exp:"Une vamp sur un accord m7 appelle le dorien, avec sa sixte majeure : vamp Dm7 = Ré dorien.",xp:30},
+  {id:"q-scales-46",courseId:"scales",lessonId:"scales-c6-03",lvl:3,q:"Une vamp tourne sur Am7 - D7. Quel mode choisir sur La ?",o:["La dorien","La éolien","La phrygien","La mineure harmonique"],a:0,exp:"D7 contient Fa#, la sixte majeure de La : c'est la note du dorien. Am7 - D7 = ii-V de Sol majeur, dont La dorien est le 2e mode. Avec La éolien (Fa naturel), le D7 frotterait. C'est la grille d'« Oye Como Va » (Santana).",xp:50},
   {id:"q-scales-47",courseId:"scales",lessonId:"scales-c6-03",lvl:2,q:"Sur Dm7 - G7 - Cmaj7 (tous diatoniques de Do), quelle gamme suffit ?",o:["Une gamme différente par accord, obligatoirement","Do majeur sur toute la grille","La pentatonique de Ré seulement","La gamme blues de Sol"],a:1,exp:"Tant que tous les accords appartiennent à une seule tonalité, la gamme parente (Do majeur) fonctionne sur toute la grille.",xp:40},
   {id:"q-scales-48",courseId:"scales",lessonId:"scales-c6-03",lvl:2,q:"Sur E7 qui résout vers Am, quelle gamme utiliser ?",o:["Mi mixolydien","La pentatonique majeure","La mineure harmonique","Mi majeur"],a:2,exp:"Sur un V7 qui résout en mineur, on prend la mineure harmonique du I : La harmonique, avec son Sol# (la tierce de E7).",xp:40},
 ];

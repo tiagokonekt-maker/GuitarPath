@@ -132,6 +132,37 @@ Format compact, une question par ligne :
 dossier de la leçon (par exemple des questions d'impro sur une leçon
 d'harmonie).
 
+Règles de qualité (contrôlées par `npm test`, section « Qualité des quiz »
+du vérificateur, et `test/quiz-qualite.test.mjs`) :
+
+- au moins **3 questions** dans le `quiz` de chaque leçon article ;
+- **pas de doublon** d'énoncé ; deux questions sur la même notion doivent
+  l'aborder sous des angles différents (définition, application, oreille) ;
+- **pas de « selon la leçon »** ni d'anecdote à mémoriser : on vérifie une
+  compétence (reconnaître, appliquer, raisonner) ;
+- une leçon ne cite **jamais une question d'une leçon placée plus loin**
+  dans le parcours (sinon l'élève est interrogé sur ce qu'il n'a pas vu) ;
+- des choix **parallèles** : même forme, longueur voisine ; une précision
+  entre parenthèses ou une réponse nettement plus longue trahit la bonne
+  réponse (rappel ℹ du vérificateur) ; des distracteurs **plausibles**
+  (erreurs réelles d'élève), jamais « un pouvoir magique » ;
+- une seule réponse juste : vérifier qu'aucun distracteur n'est aussi
+  défendable (enharmonie, accord commun à deux tonalités…).
+
+Supprimer une question : retirer son id de tous les `quiz` de leçon et des
+cartes (`quizId`). Les entrées de révision déjà enregistrées chez les élèves
+pour cet id deviennent des orphelines sans effet. Préférer réécrire une
+question (même id) quand la notion reste évaluée.
+
+## Ordre des leçons et prérequis
+
+Le `level` (palier) fixe l'ordre entre paliers. **À l'intérieur d'un
+palier**, les leçons sont rangées par module (manche, gammes, harmonie,
+rythme, impro — ordre personnalisable par l'élève), puis dans l'ordre de
+`LECONS` de chaque index. Une leçon qui dépend d'une leçon d'un autre module
+doit donc être à un palier **supérieur** (ou, dans le même module, plus loin
+dans `LECONS`).
+
 ## Exercices
 
 `exercices/<module>.js` : un tableau d'exercices. Exercice guidé (`steps`,

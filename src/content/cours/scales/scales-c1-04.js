@@ -19,9 +19,11 @@ export default {
     { type: "ref", text: "Anecdote : la chanson 'Yesterday' (The Beatles) est en Fa majeur. Elle contient des Si bémol, jamais des La dièse — pourtant ce serait la même note. C'est juste une question d'orthographe musicale cohérente avec la tonalité." },
     { type: "tip", text: "Au début, accepte simplement qu'une même case puisse avoir deux noms. Ce sera plus clair quand on parlera de tonalités, dans les prochaines leçons." },
   ],
-  quiz: ["q-base-18"],
+  quiz: ["q-base-18","q-scales-52","q-scales-53"],
 };
 
 export const quiz = [
   {id:"q-base-18",courseId:"scales",lessonId:"scales-c1-04",lvl:2,q:"Deux notes qui sonnent identiques mais portent deux noms différents sont dites…",o:["Dissonantes","Enharmoniques","Chromatiques","Diatoniques"],a:1,exp:"Do# et Réb sont enharmoniques : même case sur la guitare, même son, deux écritures selon le contexte tonal.",xp:35},
+  {id:"q-scales-52",courseId:"scales",lessonId:"scales-c1-04",lvl:1,q:"Quel est l'autre nom de La# ?",o:["Si♭","La♭","Si","Do♭"],a:0,exp:"La# est un demi-ton au-dessus de La, Si♭ un demi-ton sous Si : c'est la même case, deux noms enharmoniques du même son.",xp:30},
+  {id:"q-scales-53",courseId:"scales",lessonId:"scales-c1-04",lvl:2,q:"Dans Sol majeur, pourquoi écrit-on Fa# plutôt que Sol♭ ?",o:["Pour garder une note par lettre","Parce que Sol♭ sonne plus grave","Parce que les bémols sont interdits","Parce que Fa# se joue plus facilement"],a:0,exp:"Une gamme utilise chaque lettre une fois : Sol La Si Do Ré Mi Fa#. Écrire Sol♭ donnerait deux « Sol » et aucun « Fa ». Fa# et Sol♭ sonnent pareil : c'est une question d'orthographe.",xp:40},
 ];

@@ -37,5 +37,5 @@ export default {
 };
 
 export const quiz = [
-  {id:"q-harm-23",courseId:"harmony",lessonId:"harm-c4-01",lvl:3,q:"L'accord G13 contient combien de notes différentes ?",o:["4","5","6","7"],a:2,exp:"G13 = 1-3-5-♭7-9-11-13 = Sol-Si-Ré-Fa-La-Do-Mi. 7 notes en théorie. En pratique on omet souvent la 5 et la 11. Voicing usuel = 6 notes : Sol-Si-Fa-La-Do-Mi.",xp:60},
+  {id:"q-harm-23",courseId:"harmony",lessonId:"harm-c4-01",lvl:3,q:"Dans le voicing pratique de G13 à quatre notes, lesquelles garde-t-on ?",o:["Sol, Si, Fa, Mi","Sol, Ré, La, Do","Sol, Si, Ré, Mi","Si, Ré, Fa, La"],a:0,exp:"G13 complet = Sol Si Ré Fa La Do Mi : sept notes, injouables telles quelles. On garde la fondamentale (Sol), la tierce (Si), la 7e (Fa) et la 13e (Mi), et on omet quinte, 9e et 11e. Sol Si Ré Mi, sans 7e, serait un simple G6.",xp:60},
 ];

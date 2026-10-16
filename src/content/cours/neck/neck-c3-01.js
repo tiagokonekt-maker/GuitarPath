@@ -38,7 +38,7 @@ export default {
     { type: "ref", text: "Le riff de 'Smoke On The Water' joué en octaves doublées sonne comme un riff funky. Essaie : joue le riff sur la corde 6, et simultanément les mêmes notes sur la corde 4 +2 cases. Effet immédiat." },
     { type: "tip", text: "Drill 'octaves c6→c4' : choisis une note (ex Sol). Trouve-la sur c6 (case 3), puis joue son octave c4 (case 5). Refais avec 5 notes différentes. En 5 minutes par jour pendant une semaine, ce pattern devient instinctif." },
   ],
-  quiz: ["q-neck-32", "q-neck-33", "q-neck-34", "q-neck-16", "q-neck-17"],
+  quiz: ["q-neck-32", "q-neck-33", "q-neck-34"],
 };
 
 export const quiz = [

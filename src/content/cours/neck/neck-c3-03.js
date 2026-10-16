@@ -47,6 +47,6 @@ export default {
 
 export const quiz = [
   {id:"q-neck-35",courseId:"neck",lessonId:"neck-c3-03",lvl:1,q:"Ré, corde 4 à vide. Où est son octave sur la corde 2 ?",o:["Case 2","Case 3","Case 4","Case 5"],a:1,exp:"Pattern c4 → c2 : +3 cases (et non +2). Corde 2 case 3 = Ré.",xp:30},
-  {id:"q-neck-36",courseId:"neck",lessonId:"neck-c3-03",lvl:2,q:"Pourquoi faut-il +3 cases, et non +2, de la corde 4 à la corde 2 ?",o:["La corde 2 est plus fine que la 4","Les cordes aiguës sont plus tendues que les graves","L'écart c3-c2 est une tierce (4 demi-tons)","Par convention d'écriture des tablatures"],a:2,exp:"Entre c3 et c2, l'accordage fait une tierce (4 demi-tons) au lieu d'une quarte (5) : il manque une case, qu'on compense en allant +3.",xp:40},
+  {id:"q-neck-36",courseId:"neck",lessonId:"neck-c3-03",lvl:2,q:"Pourquoi faut-il +3 cases, et non +2, de la corde 4 à la corde 2 ?",o:["La corde 2 est plus fine que la 4","Les cordes aiguës sont plus tendues","L'écart c3-c2 n'est que d'une tierce","Par convention d'écriture des tablatures"],a:2,exp:"Entre c3 et c2, l'accordage fait une tierce (4 demi-tons) au lieu d'une quarte (5) : il manque une case, qu'on compense en allant +3.",xp:40},
   {id:"q-neck-37",courseId:"neck",lessonId:"neck-c3-03",lvl:1,q:"Lequel de ces sauts d'octave demande +2 cases ?",o:["Corde 4 → corde 2","Corde 3 → corde 1","Aucun, c'est toujours +3","Corde 5 → corde 3"],a:3,exp:"+2 dans le grave (c6 → c4, c5 → c3), +3 dans l'aigu (c4 → c2, c3 → c1), à cause de la cassure entre c3 et c2.",xp:30},
 ];

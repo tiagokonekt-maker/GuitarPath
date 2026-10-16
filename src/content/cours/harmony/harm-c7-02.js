@@ -25,11 +25,12 @@ export default {
     { type: "ref", text: "Charlie Parker, Dizzy Gillespie et les autres fondateurs du bebop (années 1940) ont codifié la substitution tritonique comme outil standard. Écoute 'Donna Lee' ou 'Anthropology' de Parker : les reharmonisations rapides que tu entends utilisent massivement les substitutions tritoniques." },
     { type: "tip", text: "Exercice simple : joue Am7-G7-Cmaj7 en boucle. Maintenant remplace G7 par Db7 : Am7-Db7-Cmaj7. Entends la différence ? La ligne de basse La-Réb-Do contre La-Sol-Do. La substitution crée une descente chromatique. C'est élégant et ça ne coûte qu'1 note de changement." },
   ],
-  quiz: ["q-harm-47", "q-harm-48", "q-harm-49", "q-impro-05", "q-impro-06"],
+  quiz: ["q-harm-47", "q-harm-48", "q-harm-49", "q-impro-08", "q-impro-06"],
 };
 
 export const quiz = [
   {id:"q-harm-47",courseId:"harmony",lessonId:"harm-c7-02",lvl:1,q:"Avec la substitution tritonique, par quel accord remplace-t-on G7 ?",o:["D7","Db7","C7","Ab7"],a:1,exp:"Un triton (6 demi-tons) au-dessus de Sol : Réb. G7 devient Db7.",xp:30},
   {id:"q-harm-48",courseId:"harmony",lessonId:"harm-c7-02",lvl:2,q:"Pourquoi G7 et Db7 sont-ils interchangeables ?",o:["Ils ont la même fondamentale","Ils ont le même nombre de notes","Ils partagent les mêmes guide tones","Ils sont dans la même gamme majeure"],a:2,exp:"G7 a Si et Fa ; Db7 a Fa et Do♭ (= Si). Mêmes guide tones, rôles inversés : ils résolvent de la même façon.",xp:40},
   {id:"q-harm-49",courseId:"harmony",lessonId:"harm-c7-02",lvl:1,q:"Dm7 - Db7 - Cmaj7 : que fait la basse ?",o:["Elle saute de quarte en quarte","Elle reste sur Do","Elle monte par tons","Elle descend par demi-tons"],a:3,exp:"Ré → Réb → Do : une descente chromatique, au lieu des sauts Ré → Sol → Do.",xp:30},
+  {id:"q-impro-08",courseId:"impro",lessonId:"harm-c7-02",lvl:3,q:"Substitution tritonique appliquée à Dm7-G7-Cmaj7 donne…",o:["Dm7-Db7-Cmaj7","Dm7-G7-C#maj7","D#m7-G7-Cmaj7","Dm7-Bb7-Cmaj7"],a:0,exp:"Sub trito du V (G7) = Db7. Donc Dm7-Db7-Cmaj7. La basse descend chromatiquement Ré→Réb→Do. Mouvement très élégant.",xp:65},
 ];

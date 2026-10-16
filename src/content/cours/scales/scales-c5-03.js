@@ -49,9 +49,11 @@ export default {
     { type: "ref", text: "Exemples emblématiques : 'Spain' (Chick Corea) en Ré phrygien dominant. 'Smoke on the Water' utilise des inflexions phrygiennes dans son intro. 'War' (Yngwie Malmsteen) en Mi phrygien dominant. Toute la musique flamenco traditionnelle 'soleá' et 'siguiriya' est en phrygien. Si tu écoutes 'Concierto de Aranjuez' (Joaquín Rodrigo, 1939), tu entends la quintessence du phrygien espagnol." },
     { type: "tip", text: "Pour goûter au phrygien : joue le riff suivant en boucle sur la corde de Mi grave : Mi(0) - Fa(1) - Sol(3) - Mi(0). Tu viens d'esquisser l'âme du phrygien. Reproduis ça avec la ♭2 toujours en évidence et tu sentiras l'Andalousie venir à toi." },
   ],
-  quiz: ["q-scales-18","q-impro-07"],
+  quiz: ["q-scales-18","q-scales-61","q-scales-62"],
 };
 
 export const quiz = [
   {id:"q-scales-18",courseId:"scales",lessonId:"scales-c5-03",lvl:3,q:"Le mode phrygien dominant a quelle formule ?",o:["1-♭2-♭3-4-5-♭6-♭7","1-2-♭3-4-5-6-7","1-♭2-3-4-5-♭6-♭7","1-♭2-♭3-4-♭5-♭6-♭7"],a:2,exp:"Phrygien dominant = phrygien avec 3 majeure (au lieu de ♭3). Formule 1-♭2-3-4-5-♭6-♭7. Mode du flamenco authentique, du klezmer juif, et du Moyen-Orient.",xp:55},
+  {id:"q-scales-61",courseId:"scales",lessonId:"scales-c5-03",lvl:3,q:"La cadence andalouse Lam - Sol - Fa - Mi se pose sur quel accord, donc dans quel mode ?",o:["Mi, en Mi phrygien","La, en La éolien","Fa, en Fa lydien","Sol, en Sol mixolydien"],a:0,exp:"La boucle s'arrête et se repose sur Mi : c'est lui la tonique. Les notes sont celles de Do majeur jouées depuis Mi : Mi phrygien. Le Fa → Mi final fait entendre la ♭2 caractéristique.",xp:50},
+  {id:"q-scales-62",courseId:"scales",lessonId:"scales-c5-03",lvl:1,q:"En Mi phrygien, quelle note est la note caractéristique, la ♭2 ?",o:["Fa","Fa#","Ré","Sol"],a:0,exp:"Mi phrygien = Mi Fa Sol La Si Do Ré. Le Fa, à un demi-ton de la fondamentale, est sa signature. Avec Fa#, on retrouverait Mi éolien.",xp:30},
 ];

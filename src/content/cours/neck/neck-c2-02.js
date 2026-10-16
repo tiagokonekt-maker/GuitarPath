@@ -45,7 +45,7 @@ export default {
       },
     },
     { type: "h", text: "L'astuce du décalage" },
-    { type: "p", text: "Voici une astuce magique : la corde 5 est 'décalée' de 2 cases par rapport à la corde 6 pour les mêmes notes. Si Do est en case 8 sur la corde 6, alors Do est en case 3 sur la corde 5 (8 - 5 = 3 ; le décalage est de 5 cases entre cordes adjacentes pour la même note, mais on garde la même 'position' visuelle). Plus simple à exprimer ainsi : la corde 5 donne accès aux mêmes notes que la corde 6, mais 5 demi-tons plus haut depuis la corde à vide." },
+    { type: "p", text: "Voici une astuce : pour une même note, à la même hauteur, la corde 5 est décalée de 5 cases par rapport à la corde 6. Do est en case 8 sur la corde 6, donc en case 3 sur la corde 5 (8 − 5 = 3). Autrement dit, la corde 5 donne les mêmes notes que la corde 6, cinq cases plus tôt, puisqu'elle est accordée 5 demi-tons plus haut." },
     { type: "h", text: "Pourquoi cette corde est si importante" },
     { type: "p", text: "La corde 5 porte la fondamentale des accords barrés en 'forme A'. Quand tu joues Ré barré case 5 (forme A barrée), c'est parce que case 5 corde 5 = Ré. Quand tu joues Do barré case 3 (forme A barrée), c'est parce que case 3 corde 5 = Do. Combinée à la corde 6, ça te donne le pouvoir de jouer n'importe quel accord majeur ou mineur dans n'importe quelle tonalité, en barré." },
     { type: "h", text: "Le lien octave avec la corde 6" },
@@ -53,9 +53,11 @@ export default {
     { type: "ref", text: "Pratique : joue Ré barré case 5 (corde 5). Identifie la fondamentale (Ré) sur la corde 5 case 5. Maintenant joue La barré case 5 (corde 6). Identifie la fondamentale (La) sur la corde 6 case 5. Ces deux accords se forment de la même façon, mais sur des cordes différentes. La logique du barré devient claire." },
     { type: "tip", text: "Drill connecté : joue la même note sur c6 et c5 en décalage. Ex : Mi (c6 case 0) puis Mi (c5 case 7). Do (c6 case 8) puis Do (c5 case 3). Ce drill développe ta vision globale du manche." },
   ],
-  quiz: ["q-base-17"],
+  quiz: ["q-base-17","q-neck-43","q-neck-44"],
 };
 
 export const quiz = [
   {id:"q-base-17",courseId:"neck",lessonId:"neck-c2-02",lvl:2,q:"Sur la corde de La (corde 5), quelle note trouve-t-on case 3 ?",o:["Do","Si","Ré","Do#"],a:0,exp:"Depuis La à vide : case 1 La#, case 2 Si, case 3 Do. Cette corde porte la fondamentale des accords barrés en forme de La.",xp:35},
+  {id:"q-neck-43",courseId:"neck",lessonId:"neck-c2-02",lvl:2,q:"Un barré en forme de La, fondamentale sur la corde 5 case 5, donne quel accord majeur ?",o:["Ré majeur","Do majeur","Mi majeur","Sol majeur"],a:0,exp:"La forme de La place la fondamentale sur la corde 5. Corde 5 case 5 = Ré : Ré majeur. Case 3 donnerait Do, case 7 Mi, case 10 Sol.",xp:40},
+  {id:"q-neck-44",courseId:"neck",lessonId:"neck-c2-02",lvl:2,q:"Do est à la case 8 de la corde 6. Où joues-tu ce même Do, à la même hauteur, sur la corde 5 ?",o:["Case 3","Case 13","Case 5","Case 10"],a:0,exp:"La corde 5 est accordée 5 demi-tons plus haut que la corde 6 : pour la même note, on recule de 5 cases. 8 − 5 = 3 : Do (corde 5, case 3).",xp:40},
 ];

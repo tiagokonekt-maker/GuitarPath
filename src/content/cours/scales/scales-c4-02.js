@@ -2,7 +2,7 @@
 // Format décrit dans src/content/README.md.
 
 export default {
-  id: "scales-c4-02", level: 7,
+  id: "scales-c4-02", level: 8,
   title: "Qu'est-ce qu'un mode (la grande révélation)",
   duration: 12,
   gropiTip: "Pour trouver la gamme parente d'un mode, remonte jusqu'au degré I : La dorien est le IIe degré, donc la gamme parente commence un ton plus bas, sur Sol. La dorien = notes de Sol majeur.",
@@ -33,5 +33,5 @@ export const quiz = [
   {id:"q-scales-12",courseId:"scales",lessonId:"scales-c4-02",lvl:3,q:"En La majeur, quel est le mode joué en partant de Do# ?",o:["Do# phrygien","Do# dorien","Do# lydien","Do# locrien"],a:0,exp:"En La majeur, Do# est le 3e degré. Le 3e mode = phrygien. Do# phrygien = La majeur en partant de Do#. Notes : Do#-Ré-Mi-Fa#-Sol#-La-Si.",xp:55},
   {id:"q-scales-13",courseId:"scales",lessonId:"scales-c4-02",lvl:3,q:"Quelle paire de modes a EXACTEMENT les mêmes notes que Do majeur ?",o:["Mi dorien et Fa lydien","Ré dorien et Sol mixolydien","Sol dorien et La éolien","Si phrygien et Do# locrien"],a:1,exp:"Tous les modes de Do majeur partagent les mêmes 7 notes. Ré dorien (II) et Sol mixolydien (V) sont 2 modes de Do majeur. Aussi : Mi phrygien, Fa lydien, La éolien, Si locrien.",xp:55},
   {id:"q-logic-03",courseId:"scales",lessonId:"scales-c4-02",lvl:3,q:"Tous les modes de Do majeur (Ionien, Dorien, etc.) partagent…",o:["La même fondamentale","Le même tempo","Les mêmes 7 notes","La même couleur"],a:2,exp:"7 modes de Do majeur = 7 fondamentales différentes mais MÊMES NOTES (Do-Ré-Mi-Fa-Sol-La-Si). C'est la fondamentale qui change la couleur ressentie.",xp:50},
-  {id:"q-logic-08",courseId:"scales",lessonId:"scales-c4-02",lvl:3,q:"Si tu joues les 7 modes de Do majeur (Do ionien, Ré dorien...), tu joues toujours…",o:["7 gammes aux notes toutes différentes", "La gamme chromatique complète, 12 notes", "Des gammes pentatoniques de 5 notes chacune", "Les mêmes 7 notes, depuis 7 fondamentales"],a:3,exp:"Mêmes notes Do-Ré-Mi-Fa-Sol-La-Si dans tous les modes. Seule la fondamentale change. C'est ce changement de centre qui crée la 'couleur' modale.",xp:55},
+  {id:"q-logic-08",courseId:"scales",lessonId:"scales-c4-02",lvl:2,q:"Quel mode de Do majeur obtiens-tu en partant de Fa ?",o:["Fa lydien","Fa ionien","Fa mixolydien","Fa dorien"],a:0,exp:"Fa est le 4e degré de Do majeur ; le 4e mode est le lydien. Fa Sol La Si Do Ré Mi : le Si (quarte augmentée) est sa note caractéristique.",xp:55},
 ];

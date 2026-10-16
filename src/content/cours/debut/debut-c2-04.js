@@ -36,7 +36,7 @@ export default {
 };
 
 export const quiz = [
-  {id:"q-debut-33",courseId:"debut",lessonId:"debut-c2-04",lvl:1,q:"Entre Do et La mineur, combien de doigts doivent vraiment bouger ?",o:["Aucun","Un seul, l'annulaire","Deux","Les trois"],a:1,exp:"L'index (corde 2, case 1) et le majeur (corde 4, case 2) sont communs aux deux accords. Seul l'annulaire passe de la corde 5 case 3 à la corde 3 case 2.",xp:25},
+  {id:"q-debut-33",courseId:"debut",lessonId:"debut-c2-04",lvl:1,q:"Entre Do et La mineur, combien de doigts doivent vraiment bouger ?",o:["Aucun","Un seul","Deux","Les trois"],a:1,exp:"L'index (corde 2, case 1) et le majeur (corde 4, case 2) sont communs aux deux accords. Seul l'annulaire passe de la corde 5 case 3 à la corde 3 case 2.",xp:25},
   {id:"q-debut-34",courseId:"debut",lessonId:"debut-c2-04",lvl:1,q:"Quand aucun doigt n'est commun entre deux accords, comment les déplacer ?",o:["Un doigt après l'autre, en commençant par l'index","Tous ensemble, d'un bloc","En regardant chaque doigt se poser un par un","En s'arrêtant de jouer une mesure"],a:1,exp:"Déplacer la forme d'un bloc, comme un tampon, est bien plus rapide que de reconstruire l'accord doigt par doigt.",xp:25},
   {id:"q-debut-35",courseId:"debut",lessonId:"debut-c2-04",lvl:2,q:"Pourquoi quitter un accord un peu avant le temps suivant ?",o:["Pour que le nouvel accord soit en place pile sur le temps","Parce que le dernier coup doit toujours être silencieux","Pour reposer la main gauche","Pour jouer plus vite que le métronome"],a:0,exp:"Le changement doit être terminé quand le temps fort arrive. Un coup sur les cordes à vide juste avant passe inaperçu ; un trou dans le rythme, non.",xp:30},
 ];

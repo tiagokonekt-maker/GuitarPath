@@ -17,7 +17,7 @@ export default {
     { type: "h", text: "Voice-leading : l'art des transitions fluides" },
     { type: "p", text: "Le 'voice-leading' est l'art de passer d'un accord à l'autre en minimisant les sauts. Au lieu de changer brusquement toutes les notes, tu gardes certaines notes communes et déplaces les autres par demi-tons ou tons. Les inversions sont l'outil principal du voice-leading : elles permettent d'utiliser des voicings 'proches' entre accords successifs." },
     { type: "h", text: "Exemple de voice-leading avec inversions" },
-    { type: "p", text: "Progression Do-Sol-La mineur-Fa (1-5-6m-4). Au lieu de sauter d'un accord à l'autre : Do état fond. → Sol 1ère inversion (Si en basse) → La mineur 1ère inversion (Do en basse) → Fa état fond. La ligne de basse monte par demi-tons : Do-Si-Do-Do... wait. Reprenons : Do-Si-La-La est plus fluide que les sauts normaux. Les inversions créent une ligne de basse mélodique." },
+    { type: "p", text: "Progression Do - Sol - La mineur - Fa (I-V-vi-IV). En état fondamental, la basse saute : Do → Sol → La → Fa. Joue plutôt Sol en 1ère inversion (Sol/Si, Si à la basse) : la basse descend alors par degrés, Do → Si → La, avant de rejoindre Fa. Cette ligne Do-Si-La est bien plus chantante que les sauts d'origine : les inversions créent une ligne de basse mélodique." },
     { type: "h", text: "Sur la guitare : inversions pratiques" },
     { type: "p", text: "Les inversions de triades s'utilisent surtout sur les cordes 1-2-3 et 2-3-4 (comme vu dans le module Manche). Sur un accord barré à 6 cordes, tu 'contiens' implicitement des inversions : certaines cordes jouent la tierce ou la quinte en position basse. Mais pour travailler les inversions explicitement, les triades à 3 cordes sont l'outil parfait." },
     {
@@ -38,10 +38,11 @@ export default {
     { type: "ref", text: "'And I Love Her' (Beatles) : la ligne de basse utilise des inversions d'accords pour créer un mouvement descendant mélodique. La basse ne suit pas toujours la fondamentale — elle passe par des tierces et quintes. Résultat : la ligne de basse est aussi une mélodie. C'est le pouvoir des inversions." },
     { type: "tip", text: "Drill inversions : prends Do majeur. Joue-le en état fondamental (corde 5 case 3, corde 4 case 2, corde 3 à vide). Puis 1ère inversion (corde 4 case 2, corde 3 à vide, corde 2 case 1 — Mi en basse). Puis 2e inversion (corde 3 à vide, corde 2 case 1, corde 1 à vide — Sol en basse). 3 positions, 3 couleurs. Mémorise les 3 formes de Do majeur. Refais avec Sol, La mineur." },
   ],
-  quiz: ["q-harm-28", "q-harm-29"],
+  quiz: ["q-harm-28", "q-harm-29", "q-harm-58"],
 };
 
 export const quiz = [
   {id:"q-harm-28",courseId:"harmony",lessonId:"harm-c2-04",lvl:1,q:"Dans une 1ère inversion, quelle note de l'accord est à la basse ?",o:["La fondamentale", "La quinte", "La septième", "La tierce"],a:3,exp:"1ère inversion = tierce à la basse. Do majeur : Mi - Sol - Do, noté Do/Mi.",xp:30},
   {id:"q-harm-29",courseId:"harmony",lessonId:"harm-c2-04",lvl:2,q:"À quoi servent surtout les inversions dans un enchaînement d'accords ?",o:["À réduire les sauts entre les accords", "À changer la tonalité du morceau", "À rendre chaque accord plus fort et plus riche", "À remplacer les accords mineurs"],a:0,exp:"C'est le voice-leading : on garde les notes communes et on déplace les autres au plus court.",xp:40},
+  {id:"q-harm-58",courseId:"harmony",lessonId:"harm-c2-04",lvl:2,q:"Dans Do - Sol - Lam - Fa, quel Sol fait descendre la basse Do → Si → La ?",o:["Sol/Si, 1re inversion","Sol/Ré, 2e inversion","Sol à l'état fondamental","Sol/La, avec la 9e en basse"],a:0,exp:"En 1re inversion, la tierce de Sol (Si) passe à la basse : Do (Do) → Si (Sol/Si) → La (Lam). La basse descend par degrés au lieu de sauter Do → Sol → La.",xp:40},
 ];

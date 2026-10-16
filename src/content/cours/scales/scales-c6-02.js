@@ -52,5 +52,5 @@ export default {
 
 export const quiz = [
   {id:"q-scales-21",courseId:"scales",lessonId:"scales-c6-02",lvl:3,q:"La gamme mineure mélodique 'jazz' a quelle formule ?",o:["1-2-♭3-4-5-♭6-♭7","1-2-♭3-4-5-6-7","1-♭2-♭3-4-5-♭6-7","1-2-3-4-5-6-♭7"],a:1,exp:"Mélodique jazz = 1-2-♭3-4-5-6-7. Mineure naturelle avec 6 ET 7 majeures. La mélodique jazz = La-Si-Do-Ré-Mi-Fa#-Sol#. Presque une majeure avec juste ♭3.",xp:55},
-  {id:"q-impro-12",courseId:"impro",lessonId:"scales-c6-02",lvl:3,q:"Sur un accord altéré G7alt (V7 vers Cm), quelle gamme ?",o:["Sol altéré (mode 7 de Lab mélodique)", "Sol mixolydien, sans altération", "Sol diminué demi-ton/ton", "Sol majeur, avec ses 7 notes naturelles"],a:0,exp:"Gamme altérée = mineure mélodique débutée sur le degré 7. Lab mélodique = Lab-Sib-Cb-Réb-Mib-Fa-Sol. Sol altéré = Sol-Lab-Sib-Cb-Réb-Mib-Fa = toutes les altérations possibles de G7.",xp:75},
+  {id:"q-impro-12",courseId:"impro",lessonId:"scales-c6-02",lvl:3,q:"Sur un accord altéré G7alt (V7 vers Cm), quelle gamme ?",o:["Sol altéré","Sol mixolydien","Sol lydien","Sol majeur"],a:0,exp:"La gamme altérée est le 7e mode de la mineure mélodique : Lab mélodique = Lab Sib Do♭ Réb Mib Fa Sol, donc Sol altéré = Sol Lab Sib Do♭ Réb Mib Fa, avec toutes les altérations possibles de G7 (♭9, #9, ♭5, ♭13). Mixolydien, lydien et majeur ignorent ces altérations.",xp:75},
 ];

@@ -19,10 +19,11 @@ export default {
     { type: "ref", text: "Écoute les premières notes de 'Do-Ré-Mi' (chanson tirée de 'La Mélodie du bonheur', 1965) : c'est littéralement la gamme majeure de Do chantée note par note. Une oreille qui connaît cette mélodie connaît déjà l'ordre des 7 notes." },
     { type: "tip", text: "Avant d'aller plus loin, mémorise cet ordre dans les deux notations : Do=C, Ré=D, Mi=E, Fa=F, Sol=G, La=A, Si=B. C'est le b.a.-ba." },
   ],
-  quiz: ["q-base-03","q-base-04"],
+  quiz: ["q-base-03","q-base-04","q-scales-49"],
 };
 
 export const quiz = [
   {id:"q-base-03",courseId:"scales",lessonId:"scales-c1-01",lvl:1,q:"Combien de notes naturelles (sans dièse ni bémol) la musique occidentale utilise-t-elle ?",o:["5","8","7","12"],a:2,exp:"Do, Ré, Mi, Fa, Sol, La, Si : 7 notes naturelles, qui se répètent ensuite à l'octave.",xp:25},
   {id:"q-base-04",courseId:"scales",lessonId:"scales-c1-01",lvl:1,q:"Quelle note vient juste après Si quand on monte la gamme naturelle ?",o:["Ré","La","Mi","Do"],a:3,exp:"Après Si, la suite recommence sur Do. L'alphabet musical boucle en permanence : Do Ré Mi Fa Sol La Si Do…",xp:25},
+  {id:"q-scales-49",courseId:"scales",lessonId:"scales-c1-01",lvl:1,q:"En notation anglaise, quelle lettre désigne Sol ?",o:["G","A","F","D"],a:0,exp:"Do = C, Ré = D, Mi = E, Fa = F, Sol = G, La = A, Si = B. L'alphabet anglais commence sur La (A), d'où ce décalage.",xp:30},
 ];

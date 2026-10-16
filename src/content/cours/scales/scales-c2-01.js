@@ -23,10 +23,11 @@ export default {
     { type: "ref", text: "Comparaison utile : une gamme, c'est comme une palette de couleurs pour un peintre. La gamme majeure = palette joyeuse et lumineuse. La gamme mineure = palette mélancolique. La gamme blues = palette urbaine, dramatique. Le choix de la gamme = le choix de l'ambiance." },
     { type: "tip", text: "Ne mémorise pas une gamme comme une suite de notes (Do-Ré-Mi...). Mémorise-la comme une formule d'intervalles (T-T-DT-T-T-T-DT). Ainsi tu peux la reconstruire dans n'importe quelle tonalité." },
   ],
-  quiz: ["q-scales-28", "q-scales-29"],
+  quiz: ["q-scales-28", "q-scales-29", "q-scales-54"],
 };
 
 export const quiz = [
-  {id:"q-scales-28",courseId:"scales",lessonId:"scales-c2-01",lvl:1,q:"Quels sont les 3 ingrédients qui définissent une gamme ?",o:["Une tonalité, un tempo et un rythme", "Une fondamentale, un nombre de notes, une formule", "Un accord de départ, une mesure et une nuance", "Une corde, une position et un doigté"],a:1,exp:"Une gamme = une fondamentale (qui la nomme), un nombre de notes et une formule d'intervalles.",xp:30},
+  {id:"q-scales-28",courseId:"scales",lessonId:"scales-c2-01",lvl:2,q:"Deux gammes partent de La et ont 7 notes chacune, mais ne sonnent pas pareil. Qu'est-ce qui les distingue ?",o:["Leur formule d'intervalles","Leur note fondamentale","Leur nombre de notes","Le tempo auquel on les joue"],a:0,exp:"Une gamme se définit par sa fondamentale, son nombre de notes et sa formule d'intervalles. Ici les deux premiers sont identiques : seule la formule (T-T-DT… ou T-DT-T…) change, et avec elle la couleur.",xp:40},
   {id:"q-scales-29",courseId:"scales",lessonId:"scales-c2-01",lvl:1,q:"Pourquoi mémoriser une gamme sous forme de formule (T-T-DT…) plutôt que de notes ?",o:["Pour la jouer plus vite", "Pour éviter d'avoir à lire les dièses", "Pour la reconstruire dans toute tonalité", "Pour ne jouer que sur une corde"],a:2,exp:"La formule ne dépend pas de la note de départ : appliquée depuis n'importe quelle fondamentale, elle redonne la gamme.",xp:30},
+  {id:"q-scales-54",courseId:"scales",lessonId:"scales-c2-01",lvl:2,q:"Tu appliques la formule T-T-DT-T-T-T-DT en partant de Ré. Quelle est la troisième note ?",o:["Fa#","Fa","Sol","Mi"],a:0,exp:"Ré + un ton = Mi, Mi + un ton = Fa#. La formule impose un ton entier après Mi : Fa naturel ne serait qu'à un demi-ton. D'où Ré majeur : Ré Mi Fa# Sol La Si Do#.",xp:40},
 ];

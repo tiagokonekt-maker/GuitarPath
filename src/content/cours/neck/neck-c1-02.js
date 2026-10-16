@@ -38,9 +38,11 @@ export default {
     { type: "ref", text: "David Gilmour (Pink Floyd) est un maître de l'utilisation des octaves. Dans le solo de 'Comfortably Numb', il joue la même phrase mélodique d'abord dans le médium, puis une octave plus haut pour le climax. C'est le contraste d'octaves qui crée la montée émotionnelle." },
     { type: "tip", text: "Test simple : sur la corde de Mi grave, joue case 0, puis case 12, puis case 24 (si tu as 24 frettes). Tu joues 3 fois la même note (Mi), à 3 octaves différentes. Écoute la transformation du timbre : grave et puissant → médium et présent → aigu et brillant." },
   ],
-  quiz: ["q-base-08"],
+  quiz: ["q-base-08","q-neck-38","q-neck-39"],
 };
 
 export const quiz = [
   {id:"q-base-08",courseId:"neck",lessonId:"neck-c1-02",lvl:1,q:"Sur une même corde, combien de cases faut-il monter pour retrouver la même note à l'octave ?",o:["7","8","10","12"],a:3,exp:"12 cases = 12 demi-tons = une octave complète. La note porte le même nom, une octave plus haut.",xp:30},
+  {id:"q-neck-38",courseId:"neck",lessonId:"neck-c1-02",lvl:1,q:"Tu joues Sol sur la corde 6, case 3. Où rejoues-tu ce Sol une octave plus haut, sur la même corde ?",o:["Case 15","Case 12","Case 10","Case 13"],a:0,exp:"Même corde, +12 cases = une octave : 3 + 12 = 15. Le nom de la note ne change pas, seule sa hauteur double.",xp:30},
+  {id:"q-neck-39",courseId:"neck",lessonId:"neck-c1-02",lvl:2,q:"Le Mi de la corde 6 à vide se retrouve une octave plus haut sur la corde 5. À quelle case ?",o:["Case 7","Case 5","Case 2","Case 12"],a:0,exp:"Mi (corde 5, case 7) sonne une octave au-dessus de la corde 6 à vide. Le même Mi existe aussi sur la corde 4, case 2 : deux positions pour une même hauteur.",xp:40},
 ];

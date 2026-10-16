@@ -9,7 +9,7 @@ export default {
   content: [
     { type: "p", text: "La bossa nova est un genre musical brésilien né à la fin des années 50 à Rio de Janeiro, créé par João Gilberto, Tom Jobim et Vinicius de Moraes. Son rythme caractéristique est l'un des plus sophistiqués et des plus difficiles à maîtriser en guitare. Mais quand c'est réussi, il est d'une élégance absolue." },
     { type: "h", text: "Origines et contexte" },
-    { type: "p", text: "La bossa nova est née du samba brésilien (rythme ternaire complexe) mélangé au jazz américain (harmonies sophistiquées, voicings 7e et 9e). João Gilberto a simplifié le samba pour le jouer seul à la guitare, en chantant par-dessus. Cette simplification 'à l'essentiel' crée le son bossa : épuré, intime, profondément groovy malgré sa légèreté apparente." },
+    { type: "p", text: "La bossa nova est née du samba brésilien (rythme binaire très syncopé) mélangé au jazz américain (harmonies sophistiquées, voicings 7e et 9e). João Gilberto a simplifié le samba pour le jouer seul à la guitare, en chantant par-dessus. Cette simplification 'à l'essentiel' crée le son bossa : épuré, intime, profondément groovy malgré sa légèreté apparente." },
     { type: "h", text: "Le pattern de base (pouce + doigts)" },
     { type: "p", text: "La bossa se joue en fingerstyle (sans médiator). Le pouce joue la basse (alternant fondamentale et quinte) sur les cordes graves. Les doigts (index, majeur, annulaire) jouent les accords sur les cordes aiguës. Le pattern rythmique global crée une anticipation systématique des accords — caractéristique vue dans la leçon sur l'anticipation." },
     { type: "h", text: "Le pattern bossa (simplifié)" },
@@ -28,9 +28,10 @@ export default {
     { type: "ref", text: "'The Girl from Ipanema' (Tom Jobim / Vinicius de Moraes, 1962 créée par João Gilberto) : la version originale fingerstyle de João Gilberto est la référence. 'Corcovado' (Quiet Nights) et 'Desafinado' sont aussi des exemples emblématiques. Pour la guitare seule, cherche les arrangements de Baden Powell ou de João Bosco." },
     { type: "tip", text: "Plan bossa sur 2 semaines : Semaine 1 - joue uniquement les accords sur les contretemps à 65 BPM (pattern simplifié). Semaine 2 - ajoute le pouce sur les temps forts. L'indépendance viendra progressivement. Ne force pas — la bossa demande de la patience mais récompense magnifiquement." },
   ],
-  quiz: ["q-rhy-39","q-rhy-10"],
+  quiz: ["q-rhy-39","q-rhy-10","q-rhy-54"],
 };
 
 export const quiz = [
   {id:"q-rhy-39",courseId:"rhythm",lessonId:"rhy-c5-04",lvl:3,q:"Dans la bossa nova, que fait le pouce pendant que les doigts jouent le motif syncopé ?",o:["Il tient une pulsation régulière sur les cordes graves","Il double exactement le motif joué par les doigts","Il reste immobile pendant toute la mesure","Il étouffe les cordes entre chaque accord"],a:0,exp:"Le pouce maintient une base régulière, les doigts syncopent au-dessus : deux couches indépendantes jouées par une seule main. C'est ce qui rend la bossa difficile — et c'est l'exercice d'indépendance le plus payant qui soit.",xp:40},
+  {id:"q-rhy-54",courseId:"rhythm",lessonId:"rhy-c5-04",lvl:1,q:"Comment joue-t-on habituellement la bossa nova à la guitare ?",o:["Aux doigts, sans médiator","Au médiator, en aller-retour","Au médiator, en coups bas","Au bottleneck, en slide"],a:0,exp:"La bossa se joue en fingerstyle : le pouce tient la basse, les doigts placent les accords syncopés. C'est ce qui permet à une seule main de jouer deux couches indépendantes.",xp:30},
 ];

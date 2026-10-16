@@ -38,7 +38,7 @@ export default {
     { type: "ref", text: "Pour entendre chaque type dans un contexte réel : 'Happy Birthday' (majeur), 'Scarborough Fair' (mineur), le passage entre les accords dans 'Hark the Herald Angels Sing' (diminué en transition), 'Oh ! You Pretty Things' de David Bowie commence sur un accord augmenté. Écoute ces passages et identifie la couleur." },
     { type: "tip", text: "Drill des 4 types : depuis Do (c5 case 3), joue successivement : Do majeur (Do-Mi-Sol), Do mineur (Do-Mib-Sol), Do diminué (Do-Mib-Solb), Do augmenté (Do-Mi-Sol#). Écoute la progression de couleur : de brillant à sombre à tendu à flottant. 4 accords, 4 univers." },
   ],
-  quiz: ["q-harm-01","q-harm-02","q-harm-03","q-harm-04","q-impro-22"],
+  quiz: ["q-harm-01","q-harm-02","q-harm-03","q-harm-04"],
 };
 
 export const quiz = [
@@ -46,5 +46,4 @@ export const quiz = [
   {id:"q-harm-02",courseId:"harmony",lessonId:"harm-c2-01",lvl:2,q:"Une triade diminuée se compose de…",o:["1-3-5","1-♭3-♭5","1-♭3-5","1-3-#5"],a:1,exp:"Diminuée = 1-♭3-♭5. Tierce mineure (3dt) + quinte diminuée (6dt). Très instable. Trouvée sur le 7e degré de la gamme majeure.",xp:35},
   {id:"q-harm-03",courseId:"harmony",lessonId:"harm-c2-01",lvl:2,q:"Quelles notes forment l'accord de Si majeur ?",o:["Si-Ré-Fa#","Si-Ré-Fa","Si-Ré#-Fa#","Si-Ré#-Fa"],a:2,exp:"Si majeur = Si + (Si+4dt = Ré#) + (Si+7dt = Fa#). Notes : Si-Ré#-Fa#. Triade majeure classique.",xp:40},
   {id:"q-harm-04",courseId:"harmony",lessonId:"harm-c2-01",lvl:3,q:"Une triade augmentée a quelle particularité ?",o:["Sa fondamentale est doublée à l'octave", "Elle contient 4 notes au lieu de 3", "Sa tierce est mineure au lieu de majeure", "Sa quinte est augmentée d'un demi-ton"],a:3,exp:"Augmentée = 1-3-#5. Quinte augmentée (8dt au lieu de 7dt). Symétrique : on peut empiler des tierces majeures à l'infini. Aug = Caug = Eaug = Lab aug (mêmes notes, fondamentales différentes).",xp:50},
-  {id:"q-impro-22",courseId:"impro",lessonId:"harm-c2-01",lvl:2,q:"Pendant un solo, poser une note de l'accord en cours produit…",o:["Une tension à résoudre","Une sensation de stabilité","Une dissonance marquée","Un effet de surprise"],a:1,exp:"Les notes de l'accord sont les points de repos. Celles qui n'en font pas partie créent du mouvement. Savoir alterner les deux est la mécanique de base du phrasé, bien avant tout vocabulaire.",xp:30},
 ];

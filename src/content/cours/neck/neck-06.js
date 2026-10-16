@@ -47,7 +47,7 @@ export default {
 };
 
 export const quiz = [
-  {id:"q-neck-18",courseId:"neck",lessonId:"neck-06",lvl:2,q:"En improvisation, les notes 'cibles' à viser sur un accord sont prioritairement…",o:["La 3e et la 7e","La fondamentale et la quinte","Toutes les notes de la gamme","Les notes en dehors de l'accord"],a:0,exp:"3e et 7e = 'guide tones' qui définissent la qualité de l'accord (Maj/min, dominante). Les viser = sonner immédiatement 'sur l'accord'.",xp:40},
-  {id:"q-neck-19",courseId:"neck",lessonId:"neck-06",lvl:3,q:"Sur Cmaj7, quelle note évite-t-on en général de tenir longtemps ?",o:["Do","Fa","Mi","Sol"],a:1,exp:"Sur Cmaj7 (Do-Mi-Sol-Si), le Fa (4e) est 'note évitée' classique. Elle crée un demi-ton avec la 3e (Mi) et sonne dissonante tenue. À utiliser en passage uniquement.",xp:55},
+  {id:"q-neck-18",courseId:"neck",lessonId:"neck-06",lvl:2,q:"Quelles notes de La pentatonique mineure forment l'arpège de Am7 ?",o:["La, Do, Mi, Sol","La, Do#, Mi, Sol","La, Do, Ré, Mi","La, Ré, Mi, Sol"],a:0,exp:"La penta mineure = La Do Ré Mi Sol. Am7 = La Do Mi Sol : quatre des cinq notes. Seul le Ré (la quarte) n'appartient pas à l'accord. Viser ces quatre notes, c'est jouer « dans » l'accord sans changer de gamme.",xp:40},
+  {id:"q-neck-19",courseId:"neck",lessonId:"neck-06",lvl:2,q:"Dans la zone de Cmaj7 à la case 8, quelles notes la gamme de Do majeur ajoute-t-elle à l'arpège ?",o:["Ré, Fa et La","Do, Mi et Sol","Ré, Fa# et La","Si, Ré et Fa"],a:0,exp:"L'arpège Cmaj7 donne Do Mi Sol Si. La gamme de Do majeur complète avec les trois notes restantes : Ré, Fa et La (9e, 11e et 13e). Accord, arpège et gamme occupent la même zone du manche.",xp:55},
   {id:"q-neck-20",courseId:"neck",lessonId:"neck-06",lvl:3,q:"Sur G7, quelles notes sont les guide tones ?",o:["Sol et Ré","Sol et Si","Si et Fa","Ré et Fa"],a:2,exp:"G7 = Sol-Si-Ré-Fa. Guide tones = 3e (Si) + 7e (Fa). Ces 2 notes définissent que c'est G7 (et pas Gm7 ou Gmaj7).",xp:50},
 ];

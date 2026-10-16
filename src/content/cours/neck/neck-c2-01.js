@@ -40,9 +40,10 @@ export default {
     { type: "ref", text: "Pratique immédiate : prends une chanson avec des accords barrés (la plupart des chansons rock/pop). Identifie la fondamentale de chaque accord sur la corde 6. Si tu joues La majeur en barré case 5, dis-toi : 'Je joue La parce que case 5 corde 6 = La'. Cette habitude grave les notes dans ta tête en moins d'une semaine." },
     { type: "tip", text: "Drill du soir (3 min) : sur la corde 6, joue case par case en nommant la note à voix haute. Mi-Fa-Fa#-Sol-Sol#-La-La#-Si-Do-Do#-Ré-Ré#-Mi. Refais en descendant. Cet exercice 'parlé' connecte ton cerveau au manche en quelques jours." },
   ],
-  quiz: ["q-base-16","q-neck-03"],
+  quiz: ["q-base-16","q-neck-03","q-neck-42"],
 };
 
 export const quiz = [
   {id:"q-base-16",courseId:"neck",lessonId:"neck-c2-01",lvl:2,q:"Sur la corde de Mi grave (corde 6), quelle note trouve-t-on case 3 ?",o:["Fa","La","Fa#","Sol"],a:3,exp:"Depuis Mi à vide : case 1 Fa, case 2 Fa#, case 3 Sol. C'est cette corde qui porte la fondamentale des accords barrés en forme de Mi.",xp:35},
+  {id:"q-neck-42",courseId:"neck",lessonId:"neck-c2-01",lvl:2,q:"Un accord barré en forme de Mi, barré à la case 8, donne quel accord majeur ?",o:["Do majeur","Si majeur","Ré majeur","La majeur"],a:0,exp:"En forme de Mi, la fondamentale est sur la corde 6, sous le barré. Corde 6 case 8 = Do : c'est un Do majeur. Case 5 donnerait La, case 7 Si, case 10 Ré.",xp:40},
 ];

@@ -2,7 +2,7 @@
 // Format décrit dans src/content/README.md.
 
 export default {
-  id: "scales-c1-06", level: 4,
+  id: "scales-c1-06", level: 3,
   title: "Les intervalles complets : sixtes, septièmes, octave",
   duration: 9,
   gropiTip: "Astuce de calcul : un intervalle et son renversement font toujours 12 demi-tons. Do→La = sixte majeure (9), La→Do = tierce mineure (3). Et le triton (6) se renverse en triton !",

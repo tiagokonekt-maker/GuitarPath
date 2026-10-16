@@ -35,5 +35,5 @@ export default {
 };
 
 export const quiz = [
-  {id:"q-harm-22",courseId:"harmony",lessonId:"harm-c7-03",lvl:3,q:"Quel accord est le 'pivot' pour moduler de Do majeur à Sol majeur ?",o:["Do","Sol","Lam","Mim"],a:1,exp:"Pivot = accord commun aux 2 tonalités. Sol = V de Do majeur ET I de Sol majeur. Passer par Sol permet une modulation fluide. Méthode classique.",xp:55},
+  {id:"q-harm-22",courseId:"harmony",lessonId:"harm-c7-03",lvl:3,q:"Pour moduler de Do majeur à Sol majeur, lequel de ces accords peut servir de pivot ?",o:["La mineur","Fa majeur","Ré majeur","Si mineur"],a:0,exp:"Un pivot appartient aux deux tonalités. La mineur est le vi de Do et le ii de Sol : Do - Lam - D7 - Sol module sans choc. Fa majeur (Fa naturel) n'existe qu'en Do ; Ré majeur et Si mineur (avec Fa#) n'existent qu'en Sol.",xp:55},
 ];

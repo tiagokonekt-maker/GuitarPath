@@ -7,7 +7,7 @@ export default {
   duration: 8,
   gropiTip: "La case 12 est pile au milieu de la corde : mesure du sillet à la 12e frette, puis de la 12e frette au chevalet, c'est (presque) la même longueur. Moitié de corde = une octave.",
   content: [
-    { type: "p", text: "Avant de mémoriser quoi que ce soit, il faut comprendre comment le manche de la guitare est construit. Cette compréhension va te faire gagner des semaines d'apprentissage : tu vas voir que le manche n'est pas un labyrinthe, mais une structure logique qui obéit à quelques règles simples." },
+    { type: "p", text: "Dans Premiers pas, tu as appris le nom des cordes et à t'accorder ; ici, on va plus loin. Avant de mémoriser quoi que ce soit, il faut comprendre comment le manche de la guitare est construit. Cette compréhension va te faire gagner des semaines d'apprentissage : tu vas voir que le manche n'est pas un labyrinthe, mais une structure logique qui obéit à quelques règles simples." },
     { type: "h", text: "Les cordes et leur accordage standard" },
     { type: "p", text: "Une guitare classique a 6 cordes. De la plus grave (la plus épaisse) à la plus aiguë (la plus fine), elles sont accordées en : Mi - La - Ré - Sol - Si - Mi. On les numérote de 6 (la plus grave) à 1 (la plus aiguë). Cet accordage 'standard' est de loin le plus répandu." },
     { type: "h", text: "Pourquoi cet accordage ?" },
@@ -48,7 +48,7 @@ export default {
 };
 
 export const quiz = [
-  {id:"q-base-01",courseId:"neck",lessonId:"neck-c1-01",lvl:1,q:"En accordage standard, quelle est la corde la plus grave (la plus épaisse) ?",o:["La corde de Mi","La corde de La","La corde de Sol","La corde de Si"],a:0,exp:"La corde 6, la plus épaisse, est accordée en Mi. De la plus grave à la plus aiguë : Mi, La, Ré, Sol, Si, Mi.",xp:25},
+  {id:"q-base-01",courseId:"neck",lessonId:"neck-c1-01",lvl:1,q:"La corde 6, case 5, sonne exactement comme quelle autre position ?",o:["Corde 5 à vide","Corde 4 à vide","Corde 5, case 5","Corde 6, case 7"],a:0,exp:"Les cordes 6 et 5 sont à une quarte (5 demi-tons) : la case 5 de la corde 6 donne La, comme la corde 5 à vide. C'est le principe de l'accordage à la 5e case vu dans Premiers pas, et la clé de toute la carte du manche.",xp:25},
   {id:"q-base-02",courseId:"neck",lessonId:"neck-c1-01",lvl:1,q:"Sur une guitare, avancer d'une case vers le corps de l'instrument fait…",o:["Monter d'un ton entier","Monter d'un demi-ton","Descendre d'un demi-ton","Monter d'une quinte"],a:1,exp:"Chaque case représente exactement un demi-ton. C'est la règle de base qui rend le manche entièrement prévisible.",xp:25},
   {id:"q-neck-01",courseId:"neck",lessonId:"neck-c1-01",lvl:1,q:"Quel intervalle sépare les cordes 3 et 2 (Sol et Si) sur une guitare en accordage standard ?",o:["Quarte juste","Quinte juste","Tierce mineure","Tierce majeure"],a:3,exp:"Sol→Si = 4 demi-tons = tierce majeure. C'est l'unique 'cassure' de l'accordage standard, toutes les autres cordes consécutives étant en quartes (5 demi-tons).",xp:30},
   {id:"q-neck-02",courseId:"neck",lessonId:"neck-c1-01",lvl:1,q:"Pourquoi les cases 12, 24 sont-elles marquées d'un double point ?",o:["Elles marquent les octaves de la corde à vide","Convention esthétique","Elles indiquent les notes naturelles","Elles séparent les zones graves/aiguës"],a:0,exp:"Le double point marque l'octave (case 12 = même note que corde à vide, +1 octave). Case 24 = +2 octaves. Repères de navigation cruciaux.",xp:25},

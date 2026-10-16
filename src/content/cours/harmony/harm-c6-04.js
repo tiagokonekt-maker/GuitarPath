@@ -25,9 +25,11 @@ export default {
     { type: "ref", text: "'Riders on the Storm' (The Doors) : vamp Dm7-Em7 en Ré dorien pendant tout le morceau. 'Oye Como Va' (Santana) : Am7-D7 en La dorien. 'Scarborough Fair' (Simon & Garfunkel) : mélodie en Mi dorien avec progressions modales. Ces morceaux montrent comment une vamp simple peut créer une atmosphère inoubliable." },
     { type: "tip", text: "Compose une vamp modale : choisis un mode (commence par dorien ou mixolydien). Construis 2 accords qui capturent sa couleur. Ex : Dm7-G (dorien) ou A7-G (mixolydien). Boucle ces 2 accords pendant 5 minutes et improvise par-dessus avec le mode correspondant. Tu viens de composer une pièce modale." },
   ],
-  quiz: ["q-impro-02"],
+  quiz: ["q-impro-02","q-harm-60","q-harm-61"],
 };
 
 export const quiz = [
   {id:"q-impro-02",courseId:"impro",lessonId:"harm-c6-04",lvl:2,q:"Sur une vamp Em7-A7 modale (= ii-V sans résolution), quel mode utiliser ?",o:["Mi phrygien","Mi locrien","Mi dorien","Mi ionien"],a:2,exp:"Em7-A7 = ii-V en Ré majeur sans résolution sur Dmaj7. Sur le ii d'un ii-V modal = dorien du ii. Donc Mi dorien (= Ré majeur en partant de Mi).",xp:50},
+  {id:"q-harm-60",courseId:"harmony",lessonId:"harm-c6-04",lvl:2,q:"Une vamp tourne sur Dm7 - G7 sans jamais aller vers Cmaj7. Où l'oreille se pose-t-elle ?",o:["Sur Ré : Ré dorien","Sur Do : Do majeur","Sur Sol : Sol mixolydien","Sur La : La éolien"],a:0,exp:"Sans résolution vers Do, c'est Dm7, l'accord qui revient, qui devient le centre. Les notes de Do majeur s'entendent alors depuis Ré : Ré dorien. C'est le principe d'une progression modale.",xp:40},
+  {id:"q-harm-61",courseId:"harmony",lessonId:"harm-c6-04",lvl:2,q:"Quelle vamp évoque immédiatement le phrygien ?",o:["Em - F en boucle","Em - D en boucle","Em - A en boucle","Em - B7 en boucle"],a:0,exp:"F est le ♭II de Mi : le demi-ton Mi-Fa, signature du phrygien, s'entend dans la basse. Em - D sonne éolien ou dorien, Em - A dorien, Em - B7 mineur harmonique.",xp:40},
 ];

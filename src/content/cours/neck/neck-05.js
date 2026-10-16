@@ -2,12 +2,12 @@
 // Format décrit dans src/content/README.md.
 
 export default {
-  id: "neck-05", level: 5,
+  id: "neck-05", level: 7,
   title: "Triades — l'unité minimale d'harmonie",
   duration: 14,
   gropiTip: "Pour passer d'une triade majeure à mineure, baisse seulement la tierce d'une case. Do sur cordes 3-2-1 (cases 5, 5, 3) devient Do mineur en reculant la corde 2 en case 4 (Mi♭).",
   content: [
-    { type: "p", text: "Une triade = 3 notes empilées par tierces (1-3-5). C'est la plus petite cellule harmonique 'complète'. Sur la guitare, jouer des triades sur 3 cordes adjacentes ouvre un monde de voicings funk, R&B, jazz, pop indé." },
+    { type: "p", text: "Tu connais les 4 types de triades et leurs inversions (module Harmonie) : ici, on les installe sur le manche, set de cordes par set de cordes. Une triade = 3 notes empilées par tierces (1-3-5). C'est la plus petite cellule harmonique 'complète'. Sur la guitare, jouer des triades sur 3 cordes adjacentes ouvre un monde de voicings funk, R&B, jazz, pop indé." },
     { type: "h", text: "Les 4 types de triades" },
     { type: "p", text: "Majeure (1-3-5) : tierce maj + quinte juste. Mineure (1-♭3-5) : tierce min + quinte juste. Diminuée (1-♭3-♭5) : tierce min + quinte diminuée. Augmentée (1-3-#5) : tierce maj + quinte augmentée." },
     { type: "h", text: "Triades sur cordes 1-2-3 (set 1)" },
@@ -49,7 +49,7 @@ export default {
 };
 
 export const quiz = [
-  {id:"q-neck-15",courseId:"neck",lessonId:"neck-05",lvl:2,q:"Une triade en 'première inversion' a quelle note à la basse ?",o:["La fondamentale","La tierce","La quinte","La septième"],a:1,exp:"État fondamental : basse = 1. 1ère inversion : basse = 3. 2e inversion : basse = 5. La 1ère inversion crée souvent du mouvement mélodique.",xp:35},
+  {id:"q-neck-15",courseId:"neck",lessonId:"neck-05",lvl:3,q:"Sur les cordes 3-2-1, quelle note est sur la corde 3 dans Do majeur en 1re inversion ?",o:["Mi","Do","Sol","Si"],a:0,exp:"1re inversion = la tierce à la basse. Sur le set 3-2-1 : Mi (corde 3 case 9), Sol (corde 2 case 8), Do (corde 1 case 8). La note la plus grave nomme la position.",xp:45},
   {id:"q-neck-16",courseId:"neck",lessonId:"neck-05",lvl:3,q:"Quelle triade contient les notes Mi-Sol-Si ?",o:["Mi majeur","Sol majeur","Mi mineur","Si diminué"],a:2,exp:"Mi-Sol-Si : intervalle Mi→Sol = 3dt (tierce mineure), Mi→Si = 7dt (quinte juste). Triade mineure = 1-♭3-5. Donc Em (Mi mineur).",xp:45},
   {id:"q-neck-17",courseId:"neck",lessonId:"neck-05",lvl:3,q:"Tu joues une triade Sol-Do-Mi. Quel accord et quelle inversion ?",o:["Do majeur, état fondamental","Sol majeur, 1ère inversion","Mi mineur, 2e inversion","Do majeur, 2e inversion"],a:3,exp:"Notes Sol-Do-Mi = Do-Mi-Sol réordonné. C'est Do majeur. Basse = Sol (la 5e), donc 2e inversion. Indication 'Do/Sol' en symbole.",xp:55},
 ];

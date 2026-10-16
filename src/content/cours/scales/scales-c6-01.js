@@ -51,5 +51,5 @@ export default {
 
 export const quiz = [
   {id:"q-scales-20",courseId:"scales",lessonId:"scales-c6-01",lvl:2,q:"La gamme mineure harmonique se distingue de la mineure naturelle par…",o:["Une 7e majeure","Une 6e majeure","Une 4e augmentée","Une 2e mineure"],a:0,exp:"Mineure harmonique = mineure naturelle avec 7 majeure. La harmonique = La-Si-Do-Ré-Mi-Fa-Sol#. Le Sol# permet la cadence V-I forte en mineur.",xp:50},
-  {id:"q-impro-09",courseId:"impro",lessonId:"scales-c6-01",lvl:3,q:"Sur le V7 dans une cadence mineure (ex: E7→Am), quelle gamme privilégier ?",o:["Mi mixolydien","E7 alteré ou phrygien dominant","La mineure naturelle","La mineure harmonique (sur Am7)"],a:1,exp:"Sur le V7 résolvant en mineur, on utilise La mineure harmonique (= Mi phrygien dominant). Le Sol# de cette gamme est la 3 de E7 et résout sur La.",xp:70},
+  {id:"q-impro-09",courseId:"impro",lessonId:"scales-c6-01",lvl:3,q:"Sur E7 qui résout vers Am, tu joues La mineure harmonique. Vue depuis Mi, quel nom porte cette gamme ?",o:["Mi phrygien dominant","Mi mixolydien","Mi phrygien","Mi locrien"],a:0,exp:"La mineure harmonique (La Si Do Ré Mi Fa Sol#) jouée depuis Mi donne Mi Fa Sol# La Si Do Ré : 1-♭2-3-4-5-♭6-♭7, le phrygien dominant. Le Sol# est la tierce de E7 ; avec un Sol naturel, ce serait Mi phrygien.",xp:70},
 ];

@@ -29,7 +29,6 @@ import * as harmC801 from "./harm-c8-01.js";
 import * as harmC802 from "./harm-c8-02.js";
 
 export const LECONS = [
-  harmony03,
   harmC101,
   harmC102,
   harmC201,
@@ -38,6 +37,7 @@ export const LECONS = [
   harmC204,
   harmC301,
   harmC302,
+  harmony03,   // arpèges : après les accords de 7e (harm-c3-01/02)
   harmC303,
   harmC304,
   harmC401,

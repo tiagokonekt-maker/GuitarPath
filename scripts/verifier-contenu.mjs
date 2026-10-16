@@ -100,6 +100,53 @@ const utilises = new Set(lecons.flatMap(l => l.quiz || []));
 const orphelins = QUIZ.filter(q => !utilises.has(q.id));
 if (orphelins.length) console.log(`  ${orphelins.length} quiz ne sont référencés par aucune leçon (utilisables en révision uniquement)`);
 
+// ── Qualité des quiz ──────────────────────────────────────────────────────
+// Règles issues de l'audit des quiz (voir src/content/README.md, « Questions
+// de quiz ») : chaque leçon article est évaluée par au moins 3 questions ; pas
+// de question en double ; pas de question « selon la leçon » (on vérifie une
+// compétence, pas la mémoire du texte) ; une leçon ne cite jamais en révision
+// une question d'une leçon placée PLUS LOIN dans le parcours (ordre par défaut
+// de buildUnits). L'écart de forme entre la bonne réponse et les autres choix
+// n'est qu'un rappel (ℹ) : il faut parfois une réponse plus précise.
+titre("Qualité des quiz");
+{
+  const MIN_QUESTIONS = 3;
+  for (const l of lecons) {
+    if (l.cartes === undefined && (l.quiz || []).length < MIN_QUESTIONS) ko(`leçon ${l.id} : ${(l.quiz || []).length} question(s) dans son quiz (minimum ${MIN_QUESTIONS})`);
+  }
+  const norm = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9#♭]+/g, " ").trim();
+  const vus = new Map();
+  for (const q of QUIZ) {
+    const k = norm(q.q);
+    if (vus.has(k)) ko(`${q.id} : même énoncé que ${vus.get(k)}`);
+    else vus.set(k, q.id);
+    if (/selon la le[cç]on|que conseille la le[cç]on|d'apr[eè]s la le[cç]on/i.test(q.q || "")) ko(`${q.id} : question « selon la leçon » — interroger la compétence, pas le texte`);
+  }
+  // Rang de chaque leçon dans le parcours par défaut (unités dans l'ordre).
+  const rang = new Map();
+  buildUnits(COURSES).forEach((u, i) => u.lessons.forEach(l => rang.set(l.id, i)));
+  const proprietaire = new Map(QUIZ.map(q => [q.id, q.lessonId]));
+  for (const l of lecons) for (const qid of l.quiz || []) {
+    const ailleurs = proprietaire.get(qid);
+    if (ailleurs && ailleurs !== l.id && rang.get(ailleurs) > rang.get(l.id)) {
+      ko(`leçon ${l.id} cite ${qid}, rattachée à ${ailleurs} qui vient plus loin dans le parcours`);
+    }
+  }
+  let rappels = 0;
+  for (const q of QUIZ) {
+    if (!Array.isArray(q.o) || typeof q.a !== "number") continue;
+    const autres = q.o.filter((_, i) => i !== q.a);
+    const bonne = q.o[q.a] || "";
+    const maxAutres = Math.max(...autres.map(o => o.length));
+    const detailSeul = /[(=]/.test(bonne) && !autres.some(o => /[(=]/.test(o));
+    if ((bonne.length > maxAutres * 1.4 && bonne.length - maxAutres > 10) || detailSeul) {
+      rappels++;
+      console.log(`  ℹ ${q.id} : la bonne réponse se distingue des autres par sa forme (longueur ou précision entre parenthèses)`);
+    }
+  }
+  console.log(`  ${QUIZ.length} questions contrôlées${rappels ? ` · ${rappels} rappel(s) de forme` : ""}`);
+}
+
 // ── Couverture par module ─────────────────────────────────────────────────
 titre("Couverture par module");
 for (const m of TESTABLE_MODULES) {

@@ -27,9 +27,10 @@ export default {
     { type: "ref", text: "Keith Richards (Rolling Stones) dit qu'il enregistre toutes ses idées de riffs la nuit avec un petit dictaphone. Beaucoup de ses riffs célèbres sont nés à 3h du matin. 'Satisfaction' est venu dans son sommeil — il s'est réveillé, a mis le dictaphone en marche, a joué le riff, puis s'est rendormi. Le lendemain, l'enregistrement était là." },
     { type: "tip", text: "Projet riff : crée 1 riff par semaine. Chaque lundi, tu as un nouveau riff à créer sur la base du style étudié (blues la semaine 1, reggae la semaine 2, funk la semaine 3, etc.). En 10 semaines, tu as 10 riffs personnels. C'est le début de ton vocabulaire musical propre." },
   ],
-  quiz: ["q-rhy-41","q-rhy-10"],
+  quiz: ["q-rhy-41","q-rhy-10","q-rhy-55"],
 };
 
 export const quiz = [
   {id:"q-rhy-41",courseId:"rhythm",lessonId:"rhy-c6-02",lvl:3,q:"Qu'est-ce qui rend un riff rythmique mémorable ?",o:["Le nombre de notes qu'il contient au total", "La vitesse à laquelle il est exécuté", "Une cellule courte, répétée puis variée", "L'usage de nombreux accords différents"],a:2,exp:"Répétition pour ancrer, variation pour relancer. Cette structure — trois fois pareil, la quatrième différente — porte l'immense majorité des riffs célèbres, et elle est directement applicable à l'improvisation.",xp:40},
+  {id:"q-rhy-55",courseId:"rhythm",lessonId:"rhy-c6-02",lvl:2,q:"En jouant ton riff, tu dois chercher la note suivante à chaque passage. Que faire ?",o:["Le simplifier jusqu'à ce qu'il tourne","L'accélérer pour qu'il paraisse fluide","Lui ajouter des notes de passage","Changer d'accordage pour le jouer"],a:0,exp:"Un bon riff se joue en boucle sans y penser. S'il faut chercher, il est trop complexe : on retire des éléments jusqu'à ce qu'il sonne naturellement après 3 ou 4 répétitions.",xp:40},
 ];

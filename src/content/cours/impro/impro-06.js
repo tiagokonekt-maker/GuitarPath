@@ -18,7 +18,7 @@ export default {
     { type: "p", text: "Sur G7 (V dans Do), tu peux substituer Db7. G7 et Db7 partagent les mêmes guide tones : Si (Dob dans Db7) et Fa, simplement échangés (3e et 7e de l'un = 7e et 3e de l'autre) — l'oreille accepte. Sur Dm7-G7-Cmaj7 : Dm7-Db7-Cmaj7. La basse descend chromatiquement Ré→Réb→Do. Mouvement luxueux du jazz moderne." },
     { type: "tip", text: "Apprends 1 lick par semaine dans toutes les tonalités (12 semaines = 12 licks). Au bout de 3 mois : 12 licks × 12 tonalités = vocabulaire suffisant pour improviser sur n'importe quel standard." },
   ],
-  quiz: ["q-impro-30","q-impro-08","q-impro-11","q-impro-14","q-impro-15"],
+  quiz: ["q-impro-30","q-impro-11","q-impro-14","q-impro-15"],
 };
 
 export const quiz = [

@@ -43,10 +43,11 @@ export default {
     { type: "ref", text: "Jeu pratique : prends une radio ou une playlist et écoute les premières secondes de chaque chanson. Essaie d'identifier le premier accord joué. Est-ce majeur ou mineur ? Puis essaie de trouver de quelle tonalité il s'agit. Cet exercice d'écoute active développe l'oreille harmonique plus vite que n'importe quelle mémorisation théorique." },
     { type: "tip", text: "Mémo visuel : écris les 12 triades majeures sur une feuille, avec fondamentale / tierce / quinte en colonnes. Colle-la dans ta chambre. Regarde-la chaque jour. En 3 semaines de simple exposition visuelle, tu les mémoriseras sans effort conscient." },
   ],
-  quiz: ["q-harm-26", "q-harm-27"],
+  quiz: ["q-harm-26", "q-harm-27", "q-harm-57"],
 };
 
 export const quiz = [
   {id:"q-harm-26",courseId:"harmony",lessonId:"harm-c2-03",lvl:1,q:"Quelles sont les notes de la triade de Ré majeur ?",o:["Ré-Fa-La", "Ré-Fa#-La", "Ré-Fa#-La#", "Ré-Sol-La"],a:1,exp:"Triade majeure = fondamentale, tierce majeure, quinte juste : Ré, Fa#, La.",xp:30},
   {id:"q-harm-27",courseId:"harmony",lessonId:"harm-c2-03",lvl:2,q:"Pourquoi la tierce de Do# majeur s'écrit-elle Mi# et non Fa ?",o:["Parce que Fa n'existe pas en Do#", "Pour éviter d'écrire un bémol dans l'accord", "Parce qu'une tierce est deux lettres plus loin", "Parce que Mi# sonne plus aigu que Fa"],a:2,exp:"Une tierce est deux lettres plus loin : Do → Mi. Élevé d'un demi-ton, c'est Mi#, qui sonne comme Fa.",xp:40},
+  {id:"q-harm-57",courseId:"harmony",lessonId:"harm-c2-03",lvl:2,q:"Quelles sont les notes de la triade de Mi♭ majeur ?",o:["Mi♭ - Sol - Si♭","Mi♭ - Sol♭ - Si♭","Mi♭ - Sol - Si","Mi♭ - La♭ - Si♭"],a:0,exp:"Tierce majeure au-dessus de Mi♭ : Sol (4 demi-tons). Quinte juste : Si♭ (7 demi-tons). Mi♭ - Sol♭ - Si♭ serait Mi♭ mineur.",xp:40},
 ];

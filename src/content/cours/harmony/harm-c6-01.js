@@ -2,7 +2,7 @@
 // Format décrit dans src/content/README.md.
 
 export default {
-  id: "harm-c6-01", level: 7,
+  id: "harm-c6-01", level: 5,
   title: "I-IV-V : le blues et le rock",
   duration: 10,
   gropiTip: "Astuce de manche : I = barré avec la fondamentale sur la corde 6, IV = même case mais fondamentale sur la corde 5, V = deux cases plus loin sur la corde 5. En La : cases 5, 5 et 7.",
@@ -10,10 +10,12 @@ export default {
     { type: "p", text: "I-IV-V est la progression la plus ancienne, la plus universelle, et la plus jouée dans l'histoire de la musique populaire. Blues, rock'n'roll, country, folk, R&B — ils reposent tous sur cette fondation à 3 accords. La comprendre, c'est comprendre l'ADN de la musique populaire depuis 100 ans." },
     { type: "h", text: "La formule" },
     { type: "p", text: "I = tonique (repos). IV = sous-dominante (mouvement). V = dominante (tension). Enchaîné : I → IV (ça part) → V (ça tend) → I (ça résout). Ce cycle éternel de départ-tension-retour est la base du storytelling musical. En La : La (I) - Ré (IV) - Mi (V)." },
+    { type: "h", text: "En bref : l'accord 7" },
+    { type: "p", text: "Le blues utilise des accords notés 7 (A7, D7, E7), dits « de dominante ». Un accord 7, c'est un accord majeur auquel on ajoute une 7e mineure, 10 demi-tons au-dessus de la fondamentale : A7 = La, Do#, Mi + Sol. Cette note de plus lui donne un son tendu, qui « veut bouger ». Tu l'étudieras en détail avec les accords de septième ; pour le blues, il suffit de savoir le jouer (diagrammes ci-dessous)." },
     { type: "h", text: "Le blues 12 mesures" },
     { type: "p", text: "La forme la plus emblématique de I-IV-V : le blues à 12 mesures. Structure standard en La : 4 mesures de I (La7), 2 mesures de IV (Ré7), 2 mesures de I (La7), 1 mesure de V (Mi7), 1 mesure de IV (Ré7), 2 mesures de I (La7). Cette grille de 12 mesures est la base de milliers de chansons blues, rock'n'roll, et jazz." },
     { type: "h", text: "Pourquoi des accords 7 dans le blues" },
-    { type: "p", text: "Dans un blues standard, le I, IV et V sont souvent des accords de dominante (X7) même si ce n'est pas 'justifié' harmoniquement (en Do majeur, le I devrait être Imaj7, pas I7). C'est une licence harmonique du blues : utiliser des accords 7 sur tous les degrés donne ce son 'rough', tendu, expressif. C'est la signature sonore du blues." },
+    { type: "p", text: "Dans un blues standard, le I, IV et V sont souvent des accords de dominante (X7) même si ce n'est pas 'justifié' harmoniquement (dans une gamme majeure, seul le V porte naturellement un accord 7). C'est une licence harmonique du blues : utiliser des accords 7 sur tous les degrés donne ce son 'rough', tendu, expressif. C'est la signature sonore du blues." },
     {
       type: "chord_diagram",
       caption: "A7 — I7 du blues en La (0 0 2 0 2 0)",
@@ -36,13 +38,13 @@ export default {
     { type: "h", text: "Variations de I-IV-V" },
     { type: "p", text: "La progression évolue selon les genres. Blues rapide : I-IV-V-IV en boucle (au lieu de revenir au I). Quick change : passage rapide par IV en mesure 2 (I-IV-I-I-IV-IV-I-I-V-IV-I-I). Turnaround : fin de grille qui revient au début via V-IV-I ou ii-V-I. Ces variations enrichissent le blues classique." },
     { type: "ref", text: "'Sweet Home Chicago' (Robert Johnson, 1936) est le blues I-IV-V par excellence en Mi. 80 ans plus tard, 'Pride and Joy' (Stevie Ray Vaughan) utilise exactement la même structure harmonique en Mi. L'ossature harmonique n'a pas changé, mais l'expression musicale a évolué. C'est ça la transmission musicale." },
-    { type: "tip", text: "Drill I-IV-V : dans 5 tonalités différentes (La, Mi, Ré, Sol, Do), trouve les 3 accords I-IV-V et joue-les en boucle à un tempo de blues (80 BPM). Improvise par-dessus avec la pentatonique de la tonalité. En 30 minutes, tu joues un blues convaincant dans 5 tonalités." },
+    { type: "tip", text: "Drill I-IV-V : dans 5 tonalités différentes (La, Mi, Ré, Sol, Do), trouve les 3 accords I-IV-V et joue-les en boucle à un tempo de blues (80 BPM). En 30 minutes, tu accompagnes un blues dans 5 tonalités ; bientôt, tu improviseras dessus avec la pentatonique." },
   ],
-  quiz: ["q-harm-35", "q-harm-36", "q-harm-37", "q-harm-14"],
+  quiz: ["q-harm-35", "q-harm-36", "q-harm-37"],
 };
 
 export const quiz = [
   {id:"q-harm-35",courseId:"harmony",lessonId:"harm-c6-01",lvl:1,q:"En La, quels sont les accords I, IV et V ?",o:["La - Ré - Mi","La - Do - Mi","La - Ré - Fa#","La - Sol - Ré"],a:0,exp:"Gamme de La majeur : La (I), Si, Do#, Ré (IV), Mi (V)… Donc La - Ré - Mi.",xp:30},
   {id:"q-harm-36",courseId:"harmony",lessonId:"harm-c6-01",lvl:1,q:"Dans un blues 12 mesures standard, combien de mesures de I au début ?",o:["2","4","1","8"],a:1,exp:"4 mesures de I, 2 de IV, 2 de I, 1 de V, 1 de IV, 2 de I.",xp:30},
-  {id:"q-harm-37",courseId:"harmony",lessonId:"harm-c6-01",lvl:2,q:"Pourquoi I, IV et V sont-ils souvent des accords 7 dans un blues ?",o:["C'est la règle de la gamme majeure","Pour éviter les accords barrés","C'est une licence propre au blues","Parce que la basse joue la 7e"],a:2,exp:"En Do majeur, le I « devrait » être Cmaj7 : jouer des accords 7 sur tous les degrés est une licence du blues, qui fait toute sa couleur.",xp:40},
+  {id:"q-harm-37",courseId:"harmony",lessonId:"harm-c6-01",lvl:2,q:"Pourquoi I, IV et V sont-ils souvent des accords 7 dans un blues ?",o:["C'est la règle de la gamme majeure","Pour éviter les accords barrés","C'est une licence propre au blues","Parce que la basse joue la 7e"],a:2,exp:"Dans une gamme majeure, seul le V porte naturellement un accord 7 (en Do : G7, alors que le I serait Cmaj7). Jouer des accords 7 sur I, IV et V est une licence propre au blues, qui fait toute sa couleur.",xp:40},
 ];

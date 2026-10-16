@@ -26,9 +26,11 @@ export default {
     { type: "ref", text: "'Black Sabbath' (Black Sabbath, 1970) : le riff d'intro est construit sur un triton (Mi-Si♭), l'intervalle le plus dissonant. En 1970, c'était délibérément provocateur et 'satanique'. Aujourd'hui, ce riff est étudié dans les conservatoires. La perception de la dissonance évolue avec le temps et la culture." },
     { type: "tip", text: "Drill auditif : joue ces 3 intervalles sur ta guitare (depuis Do c5 case 3) : Do+Mi (tierce majeure, consonant), Do+Fa# (triton, très dissonant), Do+Sol (quinte, très consonant). Écoute la différence de 'tension' entre les 3. Ton oreille apprend à reconnaître consonance/dissonance." },
   ],
-  quiz: ["q-base-13"],
+  quiz: ["q-base-13","q-harm-55","q-harm-56"],
 };
 
 export const quiz = [
   {id:"q-base-13",courseId:"harmony",lessonId:"harm-c1-02",lvl:1,q:"Deux notes qui sonnent tendues ensemble, sans stabilité, sont dites…",o:["Dissonantes","Consonantes","Enharmoniques","Chromatiques"],a:0,exp:"La dissonance crée la tension, la consonance la stabilité. Aucune n'est un défaut : c'est leur alternance qui donne vie à la musique.",xp:30},
+  {id:"q-harm-55",courseId:"harmony",lessonId:"harm-c1-02",lvl:1,q:"Lequel de ces intervalles sonne le plus consonant ?",o:["L'octave","La seconde majeure","Le triton","La septième mineure"],a:0,exp:"L'octave (rapport 2:1) est la consonance absolue : les deux notes se fondent presque en une. Seconde, triton et septième produisent des battements, donc de la tension.",xp:30},
+  {id:"q-harm-56",courseId:"harmony",lessonId:"harm-c1-02",lvl:2,q:"Un accord tendu (V7) laisse place à un accord stable (I). Comment appelle-t-on ce mouvement ?",o:["Une résolution","Une modulation","Une syncope","Une inversion"],a:0,exp:"La tension créée par la dissonance se résout sur un accord consonant : c'est la résolution. Ce va-et-vient tension → détente est le moteur de la musique tonale.",xp:40},
 ];

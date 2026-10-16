@@ -27,10 +27,11 @@ export default {
     { type: "ref", text: "Clyde Stubblefield, le batteur de James Brown sur 'Funky Drummer' (1970), joue un break de batterie qui a été samplé des centaines de fois par des rappeurs et des producteurs. Ce beat 'groovy' est construit sur des ghost notes, des syncopes précises, et une régularité métronomique. C'est l'exemple parfait de tout ce qui crée le groove." },
     { type: "tip", text: "Test groove personnel : enregistre 2 minutes de guitare rythmique sur un accord de Am avec métronome à 90 BPM. Joue le pattern le plus simple possible (une croche par temps, alternance bas-haut). Écoute l'enregistrement : est-ce que ça groove ? Si non, identifie les moments où le temps 'coule' : c'est là que tu travailles." },
   ],
-  quiz: ["q-rhy-33","q-rhy-34","q-logic-06"],
+  quiz: ["q-rhy-33","q-rhy-34","q-rhy-56"],
 };
 
 export const quiz = [
   {id:"q-rhy-33",courseId:"rhythm",lessonId:"rhy-c3-03",lvl:2,q:"Deux guitaristes jouent les mêmes notes au même tempo, et un seul « groove ». Qu'est-ce qui change ?",o:["Le choix des positions d'accords sur le manche", "Le volume général de l'instrument", "Le placement et le dosage des accents", "Le type de cordes installées"],a:2,exp:"Le groove tient à des écarts de quelques millisecondes et à la hiérarchie des accents. C'est mesurable, et c'est travaillable — contrairement à ce que laisse croire le mot « feeling ».",xp:30},
   {id:"q-rhy-34",courseId:"rhythm",lessonId:"rhy-c3-03",lvl:3,q:"Les ghost notes servent à…",o:["Remplir les silences avec des notes bien audibles", "Marquer plus nettement les temps forts", "Atteindre des tempos plus rapides", "Garder le mouvement avec des attaques étouffées"],a:3,exp:"Ce sont des attaques étouffées par la main gauche : on entend la percussion, pas la hauteur. Elles remplissent la grille rythmique sans encombrer l'harmonie, et c'est le cœur du jeu funk.",xp:40},
+  {id:"q-rhy-56",courseId:"rhythm",lessonId:"rhy-c3-03",lvl:1,q:"En groupe, avec quels instruments le guitariste rythmique doit-il d'abord se caler ?",o:["La basse et la grosse caisse","Le chant et les chœurs","Le clavier et les nappes","Les cymbales et la cloche"],a:0,exp:"Le groove d'un groupe repose sur le verrouillage entre la basse et la grosse caisse. Le guitariste s'accroche à ce grave pour que tout le monde tombe au même endroit.",xp:30},
 ];

@@ -57,6 +57,6 @@ export default {
 
 export const quiz = [
   {id:"q-base-19",courseId:"rhythm",lessonId:"rhy-c2-01",lvl:2,q:"En 4/4, combien de temps dure une ronde ?",o:["2","1","4","8"],a:2,exp:"La ronde vaut 4 temps, la blanche 2, la noire 1. Chaque valeur vaut la moitié de la précédente.",xp:35},
-  {id:"q-rhy-25",courseId:"rhythm",lessonId:"rhy-c2-01",lvl:1,q:"Combien de noires dans une ronde ?",o:["2","3","4","8"],a:2,exp:"Ronde = 2 blanches = 4 noires = 8 croches. Cette pyramide est la base de toute lecture rythmique : chaque étage vaut le double du suivant.",xp:25},
+  {id:"q-rhy-25",courseId:"rhythm",lessonId:"rhy-c2-01",lvl:1,q:"Une mesure de 4/4 contient une blanche et une noire. Que manque-t-il pour la compléter ?",o:["Encore une noire","Encore une blanche","Une ronde entière","Rien, elle est pleine"],a:0,exp:"Blanche (2 temps) + noire (1 temps) = 3 temps. Il en manque un : une noire.",xp:25},
   {id:"q-rhy-26",courseId:"rhythm",lessonId:"rhy-c2-01",lvl:2,q:"En 3/4, une blanche pointée occupe…",o:["La moitié de la mesure","Deux mesures complètes","Un temps et demi seulement","La mesure entière"],a:3,exp:"La blanche vaut 2 temps, le point en ajoute 1 : 3 temps, soit toute la mesure en 3/4. C'est l'accord tenu typique de la valse.",xp:30},
 ];

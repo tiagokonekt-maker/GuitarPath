@@ -30,7 +30,7 @@ export default {
 };
 
 export const quiz = [
-  {id:"q-scales-22",courseId:"scales",lessonId:"scales-c1-05",lvl:2,q:"Quel est l'intervalle entre Sol et Do (Sol, La, Si, Do) ?",o:["Tierce","Quinte","Quarte","Seconde"],a:2,exp:"Sol(1)-La(2)-Si(3)-Do(4) : quatre notes en comptant les deux bornes, donc une quarte.",xp:35},
+  {id:"q-scales-22",courseId:"scales",lessonId:"scales-c1-05",lvl:2,q:"En montant de Sol à Do, quel intervalle obtiens-tu ?",o:["Une tierce","Une quinte","Une quarte","Une sixte"],a:2,exp:"On compte les noms de notes, bornes comprises : Sol (1), La (2), Si (3), Do (4). Quatre notes, donc une quarte — ici une quarte juste, 5 demi-tons.",xp:35},
   {id:"q-scales-23",courseId:"scales",lessonId:"scales-c1-05",lvl:2,q:"Une tierce majeure correspond à combien de demi-tons ?",o:["3","5","2","4"],a:3,exp:"Tierce majeure = 4 demi-tons (Do→Mi). Tierce mineure = 3 demi-tons (Do→Mib) — ce seul demi-ton distingue un accord majeur d'un accord mineur.",xp:35},
-  {id:"q-scales-24",courseId:"scales",lessonId:"scales-c1-05",lvl:3,q:"Sur une seule corde de guitare, comment mesure-t-on visuellement un intervalle ?",o:["Le nombre de cases d'écart = le nombre de demi-tons","Le nombre de cases divisé par 2","Toujours 12 cases quel que soit l'intervalle","Ça dépend de la corde utilisée"],a:0,exp:"Sur une seule corde, l'intervalle en demi-tons correspond exactement au nombre de cases d'écart — tierce majeure = 4 cases, quinte = 7 cases.",xp:45},
+  {id:"q-scales-24",courseId:"scales",lessonId:"scales-c1-05",lvl:3,q:"Sur une seule corde de guitare, comment mesure-t-on visuellement un intervalle ?",o:["Une case d'écart vaut un demi-ton","Le nombre de cases divisé par 2","Toujours 12 cases quel que soit l'intervalle","Ça dépend de la corde utilisée"],a:0,exp:"Sur une seule corde, l'intervalle en demi-tons correspond exactement au nombre de cases d'écart — tierce majeure = 4 cases, quinte = 7 cases.",xp:45},
 ];

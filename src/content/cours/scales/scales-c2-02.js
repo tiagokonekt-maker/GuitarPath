@@ -45,9 +45,11 @@ export default {
     { type: "ref", text: "Pour entendre la gamme majeure 'pure' : la mélodie de 'Joy to the World' (chant de Noël) descend toute la gamme majeure du degré 8 au degré 1. C'est un exercice d'écoute parfait. Ou encore, l'intro de 'Let It Be' (The Beatles) est en Do majeur — toutes les notes des couplets viennent de cette gamme." },
     { type: "tip", text: "Sur la guitare, la position la plus pratique pour jouer une gamme majeure se trouve avec la fondamentale sur la corde 6. Ex: Sol majeur, fondamentale case 3 corde 6. Apprends cette 'forme' et tu peux la transposer en glissant le long du manche pour avoir n'importe quelle gamme majeure." },
   ],
-  quiz: ["q-scales-01"],
+  quiz: ["q-scales-01","q-scales-55","q-scales-56"],
 };
 
 export const quiz = [
   {id:"q-scales-01",courseId:"scales",lessonId:"scales-c2-02",lvl:1,q:"La formule en tons et demi-tons de la gamme majeure est…",o:["T-DT-T-T-DT-T-T","T-T-DT-T-T-T-DT","T-T-T-DT-T-T-DT","DT-T-T-T-DT-T-T"],a:1,exp:"T-T-DT-T-T-T-DT. Demi-tons entre 3-4 et 7-8. Cette structure asymétrique crée le 'son majeur' (sensation de luminosité, attraction du Si vers le Do).",xp:30},
+  {id:"q-scales-55",courseId:"scales",lessonId:"scales-c2-02",lvl:1,q:"En construisant Sol majeur avec la formule, quelle note altérée apparaît ?",o:["Fa#","Do#","Si♭","Sol#"],a:0,exp:"Sol La Si Do Ré Mi, puis un ton après Mi : Fa#, et le demi-ton final ramène à Sol. Sol majeur a un seul dièse, Fa#.",xp:30},
+  {id:"q-scales-56",courseId:"scales",lessonId:"scales-c2-02",lvl:2,q:"Dans la gamme majeure, entre quels degrés tombent les deux demi-tons ?",o:["3-4 et 7-8","2-3 et 6-7","1-2 et 5-6","4-5 et 7-8"],a:0,exp:"T-T-DT-T-T-T-DT : le premier demi-ton arrive après deux tons (degrés 3-4), le second à la fin (7-8). En Do : Mi-Fa et Si-Do.",xp:40},
 ];

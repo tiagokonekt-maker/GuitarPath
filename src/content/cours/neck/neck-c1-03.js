@@ -37,9 +37,11 @@ export default {
     { type: "ref", text: "Sur la plupart des guitares de qualité (Gibson, Fender, Martin, Taylor...), les amers ont des designs spécifiques selon le luthier. Les Les Paul ont des trapèzes de nacre, les Stratocaster des points blancs, les Telecaster aussi. Mais dans tous les cas, leur emplacement est identique : cases 3, 5, 7, 9, 12, 15, 17, 19, 21." },
     { type: "tip", text: "Drill quotidien (1 minute) : ferme les yeux, mets ton index sur une case au hasard. Ouvre les yeux et nomme la note instantanément. Refais 10 fois. En 2 semaines, ton cerveau aura cartographié le manche." },
   ],
-  quiz: ["q-base-15"],
+  quiz: ["q-base-15","q-neck-40","q-neck-41"],
 };
 
 export const quiz = [
   {id:"q-base-15",courseId:"neck",lessonId:"neck-c1-03",lvl:2,q:"Quelle case porte traditionnellement un repère double sur le manche ?",o:["La 7e","La 9e","La 12e","La 5e"],a:2,exp:"Les repères simples sont aux cases 3, 5, 7 et 9 ; la case 12 porte un repère double car elle marque l'octave complète.",xp:35},
+  {id:"q-neck-40",courseId:"neck",lessonId:"neck-c1-03",lvl:1,q:"Sur la corde 6, quelle note se trouve sous le point de la case 5 ?",o:["La","Sol","Si","Do"],a:0,exp:"Corde 6 : case 3 = Sol, case 5 = La, case 7 = Si, case 12 = Mi. Ces quatre notes-repères, sous les points, servent d'ancres pour déduire les autres.",xp:30},
+  {id:"q-neck-41",courseId:"neck",lessonId:"neck-c1-03",lvl:2,q:"Tu connais Sol à la case 3 de la corde 6. Quelle note joues-tu juste à côté, case 4 ?",o:["Sol#","La","Fa#","Sol♭"],a:0,exp:"Une case plus haut = un demi-ton plus haut : Sol devient Sol# (qu'on peut aussi écrire La♭). C'est la méthode des ancres : partir d'une note connue et compter les cases.",xp:40},
 ];
