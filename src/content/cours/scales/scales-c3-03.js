@@ -1,49 +1,65 @@
 // Leçon du module « scales » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
+
+const DO_MAJ_LA_MIN = {
+  type: "scale_pattern",
+  caption: "Do pentatonique majeure = La pentatonique mineure — même forme, fondamentale différente",
+  data: {
+    startFret: 4, endFret: 9,
+    rootColor: "green", noteColor: "primary", accentColor: "coral",
+    strings: [
+      { frets: [5, 8], root: [8] },
+      { frets: [5, 7], root: [] },
+      { frets: [5, 7], root: [] },
+      { frets: [5, 7], root: [5] },
+      { frets: [5, 8], root: [] },
+      { frets: [5, 8], root: [8] },
+    ],
+    noteMap: {
+      "5,0":"La","8,0":"Do",
+      "5,1":"Ré","7,1":"Mi",
+      "5,2":"Sol","7,2":"La",
+      "5,3":"Do","7,3":"Ré",
+      "5,4":"Mi","8,4":"Sol",
+      "5,5":"La","8,5":"Do",
+    },
+  },
+};
 
 export default {
   id: "scales-c3-03", level: 6,
   title: "Pentatonique majeure et son lien avec la mineure",
-  duration: 9,
+  duration: 7,
   gropiTip: "Raccourci : pour une pentatonique majeure, place la forme mineure position 1 trois cases plus bas. Ré majeur (case 10 corde 6) ? Forme mineure case 7, et pose tes phrases sur Ré.",
-  content: [
-    { type: "p", text: "Il existe aussi une pentatonique majeure, sœur lumineuse de la pentatonique mineure. Et le secret le plus utile de la guitare : ces deux gammes partagent les mêmes notes. Comprendre ce lien double instantanément tes outils d'improvisation." },
-    { type: "h", text: "La pentatonique majeure : formule" },
-    { type: "p", text: "Formule en degrés : 1 - 2 - 3 - 5 - 6. Soit la fondamentale, la seconde majeure, la tierce majeure, la quinte juste, la sixte majeure. En Do : Do-Ré-Mi-Sol-La. C'est la gamme majeure dont on a retiré le 4 et le 7 (les notes les plus 'tendues' en majeur)." },
-    { type: "h", text: "Son sonore typique" },
-    { type: "p", text: "Joyeux, lumineux, 'champêtre'. Très utilisée en country, gospel, folk, pop des années 60. C'est la gamme des chansons 'qui sentent bon'." },
-    { type: "h", text: "Le secret : Do penta MAJ = La penta MIN" },
-    { type: "p", text: "Compare : Do penta majeure = Do-Ré-Mi-Sol-La. La penta mineure = La-Do-Ré-Mi-Sol. Mêmes 5 notes ! Seul l'ordre — et donc la fondamentale — change. Cette équivalence s'appelle la 'pentatonique relative'. Toute pentatonique majeure a une équivalente mineure 1,5 ton plus bas (3 demi-tons en dessous)." },
-    {
-      type: "scale_pattern",
-      caption: "Do pentatonique majeure = La pentatonique mineure — même forme, fondamentale différente",
-      data: {
-        startFret: 4, endFret: 9,
-        rootColor: "green", noteColor: "primary", accentColor: "coral",
-        strings: [
-          { frets: [5, 8], root: [8] },
-          { frets: [5, 7], root: [] },
-          { frets: [5, 7], root: [] },
-          { frets: [5, 7], root: [5] },
-          { frets: [5, 8], root: [] },
-          { frets: [5, 8], root: [8] },
-        ],
-        noteMap: {
-          "5,0":"La","8,0":"Do",
-          "5,1":"Ré","7,1":"Mi",
-          "5,2":"Sol","7,2":"La",
-          "5,3":"Do","7,3":"Ré",
-          "5,4":"Mi","8,4":"Sol",
-          "5,5":"La","8,5":"Do",
-        },
-      },
-    },
-    { type: "h", text: "Les paires relatives à mémoriser" },
-    { type: "p", text: "Do maj ↔ La min. Sol maj ↔ Mi min. Ré maj ↔ Si min. La maj ↔ Fa# min. Mi maj ↔ Do# min. Si maj ↔ Sol# min. Fa maj ↔ Ré min. Si♭ maj ↔ Sol min. Mi♭ maj ↔ Do min. La♭ maj ↔ Fa min. Ré♭ maj ↔ Si♭ min. Sol♭ maj ↔ Mi♭ min. Mêmes notes, deux fondamentales possibles." },
-    { type: "h", text: "Pourquoi c'est révolutionnaire" },
-    { type: "p", text: "Si tu connais la pentatonique mineure de La (la position 1 que tu as apprise), tu connais aussi la pentatonique majeure de Do — c'est exactement la même position sur le manche. Sur une chanson en Do majeur : joue la position 'La penta min' à la case 5, mais commence et finis tes phrases sur Do (case 8 corde 6). Magie : ça sonne joyeux/majeur." },
-    { type: "ref", text: "Reconnaître une pentatonique majeure : 'My Girl' (The Temptations) commence par une mélodie pure pentatonique majeure de Do. 'Stand By Me' (Ben E. King) utilise la pentatonique majeure de La. Le riff principal de 'Sweet Home Alabama' (Lynyrd Skynyrd) est en pentatonique majeure. Country, soul, classic rock — partout." },
-    { type: "tip", text: "Astuce d'impro : pour passer de 'son blues' à 'son country' sans changer de position, garde la même forme sur le manche mais commence/termine tes phrases sur une note différente (la fondamentale majeure au lieu de la mineure). Ta tonalité change, mais pas ton effort technique." },
+  cartes: [
+    { type: "idee", titre: "La sœur lumineuse", texte: [
+      "Pentatonique majeure : 1 - 2 - 3 - 5 - 6. C'est la gamme majeure sans le 4 et le 7, ses notes les plus tendues. En Do : Do, Ré, Mi, Sol, La.",
+      "Son caractère : joyeux, ouvert. On l'entend beaucoup en country, en folk, en gospel et en pop.",
+    ] },
+    { type: "question", quizId: "q-scales-06" },
+    { type: "idee", titre: "Mêmes notes, autre maison", texte: [
+      "Compare : Do pentatonique majeure = Do Ré Mi Sol La. La pentatonique mineure = La Do Ré Mi Sol.",
+      "Les cinq mêmes notes ! Seule change la fondamentale, la note où l'on se pose. Ce sont des pentatoniques relatives.",
+    ], bloc: DO_MAJ_LA_MIN },
+    { type: "question", quizId: "q-scales-07" },
+    { type: "idee", titre: "Trois demi-tons plus bas", texte: [
+      "Toute pentatonique majeure a sa relative mineure 3 demi-tons plus bas : Do et La, Sol et Mi, Ré et Si, La et Fa#, Fa et Ré.",
+      "Ce sont les mêmes paires que les tonalités relatives du cycle des quintes.",
+    ] },
+    { type: "idee", titre: "Tu la connais déjà", texte: [
+      "Ta position 1 de La mineure, case 5, est aussi la pentatonique majeure de Do. Rien ne change sous les doigts.",
+      "Sur un morceau en Do majeur, joue cette forme mais commence et termine tes phrases sur Do (case 8 corde 6). Le même dessin sonne majeur.",
+    ] },
+    { type: "question", quizId: "q-impro-21" },
+    { type: "a-toi", titre: "Une forme, deux couleurs",
+      consigne: "Au clic, monte et descends la forme en partant du Do (corde 6, case 8) et en finissant sur un Do. Puis rejoue-la en partant et finissant sur le La de la case 5. Écoute : mêmes notes, l'une sonne claire, l'autre sombre.",
+      bloc: DO_MAJ_LA_MIN, bpm: 60 },
+    { type: "question", quizId: "q-impro-05" },
+    { type: "recap", points: [
+      "Pentatonique majeure : 1 - 2 - 3 - 5 - 6 ; en Do, Do Ré Mi Sol La.",
+      "Do pentatonique majeure = La pentatonique mineure : mêmes notes, autre repos.",
+      "La relative mineure est 3 demi-tons sous la majeure : même forme, autre note d'arrivée.",
+    ] },
   ],
   quiz: ["q-scales-06","q-scales-07","q-impro-04","q-impro-05","q-impro-21"],
 };

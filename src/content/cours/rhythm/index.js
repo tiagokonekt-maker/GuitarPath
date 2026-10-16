@@ -25,6 +25,10 @@ import * as rhyC602 from "./rhy-c6-02.js";
 import * as rhyRoutine01 from "./rhy-routine-01.js";
 import * as rhyMed01 from "./rhy-med-01.js";
 import * as rhyMed02 from "./rhy-med-02.js";
+import * as rhyTech01 from "./rhy-tech-01.js";
+import * as rhyTech02 from "./rhy-tech-02.js";
+import * as rhyTech03 from "./rhy-tech-03.js";
+import * as rhyTech04 from "./rhy-tech-04.js";
 
 export const LECONS = [
   rhyC101,
@@ -38,11 +42,19 @@ export const LECONS = [
   rhyC301,
   rhyC302,
   rhyC303,
+  // Palier 6 : techniques de main gauche. Leur place dans cette liste règle
+  // leur position dans le palier (entrelacement avec les gammes, voir
+  // pathEngine.js › entrelacer) : bend et vibrato après la position 1 de la
+  // pentatonique, legato et slides après la position 2, avant les positions 3-5.
+  rhyTech01,   // le bend juste
+  rhyTech02,   // le vibrato
   rhyC401,
   rhyMed01,    // palier 3 : médiator alterné (après le mouvement pendulaire)
   rhyC402,
   rhyMed02,    // palier 4 : changer de corde au médiator
   rhyC403,
+  rhyTech03,   // palier 6 : hammer-on et pull-off
+  rhyTech04,   // palier 6 : les slides
   rhyC501,
   rhyC502,
   rhyC503,

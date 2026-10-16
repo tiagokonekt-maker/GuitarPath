@@ -1,24 +1,55 @@
 // Leçon du module « impro » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
 
 export default {
   id: "impro-01", level: 6,
   title: "Penser en phrases musicales",
-  duration: 12,
+  duration: 8,
   gropiTip: "Pour savoir où finit ta phrase, respire avec elle : commence à jouer en expirant et arrête-toi quand tu dois reprendre ton souffle. Ton solo se met à respirer comme un chanteur.",
-  content: [
-    { type: "p", text: "L'improvisation n'est pas une suite de notes aléatoires — c'est une conversation musicale. Comme une phrase parlée, une phrase musicale a un début, un développement et une fin. Les grands improvisateurs (Miles Davis, Jimi Hendrix, Django Reinhardt) pensent tous en phrases, pas en gammes." },
-    { type: "h", text: "La règle du silence" },
-    { type: "p", text: "Le silence est ta meilleure arme. Une note seule, bien placée après un silence, a plus d'impact qu'une cascade de doubles-croches. Les débutants ont peur du silence et remplissent tout. Les pros utilisent le silence comme une note à part entière — c'est lui qui donne du sens aux notes qui suivent." },
-    { type: "h", text: "Structure d'une phrase efficace" },
-    { type: "p", text: "Une bonne phrase musicale fait 2 à 4 mesures. Elle monte vers un point culminant (souvent la 3e mesure), puis descend vers une note de résolution. Pense à une question (tension) suivie d'une réponse (résolution). La question finit souvent sur une note instable (2e, 7e). La réponse arrive sur une note stable (fondamentale, 3e, 5e)." },
-    { type: "fretboard_interactive", mode: "highlight", notes: ["A", "C", "E"], caption: "Notes stables de Am — cibles de résolution idéales", displayMode: "notes", lang: "fr", compact: true },
-    { type: "h", text: "Le principe call & response" },
-    { type: "p", text: "Joue une phrase de 2 mesures (question), puis silence 2 mesures (réponse imaginaire). Répète. Cette alternance question/réponse est la base du blues, du jazz et du rock. B.B. King en est le maître absolu — il joue 3 notes, attend, répond à lui-même. Chaque phrase est une mini-conversation." },
-    { type: "tip", text: "Exercice : sur un backing Am 70 BPM, joue 2 mesures, silence 2 mesures. Pendant le silence, écoute ce que tu viens de jouer et prépare ta réponse. Fais ça 10 minutes. Tu viens d'apprendre à phraser." },
-    { type: "h", text: "Varier le rythme, pas que les notes" },
-    { type: "p", text: "Beaucoup de débutants varient les notes mais jouent toujours le même rythme. Les pros font l'inverse : ils varient le rythme sur peu de notes. Prends juste La-Do-Mi (3 notes d'Am) et joue-les en blanches, puis en croches, puis avec des syncopes, puis avec des triolets. Tu viens d'obtenir 10 phrases différentes avec 3 notes." },
-    { type: "fretboard_interactive", mode: "scale", root: "A", scale: "pentatonic_minor", caption: "Pentatonique de La — 5 notes suffisent pour des heures d'impro", displayMode: "notes", lang: "fr", compact: true },
+  cartes: [
+    { type: "idee", titre: "Une conversation", texte: [
+      "Improviser, ce n'est pas aligner des notes au hasard : c'est parler. Comme une phrase dite, une phrase musicale a un début, un développement et une fin.",
+      "On pense en phrases, pas en gammes.",
+    ] },
+    { type: "idee", titre: "La règle du silence", texte: [
+      "Une note seule, bien placée après un silence, porte plus qu'une cascade de doubles-croches.",
+      "Le débutant remplit tout. Le silence est une note à part entière : c'est lui qui donne du sens à ce qui suit.",
+    ] },
+    { type: "question", quizId: "q-rhy-36" },
+    { type: "idee", titre: "Question, puis réponse", texte: [
+      "Une bonne phrase dure 2 à 4 mesures. La question finit sur une note instable, la 2e ou la 7e ; la réponse se pose sur une note stable.",
+      "En La mineur, tes cibles de repos : La, Do et Mi, les notes de l'accord.",
+    ], bloc: { type: "fretboard_interactive", mode: "highlight", notes: ["A", "C", "E"], caption: "Notes stables de Am — cibles de résolution idéales", displayMode: "notes", lang: "fr", compact: true } },
+    { type: "question", quizId: "q-impro-23" },
+    { type: "idee", titre: "Call & response", texte: [
+      "Joue 2 mesures, puis tais-toi 2 mesures. Pendant le silence, écoute ce que tu viens de jouer et prépare ta réponse.",
+      "Cette alternance est au cœur du blues, du jazz et du rock.",
+    ] },
+    { type: "a-toi", titre: "Une question, une réponse",
+      consigne: "Au clic, joue la question et tiens le Sol : ça reste en suspens. Deux mesures de silence. Puis la réponse, qui se pose sur La. Ensuite, invente tes propres questions et réponses dans la pentatonique, pendant deux minutes.",
+      bloc: {
+        type: "tab",
+        caption: "Question qui finit sur Sol (♭7), réponse qui se pose sur La (tonique) — La pentatonique mineure, position 1",
+        text: "Tab — question : corde 3 cases 5 et 7, corde 2 cases 5 et 8 (Do, Ré, Mi, Sol), tenue. Silence. Réponse : corde 2 cases 8 et 5, corde 3 cases 7 et 5, corde 4 case 7 (Sol, Mi, Ré, Do, La).",
+        data: { lines: [
+          "e|-----------------------------------|",
+          "B|-------5--8--------8--5------------|",
+          "G|-5--7--------------------7--5------|",
+          "D|-------------------------------7---|",
+          "A|-----------------------------------|",
+          "E|-----------------------------------|",
+        ] },
+      }, bpm: 70, minuteur: 120 },
+    { type: "idee", titre: "Varie le rythme, pas les notes", texte: [
+      "Le débutant change de notes en gardant le même rythme. Fais l'inverse : prends La, Do, Mi et joue-les en blanches, en croches, en syncopes, en triolets.",
+      "Trois notes, dix phrases. Cinq notes de pentatonique suffisent pour des heures.",
+    ], bloc: { type: "fretboard_interactive", mode: "scale", root: "A", scale: "pentatonic_minor", caption: "Pentatonique de La — 5 notes suffisent pour des heures d'impro", displayMode: "notes", lang: "fr", compact: true } },
+    { type: "question", quizId: "q-impro-24" },
+    { type: "recap", points: [
+      "Le silence fait la phrase : joue, puis laisse respirer.",
+      "Question sur une note instable, réponse sur une note stable (La, Do, Mi en Am).",
+      "Varie le rythme sur peu de notes avant d'en ajouter.",
+    ] },
   ],
   quiz: ["q-rhy-36","q-impro-23","q-impro-24","q-impro-01"],
 };

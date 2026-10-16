@@ -4,7 +4,11 @@ export default [
   // ═══ GAMMES ═══
   {id:"ex-scales-01",mod:"scales",lvl:1,title:"Penta Am pos. 1 propre",dur:12,bpm:60,courseLink:"scales-c3-01",steps:["Index case 5, annulaire case 7, auriculaire case 8.","Joue corde 6 → 1 montant à 60 BPM. Chaque note doit sonner claire.","Redescends c1 → c6 même tempo.","Augmente progressivement : 70, 80, 90 BPM."],tip:"Lenteur = propreté. Propreté = vélocité future.",xp:50},
 
-  {id:"ex-scales-02",mod:"scales",lvl:2,title:"Penta Am 5 positions enchaînées",dur:20,bpm:60,courseLink:"scales-c3-02",steps:["Position 5 (case 3) → 1 (case 5) → 2 (case 8) → 3 (case 10) → 4 (case 12).","Boucle 3 fois à 60 BPM en montant.","Boucle 3 fois en descendant.","Identifie les notes-pivot (case 5, 8, 10, 12)."],tip:"4-6 semaines de pratique pour automatiser. C'est le boss de la pentatonique.",xp:90},
+  {id:"ex-scales-02",mod:"scales",lvl:2,title:"Penta Am 5 positions enchaînées",dur:20,bpm:60,unlockedBy:["scales-c3-07"],courseLink:"scales-c3-07",steps:["Position 1 (case 5) → 2 (case 8) → 3 (case 10) → 4 (case 12) → 5 (case 15) → 1 à l'octave (case 17), une note par temps.","Boucle 3 fois à 60 BPM en montant.","Boucle 3 fois en descendant.","Change de position sur les notes communes (cases 7-8, 9-10, 12-13, 14-15)."],tip:"4 à 6 semaines de pratique pour automatiser. C'est le boss de la pentatonique.",xp:90},
+
+  {id:"ex-scales-pos2-01",mod:"scales",lvl:2,title:"Le raccord position 1 → position 2",dur:10,bpm:60,unlockedBy:["scales-c3-05"],courseLink:"scales-c3-05",steps:["Position 2 seule (cases 7 à 10), en montant et en descendant, au clic à 60.","Monte les cordes 6 à 4 en position 1, change de doigt sur La (corde 4 case 7) et finis en position 2.","Fais le chemin inverse : redescends de la position 2 vers la position 1.","Improvise une minute en passant d'une position à l'autre ; termine sur un La."],tip:"Les cases 7 et 8 appartiennent aux deux positions : vise-les pour changer.",xp:55},
+
+  {id:"ex-scales-pos345-01",mod:"scales",lvl:2,title:"Positions 3, 4 et 5 au clic",dur:15,bpm:60,unlockedBy:["scales-c3-06"],courseLink:"scales-c3-06",steps:["Position 3 (case 10) en montant et en descendant, deux minutes au clic à 60.","Position 4 (case 12), même chose.","Position 5 (case 15), puis la même forme douze cases plus bas, entre les cases 2 et 5.","Dans chaque position, joue uniquement les La en montant : trouve-les sans regarder."],tip:"Une position par jour suffit : demain, reprends la précédente avant d'attaquer la suivante.",xp:65},
 
   {id:"ex-scales-03",mod:"scales",lvl:2,title:"Sol majeur 2 octaves",dur:12,bpm:65,courseLink:"scales-c2-05",steps:["Sol(corde 6 case 3)-La(corde 6 case 5)-Si(corde 5 case 2)-Do(corde 5 case 3)-Ré(corde 5 case 5)-Mi(corde 4 case 2)-Fa#(corde 4 case 4)-Sol(corde 4 case 5).","Continue : La(corde 3 case 2)-Si(corde 3 case 4)-Do(corde 2 case 1)-Ré(corde 2 case 3)-Mi(corde 2 case 5)-Fa#(corde 1 case 2)-Sol(corde 1 case 3).","Descends pareil. 5 cycles complets.","Identifie Sol et Si comme repères visuels."],tip:"Cette position couvre 2 octaves. Mémorise-la, c'est ta base en Sol.",xp:70},
 
@@ -17,8 +21,8 @@ export default [
   {
     id:"ex-fret-04", type:"fretboard_exercise", mod:"scales", lvl:1,
     title:"Pentatonique mineure de La — 3 positions", dur:15, xp:85,
-    unlockedBy:["scales-c3-02"],
-    courseLink:"scales-c3-02",
+    unlockedBy:["scales-c3-05"],
+    courseLink:"scales-c3-05",
     stages:[
       {
         instruction:"Position 1 (cases 5-8) : sélectionne toutes les notes de La pentatonique mineure",

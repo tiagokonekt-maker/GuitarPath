@@ -1,32 +1,59 @@
 // Leçon du module « rhythm » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
 
 export default {
   id: "rhy-c4-03", level: 6,
   title: "Le palm mute : étouffer pour créer du groove",
-  duration: 9,
+  duration: 7,
   gropiTip: "Si ton palm mute tue complètement la note, recule un peu la paume vers le chevalet. Tu dois encore entendre la hauteur de la note, juste raccourcie, pas un simple « tchk ».",
-  content: [
-    { type: "p", text: "Le palm mute est l'une des techniques rythmiques les plus importantes de la guitare électrique et acoustique. Il consiste à étouffer partiellement les cordes avec la paume de la main droite, créant un son 'percussif', 'étouffé', qu'on associe immédiatement au rock, au metal et au funk. Maîtriser le palm mute, c'est ajouter une couleur rythmique essentielle à ton jeu." },
-    { type: "h", text: "La technique" },
-    { type: "p", text: "Pose le bord de la paume droite (la partie charnue entre le poignet et le petit doigt) sur les cordes, juste avant le chevalet. La pression doit être légère : assez pour étouffer le son, pas assez pour tuer le sustain complètement. Trop près du chevalet = son trop ouvert (pas assez de mute). Trop loin = son trop étouffé, presque inaudible. Trouve le sweet spot." },
-    { type: "h", text: "Son et effet" },
-    { type: "p", text: "Avec le palm mute, le son de guitare devient 'chunk', percussif, court. Les notes ont peu de sustain. À la distorsion, c'est le son du riff de metal compact et agressif. Clean, c'est le son du riff funk ou du strumming roots/country. Alterner palm mute (PM) et notes ouvertes (sans PM) crée un contraste dynamique puissant." },
-    { type: "h", text: "Palm mute partiel : graduation du son" },
-    { type: "p", text: "Tu peux varier l'intensité du palm mute en ajustant la pression ou la position. PM léger = son légèrement amorti avec du sustain. PM fort = son très court, presque 'click'. Cette graduation te permet de jouer des nuances dynamiques sur un même riff : PM léger pour les couplets, PM fort pour les bridges, notes ouvertes pour le refrain." },
-    { type: "h", text: "Notation et application" },
-    { type: "p", text: "En tablature, le palm mute se note 'PM' ou 'P.M.' avec une ligne pointillée sous les notes concernées. Dans un riff typique rock/metal : riff PM PM PM - ouvert PM PM ouvert. L'alternance crée la dynamique. Ex : E5 barré avec PM sur les temps 1-2-3, puis E5 ouvert sur le temps 4 pour l'accent." },
-    { type: "h", text: "Palm mute rythmique : le 'chug'" },
-    { type: "p", text: "En metal, le 'chug' est une technique de palm mute rythmique où tu joues des coups de médiator très rapprochés sur des cordes complètement étouffées (ou quasi-étouffées). Le résultat est presque percussif — comme une caisse claire jouée sur la guitare. Très utilisé en metal pour les parties rythmiques de 'groove metal' ou 'djent'." },
-    { type: "h", text: "Palm mute funk : le 'scratch'" },
-    { type: "p", text: "En funk, le palm mute n'est pas utilisé comme en metal. On utilise plutôt l'index de la main gauche pour étouffer toutes les cordes, et on joue des coups de médiator sur ces cordes étouffées. Résultat : un 'scratch' rythmique très court et percussif. C'est différent du palm mute classique mais produit un effet similaire." },
-    { type: "ref", text: "'Enter Sandman' (Metallica, 1991) : l'intro est un exemple classique d'alternance PM/ouvert. Le riff commence entièrement en PM, puis les accents tombent sur des notes ouvertes. Cette alternance crée la dynamique qui rend le riff si reconnaissable. Écoute et identifie les moments PM vs ouvert." },
-    {
+  cartes: [
+    { type: "idee", titre: "La paume sur le chevalet", texte: [
+      "Pose le tranchant de la paume droite, la partie charnue côté petit doigt, sur les cordes, juste devant le chevalet. Pression légère.",
+      "Trop près du chevalet, le son reste ouvert. Trop loin vers le manche, il s'éteint. Cherche l'endroit où la note sonne courte, mais sonne.",
+    ] },
+    { type: "idee", titre: "Le son « chunk »", texte: [
+      "Palm mute = notes courtes, percussives, peu de sustain. Avec de la distorsion, c'est le riff rock ou metal compact ; en son clair, une rythmique country ou funk.",
+      "Alterner notes étouffées et notes ouvertes crée un contraste puissant.",
+    ] },
+    { type: "question", quizId: "q-rhy-46" },
+    { type: "idee", titre: "Doser l'étouffement", texte: [
+      "Plus de pression ou une paume plus avancée : le son raccourcit. PM léger, la note garde un peu de sustain ; PM fort, ce n'est presque plus qu'un clic.",
+      "Tu peux ainsi nuancer un même riff : léger au couplet, ouvert au refrain.",
+    ] },
+    { type: "idee", titre: "Lire un palm mute", texte: [
+      "En tablature : « PM » ou « P.M. », avec une ligne pointillée sous les notes concernées.",
+      "Le schéma de base du rock : étouffé sur 1, 2, 3, puis une note ouverte sur le 4 pour l'accent.",
+    ], bloc: {
       type: "strum_pattern",
       caption: "Drill palm mute — PM (×) sur 1, 2, 3, note ouverte (B) sur le 4",
       data: { pattern: ["x","x","x","B"], beats: 4, style: "rock", bpm: 80 },
-    },
-    { type: "tip", text: "Drill palm mute : sur la corde de Mi grave (c6), joue en downstrokes à 80 BPM avec PM sur les temps 1, 2, 3 et note ouverte sur le temps 4. Boucle 2 minutes. Quand c'est fluide, ajoute la corde de La (c5) pour former un E5 power chord. Tu joues le riff de base du rock." },
+    } },
+    { type: "question", quizId: "q-rhy-47" },
+    { type: "a-toi", titre: "Ton riff en palm mute",
+      consigne: "Tout en coups vers le bas, à 80 BPM : six Mi graves étouffés, en croches, puis E5 ouvert, laissé sonner. Boucle deux minutes. Vérifie que chaque Mi étouffé garde sa hauteur.",
+      bloc: {
+        type: "tab",
+        caption: "PM sur les six Mi graves, puis E5 ouvert (corde 6 à vide + corde 5 case 2)",
+        text: "Tab — corde 6 à vide six fois en palm mute, puis E5 sans palm mute : corde 6 à vide et corde 5 case 2 ensemble.",
+        data: { lines: [
+          "e|-------------------------|",
+          "B|-------------------------|",
+          "G|-------------------------|",
+          "D|-------------------------|",
+          "A|-------------------2-----|",
+          "E|-0--0--0--0--0--0--0-----|",
+        ] },
+      }, bpm: 80, minuteur: 120 },
+    { type: "idee", titre: "Chug et scratch", texte: [
+      "En metal, le « chug » : des coups très rapprochés sur des cordes graves fortement étouffées, presque une caisse claire.",
+      "En funk, autre geste : c'est la main gauche qui étouffe toutes les cordes, et le médiator frappe un « scratch » court. Même effet, autre technique.",
+    ] },
+    { type: "question", quizId: "q-rhy-48" },
+    { type: "recap", points: [
+      "Tranchant de la paume juste devant le chevalet, pression légère.",
+      "Plus ou moins de pression : la note s'écourte, mais garde sa hauteur.",
+      "En tab : « PM » et une ligne pointillée ; le scratch funk étouffe à la main gauche.",
+    ] },
   ],
   quiz: ["q-rhy-46", "q-rhy-47", "q-rhy-48"],
 };

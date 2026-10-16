@@ -337,6 +337,28 @@ export const idUniteAvantScission = (id) => {
   const m = /^(palier-\d+)-\d+$/.exec(id || "");
   return m ? m[1] : null;
 };
+/**
+ * Unités AJOUTÉES à un palier déjà existant, avec leur date de mise en
+ * service. Un joueur qui avait validé toutes les autres parties du palier
+ * AVANT cette date l'avait terminé : la nouvelle unité ne doit pas refermer
+ * la suite. Elle devient franchissable pour lui, sans être marquée faite —
+ * ses leçons, sa vérification et son coffre restent à gagner. La date est
+ * indispensable : sans elle, un nouveau joueur sauterait l'unité.
+ */
+export const UNITES_AJOUTEES = { "palier-6-4": "2026-10-16" };
+
+function franchissableParHeritage(u, units, checks, claimed) {
+  const miseEnService = UNITES_AJOUTEES[u.id];
+  if (!miseEnService) return false;
+  const avant = (v) => !!v && (typeof v !== "string" || !/^\d{4}-\d{2}-\d{2}/.test(v) || v < miseEnService);
+  const palier = u.id.replace(/-\d+$/, "");
+  const soeurs = units.filter(x => x.id !== u.id && x.id.startsWith(`${palier}-`));
+  return soeurs.length > 0 && soeurs.every(x => {
+    const c = valeurUnite(checks, x.id);
+    return (!!c?.passed && avant(c.lastAttemptAt ?? true)) || avant(valeurUnite(claimed, x.id));
+  });
+}
+
 const valeurUnite = (table, id) => {
   if (!table) return undefined;
   if (table[id] != null) return table[id];
@@ -478,7 +500,8 @@ export function buildPath(content, state) {
     // y jette un œil ne doit pas voir « Continuer » le ramener aux bases.
     const isCurrent = unlocked && !complete && !currentAssigned && !optional && (!headstart || done > 0);
     if (isCurrent) currentAssigned = true;
-    prevPassable = complete || acquis || headstart || optional;
+    prevPassable = complete || acquis || headstart || optional
+      || franchissableParHeritage(u, units, checks, claimed);
 
     return {
       // Le titre reste nu : c'est l'écran (pastille « Facultatif » de

@@ -1,16 +1,30 @@
 // Leçon du module « rhythm » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
+
+const RIFF_SHUFFLE = {
+  type: "tab",
+  caption: "Riff shuffle en La : corde 5 à vide + corde 4 case 2, puis case 4 — joué long-court",
+  text: "Tab — corde 5 à vide jouée avec la corde 4, case 2 deux fois, puis case 4 deux fois ; deux fois de suite. Chaque paire de coups se joue long-court.",
+  data: { lines: [
+    "e|-------------------------|",
+    "B|-------------------------|",
+    "G|-------------------------|",
+    "D|-2--2--4--4--2--2--4--4--|",
+    "A|-0--0--0--0--0--0--0--0--|",
+    "E|-------------------------|",
+  ] },
+};
 
 export default {
   id: "rhy-c5-01", level: 6,
   title: "Blues shuffle : le feel ternaire appliqué",
-  duration: 11,
+  duration: 8,
   gropiTip: "Erreur fréquente : un shuffle trop sautillant. La note courte tombe sur la 3e note du triolet, pas sur la dernière double-croche du temps : compte « 1-trip-let » et joue sur « 1 » et « let ».",
-  content: [
-    { type: "p", text: "Le shuffle blues est le feel rythmique fondamental du blues. Quand tu entends B.B. King, Stevie Ray Vaughan, Eric Clapton dans leur répertoire blues, c'est le shuffle que tu entends. Ce feel ternaire transforme un rythme 'carré' en quelque chose qui 'swingue' et qui 'danse'. Comprendre et jouer le shuffle est une étape incontournable pour tout guitariste rock/blues." },
-    { type: "h", text: "Rappel : le feel shuffle" },
-    { type: "p", text: "On divise chaque temps en 3 (triolet), mais on ne joue que la 1ère et la 3ème note du triolet. Résultat : une paire 'longue-courte' par temps. Compté : 'DAH-dah, DAH-dah, DAH-dah, DAH-dah'. En notation écrite, les croches sont normales, mais indiqué 'shuffle feel' en tête de partition." },
-    {
+  cartes: [
+    { type: "idee", titre: "Long-court", texte: [
+      "Rappel : le shuffle découpe chaque temps en triolet et ne joue que la 1re et la 3e note. On obtient une paire longue-courte : « DAH-dah, DAH-dah ».",
+      "Sur la partition, souvent de simples croches, avec « shuffle » en tête.",
+    ], bloc: {
       type: "rhythm_grid",
       caption: "Blues shuffle — feel longue-courte par temps (triolets : 1er + 3e seulement)",
       data: {
@@ -19,19 +33,34 @@ export default {
         muted: [1, 4, 7, 10],
         label: "DAH (1 + trip) · dah (let) — la note du milieu du triolet ne sonne pas",
       },
-    },
-    { type: "h", text: "Le riff boogie-woogie" },
-    { type: "p", text: "La forme la plus emblématique du shuffle blues à la guitare : le riff boogie-woogie. Sur la corde 6 (Mi) avec Am7 en tête : joue Mi(0) suivi de La(5) en alternance sur un feel shuffle. Ou la version '3-4-5' : Mi(0)-Sol(3)-La(5) en triolets avec retour. Ce riff est la base de dizaines de classiques blues." },
-    { type: "h", text: "Le shuffle à 12 mesures" },
-    { type: "p", text: "Jouer un blues à 12 mesures en shuffle : 4 mesures de I (A7 ou riff sur La), 2 mesures de IV (D7 ou riff sur Ré), 2 mesures de I, 1 mesure de V (E7), 1 mesure de IV, 2 mesures de I. Le tout avec le feel shuffle (longue-courte sur chaque temps). C'est la grille de référence pour pratiquer le blues." },
-    { type: "h", text: "Quick change vs slow change" },
-    { type: "p", text: "Deux versions du blues 12 mesures. Slow change (classique) : 4 mesures complètes sur I avant d'aller au IV. Quick change (moderne) : on passe au IV dès la mesure 2 avant de revenir au I. Ex : A7(1)-D7(2)-A7(3)-A7(4)-D7(5)-D7(6)-A7(7)-A7(8)-E7(9)-D7(10)-A7(11)-E7(12). Les deux versions coexistent dans le répertoire blues." },
-    { type: "h", text: "Texas shuffle vs Chicago shuffle" },
-    { type: "p", text: "Texas shuffle (Stevie Ray Vaughan) : plus chargé, plus de notes, feel presque double-croches. Très physique. Chicago shuffle (Muddy Waters, Willie Dixon) : plus épuré, groove implacable, espace entre les notes. Less is more. Savoir lequel tu préfères te guide vers ton style personnel de blues." },
-    { type: "h", text: "Le shuffle acoustique" },
-    { type: "p", text: "Sur guitare acoustique, le shuffle prend une autre forme. Souvent joué en fingerpicking : le pouce fait le shuffle sur les cordes graves (basse alternée), les doigts jouent la mélodie sur les cordes aiguës. Robert Johnson jouait ainsi. Lightnin' Hopkins aussi. Ce style 'solo blues acoustique' combine basse, rythme et mélodie en même temps." },
-    { type: "ref", text: "'Pride and Joy' (Stevie Ray Vaughan, 1983) : le riff d'intro est un Texas shuffle parfait en Mi. Écoute le feel 'longue-courte' sur chaque temps. 'Everyday I Have the Blues' (B.B. King) : Chicago shuffle épuré en Fa. 'Hound Dog' (Elvis, version Big Mama Thornton originale) : shuffle en Mi. Ces 3 morceaux = 3 déclinaisons du même feel." },
-    { type: "tip", text: "Drill shuffle 20 min : mets un backing track de blues shuffle en La à 80 BPM (YouTube). Joue le riff boogie-woogie sur la corde 6 pendant 5 min. Puis improvise en pentatonique Am avec le feel shuffle (fais sonner tes phrases en longue-courte). Enregistre-toi. Tu entendras directement si le feel est là ou non." },
+    } },
+    { type: "question", quizId: "q-rhy-07" },
+    { type: "idee", titre: "Le riff shuffle", texte: [
+      "Le riff le plus joué du blues : la corde 5 à vide sonne en continu, et la corde 4 alterne Mi (corde 4 case 2) et Fa# (corde 4 case 4).",
+      "Quinte, puis sixte, au-dessus de La : deux doigts suffisent.",
+    ], bloc: RIFF_SHUFFLE },
+    { type: "a-toi", titre: "Le riff au clic",
+      consigne: "Joue le riff en coups vers le bas, chaque paire en long-court : « DAH-dah ». Lance le clic à 70 BPM, un temps par paire. Garde le poignet souple et laisse un léger palm mute. Deux minutes sans t'arrêter.",
+      bloc: RIFF_SHUFFLE, bpm: 70, minuteur: 120 },
+    { type: "idee", titre: "La grille de 12 mesures", texte: [
+      "4 mesures de I (A7), 2 de IV (D7), 2 de I, puis V (E7), IV, et 2 mesures de I.",
+      "Le même riff se transpose : sur Ré, pars de la corde 4 à vide ; sur Mi, de la corde 6 à vide.",
+    ] },
+    { type: "idee", titre: "Quick change", texte: [
+      "Variante très courante : on passe au IV dès la mesure 2, puis on revient au I.",
+      "A7, D7, A7, A7, D7, D7, A7, A7, E7, D7, A7, E7. La dernière mesure sur E7 relance la grille.",
+    ] },
+    { type: "question", quizId: "q-rhy-45" },
+    { type: "idee", titre: "Le shuffle aux doigts", texte: [
+      "Sur une acoustique, le pouce peut tenir le shuffle sur les cordes graves pendant que les doigts jouent la mélodie sur les aiguës.",
+      "Basse, rythme et mélodie à la fois : un seul guitariste fait tout l'orchestre.",
+    ] },
+    { type: "question", quizId: "q-rhy-44" },
+    { type: "recap", points: [
+      "Shuffle = 1re et 3e note du triolet : long-court sur chaque temps.",
+      "Le riff : corde à vide + quinte, puis sixte, sur I, IV et V.",
+      "Blues 12 mesures : I ×4, IV ×2, I ×2, V, IV, I ×2 ; quick change : IV dès la mesure 2.",
+    ] },
   ],
   quiz: ["q-rhy-07","q-rhy-44","q-rhy-45"],
 };

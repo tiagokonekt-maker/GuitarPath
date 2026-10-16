@@ -10647,6 +10647,18 @@ var idUniteAvantScission = (id) => {
   const m = /^(palier-\d+)-\d+$/.exec(id || "");
   return m ? m[1] : null;
 };
+var UNITES_AJOUTEES = { "palier-6-4": "2026-10-16" };
+function franchissableParHeritage(u, units, checks, claimed) {
+  const miseEnService = UNITES_AJOUTEES[u.id];
+  if (!miseEnService) return false;
+  const avant = (v) => !!v && (typeof v !== "string" || !/^\d{4}-\d{2}-\d{2}/.test(v) || v < miseEnService);
+  const palier = u.id.replace(/-\d+$/, "");
+  const soeurs = units.filter((x) => x.id !== u.id && x.id.startsWith(`${palier}-`));
+  return soeurs.length > 0 && soeurs.every((x) => {
+    const c = valeurUnite(checks, x.id);
+    return !!c?.passed && avant(c.lastAttemptAt ?? true) || avant(valeurUnite(claimed, x.id));
+  });
+}
 var valeurUnite = (table, id) => {
   if (!table) return void 0;
   if (table[id] != null) return table[id];
@@ -10707,7 +10719,7 @@ function buildPath(content, state) {
     const unlocked = i === 0 || prevPassable || done > 0 || headstart || optional || dejaOuverte;
     const isCurrent = unlocked && !complete && !currentAssigned && !optional && (!headstart || done > 0);
     if (isCurrent) currentAssigned = true;
-    prevPassable = complete || acquis || headstart || optional;
+    prevPassable = complete || acquis || headstart || optional || franchissableParHeritage(u, units, checks, claimed);
     return {
       // Le titre reste nu : c'est l'écran (pastille « Facultatif » de
       // CoursesScreen) qui signale `optional`, pas un suffixe de texte.
@@ -12738,6 +12750,10 @@ var LIENS_MORCEAUX = {
   "rhy-routine-01": ["premiers-accords"],
   // Médiator alterné : croches régulières sur une corde (corde 6).
   "rhy-med-01": ["riff-rock-mi"],
+  // Legato : le riff folk est écrit avec des hammer-ons (0h2, 2h3).
+  // (Bend, vibrato, slides : aucun morceau du catalogue n'en contient —
+  // le blues en La est un riff rythmique, sans bend ni vibrato.)
+  "rhy-tech-03": ["riff-folk-re"],
   // ── Manche ───────────────────────────────────────────────────────────
   // Power chords : le riff de la leçon reprend ses cases 0, 3, 5 sur la corde 6.
   "neck-pow-01": ["riff-rock-mi"],

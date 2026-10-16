@@ -17,6 +17,9 @@ import * as scalesC301 from "./scales-c3-01.js";
 import * as scalesC302 from "./scales-c3-02.js";
 import * as scalesC303 from "./scales-c3-03.js";
 import * as scalesC304 from "./scales-c3-04.js";
+import * as scalesC305 from "./scales-c3-05.js";
+import * as scalesC306 from "./scales-c3-06.js";
+import * as scalesC307 from "./scales-c3-07.js";
 import * as scalesC401 from "./scales-c4-01.js";
 import * as scalesC402 from "./scales-c4-02.js";
 import * as scalesC403 from "./scales-c4-03.js";
@@ -47,6 +50,9 @@ export const LECONS = [
   scalesC302,
   scalesC303,
   scalesC304,
+  scalesC305,  // palier 6 : pentatonique position 2 (suite de scales-c3-02, position 1)
+  scalesC306,  // palier 6 : positions 3, 4 et 5
+  scalesC307,  // palier 6 : relier les 5 positions
   scalesC401,
   scalesC402,
   scalesC403,

@@ -1,49 +1,68 @@
 // Leçon du module « scales » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
+
+const POSITION_1 = {
+  type: "scale_pattern",
+  caption: "La pentatonique mineure — Position 1 (case 5), la plus utilisée",
+  data: {
+    startFret: 4, endFret: 9,
+    rootColor: "amber", noteColor: "primary", accentColor: "coral",
+    strings: [
+      { frets: [5, 8], root: [5] },
+      { frets: [5, 7], root: [] },
+      { frets: [5, 7], root: [7] },
+      { frets: [5, 7], root: [] },
+      { frets: [5, 8], root: [] },
+      { frets: [5, 8], root: [5] },
+    ],
+    noteMap: {
+      "5,0":"La","8,0":"Do",
+      "5,1":"Ré","7,1":"Mi",
+      "5,2":"Sol","7,2":"La",
+      "5,3":"Do","7,3":"Ré",
+      "5,4":"Mi","8,4":"Sol",
+      "5,5":"La","8,5":"Do",
+    },
+  },
+};
 
 export default {
   id: "scales-c3-01", level: 6,
   title: "La pentatonique mineure : la gamme universelle",
-  duration: 11,
+  duration: 8,
   gropiTip: "Improvise 4 notes dans la position 1, puis termine toujours sur un La (case 5 corde 6, case 7 corde 4 ou case 5 corde 1). Ton oreille sentira qu'elle est rentrée à la maison.",
-  content: [
-    { type: "p", text: "Si la gamme majeure est la matrice théorique de la musique occidentale, la pentatonique mineure est sa version 'simplifiée et radioactive'. C'est la gamme la plus utilisée dans le monde entier : blues, rock, pop, soul, funk, et même musique chinoise traditionnelle. 5 notes, et une efficacité redoutable." },
-    { type: "h", text: "Pourquoi 'pentatonique' ?" },
-    { type: "p", text: "'Penta' vient du grec 'cinq'. 'Tonique' fait référence aux tons. La pentatonique = gamme à 5 notes. À comparer avec les gammes 'normales' qui en ont 7 (heptatoniques). Moins de notes = plus de simplicité = moins de risques de fausse note." },
-    { type: "h", text: "Comment elle est construite" },
-    { type: "p", text: "La pentatonique mineure se construit en prenant 5 notes de la gamme mineure naturelle (qu'on verra bientôt). Sa formule en degrés est : 1 - ♭3 - 4 - 5 - ♭7. Soit la fondamentale, la tierce mineure, la quarte juste, la quinte juste, et la septième mineure. En La : La-Do-Ré-Mi-Sol." },
-    { type: "h", text: "Pourquoi elle sonne toujours juste" },
-    { type: "p", text: "La pentatonique a été conçue pour éliminer les notes les plus 'tendues' de la gamme. La gamme mineure naturelle contient 7 notes dont 2 (le 2e et le 6e degrés) qui créent des frottements. La pentatonique enlève ces 2 notes 'à risque'. Résultat : 5 notes qui s'accordent pratiquement avec n'importe quel accord mineur ou progression blues." },
-    { type: "h", text: "La position 1 — celle à apprendre en premier" },
-    { type: "p", text: "Pour La pentatonique mineure, position 1 (case 5) : Corde 6 → La(5)-Do(8). Corde 5 → Ré(5)-Mi(7). Corde 4 → Sol(5)-La(7). Corde 3 → Do(5)-Ré(7). Corde 2 → Mi(5)-Sol(8). Corde 1 → La(5)-Do(8). Tu utilises uniquement deux doigts par corde (index et auriculaire). Cette forme est l'une des plus mémorables de toute la guitare — beaucoup de guitaristes la connaissent de mémoire après leur première leçon." },
-    {
-      type: "scale_pattern",
-      caption: "La pentatonique mineure — Position 1 (case 5), la plus utilisée",
-      data: {
-        startFret: 4, endFret: 9,
-        rootColor: "amber", noteColor: "primary", accentColor: "coral",
-        strings: [
-          { frets: [5, 8], root: [5] },
-          { frets: [5, 7], root: [] },
-          { frets: [5, 7], root: [7] },
-          { frets: [5, 7], root: [] },
-          { frets: [5, 8], root: [] },
-          { frets: [5, 8], root: [5] },
-        ],
-        noteMap: {
-          "5,0":"La","8,0":"Do",
-          "5,1":"Ré","7,1":"Mi",
-          "5,2":"Sol","7,2":"La",
-          "5,3":"Do","7,3":"Ré",
-          "5,4":"Mi","8,4":"Sol",
-          "5,5":"La","8,5":"Do",
-        },
-      },
-    },
-    { type: "h", text: "Sur quoi l'utiliser" },
-    { type: "p", text: "1) Tout blues (les 12 mesures classiques). 2) Toute progression en mineur. 3) La plupart des solos rock (riffs Hendrix, Page, Clapton, Slash). 4) Improvisation 'safe' sur n'importe quelle chanson en mineur. C'est ton outil de survie en improvisation." },
-    { type: "ref", text: "L'intro du solo de 'Stairway to Heaven' (Led Zeppelin) est en La pentatonique mineure. Le solo de 'Sweet Child O' Mine' (Guns N' Roses) aussi. Le riff de 'Smoke on the Water' (Deep Purple) utilise la même gamme. Une fois que tu la connais, tu reconnaîtras la pentatonique mineure dans une grande partie des solos rock que tu écoutes." },
-    { type: "tip", text: "Programme intensif : pendant 7 jours, fais 10 minutes par jour de pentatonique mineure de La position 1, à 60 BPM en montant et en descendant. Au bout d'une semaine, c'est sous tes doigts à vie." },
+  cartes: [
+    { type: "idee", titre: "Cinq notes, partout", texte: [
+      "« Penta » veut dire cinq : la pentatonique n'a que 5 notes, contre 7 pour la gamme majeure.",
+      "Blues, rock, pop, soul, funk : c'est la gamme la plus jouée à la guitare. Moins de notes, moins de risques de fausse note.",
+    ] },
+    { type: "idee", titre: "La formule", texte: [
+      "Pentatonique mineure : 1 - ♭3 - 4 - 5 - ♭7. La fondamentale, la tierce mineure, la quarte, la quinte et la septième mineure.",
+      "En La : La, Do, Ré, Mi, Sol.",
+    ] },
+    { type: "question", quizId: "q-scales-05" },
+    { type: "idee", titre: "Pourquoi elle sonne juste", texte: [
+      "Elle part de la gamme mineure naturelle et en retire le 2e et le 6e degré, les deux notes qui forment des demi-tons tendus.",
+      "Restent 5 notes qui vont sur presque tout accord mineur et sur le blues.",
+    ] },
+    { type: "question", quizId: "q-logic-10" },
+    { type: "idee", titre: "La position 1, case 5", texte: [
+      "Deux notes par corde, de la case 5 à la case 8 : index sur la case 5, annulaire sur la 7, auriculaire sur la 8.",
+      "Les La, en ambre, sont tes points d'appui : cordes 6 et 1 case 5, corde 4 case 7.",
+    ], bloc: POSITION_1 },
+    { type: "a-toi", titre: "Monte, descends, au clic",
+      consigne: "Joue la position 1 de la corde 6 à la corde 1, puis redescends : une note par clic, à 60 BPM. Pars et termine sur le La grave. Deux minutes, sans accélérer. Refais-le chaque jour d'une semaine.",
+      bloc: POSITION_1, bpm: 60, minuteur: 120 },
+    { type: "idee", titre: "Sur quoi la jouer", texte: [
+      "Sur un blues, sur une progression en mineur, sur la plupart des solos rock. En La mineur, c'est ton terrain sûr.",
+      "Ton outil de survie en improvisation : tu peux penser au rythme et au phrasé avant de penser aux notes.",
+    ] },
+    { type: "question", quizId: "q-impro-17" },
+    { type: "recap", points: [
+      "Pentatonique mineure : 1 - ♭3 - 4 - 5 - ♭7 ; en La, La Do Ré Mi Sol.",
+      "Sans le 2 et le ♭6, pas de demi-ton tendu : elle sonne juste presque partout.",
+      "Position 1 en La : cases 5 à 8, deux notes par corde.",
+    ] },
   ],
   quiz: ["q-scales-05","q-logic-10","q-fret-scales-02","q-impro-16","q-impro-17","q-impro-20"],
 };

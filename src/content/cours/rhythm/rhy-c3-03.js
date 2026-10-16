@@ -1,31 +1,45 @@
 // Leçon du module « rhythm » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
+
+const FUNK = { type: "strum_pattern", caption: "Groove funk — quelques coups francs (B/H), des ghost notes (×) partout ailleurs : la main ne s'arrête jamais", data: {pattern: ["B", "x", "x", "H", "x", "x", "B", "x", "x", "x", "B", "x", "B", "x", "x", "x"], beats: 4, style: "funk", bpm: 90} };
 
 export default {
   id: "rhy-c3-03", level: 6,
   title: "Le groove : qu'est-ce qui fait qu'un rythme 'sent bon' ?",
-  duration: 11,
+  duration: 8,
   gropiTip: "Joue des croches sur Am en ne faisant vraiment sonner que les temps 2 et 4, comme la caisse claire, et effleure à peine les autres coups. Le flux reste continu et le groove apparaît.",
-  content: [
-    { type: "p", text: "Le groove, c'est ce qui fait qu'une musique te donne envie de bouger. C'est difficile à définir avec des mots, mais immédiatement reconnaissable à l'oreille. Il n'existe pas de recette magique pour créer du groove, mais plusieurs composantes y contribuent systématiquement. Cette leçon les analyse.", img: "/mascotte-zen.webp", imgAlt: "Gropi les yeux fermés, à l'écoute", imgSide: "right" },
-    { type: "h", text: "Définition" },
-    { type: "p", text: "Le groove = la sensation physique de mouvement créée par un motif rythmique récurrent et précis. Quand tu entends du funk et que ton pied tape tout seul, c'est le groove qui parle à ton corps. Il combine 3 ingrédients : précision rythmique (les notes sont placées exactement où il faut), syncope (les accents sont déplacés stratégiquement), et régularité (le motif se répète de façon prévisible)." },
-    { type: "rhythm_grid", caption: "Le backbeat — 8 croches régulières, accent sur 2 et 4 : le squelette de la plupart des grooves", data: {beats: 4, subdivision: 8, accents: [2,6], label: "1 · et · 2 · et · 3 · et · 4 · et"} },
-    { type: "h", text: "La précision : sans elle, pas de groove" },
-    { type: "p", text: "La première condition du groove est la précision absolue du placement des notes. Pas 'à peu près sur le temps' — exactement sur le temps (ou exactement sur le contretemps, selon le style). Cette précision n'est pas de la rigidité : c'est une ancre qui donne à l'oreille un repère stable. Paradoxalement, c'est cette stabilité qui 'libère' le groove." },
-    { type: "h", text: "La répétition : le groove comme hypnose" },
-    { type: "p", text: "Le groove fonctionne par répétition. Un motif rythmique joué 1 fois est intéressant. Joué 8 fois, il commence à 'groover'. Joué 16 fois, il hypnotise. C'est pourquoi le funk et le hip-hop utilisent des boucles courtes répétées indéfiniment. La répétition installe le motif dans le corps de l'auditeur, qui commence à l'anticiper et à le ressentir physiquement." },
-    { type: "h", text: "Le micro-timing : jouer 'dans' le temps" },
-    { type: "p", text: "Au-delà de la précision, il y a le 'micro-timing' : la façon infinitésimale dont les notes se placent juste avant, sur, ou après le temps exact. Un batteur qui joue 'laid-back' place ses notes légèrement après le clic du métronome — ça crée une sensation de décontraction. Un batteur qui joue 'on top' place ses notes légèrement avant — ça crée de l'urgence. Ce micro-timing ne se programme pas : il vient des années de pratique et d'écoute." },
-    { type: "h", text: "Les ghost notes : la texture du groove" },
-    { type: "p", text: "Les ghost notes sont des notes très légères, presque inaudibles, qui remplissent l'espace entre les notes 'principales'. Sur la batterie, elles sont jouées très doucement sur la caisse claire. Sur la guitare funk, ce sont des coups de mediator sur des cordes étouffées qui ne font 'click' qu'à peine. Elles ne sont pas là pour être entendues — elles sont là pour maintenir la continuité du flux rythmique." },
-    { type: "strum_pattern", caption: "Groove funk — quelques coups francs (B/H), des ghost notes (×) partout ailleurs : la main ne s'arrête jamais", data: {pattern: ["B", "x", "x", "H", "x", "x", "B", "x", "x", "x", "B", "x", "B", "x", "x", "x"], beats: 4, style: "funk", bpm: 90} },
-    { type: "h", text: "Le lock avec la basse" },
-    { type: "p", text: "En musique de groupe, le groove vient du verrouillage ('locking') entre la basse et la grosse caisse. Quand ces deux instruments jouent exactement en même temps, le groove est solide. Quand ils se décalent légèrement, le groove s'affaiblit. En tant que guitariste, tu dois 'locker' avec la basse — écouter le grave et t'y accrocher rythmiquement." },
-    { type: "h", text: "Développer son groove" },
-    { type: "p", text: "3 exercices clés. 1) Joue avec un métronome tous les jours (améliore la précision). 2) Écoute beaucoup de funk, blues et groove music en te concentrant sur la percussion et la basse (intériorise le feel). 3) Joue avec d'autres musiciens — le vrai groove se développe dans le contexte du jeu en groupe." },
-    { type: "ref", text: "Clyde Stubblefield, le batteur de James Brown sur 'Funky Drummer' (1970), joue un break de batterie qui a été samplé des centaines de fois par des rappeurs et des producteurs. Ce beat 'groovy' est construit sur des ghost notes, des syncopes précises, et une régularité métronomique. C'est l'exemple parfait de tout ce qui crée le groove." },
-    { type: "tip", text: "Test groove personnel : enregistre 2 minutes de guitare rythmique sur un accord de Am avec métronome à 90 BPM. Joue le pattern le plus simple possible (une croche par temps, alternance bas-haut). Écoute l'enregistrement : est-ce que ça groove ? Si non, identifie les moments où le temps 'coule' : c'est là que tu travailles." },
+  cartes: [
+    { type: "idee", titre: "Ce qui fait bouger", texte: [
+      "Le groove, c'est la sensation physique de mouvement : ton pied tape tout seul.",
+      "Trois ingrédients reviennent toujours : la précision du placement, des accents bien choisis et la répétition d'un motif. Le squelette le plus courant : le backbeat, accent sur 2 et 4.",
+    ], bloc: { type: "rhythm_grid", caption: "Le backbeat — 8 croches régulières, accent sur 2 et 4 : le squelette de la plupart des grooves", data: {beats: 4, subdivision: 8, accents: [2,6], label: "1 · et · 2 · et · 3 · et · 4 · et"} } },
+    { type: "idee", titre: "La précision d'abord", texte: [
+      "Pas « à peu près » sur le temps : exactement sur le temps, ou exactement sur le contretemps.",
+      "Ce n'est pas de la rigidité : cette ancre stable donne à l'oreille un repère, et c'est elle qui libère le groove.",
+    ] },
+    { type: "question", quizId: "q-rhy-33" },
+    { type: "idee", titre: "Répéter, placer", texte: [
+      "Un motif joué une fois intéresse ; répété huit fois, il groove. Le corps de l'auditeur l'anticipe.",
+      "Puis vient le micro-timing : jouer un rien après le clic détend (« laid-back »), un rien avant pousse (« on top »). Ça vient avec l'écoute et la pratique.",
+    ] },
+    { type: "idee", titre: "Les ghost notes", texte: [
+      "Des coups de médiator sur des cordes étouffées par la main gauche : un « tchk » à peine audible entre les coups francs.",
+      "Elles ne sont pas là pour être entendues, mais pour que le flux ne s'arrête jamais.",
+    ], bloc: FUNK },
+    { type: "question", quizId: "q-rhy-34" },
+    { type: "idee", titre: "Se caler sur le grave", texte: [
+      "En groupe, le groove naît du verrouillage entre la basse et la grosse caisse. Quand elles tombent ensemble, tout tient.",
+      "Ton travail de guitariste : écouter ce grave et t'y accrocher.",
+    ] },
+    { type: "question", quizId: "q-rhy-56" },
+    { type: "a-toi", titre: "Ton premier groove funk",
+      consigne: "Sur Am, la main gauche relâchée pour étouffer : les × en ghost notes, puis serre l'accord juste pour les coups francs. Lentement au clic, la main droite en doubles-croches sans jamais s'arrêter. Enregistre-toi et écoute si le temps « coule ».",
+      bloc: FUNK, bpm: 60, minuteur: 120 },
+    { type: "recap", points: [
+      "Groove = précision, accents et répétition.",
+      "Les ghost notes gardent le flux continu sans encombrer.",
+      "En groupe, cale-toi sur la basse et la grosse caisse.",
+    ] },
   ],
   quiz: ["q-rhy-33","q-rhy-34","q-rhy-56"],
 };

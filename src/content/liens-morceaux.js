@@ -36,6 +36,10 @@ export const LIENS_MORCEAUX = {
   "rhy-routine-01": ["premiers-accords"],
   // Médiator alterné : croches régulières sur une corde (corde 6).
   "rhy-med-01": ["riff-rock-mi"],
+  // Legato : le riff folk est écrit avec des hammer-ons (0h2, 2h3).
+  // (Bend, vibrato, slides : aucun morceau du catalogue n'en contient —
+  // le blues en La est un riff rythmique, sans bend ni vibrato.)
+  "rhy-tech-03": ["riff-folk-re"],
 
   // ── Manche ───────────────────────────────────────────────────────────
   // Power chords : le riff de la leçon reprend ses cases 0, 3, 5 sur la corde 6.

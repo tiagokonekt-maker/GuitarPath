@@ -1,33 +1,52 @@
 // Leçon du module « scales » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
+
+const CYCLE = {
+  type: "circle_of_fifths",
+  caption: "Cercle des quintes — Do, Sol, Ré, La, Fa en évidence (les 5 tonalités les plus courantes)",
+  data: {
+    highlight: ["Do", "Sol", "Ré", "La", "Fa"],
+    showMinors: true,
+  },
+};
 
 export default {
   id: "scales-c2-04", level: 6,
   title: "Le cycle des quintes : la carte des tonalités",
-  duration: 10,
+  duration: 8,
   gropiTip: "Pour lire une armure en dièses, prends le dernier dièse et monte d'un demi-ton : Fa#, Do#, Sol# → le dernier est Sol#, donc La majeur.",
-  content: [
-    { type: "p", text: "Le cycle des quintes est un schéma qui organise les 12 tonalités majeures (et leurs équivalents mineurs) dans un ordre logique. Comprendre ce cycle = avoir une carte mentale de toute la musique tonale, qui te permet de moduler, transposer, et naviguer entre tonalités." },
-    { type: "h", text: "Le principe : monter de quinte en quinte" },
-    { type: "p", text: "Pars de Do majeur (0 altération). Monte d'une quinte juste : tu arrives à Sol majeur (1 dièse : Fa#). Encore une quinte : Ré majeur (2 dièses). Encore : La majeur (3 dièses). Mi (4#), Si (5#), Fa# (6#), Do# (7#). À chaque quinte ajoutée, on ajoute un dièse à l'armure de la tonalité." },
-    { type: "h", text: "Le sens inverse : descendre par quintes" },
-    { type: "p", text: "Depuis Do majeur, descends d'une quinte : Fa majeur (1 bémol : Si♭). Encore : Si♭ majeur (2 bémols). Mi♭ (3), La♭ (4), Ré♭ (5), Sol♭ (6), Do♭ (7). Côté bémols, on en ajoute un à chaque descente de quinte." },
-    { type: "h", text: "Pourquoi c'est utile" },
-    { type: "p", text: "1) Pour savoir l'armure d'une tonalité instantanément (ex: 'Mi majeur c'est combien de dièses ?' → Mi est à 4 quintes de Do, donc 4 dièses). 2) Pour moduler proprement entre tonalités voisines (les tonalités voisines dans le cycle partagent presque toutes leurs notes). 3) Pour comprendre les progressions d'accords (beaucoup de progressions jazz suivent le cycle : Cm7-F7-Bb7-Eb...)." },
-    { type: "h", text: "L'ordre des dièses et bémols" },
-    { type: "p", text: "Les dièses apparaissent toujours dans le même ordre quand tu montes le cycle : Fa# - Do# - Sol# - Ré# - La# - Mi# - Si#. Tu peux le mémoriser comme 'Fa Do Sol Ré La Mi Si'. Les bémols apparaissent dans l'ordre inverse : Si♭ - Mi♭ - La♭ - Ré♭ - Sol♭ - Do♭ - Fa♭. Soit 'Si Mi La Ré Sol Do Fa'." },
-    { type: "h", text: "Tonalités relatives mineures" },
-    { type: "p", text: "Chaque tonalité majeure a une tonalité mineure 'relative' qui partage exactement les mêmes notes. La relative mineure se trouve sur le 6e degré de la majeure. Do majeur ↔ La mineur (mêmes notes). Sol majeur ↔ Mi mineur. Etc. Ces deux tonalités ont la même armure mais des fondamentales différentes." },
-    {
-      type: "circle_of_fifths",
-      caption: "Cercle des quintes — Do, Sol, Ré, La, Fa en évidence (les 5 tonalités les plus courantes)",
-      data: {
-        highlight: ["Do", "Sol", "Ré", "La", "Fa"],
-        showMinors: true,
-      },
-    },
-    { type: "ref", text: "Pour visualiser le cycle des quintes : représente-le comme une horloge. À midi : Do (0 altération). En tournant à droite (heures 1, 2, 3...) on monte par quintes et on ajoute des dièses : Sol, Ré, La, Mi, Si... À 6h : Fa# (6 altérations, milieu du cycle). Continue à droite : Ré♭, La♭, Mi♭, Si♭, Fa, et retour à Do à midi. C'est une boucle complète." },
-    { type: "tip", text: "Apprends d'abord les 5 tonalités les plus courantes : Do (0), Sol (1#), Ré (2#), La (3#), Fa (1♭). Ces 5 tonalités reviennent sans cesse dans les chansons jouées à la guitare." },
+  cartes: [
+    { type: "idee", titre: "Une horloge des tonalités", texte: [
+      "Le cycle des quintes range les 12 tonalités majeures comme une horloge. À midi, Do, sans altération.",
+      "En tournant d'un cran, on avance d'une quinte et on gagne une altération. Une carte mentale pour transposer, moduler et lire une armure.",
+    ], bloc: CYCLE },
+    { type: "idee", titre: "Vers la droite : les dièses", texte: [
+      "Monte d'une quinte depuis Do : Sol majeur, 1 dièse (Fa#). Encore une : Ré, 2 dièses. Puis La (3), Mi (4), Si (5), Fa# (6), Do# (7).",
+      "Chaque quinte garde les dièses précédents et en ajoute un.",
+    ] },
+    { type: "question", quizId: "q-logic-02" },
+    { type: "idee", titre: "Vers la gauche : les bémols", texte: [
+      "Descends d'une quinte depuis Do : Fa majeur, 1 bémol (Si♭). Puis Si♭ (2), Mi♭ (3), La♭ (4), Ré♭ (5), Sol♭ (6), Do♭ (7).",
+      "En bas de l'horloge, Fa# et Sol♭ se rejoignent : même son, deux écritures.",
+    ] },
+    { type: "idee", titre: "L'ordre des altérations", texte: [
+      "Les dièses arrivent toujours dans le même ordre : Fa, Do, Sol, Ré, La, Mi, Si. Les bémols, dans l'ordre inverse : Si, Mi, La, Ré, Sol, Do, Fa.",
+      "Astuce côté bémols : l'avant-dernier bémol de l'armure donne la tonalité. Si♭, Mi♭ → Si♭ majeur.",
+    ] },
+    { type: "question", quizId: "q-scales-03" },
+    { type: "idee", titre: "Les relatives mineures", texte: [
+      "Chaque tonalité majeure a une relative mineure, sur son 6e degré : mêmes notes, même armure, autre fondamentale.",
+      "Do majeur et La mineur, Sol majeur et Mi mineur. Sur le cercle, elles occupent la même case.",
+    ] },
+    { type: "a-toi", titre: "Fais le tour à la guitare",
+      consigne: "Joue les accords ouverts dans l'ordre du cycle : Do, Sol, Ré, La, Mi. Quatre coups chacun, au clic. Sur chaque accord, dis à voix haute son nombre de dièses. Puis repars de Do vers Fa.",
+      bloc: CYCLE, bpm: 60 },
+    { type: "question", quizId: "q-scales-02" },
+    { type: "recap", points: [
+      "Une quinte de plus = un dièse de plus ; une quinte de moins = un bémol de plus.",
+      "Ordre des dièses : Fa Do Sol Ré La Mi Si ; des bémols : Si Mi La Ré Sol Do Fa.",
+      "La relative mineure, sur le 6e degré, partage l'armure de la majeure.",
+    ] },
   ],
   quiz: ["q-scales-02","q-scales-03","q-logic-01","q-logic-02","q-scales-30","q-scales-31"],
 };
