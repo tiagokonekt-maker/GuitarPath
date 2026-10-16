@@ -1,56 +1,74 @@
 // Leçon du module « neck » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
+
+const DEPUIS_DO = {
+  type: "fretboard",
+  caption: "Intervalles depuis Do (c6 case 8) — lecture sur 2 cordes",
+  data: {
+    frets: 7, startFret: 7,
+    showStringNames: true, showFretNumbers: true,
+    markerFrets: [9, 12],
+    notes: [
+      { string: 6, fret: 8,  label: "R",   color: "amber",   root: true },
+      { string: 6, fret: 9,  label: "m2",  color: "coral" },
+      { string: 6, fret: 10, label: "M2",  color: "neutral" },
+      { string: 6, fret: 11, label: "m3",  color: "primary" },
+      { string: 6, fret: 12, label: "M3",  color: "green" },
+      { string: 6, fret: 13, label: "P4",  color: "neutral" },
+      { string: 5, fret: 8,  label: "P4",  color: "neutral" },
+      { string: 5, fret: 9,  label: "TT",  color: "coral" },
+      { string: 5, fret: 10, label: "P5",  color: "amber" },
+      { string: 5, fret: 11, label: "m6",  color: "primary" },
+      { string: 5, fret: 12, label: "M6",  color: "green" },
+      { string: 5, fret: 13, label: "m7",  color: "amber" },
+    ],
+  },
+};
 
 export default {
   id: "neck-03", level: 4,
   title: "Intervalles : entendre les distances",
-  duration: 14,
+  duration: 9,
   gropiTip: "Entends la tierce changer de couleur : joue Mi mineur (022000), puis pose l'index corde 3 case 1 pour obtenir Mi majeur. Sol devient Sol# : de m3 à M3, de mélancolique à joyeux.",
-  content: [
-    { type: "p", text: "Un intervalle = la distance entre deux notes. C'est la brique fondamentale de la musique. Tout — accords, gammes, modes, mélodies — est une combinaison d'intervalles." },
-    { type: "h", text: "Les 12 intervalles dans l'octave" },
-    { type: "p", text: "1dt = seconde mineure (m2). 2dt = seconde majeure (M2 / ton). 3dt = tierce mineure (m3). 4dt = tierce majeure (M3). 5dt = quarte juste (P4). 6dt = triton (TT, ♭5/#4). 7dt = quinte juste (P5). 8dt = sixte mineure (m6). 9dt = sixte majeure (M6). 10dt = septième mineure (m7). 11dt = septième majeure (M7). 12dt = octave (P8)." },
-    {
+  cartes: [
+    { type: "idee", titre: "Douze distances", texte: [
+      "Un intervalle est la distance entre deux notes ; accords, gammes et mélodies en sont faits. Il y en a douze dans l'octave.",
+      "Tu les as comptés : maintenant, on les entend et on les voit sur le manche.",
+    ], bloc: {
       type: "interval_chart",
       caption: "Les 12 intervalles — caractère sonore et couleur",
       data: {
         highlight: ["m3", "M3", "P5", "P4", "TT", "m7"],
         showOnGuitar: true,
       },
-    },
-    { type: "h", text: "Caractère sonore de chaque intervalle" },
-    { type: "p", text: "Les intervalles ont des couleurs psychoacoustiques. m2/M7 = dissonance maximale. m3/m6 = mélancolie. M3/M6 = joie. P4/P5 = stabilité, vide, force. TT = tension extrême ('diabolus in musica'). m7 = tension douce, dominante. M7 = couleur jazz, lumineuse." },
-    { type: "h", text: "Voir les intervalles sur 1 corde" },
-    { type: "p", text: "Sur une seule corde, l'intervalle = nombre de cases d'écart. Tierce majeure = 4 cases. Quinte = 7 cases. Octave = 12 cases. C'est arithmétique — pas de mystère." },
-    {
-      type: "fretboard",
-      caption: "Intervalles depuis Do (c6 case 8) — lecture sur 2 cordes",
-      data: {
-        frets: 7, startFret: 7,
-        showStringNames: true, showFretNumbers: true,
-        markerFrets: [9, 12],
-        notes: [
-          { string: 6, fret: 8,  label: "R",   color: "amber",   root: true },
-          { string: 6, fret: 9,  label: "m2",  color: "coral" },
-          { string: 6, fret: 10, label: "M2",  color: "neutral" },
-          { string: 6, fret: 11, label: "m3",  color: "primary" },
-          { string: 6, fret: 12, label: "M3",  color: "green" },
-          { string: 6, fret: 13, label: "P4",  color: "neutral" },
-          { string: 5, fret: 8,  label: "P4",  color: "neutral" },
-          { string: 5, fret: 9,  label: "TT",  color: "coral" },
-          { string: 5, fret: 10, label: "P5",  color: "amber" },
-          { string: 5, fret: 11, label: "m6",  color: "primary" },
-          { string: 5, fret: 12, label: "M6",  color: "green" },
-          { string: 5, fret: 13, label: "m7",  color: "amber" },
-        ],
-      },
-    },
-    { type: "h", text: "Voir les intervalles entre 2 cordes" },
-    { type: "p", text: "Une note sur la corde adjacente plus aiguë, même case = quarte juste au-dessus (sauf c3→c2 où c'est tierce majeure). Une corde plus aiguë, 2 cases en arrière = quinte juste au-dessus. Mémorise ces 2 patterns, tu vois les intervalles partout." },
-    { type: "h", text: "Inversion d'intervalle" },
-    { type: "p", text: "Tout intervalle a son 'inverse' qui complète à l'octave. P4 + P5 = octave. m3 + M6 = octave. M2 + m7 = octave. Cette symétrie est utile pour les accords (ex: l'inversion d'une triade fait apparaître les intervalles inversés)." },
-    { type: "tip", text: "Drill quotidien : choisis 2 cases au hasard sur le manche. Calcule l'intervalle entre elles en demi-tons puis nomme-le. Au bout de 2 semaines c'est instantané." },
-    { type: "fretboard_interactive", mode: "scale", root: "A", scale: "major", caption: "Intervalles de La majeur sur le manche", displayMode: "intervals", lang: "fr", compact: true },
+    } },
+    { type: "idee", titre: "Chaque intervalle a sa couleur", texte: [
+      "Tierce et sixte mineures : mélancolie. Majeures : joie. Quarte et quinte justes : stabilité.",
+      "Triton : tension extrême. Septième mineure : tension douce ; majeure : couleur jazz.",
+    ], bloc: { type: "fretboard_interactive", mode: "scale", root: "A", scale: "major", caption: "Intervalles de La majeur sur le manche", displayMode: "intervals", lang: "fr", compact: true } },
+    { type: "question", quizId: "q-neck-07" },
+    { type: "idee", titre: "Sur une corde, puis sur deux", texte: [
+      "Depuis Do (corde 6, case 8), compte les cases : tierce mineure en 11, majeure en 12.",
+      "Sur la corde 5, même case : la quarte ; deux cases plus loin : la quinte.",
+    ], bloc: DEPUIS_DO },
+    { type: "idee", titre: "Deux raccourcis entre cordes", texte: [
+      "Corde voisine plus aiguë, même case : quarte juste. Deux cases plus loin : quinte juste.",
+      "Exception, des cordes 3 à 2 : même case = tierce majeure, et la quinte est trois cases plus loin.",
+    ] },
+    { type: "question", quizId: "q-neck-10" },
+    { type: "idee", titre: "Le renversement", texte: [
+      "Un intervalle et son renversement font 12 demi-tons : quarte + quinte, tierce mineure + sixte majeure.",
+      "Le majeur devient mineur, le juste reste juste.",
+    ] },
+    { type: "question", quizId: "q-neck-09" },
+    { type: "a-toi", titre: "Quarte, quinte, octave depuis Do",
+      consigne: "Pose Do (corde 6, case 8). Joue la quarte (corde 5, même case), la quinte (deux cases plus loin), puis l'octave (corde 4, case 10). Annonce chaque intervalle avant de le jouer, puis chante-le.",
+      bloc: DEPUIS_DO, minuteur: 90 },
+    { type: "recap", points: [
+      "Douze intervalles dans l'octave, chacun avec sa couleur.",
+      "Corde voisine, même case : quarte ; deux cases plus loin : quinte (sauf cordes 3-2).",
+      "Un intervalle et son renversement font 12 demi-tons.",
+    ] },
   ],
   quiz: ["q-neck-07", "q-neck-08", "q-neck-09", "q-neck-10"],
 };

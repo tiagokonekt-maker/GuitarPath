@@ -1,16 +1,22 @@
 // Leçon du module « rhythm » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
+
+const DOUBLES = {
+  type: "strum_pattern",
+  caption: "Balancier en doubles-croches — bas sur le chiffre et le « et », haut sur le « e » et le « a »",
+  data: { pattern: ["B","H","B","H","B","H","B","H","B","H","B","H","B","H","B","H"], beats: 4, style: "funk", bpm: 60 },
+};
 
 export default {
   id: "rhy-c2-02", level: 4,
   title: "Croches et doubles-croches",
-  duration: 10,
+  duration: 8,
   gropiTip: "Dis les syllabes à voix haute avant de jouer : « 1 e et a » à 60 BPM. Ta main descend sur le chiffre et le « et », remonte sur le « e » et le « a ». Toujours dans cet ordre.",
-  content: [
-    { type: "p", text: "Les croches et doubles-croches sont les valeurs les plus utilisées en musique populaire. Elles permettent de créer le groove, les riffs, les fills rythmiques. Maîtriser leur placement et leur comptage, c'est débloquer l'accès à la quasi-totalité des patterns rythmiques de la guitare pop, rock et blues." },
-    { type: "h", text: "La croche : 1/2 temps" },
-    { type: "p", text: "La croche vaut la moitié d'une noire. Dans une mesure de 4/4, il y a 8 croches. On les compte : '1 et 2 et 3 et 4 et'. Les chiffres (1, 2, 3, 4) tombent sur les temps forts. Les 'et' tombent entre les temps, sur les contretemps. Cette façon de compter est universelle chez les musiciens anglophones ('one and two and three and four and')." },
-    {
+  cartes: [
+    { type: "idee", titre: "La croche : un demi-temps", texte: [
+      "La croche vaut la moitié d'une noire : 8 par mesure de 4/4.",
+      "On compte « 1 et 2 et 3 et 4 et » : les chiffres tombent sur les temps, les « et » entre eux, sur les contretemps.",
+    ], bloc: {
       type: "rhythm_grid",
       caption: "1 mesure de croches en 4/4",
       data: {
@@ -18,10 +24,12 @@ export default {
         accents: [0, 2, 4, 6],
         label: "1 · et · 2 · et · 3 · et · 4 · et",
       },
-    },
-    { type: "h", text: "La double-croche : 1/4 temps" },
-    { type: "p", text: "La double-croche vaut la moitié d'une croche. Dans une mesure de 4/4, il y a 16 doubles-croches. On les compte : '1 e et a 2 e et a 3 e et a 4 e et a'. Soit '1-ee-and-a' (en anglais 'one-e-and-a'). Les chiffres tombent sur les temps, les 'e' et 'a' subdivisent encore plus finement." },
-    {
+    } },
+    { type: "question", quizId: "q-rhy-01" },
+    { type: "idee", titre: "La double-croche : un quart de temps", texte: [
+      "La moitié d'une croche : 16 par mesure. On compte « 1 e et a, 2 e et a… ».",
+      "Chaque syllabe nomme un emplacement : c'est ce qui permet de placer une note exactement où tu veux.",
+    ], bloc: {
       type: "rhythm_grid",
       caption: "1 mesure de doubles-croches en 4/4",
       data: {
@@ -29,17 +37,26 @@ export default {
         accents: [0, 4, 8, 12],
         label: "1 e et a · 2 e et a · 3 e et a · 4 e et a",
       },
-    },
-    { type: "h", text: "La main droite continue" },
-    { type: "p", text: "Secret fondamental pour jouer les croches et doubles-croches : la main droite (celle qui joue) doit continuer son mouvement pendulaire (bas-haut) même quand elle ne touche pas les cordes. C'est comme un essuie-glace qui bouge en permanence. Les notes sonnent quand la main touche les cordes, mais le mouvement ne s'arrête jamais. Cette continuité est la clé du groove." },
-    { type: "h", text: "Le strumming en croches" },
-    { type: "p", text: "En 4/4, strumming en croches : bas sur chaque chiffre (1, 2, 3, 4), haut sur chaque 'et'. Bas-haut-bas-haut-bas-haut-bas-haut. La main ne s'arrête jamais. Les coups 'haut' sont aussi importants que les coups 'bas'. Pratique ça lentement (60 BPM) avec un accord simple (Am) jusqu'à ce que la régularité soit parfaite." },
-    { type: "h", text: "Le strumming en doubles-croches" },
-    { type: "p", text: "Base du funk : 16 coups par mesure (8 bas, 8 haut alternés). '1 e et a 2 e et a...' On ne joue pas forcément tous les coups — on 'ouvre' et 'ferme' la main selon le rythme voulu. La main continue son mouvement pendulaire mais ne touche les cordes qu'aux moments sélectionnés. C'est le fondement du strumming funk." },
-    { type: "h", text: "Croches vs doubles-croches : entendre la différence" },
-    { type: "p", text: "À 100 BPM : 8 croches par mesure sonnent comme un tempo modéré, fluide. 16 doubles-croches par mesure sonnent comme un flux rapide, dense. Le même accord joué dans les deux rythmes crée des ambiances très différentes. Le rock classique utilise souvent les croches (puissance). Le funk utilise les doubles-croches (groove, légèreté)." },
-    { type: "ref", text: "'Superstition' (Stevie Wonder, 1972) : le riff de clavicorde joue des doubles-croches syncopées. La batterie aussi. C'est le pattern de doubles-croches qui crée le groove irrésistible. Sur guitare, pour reproduire ce son funk, tu dois penser en doubles-croches : main droite qui bouge en permanence à 16 coups par mesure." },
-    { type: "tip", text: "Drill progression : à 70 BPM, joue 2 mesures de noires, 2 de croches, 2 de doubles-croches, puis reviens (doubles-croches → croches → noires). Sans t'arrêter. La transition entre les valeurs doit être fluide. C'est le drill de base de tout professeur de rythme." },
+    } },
+    { type: "question", quizId: "q-rhy-17" },
+    { type: "idee", titre: "Le balancier en croches", texte: [
+      "Bas sur chaque chiffre, haut sur chaque « et ». Les coups hauts comptent autant que les bas.",
+      "Travaille-le à 60 BPM sur La mineur jusqu'à une régularité parfaite : c'est la base du rock et de la pop.",
+    ] },
+    { type: "idee", titre: "Le balancier en doubles-croches", texte: [
+      "Base du funk : 16 allers-retours par mesure, un balancier deux fois plus rapide.",
+      "On ne touche les cordes qu'aux coups choisis ; le mouvement, lui, ne s'arrête jamais, comme un essuie-glace.",
+    ], bloc: DOUBLES },
+    { type: "question", quizId: "q-rhy-02" },
+    { type: "a-toi", titre: "Noires, croches, doubles",
+      consigne: "Sur La mineur, au clic : 2 mesures de noires, 2 de croches, 2 de doubles-croches, puis le chemin inverse, sans t'arrêter. Compte à voix haute : « 1, 2… », « 1 et… », « 1 e et a… ».",
+      bloc: DOUBLES, bpm: 70 },
+    { type: "question", quizId: "q-rhy-18" },
+    { type: "recap", points: [
+      "Croche = un demi-temps (8 par mesure), double-croche = un quart (16).",
+      "On compte « 1 et » en croches, « 1 e et a » en doubles.",
+      "Le balancier ne s'arrête jamais : on choisit seulement quand toucher.",
+    ] },
   ],
   quiz: ["q-rhy-01","q-rhy-02","q-rhy-16","q-rhy-17","q-rhy-18"],
 };

@@ -1,20 +1,25 @@
 // Leçon du module « scales » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
 
 export default {
   id: "scales-c1-03", level: 2,
   title: "Tons et demi-tons : la mesure des distances",
-  duration: 10,
+  duration: 7,
   gropiTip: "Vérifie les demi-tons naturels sur la corde 2 : Si à vide, Do case 1, puis Mi case 5, Fa case 6. Une seule case d'écart à chaque fois, alors que Do→Ré en demande deux.",
-  content: [
-    { type: "p", text: "Maintenant qu'on connaît les 12 sons, il faut apprendre à mesurer les distances entre eux. C'est ici que naissent les concepts de 'ton' et 'demi-ton' — les deux unités fondamentales de toute la théorie musicale. Sans eux, impossible de comprendre une seule gamme." },
-    { type: "h", text: "Le demi-ton : la plus petite distance" },
-    { type: "p", text: "Un demi-ton, c'est l'écart entre deux notes consécutives de la gamme chromatique. Sur la guitare, c'est exactement une case d'écart sur la même corde. Exemples : Do → Do# = 1 demi-ton. Mi → Fa = 1 demi-ton (rappel : entre Mi et Fa il n'y a pas d'altération). Si → Do = 1 demi-ton aussi." },
-    { type: "h", text: "Le ton : deux demi-tons" },
-    { type: "p", text: "Un ton, c'est tout simplement deux demi-tons collés. Sur la guitare, ça correspond à deux cases d'écart. Exemples : Do → Ré = 1 ton (parce que Do → Do# → Ré, soit 2 demi-tons). Sol → La = 1 ton. Fa → Sol = 1 ton." },
-    { type: "h", text: "Les demi-tons naturels (à mémoriser) " },
-    { type: "p", text: "Reprends mentalement les 7 notes naturelles : Do-Ré-Mi-Fa-Sol-La-Si. Entre la plupart des notes, l'écart est d'un ton. SAUF entre Mi et Fa (1 demi-ton), et entre Si et Do (1 demi-ton). Ces deux endroits sont les 'demi-tons naturels' de la gamme. Ils sont au cœur de tout ce qui suit." },
-    {
+  cartes: [
+    { type: "idee", titre: "Le demi-ton : une case", texte: [
+      "Pour comprendre une gamme, il faut mesurer les distances entre les notes. Deux unités suffisent.",
+      "Le demi-ton, la plus petite : une case d'écart sur la même corde. Do → Do#, Mi → Fa, Si → Do.",
+    ] },
+    { type: "idee", titre: "Le ton : deux cases", texte: [
+      "Un ton = deux demi-tons = deux cases. Do → Ré (en passant par Do#), Fa → Sol, Sol → La.",
+      "Sur la corde 4 : Ré à vide, puis Mi en case 2, là où ton majeur se pose dans l'accord de Do. Un ton, deux cases.",
+    ] },
+    { type: "question", quizId: "q-base-11" },
+    { type: "idee", titre: "Les demi-tons naturels", texte: [
+      "Entre deux notes naturelles voisines, l'écart est d'un ton… sauf entre Mi et Fa, et entre Si et Do : un demi-ton seulement.",
+      "Retiens-le : « Mi-Fa, Si-Do, ce sont eux qui se collent ».",
+    ], bloc: {
       type: "note_grid",
       caption: "Demi-tons naturels — Mi→Fa (cases 0-1) et Si→Do (cases 7-8) collés sur corde 6",
       data: {
@@ -30,11 +35,31 @@ export default {
           { fret: 12, label: "Mi",  color: "amber" },
         ],
       },
-    },
-    { type: "h", text: "Pourquoi cette asymétrie est cruciale" },
-    { type: "p", text: "Si tu pars de Do et que tu montes en respectant cette suite ton-ton-demi-ton-ton-ton-ton-demi-ton, tu obtiens automatiquement la gamme majeure de Do. Ce 'pattern' de tons et demi-tons est ce qui crée la sonorité 'majeure'. Si tu changes le pattern, tu obtiens un autre type de gamme (mineure, modale, etc.). Toute la théorie occidentale repose sur ces patterns d'écarts." },
-    { type: "ref", text: "Exercice immédiat : sur la corde de Mi grave, monte case par case en disant à voix haute : 'Mi (case 0) - Fa (case 1, +1/2 ton) - Sol (case 3, +1 ton) - La (case 5, +1 ton) - Si (case 7, +1 ton) - Do (case 8, +1/2 ton) - Ré (case 10, +1 ton) - Mi (case 12, +1 ton)'. Tu viens de jouer la gamme majeure de Mi en parlant à haute voix le pattern T-T-DT-T-T-T-DT." },
-    { type: "tip", text: "Mnémonique pour ne jamais oublier les demi-tons naturels : 'Mi-Fa Si-Do, ce sont eux qui se collent'. Cette phrase pourrait sauver ta vie de musicien." },
+    } },
+    { type: "question", quizId: "q-base-12" },
+    { type: "idee", titre: "Le dessin des écarts fait la gamme", texte: [
+      "De Do à Do, les écarts sont : ton, ton, demi-ton, ton, ton, ton, demi-ton. Ce dessin, c'est la gamme majeure.",
+      "Change le dessin et tu changes de gamme : mineure, modes… Toute la théorie repose sur ces suites d'écarts.",
+    ] },
+    { type: "a-toi", titre: "Do majeur sur une seule corde", consigne: "Sur la corde 2, de Do (case 1) à Do (case 13), une note par clic. Dis l'écart à voix haute : « ton, ton, demi », puis « ton, ton, ton, demi ». Les deux demi-tons tombent sur Mi-Fa et Si-Do.", bloc: {
+      type: "tab",
+      caption: "La gamme de Do majeur sur la corde 2 : Do Ré Mi Fa Sol La Si Do",
+      text: "Tab — corde 2 : cases 1, 3, 5, 6, 8, 10, 12, 13.",
+      data: { lines: [
+        "e|----------------------------|",
+        "B|-1--3--5--6--8--10--12--13--|",
+        "G|----------------------------|",
+        "D|----------------------------|",
+        "A|----------------------------|",
+        "E|----------------------------|",
+      ] },
+    }, bpm: 60 },
+    { type: "question", quizId: "q-scales-51" },
+    { type: "recap", points: [
+      "Demi-ton = 1 case, ton = 2 cases.",
+      "Les deux demi-tons naturels : Mi-Fa et Si-Do.",
+      "Gamme majeure : ton, ton, demi-ton, ton, ton, ton, demi-ton.",
+    ] },
   ],
   quiz: ["q-base-11","q-base-12","q-scales-51"],
 };

@@ -64,7 +64,14 @@ function dansZoneDefilante(cible, racine) {
 // les cartes « Joue-le maintenant » ne s'affichent pas.
 export function LeconCartes({ lesson, state, dispatch, onBack, quiz, carteInitiale, done, onFinish, onJouerMorceau }) {
   const C = useC();
-  const { renderDiagramBlock } = useRenderers();
+  const { renderDiagramBlock: rendreDiagramme, FretboardLesson } = useRenderers();
+  // Le manche interactif n'est pas un diagramme de diagrams.jsx : il a son
+  // propre composant (Fretboard.jsx), comme dans les leçons article.
+  const renderDiagramBlock = useCallback((bloc, cle) => (
+    bloc?.type === "fretboard_interactive"
+      ? (FretboardLesson ? <FretboardLesson key={cle} block={bloc} /> : null)
+      : rendreDiagramme?.(bloc, cle)
+  ), [rendreDiagramme, FretboardLesson]);
   const quizParId = useMemo(() => new Map((quiz || []).map(q => [q.id, q])), [quiz]);
   // Une question liée au quiz qu'on ne sait pas résoudre (quiz non fourni)
   // est retirée plutôt qu'affichée vide.

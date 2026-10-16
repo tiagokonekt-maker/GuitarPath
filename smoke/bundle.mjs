@@ -10643,14 +10643,24 @@ function debutFacultatif(state, units = null) {
   return !(ob.skipped && ob.overallTier === "A1");
 }
 var DATE_ENTRELACEMENT = "2026-10-16";
+var idUniteAvantScission = (id) => {
+  const m = /^(palier-\d+)-\d+$/.exec(id || "");
+  return m ? m[1] : null;
+};
+var valeurUnite = (table, id) => {
+  if (!table) return void 0;
+  if (table[id] != null) return table[id];
+  const ancien = idUniteAvantScission(id);
+  return ancien ? table[ancien] : void 0;
+};
 var avantEntrelacement = (v) => !!v && (typeof v !== "string" || !/^\d{4}-\d{2}-\d{2}/.test(v) || v < DATE_ENTRELACEMENT);
 function leconsOuvertesHistorique(courses, state, headstartCount, facultatif) {
   const ouvertes = /* @__PURE__ */ new Set();
   const completed = Object.fromEntries(Object.entries(state?.completedLessons || {}).filter(([, v]) => avantEntrelacement(v)));
   const claimed = state?.claimedUnits || {};
   const passedAvant = (id) => {
-    const c = state?.unitChecks?.[id];
-    return !!c?.passed && avantEntrelacement(c.lastAttemptAt ?? true) || avantEntrelacement(claimed[id]);
+    const c = valeurUnite(state?.unitChecks, id);
+    return !!c?.passed && avantEntrelacement(c.lastAttemptAt ?? true) || avantEntrelacement(valeurUnite(claimed, id));
   };
   const traces = Object.keys(completed).length > 0 || Object.keys(state?.unitChecks || {}).some(passedAvant) || Object.keys(claimed).some(passedAvant);
   if (!traces) return ouvertes;
@@ -10685,9 +10695,9 @@ function buildPath(content, state) {
     const done = u.lessons.filter((l) => completed[l.id]).length;
     const total = u.lessons.length;
     const lessonsComplete = total > 0 && done === total;
-    const check = checks[u.id] || null;
+    const check = valeurUnite(checks, u.id) || null;
     const checkPassed = !!check?.passed;
-    const bonusClaimed = !!claimed[u.id];
+    const bonusClaimed = !!valeurUnite(claimed, u.id);
     const complete = lessonsComplete && checkPassed;
     const needsCheck = lessonsComplete && !checkPassed;
     const acquis = checkPassed || bonusClaimed;
@@ -12724,6 +12734,13 @@ var LIENS_MORCEAUX = {
   "rhy-c4-02": ["premiers-accords"],
   // Blues shuffle : la grille de 12 mesures, longue-courte.
   "rhy-c5-01": ["blues-en-la"],
+  // Travailler un morceau (lent, boucle A–B, tempo) : sur la grille débutant.
+  "rhy-routine-01": ["premiers-accords"],
+  // Médiator alterné : croches régulières sur une corde (corde 6).
+  "rhy-med-01": ["riff-rock-mi"],
+  // ── Manche ───────────────────────────────────────────────────────────
+  // Power chords : le riff de la leçon reprend ses cases 0, 3, 5 sur la corde 6.
+  "neck-pow-01": ["riff-rock-mi"],
   // ── Gammes ───────────────────────────────────────────────────────────
   // Le riff rock est construit sur la pentatonique de Mi mineur.
   "scales-c3-01": ["riff-rock-mi"],
@@ -12732,6 +12749,10 @@ var LIENS_MORCEAUX = {
   // ── Harmonie ─────────────────────────────────────────────────────────
   // Arpèges : l'accord joué note à note (Do – Lam – Fa – Sol, Lam – Do – Ré – Fa – Mi).
   "harmony-03": ["picking-do-lam-fa-sol", "rising-sun"],
+  // Accords de septième : la même grille La – Ré – Mi en 12 mesures (A7, D7, E7).
+  "harm-acc-02": ["blues-en-la"],
+  // Le petit Fa (xx3211) : les deux grilles le jouent dans cette forme.
+  "harm-acc-03": ["picking-do-lam-fa-sol", "rising-sun"],
   // I-IV-V : le blues de 12 mesures en est la forme type.
   "harm-c6-01": ["blues-en-la"]
 };
@@ -12825,7 +12846,8 @@ function dansZoneDefilante(cible, racine) {
 }
 function LeconCartes({ lesson, state, dispatch, onBack, quiz, carteInitiale, done, onFinish, onJouerMorceau }) {
   const C = useC();
-  const { renderDiagramBlock: renderDiagramBlock2 } = useRenderers();
+  const { renderDiagramBlock: rendreDiagramme, FretboardLesson: FretboardLesson2 } = useRenderers();
+  const renderDiagramBlock2 = useCallback((bloc, cle2) => bloc?.type === "fretboard_interactive" ? FretboardLesson2 ? /* @__PURE__ */ jsx7(FretboardLesson2, { block: bloc }, cle2) : null : rendreDiagramme?.(bloc, cle2), [rendreDiagramme, FretboardLesson2]);
   const quizParId = useMemo(() => new Map((quiz || []).map((q) => [q.id, q])), [quiz]);
   const cartes = useMemo(
     () => (lesson.cartes || []).filter((c) => c.type !== "question" || resoudreQuestion(c, quizParId)),

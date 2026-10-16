@@ -27,10 +27,20 @@ import * as harmC702 from "./harm-c7-02.js";
 import * as harmC703 from "./harm-c7-03.js";
 import * as harmC801 from "./harm-c8-01.js";
 import * as harmC802 from "./harm-c8-02.js";
+import * as harmAcc01 from "./harm-acc-01.js";
+import * as harmAcc02 from "./harm-acc-02.js";
+import * as harmAcc03 from "./harm-acc-03.js";
+import * as harmAcc04 from "./harm-acc-04.js";
+import * as harmAcc05 from "./harm-acc-05.js";
 
 export const LECONS = [
   harmC101,
   harmC102,
+  harmAcc01,   // palier 2 : La, Mi, Ré mineur (accords ouverts)
+  harmAcc02,   // palier 3 : E7, A7, D7, B7
+  harmAcc03,   // palier 4 : petit Fa puis Fa complet
+  harmAcc04,   // palier 4 : barré forme Mi (après le Fa complet)
+  harmAcc05,   // palier 4 : barré forme La (après la forme Mi)
   harmC201,
   harmC202,
   harmC203,

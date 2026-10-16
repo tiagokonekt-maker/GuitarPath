@@ -1,23 +1,37 @@
 // Leçon du module « impro » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
+
+const TROIS_NOTES = { type: "fretboard", caption: "Tes 3 notes en La mineur : La (fondamentale), Do (tierce mineure), Mi (quinte)", data: {frets: 5, startFret: 4, showStringNames: true, showFretNumbers: true, markerFrets: [5,7,9], notes: [{string: 6, fret: 5, label: "La", color: "amber", root: true}, {string: 6, fret: 8, label: "Do", color: "primary"}, {string: 5, fret: 7, label: "Mi", color: "primary"}]} };
 
 export default {
   id: "impro-intro-01", level: 2,
   title: "Ta première improvisation : 3 notes, en rythme",
-  duration: 8,
+  duration: 7,
   gropiTip: "Choisis un motif noire-noire-blanche et place La, Do et Mi une fois chacun : il existe 6 ordres possibles, donc déjà 6 phrases différentes sur le même rythme.",
-  content: [
-    { type: "p", text: "Improviser ne veut pas dire connaître toute la pentatonique par cœur, ni jouer vite. Ça veut dire faire des choix — même avec très peu de matière — et les assumer. Cette leçon te donne ta toute première impro, avec seulement 3 notes." },
-    { type: "h", text: "Le piège du débutant" },
-    { type: "p", text: "Beaucoup pensent qu'il faut d'abord maîtriser les 5 positions de la pentatonique avant de pouvoir improviser 'pour de vrai'. C'est faux, et ça retarde inutilement le plaisir de jouer. Avec 3 notes bien placées rythmiquement, tu improvises déjà — au sens plein du terme." },
-    { type: "h", text: "L'exercice : 3 notes, une pulsation" },
-    { type: "p", text: "Prends juste 3 notes : La, Do et Mi, les notes de l'accord de La mineur que tu connais depuis Premiers pas (plus tard, tu les retrouveras comme fondamentale, tierce mineure et quinte de la pentatonique mineure). Sur un backing ou un métronome, joue UNIQUEMENT ces 3 notes pendant 2 minutes. Ta seule variable : QUAND tu les joues, pas lesquelles." },
-    { type: "fretboard", caption: "Tes 3 notes en La mineur : La (fondamentale), Do (tierce mineure), Mi (quinte)", data: {frets: 5, startFret: 4, showStringNames: true, showFretNumbers: true, markerFrets: [5,7,9], notes: [{string: 6, fret: 5, label: "La", color: "amber", root: true}, {string: 6, fret: 8, label: "Do", color: "primary"}, {string: 5, fret: 7, label: "Mi", color: "primary"}]} },
-    { type: "rhythm_grid", caption: "Une idée rythmique pour tes 3 notes : une attaque sur le 1, le « et de 2 » et le 4, du silence ailleurs", data: {beats: 4, subdivision: 8, highlights: [0,3,6], muted: [1,2,4,5,7], label: "1 · – · – · [et] · – · – · 4 · –"} },
-    { type: "h", text: "Pourquoi le rythme d'abord" },
-    { type: "p", text: "Une seule note bien placée dans le temps vaut mieux qu'une gamme entière jouée sans intention. Le rythme est le langage principal de l'expression musicale ; le choix des notes vient après, une fois que tu as un petit stock 'sûr' dans les doigts." },
-    { type: "ref", text: "B.B. King est resté toute sa carrière l'un des guitaristes les plus reconnaissables, avec un vocabulaire de notes volontairement restreint. Ce qui rend son jeu inoubliable, ce n'est pas la quantité de notes : c'est leur placement et leur intention." },
-    { type: "tip", text: "Drill (2 min) : en La mineur, prends La (corde 6, case 5), Do (corde 6, case 8), Mi (corde 5, case 7). Lance un métronome à 70 BPM. Joue seulement ces 3 notes, en variant le rythme et les silences — jamais les notes elles-mêmes." },
+  cartes: [
+    { type: "idee", titre: "Improviser, c'est choisir", texte: [
+      "Improviser, ce n'est ni connaître toute la pentatonique, ni jouer vite : c'est faire des choix, même avec très peu de matière.",
+      "Trois notes bien placées, c'est déjà improviser.",
+    ] },
+    { type: "idee", titre: "Trois notes que tu joues déjà", texte: [
+      "Tes trois notes : La, Do et Mi. Tu les joues déjà ensemble, dans un des accords de Premiers pas. Plus tard, tu les retrouveras dans la pentatonique mineure.",
+    ] },
+    { type: "question", quizId: "q-impro-33" },
+    { type: "idee", titre: "Sous la main, case 5", texte: [
+      "Pour improviser, on les prend sur les cordes graves, groupées : La (corde 6, case 5), Mi (corde 5, case 7).",
+      "Et Do ? Sur la corde 6 lui aussi, trois demi-tons au-dessus de La. La main ne bouge pas.",
+    ] },
+    { type: "question", quizId: "q-impro-36" },
+    { type: "idee", titre: "Le rythme d'abord", texte: [
+      "Ta seule variable : QUAND tu joues, pas QUOI. Une note bien placée vaut mieux qu'une gamme jouée sans intention : B.B. King l'a prouvé toute sa carrière, avec peu de notes.",
+    ], bloc: { type: "rhythm_grid", caption: "Une idée rythmique pour tes 3 notes : une attaque sur le 1, le « et de 2 » et le 4, du silence ailleurs", data: {beats: 4, subdivision: 8, highlights: [0,3,6], muted: [1,2,4,5,7], label: "1 · – · – · [et] · – · – · 4 · –"} } },
+    { type: "a-toi", titre: "Deux minutes, trois notes", consigne: "Index sur La, auriculaire sur Do, annulaire sur Mi. Au clic, varie le rythme et les silences, jamais les notes. Pars du motif 1, « et » du 2, 4, puis invente les tiens.", bloc: TROIS_NOTES, bpm: 70, minuteur: 120 },
+    { type: "question", quizId: "q-impro-32" },
+    { type: "recap", points: [
+      "Improviser = faire des choix, même avec trois notes.",
+      "La, Do, Mi : les notes de La mineur, case 5 sur les cordes 6 et 5.",
+      "Le rythme d'abord : varie quand tu joues, pas quoi.",
+    ] },
   ],
   quiz: ["q-impro-32","q-impro-33","q-impro-36"],
 };

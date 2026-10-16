@@ -1,24 +1,16 @@
 // Leçon du module « neck » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
 
 export default {
   id: "neck-c1-01", level: 1,
   title: "Architecture du manche",
-  duration: 8,
+  duration: 7,
   gropiTip: "La case 12 est pile au milieu de la corde : mesure du sillet à la 12e frette, puis de la 12e frette au chevalet, c'est (presque) la même longueur. Moitié de corde = une octave.",
-  content: [
-    { type: "p", text: "Dans Premiers pas, tu as appris le nom des cordes et à t'accorder ; ici, on va plus loin. Avant de mémoriser quoi que ce soit, il faut comprendre comment le manche de la guitare est construit. Cette compréhension va te faire gagner des semaines d'apprentissage : tu vas voir que le manche n'est pas un labyrinthe, mais une structure logique qui obéit à quelques règles simples." },
-    { type: "h", text: "Les cordes et leur accordage standard" },
-    { type: "p", text: "Une guitare classique a 6 cordes. De la plus grave (la plus épaisse) à la plus aiguë (la plus fine), elles sont accordées en : Mi - La - Ré - Sol - Si - Mi. On les numérote de 6 (la plus grave) à 1 (la plus aiguë). Cet accordage 'standard' est de loin le plus répandu." },
-    { type: "h", text: "Pourquoi cet accordage ?" },
-    { type: "p", text: "Cinq des six cordes sont espacées d'une quarte juste (5 demi-tons). Mais entre les cordes 3 (Sol) et 2 (Si), l'écart est seulement d'une tierce majeure (4 demi-tons). C'est l'unique 'cassure' de l'accordage standard, héritée de la guitare baroque. Cette anomalie facilite les accords ouverts comme Do, Sol, Ré (plus jouables avec les doigts), au prix d'une légère asymétrie de visualisation." },
-    { type: "h", text: "Conséquence pratique" },
-    { type: "p", text: "Quand tu déplaces une forme d'accord ou de gamme entre des cordes adjacentes, tu décales de +5 cases (quarte). Mais entre la corde 3 et la corde 2, tu dois décaler de +4 cases (tierce majeure). C'est la 'règle de la cassure'. Elle explique la plupart des bizarreries que tu rencontres en jouant." },
-    { type: "h", text: "Les frettes : comment ça marche" },
-    { type: "p", text: "Les barres métalliques perpendiculaires aux cordes s'appellent des 'frettes'. Quand tu appuies sur une corde entre deux frettes, tu réduis la longueur vibrante de la corde, ce qui produit une note plus aiguë. Chaque case (= espace entre deux frettes) représente exactement un demi-ton (la plus petite distance possible en musique occidentale)." },
-    { type: "h", text: "Récap : 1 case = 1 demi-ton" },
-    { type: "p", text: "Cette équivalence est ta meilleure amie. Monter d'une case sur la même corde = +1 demi-ton. Monter de deux cases = +1 ton (= 2 demi-tons). Toute la théorie musicale se traduit directement en cases sur le manche. Une fois que tu intègres ça, tu peux 'voir' n'importe quelle gamme ou accord sur la guitare." },
-    {
+  cartes: [
+    { type: "idee", titre: "1 case = 1 demi-ton", texte: [
+      "Tu connais les cordes, Mi La Ré Sol Si Mi. Voyons comment le manche est construit : ce n'est pas un labyrinthe.",
+      "Chaque case monte d'un demi-ton, la plus petite distance de notre musique. Deux cases = un ton. Sur la corde 6, la case 12, marquée d'un double point, ramène Mi une octave plus haut.",
+    ], bloc: {
       type: "note_grid",
       caption: "Corde 6 — 1 case = 1 demi-ton. Mi grave → Mi aigu en 12 cases",
       data: {
@@ -34,15 +26,41 @@ export default {
           { fret: 12, label: "Mi",  color: "amber" },
         ],
       },
-    },
-    { type: "tip", text: "Mnémonique pour retenir l'accordage standard : 'Mi La Ré Sol Si Mi' (du grave à l'aigu). En anglais : 'E A D G B E' (Eddie Ate Dynamite Good Bye Eddie). Cette base est non-négociable." },{ type: "h", text: "Une même note, partout sur le manche" },
-          { type: "p", text: "Voici la conséquence directe de tout ce qu'on vient de voir : la note Do, par exemple, n'existe pas qu'à un seul endroit. Elle apparaît sur chaque corde, à une case différente selon l'accordage de cette corde. Regarde où elle se trouve sur les 6 cordes — ce sont exactement les mêmes cases-demi-tons qu'on vient d'expliquer, juste appliquées 6 fois." },
-          { type: "fretboard", caption: "Toutes les positions de la note Do sur le manche", data: { frets: 12, startFret: 0, showStringNames: true, showFretNumbers: true, markerFrets: [3,5,7,9,12], notes: [{ string: 6, fret: 8, label: "Do", color: "primary", root: true },{ string: 5, fret: 3, label: "Do", color: "primary", root: true },{ string: 4, fret: 10, label: "Do", color: "primary", root: true },{ string: 3, fret: 5, label: "Do", color: "primary", root: true },{ string: 2, fret: 1, label: "Do", color: "primary", root: true },{ string: 1, fret: 8, label: "Do", color: "primary", root: true }] } },
-          { type: "p", text: "Remarque : sur les cordes 6 et 1 (toutes les deux accordées en Mi), le Do tombe à la même case, case 8. Logique, elles ont le même accordage. Mais regarde la corde 2 (Si) : le Do y tombe case 1, beaucoup plus tôt que sur les autres cordes. C'est exactement la cassure dont on vient de parler qui produit ce décalage." },
-          { type: "h", text: "À toi de jouer" },
-          { type: "p", text: "Avant de continuer, un rapide test pour vérifier que la notion case=demi-ton est bien passée. Pas besoin d'aller vite, prends le temps de calculer plutôt que de deviner." },
-          { type: "fretboard_interactive", mode: "quiz", quizTarget: "A", instructions: "Trouve toutes les positions de la note La sur le manche (indice : tu en connais déjà une, c'est une corde à vide)." },
-          
+    } },
+    { type: "question", quizId: "q-base-02" },
+    { type: "idee", titre: "Des cordes espacées d'une quarte", texte: [
+      "Entre deux cordes voisines, il y a presque toujours une quarte juste : 5 demi-tons.",
+      "C'est le principe que tu utilises pour t'accorder : la case 5 d'une corde sonne comme la corde plus aiguë voisine, à vide. Avec une exception, on y vient.",
+    ] },
+    { type: "question", quizId: "q-base-01" },
+    { type: "idee", titre: "L'unique cassure : Sol → Si", texte: [
+      "Entre les cordes 3 (Sol) et 2 (Si), l'écart n'est que d'une tierce majeure : 4 demi-tons. Il rend Do, Sol et Ré plus faciles à doigter.",
+      "Conséquence : pour déplacer une forme d'une corde à la voisine, on décale de 5 cases… sauf entre les cordes 3 et 2, où l'on décale de 4.",
+    ], bloc: { type: "fretboard_interactive", mode: "quiz", quizTarget: "A", instructions: "Trouve toutes les positions de la note La sur le manche (indice : tu en connais déjà une, c'est une corde à vide)." } },
+    { type: "question", quizId: "q-neck-01" },
+    { type: "idee", titre: "Une même note, six places", texte: [
+      "Do existe sur chaque corde, à une case différente. Sur les cordes 6 et 1, toutes deux en Mi, il tombe à la même case, la 8.",
+      "Sur la corde 2, il arrive dès la case 1 : c'est la cassure qui produit ce décalage.",
+    ], bloc: { type: "fretboard", caption: "Toutes les positions de la note Do sur le manche", data: { frets: 12, startFret: 0, showStringNames: true, showFretNumbers: true, markerFrets: [3,5,7,9,12], notes: [{ string: 6, fret: 8, label: "Do", color: "primary", root: true },{ string: 5, fret: 3, label: "Do", color: "primary", root: true },{ string: 4, fret: 10, label: "Do", color: "primary", root: true },{ string: 3, fret: 5, label: "Do", color: "primary", root: true },{ string: 2, fret: 1, label: "Do", color: "primary", root: true },{ string: 1, fret: 8, label: "Do", color: "primary", root: true }] } } },
+    { type: "a-toi", titre: "Entends la cassure", consigne: "Joue chaque paire : case 5, puis la corde suivante à vide. Les deux notes sont identiques… sauf entre les cordes 3 et 2, où il faut la case 4. Écoute d'abord, puis joue-le lentement au clic.", bloc: {
+      type: "tab",
+      caption: "Les cordes deux par deux : case 5, puis corde à vide — case 4 sur la corde 3",
+      text: "Tab — corde 6 case 5, corde 5 à vide ; corde 5 case 5, corde 4 à vide ; corde 4 case 5, corde 3 à vide ; corde 3 case 4, corde 2 à vide ; corde 2 case 5, corde 1 à vide.",
+      data: { lines: [
+        "e|----------------------------0--|",
+        "B|----------------------0--5-----|",
+        "G|----------------0--4-----------|",
+        "D|----------0--5-----------------|",
+        "A|----0--5-----------------------|",
+        "E|-5-----------------------------|",
+      ] },
+    }, bpm: 60 },
+    { type: "question", quizId: "q-neck-03" },
+    { type: "recap", points: [
+      "1 case = 1 demi-ton, 2 cases = 1 ton, 12 cases = l'octave.",
+      "Cordes voisines à une quarte (5 cases), sauf Sol → Si : une tierce majeure (4 cases).",
+      "Chaque note existe à plusieurs endroits du manche, sur presque chaque corde.",
+    ] },
   ],
   quiz: ["q-base-01","q-base-02","q-neck-01","q-neck-02","q-neck-03","q-neck-04"],
 };

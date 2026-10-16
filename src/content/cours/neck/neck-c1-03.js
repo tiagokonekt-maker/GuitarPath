@@ -1,47 +1,84 @@
 // Leçon du module « neck » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
+
+const CORDE_6 = {
+  type: "fretboard",
+  caption: "Corde 6 — les notes sous les points des cases 3, 5, 7, 9 et 12",
+  data: {
+    frets: 12, startFret: 0,
+    showStringNames: false, showFretNumbers: true,
+    markerFrets: [3, 5, 7, 9, 12],
+    notes: [
+      { string: 6, fret: 3,  label: "Sol", color: "amber" },
+      { string: 6, fret: 5,  label: "La",  color: "green" },
+      { string: 6, fret: 7,  label: "Si",  color: "neutral" },
+      { string: 6, fret: 9,  label: "Do#", color: "neutral" },
+      { string: 6, fret: 12, label: "Mi",  color: "amber", root: true },
+    ],
+  },
+};
+
+const CORDES_6_ET_5 = {
+  type: "fretboard",
+  caption: "Tes ancres sur les cordes 6 et 5 — pars du point le plus proche",
+  data: {
+    frets: 12, startFret: 0,
+    showStringNames: true, showFretNumbers: true,
+    markerFrets: [3, 5, 7, 9, 12],
+    notes: [
+      { string: 6, fret: 3,  label: "Sol", color: "amber" },
+      { string: 6, fret: 5,  label: "La",  color: "green" },
+      { string: 6, fret: 7,  label: "Si",  color: "neutral" },
+      { string: 6, fret: 12, label: "Mi",  color: "amber", root: true },
+      { string: 5, fret: 3,  label: "Do",  color: "primary" },
+      { string: 5, fret: 5,  label: "Ré",  color: "green" },
+      { string: 5, fret: 7,  label: "Mi",  color: "neutral" },
+      { string: 5, fret: 12, label: "La",  color: "amber", root: true },
+    ],
+  },
+};
 
 export default {
   id: "neck-c1-03", level: 3,
   title: "Les amers visuels du manche",
-  duration: 7,
+  duration: 6,
   gropiTip: "Bonne nouvelle : la corde 1 porte exactement les mêmes notes que la corde 6, deux octaves plus haut. Tes repères Sol (3), La (5), Si (7) et Mi (12) valent pour les deux cordes de Mi.",
-  content: [
-    { type: "p", text: "Tu as sûrement remarqué que ta guitare a des points (ou parfois des incrustations plus élaborées) à certaines cases du manche. Ce ne sont pas des décorations : ce sont tes amers de navigation. Sans eux, tu serais perdu sur un manche de 22 cases. Avec eux, tu navigues à l'aise." },
-    { type: "h", text: "Les positions des points" },
-    { type: "p", text: "Sur la quasi-totalité des guitares, les points sont aux cases 3, 5, 7, 9, et 12 (avec un double point pour la 12). Puis le cycle reprend : 15, 17, 19, 21, 24. Ces emplacements ne sont pas aléatoires. Ils correspondent à des notes-clés et à des intervalles importants depuis la corde à vide." },
-    { type: "h", text: "Pourquoi ces cases précisément ?" },
-    { type: "p", text: "Les cases 3, 5, 7, 9 sont les 'demi-tons piliers' : ils marquent des intervalles importants depuis la corde à vide. Sur la corde de Mi : case 3 = Sol (tierce mineure), case 5 = La (quarte juste), case 7 = Si (quinte juste), case 9 = Do# (sixte majeure), case 12 = Mi (octave). Ces cases sont des références harmoniques que les fabricants ont choisies pour faciliter ta navigation." },
-    { type: "h", text: "Les notes-repères principales" },
-    { type: "p", text: "Mémorise dès maintenant ces 4 'notes-repères' qui sont à la base de toute navigation sur la corde 6 : case 3 = Sol, case 5 = La, case 7 = Si, case 12 = Mi (octave). Avec ces 4 notes, tu peux déduire toutes les autres en remontant ou descendant d'1-2 cases. C'est ton GPS." },
-    {
-      type: "fretboard",
-      caption: "Amers du manche — points aux cases 3, 5, 7, 9 et double-point case 12",
-      data: {
-        frets: 12, startFret: 0,
-        showStringNames: false, showFretNumbers: true,
-        markerFrets: [3, 5, 7, 9, 12],
-        notes: [
-          { string: 6, fret: 3,  label: "Sol", color: "amber" },
-          { string: 6, fret: 5,  label: "La",  color: "green" },
-          { string: 6, fret: 7,  label: "Si",  color: "neutral" },
-          { string: 6, fret: 9, label: "Do#", color: "neutral" },
-          { string: 6, fret: 12, label: "Mi",  color: "amber", root: true },
-        ],
-      },
-    },
-    { type: "h", text: "Sur la corde de La (5e)" },
-    { type: "p", text: "Mêmes amers visuels (cases 3, 5, 7, 9, 12), mais notes différentes. Case 3 = Do, case 5 = Ré, case 7 = Mi, case 12 = La (octave). Mémorise ces 4 notes aussi : ce sont les fondamentales des accords majeurs ouverts les plus utilisés." },
-    { type: "h", text: "Méthode pédagogique : ancrer 4 notes par corde" },
-    { type: "p", text: "Au lieu d'essayer de mémoriser les 12 notes de chaque corde d'un coup (impossible), apprends 4 notes par corde aux cases 3, 5, 7 et 12 (celles qui portent un point). Ces 4 notes par corde × 6 cordes = 24 notes ancrées. À partir de ces ancres, tu déduis le reste par voisinage (case d'à côté = +1 ou -1 demi-ton). C'est la méthode la plus efficace." },
-    { type: "ref", text: "Sur la plupart des guitares de qualité (Gibson, Fender, Martin, Taylor...), les amers ont des designs spécifiques selon le luthier. Les Les Paul ont des trapèzes de nacre, les Stratocaster des points blancs, les Telecaster aussi. Mais dans tous les cas, leur emplacement est identique : cases 3, 5, 7, 9, 12, 15, 17, 19, 21." },
-    { type: "tip", text: "Drill quotidien (1 minute) : ferme les yeux, mets ton index sur une case au hasard. Ouvre les yeux et nomme la note instantanément. Refais 10 fois. En 2 semaines, ton cerveau aura cartographié le manche." },
+  cartes: [
+    { type: "idee", titre: "Des points, pas des décorations", texte: [
+      "Les points incrustés sur le manche sont tes repères de navigation. Sans eux, toutes les cases se ressemblent.",
+      "Presque toutes les guitares les placent aux cases 3, 5, 7, 9 et 12, avec un double point en 12 : l'octave de la corde à vide. Puis le cycle reprend : 15, 17, 19, 21.",
+    ] },
+    { type: "question", quizId: "q-base-15" },
+    { type: "idee", titre: "Quatre notes-repères sur la corde 6", texte: [
+      "Sous les points de la corde 6 : Sol en case 3, La en case 5, Si en case 7, et Mi en case 12, l'octave.",
+      "Le point de la case 9 tombe sur Do#. Ces quatre repères sont ton GPS.",
+    ], bloc: CORDE_6 },
+    { type: "question", quizId: "q-neck-40" },
+    { type: "idee", titre: "Sur la corde 5", texte: [
+      "Mêmes points, autres notes. Do sous le point de la case 3, Ré sous celui de la case 5, La en case 12.",
+      "Et sous le point de la case 7 ? Compte deux cases depuis Ré.",
+    ] },
+    { type: "question", quizId: "q-neck-p34-01" },
+    { type: "idee", titre: "Ancrer, puis compter", texte: [
+      "N'apprends pas les 12 notes de chaque corde d'un coup. Ancre d'abord celles des points, puis déduis le reste par voisinage.",
+      "Une case plus haut : un demi-ton plus haut. Une case plus bas : un demi-ton plus bas.",
+    ] },
+    { type: "question", quizId: "q-neck-41" },
+    { type: "a-toi", titre: "Les yeux fermés",
+      consigne: "Ferme les yeux et pose l'index sur la corde 6 ou 5, à une case au hasard entre 1 et 12. Ouvre-les, repère le point le plus proche et nomme la note. Le plus d'essais possible en une minute.",
+      bloc: CORDES_6_ET_5, minuteur: 60 },
+    { type: "recap", points: [
+      "Les points sont aux cases 3, 5, 7, 9 et 12 (double point : l'octave).",
+      "Corde 6 : Sol 3, La 5, Si 7, Mi 12. Corde 5 : Do 3, Ré 5, Mi 7, La 12.",
+      "Pars du point le plus proche et compte : une case = un demi-ton.",
+    ] },
   ],
-  quiz: ["q-base-15","q-neck-40","q-neck-41"],
+  quiz: ["q-base-15","q-neck-40","q-neck-41","q-neck-p34-01"],
 };
 
 export const quiz = [
   {id:"q-base-15",courseId:"neck",lessonId:"neck-c1-03",lvl:2,q:"Quelle case porte traditionnellement un repère double sur le manche ?",o:["La 7e","La 9e","La 12e","La 5e"],a:2,exp:"Les repères simples sont aux cases 3, 5, 7 et 9 ; la case 12 porte un repère double car elle marque l'octave complète.",xp:35},
   {id:"q-neck-40",courseId:"neck",lessonId:"neck-c1-03",lvl:1,q:"Sur la corde 6, quelle note se trouve sous le point de la case 5 ?",o:["La","Sol","Si","Do"],a:0,exp:"Corde 6 : case 3 = Sol, case 5 = La, case 7 = Si, case 12 = Mi. Ces quatre notes-repères, sous les points, servent d'ancres pour déduire les autres.",xp:30},
   {id:"q-neck-41",courseId:"neck",lessonId:"neck-c1-03",lvl:2,q:"Tu connais Sol à la case 3 de la corde 6. Quelle note joues-tu juste à côté, case 4 ?",o:["Sol#","La","Fa#","Sol♭"],a:0,exp:"Une case plus haut = un demi-ton plus haut : Sol devient Sol# (qu'on peut aussi écrire La♭). C'est la méthode des ancres : partir d'une note connue et compter les cases.",xp:40},
+  {id:"q-neck-p34-01",courseId:"neck",lessonId:"neck-c1-03",lvl:1,q:"Sur la corde 5, quelle note se trouve sous le point de la case 7 ?",o:["Mi","Ré","Fa","Do"],a:0,exp:"Corde 5 : Do en case 3, Ré en case 5, puis deux cases plus haut (un ton) Mi en case 7. Les points de la corde 5 donnent Do, Ré, Mi : trois notes qui se suivent.",xp:30},
 ];

@@ -158,4 +158,6 @@ export default [
     ],
     tip:"Les fondamentales = tes ancres visuelles. Avant de voir les accords, vois les fondamentales."
   },
+
+  {id:"ex-neck-pow-01",mod:"neck",lvl:1,title:"Power chords qui voyagent",dur:8,bpm:70,unlockedBy:["neck-pow-01"],courseLink:"neck-pow-01",steps:["E5 (022xxx) puis A5 (x022xx) : trois cordes seulement, les autres muettes.","Forme mobile sur la corde 6 : Sol (corde 6 case 3) pour G5, La (corde 6 case 5) pour A5.","Sur la corde 5 : Do (corde 5 case 3) pour C5, Ré (corde 5 case 5) pour D5.","Riff au clic à 70 : E5, E5, G5, E5, A5, E5, G5, E5, en croches, coups vers le bas et palm mute léger."],tip:"Garde la forme figée en te déplaçant : seul le bras bouge, les doigts ne changent pas d'écart.",xp:50},
 ];

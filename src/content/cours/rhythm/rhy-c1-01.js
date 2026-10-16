@@ -1,18 +1,16 @@
 // Leçon du module « rhythm » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
 
 export default {
   id: "rhy-c1-01", level: 1,
   title: "Qu'est-ce que le rythme ?",
-  duration: 8,
+  duration: 6,
   gropiTip: "Mets le métronome à 60 BPM, compte 4 temps avec lui, puis coupe le son et continue à taper du pied. Rallume-le au bout de 8 temps : tombes-tu encore pile sur le clic ?",
-  content: [
-    { type: "p", text: "Le rythme est le premier langage musical de l'être humain. Bien avant les notes, bien avant les gammes, il y avait le battement du cœur, les pas de marche, les mains qui frappent. Le rythme précède la mélodie de plusieurs millénaires dans l'histoire de l'humanité. Et pourtant, c'est souvent la dimension la plus négligée par les guitaristes qui se concentrent sur les notes." },
-    { type: "h", text: "Définition : 3 concepts à distinguer" },
-    { type: "p", text: "Le rythme désigne 3 choses souvent confondues. La pulsation (ou 'pulse') = le battement régulier et constant qui sous-tend la musique. C'est ce que le métronome produit, ce que tu ressens quand tu tapes du pied. Le tempo = la vitesse de cette pulsation, mesurée en BPM (Battements Par Minute). 60 BPM = 1 battement par seconde. 120 BPM = 2 battements par seconde. Le rythme musical = la façon dont les notes s'organisent PAR RAPPORT à la pulsation. Court, long, entre les temps, sur les temps." },
-    { type: "h", text: "La pulsation : l'ancre de tout" },
-    { type: "p", text: "La pulsation est le fondement absolu de la musique rythmique. Sans pulsation stable, pas de groove, pas d'ensemble, pas de communication entre musiciens. C'est pour ça que le métronome est l'outil n°1 de tout musicien qui se prend au sérieux. Jouer 'en mesure' signifie jouer en cohérence avec une pulsation régulière." },
-    {
+  cartes: [
+    { type: "idee", titre: "La pulsation, l'ancre", texte: [
+      "Le rythme mélange trois idées souvent confondues. La première, la pulsation : un battement régulier, celui que tu tapes du pied, celui que produit le métronome.",
+      "Sans pulsation stable, pas de groove ni de jeu à plusieurs. Jouer « en mesure », c'est rester calé dessus.",
+    ], bloc: {
       type: "rhythm_grid",
       caption: "La pulsation — 4 battements strictement égaux",
       data: {
@@ -20,15 +18,29 @@ export default {
         accents: [],
         label: "1 · 2 · 3 · 4 — même durée, sans exception",
       },
-    },
-    { type: "h", text: "Le tempo : plus qu'une vitesse" },
-    { type: "p", text: "Le tempo ne définit pas seulement la vitesse d'une chanson — il en définit aussi l'ambiance. Un même morceau joué à 60 BPM (très lent) n'évoque pas la même chose qu'à 160 BPM (rapide). Les ballades tristes tournent autour de 60-80 BPM. Le rock énergique : 120-160 BPM. Le funk : souvent 90-110 BPM (plus lent qu'on ne le pense). Le bebop jazz : parfois 240-300 BPM (vertigineux)." },
-    { type: "h", text: "Le rythme musical : l'organisation des notes" },
-    { type: "p", text: "Sur la base d'une pulsation stable, les notes peuvent être placées de mille façons différentes. Longues ou courtes. Sur le temps ou entre les temps. Régulières ou irrégulières. Cette organisation constitue le rythme musical proprement dit. Deux mélodies identiques (mêmes notes) jouées avec des rythmes différents donnent des morceaux complètement différents." },
-    { type: "h", text: "Rythme interne vs rythme externe" },
-    { type: "p", text: "Les grands musiciens ont un 'rythme interne' : une pulsation intégrée qui ne dépend pas d'une source externe (métronome, batteur). Ce sens du temps intérieur s'appelle le 'inner time' ou 'pocket'. Il se développe par années de pratique au métronome. L'objectif ultime : que ton corps soit le métronome." },
-    { type: "ref", text: "James Brown, le 'Godfather of Soul', avait un sens du rythme si précis qu'il pouvait arrêter et reprendre une chanson n'importe où en claquant des doigts, et l'orchestre entier le suivait sans décalage. Ce n'est pas un don — c'est le résultat de milliers d'heures de pratique rythmique. Son secret : il faisait autant attention au rythme qu'aux notes." },
-    { type: "tip", text: "Exercice fondamental : tape le pied sur les temps (1-2-3-4) en gardant un tempo parfaitement régulier pendant 1 minute. Facile ? Maintenant fais-le à 60 BPM en regardant une montre. Sans accélérer, sans ralentir. Si tu dévies, recommence. Ce simple exercice révèle la qualité de ton sens rythmique interne." },
+    } },
+    { type: "question", quizId: "q-base-07" },
+    { type: "idee", titre: "Le tempo, en BPM", texte: [
+      "Le tempo, c'est la vitesse de la pulsation, en battements par minute (BPM). À 60 BPM, un battement par seconde.",
+      "Il donne aussi l'ambiance : ballades vers 60–80 BPM, funk souvent 90–110, rock énergique 120–160.",
+    ] },
+    { type: "question", quizId: "q-base-06" },
+    { type: "a-toi", titre: "Une minute sur la pulsation", consigne: "Pose Mi mineur. Tape du pied avec le clic et gratte un coup vers le bas par battement, en comptant « 1, 2, 3, 4 ». Une minute sans accélérer ni ralentir : plus dur qu'il n'y paraît.", bloc: { type: "strum_pattern", caption: "4 noires vers le bas — compte « 1, 2, 3, 4 »", data: { pattern: ["B", "B", "B", "B"], beats: 4, style: "folk", bpm: 60 } }, bpm: 60, minuteur: 60 },
+    { type: "idee", titre: "Le rythme, ce qu'on pose dessus", texte: [
+      "Troisième idée : le rythme musical, la façon dont les notes se placent par rapport à la pulsation. Longues ou courtes, sur le temps ou entre les temps.",
+      "Mêmes notes, autre rythme : un tout autre morceau.",
+    ] },
+    { type: "question", quizId: "q-rhy-28" },
+    { type: "idee", titre: "Le temps intérieur", texte: [
+      "Les grands musiciens ont une pulsation intégrée, qui ne dépend ni d'un métronome ni d'un batteur. James Brown arrêtait et relançait son orchestre d'un claquement de doigts.",
+      "Ce n'est pas un don : ça se construit, séance après séance, au métronome.",
+    ] },
+    { type: "question", quizId: "q-rhy-27" },
+    { type: "recap", points: [
+      "Pulsation = le battement régulier ; tempo = sa vitesse, en BPM.",
+      "Le rythme, c'est la place des notes sur cette pulsation.",
+      "Le métronome construit ton temps intérieur.",
+    ] },
   ],
   quiz: ["q-base-06","q-base-07","q-rhy-27","q-rhy-28"],
 };

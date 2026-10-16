@@ -22,11 +22,15 @@ import * as rhyC504 from "./rhy-c5-04.js";
 import * as rhyC505 from "./rhy-c5-05.js";
 import * as rhyC601 from "./rhy-c6-01.js";
 import * as rhyC602 from "./rhy-c6-02.js";
+import * as rhyRoutine01 from "./rhy-routine-01.js";
+import * as rhyMed01 from "./rhy-med-01.js";
+import * as rhyMed02 from "./rhy-med-02.js";
 
 export const LECONS = [
   rhyC101,
   rhyC102,
   rhyC103,
+  rhyRoutine01, // palier 2 : routine de pratique (après le métronome)
   rhyC201,
   rhyC202,
   rhyC203,
@@ -35,7 +39,9 @@ export const LECONS = [
   rhyC302,
   rhyC303,
   rhyC401,
+  rhyMed01,    // palier 3 : médiator alterné (après le mouvement pendulaire)
   rhyC402,
+  rhyMed02,    // palier 4 : changer de corde au médiator
   rhyC403,
   rhyC501,
   rhyC502,

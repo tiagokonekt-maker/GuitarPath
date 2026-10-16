@@ -1,22 +1,40 @@
 // Leçon du module « impro » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
+
+const QUESTION_REPONSE = { type: "tab", caption: "Question (La-Do-Mi, qui monte et reste en suspens), silence, puis réponse (Mi-Do-La, qui redescend se poser)", text: "Tab : question = La (corde 6 case 5), Do (corde 6 case 8), Mi (corde 5 case 7) ; un silence ; réponse = Mi (corde 5 case 7), Do (corde 6 case 8), La (corde 6 case 5).", data: { lines: ["e|----------------------|","B|----------------------|","G|----------------------|","D|----------------------|","A|-----7---------7------|","E|-5-8-------------8-5--|"] } };
 
 export default {
   id: "impro-intro-02", level: 4,
   title: "Question et réponse : ta première vraie phrase",
-  duration: 9,
+  duration: 7,
   gropiTip: "Chante ta question à voix basse avant de la jouer : si tu peux la fredonner, tu sauras lui répondre. Astuce : ta réponse peut reprendre le début de la question et changer seulement la fin.",
-  content: [
-    { type: "p", text: "Tu sais maintenant placer 3 notes rythmiquement. L'étape suivante, c'est le phrasé : traiter ton improvisation comme une conversation — une courte 'question' musicale, suivie d'une 'réponse' qui lui répond." },
-    { type: "h", text: "Le principe du 'question-réponse'" },
-    { type: "p", text: "C'est l'une des structures les plus anciennes de la musique — présente dans le blues, le gospel et les chants de travail, bien avant d'être théorisée par le jazz. Une phrase est jouée (la question), suivie d'une phrase qui la complète ou la résout (la réponse)." },
-    { type: "h", text: "Comment construire ta première question-réponse" },
-    { type: "p", text: "Avec tes 3 notes de « Ta première improvisation » (La, Do, Mi) : joue une courte idée rythmique (la question), laisse un SILENCE, puis réponds avec une idée légèrement différente, en utilisant les mêmes notes." },
-    { type: "tab", caption: "Question (La-Do-Mi, qui monte et reste en suspens), silence, puis réponse (Mi-Do-La, qui redescend se poser)", text: "Tab : question = La (corde 6 case 5), Do (corde 6 case 8), Mi (corde 5 case 7) ; un silence ; réponse = Mi (corde 5 case 7), Do (corde 6 case 8), La (corde 6 case 5).", data: { lines: ["e|----------------------|","B|----------------------|","G|----------------------|","D|----------------------|","A|-----7---------7------|","E|-5-8-------------8-5--|"] } },
-    { type: "h", text: "Le silence est une note" },
-    { type: "p", text: "Un débutant a souvent peur du silence et remplit chaque interstice de notes. Pourtant, l'espace est ce qui rend une phrase lisible — exactement comme la ponctuation dans une phrase parlée. Une question a besoin d'un temps de pause avant sa réponse." },
-    { type: "ref", text: "Le blues du delta du Mississippi repose largement sur ce principe : la voix chante une ligne, la guitare 'répond' immédiatement après, comme un second personnage dans le dialogue. B.B. King appelait sa guitare Lucille — elle 'parlait' littéralement en écho à sa voix." },
-    { type: "tip", text: "Drill (2 min) : joue une phrase de 2 secondes (question) avec tes 3 notes, reste silencieux 1 seconde, puis joue une phrase différente de 2 secondes (réponse) avec les mêmes notes. Répète 5 fois, en changeant le rythme à chaque fois." },
+  cartes: [
+    { type: "idee", titre: "Une conversation", texte: [
+      "Tu sais placer La, Do et Mi en rythme. Étape suivante : le phrasé.",
+      "Une courte « question », puis une « réponse » qui lui fait écho, comme dans une conversation.",
+    ] },
+    { type: "idee", titre: "En suspens, puis posée", texte: [
+      "Blues, gospel, chants de travail : une phrase en appelle une autre.",
+      "La question finit en l'air, sur une note instable ; la réponse reprend son matériau et se pose, souvent sur la tonique.",
+    ] },
+    { type: "question", quizId: "q-impro-34" },
+    { type: "idee", titre: "Ta première question-réponse", texte: [
+      "La, Do, Mi monte et reste en suspens. Un silence. Puis les mêmes notes redescendent se poser sur La.",
+      "Écoute, puis joue lentement.",
+    ], bloc: QUESTION_REPONSE },
+    { type: "idee", titre: "Le silence est une note", texte: [
+      "On a souvent peur du vide et on remplit tout. Pourtant l'espace rend la phrase lisible, comme la ponctuation à l'oral.",
+    ] },
+    { type: "question", quizId: "q-impro-35" },
+    { type: "a-toi", titre: "Cinq conversations",
+      consigne: "Au clic, joue la question de la tab, laisse un temps de silence, puis invente ta réponse avec La, Do et Mi, en finissant sur La. Cinq fois, avec un rythme différent.",
+      bloc: QUESTION_REPONSE, bpm: 70 },
+    { type: "question", quizId: "q-rhy-11" },
+    { type: "recap", points: [
+      "Une question finit en suspens, la réponse se pose sur une note stable.",
+      "La réponse reprend les notes de la question et change la fin.",
+      "Le silence entre les deux ponctue la phrase : ne le remplis pas.",
+    ] },
   ],
   quiz: ["q-rhy-11","q-impro-34","q-impro-35"],
 };

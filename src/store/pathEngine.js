@@ -325,6 +325,24 @@ export function debutFacultatif(state, units = null) {
  * ouvertes que prévu, jamais moins.
  */
 export const DATE_ENTRELACEMENT = "2026-10-16";
+
+/**
+ * Identifiant d'unité d'avant un découpage. Un palier qui grossit au-delà
+ * du seuil est scindé : `palier-2` devient `palier-2-1` et `palier-2-2`
+ * (ajout de leçons, octobre 2026). Une vérification réussie ou un coffre
+ * ouvert sous `palier-2` vaut alors pour chacune de ses parties : le
+ * joueur avait validé tout ce palier, il ne doit rien repasser.
+ */
+export const idUniteAvantScission = (id) => {
+  const m = /^(palier-\d+)-\d+$/.exec(id || "");
+  return m ? m[1] : null;
+};
+const valeurUnite = (table, id) => {
+  if (!table) return undefined;
+  if (table[id] != null) return table[id];
+  const ancien = idUniteAvantScission(id);
+  return ancien ? table[ancien] : undefined;
+};
 // Une valeur non datée (`true`, ancien format) est forcément antérieure.
 const avantEntrelacement = (v) => !!v && (typeof v !== "string" || !/^\d{4}-\d{2}-\d{2}/.test(v) || v < DATE_ENTRELACEMENT);
 
@@ -350,8 +368,8 @@ function leconsOuvertesHistorique(courses, state, headstartCount, facultatif) {
   const completed = Object.fromEntries(Object.entries(state?.completedLessons || {}).filter(([, v]) => avantEntrelacement(v)));
   const claimed = state?.claimedUnits || {};
   const passedAvant = (id) => {
-    const c = state?.unitChecks?.[id];
-    return (!!c?.passed && avantEntrelacement(c.lastAttemptAt ?? true)) || avantEntrelacement(claimed[id]);
+    const c = valeurUnite(state?.unitChecks, id);
+    return (!!c?.passed && avantEntrelacement(c.lastAttemptAt ?? true)) || avantEntrelacement(valeurUnite(claimed, id));
   };
   const traces = Object.keys(completed).length > 0
     || Object.keys(state?.unitChecks || {}).some(passedAvant)
@@ -438,9 +456,11 @@ export function buildPath(content, state) {
     const done = u.lessons.filter(l => completed[l.id]).length;
     const total = u.lessons.length;
     const lessonsComplete = total > 0 && done === total;
-    const check = checks[u.id] || null;
+    // valeurUnite : un acquis enregistré sous l'identifiant d'avant
+    // scission (`palier-2`) vaut pour chaque partie (`palier-2-1`, `-2`).
+    const check = valeurUnite(checks, u.id) || null;
     const checkPassed = !!check?.passed;
-    const bonusClaimed = !!claimed[u.id];
+    const bonusClaimed = !!valeurUnite(claimed, u.id);
     const complete = lessonsComplete && checkPassed;
     const needsCheck = lessonsComplete && !checkPassed;
     // Acquis (compatibilité, règles 1 et 3) : vérification réussie ou coffre ouvert.

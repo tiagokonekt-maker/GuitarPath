@@ -32,6 +32,14 @@ export const LIENS_MORCEAUX = {
   "rhy-c4-02": ["premiers-accords"],
   // Blues shuffle : la grille de 12 mesures, longue-courte.
   "rhy-c5-01": ["blues-en-la"],
+  // Travailler un morceau (lent, boucle A–B, tempo) : sur la grille débutant.
+  "rhy-routine-01": ["premiers-accords"],
+  // Médiator alterné : croches régulières sur une corde (corde 6).
+  "rhy-med-01": ["riff-rock-mi"],
+
+  // ── Manche ───────────────────────────────────────────────────────────
+  // Power chords : le riff de la leçon reprend ses cases 0, 3, 5 sur la corde 6.
+  "neck-pow-01": ["riff-rock-mi"],
 
   // ── Gammes ───────────────────────────────────────────────────────────
   // Le riff rock est construit sur la pentatonique de Mi mineur.
@@ -42,6 +50,10 @@ export const LIENS_MORCEAUX = {
   // ── Harmonie ─────────────────────────────────────────────────────────
   // Arpèges : l'accord joué note à note (Do – Lam – Fa – Sol, Lam – Do – Ré – Fa – Mi).
   "harmony-03": ["picking-do-lam-fa-sol", "rising-sun"],
+  // Accords de septième : la même grille La – Ré – Mi en 12 mesures (A7, D7, E7).
+  "harm-acc-02": ["blues-en-la"],
+  // Le petit Fa (xx3211) : les deux grilles le jouent dans cette forme.
+  "harm-acc-03": ["picking-do-lam-fa-sol", "rising-sun"],
   // I-IV-V : le blues de 12 mesures en est la forme type.
   "harm-c6-01": ["blues-en-la"],
 };

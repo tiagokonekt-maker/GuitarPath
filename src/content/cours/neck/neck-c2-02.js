@@ -1,39 +1,41 @@
 // Leçon du module « neck » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
+
+const CORDE_5 = {
+  type: "note_grid",
+  caption: "Corde 5 (La) — notes naturelles à mémoriser",
+  data: {
+    string: 5, stringName: "La", maxFret: 12,
+    highlights: [
+      { fret: 0,  label: "La",  color: "amber" },
+      { fret: 2,  label: "Si",  color: "green" },
+      { fret: 3,  label: "Do",  color: "primary" },
+      { fret: 5,  label: "Ré",  color: "amber" },
+      { fret: 7,  label: "Mi",  color: "green" },
+      { fret: 8,  label: "Fa",  color: "green" },
+      { fret: 10, label: "Sol", color: "green" },
+      { fret: 12, label: "La",  color: "amber" },
+    ],
+  },
+};
 
 export default {
   id: "neck-c2-02", level: 3,
   title: "Les notes de la corde de La (corde 5)",
-  duration: 9,
+  duration: 7,
   gropiTip: "Sur la corde 5, les points des cases 3, 5 et 7 donnent Do, Ré et Mi, trois notes qui se suivent. Joue-les en remontant : un petit Do-Ré-Mi sous tes yeux, facile à retenir.",
-  content: [
-    { type: "p", text: "La corde 5 (La) est ta deuxième ancre principale. Elle porte la fondamentale des accords barrés en 'forme A' (comme Ré barré case 5, Mi barré case 7). La maîtriser après la corde 6 te donne l'essentiel du manche en tête." },
-    { type: "h", text: "Les notes case par case" },
-    { type: "p", text: "Voici la suite chromatique sur la corde 5 : Case 0 = La. Case 1 = La#. Case 2 = Si. Case 3 = Do. Case 4 = Do#. Case 5 = Ré. Case 6 = Ré#. Case 7 = Mi. Case 8 = Fa. Case 9 = Fa#. Case 10 = Sol. Case 11 = Sol#. Case 12 = La (octave)." },
-    { type: "h", text: "Mêmes demi-tons naturels, autres positions" },
-    { type: "p", text: "Les 2 demi-tons naturels (Si-Do et Mi-Fa) apparaissent aussi sur la corde 5, mais à des cases différentes. Si-Do : entre cases 2 et 3. Mi-Fa : entre cases 7 et 8. Repère ces collages — ils t'aident à mémoriser le pattern." },
-    { type: "h", text: "Notes-ancres à mémoriser" },
-    { type: "p", text: "La (0), Do (3), Ré (5), Mi (7), Sol (10), La (12). Ces 6 notes ancrent toute la corde 5. Comme sur la corde 6, tu déduis les autres par voisinage." },
-    {
-      type: "note_grid",
-      caption: "Corde 5 (La) — notes naturelles à mémoriser",
-      data: {
-        string: 5, stringName: "La", maxFret: 12,
-        highlights: [
-          { fret: 0,  label: "La",  color: "amber" },
-          { fret: 2,  label: "Si",  color: "green" },
-          { fret: 3,  label: "Do",  color: "primary" },
-          { fret: 5,  label: "Ré",  color: "amber" },
-          { fret: 7,  label: "Mi",  color: "green" },
-          { fret: 8,  label: "Fa",  color: "green" },
-          { fret: 10, label: "Sol", color: "green" },
-          { fret: 12, label: "La",  color: "amber" },
-        ],
-      },
-    },
-    {
+  cartes: [
+    { type: "idee", titre: "Ta deuxième ancre", texte: [
+      "La corde 5 porte la fondamentale des barrés en forme de La. Ses notes naturelles : La (0), Si (2), Do (3), Ré (5), Mi (7), Fa (8), Sol (10), La (12).",
+      "Les demi-tons Si-Do et Mi-Fa tombent entre les cases 2-3 et 7-8.",
+    ], bloc: CORDE_5 },
+    { type: "question", quizId: "q-base-17" },
+    { type: "idee", titre: "Le décalage de 5 cases", texte: [
+      "La corde 5 est accordée 5 demi-tons plus haut que la corde 6. Pour une même note, à la même hauteur, recule donc de 5 cases.",
+      "Le La de la case 5 sur la corde 6, c'est la corde 5 à vide.",
+    ], bloc: {
       type: "fretboard",
-      caption: "Même note La — corde 6 case 5 et corde 5 case 0 (une octave d'écart)",
+      caption: "Même note La — corde 6 case 5 et corde 5 à vide",
       data: {
         frets: 7, startFret: 0,
         showStringNames: true, showFretNumbers: true,
@@ -43,21 +45,33 @@ export default {
           { string: 5, fret: 0, label: "La", color: "amber", root: true },
         ],
       },
-    },
-    { type: "h", text: "L'astuce du décalage" },
-    { type: "p", text: "Voici une astuce : pour une même note, à la même hauteur, la corde 5 est décalée de 5 cases par rapport à la corde 6. Do est en case 8 sur la corde 6, donc en case 3 sur la corde 5 (8 − 5 = 3). Autrement dit, la corde 5 donne les mêmes notes que la corde 6, cinq cases plus tôt, puisqu'elle est accordée 5 demi-tons plus haut." },
-    { type: "h", text: "Pourquoi cette corde est si importante" },
-    { type: "p", text: "La corde 5 porte la fondamentale des accords barrés en 'forme A'. Quand tu joues Ré barré case 5 (forme A barrée), c'est parce que case 5 corde 5 = Ré. Quand tu joues Do barré case 3 (forme A barrée), c'est parce que case 3 corde 5 = Do. Combinée à la corde 6, ça te donne le pouvoir de jouer n'importe quel accord majeur ou mineur dans n'importe quelle tonalité, en barré." },
-    { type: "h", text: "Le lien octave avec la corde 6" },
-    { type: "p", text: "Une astuce mémoire : la corde 5 case 12 = La. La corde 6 case 5 = La aussi. Ces deux La sont à une octave d'écart. Plus généralement : la corde 5 case X = même note que la corde 6 case (X+5). Cette équivalence permet de déduire instantanément les notes d'une corde si tu connais l'autre." },
-    { type: "ref", text: "Pratique : joue Ré barré case 5 (corde 5). Identifie la fondamentale (Ré) sur la corde 5 case 5. Maintenant joue La barré case 5 (corde 6). Identifie la fondamentale (La) sur la corde 6 case 5. Ces deux accords se forment de la même façon, mais sur des cordes différentes. La logique du barré devient claire." },
-    { type: "tip", text: "Drill connecté : joue la même note sur c6 et c5 en décalage. Ex : Mi (c6 case 0) puis Mi (c5 case 7). Do (c6 case 8) puis Do (c5 case 3). Ce drill développe ta vision globale du manche." },
+    } },
+    { type: "question", quizId: "q-neck-44" },
+    { type: "idee", titre: "Les barrés en forme de La", texte: [
+      "Dans cette forme, la fondamentale est sur la corde 5. Barré en case 3 : Do majeur. En case 5 : Ré majeur. En case 7 : Mi majeur.",
+      "Avec la corde 6, tu sais nommer n'importe quel barré majeur ou mineur.",
+    ] },
+    { type: "question", quizId: "q-neck-43" },
+    { type: "idee", titre: "Une note, deux places", texte: [
+      "Mi (corde 6, case 0) et Mi (corde 5, case 7). Do (corde 6, case 8) et Do (corde 5, case 3).",
+      "Quand tu cherches une note, pense à ces paires : prends celle qui est la plus proche de ta main.",
+    ] },
+    { type: "a-toi", titre: "Les paires en une minute",
+      consigne: "Pour chaque note naturelle, La, Si, Do, Ré, Mi, Fa, Sol : joue-la sur la corde 5, puis retrouve-la sur la corde 6. Nomme-la à voix haute. Tout le tour en 60 secondes, puis recommence plus vite.",
+      bloc: CORDE_5, minuteur: 60 },
+    { type: "question", quizId: "q-neck-p34-03" },
+    { type: "recap", points: [
+      "Corde 5 : La 0, Si 2, Do 3, Ré 5, Mi 7, Fa 8, Sol 10, La 12.",
+      "Même note, même hauteur : 5 cases plus tôt sur la corde 5 que sur la corde 6.",
+      "Un barré en forme de La porte le nom de sa note sur la corde 5.",
+    ] },
   ],
-  quiz: ["q-base-17","q-neck-43","q-neck-44"],
+  quiz: ["q-base-17","q-neck-43","q-neck-44","q-neck-p34-03"],
 };
 
 export const quiz = [
   {id:"q-base-17",courseId:"neck",lessonId:"neck-c2-02",lvl:2,q:"Sur la corde de La (corde 5), quelle note trouve-t-on case 3 ?",o:["Do","Si","Ré","Do#"],a:0,exp:"Depuis La à vide : case 1 La#, case 2 Si, case 3 Do. Cette corde porte la fondamentale des accords barrés en forme de La.",xp:35},
   {id:"q-neck-43",courseId:"neck",lessonId:"neck-c2-02",lvl:2,q:"Un barré en forme de La, fondamentale sur la corde 5 case 5, donne quel accord majeur ?",o:["Ré majeur","Do majeur","Mi majeur","Sol majeur"],a:0,exp:"La forme de La place la fondamentale sur la corde 5. Corde 5 case 5 = Ré : Ré majeur. Case 3 donnerait Do, case 7 Mi, case 10 Sol.",xp:40},
   {id:"q-neck-44",courseId:"neck",lessonId:"neck-c2-02",lvl:2,q:"Do est à la case 8 de la corde 6. Où joues-tu ce même Do, à la même hauteur, sur la corde 5 ?",o:["Case 3","Case 13","Case 5","Case 10"],a:0,exp:"La corde 5 est accordée 5 demi-tons plus haut que la corde 6 : pour la même note, on recule de 5 cases. 8 − 5 = 3 : Do (corde 5, case 3).",xp:40},
+  {id:"q-neck-p34-03",courseId:"neck",lessonId:"neck-c2-02",lvl:2,q:"Sur la corde 5, quelle note joues-tu à la case 10 ?",o:["Sol","Fa","La","Fa#"],a:0,exp:"Corde 5 : Mi (7), Fa (8), Fa# (9), Sol (10). Autre chemin : la case 12 est l'octave, La ; deux cases plus bas, un ton en dessous, c'est Sol.",xp:35},
 ];

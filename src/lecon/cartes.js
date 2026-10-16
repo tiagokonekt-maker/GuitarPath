@@ -13,7 +13,11 @@ export const TYPES_CARTE = ["idee", "question", "a-toi", "recap"];
 export const BLOCS_DIAGRAMME = [
   "fretboard", "scale_pattern", "interval_chart", "chord_diagram", "caged_form", "note_grid",
   "rhythm_grid", "strum_pattern", "circle_of_fifths", "degree_chart", "tab",
+  // Manche interactif (Fretboard.jsx › FretboardLesson) : ses réglages sont
+  // à plat dans le bloc (mode, root, scale, quizTarget…), sans `data`.
+  "fretboard_interactive",
 ];
+const BLOCS_SANS_DATA = new Set(["fretboard_interactive"]);
 
 export const MOTS_MAX_IDEE = 70;         // au-delà : avertissement
 export const CARTES_MIN = 6, CARTES_MAX = 10;
@@ -58,7 +62,7 @@ function validerBloc(bloc, ou, erreurs) {
   if (bloc == null) return;
   if (typeof bloc !== "object" || !BLOCS_DIAGRAMME.includes(bloc.type)) {
     erreurs.push(`${ou} : bloc de diagramme inconnu « ${bloc?.type} » (attendu : ${BLOCS_DIAGRAMME.join(", ")})`);
-  } else if (!bloc.data || typeof bloc.data !== "object") {
+  } else if (!BLOCS_SANS_DATA.has(bloc.type) && (!bloc.data || typeof bloc.data !== "object")) {
     erreurs.push(`${ou} : bloc ${bloc.type} sans data`);
   }
 }

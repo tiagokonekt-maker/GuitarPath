@@ -1,22 +1,16 @@
 // Leçon du module « neck » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
 
 export default {
   id: "neck-c2-05", level: 4,
   title: "Les notes des cordes Si et Mi aigu (cordes 2 et 1)",
-  duration: 9,
+  duration: 8,
   gropiTip: "Pour la corde 2, retranche 7 aux cases de la corde 6 : Do (case 8) → case 1, Ré (10) → case 3, Mi (12) → case 5. Même nom de note, à une autre octave.",
-  content: [
-    { type: "p", text: "On termine la cartographie avec les cordes 2 (Si) et 1 (Mi aigu). Ces deux cordes sont les plus utilisées pour les mélodies, les solos aigus, et les triades. Leur connaissance est essentielle pour tout jeu mélodique." },
-    { type: "h", text: "Corde 2 (Si) — case par case" },
-    { type: "p", text: "Case 0 = Si. Case 1 = Do. Case 2 = Do#. Case 3 = Ré. Case 4 = Ré#. Case 5 = Mi. Case 6 = Fa. Case 7 = Fa#. Case 8 = Sol. Case 9 = Sol#. Case 10 = La. Case 11 = La#. Case 12 = Si (octave)." },
-    { type: "h", text: "Demi-tons naturels sur c2" },
-    { type: "p", text: "Si-Do : entre cases 0 et 1 (immédiatement !). Mi-Fa : entre cases 5 et 6. Sur la corde 2, le demi-ton Si-Do est presque collé à la corde à vide. C'est facile à mémoriser." },
-    { type: "h", text: "Corde 1 (Mi aigu) — case par case" },
-    { type: "p", text: "Case 0 = Mi. Case 1 = Fa. Case 2 = Fa#. Case 3 = Sol. Case 4 = Sol#. Case 5 = La. Case 6 = La#. Case 7 = Si. Case 8 = Do. Case 9 = Do#. Case 10 = Ré. Case 11 = Ré#. Case 12 = Mi (octave)." },
-    { type: "h", text: "Le secret : c1 et c6 = même configuration" },
-    { type: "p", text: "Tu vois ? La corde 1 (Mi aigu) a EXACTEMENT les mêmes notes que la corde 6 (Mi grave), mais 2 octaves plus haut. Ce que tu apprends sur la corde 6 est gratuit sur la corde 1. C'est l'une des meilleures nouvelles de la guitare en accordage standard." },
-    {
+  cartes: [
+    { type: "idee", titre: "Les cordes qui chantent", texte: [
+      "Les cordes 2 et 1 portent les mélodies et les solos aigus. On termine la carte du manche avec elles.",
+      "Corde 2 : Si (0), Do (1), Ré (3), Mi (5), Fa (6), Sol (8), La (10), Si (12).",
+    ], bloc: {
       type: "note_grid",
       caption: "Corde 2 (Si) — Si-Do collé dès la case 0-1",
       data: {
@@ -32,8 +26,12 @@ export default {
           { fret: 12, label: "Si",  color: "amber" },
         ],
       },
-    },
-    {
+    } },
+    { type: "question", quizId: "q-neck-24" },
+    { type: "idee", titre: "La corde 1, tu la connais déjà", texte: [
+      "La corde 1 porte exactement les mêmes notes que la corde 6, deux octaves plus haut.",
+      "Mi (0), Fa (1), Sol (3), La (5), Si (7), Do (8), Ré (10), Mi (12) : tout ce que tu as appris sur la corde 6 est gratuit ici.",
+    ], bloc: {
       type: "note_grid",
       caption: "Corde 1 (Mi aigu) — identique à la corde 6, 2 octaves plus haut",
       data: {
@@ -49,15 +47,42 @@ export default {
           { fret: 12, label: "Mi",  color: "amber" },
         ],
       },
-    },
-    { type: "h", text: "L'usage des cordes aiguës" },
-    { type: "p", text: "Les cordes 2 et 1 sont LES cordes mélodiques par excellence. Elles portent la majorité des mélodies vocales transposées sur la guitare, des solos aigus, et des notes 'qui chantent'. Quand tu fais un solo dans la zone aiguë (cases 8-15 sur cordes 1 et 2), tu es dans le territoire des grands solistes." },
-    { type: "h", text: "Triades sur cordes 1-2-3" },
-    { type: "p", text: "Les triades sur les 3 cordes aiguës sont la 'signature' du jeu moderne. Pour Do majeur en position fondamentale : Sol(corde 3 case 12 ou case 0), Do(corde 2 case 1 ou 13), Mi(corde 1 case 12 ou 0). Cette forme triangulaire est utilisée dans toute la pop, le R&B, le funk." },
-    { type: "h", text: "Bilan : tu connais le manche !" },
-    { type: "p", text: "Si tu as suivi les 5 dernières leçons, tu as maintenant cartographié les 6 cordes. C'est un travail de plusieurs semaines pour automatiser, mais la théorie est en place. Continue les drills, joue tous les jours, et dans 1-2 mois, tu connaîtras le manche aussi naturellement que ton alphabet." },
-    { type: "ref", text: "Le solo final de 'Hotel California' (Eagles) utilise massivement les cordes 1 et 2 dans les zones aiguës. Si tu apprends ce solo, tu vas naturellement intégrer la position des notes sur ces cordes." },
-    { type: "tip", text: "Drill spécifique aux cordes aiguës : joue une note simple sur la corde 1 (ex : Sol case 3). Trouve immédiatement le même Sol sur la corde 6 case 3. Comprends que c'est la même note, à 2 octaves d'écart. Refais avec La, Si, Do, Ré." },
+    } },
+    { type: "question", quizId: "q-neck-25" },
+    { type: "idee", titre: "Une triade sur les cordes aiguës", texte: [
+      "Sol (corde 3, case 0), Do (corde 2, case 1), Mi (corde 1, case 0) : les trois notes de Do majeur, sur les trois cordes aiguës.",
+      "Ces petites formes à trois cordes sont partout en pop, en funk et en R&B.",
+    ] },
+    { type: "question", quizId: "q-neck-26" },
+    { type: "idee", titre: "Les six cordes sont cartographiées", texte: [
+      "Tu as maintenant les notes des six cordes. Il faudra quelques semaines de jeu quotidien pour les automatiser.",
+      "Le meilleur exercice : chercher une même note sur toutes les cordes.",
+    ] },
+    { type: "a-toi", titre: "Tous les Do en 60 secondes",
+      consigne: "Trouve les six Do des 12 premières cases, un par corde, de la corde 6 à la corde 1, puis redescends en les nommant. Essaie sans regarder, puis vérifie sur le schéma. Recommence avec Sol, Mi et Ré.",
+      bloc: {
+        type: "fretboard",
+        caption: "Les six Do des cases 0 à 12, un par corde",
+        data: {
+          frets: 12, startFret: 0,
+          showStringNames: true, showFretNumbers: true,
+          markerFrets: [3, 5, 7, 9, 12],
+          notes: [
+            { string: 6, fret: 8,  label: "Do", color: "primary", root: true },
+            { string: 5, fret: 3,  label: "Do", color: "primary", root: true },
+            { string: 4, fret: 10, label: "Do", color: "primary", root: true },
+            { string: 3, fret: 5,  label: "Do", color: "primary", root: true },
+            { string: 2, fret: 1,  label: "Do", color: "primary", root: true },
+            { string: 1, fret: 8,  label: "Do", color: "primary", root: true },
+          ],
+        },
+      }, minuteur: 60 },
+    { type: "question", quizId: "q-neck-06" },
+    { type: "recap", points: [
+      "Corde 2 : Si 0, Do 1, Ré 3, Mi 5, Fa 6, Sol 8, La 10, Si 12.",
+      "Corde 1 = corde 6, deux octaves plus haut.",
+      "Chaque note apparaît une fois par corde entre les cases 0 et 11.",
+    ] },
   ],
   quiz: ["q-neck-06","q-neck-24","q-neck-25","q-neck-26","q-fret-neck-01","q-fret-neck-02","q-fret-neck-03","q-fret-neck-04"],
 };

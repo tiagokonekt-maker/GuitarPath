@@ -17,6 +17,7 @@ import * as neckC205 from "./neck-c2-05.js";
 import * as neckC301 from "./neck-c3-01.js";
 import * as neckC302 from "./neck-c3-02.js";
 import * as neckC303 from "./neck-c3-03.js";
+import * as neckPow01 from "./neck-pow-01.js";
 
 export const LECONS = [
   neck03,
@@ -28,6 +29,7 @@ export const LECONS = [
   neckC103,
   neckC201,
   neckC202,
+  neckPow01,   // palier 3 : power chords (fondamentale corde 6 ou 5, après neck-c2-01/02)
   neckC203,
   neckC204,
   neckC205,
