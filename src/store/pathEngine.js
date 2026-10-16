@@ -39,6 +39,17 @@
 //    n'importe quelle unité. Pour quelqu'un qui joue déjà, elles sont
 //    FACULTATIVES : ouvertes, consultables, mais jamais bloquantes ni
 //    « courantes ». La règle exacte est dans `debutFacultatif` ci-dessous.
+//
+// 6. MODULES ENTRELACÉS DANS UN PALIER. Les leçons d'un palier étaient
+//    triées par module, puis découpées : un palier scindé donnait des
+//    unités d'un seul module (6-1 = cinq leçons de gammes, 8-1 = cinq
+//    modes). Elles sont désormais RÉPARTIES (voir `entrelacer`) : chaque
+//    module est étalé proportionnellement sur tout le palier, son ordre
+//    interne conservé. Chaque unité s'ouvre de préférence par une leçon
+//    PRATIQUE (voir `ouvrirParLaPratique`). Les identifiants d'unité ne
+//    changent pas (ils ne dépendent que du nombre de leçons du palier) ;
+//    la compatibilité avec une progression acquise sous l'ancien
+//    découpage est décrite au-dessus de `buildPath`.
 
 export const UNIT_CHECK_PASS_PCT = 70;
 export const MODULE_ORDER = ["neck", "scales", "harmony", "rhythm", "impro"];
@@ -56,6 +67,14 @@ export const estModulePrelude = (course) => !!course?.prelude || course?.id === 
 const SPLIT_THRESHOLD = 8;
 /** Taille cible d'une unité après scission. */
 const TARGET_UNIT_SIZE = 6;
+
+/**
+ * Modules « guitare en main » : une unité s'ouvre de préférence par l'un
+ * d'eux plutôt que par de la théorie pure (gammes, harmonie).
+ */
+export const MODULES_PRATIQUES = [DEBUT_MODULE, "neck", "rhythm"];
+/** Modules qui appliquent ce que les autres enseignent : gardés en fin de palier. */
+export const MODULES_APPLICATION = ["impro"];
 
 /** XP du coffre de fin d'unité, proportionnelle à l'effort. */
 export const UNIT_BONUS_PER_LESSON = 10;
@@ -110,13 +129,72 @@ function chunkEvenly(list, threshold = SPLIT_THRESHOLD, target = TARGET_UNIT_SIZ
 }
 
 /**
+ * Entrelace les leçons d'un palier entre modules (round-robin PONDÉRÉ).
+ *
+ * Chaque leçon reçoit une position dans le palier : (rang dans son module
+ * + ½) / nombre de leçons du module. On trie sur cette position, puis sur
+ * le rang du module (personnalisé, voir `moduleOrderFor`) à égalité. Un
+ * module de 5 leçons et un de 2 sont ainsi étalés sur toute la longueur du
+ * palier, au lieu qu'un round-robin strict laisse la fin du palier au seul
+ * module le plus fourni. L'ordre INTERNE de chaque module est conservé
+ * (la position croît avec le rang).
+ *
+ * Exception : les modules d'APPLICATION (`MODULES_APPLICATION`, l'impro)
+ * restent en fin de palier, comme avant. Leurs leçons s'appuient sur celles
+ * des autres modules du MÊME palier (« la pentatonique mineure que tu viens
+ * de voir », « cibler les notes d'accord » côté harmonie puis côté impro) :
+ * les intercaler les ferait passer avant leur prérequis.
+ */
+function entrelacer(lessons, rank) {
+  const parModule = new Map();
+  for (const l of lessons) {
+    if (!parModule.has(l.courseId)) parModule.set(l.courseId, []);
+    parModule.get(l.courseId).push(l);
+  }
+  const positionnees = [];
+  const fin = [];
+  for (const [mod, liste] of parModule) {
+    if (MODULES_APPLICATION.includes(mod)) { fin.push(...liste); continue; }
+    liste.forEach((l, i) => positionnees.push({ l, pos: (i + 0.5) / liste.length, r: rank(mod), i }));
+  }
+  positionnees.sort((a, b) => a.pos - b.pos || a.r - b.r || a.i - b.i);
+  // `lessons` arrive trié par rang de module : `fin` l'est donc aussi.
+  return [...positionnees.map(p => p.l), ...fin];
+}
+
+/**
+ * Règle d'ouverture d'une unité : on préfère commencer guitare en main.
+ *   1. Si le placement a désigné un module FAIBLE et que l'unité en
+ *      contient, sa première leçon passe en tête (la personnalisation prime)
+ *      — sauf s'il s'agit d'un module d'application (impro), jamais avancé
+ *      devant ce qu'il applique.
+ *   2. Sinon, si l'unité commence par de la théorie (module non pratique)
+ *      et contient une leçon pratique (Premiers pas, Manche, Rythme), la
+ *      première leçon pratique passe en tête.
+ *   3. Sinon, rien ne bouge.
+ * Une seule leçon est déplacée, et c'est la PREMIÈRE de son module dans
+ * l'unité : l'ordre interne de chaque module reste intact.
+ */
+function ouvrirParLaPratique(chunk, faible) {
+  const enTete = (pred) => {
+    const i = chunk.findIndex(pred);
+    return i > 0 ? [chunk[i], ...chunk.slice(0, i), ...chunk.slice(i + 1)] : chunk;
+  };
+  if (faible && chunk.some(l => l.courseId === faible)) return enTete(l => l.courseId === faible);
+  if (MODULES_PRATIQUES.includes(chunk[0]?.courseId)) return chunk;
+  return enTete(l => MODULES_PRATIQUES.includes(l.courseId));
+}
+
+/**
  * Construit la séquence d'unités PAR PALIER (sans statut).
  * Chaque leçon reçoit son courseId/courseTitle d'origine, ce qui permet au
  * reste de l'app (thème visuel, « prochaine leçon », badges par module) de
  * savoir de quelle discipline elle vient même regroupée.
  */
-export function buildUnits(courses = [], state = null) {
+export function buildUnits(courses = [], state = null, { regroupementHistorique = false } = {}) {
   const order = moduleOrderFor(state);
+  const wm = state?.onboarding?.weakestModule;
+  const faible = MODULE_ORDER.includes(wm) && !MODULES_APPLICATION.includes(wm) ? wm : null;
   const units = [];
 
   // ── Unités d'initiation, avant le palier 1 ────────────────────────────
@@ -163,7 +241,11 @@ export function buildUnits(courses = [], state = null) {
     const rank = (id) => { const i = order.indexOf(id); return i === -1 ? order.length : i; };
     lessons.sort((a, b) => rank(a.courseId) - rank(b.courseId));
 
-    const chunks = chunkEvenly(lessons);
+    // `regroupementHistorique` : l'ancien découpage (blocs d'un seul
+    // module), conservé UNIQUEMENT pour la compatibilité dans buildPath.
+    const chunks = regroupementHistorique
+      ? chunkEvenly(lessons)
+      : chunkEvenly(entrelacer(lessons, rank)).map(c => ouvrirParLaPratique(c, faible));
     chunks.forEach((chunk, partIdx) => {
       // `stock` reste calculé — c'est une donnée informative utile (voir
       // `quizPoolSize` plus bas, et les scripts de vérification de contenu)
@@ -236,14 +318,71 @@ export function debutFacultatif(state, units = null) {
 }
 
 /**
+ * Date de mise en service de l'entrelacement (AAAA-MM-JJ, locale). Toute
+ * progression datée d'AVANT a été acquise sous l'ancien découpage (blocs
+ * d'un seul module). À aligner sur le jour du déploiement : une date trop
+ * tardive offrirait aux nouveaux joueurs de la veille un peu plus d'unités
+ * ouvertes que prévu, jamais moins.
+ */
+export const DATE_ENTRELACEMENT = "2026-10-16";
+// Une valeur non datée (`true`, ancien format) est forcément antérieure.
+const avantEntrelacement = (v) => !!v && (typeof v !== "string" || !/^\d{4}-\d{2}-\d{2}/.test(v) || v < DATE_ENTRELACEMENT);
+
+/**
+ * Leçons ouvertes sous l'ANCIEN découpage, pour ne rien reverrouiller chez
+ * un joueur qui a progressé avant l'entrelacement.
+ *
+ * On rejoue l'ancien découpage sur la progression ACQUISE AVANT
+ * `DATE_ENTRELACEMENT` uniquement (leçons, vérifications et coffres datés
+ * d'avant) : c'est l'état figé de ce que le joueur avait réellement ouvert.
+ * Sans cette borne, rejouer l'ancien découpage sur une progression récente
+ * ouvrirait d'un coup tout un palier (le premier ancien bloc d'un palier
+ * contient des leçons que le nouveau découpage place en fin de palier).
+ * Un joueur sans progression antérieure n'hérite donc de rien.
+ *
+ * Chaîne rejouée, celle de l'époque : première unité, unité précédente
+ * complète (toutes ses leçons + vérification réussie), headstart du
+ * placement, initiation facultative, unité entamée. Ne renvoie que les
+ * leçons des paliers SCINDÉS (ailleurs, les deux découpages sont identiques).
+ */
+function leconsOuvertesHistorique(courses, state, headstartCount, facultatif) {
+  const ouvertes = new Set();
+  const completed = Object.fromEntries(Object.entries(state?.completedLessons || {}).filter(([, v]) => avantEntrelacement(v)));
+  const claimed = state?.claimedUnits || {};
+  const passedAvant = (id) => {
+    const c = state?.unitChecks?.[id];
+    return (!!c?.passed && avantEntrelacement(c.lastAttemptAt ?? true)) || avantEntrelacement(claimed[id]);
+  };
+  const traces = Object.keys(completed).length > 0
+    || Object.keys(state?.unitChecks || {}).some(passedAvant)
+    || Object.keys(claimed).some(passedAvant);
+  if (!traces) return ouvertes;
+
+  const anciennes = buildUnits(courses, state, { regroupementHistorique: true });
+  let precedenteFranchie = true;
+  let palierIdx = 0;
+  anciennes.forEach((u, i) => {
+    const done = u.lessons.some(l => completed[l.id]);
+    const complete = u.lessons.length > 0 && u.lessons.every(l => completed[l.id]) && passedAvant(u.id);
+    const headstart = !u.prelude && palierIdx++ < headstartCount;
+    const optional = !!u.prelude && facultatif && !complete;
+    const unlocked = i === 0 || precedenteFranchie || done || headstart || optional;
+    if (unlocked && u.part != null && !u.prelude) for (const l of u.lessons) ouvertes.add(l.id);
+    precedenteFranchie = complete || headstart || optional;
+  });
+  return ouvertes;
+}
+
+/**
  * Le parcours complet avec statuts :
  * { done, total, complete, unlocked, isCurrent, bonusClaimable, bonusClaimed,
  *   headstart, index }
  *
  * Règles de déblocage :
  *   • la première unité est toujours ouverte ;
- *   • une unité est ouverte si la précédente est complète (leçons +
- *     vérification réussie) ;
+ *   • une unité est ouverte si la précédente est FRANCHIE : complète
+ *     (leçons + vérification réussie), ou sa vérification déjà réussie, ou
+ *     son coffre déjà ouvert (voir « Compatibilité » ci-dessous) ;
  *   • une unité contenant déjà une leçon complétée reste ouverte (reprise
  *     d'une progression existante — personne ne perd son avancement) ;
  *   • les N premières unités DE PALIER sont ouvertes d'emblée si le test de
@@ -253,16 +392,39 @@ export function debutFacultatif(state, units = null) {
  *   • les unités « Premiers pas » (prelude) sont, selon `debutFacultatif`,
  *     obligatoires (chaîne normale, en tête du parcours) ou facultatives
  *     (`optional` : ouvertes, franchissables, jamais « courantes »).
+ *
+ * ── Compatibilité avec l'ancien découpage (modules non entrelacés) ──────
+ * `claimedUnits` et `unitChecks` sont indexés par identifiant d'unité
+ * (`palier-6-1`…), et ces identifiants n'ont pas changé, mais le CONTENU
+ * des unités d'un palier scindé, si. Règles, pour qu'aucun joueur ne perde
+ * rien :
+ *   1. Une vérification réussie ou un coffre ouvert reste acquis, à vie :
+ *      jamais repassée, jamais re-crédité (le coffre reste « ouvert »).
+ *   2. Une unité est COMPLÈTE quand toutes ses leçons ACTUELLES sont faites
+ *      et sa vérification réussie (même sous l'ancien contenu). S'il reste
+ *      des leçons venues d'un autre bloc, il suffit de les faire : pas de
+ *      nouvelle vérification.
+ *   3. Une vérification réussie (ou un coffre ouvert) suffit à FRANCHIR
+ *      l'unité et à ouvrir la suivante — exactement ce que l'ancien
+ *      découpage avait ouvert, puisque les identifiants sont les mêmes.
+ *      Pour un nouveau joueur, rien ne change : la vérification n'est
+ *      proposée qu'une fois toutes les leçons faites.
+ *   4. Une unité est ouverte si elle contient une leçon qui l'était sous
+ *      l'ancien découpage (`leconsOuvertesHistorique`) : une leçon déjà
+ *      accessible n'est jamais reverrouillée, même déplacée dans une unité
+ *      plus lointaine.
  */
 export function buildPath(content, state) {
   const completed = state?.completedLessons || {};
   const claimed   = state?.claimedUnits || {};
   const checks    = state?.unitChecks || {};
-  const units = buildUnits(content?.courses || [], state);
+  const courses = content?.courses || [];
+  const units = buildUnits(courses, state);
 
   const tier = state?.onboarding?.overallTier;
   const headstartCount = state?.onboarding?.done ? (TIER_HEADSTART[tier] ?? 0) : 0;
   const facultatif = debutFacultatif(state, units);
+  const ouvertesAvant = leconsOuvertesHistorique(courses, state, headstartCount, facultatif);
   let palierIdx = 0;
 
   // `prevPassable` plutôt que `prevComplete` : une unité ouverte par le
@@ -278,13 +440,17 @@ export function buildPath(content, state) {
     const lessonsComplete = total > 0 && done === total;
     const check = checks[u.id] || null;
     const checkPassed = !!check?.passed;
+    const bonusClaimed = !!claimed[u.id];
     const complete = lessonsComplete && checkPassed;
     const needsCheck = lessonsComplete && !checkPassed;
+    // Acquis (compatibilité, règles 1 et 3) : vérification réussie ou coffre ouvert.
+    const acquis = checkPassed || bonusClaimed;
     // Le headstart compte les unités DE PALIER : les unités d'initiation
     // placées devant elles ne décalent pas ce que le placement ouvre.
     const headstart = !u.prelude && palierIdx++ < headstartCount;
     const optional = !!u.prelude && facultatif && !complete;
-    const unlocked = i === 0 || prevPassable || done > 0 || headstart || optional;
+    const dejaOuverte = acquis || u.lessons.some(l => ouvertesAvant.has(l.id));
+    const unlocked = i === 0 || prevPassable || done > 0 || headstart || optional || dejaOuverte;
     // « Unité courante » = la première ouverte non terminée qui n'est pas un
     // simple palier ouvert par le placement : on ne veut pas envoyer un
     // joueur testé B2 travailler le palier 1. Une unité d'initiation
@@ -292,7 +458,7 @@ export function buildPath(content, state) {
     // y jette un œil ne doit pas voir « Continuer » le ramener aux bases.
     const isCurrent = unlocked && !complete && !currentAssigned && !optional && (!headstart || done > 0);
     if (isCurrent) currentAssigned = true;
-    prevPassable = complete || headstart || optional;
+    prevPassable = complete || acquis || headstart || optional;
 
     return {
       // Le titre reste nu : c'est l'écran (pastille « Facultatif » de
@@ -300,8 +466,8 @@ export function buildPath(content, state) {
       ...u,
       index: i, done, total, complete, unlocked, isCurrent, optional,
       lessonsComplete, needsCheck, check, headstart,
-      bonusClaimable: complete && !claimed[u.id],
-      bonusClaimed: !!claimed[u.id],
+      bonusClaimable: complete && !bonusClaimed,
+      bonusClaimed,
     };
   });
 }

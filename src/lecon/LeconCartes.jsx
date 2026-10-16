@@ -25,6 +25,7 @@ import {
   libelleContinuer, lireReprise, ecrireReprise, effacerReprise, evaluerReponse, actionRevision,
 } from "./cartes.js";
 import { todayStr } from "../store/state.js";
+import { MorceauxLies } from "./MorceauxLies.jsx";
 
 const stockage = () => { try { return typeof window !== "undefined" ? window.localStorage : null; } catch { return null; } };
 
@@ -59,7 +60,9 @@ function dansZoneDefilante(cible, racine) {
   return false;
 }
 
-export function LeconCartes({ lesson, state, dispatch, onBack, quiz, carteInitiale, done, onFinish }) {
+// `onJouerMorceau(id)` : ouvre un morceau lié (Outils › Morceaux). Sans lui,
+// les cartes « Joue-le maintenant » ne s'affichent pas.
+export function LeconCartes({ lesson, state, dispatch, onBack, quiz, carteInitiale, done, onFinish, onJouerMorceau }) {
   const C = useC();
   const { renderDiagramBlock } = useRenderers();
   const quizParId = useMemo(() => new Map((quiz || []).map(q => [q.id, q])), [quiz]);
@@ -149,6 +152,13 @@ export function LeconCartes({ lesson, state, dispatch, onBack, quiz, carteInitia
 
   const nbQuiz = (lesson.quiz || []).length;
 
+  // Depuis la carte Récap (la dernière), partir jouer le morceau termine la
+  // leçon : on ne perd pas sa complétion en sautant le bouton « Terminer ».
+  const jouerMorceau = onJouerMorceau ? (id) => {
+    if (!done) { onFinish?.(); effacerReprise(stockage(), lesson.id); }
+    onJouerMorceau(id);
+  } : null;
+
   // ── Bilan (après « Terminer la leçon ») ──────────────────────────────────
   if (bilan) {
     const questions = cartes.map((c, i) => [c, i]).filter(([c]) => c.type === "question");
@@ -170,6 +180,7 @@ export function LeconCartes({ lesson, state, dispatch, onBack, quiz, carteInitia
           <button type="button" onClick={onBack} className="gr-focus" style={{ marginTop: 16, minHeight: 48, padding: "12px 32px", borderRadius: R.lg, border: "none", background: C.green, color: C.onPrimaryBtn, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }}>
             Retour au parcours
           </button>
+          <MorceauxLies lessonId={lesson.id} onJouer={jouerMorceau} style={{ marginTop: 16, textAlign: "left" }} />
           <div>
             <button type="button" onClick={() => { setBilan(false); setSens(-1); setIndex(0); }} className="gr-focus" style={{ marginTop: 10, minHeight: 44, padding: "8px 16px", borderRadius: R.md, border: "none", background: "transparent", color: C.greenInk, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }}>
               Revoir les cartes
@@ -242,6 +253,7 @@ export function LeconCartes({ lesson, state, dispatch, onBack, quiz, carteInitia
               ))}
             </ul>
             {lesson.gropiTip && <GropiCoach variant="tip" eyebrow="Le conseil de Gropi">{lesson.gropiTip}</GropiCoach>}
+            <MorceauxLies lessonId={lesson.id} onJouer={jouerMorceau} />
             {nbQuiz > 0 && (
               <p style={{ margin: 0, fontSize: 13, color: C.text2, display: "flex", gap: 8, alignItems: "center" }}>
                 <Ti name="notebook" size={16} color={C.primaryInk} />

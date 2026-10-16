@@ -229,7 +229,10 @@ function reducer(state, action) {
       const memeJour = j.jour === today;
       s.jam = {
         seances:     (Number(j.seances) || 0) + (action.seance ? 1 : 0),
-        secondes:    (Number(j.secondes) || 0) + sec,
+        // `horsJam` : temps joué ailleurs (lecteur de morceaux, proposé aux
+        // débutants par la séance du jour). Il compte pour l'étape « Jouer »
+        // du jour, mais pas pour les badges « heures de jam ».
+        secondes:    (Number(j.secondes) || 0) + (action.horsJam ? 0 : sec),
         contraintes: (Number(j.contraintes) || 0) + (action.contrainte ? 1 : 0),
         // Temps de jeu du jour : l'étape « Jouer » de la séance du jour.
         jour: today,

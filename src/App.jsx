@@ -468,10 +468,18 @@ function AppInner({ onThemeChange }) {
   // Options de navigation (toutes facultatives) :
   //   retour  : écran où revenir à la fin (la séance du jour revient à Pratique) ;
   //   cible   : nombre de questions de révision (selon la durée de séance) ;
-  //   domaine : réviser un seul domaine ("Premiers pas", "Manche", "Théorie", "Oreille", "Rythme", "Impro").
+  //   domaine : réviser un seul domaine ("Premiers pas", "Manche", "Théorie", "Oreille", "Rythme", "Impro") ;
+  //   outil   : avec "toolbox", l'onglet à ouvrir ("metronome", "tuner", "chords", "neck", "tablature", "morceaux") ;
+  //   morceau : avec outil "morceaux", l'identifiant du morceau à ouvrir directement
+  //             (src/morceaux/catalogue.js) — son bouton retour ramène à la liste.
+  //   Ex. : navigate("toolbox", { outil: "morceaux", morceau: "premiers-accords" }).
   const [retourEcran, setRetourEcran] = useState(null);
-  const navigate = useCallback((s, { remplacer = false, retour = null, cible = null, domaine = null } = {}) => {
+  // Lien profond vers un outil : `n` change à chaque demande, ce qui remonte
+  // l'écran Outils (clé) même s'il était déjà affiché.
+  const [cibleOutil, setCibleOutil] = useState(null);
+  const navigate = useCallback((s, { remplacer = false, retour = null, cible = null, domaine = null, outil = null, morceau = null } = {}) => {
     if (!ECRANS_VALIDES.has(s)) return;
+    setCibleOutil(prev => (s === "toolbox" && outil ? { outil, morceau, n: (prev?.n || 0) + 1 } : prev && { n: prev.n }));
     if (s === "review" && content) {
       // Questions écrites + une question GÉNÉRÉE par compétence débloquée (au
       // niveau de l'élève, jamais avant sa leçon) : le moteur de révision
@@ -635,7 +643,11 @@ function AppInner({ onThemeChange }) {
       // que par un bouton flottant. Le bouton est protégé par
       // `{onBack && (...)}` dans ToolboxScreen.jsx — ne pas lui passer ce
       // prop suffit à le faire disparaître, sans toucher au fichier.
-      case "toolbox":   return <ToolboxScreen navigate={navigate} />;
+      // Avec `retour` (séance du jour, fin de leçon…), une flèche retour
+      // ramène à l'écran d'origine.
+      case "toolbox":   return <ToolboxScreen key={cibleOutil?.n || 0} navigate={navigate} dispatch={dispatch}
+                          outilInitial={cibleOutil?.outil} morceauInitial={cibleOutil?.morceau}
+                          onBack={retourEcran ? () => navigate(retourEcran) : undefined} />;
       case "review":    return <ReviewSession questions={reviewQuestions} state={state} dispatch={dispatch} onDone={() => navigate(retourEcran || "home")} />;
       case "practice":  return <PracticeScreen state={state} dispatch={dispatch} />;
       case "challenge": return <ChallengeScreen state={state} dispatch={dispatch} navigate={navigate} />;

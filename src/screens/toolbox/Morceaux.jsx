@@ -252,7 +252,28 @@ function Accords({ morceau, mesureCourante, C }) {
 
 // ══ Lecteur ══════════════════════════════════════════════════════════════
 
-function LecteurMorceau({ morceau, onRetour, C }) {
+/**
+ * Temps de lecture réel (état « lecture »), versé à l'étape « Jouer » de la
+ * séance du jour par JAM_PROGRES `horsJam` (jamais aux badges de Jam). Versé
+ * à chaque arrêt / pause, à la sortie du morceau et quand l'app passe en
+ * arrière-plan — pas une écriture par seconde.
+ */
+function useTempsDeJeu(jouant, dispatch) {
+  useEffect(() => {
+    if (!jouant) return undefined;
+    let debut = performance.now();
+    const verser = () => {
+      const sec = Math.round((performance.now() - debut) / 1000);
+      debut = performance.now();
+      if (sec > 0) dispatch?.({ type: "JAM_PROGRES", secondes: sec, horsJam: true });
+    };
+    const auMasquage = () => { if (document.visibilityState === "hidden") verser(); else debut = performance.now(); };
+    document.addEventListener("visibilitychange", auMasquage);
+    return () => { document.removeEventListener("visibilitychange", auMasquage); verser(); };
+  }, [jouant, dispatch]);
+}
+
+function LecteurMorceau({ morceau, onRetour, C, dispatch }) {
   const analyse = useMemo(() => analyserMorceau(morceau), [morceau]);
   const derniere = analyse.nbMesures - 1;
   const idVitesse = useId();
@@ -268,6 +289,7 @@ function LecteurMorceau({ morceau, onRetour, C }) {
   const jouant = etat === "lecture";
   const [colCourante, setColCourante] = useState(null);
   const [clic, setClic] = useState(null);         // temps du décompte en cours (1, 2…)
+  useTempsDeJeu(jouant, dispatch);
 
   // Miroir des réglages, lu par les rappels de lecture (minuterie de boucle,
   // onDone). Mis à jour dans les gestionnaires d'évènement, jamais pendant
@@ -541,9 +563,15 @@ function LecteurMorceau({ morceau, onRetour, C }) {
 
 // ══ Onglet ═══════════════════════════════════════════════════════════════
 
-export function Morceaux() {
+/**
+ * @param morceauInitial identifiant d'un morceau à ouvrir d'emblée (lien
+ *                       profond : navigate("toolbox", { outil: "morceaux",
+ *                       morceau })). Inconnu → la liste. Le retour ramène à la liste.
+ * @param dispatch       pour compter le temps de lecture dans la séance du jour.
+ */
+export function Morceaux({ morceauInitial = null, dispatch = null } = {}) {
   const C = useC();
-  const [ouvert, setOuvert] = useState(null);
+  const [ouvert, setOuvert] = useState(() => (morceauParId(morceauInitial) ? morceauInitial : null));
   const [dernierOuvert, setDernierOuvert] = useState(null);
   const morceau = ouvert ? morceauParId(ouvert) : null;
 
@@ -551,6 +579,6 @@ export function Morceaux() {
   const retour = () => { setDernierOuvert(ouvert); setOuvert(null); };
 
   return morceau
-    ? <LecteurMorceau key={morceau.id} morceau={morceau} onRetour={retour} C={C} />
+    ? <LecteurMorceau key={morceau.id} morceau={morceau} onRetour={retour} C={C} dispatch={dispatch} />
     : <ListeMorceaux onOuvrir={ouvrir} dernierOuvert={dernierOuvert} C={C} />;
 }

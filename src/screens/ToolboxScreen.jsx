@@ -50,15 +50,29 @@ const OUTIL_PAR_ID = {
 const comportementDefilement = () =>
   window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
 
-function ToolboxScreen({ onBack, navigate }) {
+/**
+ * @param outilInitial   onglet imposé par un lien profond (navigate("toolbox",
+ *                       { outil })) : prime sur l'onglet mémorisé, et devient
+ *                       le nouvel onglet mémorisé.
+ * @param morceauInitial avec l'onglet « morceaux », le morceau à ouvrir.
+ * @param dispatch       transmis aux outils qui comptent du temps de jeu.
+ */
+function ToolboxScreen({ onBack, navigate, dispatch, outilInitial = null, morceauInitial = null }) {
   const C = useC();
   // L'outil actif est mémorisé : revenir dans Outils ramène là où on était
   // (au milieu d'une tab, par exemple), pas systématiquement au métronome.
   const [tab, setTabBrut] = useState(() => {
+    if (OUTILS_INTERNES.has(outilInitial)) {
+      try { localStorage.setItem("groply:outil-actif", outilInitial); } catch { /* noop */ }
+      return outilInitial;
+    }
     try { const t = localStorage.getItem("groply:outil-actif"); if (OUTILS_INTERNES.has(t)) return t; } catch { /* noop */ }
     return "metronome";
   });
-  const setTab = (t) => { setTabBrut(t); try { localStorage.setItem("groply:outil-actif", t); } catch { /* noop */ } };
+  // Le morceau demandé n'est ouvert qu'une fois : changer d'onglet puis
+  // revenir à Morceaux ramène à la liste, pas au morceau du lien.
+  const [morceauDemande, setMorceauDemande] = useState(outilInitial === "morceaux" ? morceauInitial : null);
+  const setTab = (t) => { setTabBrut(t); setMorceauDemande(null); try { localStorage.setItem("groply:outil-actif", t); } catch { /* noop */ } };
   // Sur mobile, la barre de défilement horizontale est masquée par le
   // système : rien n'indiquait qu'il y avait d'autres outils à droite. Un
   // fondu + une flèche le signalent, et disparaissent une fois au bout.
@@ -195,7 +209,9 @@ function ToolboxScreen({ onBack, navigate }) {
             Chargement…
           </div>
         }>
-          {Outil ? <Outil/> : <FretboardExplorer embedded />}
+          {tab === "morceaux"
+            ? <Morceaux dispatch={dispatch} morceauInitial={morceauDemande} />
+            : Outil ? <Outil/> : <FretboardExplorer embedded />}
         </Suspense>
       </div>
 

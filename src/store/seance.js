@@ -15,8 +15,18 @@
 // L'OBJECTIF choisi au test d'accueil, longtemps ignoré, oriente la séance :
 // « Improviser » allonge Jouer, « La théorie » allonge la Révision,
 // « Le manche » choisit l'exercice dans le module Manche.
+//
+// DÉBUTANT (« Premiers pas » obligatoire et pas encore fini, voir
+// `seanceDebutant`) : l'étape « Jouer » n'envoie PAS en Jam Session, dont
+// les contextes d'impro supposent des gammes qu'il n'a pas encore vues. Elle
+// propose un morceau débutant d'Outils › Morceaux, choisi selon les leçons
+// faites (voir `choisirJeuDebutant`), ou à défaut un exercice de Premiers
+// pas (changements d'accords…). Le temps joué dans le lecteur de morceaux
+// compte pour l'étape comme celui de la Jam.
 
 import { familleDe, domaineDe } from "./generateurs.js";
+import { buildUnits, debutFacultatif, DEBUT_MODULE } from "./pathEngine.js";
+import { morceauParId } from "../morceaux/catalogue.js";
 
 export const DUREES = [5, 15, 30];
 
@@ -105,6 +115,68 @@ export function choisirExercice(state, content, objectif) {
 }
 
 /**
+ * La séance est-elle celle d'un débutant ? Oui tant que le module
+ * « Premiers pas » n'est pas fini ET qu'il est obligatoire pour lui (débutant
+ * déclaré, ou parcours par défaut — même règle que le Parcours). Un joueur
+ * confirmé qui feuillette Premiers pas garde la Jam Session.
+ */
+export function seanceDebutant(state, content) {
+  const debut = (content?.courses || []).find(c => c.id === DEBUT_MODULE);
+  if (!debut?.lessons?.length) return false;
+  const faites = state?.completedLessons || {};
+  if (debut.lessons.every(l => faites[l.id])) return false;
+  return !debutFacultatif(state, buildUnits(content.courses, state));
+}
+
+/**
+ * Morceaux débutants, et les leçons qu'il faut avoir faites pour les jouer.
+ * Du plus récent au plus ancien dans Premiers pas : la séance propose ce que
+ * l'élève vient d'apprendre.
+ */
+export const MORCEAUX_DEBUTANT = [
+  { morceau: "frere-jacques",       requis: ["debut-c3-03"] },
+  { morceau: "au-clair-de-la-lune", requis: ["debut-c3-03"] },
+  { morceau: "ode-a-la-joie",       requis: ["debut-c3-03"] },
+  // Sol, Mim, Do, Ré : les deux leçons d'accords ouverts.
+  { morceau: "premiers-accords",    requis: ["debut-c2-02", "debut-c2-03"] },
+];
+// Ordre de repli quand aucun morceau n'est encore jouable : d'abord les
+// changements d'accords, puis le reste de Premiers pas, du plus avancé au plus simple.
+const EXERCICES_DEBUTANT = ["ex-debut-04", "ex-debut-05", "ex-debut-06", "ex-debut-03", "ex-debut-02", "ex-debut-01"];
+
+/** Rang du jour (entier), pour faire tourner les morceaux d'un jour à l'autre. */
+const rangDuJour = (today) => {
+  const [a, m, j] = String(today || "").split("-").map(Number);
+  return Number.isFinite(a + m + j) ? Math.floor(Date.UTC(a, m - 1, j) / 86400000) : 0;
+};
+
+/**
+ * Ce que l'étape « Jouer » propose à un débutant :
+ *   { morceau } un morceau débutant jouable (accords et tab déjà vus) ; si
+ *               plusieurs le sont, ceux de la DERNIÈRE leçon apprise, en
+ *               rotation d'un jour à l'autre (les trois mélodies après
+ *               « Premières mélodies », sinon Premiers accords) ;
+ *   { exercice } sinon, un exercice débloqué de Premiers pas (en priorité
+ *               les changements d'accords), autre que `exclu` ;
+ *   { outil: "tuner" } en dernier recours (rien de débloqué).
+ */
+export function choisirJeuDebutant(state, content, today, exclu = null) {
+  const faites = state?.completedLessons || {};
+  const jouables = MORCEAUX_DEBUTANT.filter(m => m.requis.every(id => faites[id]) && morceauParId(m.morceau));
+  if (jouables.length) {
+    const cle = jouables[0].requis.join("+");
+    const derniers = jouables.filter(m => m.requis.join("+") === cle);
+    return { morceau: derniers[rangDuJour(today) % derniers.length].morceau };
+  }
+  const exos = new Map((content?.exercises || []).map(e => [e.id, e]));
+  for (const id of EXERCICES_DEBUTANT) {
+    const e = exos.get(id);
+    if (e && e.id !== exclu && exerciceDebloque(e, faites)) return { exercice: e };
+  }
+  return { outil: "tuner" };
+}
+
+/**
  * Compose la séance du jour et indique ce qui est fait.
  * @returns {{ etapes: Array<{id, titre, detail, minutes, fait, questions?, exercice?}>,
  *             prochaine: object|null, terminee: boolean, totalMinutes: number }}
@@ -134,8 +206,10 @@ export function planSeance({ duree = 15, objectif = "global", state, content, to
       detail: `${nbQuestions} question${nbQuestions > 1 ? "s" : ""} · compétences et quiz`, fait: reviseAujourdhui });
   }
 
+  let exGuitare = null;
   if (d === 30) {
     const ex = choisirExercice(state, content, objectif);
+    exGuitare = ex;
     if (ex) {
       const exFaitAujourdhui = Object.values(state.completedExercises || {}).some(x => x?.lastAt === today);
       const minutesEx = ex.dur ?? DUREE_EXERCICE_IDEALE;
@@ -149,9 +223,25 @@ export function planSeance({ duree = 15, objectif = "global", state, content, to
 
   const jam = state.jam || {};
   const secondesJour = jam.jour === today ? (jam.secondesJour || 0) : 0;
-  etapes.push({ id: "jouer", titre: "Jouer", minutes: jouer, secondesCible: jouer * 60,
-    secondesFaites: Math.min(secondesJour, jouer * 60),
-    detail: "Jam Session · avec une contrainte à tenir", fait: secondesJour >= jouer * 60 });
+  const jeuTempo = { secondesCible: jouer * 60, secondesFaites: Math.min(secondesJour, jouer * 60), fait: secondesJour >= jouer * 60 };
+  if (seanceDebutant(state, content)) {
+    const jeu = choisirJeuDebutant(state, content, today, exGuitare?.id);
+    if (jeu.morceau) {
+      etapes.push({ id: "jouer", titre: "Jouer", minutes: jouer, ...jeuTempo, debutant: true, morceau: jeu.morceau,
+        detail: `Morceau · ${morceauParId(jeu.morceau).titre}` });
+    } else if (jeu.exercice) {
+      // Un exercice se termine (il est alors coché), il ne se chronomètre pas.
+      const fait = state.completedExercises?.[jeu.exercice.id]?.lastAt === today || jeuTempo.fait;
+      etapes.push({ id: "jouer", titre: "Jouer", minutes: jouer, ...jeuTempo, fait, debutant: true, exercice: jeu.exercice,
+        detail: `Exercice · ${jeu.exercice.title}` });
+    } else {
+      etapes.push({ id: "jouer", titre: "Jouer", minutes: jouer, ...jeuTempo, debutant: true, outil: "tuner",
+        detail: "Accorde ta guitare, puis gratte les cordes à vide" });
+    }
+  } else {
+    etapes.push({ id: "jouer", titre: "Jouer", minutes: jouer, ...jeuTempo,
+      detail: "Jam Session · avec une contrainte à tenir" });
+  }
 
   const prochaine = etapes.find(e => !e.fait) || null;
   return { etapes, prochaine, terminee: !prochaine, totalMinutes: etapes.reduce((s, e) => s + e.minutes, 0) };

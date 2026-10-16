@@ -31,6 +31,7 @@ import { pickTip, contexteGropi } from "../store/gropiTips.js";
 import { getReviewStats } from "../store/reviewEngine.js";
 import { POSE_ROLE } from "../design/gropiPoses.js";
 import { LeconCartes } from "../lecon/LeconCartes.jsx";
+import { MorceauxLies } from "../lecon/MorceauxLies.jsx";
 import { gradeForLevel } from "../store/grades.js";
 import { lessonMastery } from "../store/mastery.js";
 
@@ -845,7 +846,8 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
 
   if(activeLesson) return (
     <LessonView lesson={activeLesson} state={state} dispatch={dispatch}
-      quiz={content.quiz} onBack={()=>setActiveLesson(null)}/>
+      quiz={content.quiz} onBack={()=>setActiveLesson(null)}
+      onJouerMorceau={(id)=>navigate("toolbox", { outil:"morceaux", morceau:id, retour:"home" })}/>
   );
 
   if(checkingUnit) return (
@@ -1000,7 +1002,9 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
 // src/content/README.md) ou, à défaut, l'article historique (`content`).
 // `quiz` (toutes les questions) sert aux cartes question liées au quiz
 // (quizId) ; `carteInitiale` force la carte de départ (rendu de contrôle).
-function LessonView({ lesson, state, dispatch, onBack, quiz, carteInitiale }) {
+// `onJouerMorceau(id)` : ouvre un morceau lié à la leçon (Outils › Morceaux,
+// voir content/liens-morceaux.js) ; absent, les liens ne s'affichent pas.
+function LessonView({ lesson, state, dispatch, onBack, quiz, carteInitiale, onJouerMorceau }) {
   const { renderDiagramBlock, FretboardLesson } = useRenderers();
   const C = useC();
   const [done,setDone] = useState(!!state.completedLessons[lesson.id]);
@@ -1053,7 +1057,7 @@ function LessonView({ lesson, state, dispatch, onBack, quiz, carteInitiale }) {
     <div>
       {pop&&<XPPop amount={30} onDone={()=>{}}/>}
       <LeconCartes key={lesson.id} lesson={lesson} state={state} dispatch={dispatch} onBack={onBack}
-        quiz={quiz} carteInitiale={carteInitiale} done={done} onFinish={finish}/>
+        quiz={quiz} carteInitiale={carteInitiale} done={done} onFinish={finish} onJouerMorceau={onJouerMorceau}/>
     </div>
   );
 
@@ -1119,6 +1123,10 @@ function LessonView({ lesson, state, dispatch, onBack, quiz, carteInitiale }) {
             </p>
           </div>
         )}
+        {/* Fin de l'article : les morceaux qui mettent la leçon en pratique.
+            Y aller termine la leçon (on a lu jusqu'au bout). */}
+        <MorceauxLies lessonId={lesson.id} style={{ marginBottom:14 }}
+          onJouer={onJouerMorceau ? (id) => { finish(); onJouerMorceau(id); } : null}/>
         {done ? (
           <div style={{ background:C.greenL, borderRadius:R.xl, padding:"22px 20px", textAlign:"center", border:`1.5px solid ${C.greenBorder}`, marginBottom:8 }}>
             <Gropi pose="celebrate" size={120} anim="cheer" style={{ margin:"0 auto" }}/>

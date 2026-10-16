@@ -47,11 +47,11 @@ const ecrireDuree = (v) => { try { localStorage.setItem(CLE_DUREE, String(v)); }
 // `prelude` : domaine du module d'initiation — pas de compétences générées
 // ni de jauge de niveau, seulement ses leçons, exercices et questions.
 const DOMAINES = [
-  { id: "Premiers pas", couleur: "coral", icone: "sparkles", modules: [DEBUT_MODULE], objectif: null, prelude: true, libre: { titre: "Accordeur", detail: "Dans la boîte à outils, onglet Accordeur", ecran: "toolbox" } },
-  { id: "Manche",  couleur: "amber",  icone: "map-2",     modules: ["neck"],              objectif: "manche",  libre: { titre: "Explorer le manche", detail: "Notes, gammes et accords sur tout le manche", ecran: "toolbox" } },
+  { id: "Premiers pas", couleur: "coral", icone: "sparkles", modules: [DEBUT_MODULE], objectif: null, prelude: true, libre: { titre: "Accordeur", detail: "Dans la boîte à outils, onglet Accordeur", ecran: "toolbox", outil: "tuner" } },
+  { id: "Manche",  couleur: "amber",  icone: "map-2",     modules: ["neck"],              objectif: "manche",  libre: { titre: "Explorer le manche", detail: "Notes, gammes et accords sur tout le manche", ecran: "toolbox", outil: "neck" } },
   { id: "Théorie", couleur: "green",  icone: "stack-2",   modules: ["scales", "harmony"], objectif: "theorie", libre: { titre: "Quiz par module", detail: "Toutes les questions de théorie, à ton rythme", quiz: true } },
   { id: "Oreille", couleur: "teal",   icone: "ear",       modules: [],                    objectif: null,      libre: { titre: "Ear Training", detail: "Intervalles, accords, suites : sans limite", ecran: "ear" } },
-  { id: "Rythme",  couleur: "blue",   icone: "metronome", modules: ["rhythm"],            objectif: null,      libre: { titre: "Métronome", detail: "Dans la boîte à outils", ecran: "toolbox" } },
+  { id: "Rythme",  couleur: "blue",   icone: "metronome", modules: ["rhythm"],            objectif: null,      libre: { titre: "Métronome", detail: "Dans la boîte à outils", ecran: "toolbox", outil: "metronome" } },
   { id: "Impro",   couleur: "pink",   icone: "wand",      modules: ["impro"],             objectif: "impro",   libre: { titre: "Jam Session", detail: "Un groupe qui suit les accords, et des contraintes à tenir", ecran: "jam" } },
 ];
 /** Exercices d'un domaine : débloqués et verrouillés (règle partagée avec la séance). */
@@ -95,6 +95,11 @@ export function TrainingScreen({ state, dispatch, content, navigate, vueInitiale
     if (e.aJour) return;
     if (e.id === "revision") navigate("review", { cible: e.questions, retour: "training" });
     else if (e.id === "guitare") setExerciceOuvert(e.exercice);
+    // Débutant : un morceau d'Outils › Morceaux, un exercice de Premiers
+    // pas ou l'accordeur, jamais la Jam Session (voir seanceDebutant).
+    else if (e.id === "jouer" && e.morceau) navigate("toolbox", { outil: "morceaux", morceau: e.morceau, retour: "training" });
+    else if (e.id === "jouer" && e.exercice) setExerciceOuvert(e.exercice);
+    else if (e.id === "jouer" && e.outil) navigate("toolbox", { outil: e.outil, retour: "training" });
     else if (e.id === "jouer") navigate("jam", { retour: "training" });
   };
 
@@ -351,7 +356,9 @@ function VueDomaine({ C, d, state, dispatch, content, navigate, progression, qui
 
   const ouvrirLibre = () => {
     if (d.libre.quiz) setQuizOuvert(true);
-    else navigate(d.libre.ecran, d.libre.ecran === "toolbox" ? {} : { retour: "training" });
+    // Outils : ouvert directement sur l'onglet de l'outil (Accordeur pour
+    // Premiers pas), pas sur le dernier onglet visité.
+    else navigate(d.libre.ecran, d.libre.ecran === "toolbox" ? { outil: d.libre.outil, retour: "training" } : { retour: "training" });
   };
 
   return (
