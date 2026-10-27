@@ -15,6 +15,14 @@ export const FORMES_ACCORDS = {
   G:  { nom: "Sol", frets: [3, 2, 0, 0, 0, 3], fingers: [2, 1, 0, 0, 0, 3] },
   Em: { nom: "Mim", frets: [0, 2, 2, 0, 0, 0], fingers: [0, 2, 3, 0, 0, 0] },
   A:  { nom: "La",  frets: [-1, 0, 2, 2, 2, 0], fingers: [0, 0, 1, 2, 3, 0] },
+  Dm: { nom: "Rém", frets: [-1, -1, 0, 2, 3, 1], fingers: [0, 0, 0, 2, 3, 1] },
+  // Septièmes ouvertes (blues, bossa).
+  E7:  { nom: "Mi7",  frets: [0, 2, 0, 1, 0, 0],   fingers: [0, 2, 0, 1, 0, 0] },
+  A7:  { nom: "La7",  frets: [-1, 0, 2, 0, 2, 0],  fingers: [0, 0, 2, 0, 3, 0] },
+  B7:  { nom: "Si7",  frets: [-1, 2, 1, 2, 0, 2],  fingers: [0, 2, 1, 3, 0, 4] },
+  D7:  { nom: "Ré7",  frets: [-1, -1, 0, 2, 1, 2], fingers: [0, 0, 0, 2, 1, 3] },
+  // Lam7 avec la corde 6 à vide : le pouce alterne La (corde 5) et Mi (corde 6).
+  Am7: { nom: "Lam7", frets: [0, 0, 2, 0, 1, 0],   fingers: [0, 0, 2, 0, 1, 0] },
 };
 
 /** Nom affiché d'un accord : « Lam », « Sol »… (le symbole si inconnu). */

@@ -11,8 +11,8 @@ import { planifierTab } from "../src/tab/tabSon.js";
 
 // ── Catalogue ─────────────────────────────────────────────────────────────
 
-test("catalogue : 8 à 12 morceaux, identifiants uniques, champs requis", () => {
-  assert.ok(MORCEAUX.length >= 8 && MORCEAUX.length <= 12, `${MORCEAUX.length} morceaux`);
+test("catalogue : 8 à 40 morceaux, identifiants uniques, champs requis", () => {
+  assert.ok(MORCEAUX.length >= 8 && MORCEAUX.length <= 40, `${MORCEAUX.length} morceaux`);
   const ids = new Set(MORCEAUX.map(m => m.id));
   assert.equal(ids.size, MORCEAUX.length);
   for (const m of MORCEAUX) {
@@ -81,6 +81,14 @@ test("morceaux d'accords : chaque note appartient à la forme de l'accord de sa 
         `${m.id} mesure ${ev.mesure + 1}, corde ${ev.string} : case ${ev.fret} hors de ${m.grille[ev.mesure]}`);
     }
   }
+});
+
+test("débuts connus : Für Elise, Menuet, Scarborough Fair (dorien : Si bécarre)", () => {
+  const debut = (id, n) => melodieJouee(analyserMorceau(morceauParId(id)).evenements).slice(0, n);
+  assert.deepEqual(debut("fur-elise", 9), ["Mi", "Ré#", "Mi", "Ré#", "Mi", "Si", "Ré", "Do", "La"]);
+  assert.deepEqual(debut("menuet-en-sol", 7), ["Ré", "Sol", "La", "Si", "Do", "Ré", "Sol"]);
+  const scarb = melodieJouee(analyserMorceau(morceauParId("scarborough-fair")).evenements);
+  assert.ok(scarb.includes("Si") && !scarb.some(n => n.includes("#")), "Ré dorien : Si naturel, aucune altération");
 });
 
 // ── Analyse ───────────────────────────────────────────────────────────────

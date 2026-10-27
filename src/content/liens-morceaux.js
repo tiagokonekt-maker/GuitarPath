@@ -26,12 +26,20 @@ export const LIENS_MORCEAUX = {
   // ── Rythme ───────────────────────────────────────────────────────────
   // Croches régulières sur la corde grave.
   "rhy-c2-02": ["riff-rock-mi"],
-  // Feel ternaire : shuffle (blues) et mesure composée 6/8 (six croches).
-  "rhy-c2-03": ["blues-en-la", "rising-sun"],
+  // Feel ternaire : shuffle (blues) et mesure composée 6/8 (six croches) ;
+  // la gigue irlandaise est le 6/8 type, deux groupes de trois croches.
+  "rhy-c2-03": ["blues-en-la", "rising-sun", "irish-washerwoman"],
   // Patterns de strumming : à appliquer sur une grille d'accords ouverts.
   "rhy-c4-02": ["premiers-accords"],
   // Blues shuffle : la grille de 12 mesures, longue-courte.
-  "rhy-c5-01": ["blues-en-la"],
+  "rhy-c5-01": ["blues-en-la", "blues-lent-mi"],
+  // Reggae : le skank sur chaque « et », Lam puis Rém, deux mesures chacun
+  // (exactement l'exercice de la leçon).
+  "rhy-c5-02": ["skank-reggae"],
+  // Funk : flux de 16e, Lam7 barré case 5 sur quatre cordes, ghost notes (x).
+  "rhy-c5-03": ["chank-funk"],
+  // Bossa : pouce sur les temps (La/Mi, Ré/La), doigts à contretemps, Am7 – D7.
+  "rhy-c5-04": ["bossa-pouce-doigts"],
   // Travailler un morceau (lent, boucle A–B, tempo) : sur la grille débutant.
   "rhy-routine-01": ["premiers-accords"],
   // Médiator alterné : croches régulières sur une corde (corde 6).
@@ -42,35 +50,43 @@ export const LIENS_MORCEAUX = {
   "rhy-tech-03": ["riff-folk-re"],
   // Jouer aux doigts : deux arpèges basse + cordes aiguës (Do – Lam – Fa – Sol
   // en croches ; Lam – Do – Ré – Fa – Mi en p-i-m-a-m-i).
-  "rhy-doigts-01": ["picking-do-lam-fa-sol", "rising-sun"],
-  // Mesures à trois : Greensleeves est en 3/4, Rising Sun en 6/8.
-  "rhy-mes-01": ["greensleeves", "rising-sun"],
+  "rhy-doigts-01": ["picking-do-lam-fa-sol", "rising-sun", "canon-pachelbel"],
+  // Mesures à trois : Greensleeves et Amazing Grace en 3/4, Rising Sun et la
+  // gigue irlandaise en 6/8.
+  "rhy-mes-01": ["greensleeves", "rising-sun", "amazing-grace", "irish-washerwoman"],
   // Picking Travis : le picking Do – Lam – Fa – Sol alterne deux basses au
   // pouce (temps 1 et 3) sous les cordes aiguës.
-  "rhy-doigts-02": ["picking-do-lam-fa-sol"],
+  // Le Travis Do – Lam – Rém – Sol : pouce alterné sur chaque temps, doigts sur les « et ».
+  "rhy-doigts-02": ["picking-do-lam-fa-sol", "travis-do-lam-rem-sol"],
   // Construire un riff : le riff de la leçon (corde 6 à vide comme pivot,
   // cases 3 et 5, relance sur la corde 5 case 2) est celui du morceau.
   "rhy-c6-02": ["riff-rock-mi"],
 
   // ── Manche ───────────────────────────────────────────────────────────
   // Power chords : le riff de la leçon reprend ses cases 0, 3, 5 sur la corde 6.
-  "neck-pow-01": ["riff-rock-mi"],
+  // Le riff power chords enchaîne E5, G5, A5 et D5 : les formes de la leçon.
+  "neck-pow-01": ["riff-rock-mi", "riff-power-chords"],
 
   // ── Gammes ───────────────────────────────────────────────────────────
   // Le riff rock est construit sur la pentatonique de Mi mineur.
   "scales-c3-01": ["riff-rock-mi"],
   // La gamme blues : son terrain naturel, le blues en La.
   "scales-c3-04": ["blues-en-la"],
+  // Dorien : Scarborough Fair est en Ré dorien (Si bécarre, la sixte majeure).
+  "scales-c5-02": ["scarborough-fair"],
 
   // ── Harmonie ─────────────────────────────────────────────────────────
   // Arpèges : l'accord joué note à note (Do – Lam – Fa – Sol, Lam – Do – Ré – Fa – Mi).
-  "harmony-03": ["picking-do-lam-fa-sol", "rising-sun"],
+  "harmony-03": ["picking-do-lam-fa-sol", "rising-sun", "canon-pachelbel"],
   // Accords de septième : la même grille La – Ré – Mi en 12 mesures (A7, D7, E7).
-  "harm-acc-02": ["blues-en-la"],
+  // Le blues lent en Mi tourne sur E7, A7, B7.
+  "harm-acc-02": ["blues-en-la", "blues-lent-mi"],
   // Le petit Fa (xx3211) : les deux grilles le jouent dans cette forme.
-  "harm-acc-03": ["picking-do-lam-fa-sol", "rising-sun"],
+  "harm-acc-03": ["picking-do-lam-fa-sol", "rising-sun", "canon-pachelbel"],
   // I-IV-V : le blues de 12 mesures en est la forme type.
-  "harm-c6-01": ["blues-en-la"],
+  "harm-c6-01": ["blues-en-la", "blues-lent-mi"],
+  // I-V-vi-IV : Sol – Ré – Mim – Do, la grille de la leçon.
+  "harm-c6-02": ["ballade-pop"],
 };
 
 /** Identifiants des morceaux liés à une leçon (liste vide si aucun). */

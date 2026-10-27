@@ -29,6 +29,21 @@ import risingSun from "./titres/risingSun.js";
 import riffRockMi from "./titres/riffRockMi.js";
 import riffFolkRe from "./titres/riffFolkRe.js";
 import bluesEnLa from "./titres/bluesEnLa.js";
+import menuetEnSol from "./titres/menuetEnSol.js";
+import amazingGrace from "./titres/amazingGrace.js";
+import laCucaracha from "./titres/laCucaracha.js";
+import balladePop from "./titres/balladePop.js";
+import skankReggae from "./titres/skankReggae.js";
+import riffPowerChords from "./titres/riffPowerChords.js";
+import scarboroughFair from "./titres/scarboroughFair.js";
+import furElise from "./titres/furElise.js";
+import londonderryAir from "./titres/londonderryAir.js";
+import irishWasherwoman from "./titres/irishWasherwoman.js";
+import canonPachelbel from "./titres/canonPachelbel.js";
+import travisDoLamRemSol from "./titres/travisDoLamRemSol.js";
+import bluesLentMi from "./titres/bluesLentMi.js";
+import chankFunk from "./titres/chankFunk.js";
+import bossaPouceDoigts from "./titres/bossaPouceDoigts.js";
 
 export const MORCEAUX = [
   odeALaJoie,
@@ -42,6 +57,21 @@ export const MORCEAUX = [
   risingSun,
   riffFolkRe,
   bluesEnLa,
+  menuetEnSol,
+  amazingGrace,
+  laCucaracha,
+  balladePop,
+  skankReggae,
+  riffPowerChords,
+  scarboroughFair,
+  furElise,
+  londonderryAir,
+  irishWasherwoman,
+  canonPachelbel,
+  travisDoLamRemSol,
+  bluesLentMi,
+  chankFunk,
+  bossaPouceDoigts,
 ];
 
 export const morceauParId = (id) => MORCEAUX.find(m => m.id === id) || null;
