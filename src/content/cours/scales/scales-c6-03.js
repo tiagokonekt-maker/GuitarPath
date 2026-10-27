@@ -1,30 +1,55 @@
 // Leçon du module « scales » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
 
 export default {
   id: "scales-c6-03", level: 9,
   title: "Comment choisir une gamme en improvisation",
-  duration: 12,
+  duration: 10,
   gropiTip: "Mini-routine : sur une vamp Am7, joue 2 tours en pentatonique mineure, 2 en éolien, puis 2 en dorien. Note la couleur que ton oreille préfère : c'est comme ça que l'instinct se construit.",
-  content: [
-    { type: "p", text: "Tu connais maintenant beaucoup de gammes. La question pratique : quelle gamme choisir face à une chanson, une grille d'accords, une situation d'improvisation ? C'est le sujet de cette leçon de synthèse, et c'est là que tu transformes la théorie en pratique.", img: "/mascotte-choix.webp", imgAlt: "Gropi qui réfléchit, boussole à la main", imgSide: "left" },
-    { type: "h", text: "Étape 1 : identifier la tonalité" },
-    { type: "p", text: "Avant tout, repère la tonalité de la chanson. Comment ? Regarde l'accord le plus présent et le dernier accord (généralement la tonalité). Si la chanson revient toujours sur Do et finit sur Do, elle est probablement en Do majeur. Si elle revient sur Am et finit sur Am, elle est en La mineur (éolien). Avec ça, tu as déjà ta 'gamme par défaut' : la majeure ou la mineure naturelle correspondante." },
-    { type: "h", text: "Étape 2 : analyser le contexte" },
-    { type: "p", text: "Ensuite, regarde le STYLE de la chanson : Pop/folk classique → ionien (majeur) ou éolien (mineur). Blues → pentatonique mineure ou gamme blues + mixolydien. Rock → mixolydien, pentatonique mineure. Jazz → modes selon les accords. Folk celtique / morceaux traditionnels → souvent dorien. Flamenco / musique espagnole → phrygien dominant. Cinéma 'magique' → lydien. Le style guide le choix." },
-    { type: "h", text: "Étape 3 : repérer les vamps modales" },
-    { type: "p", text: "Si la chanson tient un seul accord pendant longtemps (ex : 8 mesures de Dm7), c'est une 'vamp modale' — utilise le mode correspondant à cet accord. Vamp Dm7 = Ré dorien. Vamp Cmaj7 = Do ionien (mais possibilité de lydien). Vamp G7 = Sol mixolydien." },
-    { type: "h", text: "Étape 4 : changer de gamme par accord (jazz)" },
-    { type: "p", text: "Si les accords changent vite et que la chanson est jazz/sophistiquée, tu peux changer de gamme par accord. Sur Dm7 → Ré dorien. Sur G7 → Sol mixolydien. Sur Cmaj7 → Do ionien. Mais comme ces 3 modes ont les mêmes notes (Do majeur), tu peux aussi simplement jouer Do majeur tout du long en visant les notes-clés de chaque accord. Beaucoup plus simple." },
-    { type: "h", text: "Le principe de cohérence" },
-    { type: "p", text: "Une règle qui simplifie tout : tant que les accords appartiennent à une seule tonalité (ex : tous les accords sont diatoniques de Do majeur), tu peux improviser dans la gamme parente (Do majeur) et toutes tes notes sonneront 'justes'. Tu n'as pas besoin de changer de gamme à chaque accord. Cette règle marche très souvent en pop, en folk et en rock simple." },
-    { type: "h", text: "Cas particuliers" },
-    { type: "p", text: "Sur un V7 résolvant en mineur (E7 → Am) : utilise la mineure harmonique du I (La harmonique sur E7). Sur un blues majeur : utilise le mixolydien sur tout, ou la pentatonique mineure pour le côté blues, ou un mix des deux. Sur une vamp m7b5-V7-Im : utilise le locrien sur le ii, mineure harmonique sur le V, mineure naturelle sur le I." },
-    { type: "h", text: "Le conseil pratique : commence simple" },
-    { type: "p", text: "Si tu hésites toujours, voici la règle de survie : pentatonique mineure de la fondamentale de la chanson. Sur une chanson en La mineur → La pentatonique mineure. Sur une chanson en Do majeur → La pentatonique mineure (pentatonique relative). Sur un blues → pentatonique mineure de la tonique. Cette 'gamme universelle' marchera dans la plupart des cas. Tu pourras affiner avec l'expérience." },
-    { type: "scale_pattern", caption: "La pentatonique mineure, case 5 — la gamme de survie, en La mineur comme en Do majeur", data: {startFret: 4, endFret: 9, rootColor: "amber", noteColor: "primary", strings: [{frets: [5,8], root: [5]}, {frets: [5,7], root: []}, {frets: [5,7], root: [7]}, {frets: [5,7], root: []}, {frets: [5,8], root: []}, {frets: [5,8], root: [5]}], noteMap: {"5,0":"La", "8,0":"Do", "5,1":"Ré", "7,1":"Mi", "5,2":"Sol", "7,2":"La", "5,3":"Do", "7,3":"Ré", "5,4":"Mi", "8,4":"Sol", "5,5":"La", "8,5":"Do"}} },
-    { type: "ref", text: "Test pratique : prends 3 chansons de styles différents (une pop type Beatles, un blues, un standard de jazz). Identifie leur tonalité, leur style, et choisis la gamme la plus appropriée pour improviser. Avec 10 chansons analysées comme ça, tu vas développer un instinct musical solide." },
-    { type: "tip", text: "L'improvisation, c'est un peu de théorie et beaucoup d'oreille. La théorie te donne les options, mais c'est ton oreille qui choisit la bonne au moment juste. Plus tu joues, plus tu écoutes, plus ton instinct devient précis. Le but n'est pas de calculer, c'est d'entendre — et de réagir." },
+  cartes: [
+    { type: "idee", titre: "1. La tonalité", texte: [
+      "Repère l'accord sur lequel la grille revient et se termine. Do ? Tu es sans doute en Do majeur. Am ? En La mineur.",
+      "Tu tiens ta gamme par défaut : la majeure ou la mineure naturelle de cette tonique.",
+    ] },
+    { type: "idee", titre: "2. Une tonalité, une gamme", texte: [
+      "Si tous les accords viennent de la même tonalité, inutile de changer de gamme à chaque accord. La gamme parente fonctionne sur toute la grille.",
+      "Vise simplement les notes de l'accord du moment, surtout sa tierce. Ça marche très souvent en pop, en folk et en rock.",
+    ] },
+    { type: "idee", titre: "3. Le style oriente", texte: [
+      "Pop, folk : majeur ou mineur naturel. Blues, rock : penta mineure, gamme blues, mixolydien. Musiques celtiques : souvent le dorien. Flamenco : phrygien dominant.",
+      "Le style ne décide pas à ta place, mais il te donne une piste.",
+    ] },
+    { type: "question", quizId: "q-scales-47" },
+    { type: "idee", titre: "4. Vamps et cas particuliers", texte: [
+      "Un seul accord tenu longtemps ? Prends son mode : Dm7 → Ré dorien, G7 → Sol mixolydien, Cmaj7 → ionien ou lydien.",
+      "Un V7 qui résout vers un accord mineur ? La mineure harmonique de l'accord d'arrivée.",
+    ] },
+    { type: "question", quizId: "q-scales-46" },
+    { type: "idee", titre: "La règle de survie", texte: [
+      "Dans le doute, la penta mineure de la tonique passe presque partout. En majeur, prends celle de la relative : La penta mineure sur un morceau en Do.",
+      "Puis affine à l'oreille : la théorie te donne les options, ton oreille choisit.",
+    ], bloc: { type: "scale_pattern", caption: "La pentatonique mineure, case 5 — la gamme de survie, en La mineur comme en Do majeur", data: {startFret: 4, endFret: 9, rootColor: "amber", noteColor: "primary", strings: [{frets: [5,8], root: [5]}, {frets: [5,7], root: []}, {frets: [5,7], root: [7]}, {frets: [5,7], root: []}, {frets: [5,8], root: []}, {frets: [5,8], root: [5]}], noteMap: {"5,0":"La", "8,0":"Do", "5,1":"Ré", "7,1":"Mi", "5,2":"Sol", "7,2":"La", "5,3":"Do", "7,3":"Ré", "5,4":"Mi", "8,4":"Sol", "5,5":"La", "8,5":"Do"}} } },
+    { type: "a-toi", titre: "Une gamme, trois accords",
+      consigne: "Fais tourner Dm7, G7, Cmaj7, Cmaj7, une mesure chacun, au clic à 70. Reste en Do majeur tout du long et vise la tierce de chaque accord : Fa, Si, puis Mi. La tab te montre le chemin ; ensuite, improvise en gardant ces trois cibles.",
+      bloc: {
+        type: "tab",
+        caption: "Do majeur sur Dm7 – G7 – Cmaj7 : chaque phrase se pose sur la tierce de l'accord (Fa, Si, Mi)",
+        text: "Tab — Dm7 : corde 2 cases 5 et 6 (Mi, Fa). G7 : corde 1 cases 5 et 7 (La, Si). Cmaj7 : corde 1 cases 8, 7, 5 (Do, Si, La), corde 2 case 5 (Mi).",
+        data: { lines: [
+          "e|-------|-5--7--|-8--7--5-----|",
+          "B|-5--6--|-------|----------5--|",
+          "G|-------|-------|-------------|",
+          "D|-------|-------|-------------|",
+          "A|-------|-------|-------------|",
+          "E|-------|-------|-------------|",
+        ] },
+      }, bpm: 70, minuteur: 150 },
+    { type: "question", quizId: "q-scales-48" },
+    { type: "recap", points: [
+      "Trouve la tonalité : l'accord de retour et de fin donne ta gamme par défaut.",
+      "Accords d'une même tonalité : une seule gamme, en visant les notes de chaque accord.",
+      "Vamp : le mode de l'accord ; V7 vers un mineur : mineure harmonique.",
+    ] },
   ],
   quiz: ["q-scales-46", "q-scales-47", "q-scales-48", "q-scales-17", "q-scales-18"],
 };

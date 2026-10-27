@@ -1,20 +1,16 @@
 // Leçon du module « harmony » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
 
 export default {
   id: "harm-c5-03", level: 8,
   title: "Les familles fonctionnelles",
-  duration: 10,
+  duration: 9,
   gropiTip: "Deux accords qui partagent deux notes ont souvent la même fonction : Do et Lam partagent Do et Mi, Fa et Rém partagent Fa et La. Pratique pour deviner une substitution.",
-  content: [
-    { type: "p", text: "Les 7 accords diatoniques ne sont pas tous égaux. Ils se regroupent en 3 familles selon leur 'fonction' harmonique : ce qu'ils 'font' dans la musique, l'effet qu'ils créent. Comprendre ces 3 familles, c'est comprendre la grammaire de la musique tonale — pourquoi certains enchaînements sonnent 'logiques' et d'autres non." },
-    { type: "h", text: "Famille Tonique (T) : le repos" },
-    { type: "p", text: "Accords : I, iii, vi. Ces accords créent une sensation de repos, de stabilité, d'arrivée. Le I est le repos absolu. Le vi (relatif mineur) est un repos plus doux, légèrement ambigu. Le iii est le repos le plus instable des trois — il est rarement utilisé seul. En Do majeur : Do (I), Mi mineur (iii), La mineur (vi)." },
-    { type: "h", text: "Famille Sous-Dominante (SD) : le mouvement doux" },
-    { type: "p", text: "Accords : IV, ii. Ces accords créent un mouvement, une envie d'aller quelque part, mais sans la tension forte de la dominante. Le IV est ouvert, 'gospel'. Le ii est plus sophistiqué, utilisé comme 'préparation' avant la dominante. En Do majeur : Fa (IV), Ré mineur (ii)." },
-    { type: "h", text: "Famille Dominante (D) : la tension" },
-    { type: "p", text: "Accords : V, vii°. Ces accords créent la tension maximale qui 'demande' à se résoudre vers la tonique. Le V est la dominante classique. Le vii° (diminué) est encore plus instable. En Do majeur : Sol (V) ou G7 (V7), Si diminué (vii°). La progression V→I est la résolution harmonique la plus puissante de la musique tonale." },
-    {
+  cartes: [
+    { type: "idee", titre: "Trois familles", texte: [
+      "Les 7 accords d'une tonalité se rangent en 3 familles, selon l'effet qu'ils produisent : le repos (tonique), le mouvement (sous-dominante), la tension (dominante).",
+      "C'est la grammaire de l'harmonie tonale : elle explique pourquoi un enchaînement sonne logique.",
+    ], bloc: {
       type: "degree_chart",
       caption: "Les 3 familles en Do majeur — T (vert) / SD (ambre) / D (corail)",
       data: {
@@ -28,20 +24,42 @@ export default {
           { top: "vii°", label: "Si diminué — Dominante",sub: "D",  tint: "coral" },
         ],
       },
-    },
-    { type: "h", text: "La phrase harmonique typique" },
-    { type: "p", text: "La 'grammaire' de l'harmonie tonale suit généralement ce schéma : Tonique → Sous-Dominante → Dominante → Tonique. T → SD → D → T. C'est une 'phrase musicale complète'. Exemple : Do (I) → Fa (IV) → Sol (V) → Do (I). Ou plus sophistiqué : Do (I) → Ré mineur (ii) → Sol 7 (V7) → Do (I). Toutes les variations respectent cette logique de base." },
-    { type: "h", text: "Substitutions au sein d'une famille" },
-    { type: "p", text: "Les accords d'une même famille sont interchangeables. Tu peux remplacer IV par ii (même famille SD) : au lieu de I-IV-V-I, jouer I-ii-V-I. Au lieu de V-I (dominante directe), jouer vii°-I. Ces substitutions créent des progressions plus sophistiquées tout en respectant la logique fonctionnelle. C'est la base de l'harmonie 'élargie'." },
-    { type: "h", text: "Progressions circulaires" },
-    { type: "p", text: "Les progressions 'en boucle' (celles qu'on peut répéter indéfiniment) sont presque toujours T-SD-D-T ou une variation. I-IV-V-I boucle parfaitement. I-V-vi-IV boucle aussi (T-D-T-SD, un peu différent). ii-V-I boucle en jazz. Ces structures circulaires permettent l'improvisation longue durée — elles ne finissent jamais vraiment." },
-    { type: "ref", text: "'The Beatles' sont des maîtres des fonctions harmoniques. 'Twist and Shout' : I-IV-V sans sophistication, maximum d'énergie. 'Yesterday' : harmonisation bien plus complexe, toujours respectant les fonctions. 'Penny Lane' mélange les 3 familles de façon surprenante. Écouter les Beatles en analysant les fonctions T-SD-D est un cours de théorie musicale à lui seul." },
-    { type: "tip", text: "Drill : dans une chanson, identifie chaque accord et classe-le dans sa famille (T, SD ou D). Puis identifie les moments de 'tension' (D) et de 'repos' (T). Tu vas comprendre pourquoi certains moments t'émeuvent plus que d'autres : c'est souvent à la résolution D→T." },
+    } },
+    { type: "idee", titre: "Repos et mouvement", texte: [
+      "Tonique : I, vi, iii. Do est le repos absolu, Lam un repos plus doux, Mim le plus instable des trois.",
+      "Sous-dominante : IV et ii. Fa et Rém donnent envie d'avancer, sans la tension de la dominante. Le ii sert souvent à préparer le V.",
+    ] },
+    { type: "idee", titre: "La tension", texte: [
+      "Dominante : V et vii°. G7 et Si diminué partagent Si et Fa, deux notes qui tirent vers Do et Mi.",
+      "V → I est la résolution la plus forte de la musique tonale.",
+    ] },
+    { type: "question", quizId: "q-logic-07" },
+    { type: "idee", titre: "La phrase complète", texte: [
+      "Le schéma de base : T → SD → D → T. Do, Fa, Sol, Do. Ou Do, Rém, G7, Do.",
+      "Les boucles qu'on répète sans fin suivent presque toutes ce chemin, ou une variante comme I-V-vi-IV.",
+    ] },
+    { type: "idee", titre: "Remplacer dans la famille", texte: [
+      "Deux accords de la même famille s'échangent sans casser la phrase : le I peut devenir vi, le V peut devenir vii°.",
+      "Le chemin reste le même, seule la couleur change. C'est la base de la réharmonisation.",
+    ] },
+    { type: "question", quizId: "q-harm-p89-c503-01" },
+    { type: "a-toi", titre: "Une phrase, trois couleurs",
+      consigne: "Quatre temps par accord au clic. Tour 1 : Do, Fa, Sol7, Do. Tour 2 : remplace Fa par Rém. Tour 3 : remplace aussi le premier Do par Lam. Écoute : la phrase garde le même chemin, repos, mouvement, tension, repos.",
+      bloc: { type: "chord_diagram", caption: "Rém (× × 0 2 3 1) : il remplace Fa dans la famille sous-dominante", data: { name: "Dm", frets: [-1,-1,0,2,3,1], fingers: [0,0,0,2,3,1], startFret: 1 } },
+      bpm: 70, minuteur: 180 },
+    { type: "question", quizId: "q-harm-p89-c503-02" },
+    { type: "recap", points: [
+      "Tonique (I, iii, vi) = repos ; sous-dominante (IV, ii) = mouvement ; dominante (V, vii°) = tension.",
+      "La phrase type : T → SD → D → T.",
+      "Dans une même famille, les accords se remplacent : IV par ii, I par vi.",
+    ] },
   ],
-  quiz: ["q-harm-15","q-logic-07","q-harm-08","q-harm-10","q-harm-11"],
+  quiz: ["q-harm-15","q-logic-07","q-harm-08","q-harm-10","q-harm-11","q-harm-p89-c503-01","q-harm-p89-c503-02"],
 };
 
 export const quiz = [
   {id:"q-harm-15",courseId:"harmony",lessonId:"harm-c5-03",lvl:3,q:"Quelle famille fonctionnelle regroupe les accords ii et IV ?",o:["Tonique", "Dominante secondaire", "Sous-dominante", "Aucune, ils sont indépendants"],a:2,exp:"Tonique = I, iii, vi (stable). Sous-dominante = IV, ii (mouvement, tension douce). Dominante = V, vii° (tension forte). ii et IV sont substituables fonctionnellement.",xp:50},
   {id:"q-logic-07",courseId:"harmony",lessonId:"harm-c5-03",lvl:3,q:"Pourquoi la cadence V-I est-elle plus 'forte' que IV-I ?",o:["La sensible du V monte sur la tonique","Le V contient la tonique, le IV non","Le V est un accord mineur, plus tendu","Le IV n'appartient pas à la tonalité"],a:0,exp:"Le V contient la sensible (le 7e degré, Si en Do majeur), à un demi-ton sous la tonique : elle monte sur Do et crée une attraction forte. Le IV n'a pas de sensible (il contient même la tonique), d'où une résolution plus douce.",xp:60},
+  {id:"q-harm-p89-c503-01",courseId:"harmony",lessonId:"harm-c5-03",lvl:2,q:"En Do majeur, par quel accord remplacer Fa sans changer la fonction de la phrase ?",o:["Ré mineur","Mi mineur","Sol majeur","Si diminué"],a:0,exp:"Fa (IV) et Ré mineur (ii) forment la famille sous-dominante : ils partagent Fa et La. Mi mineur est une tonique, Sol et Si diminué des dominantes.",xp:40},
+  {id:"q-harm-p89-c503-02",courseId:"harmony",lessonId:"harm-c5-03",lvl:3,q:"En Do majeur, quelle suite de fonctions donne Lam - Rém - Sol7 - Do ?",o:["T - SD - D - T","T - D - SD - T","SD - SD - D - T","T - SD - SD - T"],a:0,exp:"Lam (vi) est une tonique, Rém (ii) une sous-dominante, Sol7 (V7) la dominante, Do (I) le repos : la phrase type T → SD → D → T.",xp:50},
 ];

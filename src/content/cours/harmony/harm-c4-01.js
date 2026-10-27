@@ -1,41 +1,57 @@
 // Leçon du module « harmony » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
 
 export default {
   id: "harm-c4-01", level: 9,
   title: "La 9e, la 11e, la 13e : les extensions",
-  duration: 10,
+  duration: 9,
   gropiTip: "Pour nommer une extension, ajoute 7 au degré : 2 + 7 = 9, 4 + 7 = 11, 6 + 7 = 13. Sur Do, la 9e est donc Ré, la 11e Fa et la 13e La.",
-  content: [
-    { type: "p", text: "On a vu les triades (1-3-5) et les accords de 7e (1-3-5-7). Mais on peut aller plus loin : ajouter une 9e, une 11e, ou une 13e. Ces notes supplémentaires s'appellent des 'extensions' — elles enrichissent la couleur de l'accord sans en changer la fonction fondamentale. C'est le territoire du jazz avancé, de la bossa nova et de la soul moderne." },
-    { type: "h", text: "Comment compter les extensions" },
-    { type: "p", text: "Les extensions continuent la série des tierces au-delà de la 7e. 9e = 2e une octave plus haut. 11e = 4e une octave plus haut. 13e = 6e une octave plus haut. Concrètement : Cmaj9 = Do-Mi-Sol-Si-Ré. C11 = Do-Mi-Sol-Sib-Ré-Fa. C13 = Do-Mi-Sol-Sib-Ré-Fa-La. En théorie, tu empiles jusqu'à 7 notes. En pratique, on en choisit 3 à 5 selon la couleur voulue." },
-    { type: "h", text: "La 9e : l'extension la plus utilisée" },
-    { type: "p", text: "Maj9 (1-3-5-7-9) : Cmaj9 = Do-Mi-Sol-Si-Ré. Couleur : encore plus lumineux que Maj7. m9 (1-♭3-5-♭7-9) : Dm9 = Ré-Fa-La-Do-Mi. Couleur : doux, chaud. 9 (dominante, 1-3-5-♭7-9) : G9 = Sol-Si-Ré-Fa-La. Couleur : blues sophistiqué. La 9e est souvent 'libre' — tu peux l'ajouter à presque n'importe quel accord pour le sophistiquer légèrement." },
-    { type: "h", text: "La 11e : la quarte à l'octave" },
-    { type: "p", text: "La 11e est délicate : sur un accord Maj7, le 11 naturel (= quarte juste) crée une dissonance avec la 3e (1 demi-ton d'écart). On utilise plutôt le #11 (quarte augmentée = lydien !) sur les Maj7 : Cmaj7#11 = Do-Mi-Sol-Si-Fa#. Couleur : lydienne, mystérieuse. Sur les accords m7, le 11 naturel passe sans problème : Dm11 = Ré-Fa-La-Do-Mi-Sol." },
-    { type: "h", text: "La 13e : la sixte à l'octave" },
-    { type: "p", text: "G13 = Sol-Si-Ré-Fa-La-Do-Mi (7 notes en théorie). En pratique, on joue fondamentale + 3e + 7e + 13e (4 notes). G13 voicing pratique = Sol-Si-Fa-Mi (en omettant quinte, 9e, 11e). Couleur : dominante très riche, jazz. La 13e (= 6e) est présente dans beaucoup d'accords jazz-funk." },
-    { type: "h", text: "Les altérations de tensions" },
-    { type: "p", text: "On peut aussi altérer les extensions : ♭9 (9e bémolisée), #9 (9e augmentée = 'Hendrix chord'), #11 (11e augmentée = lydien), ♭13 (13e bémolisée). Ces extensions altérées donnent des couleurs encore plus sophistiquées. L'accord 7#9 (1-3-5-♭7-#9) est l'accord de 'Purple Haze' : il combine tierce majeure ET tierce mineure (enharmonique de #9), créant une ambiguïté majeur/mineur explosive." },
-    { type: "h", text: "Sur la guitare : jouer les extensions" },
-    { type: "p", text: "Les extensions sont souvent ajoutées en remplaçant une note existante par l'extension (ex : remplacer la quinte par la 9e). Sur la guitare, avec 4-5 doigts, on choisit les notes les plus importantes de l'accord : fondamentale + 3e + 7e + extension principale. Les 4 meilleures notes selon l'effet voulu." },
-    {
+  cartes: [
+    { type: "idee", titre: "Au-delà de la 7e", texte: [
+      "Continue d'empiler des tierces après la 7e : tu obtiens la 9e, la 11e et la 13e. Ce sont les extensions.",
+      "9e = 2e à l'octave, 11e = 4e, 13e = 6e. Elles colorent l'accord sans changer sa fonction.",
+    ] },
+    { type: "question", quizId: "q-harm-p89-c401-01" },
+    { type: "idee", titre: "La 9e, la plus facile", texte: [
+      "Cmaj9 = Do Mi Sol Si Ré, lumineux. Dm9 = Ré Fa La Do Mi, doux. G9 = Sol Si Ré Fa La, bluesy.",
+      "La 9e se pose sur presque tous les accords sans les déranger.",
+    ], bloc: {
       type: "chord_diagram",
       caption: "Am9 — Am7 + 9e (Si) : × 0 5 5 0 0 = La Sol Do Si Mi. Doux, chaleureux, néo-soul",
       data: { name: "Am9", frets: [-1,0,5,5,0,0], fingers: [0,0,1,2,0,0], startFret: 4 },
-    },
-    {
-      type: "chord_diagram",
-      caption: "Gmaj9 — Gmaj7 + 9e (La) : lumineux, jazz/bossa",
-      data: { name: "Gmaj9", frets: [3,0,0,0,0,2], fingers: [2,0,0,0,0,1], startFret: 1 },
-    },
-    { type: "ref", text: "'Purple Haze' (Jimi Hendrix, 1967) : le riff utilise un accord E7#9 (Mi7 avec 9e augmentée). Le Sol# (3e majeure) et le Sol naturel (#9 = enharmonique de lab ≈ sol) coexistent, créant l'ambiguïté majeur/mineur si caractéristique du son psychédélique Hendrix. Un seul accord, un son reconnaissable en 1 seconde." },
-    { type: "tip", text: "Commence avec une seule extension : ajoute une 9e à tes accords habituels. Dm → Dm9 (ajouter Mi). Gmaj7 → Gmaj9 (ajouter La). Am7 → Am9 (ajouter Si). Ces petites modifications raffinent immédiatement ton son sans complexifier ton jeu." },
+    } },
+    { type: "idee", titre: "La 11e, délicate", texte: [
+      "Sur un accord majeur, la 11 naturelle tombe un demi-ton au-dessus de la 3e : elle frotte. On la hausse d'un demi-ton : Cmaj7#11 = Do Mi Sol Si Fa#, une couleur lydienne.",
+      "Sur un m7, la 11 passe sans problème : Dm11 = Ré Fa La Do Mi Sol.",
+    ] },
+    { type: "idee", titre: "La 13e et les choix", texte: [
+      "G13 complet compte sept notes : injouable. On garde la fondamentale, la 3e, la 7e, puis l'extension voulue.",
+      "On sacrifie d'abord la quinte, puis la 9e et la 11e.",
+    ] },
+    { type: "question", quizId: "q-harm-23" },
+    { type: "idee", titre: "Les extensions altérées", texte: [
+      "Sur une dominante, on altère : ♭9, #9, #11, ♭13.",
+      "Le 7#9, l'accord de « Purple Haze » de Jimi Hendrix, fait sonner la 3e majeure et la #9, qui sonne comme une 3e mineure : majeur et mineur à la fois.",
+    ] },
+    { type: "question", quizId: "q-harm-p89-c401-02" },
+    { type: "a-toi", titre: "Ajoute la 9e",
+      consigne: "Alterne Am7 (x02010) et Am9 (x05500), quatre temps chacun au clic : écoute le Si qui s'ajoute. Puis G (320003) contre Gmaj9 (300002) : le La de la 9e, sur la corde 5, et le Fa# sur la corde 1. Termine par Am9 - Gmaj9 en boucle.",
+      bloc: {
+        type: "chord_diagram",
+        caption: "Gmaj9 — Gmaj7 + 9e (La) : lumineux, jazz/bossa",
+        data: { name: "Gmaj9", frets: [3,0,0,0,0,2], fingers: [2,0,0,0,0,1], startFret: 1 },
+      }, bpm: 70, minuteur: 120 },
+    { type: "recap", points: [
+      "9e = 2e, 11e = 4e, 13e = 6e, une octave plus haut.",
+      "Sur un accord majeur, préfère la #11 ; sur un m7, la 11 passe.",
+      "À la guitare : fondamentale, 3e, 7e, puis l'extension. La quinte part en premier.",
+    ] },
   ],
-  quiz: ["q-harm-23","q-harm-13","q-harm-16"],
+  quiz: ["q-harm-23","q-harm-13","q-harm-16","q-harm-p89-c401-01","q-harm-p89-c401-02"],
 };
 
 export const quiz = [
   {id:"q-harm-23",courseId:"harmony",lessonId:"harm-c4-01",lvl:3,q:"Dans le voicing pratique de G13 à quatre notes, lesquelles garde-t-on ?",o:["Sol, Si, Fa, Mi","Sol, Ré, La, Do","Sol, Si, Ré, Mi","Si, Ré, Fa, La"],a:0,exp:"G13 complet = Sol Si Ré Fa La Do Mi : sept notes, injouables telles quelles. On garde la fondamentale (Sol), la tierce (Si), la 7e (Fa) et la 13e (Mi), et on omet quinte, 9e et 11e. Sol Si Ré Mi, sans 7e, serait un simple G6.",xp:60},
+  {id:"q-harm-p89-c401-01",courseId:"harmony",lessonId:"harm-c4-01",lvl:2,q:"Quelle note est la 9e de Gmaj9 ?",o:["La","Do","Mi","Fa#"],a:0,exp:"La 9e est la 2e une octave plus haut : sur Sol, c'est La. Do serait la 11e, Mi la 13e, et Fa# est la 7e majeure de l'accord.",xp:35},
+  {id:"q-harm-p89-c401-02",courseId:"harmony",lessonId:"harm-c4-01",lvl:3,q:"Sur Cmaj7, quelle note donne une couleur de 11e sans frotter contre le Mi ?",o:["Fa#","Fa","Sol","Mi♭"],a:0,exp:"Fa, la 11 naturelle, est collé un demi-ton au-dessus du Mi : il frotte. Fa#, la #11, est à un ton du Mi : la couleur lydienne, sans friction. Sol est la quinte, et Mi♭ entrerait en conflit avec la tierce majeure.",xp:50},
 ];

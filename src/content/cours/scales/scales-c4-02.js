@@ -1,29 +1,51 @@
 // Leçon du module « scales » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
 
 export default {
   id: "scales-c4-02", level: 8,
   title: "Qu'est-ce qu'un mode (la grande révélation)",
-  duration: 12,
+  duration: 9,
   gropiTip: "Pour trouver la gamme parente d'un mode, remonte jusqu'au degré I : La dorien est le IIe degré, donc la gamme parente commence un ton plus bas, sur Sol. La dorien = notes de Sol majeur.",
-  content: [
-    { type: "p", text: "Voilà. Tu y es. Tu as toutes les briques nécessaires pour comprendre les modes — ce concept qui terrorise tant de guitaristes intermédiaires. Mais en réalité, après ce que tu viens d'apprendre dans la leçon précédente, les modes vont te paraître évidents. Promis." },
-    { type: "h", text: "La définition simple" },
-    { type: "p", text: "Un mode = la gamme majeure jouée en partant d'un degré différent de la tonique. C'est tout. Si tu prends Do majeur (Do-Ré-Mi-Fa-Sol-La-Si) et que tu commences la gamme sur Ré au lieu de Do, tu obtiens : Ré-Mi-Fa-Sol-La-Si-Do-Ré. Ce sont les MÊMES notes que Do majeur, mais avec Ré comme fondamentale. Ce 'mode' s'appelle le mode dorien.", img: "/illus-prisme-lumiere.webp", imgAlt: "Un prisme qui décompose un rayon de lumière blanche en plusieurs couleurs", imgSide: "left" },
-    { type: "note_grid", caption: "Ré dorien sur la corde 5 : les notes de Do majeur, mais de Ré à Ré — les écarts deviennent T-DT-T-T-T-DT-T", data: {string: 5, stringName: "La", maxFret: 17, highlights: [{fret: 5, label: "Ré", color: "amber"}, {fret: 7, label: "Mi", color: "primary"}, {fret: 8, label: "Fa", color: "primary"}, {fret: 10, label: "Sol", color: "primary"}, {fret: 12, label: "La", color: "primary"}, {fret: 14, label: "Si", color: "primary"}, {fret: 15, label: "Do", color: "primary"}, {fret: 17, label: "Ré", color: "amber"}]} },
-    { type: "h", text: "7 modes pour 7 degrés" },
-    { type: "p", text: "Comme la gamme majeure a 7 degrés, on peut commencer la gamme sur 7 fondamentales différentes. Donc 7 modes existent. Voici leurs noms et leurs degrés de départ : I = Ionien (= majeur). II = Dorien. III = Phrygien. IV = Lydien. V = Mixolydien. VI = Éolien (= mineur naturel). VII = Locrien. Dans l'ordre, on a IDPLMEL. Mnémonique anglais : 'I Don't Particularly Like Modes A Lot' (I D P L M A L)." },
-    { type: "h", text: "Pourquoi des noms grecs ?" },
-    { type: "p", text: "Les noms viennent de la Grèce antique. Chaque mode portait le nom d'une région ou peuple grec : les Doriens (région du Péloponnèse), les Phrygiens (Asie Mineure), les Lydiens (royaume d'Anatolie), les Mixolydiens, les Éoliens (îles éoliennes), les Locriens (peuple grec ancien). Les Grecs avaient théorisé ces modes 500 ans avant notre ère. Ils ont été formalisés par l'Église médiévale, puis redécouverts par les jazzmen au XXe siècle. Histoire de plus de 2500 ans." },
-    { type: "h", text: "Mêmes notes, ambiances opposées" },
-    { type: "p", text: "Voici la chose magique : les 7 modes de Do majeur partagent EXACTEMENT les mêmes 7 notes (Do-Ré-Mi-Fa-Sol-La-Si). Mais selon la fondamentale choisie, l'ambiance change radicalement. Mi phrygien (mêmes notes que Do majeur, fondamentale Mi) sonne espagnol. Lydien (fondamentale Fa) sonne flottant et magique. Mixolydien (fondamentale Sol) sonne rock'n'roll. C'est le pouvoir de la fondamentale ressentie." },
-    { type: "scale_pattern", caption: "Ré dorien — le même réservoir que la gamme parente, mais la fondamentale est Ré (case 5 corde 5, case 7 corde 3)", data: {startFret: 4, endFret: 8, rootColor: "amber", noteColor: "primary", strings: [{frets: [5,7,8], root: []}, {frets: [5,7,8], root: [5]}, {frets: [5,7], root: []}, {frets: [4,5,7], root: [7]}, {frets: [5,6,8], root: []}, {frets: [5,7,8], root: []}], noteMap: {"5,0":"La", "7,0":"Si", "8,0":"Do", "5,1":"Ré", "7,1":"Mi", "8,1":"Fa", "5,2":"Sol", "7,2":"La", "4,3":"Si", "5,3":"Do", "7,3":"Ré", "5,4":"Mi", "6,4":"Fa", "8,4":"Sol", "5,5":"La", "7,5":"Si", "8,5":"Do"}} },
-    { type: "h", text: "Modes 'majeurs' et modes 'mineurs'" },
-    { type: "p", text: "Tous les modes ne sonnent pas pareil. Si la tierce est majeure (à 4 demi-tons de la fondamentale), le mode est dit 'majeur' : Ionien, Lydien, Mixolydien. Si la tierce est mineure (3 demi-tons), le mode est dit 'mineur' : Dorien, Phrygien, Éolien, Locrien. La tierce est ce qui détermine la couleur de base." },
-    { type: "h", text: "Pourquoi utiliser des modes en 2026 ?" },
-    { type: "p", text: "Parce qu'ils élargissent la palette sonore disponible. La gamme majeure et la gamme mineure suffisent pour une grande partie de la musique pop. Mais si tu veux faire du blues-jazz (dorien), du rock énergique (mixolydien), de la musique mystérieuse (lydien), du flamenco/oriental (phrygien), tu as besoin des modes. Ils sont les outils des compositeurs modernes." },
-    { type: "ref", text: "Pour entendre la différence : prends un drone (note tenue) en Ré sur ta basse ou via une app. Joue Do majeur (Do-Ré-Mi-Fa-Sol-La-Si). Tu entendras du dorien : couleur mineure mais lumineuse. Maintenant change de drone vers Mi et joue les MÊMES notes : tu entendras du phrygien, espagnol et tendu. Mêmes notes, ambiances opposées. C'est ça, les modes." },
-    { type: "tip", text: "Ne te décourage pas si les modes paraissent complexes. Ils ne le sont pas — ils sont juste nouveaux. Dans les 7 prochaines leçons, on va prendre chaque mode un par un et tu vas le maîtriser." },
+  cartes: [
+    { type: "idee", titre: "Une gamme, un autre départ", texte: [
+      "Un mode, c'est la gamme majeure jouée à partir d'un autre degré que sa tonique.",
+      "Prends Do majeur et pars de Ré : Ré, Mi, Fa, Sol, La, Si, Do, Ré. Mêmes notes, mais Ré devient la fondamentale, et les écarts changent de place. Ce mode s'appelle Ré dorien.",
+    ], bloc: { type: "note_grid", caption: "Ré dorien sur la corde 5 : les notes de Do majeur, mais de Ré à Ré — les écarts deviennent T-DT-T-T-T-DT-T", data: {string: 5, stringName: "La", maxFret: 17, highlights: [{fret: 5, label: "Ré", color: "amber"}, {fret: 7, label: "Mi", color: "primary"}, {fret: 8, label: "Fa", color: "primary"}, {fret: 10, label: "Sol", color: "primary"}, {fret: 12, label: "La", color: "primary"}, {fret: 14, label: "Si", color: "primary"}, {fret: 15, label: "Do", color: "primary"}, {fret: 17, label: "Ré", color: "amber"}]} } },
+    { type: "idee", titre: "Sept degrés, sept modes", texte: [
+      "I ionien (le majeur), II dorien, III phrygien, IV lydien, V mixolydien, VI éolien (le mineur naturel), VII locrien.",
+      "Leurs noms sont empruntés à des peuples et régions de la Grèce antique.",
+    ] },
+    { type: "question", quizId: "q-scales-12" },
+    { type: "idee", titre: "Mêmes notes, autre ambiance", texte: [
+      "Les sept modes de Do majeur se partagent un seul réservoir de notes. Ce qui change, c'est la note sur laquelle l'oreille se pose.",
+      "Posé sur Mi, ça sonne espagnol et tendu. Sur Fa, flottant. Sur Sol, rock.",
+    ], bloc: { type: "scale_pattern", caption: "Ré dorien — le même réservoir que la gamme parente, mais la fondamentale est Ré (case 5 corde 5, case 7 corde 3)", data: {startFret: 4, endFret: 8, rootColor: "amber", noteColor: "primary", strings: [{frets: [5,7,8], root: []}, {frets: [5,7,8], root: [5]}, {frets: [5,7], root: []}, {frets: [4,5,7], root: [7]}, {frets: [5,6,8], root: []}, {frets: [5,7,8], root: []}], noteMap: {"5,0":"La", "7,0":"Si", "8,0":"Do", "5,1":"Ré", "7,1":"Mi", "8,1":"Fa", "5,2":"Sol", "7,2":"La", "4,3":"Si", "5,3":"Do", "7,3":"Ré", "5,4":"Mi", "6,4":"Fa", "8,4":"Sol", "5,5":"La", "7,5":"Si", "8,5":"Do"}} } },
+    { type: "question", quizId: "q-scales-13" },
+    { type: "idee", titre: "Modes majeurs, modes mineurs", texte: [
+      "La tierce donne la couleur de base. Tierce majeure, à 4 demi-tons : ionien, lydien, mixolydien.",
+      "Tierce mineure, à 3 demi-tons : dorien, phrygien, éolien, locrien. Les leçons suivantes les prennent un par un.",
+    ] },
+    { type: "a-toi", titre: "Deux drones, mêmes notes",
+      consigne: "Laisse sonner la corde 4 à vide et joue la première mesure : Do majeur de Ré à Ré, c'est du dorien. Puis corde 6 à vide, seconde mesure : les mêmes notes depuis Mi, c'est du phrygien. Au clic à 60, en laissant résonner le drone. Écoute l'ambiance basculer.",
+      bloc: {
+        type: "tab",
+        caption: "Mesure 1 : Ré dorien sur le drone de Ré. Mesure 2 : Mi phrygien sur le drone de Mi",
+        text: "Tab — mesure 1 : corde 4 cases 0, 2, 3, corde 3 cases 0, 2, 4, corde 2 cases 1 et 3 (Ré à Ré). Mesure 2 : corde 6 cases 0, 1, 3, corde 5 cases 0, 2, 3, corde 4 cases 0 et 2 (Mi à Mi).",
+        data: { lines: [
+          "e|-------------------------|-------------------------|",
+          "B|-------------------1--3--|-------------------------|",
+          "G|----------0--2--4--------|-------------------------|",
+          "D|-0--2--3-----------------|-------------------0--2--|",
+          "A|-------------------------|----------0--2--3--------|",
+          "E|-------------------------|-0--1--3-----------------|",
+        ] },
+      }, bpm: 60, minuteur: 120 },
+    { type: "question", quizId: "q-logic-08" },
+    { type: "recap", points: [
+      "Un mode = la gamme majeure jouée depuis un autre degré : 7 degrés, 7 modes.",
+      "Les modes d'une même gamme ont les mêmes notes ; la fondamentale change l'ambiance.",
+      "Tierce majeure : ionien, lydien, mixolydien. Tierce mineure : les quatre autres.",
+    ] },
   ],
   quiz: ["q-scales-09","q-scales-12","q-scales-13","q-logic-03","q-logic-08","q-scales-03","q-scales-04","q-scales-08"],
 };

@@ -30,6 +30,7 @@ import * as scalesC504 from "./scales-c5-04.js";
 import * as scalesC505 from "./scales-c5-05.js";
 import * as scalesC506 from "./scales-c5-06.js";
 import * as scalesC507 from "./scales-c5-07.js";
+import * as scales3nps01 from "./scales-3nps-01.js";
 import * as scalesC601 from "./scales-c6-01.js";
 import * as scalesC602 from "./scales-c6-02.js";
 import * as scalesC603 from "./scales-c6-03.js";
@@ -63,6 +64,7 @@ export const LECONS = [
   scalesC505,
   scalesC506,
   scalesC507,
+  scales3nps01, // palier 8, lot 4 : formes 3NPS, après les sept modes
   scalesC601,
   scalesC602,
   scalesC603,

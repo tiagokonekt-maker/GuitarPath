@@ -1,37 +1,63 @@
 // Leçon du module « harmony » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
 
 export default {
   id: "harm-c7-01", level: 9,
   title: "Les accords empruntés",
-  duration: 10,
+  duration: 9,
   gropiTip: "En Do majeur, un accord qui contient Mib, Lab ou Sib vient en général de Do mineur : Fam (Lab), Sib (Sib), Lab (Lab, Mib). Écoute comme ces notes assombrissent la couleur.",
-  content: [
-    { type: "p", text: "Jusqu'ici, on a joué avec les 7 accords diatoniques d'une tonalité. Mais les compositeurs ne se limitent pas à ces 7 accords — ils 'empruntent' des accords venant d'autres tonalités pour enrichir leurs progressions. Cette technique, appelée 'modal mixture' ou 'emprunt au mineur parallèle', est l'une des plus utilisées en pop, rock et jazz." },
-    { type: "h", text: "Le principe de l'emprunt" },
-    { type: "p", text: "Une chanson en Do majeur peut temporairement emprunter un accord de Do mineur (sa 'tonalité parallèle'). Do majeur = Do-Ré-Mi-Fa-Sol-La-Si. Do mineur = Do-Ré-Mib-Fa-Sol-Lab-Sib. Les accords exclusifs à Do mineur (qui n'existent pas en Do majeur) peuvent être 'empruntés' pour créer de la couleur." },
-    { type: "h", text: "L'accord ♭VII : le plus emprunté" },
-    { type: "p", text: "En Do majeur, le VII est Si diminué. En empruntant de Do mineur, tu obtiens le ♭VII = Si♭ majeur. Cet accord (Si♭-Ré-Fa) n'appartient pas à Do majeur, mais il est souvent utilisé. Exemple : Do-Si♭-Fa-Do (I-♭VII-IV-I). Rock classique, Beatles ('Hey Jude'). Le ♭VII apporte une couleur 'brute', presque modale." },
-    { type: "h", text: "L'accord ♭VI : la couleur dramatique" },
-    { type: "p", text: "En empruntant à Do mineur, tu obtiens le ♭VI = La♭ majeur. Très utilisé pour une touche dramatique ou 'épique'. Progression : I-♭VI-♭VII-I (Do-Lab-Sib-Do). Utilisée dans beaucoup de chansons rock 'épiques' et de musiques de film d'action." },
-    { type: "h", text: "L'accord iv (sous-dominante mineure)" },
-    { type: "p", text: "En Do majeur, le IV est Fa majeur. En empruntant à Do mineur, tu obtiens iv = Fa mineur. Cet accord crée une couleur 'soul', mélancolique même dans un contexte majeur. Progression classique : I-IV-iv-I (Do-Fa-Fa mineur-Do). Très présente dans les ballades soul." },
-    {
+  cartes: [
+    { type: "idee", titre: "Le mineur parallèle", texte: [
+      "Do majeur : Do Ré Mi Fa Sol La Si. Do mineur : Do Ré Mi♭ Fa Sol La♭ Si♭. Même tonique, trois notes différentes.",
+      "Un morceau en Do majeur peut emprunter un accord à Do mineur le temps d'une mesure : c'est l'emprunt.",
+    ] },
+    { type: "question", quizId: "q-harm-45" },
+    { type: "idee", titre: "Le iv mineur", texte: [
+      "Fa devient Fam : son La♭ apporte une couleur soul, mélancolique, même dans un morceau majeur.",
+      "Do - Fa - Fam - Do : le La de Fa descend sur La♭, puis sur Sol dans l'accord de Do.",
+    ], bloc: {
       type: "chord_diagram",
       caption: "Fm — sous-dominante mineure empruntée (1 3 3 1 1 1, barré case 1)",
       data: { name: "Fm (iv)", frets: [1,3,3,1,1,1], fingers: [1,3,4,1,1,1], startFret: 1, barre: { fret: 1, from: 0, to: 5 } },
-    },
-    {
+    } },
+    { type: "idee", titre: "Le ♭VI", texte: [
+      "Sur le 6e degré de Do mineur, La♭ : La♭ Do Mi♭, un accord majeur absent de Do majeur.",
+      "Placé avant un retour à Do, il donne une touche dramatique, épique.",
+    ] },
+    { type: "question", quizId: "q-harm-44" },
+    { type: "idee", titre: "Le ♭VII", texte: [
+      "Si♭ - Ré - Fa en Do majeur : un emprunt très fréquent. Do - Si♭ - Fa - Do sonne rock, brut, presque modal.",
+      "Associé au ♭VI, il forme une montée qui revient à la tonique : Do - La♭ - Si♭ - Do.",
+    ], bloc: {
       type: "chord_diagram",
       caption: "Bb — ♭VII emprunté (× 1 3 3 3 1 barré case 1)",
       data: { name: "Bb (♭VII)", frets: [-1,1,3,3,3,1], fingers: [0,1,2,3,4,1], startFret: 1, barre: { fret: 1, from: 1, to: 5 } },
-    },
-    { type: "h", text: "L'accord V/V : dominante de la dominante" },
-    { type: "p", text: "Autre type d'emprunt : les 'dominantes secondaires'. Tu peux construire un accord de dominante (X7) qui résout vers n'importe quel accord diatonique. Ex : A7 → Dm (dans Do majeur). A7 n'est pas diatonique en Do, mais il 'prépare' Dm (ii de Do) comme une mini-résolution V→I. Résultat : la progression sonne plus 'jazz' et 'orientée'." },
-    { type: "h", text: "Le ♭II (accord napolitain)" },
-    { type: "p", text: "Emprunt classique de la musique classique : le 'accord napolitain' = ♭II majeur en position fondamentale (ou 1ère inversion). En Do : ♭II = Réb majeur. Utilisé avant le V pour créer une tension supérieure. Très dramatique. Présent dans Beethoven, Mozart, et même dans du rock moderne (Radiohead utilise des accords 'napolitains')." },
-    { type: "ref", text: "'Creep' (Radiohead, 1992) utilise la progression I-III-IV-iv (en Sol : Sol-Si-Do-Do mineur). Le Do mineur (iv) est emprunté à Sol mineur. Ce passage entre Do majeur et Do mineur est le moment émotionnellement le plus fort de la chanson — l'emprunt crée la surprise harmonique qui accompagne le pivot textuel 'I'm a creep'." },
-    { type: "tip", text: "Expérimente l'emprunt : prends I-IV-V-I en Do (Do-Fa-Sol-Do). Remplace le IV par iv (Do-Fa mineur-Sol-Do). Entends la différence. C'est ça, l'emprunt : 1 accord différent, tout l'effet change. Essaie aussi de remplacer le V par ♭VII (Do-Fa-Sib-Do) pour un effet rock." },
+    } },
+    { type: "a-toi", titre: "Deux emprunts au clic",
+      consigne: "Quatre temps par accord. Tour 1 : Do, Fa, Fam, Do. Tour 2 : Do, La♭, Si♭, Do. Les barrés sont dans la tab. Puis rejoue Do, Fa, Sol, Do : entends ce que chaque emprunt change à la couleur.",
+      bloc: {
+        type: "tab",
+        caption: "Do (x32010), Fa (133211), Fam (133111), Do ; puis Do, La♭ (466544), Si♭ (x13331), Do",
+        text: "Tab — huit accords de la corde 6 à la corde 1 : Do x-3-2-0-1-0 ; Fa 1-3-3-2-1-1 ; Fam 1-3-3-1-1-1 ; Do ; Do ; La♭ 4-6-6-5-4-4 ; Si♭ x-1-3-3-3-1 ; Do.",
+        data: { lines: [
+          "e|-0---1---1---0---0---4---1---0---|",
+          "B|-1---1---1---1---1---4---3---1---|",
+          "G|-0---2---1---0---0---5---3---0---|",
+          "D|-2---3---3---2---2---6---3---2---|",
+          "A|-3---3---3---3---3---6---1---3---|",
+          "E|-----1---1-----------4-----------|",
+        ] },
+      }, bpm: 70, minuteur: 180 },
+    { type: "idee", titre: "Dominantes secondaires", texte: [
+      "Autre façon de sortir de la gamme : faire précéder un accord de sa propre dominante. D7 → Sol : le Fa# de D7 tire vers Sol comme une sensible.",
+      "E7 → Lam marche de même. L'accord visé sonne un instant comme une tonique.",
+    ] },
+    { type: "question", quizId: "q-harm-46" },
+    { type: "recap", points: [
+      "Emprunter = prendre un accord au mineur parallèle (Do mineur pour Do majeur).",
+      "Les classiques : iv (Fam), ♭VI (La♭), ♭VII (Si♭).",
+      "Une dominante secondaire prépare un accord de la tonalité comme une mini-tonique.",
+    ] },
   ],
   quiz: ["q-harm-44", "q-harm-45", "q-harm-46", "q-impro-03"],
 };

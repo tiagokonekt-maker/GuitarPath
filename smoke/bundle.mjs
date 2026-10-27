@@ -10651,8 +10651,10 @@ var UNITES_AJOUTEES = {
   "palier-6-4": "2026-10-16",
   "palier-5-3": "2026-10-27",
   // valse et 6/8, capodastre (lot 3)
-  "palier-7-3": "2026-10-27"
+  "palier-7-3": "2026-10-27",
   // CAGED avancé, picking Travis (lot 3)
+  "palier-8-4": "2026-10-27"
+  // 3NPS, impro découpée (lot 4)
 };
 function franchissableParHeritage(u, units, checks, claimed) {
   const miseEnService = UNITES_AJOUTEES[u.id];
@@ -12768,6 +12770,9 @@ var LIENS_MORCEAUX = {
   // Picking Travis : le picking Do – Lam – Fa – Sol alterne deux basses au
   // pouce (temps 1 et 3) sous les cordes aiguës.
   "rhy-doigts-02": ["picking-do-lam-fa-sol"],
+  // Construire un riff : le riff de la leçon (corde 6 à vide comme pivot,
+  // cases 3 et 5, relance sur la corde 5 case 2) est celui du morceau.
+  "rhy-c6-02": ["riff-rock-mi"],
   // ── Manche ───────────────────────────────────────────────────────────
   // Power chords : le riff de la leçon reprend ses cases 0, 3, 5 sur la corde 6.
   "neck-pow-01": ["riff-rock-mi"],

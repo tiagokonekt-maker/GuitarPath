@@ -1,27 +1,50 @@
 // Leçon du module « scales » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
 
 export default {
   id: "scales-c5-01", level: 8,
   title: "Ionien — la lumière pure (= majeur)",
-  duration: 8,
+  duration: 7,
   gropiTip: "Improvise en Do ionien sur une boucle Do-Fa-Sol et termine chaque phrase sur une note de l'accord de Do (Do, Mi ou Sol). C'est ce repos qui donne à l'ionien sa stabilité.",
-  content: [
-    { type: "p", text: "Le mode ionien, c'est tout simplement... la gamme majeure que tu connais déjà. Pas de surprise, pas de note caractéristique exotique. Mais l'aborder en tant que 'mode' permet de bien le situer dans la famille des 7 modes, et de comprendre ce qui le rend unique.", img: "/illus-lever-soleil.webp", imgAlt: "Un lever de soleil stylisé", imgSide: "left" },
-    { type: "h", text: "Formule" },
-    { type: "p", text: "1 - 2 - 3 - 4 - 5 - 6 - 7. Aucune altération par rapport à la 'gamme parente' (puisque c'est elle-même). En Do : Do-Ré-Mi-Fa-Sol-La-Si." },
-    { type: "scale_pattern", caption: "Do ionien (= Do majeur) — fondamentale case 3 sur la corde 5, aucune note altérée", data: {startFret: 2, endFret: 5, rootColor: "amber", noteColor: "primary", strings: [{frets: [3,5], root: []}, {frets: [2,3,5], root: [3]}, {frets: [2,3,5], root: []}, {frets: [2,4,5], root: [5]}, {frets: [3,5], root: []}, {frets: [3,5], root: []}], noteMap: {"3,0":"Sol", "5,0":"La", "2,1":"Si", "3,1":"Do", "5,1":"Ré", "2,2":"Mi", "3,2":"Fa", "5,2":"Sol", "2,3":"La", "4,3":"Si", "5,3":"Do", "3,4":"Ré", "5,4":"Mi", "3,5":"Sol", "5,5":"La"}} },
-    { type: "h", text: "Couleur sonore" },
-    { type: "p", text: "Joyeux, lumineux, stable, ouvert. C'est le mode 'par défaut' de la musique pop occidentale depuis plusieurs siècles. Quand tu entends une chanson 'qui sent l'été', il y a de bonnes chances qu'elle soit en ionien." },
-    { type: "h", text: "Pourquoi 'mode brillant'" },
-    { type: "p", text: "Sur une échelle imaginaire qui classe les modes du plus lumineux au plus sombre, le Ionien est en deuxième position (juste derrière le Lydien, plus brillant encore). Ses 2 demi-tons (entre 3-4 et 7-8) créent des résolutions qui satisfont l'oreille occidentale par habitude millénaire." },
-    { type: "h", text: "Sur quels accords l'utiliser" },
-    { type: "p", text: "Tout accord majeur 7 (Cmaj7, Gmaj7, etc.) en contexte 'tonal classique' (chanson en Do majeur, par exemple). C'est la valeur sûre. Si tu hésites sur un solo, joue en ionien : c'est la valeur sûre (évite seulement de tenir longtemps la quarte sur un accord majeur 7)." },
-    { type: "chord_diagram", caption: "Cmaj7 (x32000) — l'accord type sur lequel jouer Do ionien", data: {name: "Cmaj7", frets: [-1,3,2,0,0,0], fingers: [0,3,2,0,0,0], startFret: 1} },
-    { type: "h", text: "Histoire" },
-    { type: "p", text: "Le mode ionien est un « nouveau venu » dans la théorie des modes : il n'y a été ajouté officiellement qu'au XVIe siècle, par le théoricien Glarean (Dodecachordon, 1547), alors que les modes plus anciens, comme le dorien, structuraient déjà le chant liturgique." },
-    { type: "ref", text: "Exemples emblématiques : 'Let It Be' (Beatles) en Do ionien. 'Twist and Shout' (Beatles), 'Can't Help Falling in Love' (Elvis), 'Imagine' (John Lennon) — tous en mode ionien. C'est le langage par défaut de la pop." },
-    { type: "tip", text: "Si tu sais déjà improviser en gamme majeure, tu sais improviser en ionien. Le seul changement, c'est ta façon de penser : au lieu de te dire 'je joue la gamme majeure', dis-toi 'je joue le mode ionien'. Cette nuance prépare ton cerveau aux 6 autres modes." },
+  cartes: [
+    { type: "idee", titre: "Le premier mode", texte: [
+      "L'ionien, c'est la gamme que tu connais depuis longtemps : 1-2-3-4-5-6-7, en Do : Do, Ré, Mi, Fa, Sol, La, Si. Aucune note altérée.",
+      "C'est la référence à laquelle on compare les six autres modes.",
+    ], bloc: { type: "scale_pattern", caption: "Do ionien (= Do majeur) — fondamentale case 3 sur la corde 5, aucune note altérée", data: {startFret: 2, endFret: 5, rootColor: "amber", noteColor: "primary", strings: [{frets: [3,5], root: []}, {frets: [2,3,5], root: [3]}, {frets: [2,3,5], root: []}, {frets: [2,4,5], root: [5]}, {frets: [3,5], root: []}, {frets: [3,5], root: []}], noteMap: {"3,0":"Sol", "5,0":"La", "2,1":"Si", "3,1":"Do", "5,1":"Ré", "2,2":"Mi", "3,2":"Fa", "5,2":"Sol", "2,3":"La", "4,3":"Si", "5,3":"Do", "3,4":"Ré", "5,4":"Mi", "3,5":"Sol", "5,5":"La"}} } },
+    { type: "idee", titre: "Lumineux et stable", texte: [
+      "Ses demi-tons tombent entre 3 et 4, puis entre 7 et l'octave. La 7e, la sensible, tire vers la tonique : chaque phrase s'y pose avec une vraie sensation de repos.",
+      "Seul le lydien est plus lumineux.",
+    ] },
+    { type: "question", quizId: "q-scales-38" },
+    { type: "idee", titre: "Sur quels accords", texte: [
+      "Son terrain : l'accord bâti sur ses 1, 3, 5 et 7 (Cmaj7 pour Do ionien), et toute chanson tonale en majeur.",
+      "Un seul piège : la quarte (Fa sur Cmaj7) frotte contre la tierce Mi. Passe dessus, ne la tiens pas.",
+    ], bloc: { type: "chord_diagram", caption: "Cmaj7 (x32000) — l'accord type sur lequel jouer Do ionien", data: {name: "Cmaj7", frets: [-1,3,2,0,0,0], fingers: [0,3,2,0,0,0], startFret: 1} } },
+    { type: "a-toi", titre: "La sensible qui se pose",
+      consigne: "Plaque Cmaj7, puis joue la tab quatre fois au clic à 70 : Si finit par se poser sur Do. Ensuite, improvise dans la position en finissant chaque phrase sur Do (corde 5 case 3).",
+      bloc: {
+        type: "tab",
+        caption: "Do ionien : de Mi à Do, puis la sensible Si qui se résout sur Do",
+        text: "Tab — corde 4 cases 2, 3, 5 (Mi, Fa, Sol), corde 3 cases 2, 4, 5 (La, Si, Do), puis corde 3 cases 4 et 5 (Si, Do).",
+        data: { lines: [
+          "e|-------------------------|",
+          "B|-------------------------|",
+          "G|----------2--4--5--4--5--|",
+          "D|-2--3--5-----------------|",
+          "A|-------------------------|",
+          "E|-------------------------|",
+        ] },
+      }, bpm: 70, minuteur: 150 },
+    { type: "question", quizId: "q-scales-60" },
+    { type: "idee", titre: "Penser « mode »", texte: [
+      "Si tu improvises en majeur, tu sais jouer l'ionien : pense simplement « Do ionien ».",
+      "Il n'est entré dans la théorie des modes qu'en 1547, avec le Dodecachordon de Glarean.",
+    ] },
+    { type: "recap", points: [
+      "Ionien = gamme majeure : 1-2-3-4-5-6-7, sans altération.",
+      "Sa sensible tire vers la tonique : le plus stable des modes.",
+      "Terrain naturel : l'accord maj7 et les chansons tonales en majeur.",
+    ] },
   ],
   quiz: ["q-scales-38", "q-scales-39", "q-scales-60"],
 };

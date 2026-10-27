@@ -99,9 +99,12 @@ const cas = [
     state, dispatch: noop, onBack: noop }],
   // Bloc `tab` (module « Premiers pas ») : doit passer par TabBlock, pas
   // retomber en paragraphe — vérifié après la boucle.
-  ["LessonView (tablature)", M.CoursesScreen.LessonView, {
-    lesson: COURSES.flatMap(c => c.lessons || []).find(l => (l.content || []).some(b => b.type === "tab")) || lecon,
-    state, dispatch: noop, onBack: noop }],
+  // Toutes les leçons sont en cartes : on ouvre directement la première
+  // carte qui porte une tablature.
+  ["LessonView (tablature)", M.CoursesScreen.LessonView, (() => {
+    const l = COURSES.flatMap(c => c.lessons || []).find(l => (l.cartes || []).some(c => c.bloc?.type === "tab")) || lecon;
+    return { lesson: l, quiz: QUIZ, carteInitiale: Math.max(0, (l.cartes || []).findIndex(c => c.bloc?.type === "tab")), state, dispatch: noop, onBack: noop };
+  })()],
   // Leçon au format cartes (Premiers pas) : première carte rendue.
   ["LessonView (cartes)", M.CoursesScreen.LessonView, {
     lesson: COURSES.flatMap(c => c.lessons || []).find(l => Array.isArray(l.cartes)) || lecon,

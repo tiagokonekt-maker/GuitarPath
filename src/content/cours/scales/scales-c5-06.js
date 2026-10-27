@@ -1,24 +1,20 @@
 // Leçon du module « scales » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
 
 export default {
   id: "scales-c5-06", level: 8,
   title: "Éolien — la mélancolie naturelle",
-  duration: 9,
+  duration: 8,
   gropiTip: "Écoute la ♭6 : dans la position case 5, joue Fa (case 6 corde 2) puis redescends sur Mi (case 5). Ce demi-ton qui retombe sur la quinte, c'est le soupir typique de l'éolien.",
-  content: [
-    { type: "p", text: "L'éolien est le mode mineur 'standard' — la gamme mineure naturelle que tu connais déjà sans le savoir. C'est le mode des ballades tristes, des chansons mélancoliques, des morceaux introspectifs. Il porte en lui plus de mille ans de musique européenne." },
-    { type: "h", text: "Construction" },
-    { type: "p", text: "L'éolien est le 6e mode de la gamme majeure. Si tu joues Do majeur en commençant sur La, tu obtiens La éolien : La-Si-Do-Ré-Mi-Fa-Sol. Mêmes notes que Do majeur, fondamentale = La. C'est exactement la gamme mineure naturelle de La." },
-    { type: "h", text: "Formule" },
-    { type: "p", text: "1 - 2 - ♭3 - 4 - 5 - ♭6 - ♭7. C'est la gamme mineure naturelle. Pas de note 'caractéristique' qui le distinguerait — c'est lui-même la référence du 'son mineur'." },
-    { type: "h", text: "Pourquoi pas de note caractéristique ?" },
-    { type: "p", text: "Comme le ionien (= majeur), l'éolien est trop 'standard' pour avoir une note qui le ferait sortir du lot. C'est par rapport à lui qu'on définit les autres modes mineurs : le dorien a la 6 majeure (vs ♭6 de l'éolien). Le phrygien a la ♭2 (vs 2 de l'éolien). Le locrien a la ♭5 (vs 5 de l'éolien). L'éolien est la base mineure, le mineur 'pur'." },
-    { type: "h", text: "Couleur sonore" },
-    { type: "p", text: "Mélancolique, triste, introspectif, dramatique. Le 'son mineur' classique. Quand quelqu'un dit 'cette chanson est en mineur', il parle généralement de l'éolien. C'est le mode de la majorité des ballades, des chansons d'amour torturé, des introspections musicales." },
-    { type: "h", text: "Sur quels accords l'utiliser" },
-    { type: "p", text: "Tout accord mineur dans un contexte 'tonal' classique (chanson en La mineur, par exemple). Toute progression Im-IVm-Vm typique du folk, de la pop mélancolique, du rock tristoune. C'est la valeur sûre du mineur." },
-    {
+  cartes: [
+    { type: "idee", titre: "Le 6e mode", texte: [
+      "Do majeur joué depuis La : La, Si, Do, Ré, Mi, Fa, Sol. C'est La éolien.",
+      "Tu le connais déjà sous un autre nom : c'est exactement la mineure naturelle, le « son mineur » de la plupart des ballades.",
+    ] },
+    { type: "idee", titre: "Depuis la penta", texte: [
+      "La penta mineure de La, position 1, contient déjà cinq de ses notes. Ajoute Si et Fa dans la même position et tu as l'éolien complet.",
+      "Pas de nouvelle forme à apprendre : deux notes de plus dans des doigts familiers.",
+    ], bloc: {
       type: "scale_pattern",
       caption: "La éolien (mineur naturel) — case 5. Même forme que Am pentatonique + 2 notes (Si, Fa)",
       data: {
@@ -41,11 +37,38 @@ export default {
           "5,5":"La","7,5":"Si","8,5":"Do",
         }
       },
-    },
-    { type: "h", text: "Histoire" },
-    { type: "p", text: "L'éolien tient son nom de l'Éolide, une région de la Grèce antique. Comme l'ionien, il n'est entré officiellement dans la théorie des modes qu'au XVIe siècle, avec le théoricien Glarean (Dodecachordon, 1547), avant de devenir la base de la gamme mineure de la musique tonale." },
-    { type: "ref", text: "Exemples emblématiques : 'Stairway to Heaven' (Led Zeppelin) en La éolien. 'House of the Rising Sun' (The Animals) en La éolien. 'Mad World' (Tears for Fears / Gary Jules) en Mi éolien. La quasi-totalité des chansons traditionnelles celtiques, des ballades folk russes, et de la musique 'gypsy' moderne. Quand tu entends une chanson 'qui sent l'automne', il y a de bonnes chances qu'elle soit en éolien." },
-    { type: "tip", text: "Tu connais déjà l'éolien si tu as travaillé la pentatonique mineure (qui en est extraite). Pour passer de la penta à l'éolien complet, ajoute simplement le 2 (la seconde majeure) et la ♭6 (la sixte mineure). Tu as la gamme complète." },
+    } },
+    { type: "question", quizId: "q-scales-42" },
+    { type: "idee", titre: "L'étalon du mineur", texte: [
+      "Formule : 1-2-♭3-4-5-♭6-♭7. L'éolien n'a pas de note caractéristique : c'est la référence.",
+      "Les autres modes mineurs se définissent par rapport à lui : le dorien remonte une note, le phrygien en baisse une, le locrien en baisse deux.",
+    ] },
+    { type: "idee", titre: "Sur quels accords", texte: [
+      "Son terrain : tout morceau tonal en mineur, et les grilles dont chaque accord vient de la gamme, comme Am – F – G ou Am – Dm – Em.",
+      "Couleur : mélancolique, introspective. Son Fa aime retomber d'un demi-ton sur Mi, la quinte.",
+    ] },
+    { type: "question", quizId: "q-scales-41" },
+    { type: "a-toi", titre: "La éolien sur Am – F – G",
+      consigne: "Fais tourner Am, F, G, Am, une mesure chacun, au clic à 70 : enregistre-toi ou utilise une boucle. Joue la tab, qui fait deux fois retomber Fa sur Mi, puis improvise dans la position case 5 en finissant tes phrases sur La (corde 4 case 7).",
+      bloc: {
+        type: "tab",
+        caption: "La éolien, position case 5 : la sixte mineure Fa qui retombe sur Mi, puis retour au La",
+        text: "Tab — mesure 1 : corde 1 cases 8, 7, 5 (Do, Si, La), corde 2 cases 6 et 5 (Fa, Mi). Mesure 2 : corde 2 cases 8, 6, 5 (Sol, Fa, Mi), corde 3 cases 7 et 5 (Ré, Do), corde 4 case 7 (La).",
+        data: { lines: [
+          "e|-8--7--5--------|-------------------|",
+          "B|----------6--5--|-8--6--5-----------|",
+          "G|----------------|----------7--5-----|",
+          "D|----------------|----------------7--|",
+          "A|----------------|-------------------|",
+          "E|----------------|-------------------|",
+        ] },
+      }, bpm: 70, minuteur: 150 },
+    { type: "question", quizId: "q-scales-40" },
+    { type: "recap", points: [
+      "Éolien = mineure naturelle : 1-2-♭3-4-5-♭6-♭7.",
+      "Penta mineure + la 2 et la ♭6 = l'éolien complet, dans la même position.",
+      "Les autres modes mineurs se mesurent à lui : dorien (6), phrygien (♭2), locrien (♭2, ♭5).",
+    ] },
   ],
   quiz: ["q-scales-40", "q-scales-41", "q-scales-42", "q-logic-10", "q-scales-03"],
 };

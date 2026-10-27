@@ -349,6 +349,7 @@ export const UNITES_AJOUTEES = {
   "palier-6-4": "2026-10-16",
   "palier-5-3": "2026-10-27",   // valse et 6/8, capodastre (lot 3)
   "palier-7-3": "2026-10-27",   // CAGED avancé, picking Travis (lot 3)
+  "palier-8-4": "2026-10-27",   // 3NPS, impro découpée (lot 4)
 };
 
 function franchissableParHeritage(u, units, checks, claimed) {

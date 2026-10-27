@@ -1,31 +1,47 @@
 // Leçon du module « rhythm » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
+
+const RIFF_MI = { type: "tab", caption: "Un riff d'une mesure en Mi : la corde grave à vide comme pivot, deux notes de la pentatonique pour la signature", text: "Tab : corde 6 à vide, à vide, case 3 (Sol), à vide, case 5 (La), à vide, case 3 (Sol), puis corde 5 case 2 (Si) pour relancer la boucle.", data: { lines: ["e|------------------|","B|------------------|","G|------------------|","D|------------------|","A|---------------2--|","E|-0-0-3-0-5-0-3----|"] } };
 
 export default {
   id: "rhy-c6-02", level: 9,
   title: "Construire un riff rythmique personnel",
-  duration: 11,
+  duration: 9,
   gropiTip: "Pour ton premier riff, impose-toi une contrainte : une seule corde, trois notes maximum. Sans pouvoir te cacher derrière les notes, c'est le rythme qui fait tout le travail.",
-  content: [
-    { type: "p", text: "Cette leçon de synthèse te donne les outils pour créer tes propres riffs rythmiques. Un riff rythmique personnel, c'est ta signature musicale — quelques notes ou accords organisés dans un pattern distinctif que tu as inventé. Tous les grands guitaristes ont leurs riffs caractéristiques.", img: "/mascotte-histoire.webp", imgAlt: "Gropi qui raconte une histoire, livre ouvert devant lui", imgSide: "right" },
-    { type: "h", text: "Les ingrédients d'un bon riff" },
-    { type: "p", text: "Un riff efficace combine 4 éléments : (1) Un motif rythmique fort (pas trop complexe, mémorisable). (2) Une idée harmonique simple (1-3 accords ou notes). (3) Une 'signature' distinctive (élément qui le rend reconnaissable : un bend, un mute spécifique, une note de passage). (4) La répétabilité (pouvoir le jouer 20 fois parfaitement identique)." },
-    { type: "h", text: "Étape 1 : choisir le feel" },
-    { type: "p", text: "Avant de trouver des notes, choisis le feel de ton riff. Blues shuffle ? Funk 16e ? Rock downstrokes ? Reggae skank ? Ce feel détermine le groove de base. Exemple : 'je veux un riff blues-rock avec palm mute et quelques accents ouverts'. Ce cadre te guide dans tes choix." },
-    { type: "h", text: "Étape 2 : choisir la zone harmonique" },
-    { type: "p", text: "Sur quoi ton riff est-il basé ? Power chord en Mi (rock)? Accord de Am7 (funk/blues)? Notes de la pentatonique Am (blues)? Riff de basse sur cordes graves (rock/métal)? La zone harmonique détermine la couleur et le registre du riff. La plupart des grands riffs sont très simples harmoniquement — leur force vient du rythme, pas des notes." },
-    { type: "h", text: "Étape 3 : créer le motif" },
-    { type: "p", text: "Commence par 1 mesure (4 temps). Place 4-8 éléments (coups de médiator, mutes, notes). Assure-toi qu'il y a un accent clair (souvent sur le temps 1 ou le 'et-de-2'). Teste-le en boucle 10 fois. S'il sonne naturellement après 3-4 répétitions = bon signe. Si tu dois chercher la prochaine note = trop complexe, simplifie." },
-    { type: "tab", caption: "Un riff d'une mesure en Mi : la corde grave à vide comme pivot, deux notes de la pentatonique pour la signature", text: "Tab : corde 6 à vide, à vide, case 3 (Sol), à vide, case 5 (La), à vide, case 3 (Sol), puis corde 5 case 2 (Si) pour relancer la boucle.", data: { lines: ["e|------------------|","B|------------------|","G|------------------|","D|------------------|","A|---------------2--|","E|-0-0-3-0-5-0-3----|"] } },
-    { type: "strum_pattern", caption: "La main droite du riff : palm mute (×) en continu, accents ouverts sur le « et de 2 » (H) et sur le 4 (B)", data: {pattern: ["x", "x", "x", "H", "x", "x", "B", "x"], beats: 4, style: "rock", bpm: 100} },
-    { type: "h", text: "Étape 4 : variations" },
-    { type: "p", text: "Un bon riff a une version A (la base) et une version B (variation). La version B peut : changer le dernier temps (turnaround), monter d'une corde à la fin, ajouter une note de passage. La version B intervient toutes les 4 mesures environ, créant de la variété sans tout changer." },
-    { type: "h", text: "Les riffs les plus célèbres : analyse" },
-    { type: "p", text: "'Smoke on the Water' (Deep Purple) : 4 notes en power chords, rythme de noires simples. Ultra simple, mais reconnaissable universellement. 'Johnny B. Goode' (Chuck Berry) : riff boogie en La, double-croches. Simple, groovy, répétable. 'Superstition' (Stevie Wonder) : riff clavinet = 8 notes en doubles-croches syncopées. Plus complexe mais toujours répétable. La complexité n'est pas la clé du succès d'un riff." },
-    { type: "h", text: "Documenter et développer" },
-    { type: "p", text: "Quand tu trouves un riff qui 'sonne', enregistre-le immédiatement. Les bonnes idées disparaissent. Utilise ton téléphone. Ensuite, note le en tablature (même approximative). Puis travaille-le : est-ce qu'il supporte d'être joué 2 minutes en boucle sans ennuyer ? C'est le test ultime. Les grands riffs sont faits pour être répétés." },
-    { type: "ref", text: "Keith Richards (Rolling Stones) dit qu'il enregistre toutes ses idées de riffs la nuit avec un petit dictaphone. Beaucoup de ses riffs célèbres sont nés à 3h du matin. 'Satisfaction' est venu dans son sommeil — il s'est réveillé, a mis le dictaphone en marche, a joué le riff, puis s'est rendormi. Le lendemain, l'enregistrement était là." },
-    { type: "tip", text: "Projet riff : crée 1 riff par semaine. Chaque lundi, tu as un nouveau riff à créer sur la base du style étudié (blues la semaine 1, reggae la semaine 2, funk la semaine 3, etc.). En 10 semaines, tu as 10 riffs personnels. C'est le début de ton vocabulaire musical propre." },
+  cartes: [
+    { type: "idee", titre: "Ta signature", texte: [
+      "Un riff, c'est une cellule courte qu'on reconnaît en deux secondes et qu'on rejoue en boucle.",
+      "Sa force vient d'abord du rythme, rarement du nombre de notes.",
+    ] },
+    { type: "idee", titre: "Quatre ingrédients", texte: [
+      "Un rythme qu'on retient. Une idée harmonique simple : une à trois notes ou accords. Un détail signature : un accent, un mute, une note de passage.",
+      "Et la répétabilité : pouvoir le jouer vingt fois à l'identique.",
+    ] },
+    { type: "question", quizId: "q-rhy-41" },
+    { type: "idee", titre: "Le feel, puis la zone", texte: [
+      "Choisis d'abord le feel : shuffle, funk en doubles-croches, rock en croches, skank reggae.",
+      "Puis la zone : une corde grave à vide, un power chord, quelques notes de pentatonique. Ce cadre guide tous tes choix.",
+    ] },
+    { type: "idee", titre: "Une mesure, en boucle", texte: [
+      "Quatre à huit coups sur une mesure, avec un accent clair. Joue-la dix fois de suite.",
+      "Si elle tourne seule après trois ou quatre passages, c'est bon signe. Si tu cherches la note suivante, simplifie.",
+    ], bloc: RIFF_MI },
+    { type: "question", quizId: "q-rhy-55" },
+    { type: "a-toi", titre: "Le riff en Mi",
+      consigne: "Joue le riff au clic à 80, en palm mute sur la corde à vide. Laisse sonner le Sol et le La. Quand il tourne seul, change une seule chose (un accent, une note, un silence) et garde tout le reste.",
+      bloc: RIFF_MI, bpm: 80, minuteur: 120 },
+    { type: "idee", titre: "Version A, version B", texte: [
+      "Trois fois la version A, la quatrième fois une version B : une fin différente, une note qui monte d'une corde, une note de passage.",
+      "La répétition ancre le riff, la variation relance l'écoute.",
+    ] },
+    { type: "a-toi", titre: "Ton riff",
+      consigne: "Une corde, trois notes au plus, une mesure : invente ton riff au clic. Joue A, A, A, puis B. Dès qu'il sonne, enregistre-le avec ton téléphone : les bonnes idées s'oublient vite.",
+      bpm: 80, minuteur: 300 },
+    { type: "recap", points: [
+      "Un riff tient sur une cellule courte : le rythme avant les notes.",
+      "Choisis le feel et la zone, puis une mesure qui tourne seule en boucle.",
+      "Trois fois A, une fois B ; enregistre tout de suite ce qui sonne.",
+    ] },
   ],
   quiz: ["q-rhy-41","q-rhy-10","q-rhy-55"],
 };

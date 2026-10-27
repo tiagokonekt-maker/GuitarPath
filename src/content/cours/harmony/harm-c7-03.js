@@ -1,39 +1,57 @@
 // Leçon du module « harmony » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
 
 export default {
   id: "harm-c7-03", level: 9,
   title: "Les modulations : changer de tonalité",
-  duration: 10,
+  duration: 9,
   gropiTip: "Pour moduler vers une tonalité, glisse son accord V7 juste avant : de Do vers Mi, passe par Si7 ; de Do vers Fa, par Do7. Un seul accord, et l'oreille suit.",
-  content: [
-    { type: "p", text: "Une modulation, c'est le changement de tonalité pendant un morceau. C'est l'une des techniques les plus expressives en composition : elle peut créer une montée d'énergie, une surprise, ou un changement d'ambiance radical. Les modulations sont présentes dans presque toute la musique, du classique à la pop en passant par le jazz." },
-    { type: "h", text: "Pourquoi moduler ?" },
-    { type: "p", text: "Plusieurs raisons. Monter d'un ton au refrain : technique pop classique pour créer une montée d'énergie ('And I Will Always Love You' de Whitney Houston monte d'un ton pour le dernier refrain). Changer d'ambiance : passer du majeur au mineur parallèle (ou vice versa). Développement harmonique : le jazz module constamment pour explorer différentes tonalités." },
-    { type: "h", text: "Modulation diatonique (par pivot)" },
-    { type: "p", text: "La modulation la plus douce : trouver un accord commun aux 2 tonalités ('accord pivot') et l'utiliser comme charnière. Ex : passer de Do majeur à Sol majeur. L'accord Am (vi de Do = ii de Sol) sert de pivot. Do-Am-D7-G : le Am est en Do majeur, mais le D7 prépare Sol. L'oreille accepte la modulation sans choc." },
-    {
+  cartes: [
+    { type: "idee", titre: "Changer de tonalité", texte: [
+      "Moduler, c'est déplacer le centre du morceau vers une autre tonique, en cours de route.",
+      "Pour quoi faire ? Relancer l'énergie (un dernier refrain plus haut), changer d'ambiance, ou explorer, comme le jazz qui passe d'une tonalité à l'autre en permanence.",
+    ] },
+    { type: "idee", titre: "Par accord pivot", texte: [
+      "La plus douce : un accord commun aux deux tonalités sert de charnière. De Do vers Fa, Rém est le ii de Do et le vi de Fa : Do - Rém - C7 - Fa.",
+      "Plus deux tonalités sont voisines sur le cercle, plus elles partagent d'accords.",
+    ], bloc: {
       type: "circle_of_fifths",
       caption: "Do et Sol sont voisins sur le cercle — elles partagent presque toutes leurs notes",
       data: {
         highlight: ["Do", "Sol"],
         showMinors: true,
       },
-    },
-    { type: "h", text: "Modulation directe (abrupte)" },
-    { type: "p", text: "Parfois, on module sans préparation — juste en sautant directement à la nouvelle tonalité. L'effet peut être surprenant ou même choquant. Très utilisé dans la pop pour les 'key changes' spectaculaires (dernier refrain plus haut). 'I Will Survive' (Gloria Gaynor) monte d'un demi-ton de façon assez abrupte sur le dernier refrain." },
-    { type: "h", text: "Modulation par dominante secondaire" },
-    { type: "p", text: "On prépare la nouvelle tonalité avec un accord de dominante (V7) qui résout vers elle. Ex : passage de Do majeur vers Ré majeur. A7 (dominante de Ré) prépare l'arrivée en Ré. Progression : ...Cmaj7-A7-Dmaj7... L'A7 'annonce' la nouvelle tonalité. C'est la modulation la plus fréquente en jazz." },
-    { type: "h", text: "Modulation relative (majeur ↔ mineur)" },
-    { type: "p", text: "Passer d'une tonalité majeure à sa relative mineure (ou vice versa) est très courant. Do majeur ↔ La mineur. Mêmes notes, changement de fondamentale ressentie. Beaucoup de ballades commencent au majeur et glissent vers le mineur pour les couplets (ou inversement). 'Hotel California' (Eagles) commence en Si mineur et résout sur Ré majeur (relatif)." },
-    { type: "h", text: "Modulation par cycle de quartes (jazz)" },
-    { type: "p", text: "Le jazz module souvent en suivant le cycle des quintes : après un ii-V-I en Do, on passe à ii-V-I en Fa (quarte plus bas), puis en Sib, etc. 'Autumn Leaves' suit ce principe. Chaque ii-V-I est 'résolu' et sert de 'do' pour la modulation suivante. C'est la modulation la plus fluide et la plus naturelle à l'oreille." },
-    { type: "ref", text: "'Modulation magique' la plus célèbre de la pop : 'Man in the Mirror' (Michael Jackson). Après le refrain, la musique monte d'un demi-ton. Puis encore un demi-ton. L'effet d'élévation émotionnelle est spectaculaire. C'est une modulation directe répétée — simple mais efficace. En live, ça 'soulève' littéralement le public." },
-    { type: "tip", text: "Compose une modulation simple : joue I-IV-V-I en Do majeur. Puis joue immédiatement I-IV-V-I en Ré majeur (juste 1 ton plus haut). Le contraste est frappant. Maintenant essaie une transition plus douce : Do-A7-Ré majeur (la A7 prépare Ré). Entends la différence entre modulation abrupte et préparée." },
+    } },
+    { type: "question", quizId: "q-harm-22" },
+    { type: "idee", titre: "Par la dominante", texte: [
+      "On annonce la nouvelle tonique avec son propre V7. Vers Mi mineur : B7, puis Em. Vers Fa : C7, puis Fa.",
+      "Le V7 contient la sensible de la nouvelle tonalité : l'oreille comprend avant même d'y arriver. C'est la modulation la plus courante en jazz.",
+    ] },
+    { type: "question", quizId: "q-harm-p89-c703-01" },
+    { type: "idee", titre: "Relative", texte: [
+      "Do majeur et La mineur ont les mêmes notes. Passer de l'un à l'autre déplace seulement le centre : le repos se fait sur Lam au lieu de Do.",
+      "Beaucoup de chansons alternent ainsi couplet mineur et refrain majeur.",
+    ] },
+    { type: "idee", titre: "Directe", texte: [
+      "Aucune préparation : on saute dans la nouvelle tonalité. L'effet est franc, parfois spectaculaire.",
+      "C'est le coup classique du dernier refrain monté d'un demi-ton ou d'un ton en pop.",
+    ] },
+    { type: "question", quizId: "q-harm-p89-c703-02" },
+    { type: "a-toi", titre: "Deux chemins vers Ré",
+      consigne: "Quatre temps par accord au clic. Tour 1, direct : Do, Fa, Sol, Do, puis tout de suite Ré, Sol, La, Ré. Tour 2, préparé : Do, Fa, Sol, Do, A7, Ré, Sol, La, Ré. Écoute comme A7 annonce l'arrivée.",
+      bloc: { type: "chord_diagram", caption: "A7 (× 0 2 0 2 0) : la dominante de Ré, avec son Do#", data: { name: "A7", frets: [-1,0,2,0,2,0], fingers: [0,0,2,0,3,0], startFret: 1 } },
+      bpm: 70, minuteur: 180 },
+    { type: "recap", points: [
+      "Pivot : un accord commun aux deux tonalités sert de charnière.",
+      "Dominante : le V7 de la nouvelle tonalité l'annonce.",
+      "Relative : mêmes notes, autre centre ; directe : un saut sans préparation.",
+    ] },
   ],
-  quiz: ["q-harm-22","q-impro-08","q-impro-10"],
+  quiz: ["q-harm-22","q-impro-08","q-impro-10","q-harm-p89-c703-01","q-harm-p89-c703-02"],
 };
 
 export const quiz = [
   {id:"q-harm-22",courseId:"harmony",lessonId:"harm-c7-03",lvl:3,q:"Pour moduler de Do majeur à Sol majeur, lequel de ces accords peut servir de pivot ?",o:["La mineur","Fa majeur","Ré majeur","Si mineur"],a:0,exp:"Un pivot appartient aux deux tonalités. La mineur est le vi de Do et le ii de Sol : Do - Lam - D7 - Sol module sans choc. Fa majeur (Fa naturel) n'existe qu'en Do ; Ré majeur et Si mineur (avec Fa#) n'existent qu'en Sol.",xp:55},
+  {id:"q-harm-p89-c703-01",courseId:"harmony",lessonId:"harm-c7-03",lvl:2,q:"Tu es en Do majeur et tu veux arriver en Ré majeur. Quel accord glisser juste avant le Ré ?",o:["A7","D7","G7","E7"],a:0,exp:"A7 est le V7 de Ré : son Do# est la sensible de Ré majeur. D7 est l'accord d'arrivée lui-même, G7 ramène vers Do, E7 prépare La.",xp:40},
+  {id:"q-harm-p89-c703-02",courseId:"harmony",lessonId:"harm-c7-03",lvl:2,q:"Un morceau passe de Do majeur à La mineur. Qu'est-ce qui change vraiment ?",o:["Le centre, avec les mêmes notes","Trois notes de la gamme","Toutes les notes, un ton plus bas","Une note : le Fa devient Fa#"],a:0,exp:"La mineur est la relative de Do majeur : même armure, mêmes sept notes. Seul le repos se déplace, de Do vers La.",xp:40},
 ];

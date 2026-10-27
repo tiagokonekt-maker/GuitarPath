@@ -1,27 +1,40 @@
 // Leçon du module « scales » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
 
 export default {
   id: "scales-c4-03", level: 8,
   title: "Comment l'oreille perçoit un mode (le rôle du drone)",
   duration: 8,
   gropiTip: "Drone gratuit : pour Mi phrygien, laisse sonner la corde 6 à vide et joue les notes de Do majeur sur les cordes aiguës. Insiste sur le Fa (case 1 corde 1) pour entendre la ♭2.",
-  content: [
-    { type: "p", text: "Un mode existe seulement si l'oreille perçoit une fondamentale stable. Sans cette ancre, ton cerveau retombe sur la fondamentale par défaut (la tonique de la gamme majeure parente). Comprendre ce phénomène, c'est comprendre comment 'faire sonner' un mode quand on improvise.", img: "/mascotte-zen.webp", imgAlt: "Gropi les yeux fermés, à l'écoute", imgSide: "right" },
-    { type: "h", text: "Le piège : sans ancre, pas de mode" },
-    { type: "p", text: "Si tu joues simplement les notes de Ré dorien (Ré-Mi-Fa-Sol-La-Si-Do) sans rien d'autre, ton oreille va naturellement entendre 'Do majeur' parce que c'est le pattern qu'elle reconnaît le mieux. Le mode dorien va s'évanouir. Pour qu'un mode 'sonne' vraiment, il faut un dispositif qui ancre l'oreille sur la nouvelle fondamentale." },
-    { type: "h", text: "Le drone : ton meilleur ami" },
-    { type: "p", text: "Un drone, c'est une note grave tenue en continu sous la mélodie. Quand un drone Ré joue en boucle pendant que tu improvises Ré dorien, ton oreille entend le Ré comme la fondamentale. Le mode s'installe. Cette technique vient de la musique indienne classique (les tamboura), de la musique traditionnelle écossaise (les cornemuses), du blues primitif (la corde grave qui résonne)." },
-    { type: "tab", caption: "La corde de Ré à vide sert de drone : elle revient sous chaque petite phrase de Ré dorien (La, Si, Do)", text: "Tab : corde 4 à vide (Ré), puis corde 3 cases 2 et 4 (La, Si), corde 2 case 1 (Do), Ré à vide, puis Si, La et Ré à vide pour finir. Le Si, sixte majeure, donne la couleur dorienne.", data: { lines: ["e|------------------|","B|-------1----------|","G|---2-4-----4-2----|","D|-0-------0-----0--|","A|------------------|","E|------------------|"] } },
-    { type: "h", text: "Comment générer un drone" },
-    { type: "p", text: "Trois solutions. (1) Une app de drone (il en existe plusieurs, gratuites) ou une vidéo « drone Ré » sur YouTube. (2) Une boucle d'accord modal : par exemple, jouer Dm7 en boucle pour ancrer l'oreille en Ré. (3) Ta propre guitare : laisse résonner la corde de Ré (corde 4 vide ou corde 5 case 5) entre tes phrases." },
-    { type: "h", text: "Les accords modaux : alternative au drone" },
-    { type: "p", text: "Au lieu d'un drone fixe, tu peux jouer un accord 'caractéristique' du mode en boucle. Pour le dorien : Dm7 (ou Am7). Pour le mixolydien : G7. Pour le lydien : Cmaj7 avec un Fa# en accent. Pour le phrygien : Em (avec un Fa naturel en passage). Chaque mode a ses accords 'maison'." },
-    { type: "chord_diagram", caption: "Dm7 (xx0211) — la vamp qui ancre l'oreille en Ré dorien", data: {name: "Dm7", frets: [-1,-1,0,2,1,1], fingers: [0,0,0,2,1,1], startFret: 1} },
-    { type: "h", text: "Mettre en valeur la 'note caractéristique'" },
-    { type: "p", text: "Chaque mode a une note qui le différencie de son cousin majeur ou mineur. C'est sa 'note caractéristique'. En dorien, c'est la 6e majeure. En phrygien, c'est la ♭2. En lydien, c'est la #4. En mixolydien, c'est la ♭7. Quand tu improvises, mets cette note en valeur (notes longues, temps forts) pour 'affirmer' que tu joues ce mode et pas un autre. Sinon, ton oreille glissera vers la gamme majeure ou mineure standard." },
-    { type: "ref", text: "Démonstration : 'So What' (Miles Davis, 1959) est joué sur une vamp Dm7 (qui agit comme un drone harmonique). Toute la pièce reste en Ré dorien pendant 16 mesures. Aucune ambiguïté : l'oreille s'installe dans le dorien et y reste. Sans le drone harmonique de Dm7, le morceau aurait sonné comme du Do majeur ordinaire." },
-    { type: "tip", text: "Quand tu pratiques un mode, lance toujours un drone ou une vamp d'accord modal. Sans support harmonique, tu travailles dans le vide — ton oreille ne perçoit pas la couleur du mode." },
+  cartes: [
+    { type: "idee", titre: "Sans ancre, pas de mode", texte: [
+      "Un mode n'existe que si l'oreille perçoit une fondamentale stable.",
+      "Joue les notes de Ré dorien sans rien autour : ton oreille retombe vite sur la gamme parente, le motif qu'elle connaît le mieux. Le dorien s'évanouit.",
+    ] },
+    { type: "idee", titre: "Le drone", texte: [
+      "Un drone, c'est une note grave tenue sous la mélodie. Avec un Ré qui sonne en continu, l'oreille prend Ré comme fondamentale : le mode s'installe.",
+      "Une app de drone, une boucle enregistrée, ou ta guitare : laisse résonner la corde 4 à vide entre tes phrases.",
+    ] },
+    { type: "question", quizId: "q-scales-36" },
+    { type: "idee", titre: "Ou un accord en boucle", texte: [
+      "Autre ancre : un accord du mode tenu en boucle, une vamp. Dm7 pour Ré dorien, G7 pour Sol mixolydien, Em pour Mi phrygien.",
+      "L'accord fixe la fondamentale, et ses notes colorent déjà le mode.",
+    ], bloc: { type: "chord_diagram", caption: "Dm7 (xx0211) — la vamp qui ancre l'oreille en Ré dorien", data: {name: "Dm7", frets: [-1,-1,0,2,1,1], fingers: [0,0,0,2,1,1], startFret: 1} } },
+    { type: "idee", titre: "La note caractéristique", texte: [
+      "Chaque mode a une note qui le distingue du majeur ou du mineur : la ♭2 du phrygien, la #4 du lydien, la ♭7 du mixolydien…",
+      "Pose-la sur les temps forts, en notes longues : c'est elle qui affirme le mode. Sans elle, l'oreille glisse vers le majeur ou le mineur ordinaire.",
+    ] },
+    { type: "question", quizId: "q-scales-37" },
+    { type: "a-toi", titre: "Ré dorien sur son drone",
+      consigne: "Joue la tab au clic à 60 : la corde 4 à vide revient sous chaque petite phrase. Puis improvise avec Ré, Mi, Fa, Sol, La, Si, Do sur les cordes 3 à 1, en laissant sonner le Ré grave et en revenant souvent sur Si (corde 3 case 4).",
+      bloc: { type: "tab", caption: "La corde de Ré à vide sert de drone : elle revient sous chaque petite phrase de Ré dorien (La, Si, Do)", text: "Tab : corde 4 à vide (Ré), puis corde 3 cases 2 et 4 (La, Si), corde 2 case 1 (Do), Ré à vide, puis Si, La et Ré à vide pour finir. Le Si, sixte majeure, donne la couleur dorienne.", data: { lines: ["e|------------------|","B|-------1----------|","G|---2-4-----4-2----|","D|-0-------0-----0--|","A|------------------|","E|------------------|"] } },
+      bpm: 60, minuteur: 120 },
+    { type: "question", quizId: "q-scales-59" },
+    { type: "recap", points: [
+      "Sans ancre, l'oreille entend la gamme parente : le mode disparaît.",
+      "Un drone ou un accord tenu en boucle fixe la fondamentale du mode.",
+      "Mets en valeur la note caractéristique pour affirmer le mode.",
+    ] },
   ],
   quiz: ["q-scales-36", "q-scales-37", "q-scales-59"],
 };

@@ -1,24 +1,20 @@
 // Leçon du module « scales » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
 
 export default {
   id: "scales-c5-05", level: 8,
   title: "Mixolydien — le roi du rock",
-  duration: 11,
+  duration: 9,
   gropiTip: "Repère la ♭7 vite : elle est un ton (2 cases) sous l'octave de la fondamentale. Dans la position Sol case 3, le Sol de la corde 4 est case 5, et le Fa juste en dessous, case 3.",
-  content: [
-    { type: "p", text: "Le mixolydien est le mode du rock, du blues, du country, du funk. C'est le mode des guitaristes par excellence. Si tu écoutes Hendrix, les Stones, Zeppelin, AC/DC, ZZ Top — beaucoup de leurs riffs et solos sont en mixolydien. Ce mode est fait pour la guitare." },
-    { type: "h", text: "Construction" },
-    { type: "p", text: "Le mixolydien est le 5e mode de la gamme majeure. Si tu joues Do majeur en commençant sur Sol, tu obtiens Sol mixolydien : Sol-La-Si-Do-Ré-Mi-Fa. Mêmes notes que Do majeur, fondamentale = Sol." },
-    { type: "h", text: "Formule" },
-    { type: "p", text: "1 - 2 - 3 - 4 - 5 - 6 - ♭7. Comparé à la gamme majeure (Ionien), le mixolydien a une SEPTIÈME MINEURE au lieu d'une septième majeure. Ce simple changement transforme tout." },
-    { type: "h", text: "La note caractéristique : la ♭7" },
-    { type: "p", text: "En Sol mixolydien, c'est Fa (la ♭7). Cette note est à un ton de la fondamentale (Sol), au lieu du demi-ton de la sensible classique. Du coup, la résolution 'sensible → tonique' du majeur disparaît : Fa ne 'tire' pas vers Sol comme Si tirerait vers Do. Le mixolydien sonne 'décontracté', 'flottant' — comme une dominante qui ne résout jamais. C'est exactement ce qu'on veut en blues et en rock." },
-    { type: "h", text: "Couleur sonore" },
-    { type: "p", text: "Lumineux mais décontracté. Bluesy. Rock'n'roll. Il a la luminosité du majeur, mais sans la 'demande de résolution' du ionien. C'est pour ça que ça sonne plus 'sale', plus 'libre'." },
-    { type: "h", text: "Sur quels accords l'utiliser" },
-    { type: "p", text: "1) Tout accord 7 (dominante) dans un contexte non-résolu : sur G7 → Sol mixolydien. 2) Tous les blues majeurs : sur un blues en La (A7-D7-E7), tu peux jouer La mixolydien sur tout. 3) Vamps I-♭VII typiques du rock : Ré-Do-Ré-Do = Ré mixolydien. 4) Riffs de hard rock (Whole Lotta Love, Smoke on the Water utilisent mixolydien)." },
-    {
+  cartes: [
+    { type: "idee", titre: "Le 5e mode", texte: [
+      "Do majeur joué depuis Sol : Sol, La, Si, Do, Ré, Mi, Fa. C'est Sol mixolydien.",
+      "Formule : 1-2-3-4-5-6-♭7. Le mode du rock, du blues, du country et du funk : fait pour la guitare.",
+    ] },
+    { type: "idee", titre: "La septième mineure", texte: [
+      "Une seule note change par rapport au majeur : la 7e est mineure. En Sol, Fa remplace Fa#.",
+      "Fa est à un ton de Sol : il ne tire plus vers la tonique comme une sensible. Résultat : lumineux, mais décontracté, comme une dominante qui ne résout jamais.",
+    ], bloc: {
       type: "scale_pattern",
       caption: "Sol mixolydien — case 3. Note clé : Fa naturel, la septième mineure (case 3 c4)",
       data: {
@@ -41,12 +37,38 @@ export default {
           "3,5":"Sol","5,5":"La",
         }
       },
-    },
-    { type: "p", text: "Sur un accord G7 (Sol-Si-Ré-Fa), tu pourrais être tenté de jouer Sol majeur. Mais Sol majeur contient Fa#, alors que G7 contient Fa naturel. Le Fa# de Sol majeur entre en conflit avec le Fa de l'accord. Le mixolydien (avec Fa naturel) est en revanche en parfaite cohérence avec G7. Match parfait." },
-    { type: "h", text: "Histoire" },
-    { type: "p", text: "Le mixolydien doit son nom à la 'mixture lydienne' antique. Au Moyen-Âge, c'était un mode majeur très utilisé en chant grégorien. Mais c'est au XXe siècle qu'il a explosé : le blues afro-américain, qui mélange gamme majeure et 'blue notes', sonne presque toujours mixolydien. Les Beatles l'ont popularisé en pop ('Norwegian Wood', 'Tomorrow Never Knows'). Hendrix en a fait l'âme du rock psychédélique ('Hey Joe', 'Voodoo Child'). Aujourd'hui, c'est le mode du rock, point." },
-    { type: "ref", text: "Exemples emblématiques : 'Sweet Home Chicago' (Robert Johnson) en Mi mixolydien. 'Norwegian Wood' (Beatles) en Mi mixolydien. 'Whole Lotta Love' (Led Zeppelin) en Mi mixolydien. 'Sweet Home Alabama' (Lynyrd Skynyrd) en Sol mixolydien. 'Free Falling' (Tom Petty) en Fa mixolydien. La grande majorité des solos d'Eric Clapton, Hendrix, Stevie Ray Vaughan dans un contexte rock-blues sont en mixolydien." },
-    { type: "tip", text: "Astuce mixolydien : sur un blues en La, tu connais probablement déjà la pentatonique mineure de La. Pour 'colorer' ton solo en mixolydien, ajoute la 3 majeure (Do#) et la 6 (Fa#) à ta penta. Ça te donnera les notes de La mixolydien sans tout réapprendre. Le truc des bluesmen depuis 100 ans." },
+    } },
+    { type: "question", quizId: "q-scales-16" },
+    { type: "idee", titre: "Collé à l'accord 7", texte: [
+      "G7 contient Sol, Si, Ré et Fa. Sol majeur, avec son Fa#, frotterait contre ce Fa ; le mixolydien épouse l'accord.",
+      "Autre terrain : les vamps I – ♭VII du rock, comme Sol – Fa ou Ré – Do.",
+    ] },
+    { type: "a-toi", titre: "Sol mixolydien sur Sol – Fa",
+      consigne: "Fais tourner Sol et Fa majeurs, deux mesures chacun, au clic à 70 : enregistre-toi ou utilise une boucle. Joue la tab, qui descend jusqu'au Fa (corde 4 case 3) et remonte sur Sol, puis improvise dans la position case 3 en appuyant Fa sur l'accord de Fa.",
+      bloc: {
+        type: "tab",
+        caption: "Sol mixolydien, position case 3 : une descente qui passe par la septième mineure Fa",
+        text: "Tab — corde 2 cases 3 et 1 (Ré, Do), corde 3 cases 4 et 2 (Si, La), corde 4 cases 5, 3, 5 (Sol, Fa, Sol).",
+        data: { lines: [
+          "e|----------------------|",
+          "B|-3--1-----------------|",
+          "G|-------4--2-----------|",
+          "D|-------------5--3--5--|",
+          "A|----------------------|",
+          "E|----------------------|",
+        ] },
+      }, bpm: 70, minuteur: 150 },
+    { type: "question", quizId: "q-scales-17" },
+    { type: "idee", titre: "Le raccourci des bluesmen", texte: [
+      "Tu connais la penta mineure de La. Ajoute-lui la tierce majeure Do# et la sixte Fa# : tu tiens les notes de La mixolydien, sans tout réapprendre.",
+      "Le mélange des deux couleurs, mineure et majeure, est au cœur du son blues.",
+    ] },
+    { type: "question", quizId: "q-impro-14" },
+    { type: "recap", points: [
+      "Mixolydien = 1-2-3-4-5-6-♭7 ; Sol mixolydien = notes de Do majeur depuis Sol.",
+      "Sa ♭7 colle à l'accord 7 : sur G7, Sol mixolydien plutôt que Sol majeur.",
+      "Terrain : accords 7 qui ne résolvent pas, vamps I – ♭VII, blues.",
+    ] },
   ],
   quiz: ["q-scales-16","q-scales-17","q-impro-14","q-fret-scales-05","q-logic-03","q-logic-08"],
 };
