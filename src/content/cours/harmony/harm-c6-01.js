@@ -1,44 +1,56 @@
 // Leçon du module « harmony » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
 
 export default {
   id: "harm-c6-01", level: 5,
   title: "I-IV-V : le blues et le rock",
-  duration: 10,
+  duration: 8,
   gropiTip: "Astuce de manche : I = barré avec la fondamentale sur la corde 6, IV = même case mais fondamentale sur la corde 5, V = deux cases plus loin sur la corde 5. En La : cases 5, 5 et 7.",
-  content: [
-    { type: "p", text: "I-IV-V est la progression la plus ancienne, la plus universelle, et la plus jouée dans l'histoire de la musique populaire. Blues, rock'n'roll, country, folk, R&B — ils reposent tous sur cette fondation à 3 accords. La comprendre, c'est comprendre l'ADN de la musique populaire depuis 100 ans." },
-    { type: "h", text: "La formule" },
-    { type: "p", text: "I = tonique (repos). IV = sous-dominante (mouvement). V = dominante (tension). Enchaîné : I → IV (ça part) → V (ça tend) → I (ça résout). Ce cycle éternel de départ-tension-retour est la base du storytelling musical. En La : La (I) - Ré (IV) - Mi (V)." },
-    { type: "h", text: "En bref : l'accord 7" },
-    { type: "p", text: "Le blues utilise des accords notés 7 (A7, D7, E7), dits « de dominante ». Un accord 7, c'est un accord majeur auquel on ajoute une 7e mineure, 10 demi-tons au-dessus de la fondamentale : A7 = La, Do#, Mi + Sol. Cette note de plus lui donne un son tendu, qui « veut bouger ». Tu l'étudieras en détail avec les accords de septième ; pour le blues, il suffit de savoir le jouer (diagrammes ci-dessous)." },
-    { type: "h", text: "Le blues 12 mesures" },
-    { type: "p", text: "La forme la plus emblématique de I-IV-V : le blues à 12 mesures. Structure standard en La : 4 mesures de I (La7), 2 mesures de IV (Ré7), 2 mesures de I (La7), 1 mesure de V (Mi7), 1 mesure de IV (Ré7), 2 mesures de I (La7). Cette grille de 12 mesures est la base de milliers de chansons blues, rock'n'roll, et jazz." },
-    { type: "h", text: "Pourquoi des accords 7 dans le blues" },
-    { type: "p", text: "Dans un blues standard, le I, IV et V sont souvent des accords de dominante (X7) même si ce n'est pas 'justifié' harmoniquement (dans une gamme majeure, seul le V porte naturellement un accord 7). C'est une licence harmonique du blues : utiliser des accords 7 sur tous les degrés donne ce son 'rough', tendu, expressif. C'est la signature sonore du blues." },
-    {
+  cartes: [
+    { type: "idee", titre: "Trois accords, toute une histoire", texte: [
+      "I-IV-V : blues, rock'n'roll, country et folk reposent sur ces trois accords.",
+      "I, le repos ; IV, le départ ; V, la tension qui ramène au I. En Mi : Mi, La, Si.",
+    ] },
+    { type: "question", quizId: "q-harm-35" },
+    { type: "idee", titre: "En bref : l'accord 7", texte: [
+      "Le blues joue des accords 7 : A7, D7, E7. Un accord 7, c'est un accord majeur plus une 7e mineure, 10 demi-tons au-dessus de la fondamentale : A7 = La, Do#, Mi + Sol.",
+      "Cette note de plus le rend tendu : il « veut bouger ». Tu connais déjà leurs formes ouvertes.",
+    ], bloc: {
       type: "chord_diagram",
       caption: "A7 — I7 du blues en La (0 0 2 0 2 0)",
       data: { name: "A7 (I)", frets: [0,0,2,0,2,0], fingers: [0,0,2,0,3,0], startFret: 1 },
-    },
-    {
+    } },
+    { type: "idee", titre: "Le blues 12 mesures", texte: [
+      "Quatre mesures de I, deux de IV, deux de I, puis une de V, une de IV et deux de I.",
+      "En La : A7 ×4, D7 ×2, A7 ×2, E7, D7, A7 ×2.",
+    ], bloc: {
       type: "chord_diagram",
       caption: "D7 — IV7 du blues en La (× × 0 2 1 2)",
       data: { name: "D7 (IV)", frets: [-1,-1,0,2,1,2], fingers: [0,0,0,2,1,3], startFret: 1 },
-    },
-    {
+    } },
+    { type: "idee", titre: "Des 7 partout", texte: [
+      "Dans une gamme majeure, seul le V porte naturellement un accord 7. Le blues en met sur I, IV et V.",
+      "Cette licence fait toute sa couleur, rugueuse et tendue.",
+    ], bloc: {
       type: "chord_diagram",
       caption: "E7 — V7 du blues en La (0 2 0 1 0 0)",
       data: { name: "E7 (V)", frets: [0,2,0,1,0,0], fingers: [0,2,0,1,0,0], startFret: 1 },
-    },
-    { type: "h", text: "I-IV-V en rock'n'roll" },
-    { type: "p", text: "'Johnny B. Goode' (Chuck Berry), 'Rock Around the Clock' (Bill Haley), 'Hound Dog' (Elvis), 'La Bamba' (Ritchie Valens) — toutes ces chansons iconiques = I-IV-V. La progression est si puissante qu'elle a lancé une révolution musicale dans les années 50. Avec 3 accords appris en 10 minutes, tu peux jouer des centaines de classiques." },
-    { type: "h", text: "I-IV-V en country et folk" },
-    { type: "p", text: "La country et le folk américain reposent massivement sur I-IV-V. Beaucoup de chansons s'y limitent, d'autres l'enrichissent d'un accord vi (relatif mineur). La guitare acoustique, la voix, 3 accords : c'est la définition du folk." },
-    { type: "h", text: "Variations de I-IV-V" },
-    { type: "p", text: "La progression évolue selon les genres. Blues rapide : I-IV-V-IV en boucle (au lieu de revenir au I). Quick change : passage rapide par IV en mesure 2 (I-IV-I-I-IV-IV-I-I-V-IV-I-I). Turnaround : fin de grille qui revient au début via V-IV-I ou ii-V-I. Ces variations enrichissent le blues classique." },
-    { type: "ref", text: "'Sweet Home Chicago' (Robert Johnson, 1936) est le blues I-IV-V par excellence en Mi. 80 ans plus tard, 'Pride and Joy' (Stevie Ray Vaughan) utilise exactement la même structure harmonique en Mi. L'ossature harmonique n'a pas changé, mais l'expression musicale a évolué. C'est ça la transmission musicale." },
-    { type: "tip", text: "Drill I-IV-V : dans 5 tonalités différentes (La, Mi, Ré, Sol, Do), trouve les 3 accords I-IV-V et joue-les en boucle à un tempo de blues (80 BPM). En 30 minutes, tu accompagnes un blues dans 5 tonalités ; bientôt, tu improviseras dessus avec la pentatonique." },
+    } },
+    { type: "question", quizId: "q-harm-37" },
+    { type: "a-toi", titre: "Ta première grille",
+      consigne: "Accompagne la grille en La : A7 ×4, D7 ×2, A7 ×2, E7, D7, A7 ×2. Quatre coups vers le bas par mesure, au clic, en comptant les mesures. Change d'accord sans t'arrêter : deux tours complets.",
+      bloc: { type: "strum_pattern", caption: "4 noires vers le bas — une mesure par case de la grille", data: { pattern: ["B", "B", "B", "B"], beats: 4, style: "folk", bpm: 70 } },
+      bpm: 70, minuteur: 120 },
+    { type: "idee", titre: "Variantes et transposition", texte: [
+      "Quick change : le IV dès la mesure 2, puis retour au I. Turnaround : la dernière mesure passe sur le V pour relancer la grille.",
+      "Même grille en Mi : E7, A7, B7.",
+    ] },
+    { type: "question", quizId: "q-harm-36" },
+    { type: "recap", points: [
+      "I-IV-V : repos, départ, tension. En La : La, Ré, Mi.",
+      "Accord 7 = majeur + 7e mineure (10 demi-tons) : A7 = La, Do#, Mi, Sol.",
+      "Blues 12 mesures : I ×4, IV ×2, I ×2, V, IV, I ×2, en accords 7.",
+    ] },
   ],
   quiz: ["q-harm-35", "q-harm-36", "q-harm-37"],
 };

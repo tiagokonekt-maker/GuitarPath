@@ -51,13 +51,16 @@ const ouvertesAvant = (faites7, validees7) => {
   return ids;
 };
 
-test("le palier 6 agrandi : 4 unités, nouvelles leçons dedans, palier 7 inchangé", () => {
+// Le palier 7 a depuis grossi à son tour (lot 3 : CAGED et picking Travis,
+// voir test/lot3.test.mjs) : on vérifie seulement que ses leçons d'alors y
+// sont toujours, plus son découpage exact.
+test("le palier 6 agrandi : 4 unités, nouvelles leçons dedans, leçons du palier 7 toujours au palier 7", () => {
   const u6 = buildUnits(COURSES).filter(u => u.level === 6);
   assert.deepEqual(u6.map(u => u.id), ["palier-6-1", "palier-6-2", "palier-6-3", "palier-6-4"]);
   const lecons6 = u6.flatMap(u => u.lessons.map(l => l.id));
   for (const id of [...Object.values(ANCIEN_PALIER_6).flat(), ...NOUVELLES]) assert.ok(lecons6.includes(id), id);
-  const u7 = Object.fromEntries(buildUnits(COURSES).filter(u => u.level === 7).map(u => [u.id, u.lessons.map(l => l.id)]));
-  for (const [id, lecons] of Object.entries(PALIER_7)) assert.deepEqual(u7[id], lecons, id);
+  const lecons7 = buildUnits(COURSES).filter(u => u.level === 7).flatMap(u => u.lessons.map(l => l.id));
+  for (const id of Object.values(PALIER_7).flat()) assert.ok(lecons7.includes(id), id);
 });
 
 const SCENARIOS = [

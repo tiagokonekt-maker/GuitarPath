@@ -1,20 +1,22 @@
 // Leçon du module « scales » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
 
 export default {
   id: "scales-c4-01", level: 7,
   title: "Mineur naturel et majeur : deux faces d'une même pièce",
-  duration: 10,
+  duration: 7,
   gropiTip: "Pour comparer les deux formules : la mineure naturelle, c'est la majeure avec la 3, la 6 et la 7 abaissées d'un demi-ton. Do majeur devient Do mineur avec Mi♭, La♭ et Si♭.",
-  content: [
-    { type: "p", text: "Avant d'attaquer les modes, on fait une étape essentielle : comprendre la relation entre majeur et mineur. Cette relation est plus profonde que tu ne le penses, et elle est la clé pour saisir ce qui se passera dans les leçons suivantes. Spoiler : majeur et mineur ne sont pas opposés. Ce sont deux manières d'écouter les MÊMES notes." },
-    { type: "h", text: "La gamme mineure naturelle" },
-    { type: "p", text: "Si la gamme majeure suit la formule T-T-DT-T-T-T-DT, la gamme mineure naturelle suit T-DT-T-T-DT-T-T. Les demi-tons ne sont plus aux mêmes endroits. Résultat : un caractère sonore radicalement différent. Le mineur sonne mélancolique, introspectif, parfois dramatique. Le majeur sonne lumineux, ouvert, optimiste." },
-    { type: "h", text: "Construction de La mineur naturel" },
-    { type: "p", text: "Partons de La. T → Si. DT → Do. T → Ré. T → Mi. DT → Fa. T → Sol. T → La (octave). Résultat : La-Si-Do-Ré-Mi-Fa-Sol-La. Aucune altération ! Comme Do majeur, mais en partant de La." },
-    {
+  cartes: [
+    { type: "idee", titre: "Pas des contraires", texte: [
+      "Avant les modes, une étape clé : majeur et mineur ne s'opposent pas.",
+      "Ce sont deux façons d'écouter les mêmes notes. Tout dépend de la note sur laquelle ton oreille se repose.",
+    ] },
+    { type: "idee", titre: "La formule mineure", texte: [
+      "Majeure : T-T-DT-T-T-T-DT. Mineure naturelle : T-DT-T-T-DT-T-T. Les demi-tons changent de place, et le caractère avec : plus sombre, plus introspectif.",
+      "Depuis La : La, Si, Do, Ré, Mi, Fa, Sol. Aucune altération.",
+    ], bloc: {
       type: "scale_pattern",
-      caption: "La mineur naturel (= éolien) — position case 5. Même notes que Do majeur",
+      caption: "La mineur naturel (= éolien) — position case 5. Mêmes notes que Do majeur",
       data: {
         startFret: 4, endFret: 8,
         rootColor: "primary", noteColor: "green", accentColor: "coral", accentLabel: "Fa, sixte mineure (couleur de l'éolien)",
@@ -35,15 +37,38 @@ export default {
           "5,5":"La","7,5":"Si","8,5":"Do",
         },
       },
-    },
-    { type: "h", text: "Le secret : Do majeur et La mineur partagent les mêmes notes" },
-    { type: "p", text: "Compare. Do majeur = Do-Ré-Mi-Fa-Sol-La-Si. La mineur naturel = La-Si-Do-Ré-Mi-Fa-Sol. EXACTEMENT les mêmes 7 notes. La seule différence : la note de départ (la fondamentale). Cette équivalence s'appelle la 'tonalité relative'. Toute gamme majeure a sa relative mineure, située 1 ton et demi en dessous." },
-    { type: "h", text: "Pourquoi la fondamentale change tout" },
-    { type: "p", text: "Joue Do-Ré-Mi-Fa-Sol-La-Si en revenant souvent sur Do, en commençant et finissant tes phrases sur Do. Tu entendras du majeur, du joyeux. Joue les MÊMES notes, mais reviens toujours sur La, commence et finis sur La. Tu entendras du mineur, du mélancolique. Tes oreilles 'recentrent' la gamme autour de la fondamentale qu'elles entendent le plus souvent. C'est ce phénomène qui rend les modes possibles." },
-    { type: "h", text: "Les paires de tonalités relatives" },
-    { type: "p", text: "Do maj ↔ La min. Sol maj ↔ Mi min. Ré maj ↔ Si min. La maj ↔ Fa# min. Mi maj ↔ Do# min. Si maj ↔ Sol# min. Fa maj ↔ Ré min. Si♭ maj ↔ Sol min. Mi♭ maj ↔ Do min. Mêmes notes, deux ambiances possibles. Le compositeur choisit l'une ou l'autre selon ce qu'il veut raconter." },
-    { type: "ref", text: "Test sonore : 'Greensleeves' (chanson traditionnelle anglaise du XVIe siècle) est en La mineur. 'Stairway to Heaven' (Led Zeppelin) commence en La mineur. À l'inverse, 'Joy to the World' (chant de Noël) est en Do majeur. Tu peux jouer les deux mélodies avec exactement les mêmes 7 notes (Do-Ré-Mi-Fa-Sol-La-Si), mais l'une sonnera triste, l'autre joyeuse. La fondamentale ressentie fait toute la différence." },
-    { type: "tip", text: "Cette leçon est la pierre angulaire de tout ce qui suit. Si tu comprends que 'mêmes notes + fondamentale différente = ambiance différente', tu es prêt pour les modes. Si pas encore, relis cette leçon avant d'avancer." },
+    } },
+    { type: "question", quizId: "q-scales-34" },
+    { type: "idee", titre: "Les tonalités relatives", texte: [
+      "Do majeur et La mineur ont exactement les mêmes sept notes : La mineur est la relative de Do. Elle se trouve sur le 6e degré, un ton et demi sous la tonique.",
+      "Autres paires : Sol / Mim, Ré / Sim, La / Fa#m, Fa / Rém.",
+    ] },
+    { type: "question", quizId: "q-logic-04" },
+    { type: "idee", titre: "La note de repos décide", texte: [
+      "Joue ces sept notes en commençant et en finissant tes phrases sur Do : tu entends du majeur, lumineux.",
+      "Mêmes notes, mais tu reviens toujours sur La : ça devient mineur, mélancolique. L'oreille recentre la gamme sur la note qu'elle entend comme repos. C'est ce qui rend les modes possibles.",
+    ] },
+    { type: "a-toi", titre: "Deux phrases, deux ambiances",
+      consigne: "Plaque un Lam ouvert, puis joue la première phrase : elle se pose sur La. Plaque un Do, puis la seconde : elle se pose sur Do. Au clic à 60, quatre fois chaque. Mêmes notes, écoute l'ambiance basculer.",
+      bloc: {
+        type: "tab",
+        caption: "Phrase 1 qui se pose sur La (mineur), phrase 2 qui se pose sur Do (majeur) — position case 5",
+        text: "Tab — phrase 1 : corde 2 case 5, corde 3 cases 7, 5 et 4, corde 4 case 7, tenue (Mi, Ré, Do, Si, La). Phrase 2 : corde 2 cases 8, 6 et 5, corde 3 cases 7 et 5, tenue (Sol, Fa, Mi, Ré, Do).",
+        data: { lines: [
+          "e|-------------------------------------|",
+          "B|-5--------------------8--6--5--------|",
+          "G|----7--5--4--------------------7--5--|",
+          "D|-------------7-----------------------|",
+          "A|-------------------------------------|",
+          "E|-------------------------------------|",
+        ] },
+      }, bpm: 60, minuteur: 120 },
+    { type: "question", quizId: "q-scales-35" },
+    { type: "recap", points: [
+      "Mineure naturelle : T-DT-T-T-DT-T-T ; La mineur = La Si Do Ré Mi Fa Sol.",
+      "Chaque tonalité majeure a sa relative mineure, sur son 6e degré : mêmes notes.",
+      "C'est la note de repos qui fait entendre majeur ou mineur.",
+    ] },
   ],
   quiz: ["q-logic-04","q-scales-34","q-scales-35"],
 };

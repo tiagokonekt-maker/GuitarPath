@@ -10,6 +10,9 @@ import * as rhyC202 from "./rhy-c2-02.js";
 import * as rhyC203 from "./rhy-c2-03.js";
 import * as rhyC204 from "./rhy-c2-04.js";
 import * as rhyC301 from "./rhy-c3-01.js";
+import * as rhyDoigts01 from "./rhy-doigts-01.js";
+import * as rhyDoigts02 from "./rhy-doigts-02.js";
+import * as rhyMes01 from "./rhy-mes-01.js";
 import * as rhyC302 from "./rhy-c3-02.js";
 import * as rhyC303 from "./rhy-c3-03.js";
 import * as rhyC401 from "./rhy-c4-01.js";
@@ -40,6 +43,9 @@ export const LECONS = [
   rhyC203,
   rhyC204,
   rhyC301,
+  rhyDoigts01, // palier 5 : jouer aux doigts, p-i-m-a
+  rhyMes01,    // palier 5 : valse et 6/8 (son arpège en 6/8 suppose p-i-m-a)
+  rhyDoigts02, // palier 7 : picking Travis (suite de p-i-m-a)
   rhyC302,
   rhyC303,
   // Palier 6 : techniques de main gauche. Leur place dans cette liste règle

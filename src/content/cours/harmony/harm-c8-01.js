@@ -1,31 +1,40 @@
 // Leçon du module « harmony » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
 
 export default {
   id: "harm-c8-01", level: 7,
   title: "Cibler les notes d'accord en temps réel",
-  duration: 11,
+  duration: 9,
   gropiTip: "Sur un blues en La, passe du Do# (3e de La7) au Do (7e de Ré7) pile au changement d'accord. Un seul demi-ton, et tout le monde entend que l'harmonie a bougé.",
-  content: [
-    { type: "p", text: "On arrive au cœur de l'application pratique de l'harmonie : improviser en 'suivant' les accords. Cette technique, appelée 'ciblage harmonique', transforme un solo générique en solo musical, connecté à l'harmonie. C'est la différence entre un guitariste qui 'joue des notes' et un musicien qui 'parle avec son instrument'.", img: "/mascotte-choix.webp", imgAlt: "Gropi qui réfléchit, boussole à la main", imgSide: "left" },
-    { type: "h", text: "Le problème du solo générique" },
-    { type: "p", text: "Quand tu improvises uniquement avec la gamme de la tonalité sans cibler les notes d'accord, ton solo 'flotte' au-dessus de la progression — ça sonne correct mais peu musical. Tes phrases ne semblent pas réagir aux changements d'accords. Un solo musical, lui, 'tombe' sur les bonnes notes aux bons moments." },
-    { type: "h", text: "Le principe du ciblage" },
-    { type: "p", text: "Sur chaque accord, identifie 1-2 notes 'cibles' qui définissent fortement cet accord. Tes phrases doivent arriver sur ces notes aux moments importants (temps forts, fins de phrases). La note cible peut arriver n'importe où dans la phrase, mais son placement sur un temps fort la met en valeur." },
-    { type: "h", text: "Hiérarchie des notes cibles" },
-    { type: "p", text: "1ère priorité : 3e et 7e (guide tones, définissent la qualité de l'accord). 2e priorité : fondamentale (la plus stable, mais moins 'colorée'). 3e priorité : 5e (générique, peu informative). 4e priorité : extensions (9, 11, 13 — ajoutent de la couleur sophistiquée). En commençant, concentre-toi sur les guide tones uniquement." },
-    { type: "h", text: "L'approche chromatique" },
-    { type: "p", text: "Pour 'tomber' sur une note cible de façon élégante, approche-la par chromatisme : joue la note 1 demi-ton au-dessus ou en dessous juste avant la cible. Sur G7, cible Si : joue Do → Si (depuis au-dessus) ou Si♭ → Si (depuis en dessous). Cette technique vient du bebop et donne immédiatement un son jazz." },
-    { type: "h", text: "L'enclosure" },
-    { type: "p", text: "Version plus élaborée du chromatisme : 'encadrer' la note cible par 2 notes (1 au-dessus, 1 en dessous). Pour cibler Si sur G7 : joue Do (1/2 ton au-dessus) → Si♭ (1/2 ton en dessous) → Si (cible). Ou l'inverse. Cette 'enclosure' crée une petite suspension avant la note cible, encore plus expressive." },
-    { type: "fretboard", caption: "Enclosure sur G7 : Do (au-dessus), Sib (en dessous), puis Si, la cible — corde 3", data: {frets: 4, startFret: 2, showStringNames: true, showFretNumbers: true, markerFrets: [3,5], notes: [{string: 3, fret: 5, label: "Do", color: "neutral"}, {string: 3, fret: 3, label: "Sib", color: "neutral"}, {string: 3, fret: 4, label: "Si", color: "primary", root: true}]} },
-    { type: "h", text: "Placement rythmique des cibles" },
-    { type: "p", text: "Les notes cibles tombent idéalement sur les temps forts (temps 1 et 3 d'une mesure de 4/4). Les notes 'de passage' (gamme, chromatismes, ornements) tombent sur les temps faibles (temps 2 et 4) ou les contretemps. Ce placement crée le 'swing' rythmique-harmonique : chaque temps fort 'confirme' l'accord en cours." },
-    { type: "h", text: "Exemple pratique : solo sur ii-V-I" },
-    { type: "p", text: "Sur Dm7-G7-Cmaj7 (4 temps chacun) : Dm7 → arrive sur Fa (3e de Dm7) ou Do (7e) au temps 1. G7 → arrive sur Si (3e de G7) au temps 1 de la mesure G7. Cmaj7 → arrive sur Mi (3e de Cmaj7) ou Si (7e). Les 'couloirs' entre ces notes cibles sont libres : tu peux y jouer n'importe quelle gamme ou chromatisme, tant que tu atterris sur la cible au bon moment." },
-    { type: "tab", caption: "Guide tones sur Dm7 – G7 – Cmaj7 : Fa/Do, puis Fa/Si, puis Mi/Si — une seule note bouge à chaque accord", text: "Tab : Dm7 = Fa (corde 2 case 6) et Do (corde 3 case 5) ; G7 = Fa (corde 2 case 6) et Si (corde 3 case 4) ; Cmaj7 = Mi (corde 2 case 5) et Si (corde 3 case 4).", data: { lines: ["e|---------------------|","B|-6-------6-------5---|","G|-5-------4-------4---|","D|---------------------|","A|---------------------|","E|---------------------|"] } },
-    { type: "ref", text: "Joe Pass (guitare jazz, 1929-1994) est le maître absolu du ciblage harmonique. Regarde ses vidéos de guitare solo (particulièrement 'Virtuoso', 1973) : chaque note d'accord est mise en valeur au bon moment, la gamme et les chromatismes comblent l'espace entre les cibles. C'est la définition du solo harmoniquement connecté." },
-    { type: "tip", text: "Drill ciblage (10 min) : sur Dm7-G7-Cmaj7 à 60 BPM. Jeu 1 : improvise librement sans chercher à cibler. Jeu 2 : joue UNIQUEMENT les guide tones de chaque accord (Fa-Do sur Dm7, Si-Fa sur G7, Mi-Si sur Cmaj7). Jeu 3 : mélange librement, en arrivant sur les guide tones au temps 1 de chaque nouvel accord. Entends la différence entre les 3 modes." },
+  cartes: [
+    { type: "idee", titre: "Suivre les accords", texte: [
+      "Improviser avec la seule gamme de la tonalité, ça sonne correct, mais le solo flotte : il ne réagit pas aux changements d'accords.",
+      "Le ciblage consiste à choisir, sur chaque accord, une ou deux notes qui le définissent, et à faire arriver tes phrases dessus.",
+    ] },
+    { type: "idee", titre: "Quelles cibles ?", texte: [
+      "D'abord la 3e et la 7e, les guide tones : elles disent la qualité de l'accord. Ensuite la fondamentale, stable mais moins colorée. Puis la quinte, assez neutre.",
+      "Les extensions (9, 11, 13) viendront plus tard. Pour commencer, vise les guide tones.",
+    ] },
+    { type: "idee", titre: "Sur les temps forts", texte: [
+      "Une cible porte le plus sur un temps fort, le 1 ou le 3 en 4/4. Les notes de passage vont sur les temps faibles et les contretemps.",
+      "Chaque temps fort confirme alors l'accord en cours. Entre deux cibles, le couloir est libre.",
+    ] },
+    { type: "question", quizId: "q-harm-19" },
+    { type: "idee", titre: "Approche et enclosure", texte: [
+      "Pour arriver en douceur, joue juste avant la cible la note un demi-ton au-dessus ou en dessous. Sur G7, vers le Si : Do puis Si, ou Si♭ puis Si.",
+      "L'enclosure encadre la cible : au-dessus, en dessous, puis la cible. Do, Si♭, Si : une petite suspension, une arrivée plus nette. Un son typique du bebop.",
+    ], bloc: { type: "fretboard", caption: "Enclosure sur G7 : Do (au-dessus), Sib (en dessous), puis Si, la cible — corde 3", data: {frets: 4, startFret: 2, showStringNames: true, showFretNumbers: true, markerFrets: [3,5], notes: [{string: 3, fret: 5, label: "Do", color: "neutral"}, {string: 3, fret: 3, label: "Sib", color: "neutral"}, {string: 3, fret: 4, label: "Si", color: "primary", root: true}]} } },
+    { type: "question", quizId: "q-impro-10" },
+    { type: "a-toi", titre: "Atterrir sur le ii-V-I",
+      consigne: "Boucle Dm7, G7, Cmaj7, une mesure chacun au clic. Tour 1 : joue seulement les guide tones de la tab, une note par temps. Tour 2 : improvise librement, mais pose une guide tone au temps 1 de chaque accord. Tour 3 : arrive-y par une enclosure.",
+      bloc: { type: "tab", caption: "Guide tones sur Dm7 – G7 – Cmaj7 : Fa/Do, puis Fa/Si, puis Mi/Si — une seule note bouge à chaque accord", text: "Tab : Dm7 = Fa (corde 2 case 6) et Do (corde 3 case 5) ; G7 = Fa (corde 2 case 6) et Si (corde 3 case 4) ; Cmaj7 = Mi (corde 2 case 5) et Si (corde 3 case 4).", data: { lines: ["e|---------------------|","B|-6-------6-------5---|","G|-5-------4-------4---|","D|---------------------|","A|---------------------|","E|---------------------|"] } },
+      bpm: 60, minuteur: 180 },
+    { type: "question", quizId: "q-harm-20" },
+    { type: "recap", points: [
+      "Sur chaque accord, vise d'abord la 3e et la 7e.",
+      "Les cibles sur les temps forts, les notes de passage entre elles.",
+      "Arrive sur la cible par un demi-ton, ou encadre-la : enclosure.",
+    ] },
   ],
   quiz: ["q-harm-19","q-harm-20","q-impro-06","q-impro-10","q-impro-15"],
 };

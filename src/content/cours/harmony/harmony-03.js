@@ -1,28 +1,55 @@
 // Leçon du module « harmony » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
 
 export default {
   id: "harmony-03", level: 7,
   title: "Arpèges — l'accord en mélodie",
-  duration: 12,
+  duration: 8,
   gropiTip: "Sur Cmaj7, joue l'arpège de Mim (Mi-Sol-Si) : tu obtiens la 3e, la 5e et la 7e de l'accord, sans la fondamentale. Un son plus moderne, parfait quand la basse joue déjà le Do.",
-  content: [
-    { type: "p", text: "Un arpège = les notes d'un accord jouées une par une, en succession mélodique. C'est le pont entre harmonie (vertical) et mélodie (horizontal). En impro, les arpèges te font 'sonner sur l'accord' à coup sûr." },
-    { type: "h", text: "Pourquoi les arpèges sont essentiels" },
-    { type: "p", text: "Un solo basé uniquement sur la gamme peut 'flotter' au-dessus des accords sans s'y connecter. Un solo qui contient des fragments d'arpèges 'tombe' sur les accords aux moments-clés (temps forts, fins de phrases). C'est la différence entre un solo générique et un solo qui suit l'harmonie." },
-    { type: "h", text: "Arpèges des 4 types de triades" },
-    { type: "p", text: "Majeur : 1-3-5 (Do-Mi-Sol). Mineur : 1-♭3-5 (Do-Mib-Sol). Diminué : 1-♭3-♭5 (Do-Mib-Solb). Augmenté : 1-3-#5 (Do-Mi-Sol#). 3 notes par triade, simple mais essentiel." },
-    { type: "h", text: "Arpèges des accords de 7e" },
-    { type: "p", text: "Maj7 : 1-3-5-7. m7 : 1-♭3-5-♭7. 7 : 1-3-5-♭7. m7b5 : 1-♭3-♭5-♭7. dim7 : 1-♭3-♭5-bb7. 4 notes, qui définissent intégralement l'accord. Apprendre ces 5 arpèges = avoir les 5 types d'accords sous les doigts en mélodie." },
-    { type: "h", text: "Patterns d'arpèges sur le manche" },
-    { type: "p", text: "Pour Cmaj7 forme E (case 8) : Do(corde 6 case 8), Mi(corde 5 case 7), Sol(corde 5 case 10), Si(corde 4 case 9), Do(corde 3 case 5)... non, plutôt Do(corde 1 case 8), Mi(corde 1 case 12). Apprends chaque arpège dans 2-3 positions le long du manche." },
-    { type: "h", text: "Connecter arpèges et gamme" },
-    { type: "p", text: "Pendant un solo : commence ta phrase par 2-3 notes d'arpège (les notes de l'accord), puis enrichis avec les notes de la gamme entre les notes d'arpège. Tu obtiens un solo qui suit l'harmonie et reste mélodique." },
-    { type: "h", text: "Changer d'arpège sur changement d'accord" },
-    { type: "p", text: "Sur Dm7-G7-Cmaj7 : 1ère mesure → notes de Dm7 (Ré-Fa-La-Do). 2e mesure → notes de G7 (Sol-Si-Ré-Fa). 3e mesure → notes de Cmaj7 (Do-Mi-Sol-Si). Tes phrases bougent avec l'harmonie. C'est ce qui sonne 'jazz'." },
-    { type: "tip", text: "Drill 'arpège-gamme-arpège' : 1 mesure d'arpège, 1 mesure de gamme, 1 mesure d'arpège. Boucle sur Am7. Tu apprends à alterner les deux mondes." },
-    { type: "fretboard_interactive", mode: "chord", root: "C", chord: "maj7", caption: "Arpège Cmaj7 — Do Mi Sol Si sur tout le manche", displayMode: "notes", lang: "fr", compact: true },
-    { type: "fretboard_interactive", mode: "chord", root: "D", chord: "min7", caption: "Arpège Dm7 — Ré Fa La Do sur tout le manche", displayMode: "notes", lang: "fr", compact: true },
+  cartes: [
+    { type: "idee", titre: "L'accord, note par note", texte: [
+      "Un arpège, ce sont les notes d'un accord jouées une à une. C'est le pont entre l'harmonie, verticale, et la mélodie, horizontale.",
+      "Un solo fait seulement de gamme peut flotter au-dessus des accords. Des fragments d'arpège le font tomber dessus aux moments clés.",
+    ] },
+    { type: "idee", titre: "Les formules, tu les as", texte: [
+      "Triades : majeure 1-3-5, mineure 1-♭3-5, diminuée 1-♭3-♭5, augmentée 1-3-#5.",
+      "Accords de 7e : Maj7, m7, 7, m7♭5, dim7. Leur arpège en donne les quatre notes, qui définissent tout l'accord. Cmaj7 : Do, Mi, Sol, Si.",
+    ], bloc: { type: "fretboard_interactive", mode: "chord", root: "C", chord: "maj7", caption: "Arpège Cmaj7 — Do Mi Sol Si sur tout le manche", displayMode: "notes", lang: "fr", compact: true } },
+    { type: "question", quizId: "q-harm-09" },
+    { type: "idee", titre: "Un arpège dans une position", texte: [
+      "Cmaj7 entre les cases 7 et 10, sur deux octaves : Do (corde 6 case 8), Mi (corde 5 case 7), Sol (corde 5 case 10), Si (corde 4 case 9), Do (corde 4 case 10), Mi (corde 3 case 9), Sol (corde 2 case 8), Si (corde 1 case 7), Do (corde 1 case 8).",
+      "Un doigt par case, la main ne bouge pas.",
+    ] },
+    { type: "a-toi", titre: "Monte et descends Cmaj7",
+      consigne: "Joue l'arpège en noires au clic, en montant puis en descendant. Nomme les Do à voix haute. Quand c'est fluide, commence sur le Mi ou le Sol plutôt que sur le Do.",
+      bloc: {
+        type: "tab",
+        caption: "Arpège de Cmaj7, cases 7 à 10, deux octaves en montant",
+        text: "Tab — corde 6 case 8, corde 5 cases 7 et 10, corde 4 cases 9 et 10, corde 3 case 9, corde 2 case 8, corde 1 cases 7 et 8 (Do, Mi, Sol, Si, Do, Mi, Sol, Si, Do).",
+        data: { lines: [
+          "e|----------------------7--8--|",
+          "B|-------------------8--------|",
+          "G|----------------9-----------|",
+          "D|----------9--10-------------|",
+          "A|----7--10-------------------|",
+          "E|-8--------------------------|",
+        ] },
+      }, bpm: 60, minuteur: 90 },
+    { type: "idee", titre: "Arpège et gamme ensemble", texte: [
+      "En solo, ouvre ta phrase par deux ou trois notes d'arpège, puis remplis avec la gamme entre elles.",
+      "Pose la fin sur une note de l'accord, sur un temps fort. Le solo suit l'harmonie et reste chantant.",
+    ] },
+    { type: "question", quizId: "q-harm-10" },
+    { type: "idee", titre: "Un arpège par accord", texte: [
+      "Sur Dm7 - G7 - Cmaj7, change d'arpège à chaque mesure : Ré Fa La Do, puis Sol Si Ré Fa, puis Do Mi Sol Si.",
+      "Tes phrases bougent avec l'harmonie : c'est ce qui sonne jazz.",
+    ], bloc: { type: "fretboard_interactive", mode: "chord", root: "D", chord: "min7", caption: "Arpège Dm7 — Ré Fa La Do sur tout le manche", displayMode: "notes", lang: "fr", compact: true } },
+    { type: "question", quizId: "q-harm-11" },
+    { type: "recap", points: [
+      "Un arpège = les notes de l'accord une à une ; il sonne sur l'accord à coup sûr.",
+      "Cmaj7 en case 7 : Do Mi Sol Si sur deux octaves, un doigt par case.",
+      "Change d'arpège avec l'accord, et comble avec la gamme entre les notes cibles.",
+    ] },
   ],
   quiz: ["q-harm-09","q-harm-10","q-harm-11","q-fret-harm-06"],
 };

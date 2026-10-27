@@ -1,49 +1,73 @@
 // Leçon du module « neck » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
+
+const DO_FONDAMENTAL = {
+  type: "chord_diagram",
+  caption: "Do majeur — état fondamental sur les cordes 3-2-1 (Do, Mi, Sol)",
+  data: { name: "Do", frets: [-1,-1,-1,5,5,3], fingers: [0,0,0,3,4,1], startFret: 3 },
+};
 
 export default {
   id: "neck-05", level: 7,
   title: "Triades — l'unité minimale d'harmonie",
-  duration: 14,
+  duration: 9,
   gropiTip: "Pour passer d'une triade majeure à mineure, baisse seulement la tierce d'une case. Do sur cordes 3-2-1 (cases 5, 5, 3) devient Do mineur en reculant la corde 2 en case 4 (Mi♭).",
-  content: [
-    { type: "p", text: "Tu connais les 4 types de triades et leurs inversions (module Harmonie) : ici, on les installe sur le manche, set de cordes par set de cordes. Une triade = 3 notes empilées par tierces (1-3-5). C'est la plus petite cellule harmonique 'complète'. Sur la guitare, jouer des triades sur 3 cordes adjacentes ouvre un monde de voicings funk, R&B, jazz, pop indé." },
-    { type: "h", text: "Les 4 types de triades" },
-    { type: "p", text: "Majeure (1-3-5) : tierce maj + quinte juste. Mineure (1-♭3-5) : tierce min + quinte juste. Diminuée (1-♭3-♭5) : tierce min + quinte diminuée. Augmentée (1-3-#5) : tierce maj + quinte augmentée." },
-    { type: "h", text: "Triades sur cordes 1-2-3 (set 1)" },
-    { type: "p", text: "Le set le plus utilisé. Aigu, brillant. État fondamental (Do à la basse) : Do(corde 3 case 5), Mi(corde 2 case 5), Sol(corde 1 case 3). 1ère inversion (Mi à la basse) : Mi(corde 3 case 9), Sol(corde 2 case 8), Do(corde 1 case 8). 2e inversion (Sol à la basse) : Sol(corde 3 case 12), Do(corde 2 case 13), Mi(corde 1 case 12). C'est la note la plus grave qui nomme la position." },
-    {
+  cartes: [
+    { type: "idee", titre: "Trois cordes, un accord", texte: [
+      "Tu connais les triades et leurs inversions. Ici, on les pose sur le manche, trois cordes voisines à la fois.",
+      "Le set le plus utilisé : cordes 3-2-1, aigu et brillant. Do à l'état fondamental : Do (corde 3 case 5), Mi (corde 2 case 5), Sol (corde 1 case 3).",
+    ], bloc: DO_FONDAMENTAL },
+    { type: "idee", titre: "Les inversions, plus haut", texte: [
+      "1re inversion : Mi (corde 3 case 9), Sol (corde 2 case 8), Do (corde 1 case 8).",
+      "2e inversion : Sol (corde 3 case 12), Do (corde 2 case 13), Mi (corde 1 case 12).",
+      "C'est toujours la note la plus grave qui nomme la position.",
+    ], bloc: {
       type: "chord_diagram",
       caption: "Do majeur — triade en 2e inversion, Sol à la basse (cordes 1-2-3, case 12)",
       data: {
         name: "Do", frets: [-1,-1,-1,12,13,12],
         fingers: [0,0,0,1,3,2], startFret: 11,
       },
-    },
-    {
+    } },
+    { type: "question", quizId: "q-neck-15" },
+    { type: "idee", titre: "Les autres sets", texte: [
+      "Cordes 4-3-2, son plus rond : Do (corde 4 case 10), Mi (corde 3 case 9), Sol (corde 2 case 8).",
+      "Cordes 5-4-3, médium-grave, idéal pour les vamps funk : Do (corde 5 case 3), Mi (corde 4 case 2), Sol sur la corde 3 à vide.",
+    ], bloc: { type: "fretboard_interactive", mode: "chord", root: "C", chord: "maj", caption: "Do majeur — visualise Do Mi Sol sur tout le manche", displayMode: "notes", lang: "fr", compact: true } },
+    { type: "idee", titre: "Majeur ou mineur : une case", texte: [
+      "Pour passer de majeur à mineur, baisse seulement la tierce d'un demi-ton.",
+      "Sur les cordes 3-2-1, le Mi (corde 2 case 5) recule en case 4 : Mi♭. Do devient Do mineur, les deux autres doigts ne bougent pas.",
+    ], bloc: {
       type: "chord_diagram",
-      caption: "La mineur ouvert — accord de référence (Mi La Mi La Do Mi)",
-      data: {
-        name: "Am", frets: [0,0,2,2,1,0],
-        fingers: [0,0,2,3,1,0], startFret: 1,
-      },
-    },
-    {
-      type: "chord_diagram",
-      caption: "Sol majeur ouvert — (Sol Si Ré Sol Ré Sol)",
-      data: {
-        name: "Sol", frets: [3,2,0,0,3,3],
-        fingers: [2,1,0,0,3,4], startFret: 1,
-      },
-    },
-    { type: "h", text: "Triades sur cordes 2-3-4 (set 2)" },
-    { type: "p", text: "Son médium. Plus rond. Position fondamentale Do : Do(corde 4 case 10), Mi(corde 3 case 9), Sol(corde 2 case 8). Très utilisé en R&B et néo-soul." },
-    { type: "h", text: "Triades sur cordes 3-4-5 (set 3)" },
-    { type: "p", text: "Son médium-grave. Idéal pour les vamps funk et le rock indé. Position fondamentale Do : Do(corde 5 case 3), Mi(corde 4 case 2), Sol(corde 3 à vide)." },
-    { type: "h", text: "Inversions = mouvement" },
-    { type: "p", text: "Au lieu de sauter de Do à Sol par un grand mouvement, utilise une inversion proche. Do (état fondamental) → Sol (1ère inversion une case plus loin). Le mouvement devient fluide, mélodique. C'est le voice-leading appliqué à la guitare." },
-    { type: "tip", text: "Mini-projet : prends 4 accords d'une chanson pop. Joue-les uniquement en triades sur cordes 1-2-3. Tu obtiens un son moderne et sophistiqué instantanément." },
-    { type: "fretboard_interactive", mode: "chord", root: "C", chord: "maj", caption: "Do majeur — visualise Do Mi Sol sur tout le manche", displayMode: "notes", lang: "fr", compact: true },
+      caption: "Do mineur — cordes 3-2-1 : Do, Mi♭, Sol",
+      data: { name: "Cm", frets: [-1,-1,-1,5,4,3], fingers: [0,0,0,3,2,1], startFret: 3 },
+    } },
+    { type: "question", quizId: "q-neck-16" },
+    { type: "a-toi", titre: "Trois Do sur le set aigu",
+      consigne: "Joue Do à l'état fondamental, puis en 1re et en 2e inversion, et redescends. Quatre temps chacun au clic, en grattant seulement les cordes 3-2-1. Dis à voix haute la note de basse de chaque position.",
+      bloc: {
+        type: "tab",
+        caption: "Do majeur sur les cordes 3-2-1 : fondamental, 1re inversion, 2e inversion, et retour",
+        text: "Tab — accords de trois notes : cases 5, 5, 3 (cordes 3, 2, 1) ; puis 9, 8, 8 ; puis 12, 13, 12 ; puis 9, 8, 8 ; puis 5, 5, 3.",
+        data: { lines: [
+          "e|-3-----8-----12----8-----3-----|",
+          "B|-5-----8-----13----8-----5-----|",
+          "G|-5-----9-----12----9-----5-----|",
+          "D|-------------------------------|",
+          "A|-------------------------------|",
+          "E|-------------------------------|",
+        ] },
+      }, bpm: 60, minuteur: 90 },
+    { type: "idee", titre: "Inversions = mouvement", texte: [
+      "Au lieu de sauter de Do à Sol, choisis la forme de Sol la plus proche. Sur les cordes 3-2-1 : Si (corde 3 case 4), Ré (corde 2 case 3), Sol (corde 1 case 3), sa 1re inversion.",
+      "Depuis Do (cases 5, 5, 3), le Sol reste et les deux autres notes glissent d'une ou deux cases : c'est le voice-leading.",
+    ] },
+    { type: "question", quizId: "q-neck-17" },
+    { type: "recap", points: [
+      "Une triade tient sur trois cordes voisines : sets 3-2-1, 4-3-2 et 5-4-3.",
+      "Sur le set 3-2-1, Do se joue cases 5-5-3, 9-8-8 et 12-13-12 : la note grave nomme la position.",
+      "Majeur → mineur : la tierce recule d'une case ; entre deux accords, prends la forme la plus proche.",
+    ] },
   ],
   quiz: ["q-neck-15", "q-neck-16", "q-neck-17"],
 };

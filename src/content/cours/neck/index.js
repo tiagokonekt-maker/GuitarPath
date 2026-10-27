@@ -21,7 +21,7 @@ import * as neckPow01 from "./neck-pow-01.js";
 
 export const LECONS = [
   neck03,
-  neck04,
+  neck04,      // palier 7 : CAGED (accords ouverts + barrés du palier 4), avant les triades
   neck05,
   neck06,
   neckC101,

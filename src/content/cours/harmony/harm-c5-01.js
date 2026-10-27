@@ -1,45 +1,52 @@
 // Leçon du module « harmony » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
 
 export default {
   id: "harm-c5-01", level: 7,
   title: "Harmoniser la gamme majeure",
-  duration: 12,
+  duration: 9,
   gropiTip: "Chaque accord majeur de la gamme a son relatif mineur dans la même gamme : I et vi, IV et ii, V et iii. En Do : Do/Lam, Fa/Rém, Sol/Mim. Seul le vii° reste à part.",
-  content: [
-    { type: "p", text: "Harmoniser une gamme, c'est construire un accord sur chaque note de cette gamme en utilisant uniquement les notes appartenant à la gamme. Le résultat : 7 accords 'diatoniques' qui forment la palette harmonique de la tonalité. C'est la base de toute l'harmonie tonale, et la clé pour comprendre pourquoi tel accord 'va' avec tel autre." },
-    { type: "h", text: "Le principe : empiler des tierces diatoniques" },
-    { type: "p", text: "Pour construire un accord sur le degré I de Do majeur : commence sur Do, empile des tierces en utilisant uniquement les notes de Do majeur. Do + Mi (3e) + Sol (5e) = Do majeur. Pour le degré II : Ré + Fa (3e) + La (5e) = Ré mineur. La tierce de Ré dans la gamme de Do est Fa (et non Fa# comme dans Ré majeur). Donc Ré mineur, pas majeur." },
-    { type: "h", text: "Les 7 triades diatoniques de Do majeur" },
-    { type: "p", text: "I = Do majeur (Do-Mi-Sol). ii = Ré mineur (Ré-Fa-La). iii = Mi mineur (Mi-Sol-Si). IV = Fa majeur (Fa-La-Do). V = Sol majeur (Sol-Si-Ré). vi = La mineur (La-Do-Mi). vii° = Si diminué (Si-Ré-Fa). Le pattern de qualités : Maj-min-min-Maj-Maj-min-dim. Ce pattern est UNIVERSEL — il est identique dans toute tonalité majeure." },
-    {
-      type: "chord_diagram",
-      caption: "I — Do majeur (× 3 2 0 1 0)",
-      data: { name: "C (I)", frets: [-1,3,2,0,1,0], fingers: [0,3,2,0,1,0], startFret: 1 },
-    },
-    {
+  cartes: [
+    { type: "idee", titre: "Un accord sur chaque note", texte: [
+      "Harmoniser une gamme : sur chaque note, empiler des tierces en n'utilisant que les notes de la gamme.",
+      "En Do : Do + Mi + Sol = Do majeur. Ré + Fa + La = Ré mineur, car la tierce de Ré dans la gamme de Do est Fa, pas Fa#.",
+    ], bloc: {
       type: "chord_diagram",
       caption: "ii — Ré mineur (× × 0 2 3 1)",
       data: { name: "Dm (ii)", frets: [-1,-1,0,2,3,1], fingers: [0,0,0,1,3,2], startFret: 1 },
-    },
-    {
-      type: "chord_diagram",
-      caption: "V — Sol majeur (3 2 0 0 0 3) — tension principale",
-      data: { name: "G (V)", frets: [3,2,0,0,0,3], fingers: [2,1,0,0,0,4], startFret: 1 },
-    },
-    {
+    } },
+    { type: "idee", titre: "Les 7 triades de Do", texte: [
+      "I Do, ii Rém, iii Mim, IV Fa, V Sol, vi Lam, vii° Si diminué (Si Ré Fa).",
+      "Le motif des qualités : majeur, mineur, mineur, majeur, majeur, mineur, diminué. Majuscule = majeur, minuscule = mineur, ° = diminué.",
+    ] },
+    { type: "question", quizId: "q-harm-12" },
+    { type: "idee", titre: "Le même motif partout", texte: [
+      "Ce motif vient de la place des tons et demi-tons de la gamme majeure : il est identique dans toutes les tonalités.",
+      "En Sol : Sol, Lam, Sim, Do, Ré, Mim, Fa#dim. Dire « I-V-vi-IV » décrit donc une grille dans n'importe quelle tonalité.",
+    ] },
+    { type: "question", quizId: "q-harm-13" },
+    { type: "idee", titre: "Avec la 7e", texte: [
+      "Ajoute la 7e de la gamme sur chaque degré : Cmaj7, Dm7, Em7, Fmaj7, G7, Am7, Bm7♭5.",
+      "Seul le V porte un accord de dominante. C'est lui qui crée la tension principale, celle qui ramène au I.",
+    ], bloc: {
       type: "chord_diagram",
       caption: "V7 — Sol 7 (3 2 0 0 0 1) — dominante avec ♭7, attraction maximale vers I",
       data: { name: "G7 (V7)", frets: [3,2,0,0,0,1], fingers: [3,2,0,0,0,1], startFret: 1 },
-    },
-    { type: "h", text: "Les 7 accords de 7e diatoniques" },
-    { type: "p", text: "En ajoutant la 7e à chaque degré : Imaj7 = Cmaj7. iim7 = Dm7. iiim7 = Em7. IVmaj7 = Fmaj7. V7 = G7. vim7 = Am7. viim7b5 = Bm7b5. Pattern : Maj7-m7-m7-Maj7-7-m7-m7b5. Remarque : le V porte un accord de dominante (7, pas Maj7). C'est lui qui crée la tension harmonique principale." },
-    { type: "h", text: "Pourquoi ce pattern est universel" },
-    { type: "p", text: "Ce pattern (Maj-min-min-Maj-Maj-min-dim) est déterminé par la structure de la gamme majeure (ses tons et demi-tons). Toute gamme majeure génère exactement ce même pattern, peu importe la tonalité. En Sol majeur : I=Sol, ii=Lam, iii=Sim, IV=Do, V=Ré, vi=Mim, vii°=Fa#dim. Toujours Maj-min-min-Maj-Maj-min-dim." },
-    { type: "h", text: "Le chiffrage romain : majuscule vs minuscule" },
-    { type: "p", text: "Convention universelle : chiffres romains MAJUSCULES (I, IV, V) = accords majeurs. Minuscules (ii, iii, vi) = accords mineurs. 'vii°' = diminué. C'est le système le plus utilisé pour analyser la musique. Quand un musicien dit 'la chanson est en I-V-vi-IV', tu sais exactement de quoi il parle, dans n'importe quelle tonalité." },
-    { type: "ref", text: "Analyse pratique : 'Let It Be' (Beatles) en Do majeur = C-G-Am-F = I-V-vi-IV. 'Stairway to Heaven' (Led Zeppelin) commence sur Am (vi de Do majeur). 'House of the Rising Sun' (The Animals) en La mineur = Am-C-D-F-Am = i-III-IV-VI-i (en mineur, les chiffres changent légèrement). L'harmonisation de la gamme est partout." },
-    { type: "tip", text: "Exercice : prends 5 chansons pop que tu connais. Trouve leur tonalité. Identifie les accords. Traduis en chiffrage romain (I, ii, iii...). Tu vas découvrir qu'un grand nombre de chansons pop reposent sur quelques progressions identiques. C'est illuminant." },
+    } },
+    { type: "question", quizId: "q-harm-21" },
+    { type: "a-toi", titre: "Les degrés dans trois tonalités",
+      consigne: "Une mesure par accord, au clic. I-IV-V-I puis I-V-vi-IV en Do (Do Fa Sol / Do Sol Lam Fa), en Sol (Sol Do Ré / Sol Ré Mim Do), en Ré (Ré Sol La / Ré La Sim Sol). Dis les chiffres en jouant. Bonus : capo case 2 sur la version en Do, tu sonnes en Ré.",
+      bloc: {
+        type: "chord_diagram",
+        caption: "I — Do majeur (× 3 2 0 1 0)",
+        data: { name: "C (I)", frets: [-1,3,2,0,1,0], fingers: [0,3,2,0,1,0], startFret: 1 },
+      }, bpm: 70, minuteur: 180 },
+    { type: "question", quizId: "q-harm-24" },
+    { type: "recap", points: [
+      "Harmoniser = empiler des tierces avec les seules notes de la gamme.",
+      "En majeur : I, ii, iii, IV, V, vi, vii° — majeur, mineur, mineur, majeur, majeur, mineur, diminué.",
+      "Avec les 7e : Maj7, m7, m7, Maj7, 7, m7, m7♭5 ; seul le V est une dominante.",
+    ] },
   ],
   quiz: ["q-harm-12","q-harm-13","q-harm-21","q-harm-24","q-fret-harm-10","q-logic-04","q-harm-02","q-harm-03"],
 };

@@ -345,7 +345,11 @@ export const idUniteAvantScission = (id) => {
  * ses leçons, sa vérification et son coffre restent à gagner. La date est
  * indispensable : sans elle, un nouveau joueur sauterait l'unité.
  */
-export const UNITES_AJOUTEES = { "palier-6-4": "2026-10-16" };
+export const UNITES_AJOUTEES = {
+  "palier-6-4": "2026-10-16",
+  "palier-5-3": "2026-10-27",   // valse et 6/8, capodastre (lot 3)
+  "palier-7-3": "2026-10-27",   // CAGED avancé, picking Travis (lot 3)
+};
 
 function franchissableParHeritage(u, units, checks, claimed) {
   const miseEnService = UNITES_AJOUTEES[u.id];

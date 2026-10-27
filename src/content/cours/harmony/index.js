@@ -19,6 +19,7 @@ import * as harmC501 from "./harm-c5-01.js";
 import * as harmC502 from "./harm-c5-02.js";
 import * as harmC503 from "./harm-c5-03.js";
 import * as harmC601 from "./harm-c6-01.js";
+import * as harmCapo01 from "./harm-capo-01.js";
 import * as harmC602 from "./harm-c6-02.js";
 import * as harmC603 from "./harm-c6-03.js";
 import * as harmC604 from "./harm-c6-04.js";
@@ -56,6 +57,7 @@ export const LECONS = [
   harmC502,
   harmC503,
   harmC601,
+  harmCapo01,  // palier 5 : capodastre et transposition (après I-IV-V)
   harmC602,
   harmC603,
   harmC604,

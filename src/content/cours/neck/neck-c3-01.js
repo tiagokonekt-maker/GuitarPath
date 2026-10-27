@@ -1,42 +1,71 @@
 // Leçon du module « neck » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
+
+const OCTAVE_C6_C4 = {
+  type: "fretboard",
+  caption: "Pattern octave c6→c4 (+2 cases) — La, Do, Sol et leurs octaves",
+  data: {
+    frets: 8, startFret: 2,
+    showStringNames: true, showFretNumbers: true,
+    markerFrets: [3, 5, 7],
+    notes: [
+      { string: 6, fret: 3,  label: "Sol", color: "amber",   root: true },
+      { string: 4, fret: 5,  label: "Sol", color: "amber",   root: true },
+      { string: 6, fret: 5,  label: "La",  color: "green",   root: true },
+      { string: 4, fret: 7,  label: "La",  color: "green",   root: true },
+      { string: 6, fret: 8,  label: "Do",  color: "primary", root: true },
+      { string: 4, fret: 10, label: "Do",  color: "primary", root: true },
+    ],
+  },
+};
+
+const TAB_OCTAVES = {
+  type: "tab",
+  caption: "Corde 6, puis son octave sur la corde 4 : Sol, La, Do, Si, Ré",
+  text: "Tab — corde 6 case 3 puis corde 4 case 5 ; corde 6 case 5 puis corde 4 case 7 ; corde 6 case 8 puis corde 4 case 10 ; corde 6 case 7 puis corde 4 case 9 ; corde 6 case 10 puis corde 4 case 12.",
+  data: { lines: [
+    "e|----------------------------------|",
+    "B|----------------------------------|",
+    "G|----------------------------------|",
+    "D|----5-----7-----10-----9------12--|",
+    "A|----------------------------------|",
+    "E|-3-----5-----8------7-----10------|",
+  ] },
+};
 
 export default {
   id: "neck-c3-01", level: 5,
   title: "Pattern octave 1 : corde 6 → corde 4",
-  duration: 9,
+  duration: 7,
   gropiTip: "Pour des octaves doublées propres : index sur la corde 6, annulaire sur la corde 4, et laisse l'index effleurer la corde 5 pour l'étouffer. Tu peux alors gratter sans faire sonner celle du milieu.",
-  content: [
-    { type: "p", text: "Tu connais maintenant les notes des 6 cordes. Mais mémoriser les positions une par une est lent et inefficace. Heureusement, il existe des 'patterns d'octaves' qui te permettent de trouver la même note dans plusieurs zones du manche, instantanément. Ces patterns sont la clé de la navigation rapide." },
-    { type: "h", text: "Le pattern numéro 1 : c6 → c4, +2 cases" },
-    { type: "p", text: "Voici le pattern le plus utilisé. Si tu joues une note sur la corde 6, son octave la plus proche se trouve sur la corde 4, deux cases plus haut (vers l'aigu). Exemple : Mi case 0 corde 6 → Mi case 2 corde 4 (octave). Sol case 3 corde 6 → Sol case 5 corde 4 (octave). La case 5 corde 6 → La case 7 corde 4 (octave)." },
-    { type: "h", text: "Visualisation : la forme 'L'" },
-    { type: "p", text: "Le pattern c6 → c4 +2 dessine une forme de 'L' à l'envers sur le manche. Tu peux le visualiser comme deux notes diagonales : une en bas-gauche (c6), une en haut-droite (c4 +2 cases). Cette forme se déplace partout sur le manche en gardant la même structure : 1 corde sautée, 2 cases plus haut." },
-    {
-      type: "fretboard",
-      caption: "Pattern octave c6→c4 (+2 cases) — La, Do, Sol et leurs octaves",
-      data: {
-        frets: 8, startFret: 2,
-        showStringNames: true, showFretNumbers: true,
-        markerFrets: [3, 5, 7],
-        notes: [
-          { string: 6, fret: 3,  label: "Sol", color: "amber",   root: true },
-          { string: 4, fret: 5,  label: "Sol", color: "amber",   root: true },
-          { string: 6, fret: 5,  label: "La",  color: "green",   root: true },
-          { string: 4, fret: 7,  label: "La",  color: "green",   root: true },
-          { string: 6, fret: 8,  label: "Do",  color: "primary", root: true },
-          { string: 4, fret: 10, label: "Do",  color: "primary", root: true },
-        ],
-      },
-    },
-    { type: "h", text: "Application : trouver une note rapidement" },
-    { type: "p", text: "Tu cherches Do sur la corde 4 ? Tu sais que Do est case 8 sur c6. Donc, c4 case 10 = Do (8+2). Tu cherches La sur la corde 4 ? La est case 5 sur c6, donc c4 case 7 = La. Plus besoin de mémoriser les notes de la corde 4 séparément : tu les déduis depuis c6." },
-    { type: "h", text: "L'usage en jeu" },
-    { type: "p", text: "Ce pattern est utilisé constamment en solo et en accord. Quand tu joues un riff sur la corde 6, tu peux l'enrichir en jouant les octaves correspondantes sur c4. Quand tu cherches une triade en position basse, la fondamentale + son octave c6→c4 te donne déjà 2 notes." },
-    { type: "h", text: "Octaves doublées : la signature funk" },
-    { type: "p", text: "Jouer une mélodie en octaves doublées (deux notes simultanément, à 1 octave d'écart) est une technique classique du funk et du jazz. Wes Montgomery l'a popularisée à la guitare. Sur la guitare, le pattern c6→c4 +2 te permet de jouer en octaves sans effort." },
-    { type: "ref", text: "Le riff de 'Smoke On The Water' joué en octaves doublées sonne comme un riff funky. Essaie : joue le riff sur la corde 6, et simultanément les mêmes notes sur la corde 4 +2 cases. Effet immédiat." },
-    { type: "tip", text: "Drill 'octaves c6→c4' : choisis une note (ex Sol). Trouve-la sur c6 (case 3), puis joue son octave c4 (case 5). Refais avec 5 notes différentes. En 5 minutes par jour pendant une semaine, ce pattern devient instinctif." },
+  cartes: [
+    { type: "idee", titre: "Une note, deux places", texte: [
+      "Retrouver chaque note case par case, c'est long. Les formes d'octave te donnent la même note ailleurs, instantanément.",
+      "Première forme : de la corde 6 à la corde 4, deux cases plus haut. Mi à vide sur la corde 6 → Mi (corde 4 case 2). Sol (corde 6 case 3) → Sol (corde 4 case 5).",
+    ], bloc: OCTAVE_C6_C4 },
+    { type: "idee", titre: "Une forme qui voyage", texte: [
+      "Une corde sautée, deux cases plus loin : la forme dessine un « L » à l'envers.",
+      "Elle se déplace telle quelle sur tout le manche. Tu la reconnais d'un coup d'œil, quelle que soit la note.",
+    ] },
+    { type: "question", quizId: "q-neck-33" },
+    { type: "idee", titre: "Déduire la corde 4", texte: [
+      "Tu connais la corde 6 ? Alors tu connais la corde 4. Do est case 8 sur la corde 6, donc Do (corde 4 case 10).",
+      "Plus besoin d'apprendre la corde 4 à part : tu la déduis, deux cases plus loin.",
+    ] },
+    { type: "question", quizId: "q-neck-32" },
+    { type: "idee", titre: "Les octaves doublées", texte: [
+      "Joue les deux notes ensemble : la mélodie sonne plus large, plus pleine. C'est une technique courante en jazz et en funk, popularisée à la guitare par Wes Montgomery.",
+      "Un riff sur la corde 6 s'enrichit aussitôt de son octave sur la corde 4.",
+    ] },
+    { type: "question", quizId: "q-neck-34" },
+    { type: "a-toi", titre: "Cinq notes, dix positions",
+      consigne: "Joue chaque note sur la corde 6, puis son octave sur la corde 4 : Sol, La, Do, Si, Ré. Nomme-les à voix haute, au clic. Puis plaque chaque paire ensemble, la corde 5 étouffée.",
+      bloc: TAB_OCTAVES, bpm: 60, minuteur: 120 },
+    { type: "recap", points: [
+      "Octave corde 6 → corde 4 : une corde sautée, deux cases plus haut.",
+      "La forme se déplace telle quelle : la corde 6 te donne la corde 4.",
+      "Jouées ensemble, les deux notes font des octaves doublées.",
+    ] },
   ],
   quiz: ["q-neck-32", "q-neck-33", "q-neck-34"],
 };

@@ -10647,7 +10647,13 @@ var idUniteAvantScission = (id) => {
   const m = /^(palier-\d+)-\d+$/.exec(id || "");
   return m ? m[1] : null;
 };
-var UNITES_AJOUTEES = { "palier-6-4": "2026-10-16" };
+var UNITES_AJOUTEES = {
+  "palier-6-4": "2026-10-16",
+  "palier-5-3": "2026-10-27",
+  // valse et 6/8, capodastre (lot 3)
+  "palier-7-3": "2026-10-27"
+  // CAGED avancé, picking Travis (lot 3)
+};
 function franchissableParHeritage(u, units, checks, claimed) {
   const miseEnService = UNITES_AJOUTEES[u.id];
   if (!miseEnService) return false;
@@ -12754,6 +12760,14 @@ var LIENS_MORCEAUX = {
   // (Bend, vibrato, slides : aucun morceau du catalogue n'en contient —
   // le blues en La est un riff rythmique, sans bend ni vibrato.)
   "rhy-tech-03": ["riff-folk-re"],
+  // Jouer aux doigts : deux arpèges basse + cordes aiguës (Do – Lam – Fa – Sol
+  // en croches ; Lam – Do – Ré – Fa – Mi en p-i-m-a-m-i).
+  "rhy-doigts-01": ["picking-do-lam-fa-sol", "rising-sun"],
+  // Mesures à trois : Greensleeves est en 3/4, Rising Sun en 6/8.
+  "rhy-mes-01": ["greensleeves", "rising-sun"],
+  // Picking Travis : le picking Do – Lam – Fa – Sol alterne deux basses au
+  // pouce (temps 1 et 3) sous les cordes aiguës.
+  "rhy-doigts-02": ["picking-do-lam-fa-sol"],
   // ── Manche ───────────────────────────────────────────────────────────
   // Power chords : le riff de la leçon reprend ses cases 0, 3, 5 sur la corde 6.
   "neck-pow-01": ["riff-rock-mi"],

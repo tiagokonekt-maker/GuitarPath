@@ -1,42 +1,69 @@
 // Leçon du module « harmony » + les questions de quiz qui s'y rattachent.
-// Format décrit dans src/content/README.md.
+// Format « leçon en cartes » décrit dans src/content/README.md.
+
+const TAB_QUATRE_TRIADES = {
+  type: "tab",
+  caption: "Les quatre triades de Do, fondamentale fixe : majeure, mineure, diminuée, augmentée",
+  text: "Tab — à chaque fois Do (corde 5 case 3), puis la tierce et la quinte sur la corde 4 : cases 2 et 5 (majeure), 1 et 5 (mineure), 1 et 4 (diminuée), 2 et 6 (augmentée).",
+  data: { lines: [
+    "e|-------------------------------------|",
+    "B|-------------------------------------|",
+    "G|-------------------------------------|",
+    "D|----2--5-----1--5-----1--4-----2--6--|",
+    "A|-3--------3--------3--------3--------|",
+    "E|-------------------------------------|",
+  ] },
+};
 
 export default {
   id: "harm-c2-01", level: 5,
   title: "Les 4 types de triades",
-  duration: 11,
+  duration: 8,
   gropiTip: "Pour passer de majeur à mineur, baisse juste la tierce d'une case. Sur Mi ouvert, lève le doigt de la corde 3 (case 1) : tu obtiens Mim, et toute l'ambiance bascule.",
-  content: [
-    { type: "p", text: "Une triade, c'est 3 notes empilées par tierces (1-3-5). C'est l'unité de base de l'harmonie tonale. Il existe 4 types de triades, chacun avec sa couleur sonore unique. Les maîtriser, c'est comprendre la structure de tous les accords que tu joueras dans ta vie." },
-    { type: "h", text: "Triade majeure (1-3-5)" },
-    { type: "p", text: "Tierce majeure (4 demi-tons) + quinte juste (7 demi-tons depuis la fondamentale). Couleur : brillante, joyeuse, stable, affirmative. C'est l'accord 'par défaut' de la musique populaire occidentale. Exemples sur guitare : Do (Do-Mi-Sol), Sol (Sol-Si-Ré), La (La-Do#-Mi)." },
-    { type: "h", text: "Triade mineure (1-♭3-5)" },
-    { type: "p", text: "Tierce mineure (3 demi-tons) + quinte juste (7 demi-tons). Couleur : mélancolique, introspective, douce-amère. Différence avec le majeur : 1 seul demi-ton d'écart sur la tierce. Et pourtant, l'effet émotionnel est radicalement différent. Exemples : Lam (La-Do-Mi), Rém (Ré-Fa-La), Mim (Mi-Sol-Si)." },
-    { type: "h", text: "Triade diminuée (1-♭3-♭5)" },
-    { type: "p", text: "Tierce mineure (3 demi-tons) + quinte diminuée (6 demi-tons). Couleur : instable, tendue, 'diabolique'. La quinte est diminuée (d'un demi-ton par rapport à la quinte juste), ce qui crée une forte dissonance. Cette triade n'est pas agréable tenue longtemps — elle 'demande' à se résoudre. Elle apparaît naturellement sur le 7e degré de la gamme majeure." },
-    { type: "h", text: "Triade augmentée (1-3-#5)" },
-    { type: "p", text: "Tierce majeure (4 demi-tons) + quinte augmentée (8 demi-tons). Couleur : flottante, mystérieuse, ambiguë. La quinte est augmentée d'un demi-ton. Cet accord est 'symétrique' : tu peux l'empiler à l'infini par tierces majeures et revenir à la même structure. Très utilisée dans la musique impressionniste (Debussy, Ravel) et le jazz moderne." },
-    { type: "h", text: "Comment les reconnaître à l'oreille" },
-    { type: "p", text: "Majeure : brillant, stable. 'Joyeux'. Mineure : doux, mélancolique. 'Triste'. Diminuée : tendu, instable. 'Anxieux'. Augmentée : flottant, ambigu. 'Mystérieux'. Ces qualificatifs sont des raccourcis — en réalité, la perception dépend toujours du contexte. Mais ils sont utiles pour commencer à identifier les qualités d'accord." },
-    { type: "h", text: "Récapitulatif des formules" },
-    { type: "p", text: "Majeure : 1-3-5 (4+3 demi-tons entre les tierces). Mineure : 1-♭3-5 (3+4 demi-tons). Diminuée : 1-♭3-♭5 (3+3 demi-tons). Augmentée : 1-3-#5 (4+4 demi-tons). Le pattern de demi-tons entre les tierces résume tout : 4+3 = maj, 3+4 = min, 3+3 = dim, 4+4 = aug." },
-    {
+  cartes: [
+    { type: "idee", titre: "Trois notes empilées", texte: [
+      "Une triade, c'est trois notes empilées par tierces : 1, 3, 5. C'est l'unité de base des accords.",
+      "Il en existe quatre types, chacun avec sa couleur. Tout dépend des deux tierces qui la composent.",
+    ] },
+    { type: "idee", titre: "Majeure : 1-3-5", texte: [
+      "Tierce majeure (4 demi-tons), puis tierce mineure (3) : la quinte juste tombe à 7 demi-tons de la fondamentale.",
+      "Son brillant, stable. La majeur : La, Do#, Mi.",
+    ], bloc: {
       type: "chord_diagram",
       caption: "La majeur — triade majeure ouverte (1-3-5)",
       data: { name: "A", frets: [-1,0,2,2,2,0], fingers: [0,0,1,2,3,0], startFret: 1 },
-    },
-    {
+    } },
+    { type: "question", quizId: "q-harm-01" },
+    { type: "idee", titre: "Mineure : 1-♭3-5", texte: [
+      "La tierce descend d'un demi-ton : 3 puis 4 demi-tons. La quinte ne bouge pas.",
+      "Un seul demi-ton d'écart, et le son devient doux, mélancolique. La mineur : La, Do, Mi.",
+    ], bloc: {
       type: "chord_diagram",
       caption: "La mineur — triade mineure ouverte (1-♭3-5)",
-      data: { name: "Am", frets: [0,0,2,2,1,0], fingers: [0,0,2,3,1,0], startFret: 1 },
-    },
-    {
+      data: { name: "Am", frets: [-1,0,2,2,1,0], fingers: [0,0,2,3,1,0], startFret: 1 },
+    } },
+    { type: "idee", titre: "Diminuée : 1-♭3-♭5", texte: [
+      "Deux tierces mineures, 3 + 3 : la quinte tombe à 6 demi-tons. Son tendu, instable, qui demande à se résoudre.",
+      "On la trouve sur le 7e degré de la gamme majeure : Si diminué en Do.",
+    ], bloc: {
       type: "chord_diagram",
       caption: "Si diminué — triade diminuée (1-♭3-♭5)",
       data: { name: "Bdim", frets: [-1,2,3,4,3,-1], fingers: [0,1,2,4,3,0], startFret: 1 },
-    },
-    { type: "ref", text: "Pour entendre chaque type dans un contexte réel : 'Happy Birthday' (majeur), 'Scarborough Fair' (mineur), le passage entre les accords dans 'Hark the Herald Angels Sing' (diminué en transition), 'Oh ! You Pretty Things' de David Bowie commence sur un accord augmenté. Écoute ces passages et identifie la couleur." },
-    { type: "tip", text: "Drill des 4 types : depuis Do (c5 case 3), joue successivement : Do majeur (Do-Mi-Sol), Do mineur (Do-Mib-Sol), Do diminué (Do-Mib-Solb), Do augmenté (Do-Mi-Sol#). Écoute la progression de couleur : de brillant à sombre à tendu à flottant. 4 accords, 4 univers." },
+    } },
+    { type: "question", quizId: "q-harm-02" },
+    { type: "idee", titre: "Augmentée : 1-3-#5", texte: [
+      "Deux tierces majeures, 4 + 4 : la quinte monte à 8 demi-tons. Son flottant, ambigu.",
+      "Elle est symétrique : Do augmenté, Mi augmenté et Sol# augmenté sonnent avec les mêmes trois notes.",
+    ] },
+    { type: "question", quizId: "q-harm-04" },
+    { type: "a-toi", titre: "Quatre couleurs depuis Do",
+      consigne: "Garde Do sur la corde 5 et joue les quatre triades en arpège, comme la tab : majeure, mineure, diminuée, augmentée. Seules la tierce et la quinte bougent. Écoute la couleur changer : brillant, sombre, tendu, flottant.",
+      bloc: TAB_QUATRE_TRIADES, bpm: 60, minuteur: 120 },
+    { type: "recap", points: [
+      "Majeure 4+3, mineure 3+4 : la tierce fait la différence.",
+      "Diminuée 3+3 (quinte ♭5), augmentée 4+4 (quinte #5).",
+      "Brillant, mélancolique, tendu, flottant : quatre couleurs.",
+    ] },
   ],
   quiz: ["q-harm-01","q-harm-02","q-harm-03","q-harm-04"],
 };

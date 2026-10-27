@@ -10,7 +10,7 @@ export default [
 
   {id:"ex-neck-04",mod:"neck",lvl:2,title:"Octaves 4 patterns",dur:12,bpm:null,courseLink:"neck-03",steps:["Pattern 1 (c6→c4) : +2 cases","Pattern 2 (c5→c3) : +2 cases","Pattern 3 (c4→c2) : +3 cases (à cause de la tierce maj entre c3-c2)","Pattern 4 (c3→c1) : +3 cases","Pour chaque pattern, joue 5 fondamentales différentes."],tip:"Mémorise : +2 / +2 / +3 / +3. Cette asymétrie = la 'cassure' guitare.",xp:65},
 
-  {id:"ex-neck-05",mod:"neck",lvl:2,title:"CAGED Am — 5 formes",dur:15,bpm:null,courseLink:"neck-04",steps:["Forme E barrée case 5 = Am (forme classique).","Forme D barrée case 7 (cordes 1-2-3-4) = Am.","Forme C barrée case 12 = Am (aigu).","Forme A en position ouverte case 0 = Am.","Forme G barrée case 2 = Am (difficile mais existe). Joue les 5 formes en remontant le manche."],tip:"Toutes les formes ne sont pas confortables, mais les connaître = liberté totale.",xp:75},
+  {id:"ex-neck-05",mod:"neck",lvl:2,title:"CAGED Do — 5 formes",dur:15,bpm:60,courseLink:"neck-04",steps:["Forme C : le Do ouvert (x32010), fondamentale Do (corde 5 case 3).","Forme A : barré case 3 (x35553), même fondamentale sous l'index.","Forme G : 8-7-5-5-5-8, fondamentales Do (corde 6 case 8) et Do (corde 3 case 5) ; trop étirée, garde seulement les quatre cordes aiguës (5-5-5-8).","Forme E : barré case 8 (8-10-10-9-8-8), puis forme D : x-x-10-12-13-12, fondamentale Do (corde 4 case 10).","Enchaîne les cinq formes en montant puis en redescendant, quatre coups chacune au clic à 60."],tip:"Avant de plaquer une forme, pose d'abord le doigt de la fondamentale : c'est lui qui te dit où tu es sur le manche.",xp:75},
 
   {id:"ex-neck-06",mod:"neck",lvl:3,title:"Triades Do majeur — 3 inversions",dur:12,bpm:65,courseLink:"neck-05",steps:["Cordes 3-2-1, état fondamental (Do à la basse) : corde 3 case 5 (Do), corde 2 case 5 (Mi), corde 1 case 3 (Sol).","1ère inversion (Mi à la basse) : corde 3 case 9 (Mi), corde 2 case 8 (Sol), corde 1 case 8 (Do).","2e inversion (Sol à la basse) : corde 3 case 12 (Sol), corde 2 case 13 (Do), corde 1 case 12 (Mi).","Joue les 3 positions en boucle à 65 BPM, en montant puis en redescendant le manche."],tip:"Triades = unité minimale d'harmonie. 3 voicings par accord = 9 manières d'enrichir une chanson.",xp:65},
 
@@ -152,7 +152,7 @@ export default [
         fretRange:[0,12], stringRange:[1,6],
         display:{showNotes:false},
         hint:"Chaque La est le centre d'une des 5 formes CAGED.",
-        exp:"La en : corde 6 case 5 (forme E), corde 5 à vide (forme A), corde 4 case 7 (forme D ?), corde 3 case 2, corde 2 case 10, corde 1 case 5.",
+        exp:"La en : corde 6 case 5 (formes G et E), corde 5 à vide et case 12 (formes A et C), corde 4 case 7 (forme D), corde 3 case 2 (formes A et G), corde 2 case 10 (forme D), corde 1 case 5 (formes G et E).",
         xp:30
       }
     ],
