@@ -124,15 +124,34 @@ export const accordDansLaTonalite = (toniquePc, semi, type, mineur = false) =>
 // Nommer un accord dans l'absolu demande l'oreille absolue. Ici, la tonalité
 // est annoncée et la tonique jouée d'abord : on reconnaît l'accord par sa
 // RELATION à la tonique — ce que l'oreille relative sait faire.
+// `fonction` cite des chiffres romains : elle ne s'affiche qu'une fois la
+// leçon du chiffrage faite. Avant, `fonctionNoms` dit la même chose en mots,
+// et `libelle` nomme le degré sans chiffre (annonce du vivier).
 export const DEGRES_TONALITE = {
-  "I":    { semi: 0,  type: "maj",  fonction: "la tonique : aucun mouvement, on est « à la maison »" },
-  "IV":   { semi: 5,  type: "maj",  fonction: "la sous-dominante : on s'éloigne en douceur" },
-  "V":    { semi: 7,  type: "maj",  fonction: "la dominante : une tension qui appelle le retour" },
-  "vi":   { semi: 9,  type: "min",  fonction: "le relatif mineur : même famille que le I, en plus sombre" },
-  "ii":   { semi: 2,  type: "min",  fonction: "le ii : mineur, il prépare souvent le V" },
-  "iii":  { semi: 4,  type: "min",  fonction: "le iii : mineur, proche du I (deux notes en commun)" },
-  "V7":   { semi: 7,  type: "dom7", fonction: "la dominante avec sa septième : la tension la plus forte" },
-  "vii°": { semi: 11, type: "dim",  fonction: "le vii° : diminué, il bascule vers la tonique" },
+  "I":    { semi: 0,  type: "maj",  libelle: "l'accord de tonique",
+            fonction: "la tonique : aucun mouvement, on est « à la maison »",
+            fonctionNoms: "la tonique : aucun mouvement, on est « à la maison »" },
+  "IV":   { semi: 5,  type: "maj",  libelle: "la sous-dominante",
+            fonction: "la sous-dominante : on s'éloigne en douceur",
+            fonctionNoms: "la sous-dominante : on s'éloigne en douceur" },
+  "V":    { semi: 7,  type: "maj",  libelle: "la dominante",
+            fonction: "la dominante : une tension qui appelle le retour",
+            fonctionNoms: "la dominante : une tension qui appelle le retour" },
+  "vi":   { semi: 9,  type: "min",  libelle: "le relatif mineur",
+            fonction: "le relatif mineur : même famille que le I, en plus sombre",
+            fonctionNoms: "le relatif mineur : même famille que l'accord de tonique, en plus sombre" },
+  "ii":   { semi: 2,  type: "min",  libelle: "l'accord mineur du 2e degré",
+            fonction: "le ii : mineur, il prépare souvent le V",
+            fonctionNoms: "l'accord bâti sur la 2e note de la gamme : mineur, il prépare souvent la dominante" },
+  "iii":  { semi: 4,  type: "min",  libelle: "l'accord mineur du 3e degré",
+            fonction: "le iii : mineur, proche du I (deux notes en commun)",
+            fonctionNoms: "l'accord bâti sur la 3e note de la gamme : mineur, proche de la tonique (deux notes en commun)" },
+  "V7":   { semi: 7,  type: "dom7", libelle: "la dominante avec sa septième",
+            fonction: "la dominante avec sa septième : la tension la plus forte",
+            fonctionNoms: "la dominante avec sa septième : la tension la plus forte" },
+  "vii°": { semi: 11, type: "dim",  libelle: "l'accord diminué de la sensible",
+            fonction: "le vii° : diminué, il bascule vers la tonique",
+            fonctionNoms: "l'accord bâti sur la sensible : diminué, il bascule vers la tonique" },
 };
 export const ORDRE_DEGRES = ["I", "IV", "V", "vi", "ii", "iii", "V7", "vii°"];
 export const DEPART_DEGRES = 3;
@@ -182,6 +201,79 @@ export function tirerProgression(rng, cle, toniquePc) {
   const noms = p.degres.map(([semi, type]) => accordDansLaTonalite(t, semi, type, p.mineur));
   return { cle, toniquePc: t, mineur: p.mineur, accords, noms, romain: romainDe(cle), tonalite: nomTonalite(t, p.mineur) };
 }
+
+// ─────────────────────────────────────────────────────────────────────────
+// CHIFFRES ROMAINS : d'abord les NOMS d'accords, les chiffres ensuite
+// ─────────────────────────────────────────────────────────────────────────
+// « I – V – vi – IV » ne dit rien à qui n'a pas appris le chiffrage. Les
+// réponses sont donc d'abord des noms d'accords depuis la tonique annoncée
+// (« Sol – Ré – Mim – Do »). Les chiffres romains n'apparaissent qu'après la
+// leçon qui les enseigne (harm-c5-02, « Le chiffrage romain et le système
+// Nashville ») : dans la correction (noms = chiffres), et comme format de
+// réponse, à petite dose (1 question sur 5) qui grandit avec la pratique,
+// sans jamais remplacer les noms (55 % au plus).
+export const LECON_CHIFFRES_ROMAINS = "harm-c5-02";
+/** Historique des questions de suites posées en chiffres romains (Ear Training). */
+export const CLE_SUITES_ROMAINS = "ear:progression:chiffres-romains";
+export const PART_ROMAINS = { depart: 0.2, max: 0.55, succesPleins: 20, niveauMax: 3 };
+
+/** La leçon du chiffrage est-elle faite ? (`completedLessons` de l'état) */
+export const chiffresRomainsAppris = (completedLessons) => !!completedLessons?.[LECON_CHIFFRES_ROMAINS];
+
+/**
+ * Part des questions de suites posées en chiffres romains (0 à 0,55).
+ *  • leçon pas faite → 0 : jamais de chiffres ;
+ *  • leçon faite → 20 %, puis jusqu'à 55 % selon l'avancement, le plus
+ *    favorable de : `succes` (réussites EN CHIFFRES ROMAINS, plein à 20) et
+ *    `niveau` (1 à 3, niveau de la compétence de révision : 1 → 20 %,
+ *    2 → 37,5 %, 3 → 55 %).
+ */
+export function partChiffresRomains({ leconFaite = false, succes = 0, niveau = 1 } = {}) {
+  if (!leconFaite) return 0;
+  const { depart, max, succesPleins, niveauMax } = PART_ROMAINS;
+  const parSucces = Math.min(1, Math.max(0, succes || 0) / succesPleins);
+  const parNiveau = (Math.min(niveauMax, Math.max(1, niveau || 1)) - 1) / (niveauMax - 1);
+  return depart + (max - depart) * Math.max(parSucces, parNiveau);
+}
+/** Tirage du format d'une question de suite : "romains" ou "noms". */
+export const formatSuite = (rng, params) => (rng() < partChiffresRomains(params) ? "romains" : "noms");
+
+/**
+ * Toniques possibles pour un groupe de suites : celles de leur mode, ou, si
+ * majeures et mineures se côtoient, les toniques communes (Do Sol Ré La Mi
+ * Fa) : toutes les options s'écrivent alors depuis la même tonique.
+ */
+export function toniquesPour(cles) {
+  const modes = new Set(cles.map(k => PROGRESSIONS[k].mineur));
+  if (modes.size === 1) return modes.has(true) ? TONALITES_MIN : TONALITES_MAJ;
+  return TONALITES_MAJ.filter(t => TONALITES_MIN.includes(t));
+}
+/** Les accords d'une suite depuis une tonique : ["Sol", "Ré", "Mim", "Do"]. */
+export const nomsSuite = (cle, toniquePc) =>
+  PROGRESSIONS[cle].degres.map(([semi, type]) => accordDansLaTonalite(toniquePc, semi, type, PROGRESSIONS[cle].mineur));
+/** "Sol – Ré – Mim – Do" */
+export const libelleNomsSuite = (cle, toniquePc) => nomsSuite(cle, toniquePc).join(" – ");
+/** La tonique seule (« Sib ») : l'annoncer ne trahit pas majeur ou mineur. */
+export const nomTonique = (toniquePc) => nomDansLaTonalite(toniquePc, toniquePc);
+
+/**
+ * Correction d'une suite tirée (tirerProgression) : avant la leçon, les noms
+ * seulement ; après, les noms ET les chiffres, pour apprendre le lien.
+ * « Sol – Ré – Mim – Do = I – V – vi – IV en Sol majeur. »
+ */
+export const correctionSuite = (p, leconFaite) => (leconFaite
+  ? `${p.noms.join(" – ")} = ${p.romain} en ${p.tonalite}.`
+  : `En ${p.tonalite} : ${p.noms.join(" – ")}.`);
+
+/** Une suite hors question (annonce du vivier) : en Do majeur ou en La mineur. */
+export function exempleSuite(cle, leconFaite) {
+  const mineur = PROGRESSIONS[cle].mineur, t = mineur ? 9 : 0;
+  const ex = `en ${nomTonalite(t, mineur)} : ${libelleNomsSuite(cle, t)}`;
+  return leconFaite ? `${romainDe(cle)} (${ex})` : `la suite ${ex}`;
+}
+/** Un degré hors question (annonce du vivier) : « la dominante (V) » ou « la dominante ». */
+export const exempleDegre = (degre, leconFaite) =>
+  (leconFaite ? `${DEGRES_TONALITE[degre].libelle} (${degre})` : DEGRES_TONALITE[degre].libelle);
 
 // ─────────────────────────────────────────────────────────────────────────
 // DICTÉE MÉLODIQUE — 3 à 5 notes, dans la gamme, en partant de la tonique

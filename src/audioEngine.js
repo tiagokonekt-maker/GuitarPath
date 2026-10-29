@@ -98,6 +98,7 @@ import {
   INTERVALLES, SENS, QUALITES, DEGRES_TONALITE, ORDRE_DEGRES, PROGRESSIONS, ORDRE_PROGRESSIONS,
   tirerIntervalle, tirerAccord, tirerAccordEnTonalite, tirerProgression, tirerDictee,
   accordDansLaTonalite, romainDe, midiVersTone, choisir as choisirO, melanger as melangerO,
+  toniquesPour, libelleNomsSuite, nomTonique, correctionSuite,
 } from "./store/oreille.js";
 import { planifierTab } from "./tab/tabSon.js";
 
@@ -1401,11 +1402,22 @@ function optionsDe(rng, pool, bonne, toutes) {
  * @param opts.niveau        dictée : niveau 1 à 5
  * @param opts.toutesOptions true = une option par élément du vivier (écran
  *                           Ear Training) ; sinon 4 options au plus (quiz)
+ * @param opts.leconChiffres accord en tonalité et suites : la leçon du
+ *                           chiffrage romain (oreille.LECON_CHIFFRES_ROMAINS)
+ *                           est-elle faite ? false = noms d'accords seuls,
+ *                           aucun chiffre romain affiché. Absent = ancien
+ *                           comportement (chiffres affichés).
+ * @param opts.format        suites : "noms" (« Sol – Ré – Mim – Do ») ou
+ *                           "romains" (« I – V – vi – IV », seulement si la
+ *                           leçon est faite). Absent : "noms" si leconChiffres
+ *                           est fourni, sinon "romains" (ancien comportement).
  * @param opts.rng           générateur aléatoire (tests)
  */
 export function generateEarTrainingQuestion(type = "interval", opts = {}) {
   const rng = opts.rng || Math.random;
   const toutes = !!opts.toutesOptions;
+  // Chiffres romains : jamais avant la leçon qui les enseigne.
+  const chiffres = opts.leconChiffres !== false;
 
   if (type === "interval") {
     const pool = opts.pool?.length ? opts.pool : INTERVALLES_HISTORIQUES;
@@ -1467,10 +1479,12 @@ export function generateEarTrainingQuestion(type = "interval", opts = {}) {
     const t = tirerAccordEnTonalite(rng, degre);
     const ref = t.reference.map(midiVersTone), cible = t.midi.map(midiVersTone);
     const SEC = 1.6;
-    const options = optionsDe(rng, pool, degre, toutes).map(d => ({
-      key: d,
-      label: `${accordDansLaTonalite(t.toniquePc, DEGRES_TONALITE[d].semi, DEGRES_TONALITE[d].type)} (${d})`,
-    }));
+    // Nom de l'accord dans la tonalité (« Rém ») ; le degré (« Rém (ii) »)
+    // seulement une fois le chiffrage romain appris.
+    const options = optionsDe(rng, pool, degre, toutes).map(d => {
+      const nom = accordDansLaTonalite(t.toniquePc, DEGRES_TONALITE[d].semi, DEGRES_TONALITE[d].type);
+      return { key: d, label: chiffres ? `${nom} (${d})` : nom };
+    });
     return {
       type: "chord_full",
       notes: cible,
@@ -1478,7 +1492,9 @@ export function generateEarTrainingQuestion(type = "interval", opts = {}) {
       tonalite: t.tonalite,
       answer: degre,
       options,
-      repere: `${t.nom} est ${DEGRES_TONALITE[degre].fonction}.`,
+      repere: chiffres
+        ? `${t.nom} (${degre}) est ${DEGRES_TONALITE[degre].fonction}.`
+        : `${t.nom} est ${DEGRES_TONALITE[degre].fonctionNoms}.`,
       consigne: `Tonalité : ${t.tonalite}. Écoute la tonique, puis l'accord`,
       play: () => playSuite([ref, cible], SEC),
       // Le 2e accord attaque à 1,6 s (+ étalement du grattage) et sonne 90 %.
@@ -1492,9 +1508,16 @@ export function generateEarTrainingQuestion(type = "interval", opts = {}) {
     const SEC_PAR_ACCORD = 1.6;
     const pool = opts.pool?.length ? opts.pool : ORDRE_PROGRESSIONS.slice(0, 4);
     const cle = opts.cible ?? choisirO(rng, pool);
-    const p = tirerProgression(rng, cle);
+    const format = chiffres && opts.format !== "noms" && (opts.format === "romains" || opts.leconChiffres === undefined)
+      ? "romains" : "noms";
+    const cles = optionsDe(rng, pool, cle, toutes);
+    // En noms, toutes les options s'écrivent depuis la tonique tirée : si
+    // majeures et mineures se côtoient, une tonique commune aux deux listes
+    // (pas de « Sim » en face d'un « Si majeur » introuvable dans la liste).
+    const p = format === "noms" ? tirerProgression(rng, cle, choisirO(rng, toniquesPour(cles))) : tirerProgression(rng, cle);
     const accords = p.accords.map(a => a.map(midiVersTone));
-    const options = optionsDe(rng, pool, cle, toutes).map(k => ({ key: k, label: romainDe(k) }));
+    const options = cles.map(k => ({ key: k, label: format === "romains" ? romainDe(k) : libelleNomsSuite(k, p.toniquePc) }));
+    const tonique = nomTonique(p.toniquePc);
     return {
       type: "progression",
       accords,
@@ -1505,13 +1528,16 @@ export function generateEarTrainingQuestion(type = "interval", opts = {}) {
       tonalite: p.tonalite,
       roman: p.romain,
       noms: p.noms,
+      format,
       answer: cle,
       options,
-      // Les degrés en chiffres romains se lisent dans toutes les tonalités ;
-      // l'orthographe des accords (Dom – Lab – Mib – Sib) vient avec la
-      // correction, une fois la tonalité dévoilée.
-      repere: `En ${p.tonalite} : ${p.noms.join(" – ")}.`,
-      consigne: "Écoute la suite (le premier accord est la tonique)",
+      // La tonique est annoncée (sans « majeur » / « mineur » : ça s'entend).
+      // La correction donne toujours les noms, et les chiffres romains en
+      // regard une fois la leçon faite : « Sol – Ré – Mim – Do = I – V – vi – IV ».
+      repere: correctionSuite(p, chiffres),
+      consigne: format === "romains"
+        ? `Tonique : ${tonique}. Écoute la suite (le premier accord est la tonique). Quels degrés ?`
+        : `Tonique : ${tonique}. Écoute la suite (le premier accord est la tonique). Quels accords ?`,
       play: () => playSuite(accords, SEC_PAR_ACCORD),
       durationMs: dureeMs((accords.length - 1) * SEC_PAR_ACCORD + 6 * 0.026, SEC_PAR_ACCORD * 0.9),
     };

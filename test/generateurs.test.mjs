@@ -190,6 +190,18 @@ function verifier(fid, niv, q) {
   if (fid === "oreille-progressions") {
     const acc = q.audio.accords.map(a => a.map(midi)), b0 = acc[0][0];
     const entendu = acc.map(a => [(((a[0] - b0) % 12) + 12) % 12, a.slice(0, 3).map(n => n - a[0]).join(",")]);
+    // Réponse en NOMS d'accords (« Sol – Ré – Mim – Do ») : chaque nom doit
+    // avoir la fondamentale et la qualité entendues, depuis la tonique annoncée.
+    if (/^(Do|Ré|Mi|Fa|Sol|La|Si)/.test(bonne)) {
+      const tonique = lire(/^Tonique : (\S+)\./.exec(q.q)?.[1] || "");
+      if (!tonique || tonique.pc !== b0 % 12) return "tonique annoncée ≠ premier accord";
+      const lus = bonne.split(" – ").map(x => { const m = /^(.+?)(m?)$/.exec(x); return [lire(m[1]), m[2] ? "0,3,7" : "0,4,7"]; });
+      if (lus.some(([n]) => !n)) return `nom illisible : ${bonne}`;
+      const attenduN = lus.map(([n, t]) => [((n.pc - tonique.pc) % 12 + 12) % 12, t]);
+      if (JSON.stringify(entendu) !== JSON.stringify(attenduN)) return `${JSON.stringify(entendu)} ≠ ${bonne}`;
+      if (niv === 1 && lus[0][1] === "0,3,7") return "suite mineure au niveau 1";
+      return null;
+    }
     const table = ROMAIN[bonne.startsWith("i ") ? "min" : "maj"];
     const attendu = bonne.split(" – ").map(r => [table[r.toUpperCase()], r === r.toUpperCase() ? "0,4,7" : "0,3,7"]);
     if (JSON.stringify(entendu) !== JSON.stringify(attendu)) return `${JSON.stringify(entendu)} ≠ ${bonne}`;

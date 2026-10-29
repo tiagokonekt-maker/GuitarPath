@@ -1406,6 +1406,23 @@ function tirerProgression(rng, cle2, toniquePc) {
   const noms = p.degres.map(([semi, type]) => accordDansLaTonalite(t, semi, type, p.mineur));
   return { cle: cle2, toniquePc: t, mineur: p.mineur, accords, noms, romain: romainDe(cle2), tonalite: nomTonalite(t, p.mineur) };
 }
+function partChiffresRomains({ leconFaite = false, succes = 0, niveau = 1 } = {}) {
+  if (!leconFaite) return 0;
+  const { depart, max, succesPleins, niveauMax } = PART_ROMAINS;
+  const parSucces = Math.min(1, Math.max(0, succes || 0) / succesPleins);
+  const parNiveau = (Math.min(niveauMax, Math.max(1, niveau || 1)) - 1) / (niveauMax - 1);
+  return depart + (max - depart) * Math.max(parSucces, parNiveau);
+}
+function toniquesPour(cles) {
+  const modes = new Set(cles.map((k) => PROGRESSIONS[k].mineur));
+  if (modes.size === 1) return modes.has(true) ? TONALITES_MIN : TONALITES_MAJ;
+  return TONALITES_MAJ.filter((t) => TONALITES_MIN.includes(t));
+}
+function exempleSuite(cle2, leconFaite) {
+  const mineur = PROGRESSIONS[cle2].mineur, t = mineur ? 9 : 0;
+  const ex = `en ${nomTonalite(t, mineur)} : ${libelleNomsSuite(cle2, t)}`;
+  return leconFaite ? `${romainDe(cle2)} (${ex})` : `la suite ${ex}`;
+}
 function touchesDictee(toniquePc, niveau) {
   const p = NIVEAUX_DICTEE[Math.max(1, Math.min(NIVEAUX_DICTEE.length, niveau)) - 1];
   const e = p.mineur ? ECHELLES.mineur : ECHELLES.majeur;
@@ -1481,7 +1498,7 @@ function niveauProgressif(h, seuils = SEUILS_DICTEE) {
   if ((h?.attempts || 0) > 0 && (h?.streak || 0) === 0) n = Math.max(1, n - 1);
   return n;
 }
-var choisir, entre, midiVersTone, pcDe2, INTERVALLES, ORDRE_INTERVALLES, DEPART_INTERVALLES, SENS, QUALITES, ORDRE_QUALITES, DEPART_QUALITES, TONALITES_MAJ, TONALITES_MIN, gammeDe, nomTonalite, accordDansLaTonalite, DEGRES_TONALITE, ORDRE_DEGRES, DEPART_DEGRES, basseDegre, PROGRESSIONS, ORDRE_PROGRESSIONS, DEPART_PROGRESSIONS, romainDe, NIVEAUX_DICTEE, ECHELLES, SEUILS_DICTEE, cleItem, estAcquis, precision;
+var choisir, entre, midiVersTone, pcDe2, INTERVALLES, ORDRE_INTERVALLES, DEPART_INTERVALLES, SENS, QUALITES, ORDRE_QUALITES, DEPART_QUALITES, TONALITES_MAJ, TONALITES_MIN, gammeDe, nomTonalite, accordDansLaTonalite, DEGRES_TONALITE, ORDRE_DEGRES, DEPART_DEGRES, basseDegre, PROGRESSIONS, ORDRE_PROGRESSIONS, DEPART_PROGRESSIONS, romainDe, LECON_CHIFFRES_ROMAINS, CLE_SUITES_ROMAINS, PART_ROMAINS, chiffresRomainsAppris, formatSuite, nomsSuite, libelleNomsSuite, nomTonique, correctionSuite, exempleDegre, NIVEAUX_DICTEE, ECHELLES, SEUILS_DICTEE, cleItem, estAcquis, precision;
 var init_oreille = __esm({
   "src/store/oreille.js"() {
     init_notes();
@@ -1528,14 +1545,62 @@ var init_oreille = __esm({
     nomTonalite = (toniquePc, mineur = false) => `${nomRacineGamme(NOTES_DIESES_EN[pcDe2(toniquePc)], gammeDe(mineur))} ${mineur ? "mineur" : "majeur"}`;
     accordDansLaTonalite = (toniquePc, semi, type, mineur = false) => nomDansLaTonalite(toniquePc + semi, toniquePc, mineur) + (QUALITES[type]?.sym ?? "");
     DEGRES_TONALITE = {
-      "I": { semi: 0, type: "maj", fonction: "la tonique : aucun mouvement, on est \xAB \xE0 la maison \xBB" },
-      "IV": { semi: 5, type: "maj", fonction: "la sous-dominante : on s'\xE9loigne en douceur" },
-      "V": { semi: 7, type: "maj", fonction: "la dominante : une tension qui appelle le retour" },
-      "vi": { semi: 9, type: "min", fonction: "le relatif mineur : m\xEAme famille que le I, en plus sombre" },
-      "ii": { semi: 2, type: "min", fonction: "le ii : mineur, il pr\xE9pare souvent le V" },
-      "iii": { semi: 4, type: "min", fonction: "le iii : mineur, proche du I (deux notes en commun)" },
-      "V7": { semi: 7, type: "dom7", fonction: "la dominante avec sa septi\xE8me : la tension la plus forte" },
-      "vii\xB0": { semi: 11, type: "dim", fonction: "le vii\xB0 : diminu\xE9, il bascule vers la tonique" }
+      "I": {
+        semi: 0,
+        type: "maj",
+        libelle: "l'accord de tonique",
+        fonction: "la tonique : aucun mouvement, on est \xAB \xE0 la maison \xBB",
+        fonctionNoms: "la tonique : aucun mouvement, on est \xAB \xE0 la maison \xBB"
+      },
+      "IV": {
+        semi: 5,
+        type: "maj",
+        libelle: "la sous-dominante",
+        fonction: "la sous-dominante : on s'\xE9loigne en douceur",
+        fonctionNoms: "la sous-dominante : on s'\xE9loigne en douceur"
+      },
+      "V": {
+        semi: 7,
+        type: "maj",
+        libelle: "la dominante",
+        fonction: "la dominante : une tension qui appelle le retour",
+        fonctionNoms: "la dominante : une tension qui appelle le retour"
+      },
+      "vi": {
+        semi: 9,
+        type: "min",
+        libelle: "le relatif mineur",
+        fonction: "le relatif mineur : m\xEAme famille que le I, en plus sombre",
+        fonctionNoms: "le relatif mineur : m\xEAme famille que l'accord de tonique, en plus sombre"
+      },
+      "ii": {
+        semi: 2,
+        type: "min",
+        libelle: "l'accord mineur du 2e degr\xE9",
+        fonction: "le ii : mineur, il pr\xE9pare souvent le V",
+        fonctionNoms: "l'accord b\xE2ti sur la 2e note de la gamme : mineur, il pr\xE9pare souvent la dominante"
+      },
+      "iii": {
+        semi: 4,
+        type: "min",
+        libelle: "l'accord mineur du 3e degr\xE9",
+        fonction: "le iii : mineur, proche du I (deux notes en commun)",
+        fonctionNoms: "l'accord b\xE2ti sur la 3e note de la gamme : mineur, proche de la tonique (deux notes en commun)"
+      },
+      "V7": {
+        semi: 7,
+        type: "dom7",
+        libelle: "la dominante avec sa septi\xE8me",
+        fonction: "la dominante avec sa septi\xE8me : la tension la plus forte",
+        fonctionNoms: "la dominante avec sa septi\xE8me : la tension la plus forte"
+      },
+      "vii\xB0": {
+        semi: 11,
+        type: "dim",
+        libelle: "l'accord diminu\xE9 de la sensible",
+        fonction: "le vii\xB0 : diminu\xE9, il bascule vers la tonique",
+        fonctionNoms: "l'accord b\xE2ti sur la sensible : diminu\xE9, il bascule vers la tonique"
+      }
     };
     ORDRE_DEGRES = ["I", "IV", "V", "vi", "ii", "iii", "V7", "vii\xB0"];
     DEPART_DEGRES = 3;
@@ -1557,6 +1622,16 @@ var init_oreille = __esm({
     ORDRE_PROGRESSIONS = Object.keys(PROGRESSIONS);
     DEPART_PROGRESSIONS = 3;
     romainDe = (cle2) => PROGRESSIONS[cle2].degres.map((d) => d[2]).join(" \u2013 ");
+    LECON_CHIFFRES_ROMAINS = "harm-c5-02";
+    CLE_SUITES_ROMAINS = "ear:progression:chiffres-romains";
+    PART_ROMAINS = { depart: 0.2, max: 0.55, succesPleins: 20, niveauMax: 3 };
+    chiffresRomainsAppris = (completedLessons) => !!completedLessons?.[LECON_CHIFFRES_ROMAINS];
+    formatSuite = (rng, params) => rng() < partChiffresRomains(params) ? "romains" : "noms";
+    nomsSuite = (cle2, toniquePc) => PROGRESSIONS[cle2].degres.map(([semi, type]) => accordDansLaTonalite(toniquePc, semi, type, PROGRESSIONS[cle2].mineur));
+    libelleNomsSuite = (cle2, toniquePc) => nomsSuite(cle2, toniquePc).join(" \u2013 ");
+    nomTonique = (toniquePc) => nomDansLaTonalite(toniquePc, toniquePc);
+    correctionSuite = (p, leconFaite) => leconFaite ? `${p.noms.join(" \u2013 ")} = ${p.romain} en ${p.tonalite}.` : `En ${p.tonalite} : ${p.noms.join(" \u2013 ")}.`;
+    exempleDegre = (degre, leconFaite) => leconFaite ? `${DEGRES_TONALITE[degre].libelle} (${degre})` : DEGRES_TONALITE[degre].libelle;
     NIVEAUX_DICTEE = [
       { n: 3, degreMax: 2, sautMax: 1, mineur: false, libelle: "3 notes, de la tonique \xE0 la tierce, par degr\xE9s conjoints" },
       { n: 4, degreMax: 4, sautMax: 2, mineur: false, libelle: "4 notes, de la tonique \xE0 la quinte" },
@@ -2804,6 +2879,7 @@ function optionsDe(rng, pool, bonne, toutes) {
 function generateEarTrainingQuestion(type = "interval", opts = {}) {
   const rng = opts.rng || Math.random;
   const toutes = !!opts.toutesOptions;
+  const chiffres = opts.leconChiffres !== false;
   if (type === "interval") {
     const pool = opts.pool?.length ? opts.pool : INTERVALLES_HISTORIQUES;
     const dt = opts.cible ?? choisir(rng, pool);
@@ -2854,10 +2930,10 @@ function generateEarTrainingQuestion(type = "interval", opts = {}) {
     const t = tirerAccordEnTonalite(rng, degre);
     const ref = t.reference.map(midiVersTone), cible = t.midi.map(midiVersTone);
     const SEC = 1.6;
-    const options = optionsDe(rng, pool, degre, toutes).map((d) => ({
-      key: d,
-      label: `${accordDansLaTonalite(t.toniquePc, DEGRES_TONALITE[d].semi, DEGRES_TONALITE[d].type)} (${d})`
-    }));
+    const options = optionsDe(rng, pool, degre, toutes).map((d) => {
+      const nom2 = accordDansLaTonalite(t.toniquePc, DEGRES_TONALITE[d].semi, DEGRES_TONALITE[d].type);
+      return { key: d, label: chiffres ? `${nom2} (${d})` : nom2 };
+    });
     return {
       type: "chord_full",
       notes: cible,
@@ -2865,7 +2941,7 @@ function generateEarTrainingQuestion(type = "interval", opts = {}) {
       tonalite: t.tonalite,
       answer: degre,
       options,
-      repere: `${t.nom} est ${DEGRES_TONALITE[degre].fonction}.`,
+      repere: chiffres ? `${t.nom} (${degre}) est ${DEGRES_TONALITE[degre].fonction}.` : `${t.nom} est ${DEGRES_TONALITE[degre].fonctionNoms}.`,
       consigne: `Tonalit\xE9 : ${t.tonalite}. \xC9coute la tonique, puis l'accord`,
       play: () => playSuite([ref, cible], SEC),
       // Le 2e accord attaque à 1,6 s (+ étalement du grattage) et sonne 90 %.
@@ -2878,9 +2954,12 @@ function generateEarTrainingQuestion(type = "interval", opts = {}) {
     const SEC_PAR_ACCORD = 1.6;
     const pool = opts.pool?.length ? opts.pool : ORDRE_PROGRESSIONS.slice(0, 4);
     const cle2 = opts.cible ?? choisir(rng, pool);
-    const p = tirerProgression(rng, cle2);
+    const format = chiffres && opts.format !== "noms" && (opts.format === "romains" || opts.leconChiffres === void 0) ? "romains" : "noms";
+    const cles = optionsDe(rng, pool, cle2, toutes);
+    const p = format === "noms" ? tirerProgression(rng, cle2, choisir(rng, toniquesPour(cles))) : tirerProgression(rng, cle2);
     const accords = p.accords.map((a) => a.map(midiVersTone));
-    const options = optionsDe(rng, pool, cle2, toutes).map((k) => ({ key: k, label: romainDe(k) }));
+    const options = cles.map((k) => ({ key: k, label: format === "romains" ? romainDe(k) : libelleNomsSuite(k, p.toniquePc) }));
+    const tonique = nomTonique(p.toniquePc);
     return {
       type: "progression",
       accords,
@@ -2891,13 +2970,14 @@ function generateEarTrainingQuestion(type = "interval", opts = {}) {
       tonalite: p.tonalite,
       roman: p.romain,
       noms: p.noms,
+      format,
       answer: cle2,
       options,
-      // Les degrés en chiffres romains se lisent dans toutes les tonalités ;
-      // l'orthographe des accords (Dom – Lab – Mib – Sib) vient avec la
-      // correction, une fois la tonalité dévoilée.
-      repere: `En ${p.tonalite} : ${p.noms.join(" \u2013 ")}.`,
-      consigne: "\xC9coute la suite (le premier accord est la tonique)",
+      // La tonique est annoncée (sans « majeur » / « mineur » : ça s'entend).
+      // La correction donne toujours les noms, et les chiffres romains en
+      // regard une fois la leçon faite : « Sol – Ré – Mim – Do = I – V – vi – IV ».
+      repere: correctionSuite(p, chiffres),
+      consigne: format === "romains" ? `Tonique : ${tonique}. \xC9coute la suite (le premier accord est la tonique). Quels degr\xE9s ?` : `Tonique : ${tonique}. \xC9coute la suite (le premier accord est la tonique). Quels accords ?`,
       play: () => playSuite(accords, SEC_PAR_ACCORD),
       durationMs: dureeMs((accords.length - 1) * SEC_PAR_ACCORD + 6 * 0.026, SEC_PAR_ACCORD * 0.9)
     };
@@ -3567,6 +3647,725 @@ E|0-0-0-0-0-0-0-0-|----------------|----------------|0-0-0-0-0-0-0-0-|
   }
 });
 
+// src/morceaux/titres/menuetEnSol.js
+var menuetEnSol_default;
+var init_menuetEnSol = __esm({
+  "src/morceaux/titres/menuetEnSol.js"() {
+    menuetEnSol_default = {
+      id: "menuet-en-sol",
+      titre: "Menuet en Sol",
+      auteur: "Attribu\xE9 \xE0 Christian Petzold (1677\u20131733)",
+      description: "Le c\xE9l\xE8bre menuet du Petit livre d'Anna Magdalena Bach : noires et croches \xE0 trois temps, en premi\xE8re position.",
+      niveau: "debutant",
+      type: "melodie",
+      tempo: 92,
+      tonalite: "Sol majeur",
+      mesure: "3/4",
+      colsParMesure: 12,
+      licence: "Domaine public \u2014 menuet du Notenb\xFCchlein f\xFCr Anna Magdalena Bach (1725), attribu\xE9 \xE0 Petzold, mort en 1733. Tablature originale Groply.",
+      melodie: "R\xE9 Sol La Si Do | R\xE9 Sol Sol | Mi Do R\xE9 Mi Fa# | Sol Sol Sol | Do R\xE9 Do Si La | Si Do Si La Sol | Fa# Sol La Si Sol | La | R\xE9 Sol La Si Do | R\xE9 Sol Sol | Mi Do R\xE9 Mi Fa# | Sol Sol Sol | Do R\xE9 Do Si La | Si Do Si La Sol | La Si La Sol Fa# | Sol",
+      tab: `
+e|------------|------------|0-------0-2-|3-----------|
+B|3-------0-1-|3-----------|----1-3-----|------------|
+G|----0-2-----|----0---0---|------------|----0---0---|
+D|------------|------------|------------|------------|
+A|------------|------------|------------|------------|
+E|------------|------------|------------|------------|
+
+e|------------|------------|------------|------------|
+B|1---3-1-0---|0---1-0-----|--------0---|------------|
+G|----------2-|--------2-0-|----0-2---0-|2-----------|
+D|------------|------------|4-----------|------------|
+A|------------|------------|------------|------------|
+E|------------|------------|------------|------------|
+
+e|------------|------------|0-------0-2-|3-----------|
+B|3-------0-1-|3-----------|----1-3-----|------------|
+G|----0-2-----|----0---0---|------------|----0---0---|
+D|------------|------------|------------|------------|
+A|------------|------------|------------|------------|
+E|------------|------------|------------|------------|
+
+e|------------|------------|------------|------------|
+B|1---3-1-0---|0---1-0-----|----0-------|------------|
+G|----------2-|--------2-0-|2-----2-0---|0-----------|
+D|------------|------------|----------4-|------------|
+A|------------|------------|------------|------------|
+E|------------|------------|------------|------------|
+`
+    };
+  }
+});
+
+// src/morceaux/titres/amazingGrace.js
+var amazingGrace_default;
+var init_amazingGrace = __esm({
+  "src/morceaux/titres/amazingGrace.js"() {
+    amazingGrace_default = {
+      id: "amazing-grace",
+      titre: "Amazing Grace",
+      auteur: "Air \xAB New Britain \xBB (1829)",
+      description: "Le grand air de gospel, \xE0 trois temps, sur les cordes 2 \xE0 4 en premi\xE8re position.",
+      niveau: "debutant",
+      type: "melodie",
+      tempo: 84,
+      tonalite: "Sol majeur",
+      mesure: "3/4",
+      colsParMesure: 12,
+      licence: "Domaine public \u2014 air \xAB New Britain \xBB, publi\xE9 en 1829. Tablature originale Groply, sans paroles.",
+      melodie: "R\xE9 | Sol Si Sol | Si La | Sol Mi | R\xE9 R\xE9 | Sol Si Sol | Si La Si | R\xE9 | Si | R\xE9 Si Sol | Si La | Sol Mi | R\xE9 R\xE9 | Sol Si La Sol | Si La | Sol",
+      tab: `
+e|------------|------------|------------|------------|
+B|------------|--------0---|0-----------|------------|
+G|------------|0---------0-|--------2---|0-----------|
+D|--------0---|------------|------------|--------2---|
+A|------------|------------|------------|------------|
+E|------------|------------|------------|------------|
+
+e|------------|------------|------------|------------|
+B|------------|--------0---|0---------0-|3-----------|
+G|------------|0---------0-|--------2---|------------|
+D|0-------0---|------------|------------|------------|
+A|------------|------------|------------|------------|
+E|------------|------------|------------|------------|
+
+e|------------|------------|------------|------------|
+B|--------0---|3-------0---|0-----------|------------|
+G|------------|----------0-|--------2---|0-----------|
+D|------------|------------|------------|--------2---|
+A|------------|------------|------------|------------|
+E|------------|------------|------------|------------|
+
+e|------------|------------|------------|------------|
+B|------------|--------0---|0-----------|------------|
+G|------------|0---------2-|--------2---|0-----------|
+D|0-------0---|-----------5|------------|------------|
+A|------------|------------|------------|------------|
+E|------------|------------|------------|------------|
+`
+    };
+  }
+});
+
+// src/morceaux/titres/laCucaracha.js
+var laCucaracha_default;
+var init_laCucaracha = __esm({
+  "src/morceaux/titres/laCucaracha.js"() {
+    laCucaracha_default = {
+      id: "la-cucaracha",
+      titre: "La Cucaracha",
+      auteur: "Traditionnel mexicain",
+      description: "L'air mexicain plein d'entrain, transpos\xE9 en Sol : des notes qui d\xE9marrent juste apr\xE8s le temps, en premi\xE8re position.",
+      niveau: "debutant",
+      type: "melodie",
+      tempo: 120,
+      tonalite: "Sol majeur",
+      mesure: "4/4",
+      colsParMesure: 16,
+      licence: "Domaine public \u2014 chanson traditionnelle mexicaine (XIXe si\xE8cle). Tablature originale Groply, sans paroles.",
+      melodie: "R\xE9 R\xE9 Sol Sol Si Si | R\xE9 Si | R\xE9 Mi R\xE9 Do Si R\xE9 | Do La | R\xE9 R\xE9 Fa# Fa# La La | Do La | R\xE9 Mi R\xE9 Do Si La | Sol R\xE9 R\xE9 R\xE9 | Sol Si R\xE9 R\xE9 R\xE9 | Sol Si | Sol Sol Sol Fa# Fa# Mi Mi | R\xE9 R\xE9 R\xE9 R\xE9 | Fa# La R\xE9 R\xE9 R\xE9 | Fa# La | R\xE9 Mi R\xE9 Do Si La | Sol",
+      tab: `
+e|----------------|----------------|------0---------|----------------|
+B|------------0-0-|3-----0---------|--3-----3-1-0-3-|1---------------|
+G|--------0-0-----|----------------|----------------|----2-----------|
+D|--0---0---------|----------------|----------------|----------------|
+A|----------------|----------------|----------------|----------------|
+E|----------------|----------------|----------------|----------------|
+
+e|----------------|----------------|------0---------|----------------|
+B|----------------|1---------------|--3-----3-1-0---|----------------|
+G|------------2-2-|------2---------|--------------2-|0---------------|
+D|--0---0-4-4-----|----------------|----------------|----------0-0-0-|
+A|----------------|----------------|----------------|----------------|
+E|----------------|----------------|----------------|----------------|
+
+e|----------------|----------------|----------------|----------------|
+B|------0---------|------0---------|----------------|----------------|
+G|0---------------|0---------------|--0-0-0---------|----------------|
+D|----------0-0-0-|----------------|--------4-4-2-2-|0---------0-0-0-|
+A|----------------|----------------|----------------|----------------|
+E|----------------|----------------|----------------|----------------|
+
+e|----------------|----------------|------0---------|----------------|
+B|----------------|----------------|--3-----3-1-0---|----------------|
+G|------2---------|------2---------|--------------2-|0---------------|
+D|4---------0-0-0-|4---------------|----------------|----------------|
+A|----------------|----------------|----------------|----------------|
+E|----------------|----------------|----------------|----------------|
+`
+    };
+  }
+});
+
+// src/morceaux/titres/balladePop.js
+var balladePop_default;
+var init_balladePop = __esm({
+  "src/morceaux/titres/balladePop.js"() {
+    balladePop_default = {
+      id: "ballade-pop",
+      titre: "Ballade pop I\u2013V\u2013vi\u2013IV",
+      auteur: "Exercice original Groply",
+      description: "Sol \u2013 R\xE9 \u2013 Mim \u2013 Do, la grille de mille chansons pop, en arp\xE8ge de croches : basse, puis les trois cordes aigu\xEBs.",
+      niveau: "debutant",
+      type: "accords",
+      tempo: 76,
+      tonalite: "Sol majeur",
+      mesure: "4/4",
+      colsParMesure: 16,
+      licence: "\u0152uvre originale Groply (grille I\u2013V\u2013vi\u2013IV, formule harmonique libre de droits).",
+      accords: ["G", "D", "Em", "C"],
+      grille: ["G", "D", "Em", "C", "G", "D", "Em", "C", "G", "D", "Em", "C", "G", "D", "Em", "C", "G"],
+      tab: `
+e|------3-------3-|------2-------2-|------0-------0-|------0-------0-|
+B|----0---0---0---|----3---3---3---|----0---0---0---|----1---1---1---|
+G|--0-------0-----|--2-------2-----|--0-------0-----|--0-------0-----|
+D|----------------|0---------------|----------------|----------------|
+A|----------------|----------------|----------------|3---------------|
+E|3---------------|----------------|0---------------|----------------|
+
+e|------3-------3-|------2-------2-|------0-------0-|------0-------0-|
+B|----0---0---0---|----3---3---3---|----0---0---0---|----1---1---1---|
+G|--0-------0-----|--2-------2-----|--0-------0-----|--0-------0-----|
+D|----------------|0---------------|----------------|----------------|
+A|----------------|----------------|----------------|3---------------|
+E|3---------------|----------------|0---------------|----------------|
+
+e|------3-------3-|------2-------2-|------0-------0-|------0-------0-|
+B|----0---0---0---|----3---3---3---|----0---0---0---|----1---1---1---|
+G|--0-------0-----|--2-------2-----|--0-------0-----|--0-------0-----|
+D|----------------|0---------------|----------------|----------------|
+A|----------------|----------------|----------------|3---------------|
+E|3---------------|----------------|0---------------|----------------|
+
+e|------3-------3-|------2-------2-|------0-------0-|------0-------0-|
+B|----0---0---0---|----3---3---3---|----0---0---0---|----1---1---1---|
+G|--0-------0-----|--2-------2-----|--0-------0-----|--0-------0-----|
+D|----------------|0---------------|----------------|----------------|
+A|----------------|----------------|----------------|3---------------|
+E|3---------------|----------------|0---------------|----------------|
+
+e|3---------------|
+B|0---------------|
+G|0---------------|
+D|----------------|
+A|----------------|
+E|3---------------|
+`
+    };
+  }
+});
+
+// src/morceaux/titres/skankReggae.js
+var skankReggae_default;
+var init_skankReggae = __esm({
+  "src/morceaux/titres/skankReggae.js"() {
+    skankReggae_default = {
+      id: "skank-reggae",
+      titre: "Skank reggae Lam \u2013 R\xE9m",
+      auteur: "Exercice original Groply",
+      description: "Rien sur les temps, un accord bref sur chaque \xAB et \xBB : le skank reggae sur les trois cordes aigu\xEBs, deux mesures de Lam, deux de R\xE9m.",
+      niveau: "debutant",
+      type: "accords",
+      tempo: 76,
+      tonalite: "La mineur",
+      mesure: "4/4",
+      colsParMesure: 16,
+      licence: "\u0152uvre originale Groply.",
+      accords: ["Am", "Dm"],
+      grille: ["Am", "Am", "Dm", "Dm", "Am", "Am", "Dm", "Dm"],
+      tab: `
+e|--0---0---0---0-|--0---0---0---0-|--1---1---1---1-|--1---1---1---1-|
+B|--1---1---1---1-|--1---1---1---1-|--3---3---3---3-|--3---3---3---3-|
+G|--2---2---2---2-|--2---2---2---2-|--2---2---2---2-|--2---2---2---2-|
+D|----------------|----------------|----------------|----------------|
+A|----------------|----------------|----------------|----------------|
+E|----------------|----------------|----------------|----------------|
+
+e|--0---0---0---0-|--0---0---0---0-|--1---1---1---1-|--1---1---1---1-|
+B|--1---1---1---1-|--1---1---1---1-|--3---3---3---3-|--3---3---3---3-|
+G|--2---2---2---2-|--2---2---2---2-|--2---2---2---2-|--2---2---2---2-|
+D|----------------|----------------|----------------|----------------|
+A|----------------|----------------|----------------|----------------|
+E|----------------|----------------|----------------|----------------|
+`
+    };
+  }
+});
+
+// src/morceaux/titres/riffPowerChords.js
+var riffPowerChords_default;
+var init_riffPowerChords = __esm({
+  "src/morceaux/titres/riffPowerChords.js"() {
+    riffPowerChords_default = {
+      id: "riff-power-chords",
+      titre: "Riff power chords",
+      auteur: "Riff original Groply",
+      description: "Mi5 en croches, puis Sol5, La5 et R\xE95 : la m\xEAme forme \xE0 deux doigts qui glisse sur le manche.",
+      niveau: "debutant",
+      type: "riff",
+      tempo: 96,
+      tonalite: "Mi mineur",
+      mesure: "4/4",
+      colsParMesure: 16,
+      licence: "\u0152uvre originale Groply.",
+      tab: `
+e|----------------|----------------|----------------|----------------|
+B|----------------|----------------|----------------|----------------|
+G|----------------|----------------|----------------|----------------|
+D|----------------|----------------|----------------|--------7-7-2---|
+A|2-2-2-2-5-5-7-7-|2-2-2-2-7-5-2---|2-2-2-2-5-5-7-7-|2-2-2-2-5-5-0---|
+E|0-0-0-0-3-3-5-5-|0-0-0-0-5-3-0---|0-0-0-0-3-3-5-5-|0-0-0-0---------|
+
+e|----------------|----------------|----------------|----------------|
+B|----------------|----------------|----------------|----------------|
+G|----------------|----------------|----------------|----------------|
+D|----------------|----------------|----------------|--------7-7-2---|
+A|2-2-2-2-5-5-7-7-|2-2-2-2-7-5-2---|2-2-2-2-5-5-7-7-|2-2-2-2-5-5-0---|
+E|0-0-0-0-3-3-5-5-|0-0-0-0-5-3-0---|0-0-0-0-3-3-5-5-|0-0-0-0---------|
+
+e|----------------|
+B|----------------|
+G|----------------|
+D|----------------|
+A|2---------------|
+E|0---------------|
+`
+    };
+  }
+});
+
+// src/morceaux/titres/scarboroughFair.js
+var scarboroughFair_default;
+var init_scarboroughFair = __esm({
+  "src/morceaux/titres/scarboroughFair.js"() {
+    scarboroughFair_default = {
+      id: "scarborough-fair",
+      titre: "Scarborough Fair",
+      auteur: "Traditionnel anglais",
+      description: "Une ballade en mode dorien : la gamme de R\xE9 avec Si b\xE9carre, \xE0 trois temps, en premi\xE8re position.",
+      niveau: "intermediaire",
+      type: "melodie",
+      tempo: 100,
+      tonalite: "R\xE9 dorien",
+      mesure: "3/4",
+      colsParMesure: 12,
+      licence: "Domaine public \u2014 air traditionnel anglais. Tablature originale Groply, sans paroles.",
+      melodie: "R\xE9 R\xE9 | La La | Mi Fa Mi | R\xE9 | La Do | R\xE9 Do | La Si Sol | La | R\xE9 | R\xE9 R\xE9 | Do La | La Sol Fa | Mi Do | R\xE9 La | Sol Fa | Mi R\xE9 Do | R\xE9",
+      tab: `
+e|------------|------------|------------|------------|
+B|------------|------------|------------|------------|
+G|------------|2-------2---|------------|------------|
+D|0-------0---|------------|2-----3-2---|0-----------|
+A|------------|------------|------------|------------|
+E|------------|------------|------------|------------|
+
+e|------------|------------|------------|------------|
+B|--------1---|3-------1---|----0-------|------------|
+G|----2-------|------------|2-------0---|2-----------|
+D|------------|------------|------------|------------|
+A|------------|------------|------------|------------|
+E|------------|------------|------------|------------|
+
+e|------------|------------|------------|------------|
+B|--------3---|3-------3---|1-----------|------------|
+G|------------|------------|--------2---|2---0-------|
+D|------------|------------|------------|--------3---|
+A|------------|------------|------------|------------|
+E|------------|------------|------------|------------|
+
+e|------------|------------|------------|------------|
+B|------------|------------|------------|------------|
+G|------------|------------|--------2---|0-----------|
+D|2-----------|------------|0-----------|--------3---|
+A|----3-------|------------|------------|------------|
+E|------------|------------|------------|------------|
+
+e|------------|------------|
+B|------------|------------|
+G|------------|------------|
+D|2---0-------|0-----------|
+A|--------3---|------------|
+E|------------|------------|
+`
+    };
+  }
+});
+
+// src/morceaux/titres/furElise.js
+var furElise_default;
+var init_furElise = __esm({
+  "src/morceaux/titres/furElise.js"() {
+    furElise_default = {
+      id: "fur-elise",
+      titre: "F\xFCr Elise (th\xE8me)",
+      auteur: "Ludwig van Beethoven (1770\u20131827)",
+      description: "Le th\xE8me de la Lettre \xE0 \xC9lise, en premi\xE8re position : l'aller-retour Mi \u2013 R\xE9# entre deux cordes, puis les arp\xE8ges de La mineur et de Mi.",
+      niveau: "intermediaire",
+      type: "melodie",
+      tempo: 66,
+      tonalite: "La mineur",
+      mesure: "3/4",
+      colsParMesure: 12,
+      licence: "Domaine public \u2014 Beethoven, mort en 1827. Tablature originale Groply (m\xE9lodie seule).",
+      melodie: "Mi R\xE9# | Mi R\xE9# Mi Si R\xE9 Do | La Do Mi La | Si Mi Sol# Si | Do Mi Mi R\xE9# | Mi R\xE9# Mi Si R\xE9 Do | La Do Mi La | Si Mi Do Si | La",
+      tab: `
+e|--------0---|0---0-------|------------|------------|
+B|----------4-|--4---0-3-1-|------------|0---------0-|
+G|------------|------------|2---------2-|--------1---|
+D|------------|------------|--------2---|------2-----|
+A|------------|------------|------3-----|------------|
+E|------------|------------|------------|------------|
+
+e|--------0---|0---0-------|------------|------------|
+B|1---------4-|--4---0-3-1-|------------|0-------1-0-|
+G|------------|------------|2---------2-|------------|
+D|------2-----|------------|--------2---|------2-----|
+A|------------|------------|------3-----|------------|
+E|------------|------------|------------|------------|
+
+e|------------|
+B|------------|
+G|2-----------|
+D|------------|
+A|------------|
+E|------------|
+`
+    };
+  }
+});
+
+// src/morceaux/titres/londonderryAir.js
+var londonderryAir_default;
+var init_londonderryAir = __esm({
+  "src/morceaux/titres/londonderryAir.js"() {
+    londonderryAir_default = {
+      id: "londonderry-air",
+      titre: "Londonderry Air",
+      auteur: "Air traditionnel irlandais",
+      description: "Le grand air lent irlandais, en Do : longues phrases legato, de La grave au Mi aigu de la premi\xE8re position.",
+      niveau: "intermediaire",
+      type: "melodie",
+      tempo: 72,
+      tonalite: "Do majeur",
+      mesure: "4/4",
+      colsParMesure: 16,
+      licence: "Domaine public \u2014 air traditionnel irlandais (publi\xE9 par George Petrie en 1855). Tablature originale Groply, sans paroles.",
+      melodie: "Si Do R\xE9 | Mi R\xE9 Mi La Sol Mi | R\xE9 Do La Do Mi Fa | Sol La Sol Mi Do Mi | R\xE9 Si Do R\xE9 | Mi R\xE9 Mi La Sol Mi | R\xE9 Do La Si Do R\xE9 | Mi Fa Mi R\xE9 Do R\xE9 | Do Sol La Si | Do Si Si La Sol La | Sol Mi Do Sol La Si | Do Si Si La Sol Mi | R\xE9 Sol Sol Sol | Mi R\xE9 R\xE9 Do La Do | Sol Mi Do Si Do R\xE9 | Mi La Sol Mi R\xE9 Do La Si | Do",
+      tab: `
+e|----------------|----------------|----------------|----------------|
+B|----------------|----------------|----------------|----------------|
+G|----------------|----------2-0---|----------------|0-----2-0-------|
+D|--------------0-|2-----0-2-----2-|0-----------2-3-|----------2---2-|
+A|----------2-3---|----------------|--3-0-----3-----|------------3---|
+E|----------------|----------------|----------------|----------------|
+
+e|----------------|----------------|----------------|----------------|
+B|----------------|----------------|----------------|----------------|
+G|----------------|----------2-0---|----------------|----------------|
+D|0-------------0-|2-----0-2-----2-|0-------------0-|2-----3-2-0---0-|
+A|----------2-3---|----------------|--3-0-----2-3---|------------3---|
+E|----------------|----------------|----------------|----------------|
+
+e|----------------|----------------|----------------|----------------|
+B|--------------0-|1-----0-0-------|--------------0-|1-----0-0-------|
+G|----------0-2---|----------2-0-2-|0---------0-2---|----------2-0---|
+D|----------------|----------------|--2-------------|--------------2-|
+A|3---------------|----------------|----3-----------|----------------|
+E|----------------|----------------|----------------|----------------|
+
+e|----------------|0---------------|----------------|----------------|
+B|----------------|------3-3-1---1-|----------------|----------------|
+G|----------0-0-0-|------------2---|0---------------|--2-0-----------|
+D|0---------------|----------------|--2-----------0-|2-----2-0-------|
+A|----------------|----------------|----3-----2-3---|----------3-0-2-|
+E|----------------|----------------|----------------|----------------|
+
+e|----------------|
+B|----------------|
+G|----------------|
+D|----------------|
+A|3---------------|
+E|----------------|
+`
+    };
+  }
+});
+
+// src/morceaux/titres/irishWasherwoman.js
+var irishWasherwoman_default;
+var init_irishWasherwoman = __esm({
+  "src/morceaux/titres/irishWasherwoman.js"() {
+    irishWasherwoman_default = {
+      id: "irish-washerwoman",
+      titre: "The Irish Washerwoman (gigue)",
+      auteur: "Traditionnel irlandais",
+      description: "Une gigue en 6/8 : six croches par mesure, deux groupes de trois, sur les arp\xE8ges de Sol et de R\xE9.",
+      niveau: "intermediaire",
+      type: "melodie",
+      tempo: 120,
+      tonalite: "Sol majeur",
+      mesure: "6/8",
+      colsParMesure: 12,
+      licence: "Domaine public \u2014 gigue traditionnelle (imprim\xE9e d\xE8s la fin du XVIIIe si\xE8cle). Tablature originale Groply.",
+      melodie: "R\xE9 Do | Si Sol Sol R\xE9 Sol Sol | Si Sol Si R\xE9 Do Si | Do La La Mi La La | Do La Do Mi R\xE9 Do | Si Sol Sol R\xE9 Sol Sol | Si Sol Si R\xE9 Do Si | Do Si Do La R\xE9 Do | Si Sol Sol Sol",
+      tab: `
+e|------------|------------|------------|------------|
+B|--------3-1-|0-----------|0---0-3-1-0-|1-----------|
+G|------------|--0-0---0-0-|--0---------|--2-2---2-2-|
+D|------------|------0-----|------------|------2-----|
+A|------------|------------|------------|------------|
+E|------------|------------|------------|------------|
+
+e|------0-----|------------|------------|------------|
+B|1---1---3-1-|0-----------|0---0-3-1-0-|1-0-1---3-1-|
+G|--2---------|--0-0---0-0-|--0---------|------2-----|
+D|------------|------0-----|------------|------------|
+A|------------|------------|------------|------------|
+E|------------|------------|------------|------------|
+
+e|------------|
+B|0-----------|
+G|--0-0-0-----|
+D|------------|
+A|------------|
+E|------------|
+`
+    };
+  }
+});
+
+// src/morceaux/titres/canonPachelbel.js
+var canonPachelbel_default;
+var init_canonPachelbel = __esm({
+  "src/morceaux/titres/canonPachelbel.js"() {
+    canonPachelbel_default = {
+      id: "canon-pachelbel",
+      titre: "Canon de Pachelbel (grille)",
+      auteur: "Johann Pachelbel (1653\u20131706)",
+      description: "La grille du Canon transpos\xE9e en Do pour rester en accords ouverts, en arp\xE8ge r\xE9gulier de croches : basse, puis les trois cordes aigu\xEBs.",
+      niveau: "intermediaire",
+      type: "accords",
+      tempo: 72,
+      tonalite: "Do majeur",
+      mesure: "4/4",
+      colsParMesure: 16,
+      licence: "Domaine public \u2014 Pachelbel, mort en 1706 (grille du Canon en R\xE9, transpos\xE9e). Arp\xE8ge original Groply.",
+      accords: ["C", "G", "Am", "Em", "F"],
+      grille: ["C", "G", "Am", "Em", "F", "C", "F", "G", "C", "G", "Am", "Em", "F", "C", "F", "G", "C"],
+      tab: `
+e|------0-------0-|------3-------3-|------0-------0-|------0-------0-|
+B|----1---1---1---|----0---0---0---|----1---1---1---|----0---0---0---|
+G|--0-------0-----|--0-------0-----|--2-------2-----|--0-------0-----|
+D|----------------|----------------|----------------|----------------|
+A|3---------------|----------------|0---------------|----------------|
+E|----------------|3---------------|----------------|0---------------|
+
+e|------1-------1-|------0-------0-|------1-------1-|------3-------3-|
+B|----1---1---1---|----1---1---1---|----1---1---1---|----0---0---0---|
+G|--2-------2-----|--0-------0-----|--2-------2-----|--0-------0-----|
+D|3---------------|----------------|3---------------|----------------|
+A|----------------|3---------------|----------------|----------------|
+E|----------------|----------------|----------------|3---------------|
+
+e|------0-------0-|------3-------3-|------0-------0-|------0-------0-|
+B|----1---1---1---|----0---0---0---|----1---1---1---|----0---0---0---|
+G|--0-------0-----|--0-------0-----|--2-------2-----|--0-------0-----|
+D|----------------|----------------|----------------|----------------|
+A|3---------------|----------------|0---------------|----------------|
+E|----------------|3---------------|----------------|0---------------|
+
+e|------1-------1-|------0-------0-|------1-------1-|------3-------3-|
+B|----1---1---1---|----1---1---1---|----1---1---1---|----0---0---0---|
+G|--2-------2-----|--0-------0-----|--2-------2-----|--0-------0-----|
+D|3---------------|----------------|3---------------|----------------|
+A|----------------|3---------------|----------------|----------------|
+E|----------------|----------------|----------------|3---------------|
+
+e|0---------------|
+B|1---------------|
+G|0---------------|
+D|----------------|
+A|3---------------|
+E|----------------|
+`
+    };
+  }
+});
+
+// src/morceaux/titres/travisDoLamRemSol.js
+var travisDoLamRemSol_default;
+var init_travisDoLamRemSol = __esm({
+  "src/morceaux/titres/travisDoLamRemSol.js"() {
+    travisDoLamRemSol_default = {
+      id: "travis-do-lam-rem-sol",
+      titre: "Travis Do \u2013 Lam \u2013 R\xE9m \u2013 Sol",
+      auteur: "Exercice original Groply",
+      description: "Le pouce alterne deux basses sur chaque temps, les doigts r\xE9pondent sur les \xAB et \xBB : le picking Travis sur une grille en Do.",
+      niveau: "intermediaire",
+      type: "accords",
+      tempo: 72,
+      tonalite: "Do majeur",
+      mesure: "4/4",
+      colsParMesure: 16,
+      licence: "\u0152uvre originale Groply.",
+      accords: ["C", "Am", "Dm", "G"],
+      grille: ["C", "Am", "Dm", "G", "C", "Am", "Dm", "G", "C"],
+      tab: `
+e|0---------------|0---------------|1-----1-------1-|3---------------|
+B|--1-------1-----|--1-------1-----|--3-------3-----|--0-------0-----|
+G|------0-------0-|------2-------2-|----2-------2---|------0-------0-|
+D|----2-------2---|----2-------2---|0-------0-------|----0-------0---|
+A|3-------3-------|0-------0-------|----------------|----------------|
+E|----------------|----------------|----------------|3-------3-------|
+
+e|0---------------|0---------------|1-----1-------1-|3---------------|
+B|--1-------1-----|--1-------1-----|--3-------3-----|--0-------0-----|
+G|------0-------0-|------2-------2-|----2-------2---|------0-------0-|
+D|----2-------2---|----2-------2---|0-------0-------|----0-------0---|
+A|3-------3-------|0-------0-------|----------------|----------------|
+E|----------------|----------------|----------------|3-------3-------|
+
+e|0---------------|
+B|1---------------|
+G|0---------------|
+D|2---------------|
+A|3---------------|
+E|----------------|
+`
+    };
+  }
+});
+
+// src/morceaux/titres/bluesLentMi.js
+var bluesLentMi_default;
+var init_bluesLentMi = __esm({
+  "src/morceaux/titres/bluesLentMi.js"() {
+    bluesLentMi_default = {
+      id: "blues-lent-mi",
+      titre: "Blues lent en Mi (walking bass)",
+      auteur: "Riff original Groply",
+      description: "Les 12 mesures du blues en Mi, avec une ligne de basse qui monte et redescend l'accord de septi\xE8me. Lent, puis en shuffle.",
+      niveau: "intermediaire",
+      type: "riff",
+      tempo: 70,
+      tonalite: "Mi (blues)",
+      mesure: "4/4",
+      colsParMesure: 16,
+      licence: "Riff original Groply ; grille de blues de 12 mesures traditionnelle (domaine public).",
+      accords: ["E7", "A7", "B7"],
+      grille: ["E7", "E7", "E7", "E7", "A7", "A7", "E7", "E7", "B7", "A7", "E7", "B7", "E7"],
+      tab: `
+e|----------------|----------------|----------------|----------------|
+B|----------------|----------------|----------------|----------------|
+G|----------------|----------------|----------------|----------------|
+D|--------0-------|--------0-------|--------0-------|--------0-------|
+A|----2-4---4-2---|----2-4---4-2---|----2-4---4-2---|----2-4---4-2---|
+E|0-4-----------4-|0-4-----------4-|0-4-----------4-|0-4-----------4-|
+
+e|----------------|----------------|----------------|----------------|
+B|----------------|----------------|----------------|----------------|
+G|--------0-------|--------0-------|----------------|----------------|
+D|----2-4---4-2---|----2-4---4-2---|--------0-------|--------0-------|
+A|0-4-----------4-|0-4-----------4-|----2-4---4-2---|----2-4---4-2---|
+E|----------------|----------------|0-4-----------4-|0-4-----------4-|
+
+e|----------------|----------------|----------------|----------------|
+B|----------------|----------------|----------------|----------------|
+G|--------2-------|--------0-------|----------------|--------2-------|
+D|--1-4-6---6-4-1-|----2-4---4-2---|--------0-------|--1-4-6---6-4-1-|
+A|2---------------|0-4-----------4-|----2-4---4-2---|2---------------|
+E|----------------|----------------|0-4-----------4-|----------------|
+
+e|0---------------|
+B|0---------------|
+G|1---------------|
+D|0---------------|
+A|2---------------|
+E|0---------------|
+`
+    };
+  }
+});
+
+// src/morceaux/titres/chankFunk.js
+var chankFunk_default;
+var init_chankFunk = __esm({
+  "src/morceaux/titres/chankFunk.js"() {
+    chankFunk_default = {
+      id: "chank-funk",
+      titre: "Chank funk en Lam7",
+      auteur: "Riff original Groply",
+      description: "Seize doubles-croches par mesure, la main droite ne s'arr\xEAte jamais : quelques accords de Lam7 (case 5) au milieu des ghost notes \xE9touff\xE9es (x).",
+      niveau: "intermediaire",
+      type: "riff",
+      tempo: 84,
+      tonalite: "La mineur (dorien)",
+      mesure: "4/4",
+      colsParMesure: 16,
+      licence: "\u0152uvre originale Groply.",
+      tab: `
+e|5xx5xx5xxx5xxx5-|xx5xxx5x5xx5xx5-|5xx5xx5xxx5xxx5-|xx5xxx5x5xx5xx5-|
+B|5xx5xx5xxx5xxx5-|xx5xxx5x5xx5xx5-|5xx5xx5xxx5xxx5-|xx5xxx5x5xx5xx5-|
+G|5xx5xx5xxx5xxx5-|xx5xxx5x5xx5xx5-|5xx5xx5xxx5xxx5-|xx5xxx5x5xx5xx5-|
+D|5xx5xx5xxx5xxx5-|xx5xxx5x5xx5xx5-|5xx5xx5xxx5xxx5-|xx5xxx5x5xx5xx5-|
+A|----------------|----------------|----------------|----------------|
+E|----------------|----------------|----------------|----------------|
+
+e|5xx5xx5xxx5xxx5-|xx5xxx5x5xx5xx5-|5xx5xx5xxx5xxx5-|5---------------|
+B|5xx5xx5xxx5xxx5-|xx5xxx5x5xx5xx5-|5xx5xx5xxx5xxx5-|5---------------|
+G|5xx5xx5xxx5xxx5-|xx5xxx5x5xx5xx5-|5xx5xx5xxx5xxx5-|5---------------|
+D|5xx5xx5xxx5xxx5-|xx5xxx5x5xx5xx5-|5xx5xx5xxx5xxx5-|5---------------|
+A|----------------|----------------|----------------|----------------|
+E|----------------|----------------|----------------|----------------|
+`
+    };
+  }
+});
+
+// src/morceaux/titres/bossaPouceDoigts.js
+var bossaPouceDoigts_default;
+var init_bossaPouceDoigts = __esm({
+  "src/morceaux/titres/bossaPouceDoigts.js"() {
+    bossaPouceDoigts_default = {
+      id: "bossa-pouce-doigts",
+      titre: "Bossa nova Lam7 \u2013 R\xE97",
+      auteur: "Exercice original Groply",
+      description: "Le pouce marque chaque temps, fondamentale puis quinte ; les doigts posent l'accord \xE0 contretemps, sur un rythme qui s'\xE9tale sur deux mesures.",
+      niveau: "intermediaire",
+      type: "riff",
+      tempo: 66,
+      tonalite: "La mineur",
+      mesure: "4/4",
+      colsParMesure: 16,
+      licence: "\u0152uvre originale Groply.",
+      accords: ["Am7", "D7"],
+      grille: ["Am7", "Am7", "D7", "D7", "Am7", "Am7", "D7", "D7", "Am7"],
+      tab: `
+e|----------------|----------------|2-----2-----2---|----2-----2-----|
+B|1-----1-----1---|----1-----1-----|1-----1-----1---|----1-----1-----|
+G|0-----0-----0---|----0-----0-----|2-----2-----2---|----2-----2-----|
+D|2-----2-----2---|----2-----2-----|0-------0-------|0-------0-------|
+A|0-------0-------|0-------0-------|----0-------0---|----0-------0---|
+E|----0-------0---|----0-------0---|----------------|----------------|
+
+e|----------------|----------------|2-----2-----2---|----2-----2-----|
+B|1-----1-----1---|----1-----1-----|1-----1-----1---|----1-----1-----|
+G|0-----0-----0---|----0-----0-----|2-----2-----2---|----2-----2-----|
+D|2-----2-----2---|----2-----2-----|0-------0-------|0-------0-------|
+A|0-------0-------|0-------0-------|----0-------0---|----0-------0---|
+E|----0-------0---|----0-------0---|----------------|----------------|
+
+e|0---------------|
+B|1---------------|
+G|0---------------|
+D|2---------------|
+A|0---------------|
+E|----------------|
+`
+    };
+  }
+});
+
 // src/morceaux/catalogue.js
 var MORCEAUX, morceauParId;
 var init_catalogue = __esm({
@@ -3582,6 +4381,21 @@ var init_catalogue = __esm({
     init_riffRockMi();
     init_riffFolkRe();
     init_bluesEnLa();
+    init_menuetEnSol();
+    init_amazingGrace();
+    init_laCucaracha();
+    init_balladePop();
+    init_skankReggae();
+    init_riffPowerChords();
+    init_scarboroughFair();
+    init_furElise();
+    init_londonderryAir();
+    init_irishWasherwoman();
+    init_canonPachelbel();
+    init_travisDoLamRemSol();
+    init_bluesLentMi();
+    init_chankFunk();
+    init_bossaPouceDoigts();
     MORCEAUX = [
       odeALaJoie_default,
       auClairDeLaLune_default,
@@ -3593,7 +4407,22 @@ var init_catalogue = __esm({
       pickingDoLamFaSol_default,
       risingSun_default,
       riffFolkRe_default,
-      bluesEnLa_default
+      bluesEnLa_default,
+      menuetEnSol_default,
+      amazingGrace_default,
+      laCucaracha_default,
+      balladePop_default,
+      skankReggae_default,
+      riffPowerChords_default,
+      scarboroughFair_default,
+      furElise_default,
+      londonderryAir_default,
+      irishWasherwoman_default,
+      canonPachelbel_default,
+      travisDoLamRemSol_default,
+      bluesLentMi_default,
+      chankFunk_default,
+      bossaPouceDoigts_default
     ];
     morceauParId = (id) => MORCEAUX.find((m) => m.id === id) || null;
   }
@@ -9527,7 +10356,15 @@ var init_accords = __esm({
       E: { nom: "Mi", frets: [0, 2, 2, 1, 0, 0], fingers: [0, 2, 3, 1, 0, 0] },
       G: { nom: "Sol", frets: [3, 2, 0, 0, 0, 3], fingers: [2, 1, 0, 0, 0, 3] },
       Em: { nom: "Mim", frets: [0, 2, 2, 0, 0, 0], fingers: [0, 2, 3, 0, 0, 0] },
-      A: { nom: "La", frets: [-1, 0, 2, 2, 2, 0], fingers: [0, 0, 1, 2, 3, 0] }
+      A: { nom: "La", frets: [-1, 0, 2, 2, 2, 0], fingers: [0, 0, 1, 2, 3, 0] },
+      Dm: { nom: "R\xE9m", frets: [-1, -1, 0, 2, 3, 1], fingers: [0, 0, 0, 2, 3, 1] },
+      // Septièmes ouvertes (blues, bossa).
+      E7: { nom: "Mi7", frets: [0, 2, 0, 1, 0, 0], fingers: [0, 2, 0, 1, 0, 0] },
+      A7: { nom: "La7", frets: [-1, 0, 2, 0, 2, 0], fingers: [0, 0, 2, 0, 3, 0] },
+      B7: { nom: "Si7", frets: [-1, 2, 1, 2, 0, 2], fingers: [0, 2, 1, 3, 0, 4] },
+      D7: { nom: "R\xE97", frets: [-1, -1, 0, 2, 1, 2], fingers: [0, 0, 0, 2, 1, 3] },
+      // Lam7 avec la corde 6 à vide : le pouce alterne La (corde 5) et Mi (corde 6).
+      Am7: { nom: "Lam7", frets: [0, 0, 2, 0, 1, 0], fingers: [0, 0, 2, 0, 1, 0] }
     };
     nomAccord2 = (symbole2) => FORMES_ACCORDS[symbole2]?.nom ?? symbole2;
   }
@@ -12748,12 +13585,20 @@ var LIENS_MORCEAUX = {
   // ── Rythme ───────────────────────────────────────────────────────────
   // Croches régulières sur la corde grave.
   "rhy-c2-02": ["riff-rock-mi"],
-  // Feel ternaire : shuffle (blues) et mesure composée 6/8 (six croches).
-  "rhy-c2-03": ["blues-en-la", "rising-sun"],
+  // Feel ternaire : shuffle (blues) et mesure composée 6/8 (six croches) ;
+  // la gigue irlandaise est le 6/8 type, deux groupes de trois croches.
+  "rhy-c2-03": ["blues-en-la", "rising-sun", "irish-washerwoman"],
   // Patterns de strumming : à appliquer sur une grille d'accords ouverts.
   "rhy-c4-02": ["premiers-accords"],
   // Blues shuffle : la grille de 12 mesures, longue-courte.
-  "rhy-c5-01": ["blues-en-la"],
+  "rhy-c5-01": ["blues-en-la", "blues-lent-mi"],
+  // Reggae : le skank sur chaque « et », Lam puis Rém, deux mesures chacun
+  // (exactement l'exercice de la leçon).
+  "rhy-c5-02": ["skank-reggae"],
+  // Funk : flux de 16e, Lam7 barré case 5 sur quatre cordes, ghost notes (x).
+  "rhy-c5-03": ["chank-funk"],
+  // Bossa : pouce sur les temps (La/Mi, Ré/La), doigts à contretemps, Am7 – D7.
+  "rhy-c5-04": ["bossa-pouce-doigts"],
   // Travailler un morceau (lent, boucle A–B, tempo) : sur la grille débutant.
   "rhy-routine-01": ["premiers-accords"],
   // Médiator alterné : croches régulières sur une corde (corde 6).
@@ -12764,32 +13609,40 @@ var LIENS_MORCEAUX = {
   "rhy-tech-03": ["riff-folk-re"],
   // Jouer aux doigts : deux arpèges basse + cordes aiguës (Do – Lam – Fa – Sol
   // en croches ; Lam – Do – Ré – Fa – Mi en p-i-m-a-m-i).
-  "rhy-doigts-01": ["picking-do-lam-fa-sol", "rising-sun"],
-  // Mesures à trois : Greensleeves est en 3/4, Rising Sun en 6/8.
-  "rhy-mes-01": ["greensleeves", "rising-sun"],
+  "rhy-doigts-01": ["picking-do-lam-fa-sol", "rising-sun", "canon-pachelbel"],
+  // Mesures à trois : Greensleeves et Amazing Grace en 3/4, Rising Sun et la
+  // gigue irlandaise en 6/8.
+  "rhy-mes-01": ["greensleeves", "rising-sun", "amazing-grace", "irish-washerwoman"],
   // Picking Travis : le picking Do – Lam – Fa – Sol alterne deux basses au
   // pouce (temps 1 et 3) sous les cordes aiguës.
-  "rhy-doigts-02": ["picking-do-lam-fa-sol"],
+  // Le Travis Do – Lam – Rém – Sol : pouce alterné sur chaque temps, doigts sur les « et ».
+  "rhy-doigts-02": ["picking-do-lam-fa-sol", "travis-do-lam-rem-sol"],
   // Construire un riff : le riff de la leçon (corde 6 à vide comme pivot,
   // cases 3 et 5, relance sur la corde 5 case 2) est celui du morceau.
   "rhy-c6-02": ["riff-rock-mi"],
   // ── Manche ───────────────────────────────────────────────────────────
   // Power chords : le riff de la leçon reprend ses cases 0, 3, 5 sur la corde 6.
-  "neck-pow-01": ["riff-rock-mi"],
+  // Le riff power chords enchaîne E5, G5, A5 et D5 : les formes de la leçon.
+  "neck-pow-01": ["riff-rock-mi", "riff-power-chords"],
   // ── Gammes ───────────────────────────────────────────────────────────
   // Le riff rock est construit sur la pentatonique de Mi mineur.
   "scales-c3-01": ["riff-rock-mi"],
   // La gamme blues : son terrain naturel, le blues en La.
   "scales-c3-04": ["blues-en-la"],
+  // Dorien : Scarborough Fair est en Ré dorien (Si bécarre, la sixte majeure).
+  "scales-c5-02": ["scarborough-fair"],
   // ── Harmonie ─────────────────────────────────────────────────────────
   // Arpèges : l'accord joué note à note (Do – Lam – Fa – Sol, Lam – Do – Ré – Fa – Mi).
-  "harmony-03": ["picking-do-lam-fa-sol", "rising-sun"],
+  "harmony-03": ["picking-do-lam-fa-sol", "rising-sun", "canon-pachelbel"],
   // Accords de septième : la même grille La – Ré – Mi en 12 mesures (A7, D7, E7).
-  "harm-acc-02": ["blues-en-la"],
+  // Le blues lent en Mi tourne sur E7, A7, B7.
+  "harm-acc-02": ["blues-en-la", "blues-lent-mi"],
   // Le petit Fa (xx3211) : les deux grilles le jouent dans cette forme.
-  "harm-acc-03": ["picking-do-lam-fa-sol", "rising-sun"],
+  "harm-acc-03": ["picking-do-lam-fa-sol", "rising-sun", "canon-pachelbel"],
   // I-IV-V : le blues de 12 mesures en est la forme type.
-  "harm-c6-01": ["blues-en-la"]
+  "harm-c6-01": ["blues-en-la", "blues-lent-mi"],
+  // I-V-vi-IV : Sol – Ré – Mim – Do, la grille de la leçon.
+  "harm-c6-02": ["ballade-pop"]
 };
 var morceauxDeLecon = (lessonId) => LIENS_MORCEAUX[lessonId] || [];
 
@@ -15688,16 +16541,22 @@ var familleProgressionsOreille = {
   generer(niv, rng, contexte) {
     const harmonique = niv === 3 && !!contexte?.completedLessons?.["scales-c6-01"];
     const pool = niv === 1 ? MAJEURES : harmonique ? [...MAJEURES, ...MINEURES, ...HARMONIQUES] : [...MAJEURES, ...MINEURES];
-    const cle2 = choisir2(rng, pool), p = tirerProgression(rng, cle2);
-    const meme = melanger2(rng, pool.filter((k) => k !== cle2 && PROGRESSIONS[k].mineur === p.mineur));
-    const autre = melanger2(rng, pool.filter((k) => k !== cle2 && PROGRESSIONS[k].mineur !== p.mineur));
-    const o = melanger2(rng, [cle2, ...[...meme, ...autre].slice(0, 3)]).map(romainDe);
+    const cle2 = choisir2(rng, pool), mineur = PROGRESSIONS[cle2].mineur;
+    const meme = melanger2(rng, pool.filter((k) => k !== cle2 && PROGRESSIONS[k].mineur === mineur));
+    const autre = melanger2(rng, pool.filter((k) => k !== cle2 && PROGRESSIONS[k].mineur !== mineur));
+    const cles = melanger2(rng, [cle2, ...[...meme, ...autre].slice(0, 3)]);
+    const format = formatSuite(rng, { leconFaite: true, niveau: niv });
+    const romains = format === "romains";
+    const p = tirerProgression(rng, cle2, romains ? void 0 : choisir2(rng, toniquesPour(cles)));
+    const libelle = (k) => romains ? romainDe(k) : libelleNomsSuite(k, p.toniquePc);
+    const o = cles.map(libelle);
     return {
-      q: "\xC9coute la suite d'accords (le premier accord est la tonique). Quels degr\xE9s ?",
+      q: `Tonique : ${nomTonique(p.toniquePc)}. \xC9coute la suite d'accords (le premier accord est la tonique). ${romains ? "Quels degr\xE9s ?" : "Quels accords ?"}`,
       o,
-      a: o.indexOf(romainDe(cle2)),
+      a: o.indexOf(libelle(cle2)),
       audio: { type: "suite", accords: p.accords.map((a) => a.map(midiVersTone2)) },
-      exp: `${p.romain}, ici en ${p.tonalite} : ${p.noms.join(" \u2013 ")}.${p.mineur ? " Majuscule = accord majeur, minuscule = accord mineur." : ""}`
+      // Toujours les noms ET les chiffres : c'est ainsi que le lien s'apprend.
+      exp: `${correctionSuite(p, true)}${p.mineur ? " Majuscule = accord majeur, minuscule = accord mineur." : ""}`
     };
   }
 };
@@ -16637,8 +17496,8 @@ var SENS2 = [
 var VIVIERS = {
   interval: { ordre: ORDRE_INTERVALLES, depart: DEPART_INTERVALLES, nom: (x) => INTERVALLES[x].nom, unite: "intervalles" },
   chord_quality: { ordre: ORDRE_QUALITES, depart: DEPART_QUALITES, nom: (x) => QUALITES[x].nom, unite: "qualit\xE9s" },
-  chord_full: { ordre: ORDRE_DEGRES, depart: DEPART_DEGRES, nom: (x) => x, unite: "degr\xE9s" },
-  progression: { ordre: ORDRE_PROGRESSIONS, depart: DEPART_PROGRESSIONS, nom: (x) => romainDe(x), unite: "suites" }
+  chord_full: { ordre: ORDRE_DEGRES, depart: DEPART_DEGRES, nom: (x, chiffres) => exempleDegre(x, chiffres), unite: "accords" },
+  progression: { ordre: ORDRE_PROGRESSIONS, depart: DEPART_PROGRESSIONS, nom: (x, chiffres) => exempleSuite(x, chiffres), unite: "suites" }
 };
 var SESSION_LENGTH = 8;
 var XP_PAR_REPONSE = 25;
@@ -16677,6 +17536,8 @@ function EarTraining({ onBack, dispatch, state }) {
   }, [cfg, libre, hist, mode]);
   const niveauDictee = niveauProgressif(hist["ear-dictation"], SEUILS_DICTEE);
   const precisionMode = precision(hist[idMode]);
+  const leconChiffres = chiffresRomainsAppris(state?.completedLessons);
+  const partRomains = partChiffresRomains({ leconFaite: leconChiffres, succes: hist[CLE_SUITES_ROMAINS]?.successes || 0 });
   const annulerFinTimer = useCallback2(() => {
     if (finTimerRef.current) {
       clearTimeout(finTimerRef.current);
@@ -16703,8 +17564,9 @@ function EarTraining({ onBack, dispatch, state }) {
     }
     const cible = choisirItem(Math.random, vivier.pool, hist, (x) => cleItem(mode, x), precedentRef.current);
     precedentRef.current = cible;
-    setQuestion(generateEarTrainingQuestion(mode, { pool: vivier.pool, cible, sens, toutesOptions: true }));
-  }, [mode, sens, vivier, hist, niveauDictee, annulerFinTimer]);
+    const format = mode === "progression" ? formatSuite(Math.random, { leconFaite: leconChiffres, succes: hist[CLE_SUITES_ROMAINS]?.successes || 0 }) : void 0;
+    setQuestion(generateEarTrainingQuestion(mode, { pool: vivier.pool, cible, sens, toutesOptions: true, leconChiffres, format }));
+  }, [mode, sens, vivier, hist, niveauDictee, annulerFinTimer, leconChiffres]);
   useEffect8(() => {
     if (audioReady && !question) nextQuestion();
   }, [audioReady, question, nextQuestion]);
@@ -16746,6 +17608,7 @@ function EarTraining({ onBack, dispatch, state }) {
   const enregistrer = (correct, item) => {
     let h = updateReviewHistory(hist, idMode, correct);
     if (item != null && mode !== "dictation") h = updateReviewHistory(h, cleItem(mode, item), correct);
+    if (question?.format === "romains") h = updateReviewHistory(h, CLE_SUITES_ROMAINS, correct);
     dispatch?.({ type: "REVIEW_ANSWER", questionId: idMode, id: idMode, history: h, correct, xp: correct ? XP_PAR_REPONSE : 0 });
     const newScore = { correct: score.correct + (correct ? 1 : 0), total: score.total + 1 };
     setScore(newScore);
@@ -16928,6 +17791,11 @@ function EarTraining({ onBack, dispatch, state }) {
             " \xB7 pr\xE9cision ",
             precisionMode,
             " %"
+          ] }),
+          mode === "progression" && leconChiffres && /* @__PURE__ */ jsxs10(Fragment7, { children: [
+            " \xB7 chiffres romains : ",
+            Math.round(partRomains * 100),
+            " % des questions"
           ] })
         ] }),
         cfg && /* @__PURE__ */ jsx12("button", { onClick: basculerLibre, "aria-pressed": libre, className: "gr-focus", style: { ...chip(libre), minHeight: 40, padding: "6px 10px", fontSize: 11.5 }, children: libre ? "Vivier complet" : "Tout d\xE9bloquer" })
@@ -16936,7 +17804,7 @@ function EarTraining({ onBack, dispatch, state }) {
         /* @__PURE__ */ jsx12(Ti, { name: "sparkles", size: 15, color: C.primaryD }),
         /* @__PURE__ */ jsxs10("span", { children: [
           "Nouveau dans ton vivier : ",
-          /* @__PURE__ */ jsx12("b", { children: cfg.nom(vivier.nouveau) })
+          /* @__PURE__ */ jsx12("b", { children: cfg.nom(vivier.nouveau, leconChiffres) })
         ] })
       ] }),
       audioError && /* @__PURE__ */ jsx12("div", { role: "alert", style: { background: C.coralL, border: `1px solid ${C.coralBorder}`, borderRadius: R.md, padding: "12px 14px", fontSize: 12, color: C.coralD, fontFamily: FONTS.ui }, children: "Les \xE9chantillons audio n'ont pas pu \xEAtre charg\xE9s. V\xE9rifie ta connexion, puis reviens sur cet \xE9cran." }),
@@ -17945,7 +18813,7 @@ function toToneTime(beat) {
 // src/screens/jam/harmonie.js
 var ROOTS_FR = ["A", "B", "C", "D", "E", "F", "G", "C#", "D#", "F#", "G#", "A#"].map((en) => ({ en, fr: NOTES_DIESES_FR[NOTES_DIESES_EN.indexOf(en)] }));
 var CHROMATIC4 = NOTES_DIESES_EN;
-var nomTonique = (root, scaleKey) => nomRacineGamme(root, scaleKey);
+var nomTonique2 = (root, scaleKey) => nomRacineGamme(root, scaleKey);
 var SHARP_TO_FLAT2 = { "C#": "Db", "D#": "Eb", "F#": "Gb", "G#": "Ab", "A#": "Bb" };
 function transposeNote(root, semitones) {
   const idx = CHROMATIC4.indexOf(root);
@@ -20000,7 +20868,7 @@ function JamSession({ onBack, dispatch, state }) {
   const ctxBase = CONTEXTS.find((c) => c.id === contextId);
   const ctx = useMemo6(() => appliquerChoix(ctxBase, grilleId, gammeChoisie), [ctxBase, grilleId, gammeChoisie]);
   const packDuStyle = packPourStyle(getStyle(ctx.id), PACKS);
-  const rootFr = nomTonique(root, ctx.scale);
+  const rootFr = nomTonique2(root, ctx.scale);
   const activeNotes = useMemo6(() => getScaleNotes(root, ctx.scale), [root, ctx.scale]);
   const nomsActifs = useMemo6(() => nomsGamme(root, ctx.scale), [root, ctx.scale]);
   const accordEnCours = accordIdx != null ? ctx.chords[accordIdx] ?? null : null;
@@ -20090,7 +20958,7 @@ function JamSession({ onBack, dispatch, state }) {
             ctx,
             titre: "Tonalit\xE9",
             valeur: root,
-            options: ctxBase.tonalites.map((t) => ({ id: t, label: nomTonique(t, ctx.scale) })),
+            options: ctxBase.tonalites.map((t) => ({ id: t, label: nomTonique2(t, ctx.scale) })),
             onChoix: setRoot
           }
         )
@@ -20117,7 +20985,7 @@ function JamSession({ onBack, dispatch, state }) {
         fontWeight: root === r.en ? 700 : 400,
         cursor: "pointer",
         fontFamily: FONTS.ui
-      }, children: nomTonique(r.en, ctx.scale) }, r.en)) }),
+      }, children: nomTonique2(r.en, ctx.scale) }, r.en)) }),
       /* @__PURE__ */ jsx18("div", { style: { display: "flex", gap: 6 }, children: [{ key: "notes", label: "Notes" }, { key: "intervals", label: "Intervalles" }, { key: "degrees", label: "Degr\xE9s" }].map((m) => /* @__PURE__ */ jsx18("button", { onClick: () => setDisplayMode(m.key), "aria-pressed": displayMode === m.key, className: "gr-focus", style: {
         flex: 1,
         minHeight: 40,

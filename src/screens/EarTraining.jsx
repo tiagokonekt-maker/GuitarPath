@@ -11,6 +11,13 @@
 // La dictée a 5 niveaux (3 → 5 notes, de la tierce à l'octave, puis le
 // mineur), déduits des réussites comme les compétences de la révision.
 //
+// ── Chiffres romains ──────────────────────────────────────────────────────
+// Accord en tonalité et suites répondent par des NOMS d'accords (« Rém »,
+// « Sol – Ré – Mim – Do »). Les chiffres romains n'arrivent qu'après la leçon
+// du chiffrage (harm-c5-02) : « Rém (ii) », correction « noms = chiffres »,
+// et une part de questions de suites en chiffres (20 % → 55 %, jamais tous),
+// qui grandit avec les réussites en chiffres (oreille.partChiffresRomains).
+//
 // ── Historique ────────────────────────────────────────────────────────────
 // Chaque réponse met à jour, dans reviewHistory (même action REVIEW_ANSWER
 // qu'avant, synchronisée entre appareils) :
@@ -32,7 +39,8 @@ import { updateReviewHistory } from "../store/reviewEngine.js";
 import {
   INTERVALLES, QUALITES, ORDRE_INTERVALLES, DEPART_INTERVALLES, ORDRE_QUALITES, DEPART_QUALITES,
   ORDRE_DEGRES, DEPART_DEGRES, ORDRE_PROGRESSIONS, DEPART_PROGRESSIONS, NIVEAUX_DICTEE, SEUILS_DICTEE,
-  romainDe, cleItem, poolAdaptatif, choisirItem, niveauProgressif, precision,
+  cleItem, poolAdaptatif, choisirItem, niveauProgressif, precision,
+  chiffresRomainsAppris, partChiffresRomains, formatSuite, CLE_SUITES_ROMAINS, exempleSuite, exempleDegre,
 } from "../store/oreille.js";
 
 const MODES = [
@@ -51,12 +59,13 @@ const SENS = [
 ];
 
 // Vivier progressif de chaque mode à choix : ordre d'introduction, taille de
-// départ, nom affiché d'un élément.
+// départ, nom affiché d'un élément (`chiffres` : la leçon du chiffrage romain
+// est faite — avant, aucun chiffre romain n'est affiché).
 const VIVIERS = {
   interval:      { ordre: ORDRE_INTERVALLES,   depart: DEPART_INTERVALLES,   nom: (x) => INTERVALLES[x].nom,  unite: "intervalles" },
   chord_quality: { ordre: ORDRE_QUALITES,      depart: DEPART_QUALITES,      nom: (x) => QUALITES[x].nom,     unite: "qualités" },
-  chord_full:    { ordre: ORDRE_DEGRES,        depart: DEPART_DEGRES,        nom: (x) => x,                   unite: "degrés" },
-  progression:   { ordre: ORDRE_PROGRESSIONS,  depart: DEPART_PROGRESSIONS,  nom: (x) => romainDe(x),         unite: "suites" },
+  chord_full:    { ordre: ORDRE_DEGRES,        depart: DEPART_DEGRES,        nom: (x, chiffres) => exempleDegre(x, chiffres), unite: "accords" },
+  progression:   { ordre: ORDRE_PROGRESSIONS,  depart: DEPART_PROGRESSIONS,  nom: (x, chiffres) => exempleSuite(x, chiffres), unite: "suites" },
 };
 
 const SESSION_LENGTH = 8;
@@ -105,6 +114,10 @@ export function EarTraining({ onBack, dispatch, state }) {
   }, [cfg, libre, hist, mode]);
   const niveauDictee = niveauProgressif(hist["ear-dictation"], SEUILS_DICTEE);
   const precisionMode = precision(hist[idMode]);
+  // Chiffres romains (accord en tonalité, suites) : seulement après la leçon
+  // du chiffrage, puis à dose croissante avec les réussites (store/oreille.js).
+  const leconChiffres = chiffresRomainsAppris(state?.completedLessons);
+  const partRomains = partChiffresRomains({ leconFaite: leconChiffres, succes: hist[CLE_SUITES_ROMAINS]?.successes || 0 });
 
   const annulerFinTimer = useCallback(() => {
     if (finTimerRef.current) { clearTimeout(finTimerRef.current); finTimerRef.current = null; }
@@ -133,8 +146,11 @@ export function EarTraining({ onBack, dispatch, state }) {
     }
     const cible = choisirItem(Math.random, vivier.pool, hist, (x) => cleItem(mode, x), precedentRef.current);
     precedentRef.current = cible;
-    setQuestion(generateEarTrainingQuestion(mode, { pool: vivier.pool, cible, sens, toutesOptions: true }));
-  }, [mode, sens, vivier, hist, niveauDictee, annulerFinTimer]);
+    const format = mode === "progression"
+      ? formatSuite(Math.random, { leconFaite: leconChiffres, succes: hist[CLE_SUITES_ROMAINS]?.successes || 0 })
+      : undefined;
+    setQuestion(generateEarTrainingQuestion(mode, { pool: vivier.pool, cible, sens, toutesOptions: true, leconChiffres, format }));
+  }, [mode, sens, vivier, hist, niveauDictee, annulerFinTimer, leconChiffres]);
 
   // Première question quand l'audio est prêt, et après un changement de mode
   // (qui remet `question` à null). Pas de boucle : rien tant qu'une question existe.
@@ -175,6 +191,8 @@ export function EarTraining({ onBack, dispatch, state }) {
   const enregistrer = (correct, item) => {
     let h = updateReviewHistory(hist, idMode, correct);
     if (item != null && mode !== "dictation") h = updateReviewHistory(h, cleItem(mode, item), correct);
+    // Réussites en chiffres romains : elles font grandir leur part.
+    if (question?.format === "romains") h = updateReviewHistory(h, CLE_SUITES_ROMAINS, correct);
     dispatch?.({ type: "REVIEW_ANSWER", questionId: idMode, id: idMode, history: h, correct, xp: correct ? XP_PAR_REPONSE : 0 });
     const newScore = { correct: score.correct + (correct ? 1 : 0), total: score.total + 1 };
     setScore(newScore);
@@ -346,6 +364,7 @@ export function EarTraining({ onBack, dispatch, state }) {
             {cfg && vivier && <>Vivier : <b style={{ color: C.text }}>{vivier.pool.length}/{vivier.total}</b> {cfg.unite}</>}
             {mode === "dictation" && <>Niveau <b style={{ color: C.text }}>{niveauDictee}/{NIVEAUX_DICTEE.length}</b> · {NIVEAUX_DICTEE[niveauDictee - 1].libelle}</>}
             {precisionMode != null && <> · précision {precisionMode} %</>}
+            {mode === "progression" && leconChiffres && <> · chiffres romains : {Math.round(partRomains * 100)} % des questions</>}
           </div>
           {cfg && (
             <button onClick={basculerLibre} aria-pressed={libre} className="gr-focus" style={{ ...chip(libre), minHeight: 40, padding: "6px 10px", fontSize: 11.5 }}>
@@ -356,7 +375,7 @@ export function EarTraining({ onBack, dispatch, state }) {
         {cfg && vivier?.nouveau != null && (
           <div role="status" style={{ display: "flex", gap: 8, alignItems: "center", background: C.primaryL, border: `1px solid ${C.primaryBorder}`, borderRadius: R.md, padding: "8px 12px", fontSize: 12, color: C.primaryD, fontFamily: FONTS.ui }}>
             <Ti name="sparkles" size={15} color={C.primaryD} />
-            <span>Nouveau dans ton vivier : <b>{cfg.nom(vivier.nouveau)}</b></span>
+            <span>Nouveau dans ton vivier : <b>{cfg.nom(vivier.nouveau, leconChiffres)}</b></span>
           </div>
         )}
 

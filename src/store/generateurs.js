@@ -23,7 +23,7 @@
 // Lettres, demi-tons naturels et noms chromatiques : définis une seule fois
 // dans music/notes.js (partagés avec le manche, la Jam, la boîte à outils).
 import { LETTRES_FR, LETTRES_EN, NATUREL, NOTES_DIESES_FR, NOTES_DIESES_EN } from "../music/notes.js";
-import { INTERVALLES as INTERVALLES_OREILLE, QUALITES as QUALITES_OREILLE, PROGRESSIONS, NIVEAUX_DICTEE, voicingAccord, tirerDictee, tirerProgression, romainDe } from "./oreille.js";
+import { INTERVALLES as INTERVALLES_OREILLE, QUALITES as QUALITES_OREILLE, PROGRESSIONS, NIVEAUX_DICTEE, voicingAccord, tirerDictee, tirerProgression, romainDe, formatSuite, toniquesPour, libelleNomsSuite, nomTonique, correctionSuite } from "./oreille.js";
 
 // ─────────────────────────────────────────────────────────────────────────
 // THÉORIE : notes orthographiées (lettre + altération)
@@ -673,15 +673,27 @@ const familleProgressionsOreille = {
     // Le mineur harmonique n'arrive qu'une fois sa leçon faite.
     const harmonique = niv === 3 && !!contexte?.completedLessons?.["scales-c6-01"];
     const pool = niv === 1 ? MAJEURES : harmonique ? [...MAJEURES, ...MINEURES, ...HARMONIQUES] : [...MAJEURES, ...MINEURES];
-    const cle = choisir(rng, pool), p = tirerProgression(rng, cle);
+    const cle = choisir(rng, pool), mineur = PROGRESSIONS[cle].mineur;
     // Leurres de même couleur de préférence : distinguer majeur et mineur
     // est le plus facile, c'est l'ordre des degrés qui s'entraîne.
-    const meme = melanger(rng, pool.filter(k => k !== cle && PROGRESSIONS[k].mineur === p.mineur));
-    const autre = melanger(rng, pool.filter(k => k !== cle && PROGRESSIONS[k].mineur !== p.mineur));
-    const o = melanger(rng, [cle, ...[...meme, ...autre].slice(0, 3)]).map(romainDe);
-    return { q: "Écoute la suite d'accords (le premier accord est la tonique). Quels degrés ?", o, a: o.indexOf(romainDe(cle)),
+    const meme = melanger(rng, pool.filter(k => k !== cle && PROGRESSIONS[k].mineur === mineur));
+    const autre = melanger(rng, pool.filter(k => k !== cle && PROGRESSIONS[k].mineur !== mineur));
+    const cles = melanger(rng, [cle, ...[...meme, ...autre].slice(0, 3)]);
+    // NOMS d'accords d'abord, chiffres romains à dose croissante avec le
+    // niveau (20 % → 55 %, jamais tous) : la famille suit la leçon du
+    // chiffrage (harm-c5-02), les chiffres sont donc déjà vus, mais les noms
+    // restent le format principal (store/oreille.js, partChiffresRomains).
+    const format = formatSuite(rng, { leconFaite: true, niveau: niv });
+    const romains = format === "romains";
+    // En noms, toutes les options partent de la même tonique, annoncée.
+    const p = tirerProgression(rng, cle, romains ? undefined : choisir(rng, toniquesPour(cles)));
+    const libelle = (k) => (romains ? romainDe(k) : libelleNomsSuite(k, p.toniquePc));
+    const o = cles.map(libelle);
+    return { q: `Tonique : ${nomTonique(p.toniquePc)}. Écoute la suite d'accords (le premier accord est la tonique). ${romains ? "Quels degrés ?" : "Quels accords ?"}`,
+      o, a: o.indexOf(libelle(cle)),
       audio: { type: "suite", accords: p.accords.map(a => a.map(midiVersTone)) },
-      exp: `${p.romain}, ici en ${p.tonalite} : ${p.noms.join(" – ")}.${p.mineur ? " Majuscule = accord majeur, minuscule = accord mineur." : ""}` };
+      // Toujours les noms ET les chiffres : c'est ainsi que le lien s'apprend.
+      exp: `${correctionSuite(p, true)}${p.mineur ? " Majuscule = accord majeur, minuscule = accord mineur." : ""}` };
   },
 };
 

@@ -142,13 +142,14 @@ test("orthographe des suites dans la tonalité : Dom – Lab – Mib – Sib, pa
   }
 });
 
-test("question de suite : options en chiffres romains, tonalité et accords nommés dans la correction", () => {
+test("question de suite (appel historique, sans leconChiffres) : options en chiffres romains, noms et chiffres dans la correction", () => {
   const r = rng(8);
   for (let i = 0; i < 100; i++) {
     const q = generateEarTrainingQuestion("progression", { pool: ORDRE_PROGRESSIONS, toutesOptions: true, rng: r });
+    assert.equal(q.format, "romains");
     assert.equal(q.options.find(o => o.key === q.answer).label, q.roman);
     assert.ok(q.options.every(o => /^[ivIV]+°?( – [ivIV]+°?)+$/.test(o.label)));
-    assert.match(q.repere, /^En \S+ (majeur|mineur) : /);
+    assert.match(q.repere, / = [ivIV]+.* en \S+ (majeur|mineur)\.$/);
     assert.equal(q.accords.length, 4);
   }
 });
