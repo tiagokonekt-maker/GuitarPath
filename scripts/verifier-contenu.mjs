@@ -175,7 +175,7 @@ const lecInUnites = unites.flatMap(u => u.lessons.map(l => l.id));
 if (lecInUnites.length !== lecons.length) ko(`${lecons.length - lecInUnites.length} leçon(s) perdue(s) dans le découpage`);
 // ── Vérification d'unité : le meilleur cas atteint-il un minimum exploitable ? ──
 //
-// `checkSize` (15) est une CIBLE, pas une garantie — c'est voulu (voir
+// `checkSize` (2 par leçon, 6 à 12) est une CIBLE, pas une garantie — c'est voulu (voir
 // pathEngine.js et unitCheckSampler.js). La comparer directement au cœur
 // d'UNE unité isolée, comme le faisait ce script avant, redonnait une
 // alerte sur la quasi-totalité des unités : 15 fut choisi précisément pour
@@ -207,7 +207,7 @@ for (let i = 0; i < unites.length; i++) {
   }
 }
 const moyenne = Math.round(disponibiliteMax.reduce((a, b) => a + b, 0) / disponibiliteMax.length);
-console.log(`  vérification, meilleur cas par unité : min ${Math.min(...disponibiliteMax)} · moy ${moyenne} · max ${Math.max(...disponibiliteMax)} (cible 15)`);
+console.log(`  vérification, meilleur cas par unité : min ${Math.min(...disponibiliteMax)} · moy ${moyenne} · max ${Math.max(...disponibiliteMax)} (cible 6 à 12)`);
 
 // ── Économie d'XP ─────────────────────────────────────────────────────────
 titre("Économie d'XP");

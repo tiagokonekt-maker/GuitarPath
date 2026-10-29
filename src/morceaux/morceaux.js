@@ -62,6 +62,7 @@ export function analyserMorceau(morceau) {
     if (pos >= W) anomalies.push(`Évènement sur une barre de mesure (corde ${ev.string}, colonne ${ev.col}).`);
     const out = { ...ev, col: versMusical(ev.col), mesure: Math.floor(ev.col / pas) };
     if (ev.releaseCol != null) out.releaseCol = versMusical(ev.releaseCol);
+    if (ev.toCol != null) out.toCol = versMusical(ev.toCol);   // liaisons enchaînées
     return out;
   });
   const nbMesures = compterMesures(morceau.tab);
@@ -152,11 +153,14 @@ function decaler(evenements, delta) {
 }
 
 /**
- * Ajoute une mesure de décompte (notes étouffées sur les temps) devant les
- * évènements, décalés d'une mesure. Chaque clic porte `decompte: n` (1, 2…).
+ * Ajoute une mesure de décompte devant les évènements, décalés d'une
+ * mesure. Chaque temps est un évènement `{ type: "clic", col, decompte: n,
+ * accent }` (n = 1, 2… ; accent sur le premier temps) : audioEngine.playTab
+ * le joue en clic de métronome, dans le temps audio. Pas de corde : le plan
+ * sonore de la guitare (tabSon) l'ignore.
  */
 export function ajouterDecompte(evenements, colsParMesure, temps) {
-  const clics = temps.map((c, i) => ({ type: "mute", string: 4, col: c, decompte: i + 1 }));
+  const clics = temps.map((c, i) => ({ type: "clic", col: c, decompte: i + 1, accent: i === 0 }));
   const decales = evenements.map(e => {
     const out = { ...e, col: e.col + colsParMesure };
     if (e.releaseCol != null) out.releaseCol = e.releaseCol + colsParMesure;
@@ -205,6 +209,13 @@ export function filtrerMorceaux(liste, { niveau = "tous", type = "tous" } = {}) 
 
 /** Texte d'un évènement tel qu'écrit dans la tab : « 3 », « x », « 0h2 »… */
 export function texteEvenement(ev) {
+  // Maillon suivi d'une autre liaison (3h5h7) : on n'écrit que le départ et
+  // le symbole (« 3h »), la case d'arrivée est écrite par le maillon suivant,
+  // qui commence sur sa colonne — même rendu que le texte d'origine.
+  if (ev.enchaine) {
+    const sym = { hammer: "h", pull: "p", slide_up: "/", slide_down: "\\" }[ev.type];
+    if (sym) return `${ev.fromFret}${sym}`;
+  }
   switch (ev.type) {
     case "mute": return "x";
     case "note": return String(ev.fret);

@@ -52,14 +52,26 @@
 //          bend / une liaison) : `vibrato: true` sur l'évènement, rendu
 //          par tabSon.js en légère modulation périodique de la hauteur.
 //   x      note étouffée / percussive
+//   3h5h7  liaisons ENCHAÎNÉES — h, p, / et \ mélangeables (5h7p5, 7p5p3,
+//          5h7/9) : un évènement par maillon, chacun avec `toCol` = colonne
+//          de sa case cible (le rythme du trille vient de l'écriture). Le
+//          premier maillon est attaqué ; les suivants portent
+//          `sansAttaque: true` (même voix, sans médiator) ; tous sauf le
+//          dernier portent `enchaine: true`. Un « ~ » final met le vibrato
+//          sur le dernier maillon. Une liaison SIMPLE (3h5) reste un seul
+//          évènement sans toCol, exactement comme avant.
 // Non géré, noté ici pour ne pas prétendre le contraire :
 //   pré-bend (« 9pb7 », « (9)r7 ») — un « r » sans bend juste devant est
 //   ignoré ; les cases autour sonnent comme des notes simples.
-//   liaisons enchaînées (3h5h7) — donne 3h5 puis 7 simple.
+//   liaison vers un bend (« 5h7b9 ») — la chaîne s'arrête à 7, le « b »
+//   est ignoré et 9 sonne comme une note simple.
 //   tablatures à 4, 5 ou 7 cordes — systèmes ignorés (avertissement).
 
 /** Symboles de technique reconnus entre deux numéros de case. */
 const TECH_SYMBOLS = new Set(["h", "p", "/", "\\", "b"]);
+
+/** Symboles de liaison qui peuvent s'enchaîner (3h5h7, 5h7p5, 5h7/9). */
+const LEGATO = new Set(["h", "p", "/", "\\"]);
 
 const TECH_TYPE = {
   h: "hammer", p: "pull", "/": "slide_up", "\\": "slide_down", b: "bend",
@@ -140,6 +152,32 @@ function parseStringLine(line) {
     if (nombre) {
       const apres = nombre.fin;
       const symbole = line[apres];
+      // Liaisons enchaînées : « 5h7p5 », « 3h5h7 », « 5h7/9 ». Chaque maillon
+      // a sa propre case cible ; un maillon sans cible arrête la chaîne.
+      if (symbole && LEGATO.has(symbole)) {
+        const maillons = [];
+        let depart = nombre, k = apres;
+        while (k < n && LEGATO.has(line[k])) {
+          const cible = lireNombre(k + 1);
+          if (!cible) break;
+          maillons.push({ symbole: line[k], depart, cible, colCible: k + 1 });
+          depart = cible; k = cible.fin;
+        }
+        if (maillons.length >= 2) {
+          const evs = maillons.map((m, idx) => {
+            const ev = {
+              type: TECH_TYPE[m.symbole], fromFret: m.depart.valeur, toFret: m.cible.valeur,
+              col: idx === 0 ? i : maillons[idx - 1].colCible, toCol: m.colCible,
+            };
+            if (idx > 0) ev.sansAttaque = true;                  // la corde n'est pas réattaquée
+            if (idx < maillons.length - 1) ev.enchaine = true;   // une autre liaison suit
+            return ev;
+          });
+          i = vibratoApres(evs[evs.length - 1], k);
+          events.push(...evs);
+          continue;
+        }
+      }
       if (symbole && TECH_SYMBOLS.has(symbole)) {
         const cible = lireNombre(apres + 1);
         const toFret = cible ? cible.valeur
@@ -216,6 +254,7 @@ function preparerSysteme(lignes6) {
 function decaler(ev, offset) {
   const out = { ...ev, col: ev.col + offset };
   if (ev.releaseCol != null) out.releaseCol = ev.releaseCol + offset;
+  if (ev.toCol != null) out.toCol = ev.toCol + offset;
   return out;
 }
 
@@ -227,7 +266,8 @@ function decaler(ev, offset) {
  * @param texte  le texte collé ou tapé par l'utilisateur
  * @returns { evenements, erreur, avertissements, systemes }
  *   evenements      [{ type, string, col, fret|fromFret&toFret,
- *                      vibrato?, releaseFret?, releaseCol? }, ...] trié
+ *                      vibrato?, releaseFret?, releaseCol?,
+ *                      toCol?, sansAttaque?, enchaine? }, ...] trié
  *   erreur          message si aucun système de 6 lignes exploitable, sinon null
  *   avertissements  [string] blocs ignorés (nombre de lignes ≠ 6), jamais bloquant
  *   systemes        nombre de systèmes de 6 lignes retenus

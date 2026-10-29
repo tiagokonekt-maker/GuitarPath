@@ -352,4 +352,9 @@ export const GROPI_CATALOGUE = [
     text: "Le jeu question-réponse vient des chants de travail et du gospel afro-américains, où un meneur lance une phrase et le groupe lui répond. Le blues l'a transmis à la guitare." },
   { id: "t-intervalles-oreille", type: "tip", lecons: ["neck-03", "scales-c1-05"], modules: ["neck", "scales"], mots: ["intervalle", "entendre"],
     text: "Astuce de musicien : associer chaque intervalle à un air connu. Le thème de « Star Wars » s'ouvre sur une quinte juste, celui des « Dents de la mer » sur un demi-ton." },
+  // Annexes (leçons facultatives : cordes, ampli, composition).
+  { id: "t-annexes-cordes-essuyer", type: "tip", lecons: ["annexes-cordes"], modules: ["annexes"], mots: ["cordes"],
+    text: "Essuie tes cordes avec un chiffon sec après chaque séance : la sueur qui reste dessus les rend ternes bien plus vite." },
+  { id: "a-annexes-fuzz", type: "anecdote", lecons: ["annexes-ampli"], modules: ["annexes"], mots: ["ampli", "effets"],
+    text: "Le son fuzz est né d'un accident : en 1961, une console de studio défaillante a saturé une partie de basse sur un enregistrement de country. Une pédale imitant ce défaut est sortie dès l'année suivante." },
 ];

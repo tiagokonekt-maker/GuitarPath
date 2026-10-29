@@ -7,7 +7,8 @@ import { defineConfig, globalIgnores } from 'eslint/config';
 export default defineConfig([
   // smoke/_entry.jsx est régénéré par smoke/build.mjs à chaque `npm run smoke`
   // (une suite de `export * as …`) : rien à vérifier dedans.
-  globalIgnores(['dist', 'coverage', '*.bak', 'smoke/_entry.jsx']),
+  // banc/ : bancs d'essai locaux (hors dépôt, voir .git/info/exclude).
+  globalIgnores(['dist', 'coverage', '*.bak', 'smoke/_entry.jsx', 'banc']),
   {
     files: ['**/*.{js,jsx}'],
     extends: [

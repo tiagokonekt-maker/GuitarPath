@@ -2,8 +2,8 @@
 // Format « leçon en cartes » décrit dans src/content/README.md.
 // Technique, 3 sur 4 : hammer-on (h), pull-off (p) et trille, dans la
 // position 1 de la pentatonique (scales-c3-02).
-// Le lecteur de tab ne lit pas les liaisons enchaînées (5h7p5) : le trille
-// est écrit en paires 5h7, la consigne dit de les enchaîner.
+// Les paires (5h7, 7p5) d'abord, une attaque chacune ; puis le vrai trille,
+// liaisons enchaînées (5h7p5h7…) : une seule attaque pour toute la chaîne.
 
 const TAB_PAIRES = {
   type: "tab",
@@ -21,12 +21,12 @@ const TAB_PAIRES = {
 
 const TAB_TRILLE = {
   type: "tab",
-  caption: "Vers le trille : des paires liées, de plus en plus serrées",
-  text: "Tab — corde 3 : quatre fois 5h7 ; corde 2 : quatre fois 5h8. Une attaque par paire ; quand c'est régulier, enchaîne hammer-on et pull-off sans regratter.",
+  caption: "Le trille : hammer-ons et pull-offs enchaînés, une seule attaque",
+  text: "Tab — corde 3 : 5h7p5h7p5h7p5h7, une seule attaque au début ; corde 2 : 5h8p5h8p5h8p5h8, même chose.",
   data: { lines: [
     "e|----------------|----------------|",
-    "B|----------------|5h8-5h8-5h8-5h8-|",
-    "G|5h7-5h7-5h7-5h7-|----------------|",
+    "B|----------------|5h8p5h8p5h8p5h8-|",
+    "G|5h7p5h7p5h7p5h7-|----------------|",
     "D|----------------|----------------|",
     "A|----------------|----------------|",
     "E|----------------|----------------|",
@@ -61,7 +61,7 @@ export default {
       "Commence par des paires bien régulières, puis serre le mouvement.",
     ] },
     { type: "a-toi", titre: "Une minute de trille",
-      consigne: "Joue les paires de la tab au clic à 70. Quand elles sont régulières, enchaîne hammer-on et pull-off sur la corde 3, cases 5 et 7, sans regratter, aussi longtemps que la note tient.",
+      consigne: "Gratte une seule fois la case 5 de la corde 3, puis enchaîne hammer-on et pull-off entre les cases 5 et 7 au clic à 70, sans regratter, aussi longtemps que la note tient. Même chose sur la corde 2, cases 5 et 8.",
       bloc: TAB_TRILLE, bpm: 70, minuteur: 60 },
     { type: "question", quizId: "q-rhy-legato-03-tech" },
     { type: "recap", points: [

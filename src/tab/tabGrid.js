@@ -112,8 +112,13 @@ function notesDeLaCorde(grille, corde) {
  * Grille → évènements, au format de tabParser.parseTab (+ `toCol` pour les
  * liaisons : la note d'arrivée sonne sur SA colonne). Une note d'arrivée
  * de liaison est "consommée" : elle n'est pas rejouée une seconde fois.
- * Limite v1, assumée : une liaison ne s'enchaîne pas sur une autre
- * (3h5h7 donne 3h5 puis 7 simple).
+ * Liaisons enchaînées : une note d'arrivée elle-même liée continue la
+ * chaîne (3h5h7, 5h7p5) — un évènement par maillon, au format de parseTab
+ * (`sansAttaque` sur les maillons suivants, `enchaine` sur tous sauf le
+ * dernier). Limites du modèle de grille : le TYPE de chaque maillon est
+ * déduit (h si ça monte, p si ça descend ; sens du slide idem), on ne
+ * peut donc pas écrire un « hammer descendant » ; une liaison ne peut pas
+ * aboutir sur un bend (5h7b9) ; et le vibrato n'existe qu'en fin de chaîne.
  */
 export function grilleVersEvenements(grille) {
   const evenements = [];
@@ -131,12 +136,26 @@ export function grilleVersEvenements(grille) {
 
       const vibNote = cell.vibrato ? { vibrato: true } : {};
       if ((cell.lie || cell.slide) && suivanteJouable) {
-        const monte = suivante.cell.fret >= cell.fret;
-        const type = cell.slide ? (monte ? "slide_up" : "slide_down") : (monte ? "hammer" : "pull");
+        // Liaison, éventuellement ENCHAÎNÉE : tant que la note d'arrivée est
+        // elle-même liée à une note jouable, la chaîne continue (3h5h7).
+        const chaine = [];
+        let k = i;
+        while (k + 1 < notes.length) {
+          const de = notes[k], vers = notes[k + 1];
+          if (!(de.cell.lie || de.cell.slide) || vers.cell.mute || typeof vers.cell.fret !== "number") break;
+          const monte = vers.cell.fret >= de.cell.fret;
+          const type = de.cell.slide ? (monte ? "slide_up" : "slide_down") : (monte ? "hammer" : "pull");
+          chaine.push({ type, fromFret: de.cell.fret, toFret: vers.cell.fret, col: de.col, toCol: vers.col, string: corde });
+          consommees.add(vers.col);
+          k++;
+        }
+        chaine.forEach((ev, idx) => {
+          if (idx > 0) ev.sansAttaque = true;
+          if (idx < chaine.length - 1) ev.enchaine = true;
+        });
         // Le vibrato d'une liaison est porté par la note d'arrivée.
-        const vibArrivee = suivante.cell.vibrato ? { vibrato: true } : {};
-        evenements.push({ type, fromFret: cell.fret, toFret: suivante.cell.fret, col, toCol: suivante.col, string: corde, ...vibArrivee });
-        consommees.add(suivante.col);
+        if (notes[k].cell.vibrato) chaine[chaine.length - 1].vibrato = true;
+        evenements.push(...chaine);
         return;
       }
       if (cell.bend === 1 || cell.bend === 2) {

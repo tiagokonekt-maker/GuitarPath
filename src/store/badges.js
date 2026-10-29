@@ -45,8 +45,9 @@ const debutTermine = (state, content) => {
   const c = content.courses.find(estModuleInitiation);
   return !!c && c.lessons.length > 0 && c.lessons.every(l => state.completedLessons[l.id]);
 };
+// Les Annexes (module `facultatif`) ne comptent pas non plus.
 const allModulesMastered = (state, content) =>
-  content.courses.filter(c => !estModuleInitiation(c)).every(c => {
+  content.courses.filter(c => !estModuleInitiation(c) && !c.facultatif).every(c => {
     const total = c.lessons.length;
     const done = c.lessons.filter(l => state.completedLessons[l.id]).length;
     return total > 0 && done === total;

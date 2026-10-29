@@ -1190,6 +1190,9 @@ export function TabBlock({ data, caption, text }) {
 //   const visual = renderDiagramBlock(b, i);
 //   if (visual) return visual;
 // ═══════════════════════════════════════════════════════════════════════════
+// Fonction de rendu partagée par toutes les leçons, exportée à côté des
+// composants de diagramme qu'elle utilise.
+// eslint-disable-next-line react-refresh/only-export-components
 export function renderDiagramBlock(block, key) {
   const { type, data, caption } = block;
 

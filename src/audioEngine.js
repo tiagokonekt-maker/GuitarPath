@@ -997,6 +997,54 @@ function jouerVoix(v, t0) {
 }
 
 /**
+ * Clic de décompte, planifié à l'instant AUDIO `T` : un souffle de bruit très
+ * bref dans un passe-bande, le même timbre « bois » que le métronome des
+ * Outils et des cartes (src/lecon/clic.js) — sec, il perce sans masquer la
+ * guitare. Le premier temps est accentué (plus fort, plus aigu). Synthétisé :
+ * il sonne aussi en mode de repli (sans les échantillons du moteur de cordes).
+ * Enregistré comme une voix : stopAll() le coupe, même planifié d'avance.
+ */
+function jouerClic(T, accent = false) {
+  if (!Tone || !sortieMaitre) return;
+  const bruit = new Tone.Noise("white");
+  const filtre = new Tone.Filter({ type: "bandpass", frequency: accent ? 2600 : 1500, Q: 2.2 });
+  const gain = new Tone.Gain(0);
+  bruit.chain(filtre, gain, sortieMaitre);
+  const crete = accent ? 0.9 : 0.5;
+  gain.gain.setValueAtTime(0, T);
+  gain.gain.linearRampToValueAtTime(crete, T + 0.0006);
+  gain.gain.setTargetAtTime(0, T + 0.0006, 0.009);
+  bruit.start(T);
+  bruit.stop(T + 0.07);
+  const voix = { src: bruit, gain };
+  voixCordes.add(voix);
+  bruit.onstop = () => {
+    voixCordes.delete(voix);
+    // onstop arrive à l'instant planifié : on laisse finir le dernier bloc.
+    setTimeout(() => { try { bruit.dispose(); filtre.dispose(); gain.dispose(); } catch { /* noop */ } }, 100);
+  };
+}
+
+/** Les mêmes évènements, `delta` colonnes plus loin (liaisons et bends compris). */
+function decalerColonnes(evenements, delta) {
+  return evenements.map(e => {
+    const out = { ...e, col: e.col + delta };
+    if (e.toCol != null) out.toCol = e.toCol + delta;
+    if (e.releaseCol != null) out.releaseCol = e.releaseCol + delta;
+    return out;
+  });
+}
+
+/** Longueur d'une boucle valide (en colonnes), ou 0 si pas de boucle. */
+function longueurBoucle(boucle) {
+  return boucle && Array.isArray(boucle.evenements) && boucle.evenements.length && boucle.colonnes > 0
+    ? boucle.colonnes : 0;
+}
+
+/** Avance (s) avec laquelle le tour de boucle suivant est planifié. */
+const AVANCE_TOUR_S = 1.5;
+
+/**
  * Joue une tablature avec le moteur de cordes. Rendu (détails dans
  * tab/tabSon.js) : chaque note résonne jusqu'à ce que sa corde rejoue ;
  * bends et slides glissent en continu ; hammer-on et pull-off changent de
@@ -1004,11 +1052,22 @@ function jouerVoix(v, t0) {
  * accords sont grattés du grave vers l'aigu ; les temps sont accentués et
  * chaque note varie légèrement, comme sous de vrais doigts.
  *
- * @param evenements    sortie de parseTab(texte).evenements ou grilleVersEvenements
+ * @param evenements    sortie de parseTab(texte).evenements ou grilleVersEvenements.
+ *                      Un évènement `{ type: "clic", col, accent? }` (décompte,
+ *                      morceaux/morceaux.js) sonne en clic de métronome.
  * @param opts.bpm, opts.subdivision (0.25 = double-croche par colonne)
  * @param opts.onEvent(ev)  appelé à l'instant de chaque évènement (curseur visuel)
- * @param opts.onDone()     appelé une fois la séquence terminée
+ * @param opts.onDone()     appelé une fois la séquence terminée (jamais en boucle)
  * @param opts.reglages     surcharge partielle des réglages sonores (tabSon.js)
+ * @param opts.boucle       { evenements, colonnes } : après `evenements` (qui
+ *                          dure opts.colonnes colonnes), ce passage est rejoué
+ *                          sans fin, jusqu'à stopAll(). Chaque tour est
+ *                          planifié dans le temps AUDIO avant la fin du
+ *                          précédent : aucun trou, aucune coupure — les
+ *                          dernières notes résonnent jusqu'à ce que leur
+ *                          corde rejoue au tour suivant.
+ * @param opts.colonnes     longueur du premier passage, en colonnes (avec
+ *                          boucle ; par défaut, dernière colonne + 1)
  */
 export async function playTab(evenements, opts = {}) {
   if (!await ensureLoaded()) return;
@@ -1029,110 +1088,169 @@ export async function playTab(evenements, opts = {}) {
   }
 
   if (maLecture !== generationTab) return;   // arrêtée pendant le chargement : on ne joue rien
-  const { voix } = planifierTab(evenements, { bpm, subdivision, reglages: opts.reglages });
+  const spc = (60 / bpm) * subdivision;
+  const dernierCol = Math.max(...evenements.map(e => e.toCol ?? e.col));
+  const lgBoucle = longueurBoucle(opts.boucle);
+  const premier = { evenements, colonnes: opts.colonnes > 0 ? opts.colonnes : dernierCol + 1 };
+  const tourDeBoucle = lgBoucle ? { evenements: opts.boucle.evenements, colonnes: lgBoucle } : null;
+
+  // Un tour = un passage complet, planifié d'un bloc à partir de l'instant
+  // audio `debutT`. En boucle, le tour suivant est passé à tabSon en `suite` :
+  // les notes de fin s'arrêtent là où leur corde rejoue, sinon résonnent.
+  const jouerTour = (tour, debutT) => {
+    const sonores = tour.evenements.filter(e => e.type !== "clic");
+    const suite = tourDeBoucle ? decalerColonnes(tourDeBoucle.evenements.filter(e => e.type !== "clic"), tour.colonnes) : undefined;
+    const { voix } = planifierTab(sonores, { bpm, subdivision, reglages: opts.reglages, suite });
+    try {
+      for (const v of voix) jouerVoix(v, debutT);
+      for (const e of tour.evenements) if (e.type === "clic") jouerClic(debutT + e.col * spc, !!e.accent);
+    } catch (e) { warn("playTab:", e); }
+    // Curseur : minuteurs calés sur l'horloge audio, que stopAll() coupe aussi.
+    for (const ev of tour.evenements) visuelA(debutT + ev.col * spc, () => onEvent?.(ev));
+  };
+
   const AVANCE_MS = 80;   // l'audio est planifié à l'échantillon près, un peu à l'avance
   const t0 = Tone.now() + AVANCE_MS / 1000;
-  try { for (const v of voix) jouerVoix(v, t0); } catch (e) { warn("playTab:", e); }
+  jouerTour(premier, t0);
 
-  // Curseur et fin : minuteurs annulables, que stopAll() coupe aussi.
-  const spc = (60 / bpm) * subdivision;
-  for (const ev of evenements) differer(() => onEvent?.(ev), AVANCE_MS + ev.col * spc * 1000);
-  const dernierCol = Math.max(...evenements.map(e => e.toCol ?? e.col));
-  differer(() => onDone?.(), AVANCE_MS + (dernierCol + 2) * spc * 1000);
+  if (!tourDeBoucle) {
+    differer(() => onDone?.(), AVANCE_MS + (dernierCol + 2) * spc * 1000);
+    return;
+  }
+  // Boucle : chaque tour est planifié AVANCE_TOUR_S avant la fin du
+  // précédent, sur la même horloge audio — jamais de stopAll entre deux tours.
+  const tourSuivant = (debutT) => {
+    if (maLecture !== generationTab) return;
+    jouerTour(tourDeBoucle, debutT);
+    const finT = debutT + tourDeBoucle.colonnes * spc;
+    differer(() => tourSuivant(finT), Math.max(1, (finT - AVANCE_TOUR_S - Tone.immediate()) * 1000));
+  };
+  const fin0 = t0 + premier.colonnes * spc;
+  differer(() => tourSuivant(fin0), Math.max(1, (fin0 - AVANCE_TOUR_S - Tone.immediate()) * 1000));
 }
 
 /*
  * ANCIEN LECTEUR — conservé comme REPLI si le moteur de cordes échoue.
  * (Sampler : notes coupées à une case, bend sans glissement, slide en escalier.)
+ * La boucle et le décompte y fonctionnent aussi (tours enchaînés par minuteur,
+ * sans stopAll entre deux tours ; clics synthétisés, dans le temps audio).
  */
 async function playTabSampler(evenements, opts = {}) {
   if (!await ensureLoaded()) return;
   stopAll();
   reveillerSortie();
 
-  const { bpm = 90, subdivision = 0.25, onEvent, onDone } = opts;
+  const { bpm = 90, subdivision = 0.25, onDone } = opts;
   if (!Array.isArray(evenements) || evenements.length === 0) { onDone?.(); return; }
 
   const secParColonne = (60 / bpm) * subdivision;
-  const dureeNote = secParColonne;
   // toCol (liaisons issues de la grille de saisie) peut dépasser col.
   const dernierCol = Math.max(...evenements.map(e => e.toCol ?? e.col));
+  const lgBoucle = longueurBoucle(opts.boucle);
 
   try {
-    for (const ev of evenements) {
-      const tMs = ev.col * secParColonne * 1000;
+    jouerTourSampler(evenements, opts, secParColonne);
+    if (!lgBoucle) {
+      differer(() => onDone?.(), (dernierCol + 2) * secParColonne * 1000);
+      return;
+    }
+    const colonnes = opts.colonnes > 0 ? opts.colonnes : dernierCol + 1;
+    const debut = performance.now();
+    let finMs = colonnes * secParColonne * 1000;
+    // Échéances calculées depuis le départ : pas de dérive cumulée.
+    const tour = () => {
+      jouerTourSampler(opts.boucle.evenements, opts, secParColonne);
+      finMs += lgBoucle * secParColonne * 1000;
+      differer(tour, Math.max(1, debut + finMs - performance.now()));
+    };
+    differer(tour, finMs);
+  } catch (e) { warn("playTab:", e); }
+}
 
-      if (ev.type === "mute") {
-        differer(() => { onEvent?.(ev); }, tMs);   // aucun son, juste le curseur
-        continue;
-      }
+/** Un passage, pour le lecteur de repli, à partir de maintenant. */
+function jouerTourSampler(evenements, opts, secParColonne) {
+  const { onEvent } = opts;
+  const dureeNote = secParColonne;
+  const t0 = Tone.now() + 0.02;
+  for (const ev of evenements) {
+    const tMs = ev.col * secParColonne * 1000;
 
-      if (ev.type === "note") {
-        const note = getToneNoteAtPosition(ev.string, ev.fret);
-        differer(() => {
-          onEvent?.(ev);
-          try { sampler.triggerAttackRelease(note, dureeNote, Tone.now(), 0.75); }
-          catch (e) { warn("playTab note:", e); }
-        }, tMs);
-        continue;
-      }
-
-      if (ev.type === "bend") {
-        // La hauteur d'arrivée, directement — voir le commentaire de tête.
-        const note = getToneNoteAtPosition(ev.string, ev.toFret);
-        differer(() => {
-          onEvent?.(ev);
-          try { sampler.triggerAttackRelease(note, dureeNote, Tone.now(), 0.75); }
-          catch (e) { warn("playTab bend:", e); }
-        }, tMs);
-        continue;
-      }
-
-      if (ev.type === "hammer" || ev.type === "pull") {
-        const noteDepart  = getToneNoteAtPosition(ev.string, ev.fromFret);
-        const noteArrivee = getToneNoteAtPosition(ev.string, ev.toFret);
-        // Avec toCol (grille de saisie), la note d'arrivée tombe sur SA
-        // colonne ; sans (texte collé), 75 ms après, comme avant.
-        const ecart = ev.toCol != null ? (ev.toCol - ev.col) * secParColonne : 0.075;
-        differer(() => {
-          onEvent?.(ev);
-          try {
-            sampler.triggerAttackRelease(noteDepart, Math.max(0.04, ecart), Tone.now(), 0.75);
-            // Seconde note plus douce, sans attaque au médiator — c'est le
-            // doigt seul qui la produit sur un hammer-on ou un pull-off.
-            sampler.triggerAttackRelease(noteArrivee, dureeNote * 0.9, Tone.now() + ecart, 0.45);
-          } catch (e) { warn("playTab hammer/pull:", e); }
-        }, tMs);
-        continue;
-      }
-
-      if (ev.type === "slide_up" || ev.type === "slide_down") {
-        const pas = ev.fromFret <= ev.toFret ? 1 : -1;
-        const cases = [];
-        for (let f = ev.fromFret; pas > 0 ? f <= ev.toFret : f >= ev.toFret; f += pas) cases.push(f);
-        // Avec toCol, l'arrivée du slide tombe sur sa propre colonne.
-        const dureeGlissando = ev.toCol != null
-          ? (ev.toCol - ev.col) * secParColonne
-          : Math.min(0.16, dureeNote * 0.5);
-        differer(() => {
-          onEvent?.(ev);
-          cases.forEach((f, i) => {
-            const note = getToneNoteAtPosition(ev.string, f);
-            const estArrivee = i === cases.length - 1;
-            const t = Tone.now() + (cases.length > 1 ? (i / (cases.length - 1)) * dureeGlissando : 0);
-            try {
-              sampler.triggerAttackRelease(
-                note, estArrivee ? dureeNote : 0.045, t, estArrivee ? 0.75 : 0.4,
-              );
-            } catch (e) { warn("playTab slide:", e); }
-          });
-        }, tMs);
-        continue;
-      }
+    if (ev.type === "clic") {
+      try { jouerClic(t0 + ev.col * secParColonne, !!ev.accent); } catch (e) { warn("playTab clic:", e); }
+      differer(() => { onEvent?.(ev); }, tMs);
+      continue;
     }
 
-    differer(() => onDone?.(), (dernierCol + 2) * secParColonne * 1000);
-  } catch (e) { warn("playTab:", e); }
+    if (ev.type === "mute") {
+      differer(() => { onEvent?.(ev); }, tMs);   // aucun son, juste le curseur
+      continue;
+    }
+
+    if (ev.type === "note") {
+      const note = getToneNoteAtPosition(ev.string, ev.fret);
+      differer(() => {
+        onEvent?.(ev);
+        try { sampler.triggerAttackRelease(note, dureeNote, Tone.now(), 0.75); }
+        catch (e) { warn("playTab note:", e); }
+      }, tMs);
+      continue;
+    }
+
+    if (ev.type === "bend") {
+      // La hauteur d'arrivée, directement — voir le commentaire de tête.
+      const note = getToneNoteAtPosition(ev.string, ev.toFret);
+      differer(() => {
+        onEvent?.(ev);
+        try { sampler.triggerAttackRelease(note, dureeNote, Tone.now(), 0.75); }
+        catch (e) { warn("playTab bend:", e); }
+      }, tMs);
+      continue;
+    }
+
+    if (ev.type === "hammer" || ev.type === "pull") {
+      const noteDepart  = getToneNoteAtPosition(ev.string, ev.fromFret);
+      const noteArrivee = getToneNoteAtPosition(ev.string, ev.toFret);
+      // Avec toCol (grille de saisie, liaison enchaînée), la note d'arrivée
+      // tombe sur SA colonne ; sans (texte collé), 75 ms après, comme avant.
+      const ecart = ev.toCol != null ? (ev.toCol - ev.col) * secParColonne : 0.075;
+      differer(() => {
+        onEvent?.(ev);
+        try {
+          // Maillon d'une liaison enchaînée : la note de départ sonne déjà.
+          if (!ev.sansAttaque) sampler.triggerAttackRelease(noteDepart, Math.max(0.04, ecart), Tone.now(), 0.75);
+          // Seconde note plus douce, sans attaque au médiator — c'est le
+          // doigt seul qui la produit sur un hammer-on ou un pull-off.
+          sampler.triggerAttackRelease(noteArrivee, dureeNote * 0.9, Tone.now() + ecart, 0.45);
+        } catch (e) { warn("playTab hammer/pull:", e); }
+      }, tMs);
+      continue;
+    }
+
+    if (ev.type === "slide_up" || ev.type === "slide_down") {
+      const pas = ev.fromFret <= ev.toFret ? 1 : -1;
+      const cases = [];
+      for (let f = ev.fromFret; pas > 0 ? f <= ev.toFret : f >= ev.toFret; f += pas) cases.push(f);
+      if (ev.sansAttaque && cases.length > 1) cases.shift();   // départ déjà joué
+      // Avec toCol, l'arrivée du slide tombe sur sa propre colonne.
+      const dureeGlissando = ev.toCol != null
+        ? (ev.toCol - ev.col) * secParColonne
+        : Math.min(0.16, dureeNote * 0.5);
+      differer(() => {
+        onEvent?.(ev);
+        cases.forEach((f, i) => {
+          const note = getToneNoteAtPosition(ev.string, f);
+          const estArrivee = i === cases.length - 1;
+          const t = Tone.now() + (cases.length > 1 ? (i / (cases.length - 1)) * dureeGlissando : 0);
+          try {
+            sampler.triggerAttackRelease(
+              note, estArrivee ? dureeNote : 0.045, t, estArrivee ? 0.75 : 0.4,
+            );
+          } catch (e) { warn("playTab slide:", e); }
+        });
+      }, tMs);
+      continue;
+    }
+  }
 }
 
 // Joue un accord depuis root + chordType

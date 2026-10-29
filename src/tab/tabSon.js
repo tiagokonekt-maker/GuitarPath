@@ -17,6 +17,8 @@
 //     fin de la voix ;
 //   • un slide fait GLISSER la hauteur d'une case à l'autre, sans attaque ;
 //   • un hammer-on / pull-off change de hauteur d'un coup, sans médiator ;
+//     une liaison ENCHAÎNÉE (3h5h7, 5h7p5 : maillons marqués sansAttaque)
+//     reste une seule voix, qui change de hauteur à chaque maillon ;
 //   • une note étouffée (x) donne un « tchk » court et sourd, pas un silence ;
 //   • dans un accord, les cordes sont grattées de la plus grave à la plus
 //     aiguë, à quelques millisecondes d'écart — jamais parfaitement ensemble.
@@ -42,10 +44,10 @@ export const REGLAGES = {
   grattageMs: 12,           // écart entre deux cordes d'un accord
   bendDelaiS: 0.03,         // le bend commence juste après l'attaque
   bendDureeMax: 0.18,       // s — durée max de la montée d'un bend
-  slidePart: 0.85,
+  slidePart: 0.85,         // part du temps disponible occupée par le glissé
   vibratoAmplitude: 0.3,    // demi-ton — écart max de part et d'autre de la note
   vibratoFrequence: 5.5,    // Hz — oscillations par seconde
-  vibratoDelaiS: 0.06,      // s — la note est d'abord tenue droite, puis vibre          // part du temps disponible occupée par le glissé
+  vibratoDelaiS: 0.06,      // s — la note est d'abord tenue droite, puis vibre
   etouffeeDuree: 0.05,      // s — le « tchk » d'une note étouffée
   velociteEtouffee: 0.55,
 };
@@ -57,11 +59,47 @@ const vel = (col, rng, R) => {
   return Math.max(0.2, Math.min(1, v));
 };
 
+/** Dernière voix (dans l'ordre de création) jouée sur la corde `corde`. */
+function derniereVoixDe(voix, corde) {
+  for (let i = voix.length - 1; i >= 0; i--) if (voix[i].corde === corde) return voix[i];
+  return null;
+}
+
+/**
+ * Ajoute un maillon de liaison enchaînée (`sansAttaque`) à la courbe de
+ * hauteur de la voix `x`. Les instants sont comptés depuis la colonne de
+ * l'attaque de la voix (x.colOrigine). Renvoie false si la voix ne peut pas
+ * être prolongée (absente, étouffée, ou pas sur la case de départ du maillon).
+ */
+function prolonger(x, ev, ouverte, spc, R) {
+  if (!x || x.etouffee || x.colOrigine == null || x.colOrigine > ev.col) return false;
+  const derniere = x.hauteurs[x.hauteurs.length - 1];
+  if (Math.round(derniere.midi) !== ouverte + ev.fromFret) return false;
+  const arrivee = ouverte + ev.toFret;
+  const tCol = (c) => (c - x.colOrigine) * spc;
+  const toCol = ev.toCol ?? ev.col + 1;
+  const tDepart = Math.max(derniere.t, tCol(ev.col));
+  if (ev.type === "slide_up" || ev.type === "slide_down") {
+    const dispo = (toCol - ev.col) * spc;
+    x.hauteurs.push({ t: tDepart, midi: derniere.midi, forme: "saut" });
+    x.hauteurs.push({ t: tDepart + Math.max(0.03, dispo * R.slidePart), midi: arrivee, forme: "rampe" });
+  } else {
+    x.hauteurs.push({ t: Math.max(tDepart, tCol(toCol)), midi: arrivee, forme: "saut" });
+  }
+  if (ev.vibrato) x.vibrato = true;
+  x.maillons = (x.maillons || 0) + 1;
+  return true;
+}
+
 /**
  * @param evenements  sortie de parseTab / grilleVersEvenements
  * @param opts.bpm, opts.subdivision (0.25 = double-croche par colonne)
  * @param opts.rng    générateur aléatoire (injectable pour des tests déterministes)
  * @param opts.reglages  surcharge partielle de REGLAGES
+ * @param opts.suite  évènements joués JUSTE APRÈS (boucle A–B : le tour
+ *                    suivant, colonnes déjà décalées). Pas joués ici : ils
+ *                    décident seulement où s'arrêtent les dernières notes
+ *                    (coupées si leur corde rejoue, sinon résonance normale).
  * @returns { voix: [...], duree } — duree = fin de la dernière voix (s)
  */
 export function planifierTab(evenements, opts = {}) {
@@ -69,11 +107,17 @@ export function planifierTab(evenements, opts = {}) {
   const R = { ...REGLAGES, ...(opts.reglages || {}) };
   const spc = (60 / bpm) * subdivision;   // secondes par colonne
   if (!Array.isArray(evenements) || !evenements.length) return { voix: [], duree: 0 };
+  // Suite (boucle) : évènements qui suivent immédiatement, mêmes colonnes.
+  // Ils servent seulement à savoir quand une corde REJOUE après la fin :
+  // leurs voix sont calculées puis retirées du plan.
+  const suite = Array.isArray(opts.suite) ? opts.suite : [];
+  const deLaSuite = new Set(suite);
+  const tous = suite.length ? [...evenements, ...suite] : evenements;
 
   // Grattage : dans un accord (≥ 3 cordes sur la même colonne), de la corde
   // la plus grave (6) à la plus aiguë (1).
   const parCol = new Map();
-  for (const ev of evenements) {
+  for (const ev of tous) {
     if (!parCol.has(ev.col)) parCol.set(ev.col, []);
     parCol.get(ev.col).push(ev);
   }
@@ -84,20 +128,28 @@ export function planifierTab(evenements, opts = {}) {
   }
 
   const voix = [];
-  for (const ev of [...evenements].sort((a, b) => a.col - b.col || b.string - a.string)) {
+  for (const ev of [...tous].sort((a, b) => a.col - b.col || b.string - a.string)) {
     const ouverte = CORDE_MIDI[ev.string];
     if (ouverte == null) continue;
+    // Maillon d'une liaison enchaînée (3h5h7) : il PROLONGE la voix en cours
+    // sur sa corde, sans nouvelle attaque. Si cette voix manque (passage A–B
+    // ou reprise qui commence au milieu de la chaîne), il est attaqué comme
+    // une liaison simple.
+    if (ev.sansAttaque) {
+      const x = derniereVoixDe(voix, ev.string);
+      if (x && deLaSuite.has(x.ev) === deLaSuite.has(ev) && prolonger(x, ev, ouverte, spc, R)) continue;
+    }
     const jitter = (rng() * R.decalageMaxMs) / 1000;
     const debut = ev.col * spc + (decalageGrattage.get(ev) || 0) + jitter;
     const v = vel(ev.col, rng, R);
 
     if (ev.type === "mute") {
-      voix.push({ corde: ev.string, debut, fin: debut + R.etouffeeDuree, velocite: R.velociteEtouffee, etouffee: true,
+      voix.push({ corde: ev.string, colOrigine: ev.col, debut, fin: debut + R.etouffeeDuree, velocite: R.velociteEtouffee, etouffee: true,
         hauteurs: [{ t: 0, midi: ouverte, forme: "saut" }], ev });
       continue;
     }
     if (ev.type === "note") {
-      voix.push({ corde: ev.string, debut, fin: null, velocite: v, etouffee: false, hauteurs: [{ t: 0, midi: ouverte + ev.fret, forme: "saut" }], ev });
+      voix.push({ corde: ev.string, colOrigine: ev.col, debut, fin: null, velocite: v, etouffee: false, hauteurs: [{ t: 0, midi: ouverte + ev.fret, forme: "saut" }], ev });
       continue;
     }
     if (ev.type === "bend") {
@@ -117,20 +169,20 @@ export function planifierTab(evenements, opts = {}) {
         hauteurs.push({ t: tRelache, midi: arrivee, forme: "saut" });
         hauteurs.push({ t: tRelache + montee, midi: ouverte + ev.releaseFret, forme: "rampe" });
       }
-      voix.push({ corde: ev.string, debut, fin: null, velocite: v, etouffee: false, ev, hauteurs });
+      voix.push({ corde: ev.string, colOrigine: ev.col, debut, fin: null, velocite: v, etouffee: false, ev, hauteurs });
       continue;
     }
     if (ev.type === "hammer" || ev.type === "pull") {
       // Arrivée sur SA colonne (toCol, grille de saisie) ; sinon 75 ms après
       // (texte collé), comme avant.
       const ecart = ev.toCol != null ? (ev.toCol - ev.col) * spc : 0.075;
-      voix.push({ corde: ev.string, debut, fin: null, velocite: v, etouffee: false, ev,
+      voix.push({ corde: ev.string, colOrigine: ev.col, debut, fin: null, velocite: v, etouffee: false, ev,
         hauteurs: [{ t: 0, midi: ouverte + ev.fromFret, forme: "saut" }, { t: ecart, midi: ouverte + ev.toFret, forme: "saut" }] });
       continue;
     }
     if (ev.type === "slide_up" || ev.type === "slide_down") {
       const dispo = ev.toCol != null ? (ev.toCol - ev.col) * spc : Math.min(0.16, spc);
-      voix.push({ corde: ev.string, debut, fin: null, velocite: v, etouffee: false, ev,
+      voix.push({ corde: ev.string, colOrigine: ev.col, debut, fin: null, velocite: v, etouffee: false, ev,
         hauteurs: [{ t: 0, midi: ouverte + ev.fromFret, forme: "saut" }, { t: Math.max(0.03, dispo * R.slidePart), midi: ouverte + ev.toFret, forme: "rampe" }] });
       continue;
     }
@@ -149,7 +201,10 @@ export function planifierTab(evenements, opts = {}) {
       if (x.etouffee) return;
       const derniereHauteur = x.hauteurs[x.hauteurs.length - 1].t;
       const suivante = liste[i + 1];
-      const naturelle = x.debut + Math.max(derniereHauteur + 0.05, suivante ? R.resonanceMax : R.resonanceFinale);
+      // Liaison enchaînée : chaque hammer-on / pull-off relance la corde, la
+      // résonance se compte depuis le dernier maillon (pas depuis l'attaque).
+      const depuis = x.maillons ? derniereHauteur : 0;
+      const naturelle = x.debut + Math.max(derniereHauteur + 0.05, depuis + (suivante ? R.resonanceMax : R.resonanceFinale));
       x.fin = suivante ? Math.min(suivante.debut, naturelle) : naturelle;
     });
   }
@@ -158,7 +213,7 @@ export function planifierTab(evenements, opts = {}) {
   // note / +A / note / −A / … reliés par des rampes, un quart de période
   // d'écart : une oscillation régulière jusqu'à la fin de la voix.
   for (const x of voix) {
-    if (!x.ev?.vibrato || x.etouffee) continue;
+    if (!(x.ev?.vibrato || x.vibrato) || x.etouffee) continue;
     const dernier = x.hauteurs[x.hauteurs.length - 1];
     const tDebut = dernier.t + R.vibratoDelaiS;
     const tFin = x.fin - x.debut;
@@ -171,6 +226,7 @@ export function planifierTab(evenements, opts = {}) {
     }
   }
 
-  voix.sort((a, b) => a.debut - b.debut);
-  return { voix, duree: voix.reduce((m, x) => Math.max(m, x.fin), 0) };
+  const retenues = suite.length ? voix.filter(x => !deLaSuite.has(x.ev)) : voix;
+  retenues.sort((a, b) => a.debut - b.debut);
+  return { voix: retenues, duree: retenues.reduce((m, x) => Math.max(m, x.fin), 0) };
 }

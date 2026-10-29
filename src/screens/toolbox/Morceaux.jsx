@@ -6,8 +6,9 @@
 //
 // Toute la logique (analyse de la tab, découpage A–B, tempo, décompte) vit
 // dans morceaux/morceaux.js, testée à part. Ici : l'affichage, et un appel
-// à audioEngine.playTab avec des évènements déjà préparés — le moteur audio
-// n'a pas eu besoin d'une seule option nouvelle.
+// à audioEngine.playTab avec des évènements déjà préparés. playTab gère
+// lui-même la boucle A–B (option `boucle`, tours enchaînés dans le temps
+// audio) et le clic du décompte (évènements `clic`).
 import { useState, useRef, useEffect, useCallback, useMemo, useId } from "react";
 import { FONTS, R, T, TAP } from "../../design/tokens.js";
 import { useC } from "../../design/ThemeContext.jsx";
@@ -305,7 +306,6 @@ function LecteurMorceau({ morceau, onRetour, C, dispatch }) {
   // lecture à tout instant, entre deux notes.
   const derniereRef = useRef(null);
   const repriseRef = useRef(null);                 // position mémorisée à la pause
-  const timerBoucleRef = useRef(null);
   const timerReglageRef = useRef(null);
   const titreRef = useRef(null);
 
@@ -314,7 +314,6 @@ function LecteurMorceau({ morceau, onRetour, C, dispatch }) {
   // Coupe le son et invalide les rappels de la lecture en cours.
   const couper = useCallback(() => {
     lectureRef.current++;
-    clearTimeout(timerBoucleRef.current); timerBoucleRef.current = null;
     stopAll();
     setClic(null);
   }, []);
@@ -336,15 +335,17 @@ function LecteurMorceau({ morceau, onRetour, C, dispatch }) {
     return pos >= d * W && pos < (f + 1) * W ? pos : null;
   }, [analyse]);
 
-  const lancerRef = useRef(null);
   // depuisCol : colonne exacte où reprendre (par défaut le début A) ;
   // avecDecompte : décompte joué devant (si l'option est active).
   const lancer = useCallback(async ({ depuisCol, avecDecompte }) => {
     const r = reglagesRef.current;
-    const plan = preparerLecture(analyse, {
-      tempo: morceau.tempo, signature: morceau.mesure, pourcent: r.vitesse,
-      debut: r.debut, fin: r.fin, decompte: avecDecompte && r.decompte, depuisCol,
-    });
+    const base = { tempo: morceau.tempo, signature: morceau.mesure, pourcent: r.vitesse, debut: r.debut, fin: r.fin };
+    // En boucle, le passage A–B complet (sans décompte ni reprise) est confié
+    // au moteur audio, qui enchaîne les tours dans le temps audio : la fin du
+    // passage résonne jusqu'au retour du début A, sans coupure ni trou.
+    const tour = r.boucle ? preparerLecture(analyse, base) : null;
+    let plan = preparerLecture(analyse, { ...base, decompte: avecDecompte && r.decompte, depuisCol });
+    if (!plan.evenements.length && tour?.evenements.length) plan = tour;   // reprise sur la fin muette du passage
     if (!plan.evenements.length) return;
     couper();
     const id = lectureRef.current;
@@ -353,6 +354,8 @@ function LecteurMorceau({ morceau, onRetour, C, dispatch }) {
     // avant de jouer ; la minuterie de boucle ne doit partir qu'ensuite.
     await playTab(plan.evenements, {
       bpm: plan.bpm,
+      colonnes: plan.colonnes,
+      boucle: tour?.evenements.length ? { evenements: tour.evenements, colonnes: tour.colonnes } : undefined,
       onEvent: (ev) => {
         if (!enLecture(id)) return;
         if (ev.decompte) { setClic(ev.decompte); return; }
@@ -360,29 +363,17 @@ function LecteurMorceau({ morceau, onRetour, C, dispatch }) {
         derniereRef.current = { col: ev.colMorceau, t: performance.now(), bpm: plan.bpm };
         setColCourante(ev.colMorceau);
       },
+      // Jamais appelé en boucle : la lecture ne s'arrête qu'à stopAll().
       onDone: () => {
         if (enLecture(id) && !reglagesRef.current.boucle) arreter();
       },
     });
-    if (!enLecture(id)) return;   // arrêtée ou remplacée pendant le chargement
-    // En boucle, on repart du début A à la fin de la DERNIÈRE MESURE du
-    // passage (et non de la dernière note) : la boucle reste calée sur la
-    // pulsation.
-    if (r.boucle) {
-      timerBoucleRef.current = setTimeout(() => {
-        timerBoucleRef.current = null;
-        if (!enLecture(id)) return;
-        if (reglagesRef.current.boucle) lancerRef.current?.({ avecDecompte: false });
-        else arreter();
-      }, plan.duree * 1000);
-    }
   }, [analyse, morceau, arreter, couper]);
-  useEffect(() => { lancerRef.current = lancer; }, [lancer]);
 
   // On quitte le morceau (retour à la liste, autre onglet) : silence.
   useEffect(() => () => {
     lectureRef.current++; etatRef.current = "arret";
-    clearTimeout(timerBoucleRef.current); clearTimeout(timerReglageRef.current);
+    clearTimeout(timerReglageRef.current);
     stopAll();
   }, []);
 
@@ -424,8 +415,8 @@ function LecteurMorceau({ morceau, onRetour, C, dispatch }) {
     setDebut(d); setFin(f); majReglages({ debut: d, fin: f }); appliquerEnDirect();
   };
   const toutLeMorceau = () => { setDebut(0); setFin(derniere); majReglages({ debut: 0, fin: derniere }); appliquerEnDirect(); };
-  // La boucle se décide à la fin du passage : relancer pour (re)programmer
-  // le retour au début A.
+  // La boucle est planifiée par le moteur audio dès le lancement : relancer
+  // (là où on en est) pour l'ajouter ou la retirer.
   const basculerBoucle = () => { const b = !boucle; setBoucle(b); majReglages({ boucle: b }); appliquerEnDirect(); };
   // Le décompte ne sert qu'au démarrage : rien à relancer.
   const basculerDecompte = () => { const d = !decompte; setDecompte(d); majReglages({ decompte: d }); };

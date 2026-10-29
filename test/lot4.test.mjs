@@ -183,7 +183,9 @@ for (const date of ["2026-09-01", DATE_ENTRELACEMENT, "2026-10-20"]) {
     const path = buildPath(content, s);
     const ouvertes = new Set(path.filter(u => u.unlocked).flatMap(u => u.lessons.map(l => l.id)));
 
-    assert.equal(path[path.length - 1].id, "palier-9-3", "le parcours finit toujours sur palier-9-3");
+    // Les Annexes (facultatives, voir test/annexes.test.mjs) viennent après.
+    const parcours = path.filter(u => !u.annexe);
+    assert.equal(parcours[parcours.length - 1].id, "palier-9-3", "le parcours finit toujours sur palier-9-3");
     for (const l of [...Object.values(ANCIEN[8]).flat(), ...Object.values(ANCIEN[9]).flat()]) assert.ok(ouvertes.has(l), `${l} reste accessible`);
     for (const l of [...NOUVELLES[8], ...NOUVELLES[9]]) assert.ok(ouvertes.has(l), `${l} accessible`);
     verifierAcquis(path, validees);

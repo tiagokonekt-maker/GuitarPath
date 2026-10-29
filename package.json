@@ -8,11 +8,12 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "node --test \"test/**/*.test.mjs\" && npm run verify",
+    "test": "node scripts/generer-index-app.mjs && node --test \"test/**/*.test.mjs\" && npm run verify",
     "test:watch": "node --test --watch \"test/**/*.test.mjs\"",
     "verify": "node scripts/verifier-imports.mjs && node scripts/verifier-contenu.mjs",
     "smoke": "node smoke/build.mjs && node smoke/render.mjs",
-    "check": "npm run test && npm run smoke"
+    "check": "npm run test && npm run smoke",
+    "contenu:app": "node scripts/generer-index-app.mjs"
   },
   "dependencies": {
     "@fontsource/nunito": "^5.3.0",

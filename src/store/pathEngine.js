@@ -50,6 +50,13 @@
 //    changent pas (ils ne dépendent que du nombre de leçons du palier) ;
 //    la compatibilité avec une progression acquise sous l'ancien
 //    découpage est décrite au-dessus de `buildPath`.
+//
+// 7. VÉRIFICATION À 2 QUESTIONS PAR LEÇON (6 à 12), au lieu de 15 pour
+//    toutes : voir `unitCheckSize`.
+//
+// 8. ANNEXES. Un module `facultatif` (« Annexes ») forme une unité placée
+//    après le palier 9, toujours ouverte, jamais bloquante : voir
+//    `estModuleAnnexe`.
 
 export const UNIT_CHECK_PASS_PCT = 70;
 export const MODULE_ORDER = ["neck", "scales", "harmony", "rhythm", "impro"];
@@ -84,17 +91,67 @@ export const unitBonusXp = (lessonCount) =>
 export const UNIT_BONUS_XP = 40;
 
 /**
- * Nombre CIBLE de questions de vérification.
+ * Nombre CIBLE de questions de vérification : 2 par leçon, entre 6 et 12.
  *
- * Passé de "proportionnel à la taille de l'unité" (4 à 14, borné) à une
- * cible fixe de 15 : le nombre réel de leçons ne dit rien de si l'utilisateur
- * a vraiment compris ou juste eu de la chance sur un petit échantillon.
+ *     questions = min(12, max(6, 2 × leçons))
  *
- * `_lessonCount` reste dans la signature pour ne rien casser côté appelants,
- * mais n'est plus utilisé — la cible ne dépend plus de la taille de l'unité.
+ *     leçons    : 2  3  4  5   6   7   8
+ *     questions : 6  6  8  10  12  12  12
+ *     erreurs tolérées à 70 % : 1  1  2  3  3  3  3
+ *
+ * Pourquoi :
+ *   • 2 PAR LEÇON : chaque leçon peut être interrogée sous deux angles, et
+ *     la vérification reste en rapport avec l'effort (la cible fixe de 15
+ *     posait 15 questions sur une unité de 3 leçons : plus long que les
+ *     leçons elles-mêmes, et forcément répétitif, le cœur de l'unité n'en
+ *     contenant souvent qu'une dizaine) ;
+ *   • PLANCHER 6 : en dessous, une seule réponse au hasard fait varier le
+ *     score de plus de 15 points, et 70 % se jouerait à pile ou face. À 6,
+ *     il faut 5 bonnes réponses : une erreur permise, pas deux ;
+ *   • PLAFOND 12 : au-delà, la vérification dépasse ~4 minutes et l'attention
+ *     baisse ; c'est aussi ce qu'un cœur de 6 à 8 leçons (≥ 3 questions
+ *     chacune) fournit en gardant la moitié de côté pour la rotation d'une
+ *     tentative à l'autre (voir unitCheckSampler.buildSample).
+ * Les unités du parcours font 2 à 8 leçons (seuil de scission) : la
+ * formule couvre donc toute la plage, du plancher au plafond.
+ *
+ * Ce n'est qu'une CIBLE : le vrai plafond (pool réellement disponible pour
+ * CET utilisateur) se calcule à l'exécution, dans buildSample. Une
+ * vérification déjà réussie reste acquise quelle que soit la taille d'alors
+ * (buildPath ne lit que `passed`).
  */
-export const unitCheckSize = (_lessonCount) => 15;
-export const UNIT_CHECK_MAX_QUESTIONS = 15;   // cible par défaut si unit.checkSize est absent
+export const UNIT_CHECK_PAR_LECON = 2;
+export const UNIT_CHECK_MIN_QUESTIONS = 6;
+export const UNIT_CHECK_MAX_QUESTIONS = 12;   // aussi la cible par défaut si unit.checkSize est absent
+export const unitCheckSize = (lessonCount) => Math.min(
+  UNIT_CHECK_MAX_QUESTIONS,
+  Math.max(UNIT_CHECK_MIN_QUESTIONS, Math.round((lessonCount || 0) * UNIT_CHECK_PAR_LECON)),
+);
+/**
+ * Bonnes réponses nécessaires sur `n` questions pour atteindre le seuil
+ * (même règle que l'écran : pourcentage arrondi ≥ UNIT_CHECK_PASS_PCT).
+ */
+export function bonnesReponsesRequises(n) {
+  if (!(n > 0)) return 0;
+  for (let k = 0; k <= n; k++) if (Math.round((k / n) * 100) >= UNIT_CHECK_PASS_PCT) return k;
+  return n;
+}
+
+/**
+ * Module « Annexes » : leçons pratiques hors progression (changer ses
+ * cordes, régler son ampli, écrire un morceau…). Un module marqué
+ * `facultatif: true` (ou portant cet identifiant) forme UNE unité placée
+ * APRÈS tout le parcours, toujours ouverte, sans vérification ni coffre,
+ * jamais « courante », jamais proposée comme prochaine leçon, et qui ne
+ * compte ni dans les statistiques du parcours ni pour rendre « Premiers
+ * pas » facultatif. Ses questions (courseId "annexes") n'entrent pas dans
+ * le test de placement (TESTABLE_MODULES) ni dans le pool d'une autre
+ * unité (getUnitQuizPool ne retient que les modules de l'unité).
+ * Comme elle vient en dernier, les identifiants et l'ordre des unités de
+ * palier ne bougent pas.
+ */
+export const ANNEXES_MODULE = "annexes";
+export const estModuleAnnexe = (course) => !!course?.facultatif || course?.id === ANNEXES_MODULE;
 
 /** Nombre de paliers ouverts d'emblée selon le résultat du placement. */
 const TIER_HEADSTART = { A1: 0, A2: 1, B1: 2, B2: 3 };
@@ -218,13 +275,13 @@ export function buildUnits(courses = [], state = null, { regroupementHistorique 
         courseIds: [c.id],
         lessons: chunk,
         bonusXp: unitBonusXp(chunk.length),
-        checkSize: Math.max(3, unitCheckSize(chunk.length)),
+        checkSize: unitCheckSize(chunk.length),
         quizPoolSize: new Set(chunk.flatMap(l => l.quiz || [])).size,
       });
     });
   }
 
-  const allLessons = courses.filter(c => !estModulePrelude(c)).flatMap(c =>
+  const allLessons = courses.filter(c => !estModulePrelude(c) && !estModuleAnnexe(c)).flatMap(c =>
     (c.lessons || []).map(l => ({ ...l, courseId: c.id, courseTitle: c.title }))
   );
   // Leçons sans level explicite (contenu importé, oubli) : rattachées au
@@ -262,7 +319,7 @@ export function buildUnits(courses = [], state = null, { regroupementHistorique 
       // utilisateur au moment précis de la vérification — cœur + renfort +
       // rappel confondus. `checkSize` ici n'est qu'une CIBLE.
       const stock = new Set(chunk.flatMap(l => l.quiz || [])).size;
-      const checkSize = Math.max(3, unitCheckSize(chunk.length));
+      const checkSize = unitCheckSize(chunk.length);
       units.push({
         id: chunks.length > 1 ? `palier-${level}-${partIdx + 1}` : `palier-${level}`,
         level,
@@ -276,6 +333,32 @@ export function buildUnits(courses = [], state = null, { regroupementHistorique 
         checkSize,
         quizPoolSize: stock,
       });
+    });
+  }
+
+  // ── Annexes, après le palier 9 ─────────────────────────────────────────
+  // Une unité par module annexe, id = id du module (`annexes`). Pas de
+  // palier : `level` vaut undefined et non null, car `null < 5` est VRAI en
+  // JavaScript (une unité sans palier passerait pour un palier antérieur),
+  // alors que toute comparaison avec undefined est fausse. Pas de
+  // vérification (`checkSize: 0`), pas de coffre (`bonusXp: 0`) : voir
+  // estModuleAnnexe et buildPath.
+  for (const c of courses.filter(estModuleAnnexe)) {
+    const lessons = (c.lessons || []).map(l => ({ ...l, courseId: c.id, courseTitle: c.title, annexe: true }));
+    if (lessons.length === 0) continue;
+    units.push({
+      id: c.id,
+      level: undefined,
+      part: null,
+      parts: 1,
+      title: c.title,
+      prelude: false,
+      annexe: true,
+      courseIds: [c.id],
+      lessons,
+      bonusXp: 0,
+      checkSize: 0,
+      quizPoolSize: new Set(lessons.flatMap(l => l.quiz || [])).size,
     });
   }
   return units;
@@ -308,8 +391,12 @@ export function debutFacultatif(state, units = null) {
   const prelude = (units || []).filter(u => u.prelude);
   const leconsPrelude = new Set(prelude.flatMap(u => u.lessons.map(l => l.id)));
   const unitesPrelude = new Set(prelude.map(u => u.id));
+  // Une leçon d'annexe (changer ses cordes…) ne dit rien du niveau : un
+  // débutant complet qui la lit reste sur le parcours débutant.
+  const leconsAnnexes = new Set((units || []).filter(u => u.annexe).flatMap(u => u.lessons.map(l => l.id)));
   const hors = (id, connus) => !connus.has(id) && !id.startsWith(`${DEBUT_MODULE}-`);
-  const autreLecon = Object.keys(state?.completedLessons || {}).some(id => hors(id, leconsPrelude));
+  const autreLecon = Object.keys(state?.completedLessons || {})
+    .some(id => hors(id, leconsPrelude) && !leconsAnnexes.has(id) && !id.startsWith(`${ANNEXES_MODULE}-`));
   const autreVerif = Object.entries(state?.unitChecks || {}).some(([id, c]) => c?.passed && hors(id, unitesPrelude));
   if (autreLecon || autreVerif) return true;
 
@@ -403,7 +490,8 @@ function leconsOuvertesHistorique(courses, state, headstartCount, facultatif) {
     || Object.keys(claimed).some(passedAvant);
   if (!traces) return ouvertes;
 
-  const anciennes = buildUnits(courses, state, { regroupementHistorique: true });
+  // Les annexes n'existaient pas sous l'ancien découpage : hors de la chaîne.
+  const anciennes = buildUnits(courses, state, { regroupementHistorique: true }).filter(u => !u.annexe);
   let precedenteFranchie = true;
   let palierIdx = 0;
   anciennes.forEach((u, i) => {
@@ -483,6 +571,19 @@ export function buildPath(content, state) {
     const done = u.lessons.filter(l => completed[l.id]).length;
     const total = u.lessons.length;
     const lessonsComplete = total > 0 && done === total;
+
+    // Annexes : toujours ouvertes, facultatives, sans vérification ni
+    // coffre, jamais courantes. Elles ne touchent ni à `prevPassable` ni à
+    // `currentAssigned` : rien de ce qui suit (il n'y a rien après elles,
+    // mais un pack importé pourrait en ajouter) n'en dépend.
+    if (u.annexe) {
+      return {
+        ...u,
+        index: i, done, total, complete: lessonsComplete, unlocked: true, isCurrent: false, optional: true,
+        lessonsComplete, needsCheck: false, check: null, headstart: false,
+        bonusClaimable: false, bonusClaimed: false,
+      };
+    }
     // valeurUnite : un acquis enregistré sous l'identifiant d'avant
     // scission (`palier-2`) vaut pour chaque partie (`palier-2-1`, `-2`).
     const check = valeurUnite(checks, u.id) || null;
@@ -640,7 +741,9 @@ export function getNextLesson(content, state) {
   // placement mais volontairement survolé.
   // Les unités d'initiation facultatives passent en dernier : elles ne
   // sont jamais proposées avant le contenu du parcours lui-même.
-  const ordered = [...path.filter(u => u.isCurrent), ...path.filter(u => !u.optional), ...path.filter(u => u.optional)];
+  // Les annexes ne sont jamais proposées : on y va quand on veut.
+  const parcours = path.filter(u => !u.annexe);
+  const ordered = [...parcours.filter(u => u.isCurrent), ...parcours.filter(u => !u.optional), ...parcours.filter(u => u.optional)];
   const seen = new Set();
 
   for (const u of ordered) {
@@ -658,9 +761,12 @@ export function getNextLesson(content, state) {
   return null;
 }
 
-/** Statistiques globales du parcours (pour l'en-tête de l'écran). */
+/**
+ * Statistiques globales du parcours (pour l'en-tête de l'écran). Les annexes
+ * n'y comptent pas : facultatives, elles n'empêchent pas d'atteindre 100 %.
+ */
 export function getPathStats(content, state) {
-  const path = buildPath(content, state);
+  const path = buildPath(content, state).filter(u => !u.annexe);
   const totalLessons = path.reduce((a, u) => a + u.total, 0);
   const doneLessons  = path.reduce((a, u) => a + u.done, 0);
   const currentUnit  = path.find(u => u.isCurrent) || null;

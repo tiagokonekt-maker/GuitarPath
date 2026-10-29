@@ -181,8 +181,11 @@ test("extraireSegment décale aussi releaseCol et toCol", () => {
 
 test("ajouterDecompte : une mesure de clics devant, le reste décalé d'une mesure", () => {
   const evs = ajouterDecompte([{ type: "note", string: 1, fret: 0, col: 0 }], 16, [0, 4, 8, 12]);
-  assert.deepEqual(evs.map(e => [e.col, e.type, e.decompte ?? null]),
-    [[0, "mute", 1], [4, "mute", 2], [8, "mute", 3], [12, "mute", 4], [16, "note", null]]);
+  assert.deepEqual(evs.map(e => [e.col, e.type, e.decompte ?? null, !!e.accent]),
+    [[0, "clic", 1, true], [4, "clic", 2, false], [8, "clic", 3, false], [12, "clic", 4, false], [16, "note", null, false]]);
+  // Pas de corde : le plan sonore de la guitare ignore les clics (joués à part, par playTab).
+  assert.ok(evs.slice(0, 4).every(e => e.string == null));
+  assert.equal(planifierTab(evs.slice(0, 4), { bpm: 60 }).voix.length, 0);
 });
 
 test("preparerLecture : segment, tempo réduit, décompte et durée de boucle", () => {

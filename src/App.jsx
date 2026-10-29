@@ -82,8 +82,24 @@ const PRELOAD = {
 };
 
 // ── Contenu pédagogique ───────────────────────────────────────────────────
-// Chargé en parallèle du premier rendu, pas avant lui.
-const chargerContenu = () => import("./content/index.js");
+// Chargé en parallèle du premier rendu, pas avant lui. Index GÉNÉRÉ
+// (scripts/generer-index-app.mjs) : métadonnées des leçons, quiz et
+// exercices, SANS le corps des leçons (cartes), chargé à l'ouverture de
+// chaque leçon (src/lecon/corpsLecon.js). src/content/index.js reste la
+// source complète, utilisée par Node (tests, vérificateurs).
+const chargerContenu = () => import("./content/index-app.js");
+
+// Une fois l'app affichée et au repos, on récupère en tâche de fond le corps
+// de toutes les leçons : le service worker les met en cache, ce qui garde
+// chaque leçon ouvrable hors-ligne. Sauf si l'économiseur de données est actif.
+let corpsPrecharges = false;
+function prechargerCorpsAuRepos() {
+  if (corpsPrecharges || typeof window === "undefined" || navigator.connection?.saveData) return;
+  corpsPrecharges = true;
+  const lancer = () => import("./lecon/corpsLecon.js").then(m => m.prechargerCorpsLecons()).catch(() => {});
+  const auRepos = window.requestIdleCallback || ((f) => setTimeout(f, 1));
+  setTimeout(() => auRepos(lancer, { timeout: 10000 }), 5000);
+}
 
 // ── Navigation ────────────────────────────────────────────────────────────
 // « Parcours » disparaît en tant qu'onglet séparé : l'Accueil EST le
@@ -159,7 +175,10 @@ function AppInner({ onThemeChange }) {
   // ── Contenu pédagogique ────────────────────────────────────────────────
   const rechargerContenu = useCallback(() => {
     chargerContenu()
-      .then(m => setContent(loadContent({ courses: m.COURSES, quiz: m.QUIZ, exercises: m.EXERCISES })))
+      .then(m => {
+        setContent(loadContent({ courses: m.COURSES, quiz: m.QUIZ, exercises: m.EXERCISES }));
+        prechargerCorpsAuRepos();
+      })
       .catch(err => { console.error("Groply — chargement du contenu :", err); setLoadError(err); });
   }, []);
   useEffect(() => { rechargerContenu(); }, [rechargerContenu]);

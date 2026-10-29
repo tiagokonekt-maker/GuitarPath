@@ -4,6 +4,10 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { LIGHT, DARK, FONTS, R } from "./tokens.js";
 
+// Contexte et hooks exportés avec le Provider, volontairement : les séparer
+// changerait des dizaines d'imports pour un gain limité au rechargement à
+// chaud en développement.
+// eslint-disable-next-line react-refresh/only-export-components
 export const ThemeContext = createContext({ C: LIGHT, theme: "light", resolvedTheme: "light" });
 
 export function ThemeProvider({ children, theme = "auto" }) {
@@ -35,10 +39,12 @@ export function ThemeProvider({ children, theme = "auto" }) {
 }
 
 // Hook principal : remplace "import { C } from ./tokens.js" partout
+// eslint-disable-next-line react-refresh/only-export-components
 export function useC() {
   return useContext(ThemeContext).C;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useTheme() {
   return useContext(ThemeContext);
 }

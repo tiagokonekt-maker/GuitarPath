@@ -16,6 +16,9 @@
 // d'ici, au lieu de les définir localement.
 import { getUnitQuizPool, UNIT_CHECK_MAX_QUESTIONS } from "./pathEngine.js";
 
+/** Plafond dur du rappel (questions de paliers antérieurs). */
+export const MAX_RAPPEL = 3;
+
 function shuffle(arr) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -34,20 +37,25 @@ function shuffle(arr) {
  *      contrôlait plus rien une fois les corrections vues une fois.
  * v2 : pool élargi au renfort (même module, déjà complété), dosage
  *      deux-tiers/un-tiers, rotation par tentative précédente.
- * v3 (celle-ci) : cible passée de ~7 à 15, et un TROISIÈME étage —
+ * v3 : cible passée de ~7 à 15, et un TROISIÈME étage —
  *      2 à 3 questions de RAPPEL, tirées de paliers déjà complétés. Objectif
  *      explicite : s'assurer que l'utilisateur a vraiment étudié le
  *      contenu, pas seulement eu de la chance sur un petit échantillon.
+ * v4 (celle-ci) : cible proportionnelle, 2 questions par leçon entre 6 et
+ *      12 (pathEngine.unitCheckSize). Le rappel suit la taille : un quart
+ *      de l'échantillon, arrondi par défaut, plafonné à 3 (6 → 1, 8 → 2,
+ *      10 → 2, 12 → 3), pour que le rappel ne mange pas la moitié d'une
+ *      petite vérification.
  *
- * ── Répartition des 15 questions ─────────────────────────────────────────
- *   1. RAPPEL   jusqu'à 3, jamais plus que ce qui existe réellement (une
- *               unité de palier 1 ou 2 n'a simplement rien à rappeler —
+ * ── Répartition (cible de 6 à 12 questions) ──────────────────────────────
+ *   1. RAPPEL   ⌊cible / 4⌋, au plus 3, jamais plus que ce qui existe
+ *               réellement (une unité de palier 1 n'a rien à rappeler —
  *               0 rappel dans ce cas, pas une valeur forcée).
  *   2. CŒUR     le reste, à hauteur de deux tiers, plafonné à la moitié du
  *               cœur disponible (pour que la rotation reste possible d'une
  *               tentative à l'autre).
  *   3. RENFORT  complète jusqu'à la cible.
- *   4. CŒUR     à nouveau, si le renfort ne suffit pas à atteindre 15 (cas
+ *   4. CŒUR     à nouveau, si le renfort ne suffit pas à atteindre la cible (cas
  *               des tout premiers paliers, où renfort ET rappel peuvent
  *               être vides).
  *
@@ -98,8 +106,9 @@ export function buildSample(unit, content, completedLessons, dejaVues = []) {
   const filesExtra  = parPriorite(extra);
   const filesReview = parPriorite(review);
 
-  // Jusqu'à 3 rappels — jamais forcé au-delà de ce qui existe vraiment.
-  const cibleRevision = Math.min(3, filesReview.length);
+  // Un quart de l'échantillon, 3 au plus — jamais forcé au-delà de ce qui
+  // existe vraiment.
+  const cibleRevision = Math.min(MAX_RAPPEL, Math.floor(taille / 4), filesReview.length);
 
   // Le reste se répartit comme avant (deux tiers cœur / un tiers renfort),
   // mais sur ce qu'il RESTE une fois le rappel casé — et jamais plus que la
@@ -125,7 +134,7 @@ export function buildSample(unit, content, completedLessons, dejaVues = []) {
   // ça reste une question SUR CETTE unité, donc légitime d'en reprendre au
   // besoin. Le rappel, lui, n'a PAS de complément : 3 est un plafond dur,
   // pas une cible de repli. Sur une unité au cœur trop petit pour compenser,
-  // l'échantillon final sera simplement plus court que 15 — plus honnête
+  // l'échantillon final sera simplement plus court que la cible — plus honnête
   // qu'un rappel gonflé artificiellement pour atteindre un compte rond.
   for (const q of filesCore)   { if (choisies.length >= taille)             break; ajouter(q); }
 

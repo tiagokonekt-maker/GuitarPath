@@ -1648,13 +1648,39 @@ var init_oreille = __esm({
 });
 
 // src/tab/tabSon.js
+function derniereVoixDe(voix, corde) {
+  for (let i = voix.length - 1; i >= 0; i--) if (voix[i].corde === corde) return voix[i];
+  return null;
+}
+function prolonger(x, ev, ouverte, spc, R2) {
+  if (!x || x.etouffee || x.colOrigine == null || x.colOrigine > ev.col) return false;
+  const derniere = x.hauteurs[x.hauteurs.length - 1];
+  if (Math.round(derniere.midi) !== ouverte + ev.fromFret) return false;
+  const arrivee = ouverte + ev.toFret;
+  const tCol = (c) => (c - x.colOrigine) * spc;
+  const toCol = ev.toCol ?? ev.col + 1;
+  const tDepart = Math.max(derniere.t, tCol(ev.col));
+  if (ev.type === "slide_up" || ev.type === "slide_down") {
+    const dispo = (toCol - ev.col) * spc;
+    x.hauteurs.push({ t: tDepart, midi: derniere.midi, forme: "saut" });
+    x.hauteurs.push({ t: tDepart + Math.max(0.03, dispo * R2.slidePart), midi: arrivee, forme: "rampe" });
+  } else {
+    x.hauteurs.push({ t: Math.max(tDepart, tCol(toCol)), midi: arrivee, forme: "saut" });
+  }
+  if (ev.vibrato) x.vibrato = true;
+  x.maillons = (x.maillons || 0) + 1;
+  return true;
+}
 function planifierTab(evenements, opts = {}) {
   const { bpm = 90, subdivision = 0.25, rng = Math.random } = opts;
   const R2 = { ...REGLAGES, ...opts.reglages || {} };
   const spc = 60 / bpm * subdivision;
   if (!Array.isArray(evenements) || !evenements.length) return { voix: [], duree: 0 };
+  const suite = Array.isArray(opts.suite) ? opts.suite : [];
+  const deLaSuite = new Set(suite);
+  const tous = suite.length ? [...evenements, ...suite] : evenements;
   const parCol = /* @__PURE__ */ new Map();
-  for (const ev of evenements) {
+  for (const ev of tous) {
     if (!parCol.has(ev.col)) parCol.set(ev.col, []);
     parCol.get(ev.col).push(ev);
   }
@@ -1664,15 +1690,20 @@ function planifierTab(evenements, opts = {}) {
     [...evs].sort((a, b) => b.string - a.string).forEach((ev, i) => decalageGrattage.set(ev, i * R2.grattageMs / 1e3));
   }
   const voix = [];
-  for (const ev of [...evenements].sort((a, b) => a.col - b.col || b.string - a.string)) {
+  for (const ev of [...tous].sort((a, b) => a.col - b.col || b.string - a.string)) {
     const ouverte = CORDE_MIDI[ev.string];
     if (ouverte == null) continue;
+    if (ev.sansAttaque) {
+      const x = derniereVoixDe(voix, ev.string);
+      if (x && deLaSuite.has(x.ev) === deLaSuite.has(ev) && prolonger(x, ev, ouverte, spc, R2)) continue;
+    }
     const jitter = rng() * R2.decalageMaxMs / 1e3;
     const debut = ev.col * spc + (decalageGrattage.get(ev) || 0) + jitter;
     const v = vel(ev.col, rng, R2);
     if (ev.type === "mute") {
       voix.push({
         corde: ev.string,
+        colOrigine: ev.col,
         debut,
         fin: debut + R2.etouffeeDuree,
         velocite: R2.velociteEtouffee,
@@ -1683,7 +1714,7 @@ function planifierTab(evenements, opts = {}) {
       continue;
     }
     if (ev.type === "note") {
-      voix.push({ corde: ev.string, debut, fin: null, velocite: v, etouffee: false, hauteurs: [{ t: 0, midi: ouverte + ev.fret, forme: "saut" }], ev });
+      voix.push({ corde: ev.string, colOrigine: ev.col, debut, fin: null, velocite: v, etouffee: false, hauteurs: [{ t: 0, midi: ouverte + ev.fret, forme: "saut" }], ev });
       continue;
     }
     if (ev.type === "bend") {
@@ -1700,13 +1731,14 @@ function planifierTab(evenements, opts = {}) {
         hauteurs.push({ t: tRelache, midi: arrivee, forme: "saut" });
         hauteurs.push({ t: tRelache + montee, midi: ouverte + ev.releaseFret, forme: "rampe" });
       }
-      voix.push({ corde: ev.string, debut, fin: null, velocite: v, etouffee: false, ev, hauteurs });
+      voix.push({ corde: ev.string, colOrigine: ev.col, debut, fin: null, velocite: v, etouffee: false, ev, hauteurs });
       continue;
     }
     if (ev.type === "hammer" || ev.type === "pull") {
       const ecart = ev.toCol != null ? (ev.toCol - ev.col) * spc : 0.075;
       voix.push({
         corde: ev.string,
+        colOrigine: ev.col,
         debut,
         fin: null,
         velocite: v,
@@ -1720,6 +1752,7 @@ function planifierTab(evenements, opts = {}) {
       const dispo = ev.toCol != null ? (ev.toCol - ev.col) * spc : Math.min(0.16, spc);
       voix.push({
         corde: ev.string,
+        colOrigine: ev.col,
         debut,
         fin: null,
         velocite: v,
@@ -1741,12 +1774,13 @@ function planifierTab(evenements, opts = {}) {
       if (x.etouffee) return;
       const derniereHauteur = x.hauteurs[x.hauteurs.length - 1].t;
       const suivante = liste2[i + 1];
-      const naturelle = x.debut + Math.max(derniereHauteur + 0.05, suivante ? R2.resonanceMax : R2.resonanceFinale);
+      const depuis = x.maillons ? derniereHauteur : 0;
+      const naturelle = x.debut + Math.max(derniereHauteur + 0.05, depuis + (suivante ? R2.resonanceMax : R2.resonanceFinale));
       x.fin = suivante ? Math.min(suivante.debut, naturelle) : naturelle;
     });
   }
   for (const x of voix) {
-    if (!x.ev?.vibrato || x.etouffee) continue;
+    if (!(x.ev?.vibrato || x.vibrato) || x.etouffee) continue;
     const dernier = x.hauteurs[x.hauteurs.length - 1];
     const tDebut = dernier.t + R2.vibratoDelaiS;
     const tFin = x.fin - x.debut;
@@ -1758,8 +1792,9 @@ function planifierTab(evenements, opts = {}) {
       x.hauteurs.push({ t: tDebut + k * pas, midi: dernier.midi + ecart, forme: "rampe" });
     }
   }
-  voix.sort((a, b) => a.debut - b.debut);
-  return { voix, duree: voix.reduce((m, x) => Math.max(m, x.fin), 0) };
+  const retenues = suite.length ? voix.filter((x) => !deLaSuite.has(x.ev)) : voix;
+  retenues.sort((a, b) => a.debut - b.debut);
+  return { voix: retenues, duree: retenues.reduce((m, x) => Math.max(m, x.fin), 0) };
 }
 var CORDE_MIDI, REGLAGES, vel;
 var init_tabSon = __esm({
@@ -1787,12 +1822,13 @@ var init_tabSon = __esm({
       bendDureeMax: 0.18,
       // s — durée max de la montée d'un bend
       slidePart: 0.85,
+      // part du temps disponible occupée par le glissé
       vibratoAmplitude: 0.3,
       // demi-ton — écart max de part et d'autre de la note
       vibratoFrequence: 5.5,
       // Hz — oscillations par seconde
       vibratoDelaiS: 0.06,
-      // s — la note est d'abord tenue droite, puis vibre          // part du temps disponible occupée par le glissé
+      // s — la note est d'abord tenue droite, puis vibre
       etouffeeDuree: 0.05,
       // s — le « tchk » d'une note étouffée
       velociteEtouffee: 0.55
@@ -2637,6 +2673,43 @@ function jouerVoix(v, t0) {
     }
   };
 }
+function jouerClic(T2, accent = false) {
+  if (!Tone || !sortieMaitre) return;
+  const bruit = new Tone.Noise("white");
+  const filtre = new Tone.Filter({ type: "bandpass", frequency: accent ? 2600 : 1500, Q: 2.2 });
+  const gain = new Tone.Gain(0);
+  bruit.chain(filtre, gain, sortieMaitre);
+  const crete = accent ? 0.9 : 0.5;
+  gain.gain.setValueAtTime(0, T2);
+  gain.gain.linearRampToValueAtTime(crete, T2 + 6e-4);
+  gain.gain.setTargetAtTime(0, T2 + 6e-4, 9e-3);
+  bruit.start(T2);
+  bruit.stop(T2 + 0.07);
+  const voix = { src: bruit, gain };
+  voixCordes.add(voix);
+  bruit.onstop = () => {
+    voixCordes.delete(voix);
+    setTimeout(() => {
+      try {
+        bruit.dispose();
+        filtre.dispose();
+        gain.dispose();
+      } catch {
+      }
+    }, 100);
+  };
+}
+function decalerColonnes(evenements, delta) {
+  return evenements.map((e) => {
+    const out = { ...e, col: e.col + delta };
+    if (e.toCol != null) out.toCol = e.toCol + delta;
+    if (e.releaseCol != null) out.releaseCol = e.releaseCol + delta;
+    return out;
+  });
+}
+function longueurBoucle(boucle) {
+  return boucle && Array.isArray(boucle.evenements) && boucle.evenements.length && boucle.colonnes > 0 ? boucle.colonnes : 0;
+}
 async function playTab(evenements, opts = {}) {
   if (!await ensureLoaded()) return;
   stopAll();
@@ -2655,108 +2728,158 @@ async function playTab(evenements, opts = {}) {
     return playTabSampler(evenements, opts);
   }
   if (maLecture !== generationTab) return;
-  const { voix } = planifierTab(evenements, { bpm, subdivision, reglages: opts.reglages });
+  const spc = 60 / bpm * subdivision;
+  const dernierCol = Math.max(...evenements.map((e) => e.toCol ?? e.col));
+  const lgBoucle = longueurBoucle(opts.boucle);
+  const premier = { evenements, colonnes: opts.colonnes > 0 ? opts.colonnes : dernierCol + 1 };
+  const tourDeBoucle = lgBoucle ? { evenements: opts.boucle.evenements, colonnes: lgBoucle } : null;
+  const jouerTour = (tour, debutT) => {
+    const sonores = tour.evenements.filter((e) => e.type !== "clic");
+    const suite = tourDeBoucle ? decalerColonnes(tourDeBoucle.evenements.filter((e) => e.type !== "clic"), tour.colonnes) : void 0;
+    const { voix } = planifierTab(sonores, { bpm, subdivision, reglages: opts.reglages, suite });
+    try {
+      for (const v of voix) jouerVoix(v, debutT);
+      for (const e of tour.evenements) if (e.type === "clic") jouerClic(debutT + e.col * spc, !!e.accent);
+    } catch (e) {
+      warn("playTab:", e);
+    }
+    for (const ev of tour.evenements) visuelA(debutT + ev.col * spc, () => onEvent?.(ev));
+  };
   const AVANCE_MS = 80;
   const t0 = Tone.now() + AVANCE_MS / 1e3;
-  try {
-    for (const v of voix) jouerVoix(v, t0);
-  } catch (e) {
-    warn("playTab:", e);
+  jouerTour(premier, t0);
+  if (!tourDeBoucle) {
+    differer(() => onDone?.(), AVANCE_MS + (dernierCol + 2) * spc * 1e3);
+    return;
   }
-  const spc = 60 / bpm * subdivision;
-  for (const ev of evenements) differer(() => onEvent?.(ev), AVANCE_MS + ev.col * spc * 1e3);
-  const dernierCol = Math.max(...evenements.map((e) => e.toCol ?? e.col));
-  differer(() => onDone?.(), AVANCE_MS + (dernierCol + 2) * spc * 1e3);
+  const tourSuivant = (debutT) => {
+    if (maLecture !== generationTab) return;
+    jouerTour(tourDeBoucle, debutT);
+    const finT = debutT + tourDeBoucle.colonnes * spc;
+    differer(() => tourSuivant(finT), Math.max(1, (finT - AVANCE_TOUR_S - Tone.immediate()) * 1e3));
+  };
+  const fin0 = t0 + premier.colonnes * spc;
+  differer(() => tourSuivant(fin0), Math.max(1, (fin0 - AVANCE_TOUR_S - Tone.immediate()) * 1e3));
 }
 async function playTabSampler(evenements, opts = {}) {
   if (!await ensureLoaded()) return;
   stopAll();
   reveillerSortie();
-  const { bpm = 90, subdivision = 0.25, onEvent, onDone } = opts;
+  const { bpm = 90, subdivision = 0.25, onDone } = opts;
   if (!Array.isArray(evenements) || evenements.length === 0) {
     onDone?.();
     return;
   }
   const secParColonne = 60 / bpm * subdivision;
-  const dureeNote = secParColonne;
   const dernierCol = Math.max(...evenements.map((e) => e.toCol ?? e.col));
+  const lgBoucle = longueurBoucle(opts.boucle);
   try {
-    for (const ev of evenements) {
-      const tMs = ev.col * secParColonne * 1e3;
-      if (ev.type === "mute") {
-        differer(() => {
-          onEvent?.(ev);
-        }, tMs);
-        continue;
-      }
-      if (ev.type === "note") {
-        const note2 = getToneNoteAtPosition(ev.string, ev.fret);
-        differer(() => {
-          onEvent?.(ev);
-          try {
-            sampler.triggerAttackRelease(note2, dureeNote, Tone.now(), 0.75);
-          } catch (e) {
-            warn("playTab note:", e);
-          }
-        }, tMs);
-        continue;
-      }
-      if (ev.type === "bend") {
-        const note2 = getToneNoteAtPosition(ev.string, ev.toFret);
-        differer(() => {
-          onEvent?.(ev);
-          try {
-            sampler.triggerAttackRelease(note2, dureeNote, Tone.now(), 0.75);
-          } catch (e) {
-            warn("playTab bend:", e);
-          }
-        }, tMs);
-        continue;
-      }
-      if (ev.type === "hammer" || ev.type === "pull") {
-        const noteDepart = getToneNoteAtPosition(ev.string, ev.fromFret);
-        const noteArrivee = getToneNoteAtPosition(ev.string, ev.toFret);
-        const ecart = ev.toCol != null ? (ev.toCol - ev.col) * secParColonne : 0.075;
-        differer(() => {
-          onEvent?.(ev);
-          try {
-            sampler.triggerAttackRelease(noteDepart, Math.max(0.04, ecart), Tone.now(), 0.75);
-            sampler.triggerAttackRelease(noteArrivee, dureeNote * 0.9, Tone.now() + ecart, 0.45);
-          } catch (e) {
-            warn("playTab hammer/pull:", e);
-          }
-        }, tMs);
-        continue;
-      }
-      if (ev.type === "slide_up" || ev.type === "slide_down") {
-        const pas = ev.fromFret <= ev.toFret ? 1 : -1;
-        const cases = [];
-        for (let f = ev.fromFret; pas > 0 ? f <= ev.toFret : f >= ev.toFret; f += pas) cases.push(f);
-        const dureeGlissando = ev.toCol != null ? (ev.toCol - ev.col) * secParColonne : Math.min(0.16, dureeNote * 0.5);
-        differer(() => {
-          onEvent?.(ev);
-          cases.forEach((f, i) => {
-            const note2 = getToneNoteAtPosition(ev.string, f);
-            const estArrivee = i === cases.length - 1;
-            const t = Tone.now() + (cases.length > 1 ? i / (cases.length - 1) * dureeGlissando : 0);
-            try {
-              sampler.triggerAttackRelease(
-                note2,
-                estArrivee ? dureeNote : 0.045,
-                t,
-                estArrivee ? 0.75 : 0.4
-              );
-            } catch (e) {
-              warn("playTab slide:", e);
-            }
-          });
-        }, tMs);
-        continue;
-      }
+    jouerTourSampler(evenements, opts, secParColonne);
+    if (!lgBoucle) {
+      differer(() => onDone?.(), (dernierCol + 2) * secParColonne * 1e3);
+      return;
     }
-    differer(() => onDone?.(), (dernierCol + 2) * secParColonne * 1e3);
+    const colonnes = opts.colonnes > 0 ? opts.colonnes : dernierCol + 1;
+    const debut = performance.now();
+    let finMs = colonnes * secParColonne * 1e3;
+    const tour = () => {
+      jouerTourSampler(opts.boucle.evenements, opts, secParColonne);
+      finMs += lgBoucle * secParColonne * 1e3;
+      differer(tour, Math.max(1, debut + finMs - performance.now()));
+    };
+    differer(tour, finMs);
   } catch (e) {
     warn("playTab:", e);
+  }
+}
+function jouerTourSampler(evenements, opts, secParColonne) {
+  const { onEvent } = opts;
+  const dureeNote = secParColonne;
+  const t0 = Tone.now() + 0.02;
+  for (const ev of evenements) {
+    const tMs = ev.col * secParColonne * 1e3;
+    if (ev.type === "clic") {
+      try {
+        jouerClic(t0 + ev.col * secParColonne, !!ev.accent);
+      } catch (e) {
+        warn("playTab clic:", e);
+      }
+      differer(() => {
+        onEvent?.(ev);
+      }, tMs);
+      continue;
+    }
+    if (ev.type === "mute") {
+      differer(() => {
+        onEvent?.(ev);
+      }, tMs);
+      continue;
+    }
+    if (ev.type === "note") {
+      const note2 = getToneNoteAtPosition(ev.string, ev.fret);
+      differer(() => {
+        onEvent?.(ev);
+        try {
+          sampler.triggerAttackRelease(note2, dureeNote, Tone.now(), 0.75);
+        } catch (e) {
+          warn("playTab note:", e);
+        }
+      }, tMs);
+      continue;
+    }
+    if (ev.type === "bend") {
+      const note2 = getToneNoteAtPosition(ev.string, ev.toFret);
+      differer(() => {
+        onEvent?.(ev);
+        try {
+          sampler.triggerAttackRelease(note2, dureeNote, Tone.now(), 0.75);
+        } catch (e) {
+          warn("playTab bend:", e);
+        }
+      }, tMs);
+      continue;
+    }
+    if (ev.type === "hammer" || ev.type === "pull") {
+      const noteDepart = getToneNoteAtPosition(ev.string, ev.fromFret);
+      const noteArrivee = getToneNoteAtPosition(ev.string, ev.toFret);
+      const ecart = ev.toCol != null ? (ev.toCol - ev.col) * secParColonne : 0.075;
+      differer(() => {
+        onEvent?.(ev);
+        try {
+          if (!ev.sansAttaque) sampler.triggerAttackRelease(noteDepart, Math.max(0.04, ecart), Tone.now(), 0.75);
+          sampler.triggerAttackRelease(noteArrivee, dureeNote * 0.9, Tone.now() + ecart, 0.45);
+        } catch (e) {
+          warn("playTab hammer/pull:", e);
+        }
+      }, tMs);
+      continue;
+    }
+    if (ev.type === "slide_up" || ev.type === "slide_down") {
+      const pas = ev.fromFret <= ev.toFret ? 1 : -1;
+      const cases = [];
+      for (let f = ev.fromFret; pas > 0 ? f <= ev.toFret : f >= ev.toFret; f += pas) cases.push(f);
+      if (ev.sansAttaque && cases.length > 1) cases.shift();
+      const dureeGlissando = ev.toCol != null ? (ev.toCol - ev.col) * secParColonne : Math.min(0.16, dureeNote * 0.5);
+      differer(() => {
+        onEvent?.(ev);
+        cases.forEach((f, i) => {
+          const note2 = getToneNoteAtPosition(ev.string, f);
+          const estArrivee = i === cases.length - 1;
+          const t = Tone.now() + (cases.length > 1 ? i / (cases.length - 1) * dureeGlissando : 0);
+          try {
+            sampler.triggerAttackRelease(
+              note2,
+              estArrivee ? dureeNote : 0.045,
+              t,
+              estArrivee ? 0.75 : 0.4
+            );
+          } catch (e) {
+            warn("playTab slide:", e);
+          }
+        });
+      }, tMs);
+      continue;
+    }
   }
 }
 async function playChordFromRoot(root, chordType, onStep) {
@@ -3035,7 +3158,7 @@ function makeEarQuizQuestion(mode = "interval") {
     play: ear.play
   };
 }
-var Tone, tonePromise, ctxGeste, SAMPLE_URLS, busGuitare, buffersCordes, voixCordes, generationTab, NOMS_ECHANTILLONS, MIDI_MIN_ECH, MIDI_MAX_ECH, BASE_URL, RELEASE, QUEUE_AUDIBLE_MS, RONDE_120, listSampleUrls, SAMPLE_COUNT, SHARP_TO_FLAT, CHROMATIC, OPEN_STRINGS2, DEV, warn, sortieMaitre, enAttente, lectureEnCours, departLecture, restaurationTimer, sampler, loadPromise, isLoaded, loadError, MELODIE_ECART, MELODIE_DEPART, MELODIE_NOTE, ECART_INTERVALLE_MS, promesseCordes, urlsCordes, vitessePour, progressionTimers, progressionTimer, dureeMs, INTERVALLES_HISTORIQUES, QUALITES_HISTORIQUES;
+var Tone, tonePromise, ctxGeste, SAMPLE_URLS, busGuitare, buffersCordes, voixCordes, generationTab, NOMS_ECHANTILLONS, MIDI_MIN_ECH, MIDI_MAX_ECH, BASE_URL, RELEASE, QUEUE_AUDIBLE_MS, RONDE_120, listSampleUrls, SAMPLE_COUNT, SHARP_TO_FLAT, CHROMATIC, OPEN_STRINGS2, DEV, warn, sortieMaitre, enAttente, lectureEnCours, departLecture, restaurationTimer, sampler, loadPromise, isLoaded, loadError, MELODIE_ECART, MELODIE_DEPART, MELODIE_NOTE, ECART_INTERVALLE_MS, promesseCordes, urlsCordes, vitessePour, AVANCE_TOUR_S, progressionTimers, progressionTimer, dureeMs, INTERVALLES_HISTORIQUES, QUALITES_HISTORIQUES;
 var init_audioEngine = __esm({
   "src/audioEngine.js"() {
     init_fretboardUtils();
@@ -3150,6 +3273,7 @@ var init_audioEngine = __esm({
     promesseCordes = null;
     urlsCordes = (buffers) => Object.fromEntries(Object.keys(SAMPLE_URLS).map((n) => [n, buffers.get(n)]));
     vitessePour = (midi, base) => Math.pow(2, (midi - base) / 12);
+    AVANCE_TOUR_S = 1.5;
     progressionTimers = [];
     progressionTimer = null;
     dureeMs = (finDerniereAttaque, dureeNote) => Math.round((finDerniereAttaque + secondes(dureeNote)) * 1e3) + QUEUE_AUDIBLE_MS;
@@ -4469,6 +4593,34 @@ function parseStringLine(line) {
     if (nombre) {
       const apres = nombre.fin;
       const symbole2 = line[apres];
+      if (symbole2 && LEGATO.has(symbole2)) {
+        const maillons = [];
+        let depart = nombre, k = apres;
+        while (k < n && LEGATO.has(line[k])) {
+          const cible = lireNombre(k + 1);
+          if (!cible) break;
+          maillons.push({ symbole: line[k], depart, cible, colCible: k + 1 });
+          depart = cible;
+          k = cible.fin;
+        }
+        if (maillons.length >= 2) {
+          const evs = maillons.map((m, idx) => {
+            const ev2 = {
+              type: TECH_TYPE[m.symbole],
+              fromFret: m.depart.valeur,
+              toFret: m.cible.valeur,
+              col: idx === 0 ? i : maillons[idx - 1].colCible,
+              toCol: m.colCible
+            };
+            if (idx > 0) ev2.sansAttaque = true;
+            if (idx < maillons.length - 1) ev2.enchaine = true;
+            return ev2;
+          });
+          i = vibratoApres(evs[evs.length - 1], k);
+          events.push(...evs);
+          continue;
+        }
+      }
       if (symbole2 && TECH_SYMBOLS.has(symbole2)) {
         const cible = lireNombre(apres + 1);
         const toFret = cible ? cible.valeur : symbole2 === "b" ? nombre.valeur + 2 : nombre.valeur;
@@ -4529,6 +4681,7 @@ function preparerSysteme(lignes6) {
 function decaler(ev, offset) {
   const out = { ...ev, col: ev.col + offset };
   if (ev.releaseCol != null) out.releaseCol = ev.releaseCol + offset;
+  if (ev.toCol != null) out.toCol = ev.toCol + offset;
   return out;
 }
 function parseTab(texte) {
@@ -4572,10 +4725,11 @@ function parseTab(texte) {
   evenements.sort((a, b) => a.col - b.col || a.string - b.string);
   return { evenements, erreur: null, avertissements, systemes: systemes.length };
 }
-var TECH_SYMBOLS, TECH_TYPE, NB_CORDES, CARACTERES_TAB;
+var TECH_SYMBOLS, LEGATO, TECH_TYPE, NB_CORDES, CARACTERES_TAB;
 var init_tabParser = __esm({
   "src/tab/tabParser.js"() {
     TECH_SYMBOLS = /* @__PURE__ */ new Set(["h", "p", "/", "\\", "b"]);
+    LEGATO = /* @__PURE__ */ new Set(["h", "p", "/", "\\"]);
     TECH_TYPE = {
       h: "hammer",
       p: "pull",
@@ -4607,6 +4761,7 @@ function analyserMorceau(morceau) {
     if (pos >= W) anomalies.push(`\xC9v\xE8nement sur une barre de mesure (corde ${ev.string}, colonne ${ev.col}).`);
     const out = { ...ev, col: versMusical(ev.col), mesure: Math.floor(ev.col / pas) };
     if (ev.releaseCol != null) out.releaseCol = versMusical(ev.releaseCol);
+    if (ev.toCol != null) out.toCol = versMusical(ev.toCol);
     return out;
   });
   const nbMesures = compterMesures(morceau.tab);
@@ -4660,7 +4815,7 @@ function decaler2(evenements, delta) {
   });
 }
 function ajouterDecompte(evenements, colsParMesure, temps) {
-  const clics = temps.map((c, i) => ({ type: "mute", string: 4, col: c, decompte: i + 1 }));
+  const clics = temps.map((c, i) => ({ type: "clic", col: c, decompte: i + 1, accent: i === 0 }));
   const decales = evenements.map((e) => {
     const out = { ...e, col: e.col + colsParMesure };
     if (e.releaseCol != null) out.releaseCol = e.releaseCol + colsParMesure;
@@ -4693,6 +4848,10 @@ function filtrerMorceaux(liste2, { niveau = "tous", type = "tous" } = {}) {
   return liste2.filter((m) => (niveau === "tous" || m.niveau === niveau) && (type === "tous" || m.type === type));
 }
 function texteEvenement(ev) {
+  if (ev.enchaine) {
+    const sym = { hammer: "h", pull: "p", slide_up: "/", slide_down: "\\" }[ev.type];
+    if (sym) return `${ev.fromFret}${sym}`;
+  }
   switch (ev.type) {
     case "mute":
       return "x";
@@ -4722,6 +4881,11084 @@ var init_morceaux = __esm({
     VITESSE_MIN = 40;
     VITESSE_MAX = 100;
     dureeColonnes = (nbCols, bpm) => nbCols * (60 / bpm) / 4;
+  }
+});
+
+// src/content/cours/debut/debut-c1-01.js
+var debut_c1_01_exports = {};
+__export(debut_c1_01_exports, {
+  default: () => debut_c1_01_default,
+  quiz: () => quiz
+});
+var debut_c1_01_default, quiz;
+var init_debut_c1_01 = __esm({
+  "src/content/cours/debut/debut-c1-01.js"() {
+    debut_c1_01_default = {
+      id: "debut-c1-01",
+      level: 0,
+      unite: 1,
+      title: "Tenir ta guitare",
+      duration: 6,
+      gropiTip: "Fais le test de profil : prends-toi en photo avec ton t\xE9l\xE9phone en position assise. La guitare doit \xEAtre presque verticale et la t\xEAte du manche \xE0 hauteur d'\xE9paule, pas plus bas que la caisse.",
+      cartes: [
+        { type: "idee", titre: "Bien tenue, la guitare tient seule", texte: [
+          "Avant la premi\xE8re note, on r\xE8gle ta posture. Bien install\xE9e, la guitare tient toute seule, tes \xE9paules sont rel\xE2ch\xE9es et tes deux mains restent libres.",
+          "Mal install\xE9e, c'est le poignet qui souffre et des accords qui sonnent mal."
+        ] },
+        { type: "idee", titre: "Assis : sur la cuisse droite", texte: [
+          "Chaise sans accoudoirs, dos droit, pieds \xE0 plat. Le creux de la guitare sur ta cuisse droite (si tu es droitier), la caisse contre ton ventre.",
+          "Elle est presque verticale, pas couch\xE9e. Ton avant-bras droit, pos\xE9 sur la caisse, la stabilise ; la t\xEAte du manche arrive \xE0 hauteur d'\xE9paule."
+        ] },
+        { type: "question", quizId: "q-debut-01" },
+        { type: "idee", titre: "Debout : la sangle porte tout", texte: [
+          "R\xE8gle la sangle pour retrouver la hauteur de la position assise.",
+          "Une guitare port\xE9e tr\xE8s bas a l'air cool, mais elle tord le poignet gauche. Garde \xE7a pour plus tard."
+        ] },
+        { type: "idee", titre: "Trois pi\xE8ges \xE0 \xE9viter", texte: [
+          "Pencher la guitare pour voir les cordes : \xE7a tord le poignet gauche. Penche plut\xF4t la t\xEAte.",
+          "Remonter les \xE9paules : garde-les basses, m\xE2choire d\xE9tendue. Et porter le manche de la main gauche : elle appuie sur les cordes, elle ne tient pas la guitare."
+        ] },
+        { type: "question", quizId: "q-debut-03" },
+        { type: "a-toi", titre: "Le test du l\xE2cher", consigne: "Installe-toi, puis l\xE2che compl\xE8tement le manche. La guitare doit rester en place, tenue par ta cuisse, ton ventre et ton avant-bras droit. Elle pique du nez ? Rapproche-la de ton corps et appuie un peu plus l'avant-bras sur la caisse." },
+        { type: "question", quizId: "q-debut-02" },
+        { type: "idee", titre: "Et si tu es gaucher ?", texte: [
+          "Deux options : une guitare pour gaucher (tout est invers\xE9, elle se pose sur ta cuisse gauche) ou une guitare de droitier, que beaucoup de gauchers jouent tr\xE8s bien.",
+          "Cette le\xE7on vaut en miroir. Choisis et tiens-t'y d\xE8s le d\xE9part."
+        ] },
+        { type: "recap", points: [
+          "Assis : creux de la guitare sur la cuisse droite, caisse contre le ventre, guitare presque verticale.",
+          "Ta cuisse, ton ventre et ton avant-bras droit tiennent la guitare, pas ta main gauche.",
+          "\xC9paules basses, poignet droit : penche la t\xEAte plut\xF4t que la guitare."
+        ] }
+      ],
+      quiz: ["q-debut-01", "q-debut-02", "q-debut-03"]
+    };
+    quiz = [
+      { id: "q-debut-01", courseId: "debut", lessonId: "debut-c1-01", lvl: 1, q: "Assis, pour un droitier, o\xF9 se pose la guitare ?", o: ["Sur la cuisse droite, caisse contre le ventre", "\xC0 plat sur les deux genoux, cordes vers le plafond", "Sur la cuisse gauche, manche vers le sol", "Entre les deux genoux, manche \xE0 la verticale"], a: 0, exp: "Le creux de la guitare se pose sur la cuisse droite, le dos de la caisse contre ton ventre. Couch\xE9e \xE0 plat, elle t'obligerait \xE0 tordre le poignet gauche pour atteindre les cordes.", xp: 25 },
+      { id: "q-debut-02", courseId: "debut", lessonId: "debut-c1-01", lvl: 1, q: "Tu l\xE2ches le manche et ta guitare pique du nez. Qu'est-ce que \xE7a veut dire ?", o: ["Que ta main gauche doit serrer plus fort", "Qu'elle n'est pas assez cal\xE9e contre toi", "Que ta sangle est trop courte", "Que c'est normal, c'est toujours comme \xE7a"], a: 1, exp: "Bien install\xE9e, la guitare tient seule entre ta cuisse, ton ventre et ton avant-bras droit. La main gauche n'est pas l\xE0 pour la porter : elle doit \xEAtre libre d'appuyer sur les cordes.", xp: 25 },
+      { id: "q-debut-03", courseId: "debut", lessonId: "debut-c1-01", lvl: 2, q: "Pourquoi \xE9viter de pencher la guitare vers toi pour voir les cordes ?", o: ["\xC7a d\xE9saccorde l'instrument", "\xC7a ab\xEEme le manche avec le temps", "\xC7a tord ton poignet gauche", "\xC7a emp\xEAche d'entendre ce que tu joues"], a: 2, exp: "Incliner la guitare change tout l'angle de la main gauche : les doigts arrivent de travers sur les cordes. Garde la guitare presque verticale et penche plut\xF4t l\xE9g\xE8rement la t\xEAte.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/debut/debut-c1-02.js
+var debut_c1_02_exports = {};
+__export(debut_c1_02_exports, {
+  default: () => debut_c1_02_default,
+  quiz: () => quiz2
+});
+var debut_c1_02_default, quiz2;
+var init_debut_c1_02 = __esm({
+  "src/content/cours/debut/debut-c1-02.js"() {
+    debut_c1_02_default = {
+      id: "debut-c1-02",
+      level: 0,
+      unite: 1,
+      title: "La main gauche : pouce, doigts, frettes",
+      duration: 7,
+      gropiTip: "Mini-exercice : joue la case 1 de la corde 1 avec chaque doigt tour \xE0 tour (1, 2, 3 puis 4), en cherchant \xE0 chaque fois la pression minimale qui donne une note nette.",
+      cartes: [
+        { type: "idee", titre: "Les doigts ont un num\xE9ro", texte: [
+          "Ta main gauche choisit les notes. Partout, ses doigts sont num\xE9rot\xE9s : 1 = index, 2 = majeur, 3 = annulaire, 4 = auriculaire.",
+          "Le pouce n'a pas de num\xE9ro : il reste derri\xE8re le manche."
+        ] },
+        { type: "question", quizId: "q-debut-04" },
+        { type: "idee", titre: "Pouce derri\xE8re, doigts arrondis", texte: [
+          "Pouce au dos du manche, en face du majeur : il sert d'appui, il ne serre pas. La paume ne colle pas au manche.",
+          "Appuie avec le bout des doigts, arrondis comme autour d'une balle : ils \xE9pargnent les cordes voisines. D'o\xF9 des ongles courts \xE0 gauche."
+        ] },
+        { type: "idee", titre: "Juste derri\xE8re la frette", texte: [
+          "Les frettes sont les barrettes de m\xE9tal. La case 1 est entre le sillet (la pi\xE8ce blanche en haut du manche) et la premi\xE8re frette.",
+          "Pose le doigt tout pr\xE8s de la frette qui ferme la case. Au milieu, il faut appuyer plus fort ; sur la frette, le son est \xE9touff\xE9."
+        ], bloc: {
+          type: "note_grid",
+          caption: "Corde 1 (Mi aigu) : case 1 = Fa, case 3 = Sol \u2014 appuie tout pr\xE8s de la frette, c\xF4t\xE9 case",
+          data: {
+            string: 1,
+            stringName: "Mi aigu",
+            maxFret: 5,
+            highlights: [
+              { fret: 0, label: "Mi", color: "neutral" },
+              { fret: 1, label: "Fa", color: "primary" },
+              { fret: 3, label: "Sol", color: "green" }
+            ]
+          }
+        } },
+        { type: "question", quizId: "q-debut-05" },
+        { type: "a-toi", titre: "Trouve la pression minimale", consigne: "Index sur la corde 1, case 1 : joue la note. Rel\xE2che peu \xE0 peu jusqu'\xE0 ce qu'elle frise, puis rajoute juste assez de pression pour qu'elle sonne nette. C'est la bonne dose : serrer plus ne fait que fatiguer. Refais-le avec les doigts 2, 3 et 4." },
+        { type: "idee", titre: "Bout des doigts ou poignet ?", texte: [
+          "Le bout des doigts qui chauffe les premi\xE8res semaines, c'est normal : la corne se forme.",
+          "Une douleur au poignet, au pouce ou dans l'avant-bras, non. Arr\xEAte-toi, secoue la main et v\xE9rifie ta posture : souvent, le pouce serre trop."
+        ] },
+        { type: "question", quizId: "q-debut-07" },
+        { type: "recap", points: [
+          "1 index, 2 majeur, 3 annulaire, 4 auriculaire ; le pouce reste derri\xE8re le manche.",
+          "Le bout des doigts, arrondis, tout pr\xE8s de la frette, c\xF4t\xE9 case.",
+          "Juste assez de pression pour une note nette. Mal au poignet : pause et correction."
+        ] }
+      ],
+      quiz: ["q-debut-04", "q-debut-05", "q-debut-06", "q-debut-07"]
+    };
+    quiz2 = [
+      { id: "q-debut-04", courseId: "debut", lessonId: "debut-c1-02", lvl: 1, q: "Sur un diagramme d'accord, quel doigt porte le num\xE9ro 3 ?", o: ["L'index", "Le majeur", "L'annulaire", "L'auriculaire"], a: 2, exp: "1 = index, 2 = majeur, 3 = annulaire, 4 = auriculaire. Le pouce, lui, reste derri\xE8re le manche et n'a pas de num\xE9ro.", xp: 25 },
+      { id: "q-debut-05", courseId: "debut", lessonId: "debut-c1-02", lvl: 1, q: "Pour jouer la case 3, o\xF9 poses-tu le doigt ?", o: ["Pile sur la troisi\xE8me frette", "Au milieu exact de la case", "Tout pr\xE8s de la frette qui ferme la case, c\xF4t\xE9 case", "Tout pr\xE8s du sillet, en haut du manche"], a: 2, exp: "Juste derri\xE8re la frette, c\xF4t\xE9 case : c'est l\xE0 qu'il faut le moins de force pour une note nette. Au milieu, il faut appuyer bien plus fort ; sur la frette, le son est \xE9touff\xE9.", xp: 25 },
+      { id: "q-debut-06", courseId: "debut", lessonId: "debut-c1-02", lvl: 1, q: "Ton doigt touche la corde voisine et l'\xE9touffe. Que corriger d'abord ?", o: ["Appuyer beaucoup plus fort", "Arrondir le doigt pour appuyer avec le bout", "Coller la paume contre le manche", "Jouer plus doucement de la main droite"], a: 1, exp: "Un doigt arrondi, pos\xE9 sur le bout, laisse passer les cordes voisines. \xC0 plat, la pulpe d\xE9borde et les \xE9touffe. Pense aussi \xE0 couper tes ongles de main gauche.", xp: 25 },
+      { id: "q-debut-07", courseId: "debut", lessonId: "debut-c1-02", lvl: 2, q: "Apr\xE8s dix minutes de jeu, ton poignet gauche te fait mal. Quelle est la bonne r\xE9action ?", o: ["Continuer, c'est la corne qui se forme", "Faire une pause et v\xE9rifier ta posture", "Serrer plus fort pour finir plus vite", "Changer de m\xE9diator et continuer"], a: 1, exp: "La corne concerne le bout des doigts, pas le poignet. Une douleur au poignet signale une tension : guitare mal plac\xE9e, pouce qui serre trop. On s'arr\xEAte et on corrige.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/debut/debut-c1-03.js
+var debut_c1_03_exports = {};
+__export(debut_c1_03_exports, {
+  default: () => debut_c1_03_default,
+  quiz: () => quiz3
+});
+var QUATRE_COUPS, debut_c1_03_default, quiz3;
+var init_debut_c1_03 = __esm({
+  "src/content/cours/debut/debut-c1-03.js"() {
+    QUATRE_COUPS = { type: "strum_pattern", caption: "Ton premier geste : 4 coups vers le bas, un par temps", data: { pattern: ["B", "B", "B", "B"], beats: 4, style: "folk", bpm: 60 } };
+    debut_c1_03_default = {
+      id: "debut-c1-03",
+      level: 0,
+      unite: 1,
+      title: "La main droite : m\xE9diator ou doigts",
+      duration: 6,
+      gropiTip: "Joue tes 4 coups vers le bas face \xE0 un miroir et regarde ton coude : il doit rester pos\xE9 sur la caisse pendant que ton poignet fait le travail.",
+      cartes: [
+        { type: "idee", titre: "M\xE9diator ou doigts", texte: [
+          "La main droite fait sonner les notes : rythme, volume, caract\xE8re.",
+          "Tu peux jouer au m\xE9diator (le petit triangle en plastique, ou plectre) ou aux doigts. Pour tes premiers accords, commence au m\xE9diator."
+        ] },
+        { type: "idee", titre: "Tenir le m\xE9diator", texte: [
+          "Index l\xE9g\xE8rement pli\xE9, m\xE9diator \xE0 plat sur le c\xF4t\xE9 de sa derni\xE8re phalange, pointe vers les cordes. Referme le pouce par-dessus : seuls 2 \xE0 3 mm de pointe d\xE9passent.",
+          "Serre juste assez pour qu'il ne tourne pas. Pour d\xE9buter, prends-le fin ou m\xE9dium (0,5 \xE0 0,7 mm) : il pardonne les maladresses."
+        ] },
+        { type: "question", quizId: "q-debut-08" },
+        { type: "idee", titre: "Le geste vient du poignet", texte: [
+          "Ton avant-bras reste pos\xE9 sur la caisse. Le mouvement vient surtout du poignet, comme pour secouer un thermom\xE8tre ou s\xE9cher des doigts mouill\xE9s.",
+          "Gratter depuis l'\xE9paule fatigue vite et manque de pr\xE9cision."
+        ] },
+        { type: "question", quizId: "q-debut-09" },
+        { type: "a-toi", titre: "4 coups vers le bas", consigne: "Cordes \xE0 vide, sans main gauche : 4 coups vers le bas, un par clic, en comptant \xAB 1, 2, 3, 4 \xBB \xE0 voix haute. Vise un son \xE9gal sur toutes les cordes. Toutes les deux minutes, secoue la main droite pour la d\xE9tendre.", bloc: QUATRE_COUPS, bpm: 60 },
+        { type: "idee", titre: "Jouer aux doigts", texte: [
+          "Le pouce joue les trois cordes graves (6, 5 et 4) ; index, majeur et annulaire se partagent les cordes 3, 2 et 1, un doigt par corde. On les note p, i, m, a.",
+          "Gratter au pouce ou \xE0 l'ongle de l'index, c'est plus doux : parfait pour jouer tard le soir."
+        ] },
+        { type: "question", quizId: "q-debut-10" },
+        { type: "recap", points: [
+          "M\xE9diator \xE0 plat sur l'index, pouce par-dessus, 2 \xE0 3 mm de pointe.",
+          "Le geste vient du poignet, avant-bras pos\xE9 sur la caisse.",
+          "Aux doigts : le pouce pour les cordes 6, 5 et 4 ; i, m, a pour les cordes 3, 2 et 1."
+        ] }
+      ],
+      quiz: ["q-debut-08", "q-debut-09", "q-debut-10"]
+    };
+    quiz3 = [
+      { id: "q-debut-08", courseId: "debut", lessonId: "debut-c1-03", lvl: 1, q: "Combien de pointe du m\xE9diator doit d\xE9passer de tes doigts ?", o: ["Quasiment rien, il doit \xEAtre cach\xE9", "Environ 2 \xE0 3 millim\xE8tres", "La moiti\xE9 du m\xE9diator", "Au moins 1 centim\xE8tre"], a: 1, exp: "2 \xE0 3 mm suffisent. Avec plus de pointe, le m\xE9diator accroche les cordes et tourne ; avec moins, tu rates les cordes.", xp: 25 },
+      { id: "q-debut-09", courseId: "debut", lessonId: "debut-c1-03", lvl: 1, q: "D'o\xF9 vient principalement le mouvement pour gratter les cordes ?", o: ["De l'\xE9paule, tout le bras bouge", "Du poignet, aid\xE9 par l'avant-bras", "Des doigts qui tiennent le m\xE9diator", "Du coude, qui se soul\xE8ve de la caisse"], a: 1, exp: "L'avant-bras reste pos\xE9 sur la caisse et le poignet fait l'essentiel du travail. Gratter depuis l'\xE9paule fatigue vite et manque de pr\xE9cision.", xp: 25 },
+      { id: "q-debut-10", courseId: "debut", lessonId: "debut-c1-03", lvl: 2, q: "En jeu aux doigts, quel doigt attaque la corde 2 ?", o: ["L'index", "Le majeur", "Le pouce", "L'annulaire"], a: 1, exp: "Le pouce (p) garde les basses, cordes 6, 5 et 4 ; puis un doigt par corde : index (i) sur la 3, majeur (m) sur la 2, annulaire (a) sur la 1.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/debut/debut-c1-04.js
+var debut_c1_04_exports = {};
+__export(debut_c1_04_exports, {
+  default: () => debut_c1_04_default,
+  quiz: () => quiz4
+});
+var debut_c1_04_default, quiz4;
+var init_debut_c1_04 = __esm({
+  "src/content/cours/debut/debut-c1-04.js"() {
+    debut_c1_04_default = {
+      id: "debut-c1-04",
+      level: 0,
+      unite: 1,
+      title: "S'\xE9chauffer et jouer d\xE9tendu",
+      duration: 6,
+      gropiTip: "Variante : fais l'exercice \xE0 l'envers, cases 4-3-2-1, en remontant de la corde 1 \xE0 la corde 6. Garde l'auriculaire tout pr\xE8s des cordes au lieu de le laisser s'envoler.",
+      cartes: [
+        { type: "idee", titre: "Deux minutes qui changent tout", texte: [
+          "La guitare sollicite de petits muscles et des tendons, avec des gestes r\xE9p\xE9t\xE9s. Deux minutes d'\xE9chauffement et un peu d'attention \xE0 la d\xE9tente : tu joues plus longtemps, plus proprement, sans douleur."
+        ] },
+        { type: "a-toi", titre: "Une minute sans guitare", consigne: "Ouvre grand les mains puis ferme les poings, dix fois, lentement. Fais tourner les poignets dans les deux sens. Laisse tomber les \xE9paules et roule-les vers l'arri\xE8re trois ou quatre fois. Rien de sportif : on r\xE9veille la circulation.", minuteur: 60 },
+        { type: "idee", titre: "L'exercice 1-2-3-4", texte: [
+          "Corde 6 : index en case 1, majeur en case 2, annulaire en case 3, auriculaire en case 4. Un doigt par case, juste derri\xE8re la frette, une note nette \xE0 chaque fois.",
+          "Puis la corde 5, et ainsi de suite jusqu'\xE0 la corde 1."
+        ], bloc: {
+          type: "fretboard",
+          caption: "L'exercice 1-2-3-4 : un doigt par case, ici sur la corde 6 (chiffres = doigts)",
+          data: {
+            frets: 5,
+            startFret: 0,
+            showStringNames: true,
+            showFretNumbers: true,
+            notes: [
+              { string: 6, fret: 1, label: "1", color: "primary" },
+              { string: 6, fret: 2, label: "2", color: "green" },
+              { string: 6, fret: 3, label: "3", color: "amber" },
+              { string: 6, fret: 4, label: "4", color: "coral" }
+            ]
+          }
+        } },
+        { type: "question", quizId: "q-debut-11" },
+        { type: "a-toi", titre: "1-2-3-4 au clic", consigne: "Une note par clic, de la corde 6 \xE0 la corde 1, l'auriculaire pr\xE8s des cordes. Lent et net plut\xF4t que rapide et brouillon. Fais-en ton rituel de d\xE9but de s\xE9ance : il muscle aussi le petit doigt.", bpm: 60 },
+        { type: "idee", titre: "Rep\xE8re la crispation", texte: [
+          "La tension s'installe sans pr\xE9venir. Toutes les quelques minutes, fais le tour : \xE9paules remont\xE9es ? M\xE2choire serr\xE9e ? Respiration bloqu\xE9e ? Pouce qui \xE9crase le manche ?",
+          "Chaque tension rep\xE9r\xE9e, rel\xE2che-la avant de continuer."
+        ] },
+        { type: "question", quizId: "q-debut-13" },
+        { type: "idee", titre: "Court, mais souvent", texte: [
+          "Au d\xE9but, 15 \xE0 20 minutes par jour te font progresser plus vite qu'une heure et demie le dimanche. Et tes doigts ont le temps de s'endurcir sans souffrir."
+        ] },
+        { type: "recap", points: [
+          "Une minute d'\xE9chauffement sans guitare avant de jouer.",
+          "1-2-3-4 : un doigt par case, sur chaque corde, lentement.",
+          "Traque la crispation (\xE9paules, m\xE2choire, souffle, pouce) et joue un peu chaque jour."
+        ] }
+      ],
+      quiz: ["q-debut-11", "q-debut-12", "q-debut-13"]
+    };
+    quiz4 = [
+      { id: "q-debut-11", courseId: "debut", lessonId: "debut-c1-04", lvl: 1, q: "Dans l'exercice 1-2-3-4, quel doigt joue la case 4 ?", o: ["L'index", "L'annulaire", "L'auriculaire", "Le pouce"], a: 2, exp: "Un doigt par case : index en case 1, majeur en 2, annulaire en 3, auriculaire en 4. C'est justement ce qui fait travailler le petit doigt.", xp: 25 },
+      { id: "q-debut-12", courseId: "debut", lessonId: "debut-c1-04", lvl: 1, q: "Pour progresser au d\xE9but, qu'est-ce qui marche le mieux ?", o: ["Une longue s\xE9ance par semaine", "15 \xE0 20 minutes presque tous les jours", "Jouer seulement quand on a de l'inspiration", "Jouer jusqu'\xE0 avoir mal aux doigts"], a: 1, exp: "La r\xE9gularit\xE9 bat la dur\xE9e : de courtes s\xE9ances fr\xE9quentes ancrent mieux les gestes et laissent \xE0 la peau des doigts le temps de s'endurcir.", xp: 25 },
+      { id: "q-debut-13", courseId: "debut", lessonId: "debut-c1-04", lvl: 2, q: "Lequel de ces signes trahit une crispation pendant que tu joues ?", o: ["Les \xE9paules qui remontent", "Le bout des doigts qui chauffe", "Une note qui sonne bien nette", "Le pied qui bat la mesure"], a: 0, exp: "\xC9paules remont\xE9es, m\xE2choire serr\xE9e, respiration bloqu\xE9e, pouce qui \xE9crase le manche : autant de tensions \xE0 rel\xE2cher. Le bout des doigts qui chauffe, lui, est normal au d\xE9but.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/debut/debut-c1-05.js
+var debut_c1_05_exports = {};
+__export(debut_c1_05_exports, {
+  default: () => debut_c1_05_default,
+  quiz: () => quiz5
+});
+var debut_c1_05_default, quiz5;
+var init_debut_c1_05 = __esm({
+  "src/content/cours/debut/debut-c1-05.js"() {
+    debut_c1_05_default = {
+      id: "debut-c1-05",
+      level: 0,
+      unite: 1,
+      title: "Les cordes et l'accordeur",
+      duration: 7,
+      gropiTip: "Avant de tourner une m\xE9canique, suis la corde du doigt jusqu'\xE0 sa cl\xE9 : tendre la mauvaise corde en croyant accorder l'autre, c'est l'erreur classique qui finit par la casser.",
+      cartes: [
+        { type: "idee", titre: "Accord\xE9e, sinon rien ne sonne", texte: [
+          "D\xE9saccord\xE9e, une guitare sonne faux m\xEAme avec des doigts parfaits : la cause n\xB01 des \xAB je n'y arrive pas \xBB.",
+          "Accorder prend une minute. Mais d'abord, le nom de tes cordes."
+        ] },
+        { type: "idee", titre: "Mi, La, R\xE9, Sol, Si, Mi", texte: [
+          "La corde 1 est la plus fine (aigu\xEB) ; la corde 6, la plus grosse (grave), est la plus proche de ton visage.",
+          "De la 6 \xE0 la 1 : Mi, La, R\xE9, Sol, Si, Mi. Deux Mi, \xE0 deux octaves d'\xE9cart. Pour t'en souvenir : \xAB Mon Lapin Ronge Sept Salades M\xFBres \xBB."
+        ] },
+        { type: "question", quizId: "q-debut-14-app" },
+        { type: "idee", titre: "Les lettres de l'accordeur", texte: [
+          "Beaucoup d'accordeurs \xE9crivent les notes en anglais : Mi = E, La = A, R\xE9 = D, Sol = G, Si = B.",
+          "Tes cordes \xE0 vide donnent donc, de la 6 \xE0 la 1 : E A D G B E."
+        ] },
+        { type: "question", quizId: "q-debut-17-app" },
+        { type: "idee", titre: "Trop basse ? On tend", texte: [
+          "Joue une corde \xE0 vide. Trop basse : tourne la m\xE9canique (la cl\xE9 sur la t\xEAte du manche) pour la tendre. Trop haute : d\xE9tends-la. Un quart de tour change d\xE9j\xE0 beaucoup.",
+          "V\xE9rifie que l'accordeur affiche la BONNE note : une corde trop tendue peut casser."
+        ] },
+        { type: "question", quizId: "q-debut-16" },
+        { type: "a-toi", titre: "Accorde ta guitare", consigne: "Ouvre Outils \u2192 Accordeur et autorise le micro. Accorde les six cordes, de la 6 \xE0 la 1. Astuce de pro : arrive \xE0 la note par en dessous ; si tu d\xE9passes, redescends puis remonte. L'accord tient mieux." },
+        { type: "idee", titre: "Quand r\xE9accorder ?", texte: [
+          "\xC0 chaque s\xE9ance, souvent apr\xE8s des cordes neuves, et apr\xE8s un coup de froid ou de chaleur.",
+          "Et d\xE8s que tes accords sonnent faux alors que tes doigts sont bien plac\xE9s : v\xE9rifie l'accordage avant de douter de toi."
+        ] },
+        { type: "recap", points: [
+          "De la corde 6 \xE0 la 1 : Mi La R\xE9 Sol Si Mi, soit E A D G B E.",
+          "Trop basse : on tend ; trop haute : on d\xE9tend, doucement.",
+          "On arrive \xE0 la note par en dessous, et on accorde \xE0 chaque s\xE9ance."
+        ] }
+      ],
+      quiz: ["q-debut-14", "q-debut-15", "q-debut-16", "q-debut-17", "q-debut-14-app", "q-debut-17-app"]
+    };
+    quiz5 = [
+      { id: "q-debut-14", courseId: "debut", lessonId: "debut-c1-05", lvl: 1, q: "De la plus grosse corde \xE0 la plus fine, quels sont les noms des cordes \xE0 vide ?", o: ["Mi La R\xE9 Sol Si Mi", "Mi Si Sol R\xE9 La Mi", "Do R\xE9 Mi Fa Sol La", "Mi La R\xE9 Sol Do Mi"], a: 0, exp: "Mi (6), La (5), R\xE9 (4), Sol (3), Si (2), Mi (1). Moyen mn\xE9motechnique : \xAB Mon Lapin Ronge Sept Salades M\xFBres \xBB.", xp: 25 },
+      { id: "q-debut-14-app", courseId: "debut", lessonId: "debut-c1-05", lvl: 1, q: "Quelle corde \xE0 vide sonne Sol ?", o: ["La corde 3", "La corde 4", "La corde 2", "La corde 5"], a: 0, exp: "De la 6 \xE0 la 1 : Mi, La, R\xE9, Sol, Si, Mi. Sol est la quatri\xE8me en partant de la grave : la corde 3.", xp: 25 },
+      { id: "q-debut-15", courseId: "debut", lessonId: "debut-c1-05", lvl: 1, q: "Laquelle est la corde 1 ?", o: ["La plus grosse, la plus grave", "La plus fine, la plus aigu\xEB", "Celle du milieu, accord\xE9e en Sol", "Celle accord\xE9e en La"], a: 1, exp: "La num\xE9rotation part de la corde la plus fine : la corde 1 est le Mi aigu, la corde 6 le Mi grave.", xp: 25 },
+      { id: "q-debut-16", courseId: "debut", lessonId: "debut-c1-05", lvl: 1, q: "L'accordeur indique que ta corde est trop basse. Que fais-tu ?", o: ["Tu tends la corde avec la m\xE9canique", "Tu d\xE9tends la corde avec la m\xE9canique", "Tu appuies plus fort avec la main gauche", "Tu changes de corde"], a: 0, exp: "Plus une corde est tendue, plus elle sonne aigu. Trop basse : on la tend, doucement, en surveillant l'accordeur.", xp: 25 },
+      { id: "q-debut-17", courseId: "debut", lessonId: "debut-c1-05", lvl: 2, q: "En notation anglaise, que donnent les six cordes \xE0 vide, de la corde 6 \xE0 la corde 1 ?", o: ["A B C D E F", "E A D G B E", "E B G D A E", "C D E F G A"], a: 1, exp: "Mi = E, La = A, R\xE9 = D, Sol = G, Si = B : E A D G B E. Beaucoup d'accordeurs affichent ces lettres.", xp: 30 },
+      { id: "q-debut-17-app", courseId: "debut", lessonId: "debut-c1-05", lvl: 2, q: "Ton accordeur affiche D : quelle corde \xE0 vide es-tu en train d'accorder ?", o: ["La corde 4", "La corde 5", "La corde 3", "La corde 2"], a: 0, exp: "D = R\xE9 en notation anglaise, et la corde \xE0 vide accord\xE9e en R\xE9 est la corde 4 (E A D G B E, de la 6 \xE0 la 1).", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/debut/debut-c1-06.js
+var debut_c1_06_exports = {};
+__export(debut_c1_06_exports, {
+  default: () => debut_c1_06_default,
+  quiz: () => quiz6
+});
+var REPERES, debut_c1_06_default, quiz6;
+var init_debut_c1_06 = __esm({
+  "src/content/cours/debut/debut-c1-06.js"() {
+    REPERES = {
+      type: "fretboard",
+      caption: "Les rep\xE8res d'accordage : case 5 partout, sauf case 4 sur la corde de Sol",
+      data: {
+        frets: 6,
+        startFret: 0,
+        showStringNames: true,
+        showFretNumbers: true,
+        notes: [
+          { string: 6, fret: 5, label: "La", color: "primary" },
+          { string: 5, fret: 5, label: "R\xE9", color: "primary" },
+          { string: 4, fret: 5, label: "Sol", color: "primary" },
+          { string: 3, fret: 4, label: "Si", color: "coral" },
+          { string: 2, fret: 5, label: "Mi", color: "primary" }
+        ]
+      }
+    };
+    debut_c1_06_default = {
+      id: "debut-c1-06",
+      level: 0,
+      unite: 1,
+      title: "Accorder \xE0 l'oreille : la m\xE9thode de la 5e case",
+      duration: 8,
+      gropiTip: "Le La de ta corde 5 \xE0 vide vibre \xE0 110 Hz, deux octaves sous le La 440 du diapason. La corde 6 en case 5 donne exactement ce m\xEAme La : c'est pour \xE7a que la m\xE9thode marche.",
+      cartes: [
+        { type: "idee", titre: "Ta guitare s'accorde avec elle-m\xEAme", texte: [
+          "Pas d'accordeur ? Sur une corde, une case pr\xE9cise donne la m\xEAme note que la corde suivante \xE0 vide. Compare les deux sons et ajuste.",
+          "On part d'une corde jug\xE9e juste, en g\xE9n\xE9ral la 6."
+        ] },
+        { type: "idee", titre: "La r\xE8gle de la case 5", texte: [
+          "Corde 6 case 5 = corde 5 \xE0 vide (La). Corde 5 case 5 = corde 4 \xE0 vide (R\xE9). Corde 4 case 5 = corde 3 \xE0 vide (Sol).",
+          "Exception : corde 3 case 4 = corde 2 \xE0 vide (Si). Enfin, corde 2 case 5 = corde 1 \xE0 vide (Mi)."
+        ], bloc: REPERES },
+        { type: "question", quizId: "q-debut-19" },
+        { type: "idee", titre: "Pourquoi la case 4 ?", texte: [
+          "Une case = un demi-ton. Entre deux cordes voisines, l'\xE9cart est de 5 demi-tons, d'o\xF9 la case 5.",
+          "Entre Sol et Si, il n'est que de 4 demi-tons : la seule irr\xE9gularit\xE9 de l'accordage standard."
+        ] },
+        { type: "question", quizId: "q-debut-21" },
+        { type: "idee", titre: "\xC9coute les battements", texte: [
+          "Joue les deux notes ensemble. Presque identiques, elles ondulent : \xAB wa-wa-wa \xBB. Ce sont les battements.",
+          "Plus les notes se rapprochent, plus l'ondulation ralentit. Quand elle dispara\xEEt et que tout fusionne en un son stable, c'est juste."
+        ] },
+        { type: "question", quizId: "q-debut-20" },
+        { type: "a-toi", titre: "Accorde \xE0 l'oreille", consigne: "D\xE9saccorde un peu ta corde 5, puis accorde-la sur la case 5 de la corde 6 en \xE9coutant les battements ralentir. Perdu ? D\xE9tends franchement, puis remonte doucement. Encha\xEEne les quatre autres comparaisons.", bloc: REPERES },
+        { type: "idee", titre: "Juste entre vous, pas forc\xE9ment au diapason", texte: [
+          "Ta guitare peut \xEAtre juste avec elle-m\xEAme sans \xEAtre au diapason (La = 440 Hz). Seul, aucun souci.",
+          "Pour jouer avec d'autres ou sur un enregistrement, repasse par Outils \u2192 Accordeur."
+        ] },
+        { type: "recap", points: [
+          "Case 5 d'une corde = corde suivante \xE0 vide, sauf de la corde 3 \xE0 la corde 2 : case 4.",
+          "Cordes voisines : 5 demi-tons d'\xE9cart ; entre Sol et Si, seulement 4.",
+          "Battements qui ralentissent puis disparaissent : les deux notes sont \xE0 l'unisson."
+        ] }
+      ],
+      quiz: ["q-debut-18", "q-debut-19", "q-debut-20", "q-debut-21"]
+    };
+    quiz6 = [
+      { id: "q-debut-18", courseId: "debut", lessonId: "debut-c1-06", lvl: 1, q: "Pour accorder la corde 5 (La) \xE0 l'oreille, quelle note de la corde 6 sers-tu de r\xE9f\xE9rence ?", o: ["La case 3", "La case 4", "La case 5", "La case 7"], a: 2, exp: "Corde 6, case 5 = La, la m\xEAme note que la corde 5 \xE0 vide. On compare les deux et on ajuste la corde 5.", xp: 25 },
+      { id: "q-debut-19", courseId: "debut", lessonId: "debut-c1-06", lvl: 1, q: "Quelle comparaison fait exception \xE0 la r\xE8gle de la 5e case ?", o: ["Corde 6 vers corde 5", "Corde 5 vers corde 4", "Corde 3 vers corde 2", "Corde 2 vers corde 1"], a: 2, exp: "Entre Sol (corde 3) et Si (corde 2), l'\xE9cart est de 4 demi-tons au lieu de 5 : on prend la case 4 de la corde 3.", xp: 25 },
+      { id: "q-debut-20", courseId: "debut", lessonId: "debut-c1-06", lvl: 2, q: "En comparant deux notes, tu entends une ondulation qui ralentit. Qu'est-ce que \xE7a signifie ?", o: ["Les deux notes se rapprochent de l'unisson", "La corde va casser", "Tu as pris la mauvaise case", "La guitare a besoin de cordes neuves"], a: 0, exp: "Ce sont les battements : plus deux notes sont proches, plus l'ondulation est lente. Quand elle dispara\xEEt, les notes sont \xE0 l'unisson.", xp: 30 },
+      { id: "q-debut-21", courseId: "debut", lessonId: "debut-c1-06", lvl: 2, q: "Combien de demi-tons s\xE9parent deux cordes voisines, hors du duo Sol\u2013Si ?", o: ["3", "4", "5", "7"], a: 2, exp: "5 demi-tons (une quarte juste), d'o\xF9 la case 5. Entre Sol et Si, seulement 4 demi-tons (une tierce majeure), d'o\xF9 la case 4.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/debut/debut-c2-01.js
+var debut_c2_01_exports = {};
+__export(debut_c2_01_exports, {
+  default: () => debut_c2_01_default,
+  quiz: () => quiz7
+});
+var EM, debut_c2_01_default, quiz7;
+var init_debut_c2_01 = __esm({
+  "src/content/cours/debut/debut-c2-01.js"() {
+    EM = { type: "chord_diagram", caption: "Mi mineur (Em) \u2014 exemple de diagramme", data: { name: "Em", frets: [0, 2, 2, 0, 0, 0], fingers: [0, 2, 3, 0, 0, 0], startFret: 1 } };
+    debut_c2_01_default = {
+      id: "debut-c2-01",
+      level: 0,
+      unite: 2,
+      title: "Lire un diagramme d'accord",
+      duration: 5,
+      gropiTip: "Mini-d\xE9fi : \xE9cris Mi mineur en chiffres sans regarder (022000), puis devine ce que donne 000000. R\xE9ponse : les six cordes \xE0 vide, Mi La R\xE9 Sol Si Mi !",
+      cartes: [
+        { type: "idee", titre: "Un accord, un sch\xE9ma", texte: [
+          "Un accord, c'est plusieurs notes jou\xE9es ensemble. Le diagramme d'accord montre o\xF9 poser les doigts.",
+          "C'est ta guitare debout devant toi, cordes face \xE0 toi."
+        ] },
+        { type: "idee", titre: "Cordes et frettes", texte: [
+          "Les lignes verticales sont les 6 cordes : la 6 (Mi grave) \xE0 gauche, la 1 (Mi aigu) \xE0 droite. Les lignes horizontales sont les frettes.",
+          "Le trait \xE9pais en haut, c'est le sillet : la case 1 est juste en dessous."
+        ], bloc: EM },
+        { type: "question", quizId: "q-debut-23" },
+        { type: "idee", titre: "Ronds, cercles et croix", texte: [
+          "Un rond plein = un doigt \xE0 poser ; le chiffre dedans = le doigt \xE0 utiliser (1 index, 2 majeur, 3 annulaire, 4 auriculaire).",
+          "Un petit cercle au-dessus du sillet = corde jou\xE9e \xE0 vide. Une croix = corde \xE0 ne pas jouer."
+        ] },
+        { type: "question", quizId: "q-debut-22" },
+        { type: "idee", titre: "L'accord en chiffres", texte: [
+          "On \xE9crit aussi un accord en six caract\xE8res, de la corde 6 \xE0 la corde 1 : un chiffre = la case, 0 = \xE0 vide, x = corde non jou\xE9e. Mi mineur s'\xE9crit 022000.",
+          "Noms anglais : Do = C, R\xE9 = D, Mi = E, Fa = F, Sol = G, La = A, Si = B. Un \xAB m \xBB = mineur : Em = Mi mineur."
+        ] },
+        { type: "question", quizId: "q-debut-24" },
+        { type: "a-toi", titre: "Lis et pose Mi mineur", consigne: "Majeur (2) sur la corde 5 en case 2, annulaire (3) sur la corde 4 en case 2, le reste \xE0 vide. \xC9coute-le avec le bouton, puis pose l'accord et gratte les six cordes.", bloc: EM },
+        { type: "recap", points: [
+          "Le diagramme montre le manche debout, vu de face : corde 6 \xE0 gauche, sillet en haut.",
+          "Rond = doigt (avec son num\xE9ro), cercle = corde \xE0 vide, croix = corde muette.",
+          "En chiffres, de la corde 6 \xE0 la 1 : Mi mineur = 022000."
+        ] }
+      ],
+      quiz: ["q-debut-22", "q-debut-23", "q-debut-24"]
+    };
+    quiz7 = [
+      { id: "q-debut-22", courseId: "debut", lessonId: "debut-c2-01", lvl: 1, q: "Sur un diagramme d'accord, que signifie une croix au-dessus d'une corde ?", o: ["La corde se joue \xE0 vide", "Cette corde ne doit pas \xEAtre jou\xE9e", "Il faut poser l'index sur cette corde", "La corde doit \xEAtre jou\xE9e plus fort"], a: 1, exp: "Une croix = corde non jou\xE9e (on l'\xE9vite avec le m\xE9diator, ou on l'\xE9touffe). Un petit cercle vide = corde jou\xE9e \xE0 vide.", xp: 25 },
+      { id: "q-debut-23", courseId: "debut", lessonId: "debut-c2-01", lvl: 1, q: "Sur un diagramme d'accord vertical, o\xF9 se trouve la corde de Mi grave ?", o: ["Tout \xE0 gauche", "Tout \xE0 droite", "En haut", "Au milieu"], a: 0, exp: "Le diagramme montre le manche debout, vu de face : corde 6 (Mi grave) \xE0 gauche, corde 1 (Mi aigu) \xE0 droite, sillet en haut.", xp: 25 },
+      { id: "q-debut-24", courseId: "debut", lessonId: "debut-c2-01", lvl: 2, q: "Que signifie la notation x32010 ?", o: ["Corde 6 non jou\xE9e, corde 5 case 3, corde 4 case 2, corde 3 \xE0 vide, corde 2 case 1, corde 1 \xE0 vide", "Les doigts \xE0 utiliser, de l'index \xE0 l'auriculaire", "Corde 1 non jou\xE9e, corde 2 case 3, corde 3 case 2, corde 4 \xE0 vide, corde 5 case 1, corde 6 \xE0 vide", "Un rythme : un silence puis cinq coups"], a: 0, exp: "On lit de la corde 6 \xE0 la corde 1 : x = non jou\xE9e, chiffre = case, 0 = \xE0 vide. x32010, c'est l'accord de Do que tu apprendras bient\xF4t.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/debut/debut-c2-02.js
+var debut_c2_02_exports = {};
+__export(debut_c2_02_exports, {
+  default: () => debut_c2_02_default,
+  quiz: () => quiz8
+});
+var debut_c2_02_default, quiz8;
+var init_debut_c2_02 = __esm({
+  "src/content/cours/debut/debut-c2-02.js"() {
+    debut_c2_02_default = {
+      id: "debut-c2-02",
+      level: 0,
+      unite: 2,
+      title: "Tes deux premiers accords : Mi mineur et La mineur",
+      duration: 7,
+      gropiTip: "Ton La mineur grogne dans le grave ? C'est s\xFBrement la corde 6 qui sonne. D\xE9marre ton coup de m\xE9diator sur la corde 5, \xE0 vide : c'est le La qui donne son nom \xE0 l'accord.",
+      cartes: [
+        { type: "idee", titre: "Deux accords pour commencer", texte: [
+          "Les deux accords les plus faciles : deux doigts, puis trois, et presque la m\xEAme forme. \xC0 la fin de cette le\xE7on, tu joues d\xE9j\xE0 de la musique."
+        ] },
+        { type: "idee", titre: "Mi mineur (Em)", texte: [
+          "Majeur (2) sur la corde 5, case 2 ; annulaire (3) sur la corde 4, case 2, c\xF4te \xE0 c\xF4te. Gratte les six cordes.",
+          "Ses trois notes : Mi, Sol et Si."
+        ], bloc: { type: "chord_diagram", caption: "Mi mineur (Em) \u2014 022000, les 6 cordes", data: { name: "Em", frets: [0, 2, 2, 0, 0, 0], fingers: [0, 2, 3, 0, 0, 0], startFret: 1 } } },
+        { type: "question", quizId: "q-debut-25" },
+        { type: "idee", titre: "La mineur (Am)", texte: [
+          "Index (1) sur la corde 2, case 1 ; majeur (2) sur la corde 4, case 2 ; annulaire (3) sur la corde 3, case 2.",
+          "Gratte \xE0 partir de la corde 5 : la corde 6 ne se joue pas. Ses notes : La, Do et Mi."
+        ], bloc: { type: "chord_diagram", caption: "La mineur (Am) \u2014 x02210, cordes 5 \xE0 1", data: { name: "Am", frets: [-1, 0, 2, 2, 1, 0], fingers: [0, 0, 2, 3, 1, 0], startFret: 1 } } },
+        { type: "question", quizId: "q-debut-26" },
+        { type: "idee", titre: "Le m\xEAme duo, une corde plus loin", texte: [
+          "Le duo majeur + annulaire de Mi mineur se retrouve dans La mineur, une corde vers les aigus : cordes 4 et 3 au lieu de 5 et 4.",
+          "Pour passer de l'un \xE0 l'autre, d\xE9place ce duo d'un bloc, sans le d\xE9monter, et ajoute ou retire l'index."
+        ] },
+        { type: "a-toi", titre: "Chaque corde doit sonner", consigne: "Pose Mi mineur et joue les cordes une par une. Une corde muette ou qui frise ? Doigt trop \xE0 plat, trop loin de la frette ou pas assez appuy\xE9 : corrige. Puis retire la main et repose l'accord d'un geste, dix fois. Pareil avec La mineur." },
+        { type: "question", quizId: "q-debut-28" },
+        { type: "recap", points: [
+          "Mi mineur = 022000 : majeur et annulaire en case 2, sur les cordes 5 et 4.",
+          "La mineur = x02210 : on gratte \xE0 partir de la corde 5.",
+          "V\xE9rifie corde par corde, puis repose l'accord d'un seul geste."
+        ] }
+      ],
+      quiz: ["q-debut-25", "q-debut-26", "q-debut-27", "q-debut-28"]
+    };
+    quiz8 = [
+      { id: "q-debut-25", courseId: "debut", lessonId: "debut-c2-02", lvl: 1, q: "Dans l'accord de Mi mineur, sur quelles cordes se posent les doigts ?", o: ["Cordes 5 et 4, case 2", "Cordes 3 et 2, case 1", "Cordes 6 et 5, case 3", "Cordes 2 et 1, case 2"], a: 0, exp: "Em = 022000 : majeur sur la corde 5 case 2, annulaire sur la corde 4 case 2, tout le reste \xE0 vide.", xp: 25 },
+      { id: "q-debut-26", courseId: "debut", lessonId: "debut-c2-02", lvl: 1, q: "Quelle corde ne doit pas \xEAtre jou\xE9e dans l'accord de La mineur ?", o: ["La corde 1 (Mi aigu)", "La corde 6 (Mi grave)", "La corde 5 (La)", "La corde 3 (Sol)"], a: 1, exp: "Am = x02210 : on gratte \xE0 partir de la corde 5, qui donne justement la note La, la fondamentale de l'accord.", xp: 25 },
+      { id: "q-debut-27", courseId: "debut", lessonId: "debut-c2-02", lvl: 2, q: "Quelles sont les trois notes de l'accord de Mi mineur ?", o: ["Mi, Sol#, Si", "Mi, Sol, Si", "Mi, La, Do", "Mi, Sol, Do"], a: 1, exp: "Mi mineur = Mi, Sol, Si. Avec Sol# \xE0 la place de Sol, ce serait Mi majeur : c'est cette seule note qui change la couleur de l'accord.", xp: 30 },
+      { id: "q-debut-28", courseId: "debut", lessonId: "debut-c2-02", lvl: 1, q: "Une corde frise quand tu joues ton accord. Que v\xE9rifies-tu en premier ?", o: ["Que tu grattes assez fort", "Le placement du doigt sur cette corde", "Que le m\xE9diator est assez \xE9pais", "Que tu comptes bien les temps"], a: 1, exp: "Une corde qui frise vient presque toujours de la main gauche : doigt trop loin de la frette, pas assez appuy\xE9, ou un doigt voisin qui la touche.", xp: 25 }
+    ];
+  }
+});
+
+// src/content/cours/debut/debut-c2-03.js
+var debut_c2_03_exports = {};
+__export(debut_c2_03_exports, {
+  default: () => debut_c2_03_default,
+  quiz: () => quiz9
+});
+var RE, debut_c2_03_default, quiz9;
+var init_debut_c2_03 = __esm({
+  "src/content/cours/debut/debut-c2-03.js"() {
+    RE = { type: "chord_diagram", caption: "R\xE9 majeur (D) \u2014 xx0232, cordes 4 \xE0 1", data: { name: "D", frets: [-1, -1, 0, 2, 3, 2], fingers: [0, 0, 0, 1, 3, 2], startFret: 1 } };
+    debut_c2_03_default = {
+      id: "debut-c2-03",
+      level: 0,
+      unite: 2,
+      title: "Trois accords majeurs : Do, Sol et R\xE9",
+      duration: 8,
+      gropiTip: "Dans R\xE9, ton majeur (corde 1, case 2) joue Fa#, la note qui rend l'accord majeur. Recule-le en case 1 : il joue Fa, et tu obtiens R\xE9 mineur (xx0231).",
+      cartes: [
+        { type: "idee", titre: "Trois accords lumineux", texte: [
+          "Apr\xE8s deux accords mineurs, plut\xF4t m\xE9lancoliques, voici trois accords majeurs, plus lumineux.",
+          "Avec ces cinq accords, tu accompagnes \xE9norm\xE9ment de chansons."
+        ] },
+        { type: "idee", titre: "Do (C) : x32010", texte: [
+          "Annulaire (3) sur la corde 5 en case 3, majeur (2) sur la corde 4 en case 2, index (1) sur la corde 2 en case 1. On ne joue pas la corde 6.",
+          "Surveille la corde 3, \xE0 vide : un doigt trop \xE0 plat l'\xE9touffe. Notes : Do, Mi, Sol."
+        ], bloc: { type: "chord_diagram", caption: "Do majeur (C) \u2014 x32010, cordes 5 \xE0 1", data: { name: "C", frets: [-1, 3, 2, 0, 1, 0], fingers: [0, 3, 2, 0, 1, 0], startFret: 1 } } },
+        { type: "idee", titre: "Sol (G) : 320003", texte: [
+          "Majeur (2) sur la corde 6 en case 3, index (1) sur la corde 5 en case 2, annulaire (3) sur la corde 1 en case 3. On gratte les six cordes. Notes : Sol, Si, R\xE9.",
+          "Variante plus pleine, pour plus tard : 320033."
+        ], bloc: { type: "chord_diagram", caption: "Sol majeur (G) \u2014 320003, les 6 cordes", data: { name: "G", frets: [3, 2, 0, 0, 0, 3], fingers: [2, 1, 0, 0, 0, 3], startFret: 1 } } },
+        { type: "question", quizId: "q-debut-30" },
+        { type: "idee", titre: "R\xE9 (D) : xx0232", texte: [
+          "Index (1) sur la corde 3 en case 2, majeur (2) sur la corde 1 en case 2, annulaire (3) sur la corde 2 en case 3 : un petit triangle. On gratte depuis la corde 4 \xE0 vide.",
+          "Notes : R\xE9, Fa#, La. Le plus d\xE9licat : arrondis bien les doigts."
+        ], bloc: RE },
+        { type: "question", quizId: "q-debut-29" },
+        { type: "idee", titre: "Pars de la bonne corde", texte: [
+          "Do se joue sur 5 cordes, R\xE9 sur 4, Sol sur 6. La corde de d\xE9part porte la note la plus grave, souvent celle qui nomme l'accord.",
+          "Commence ton geste de main droite sur cette corde-l\xE0."
+        ] },
+        { type: "a-toi", titre: "Do, Sol, R\xE9, corde par corde", consigne: "Pose chaque accord, joue ses cordes une par une depuis sa corde de d\xE9part, puis gratte-le quatre fois au clic. R\xE9 bute ? C'est normal : v\xE9rifie que ton majeur ne touche pas la corde 2.", bloc: RE, bpm: 60 },
+        { type: "question", quizId: "q-debut-32" },
+        { type: "recap", points: [
+          "Do = x32010, Sol = 320003, R\xE9 = xx0232.",
+          "Gratte depuis la corde de d\xE9part : la 5 pour Do, la 6 pour Sol, la 4 pour R\xE9.",
+          "Doigts arrondis : la corde 3 de Do et la corde 1 de R\xE9 doivent sonner."
+        ] }
+      ],
+      quiz: ["q-debut-29", "q-debut-30", "q-debut-31", "q-debut-32"]
+    };
+    quiz9 = [
+      { id: "q-debut-29", courseId: "debut", lessonId: "debut-c2-03", lvl: 1, q: "Pour l'accord de R\xE9 majeur, depuis quelle corde commences-tu \xE0 gratter ?", o: ["La corde 6 (Mi grave)", "La corde 5 (La)", "La corde 4 (R\xE9)", "La corde 3 (Sol)"], a: 2, exp: "On part de la corde 4 \xE0 vide : c'est le R\xE9, la fondamentale de l'accord. Les cordes 6 et 5 ne sont pas jou\xE9es (xx0232), sinon l'accord sonne lourd et flou.", xp: 25 },
+      { id: "q-debut-30", courseId: "debut", lessonId: "debut-c2-03", lvl: 1, q: "Dans l'accord de Do, quelle corde reste \xE0 vide entre deux doigts pos\xE9s ?", o: ["La corde 3", "La corde 5", "La corde 6", "La corde 4"], a: 0, exp: "Corde 4 case 2, corde 3 \xE0 vide, corde 2 case 1 : la corde 3 doit sonner entre deux doigts, d'o\xF9 l'importance de bien les arrondir.", xp: 25 },
+      { id: "q-debut-31", courseId: "debut", lessonId: "debut-c2-03", lvl: 2, q: "Quelles sont les notes de l'accord de Sol majeur ?", o: ["Sol, Si, R\xE9", "Sol, Si\u266D, R\xE9", "Sol, Do, Mi", "Sol, La, Si"], a: 0, exp: "Sol majeur = Sol, Si, R\xE9. Sur la guitare (320003) : Sol, Si, R\xE9, Sol, Si, Sol, de la corde 6 \xE0 la corde 1.", xp: 30 },
+      { id: "q-debut-32", courseId: "debut", lessonId: "debut-c2-03", lvl: 2, q: "L'accord de R\xE9 majeur contient R\xE9, La et\u2026", o: ["Fa", "Fa#", "Sol", "Si"], a: 1, exp: "R\xE9 majeur = R\xE9, Fa#, La. C'est la corde 1 case 2 qui donne le Fa#. Avec un Fa naturel, ce serait R\xE9 mineur.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/debut/debut-c2-04.js
+var debut_c2_04_exports = {};
+__export(debut_c2_04_exports, {
+  default: () => debut_c2_04_default,
+  quiz: () => quiz10
+});
+var debut_c2_04_default, quiz10;
+var init_debut_c2_04 = __esm({
+  "src/content/cours/debut/debut-c2-04.js"() {
+    debut_c2_04_default = {
+      id: "debut-c2-04",
+      level: 0,
+      unite: 2,
+      title: "Changer d'accord sans s'arr\xEAter",
+      duration: 7,
+      gropiTip: "Pendant que tu grattes un accord, dis d\xE9j\xE0 dans ta t\xEAte le nom du suivant : ton cerveau pr\xE9pare le trajet des doigts avant m\xEAme que ta main bouge.",
+      cartes: [
+        { type: "idee", titre: "Le vrai d\xE9fi : encha\xEEner", texte: [
+          "Poser un accord, c'est la moiti\xE9 du chemin. L'autre : passer au suivant sans casser le rythme."
+        ] },
+        { type: "idee", titre: "Les doigts pivots", texte: [
+          "Les doigts communs \xE0 deux accords restent pos\xE9s : ne les soul\xE8ve pas.",
+          "De Do \xE0 La mineur, l'index (corde 2, case 1) et le majeur (corde 4, case 2) restent en place. Seul l'annulaire passe de la corde 5 en case 3 \xE0 la corde 3 en case 2."
+        ], bloc: { type: "chord_diagram", caption: "Do (C) \u2014 index et majeur resteront en place pour La mineur", data: { name: "C", frets: [-1, 3, 2, 0, 1, 0], fingers: [0, 3, 2, 0, 1, 0], startFret: 1 } } },
+        { type: "question", quizId: "q-debut-33" },
+        { type: "idee", titre: "Glisser ou d\xE9placer d'un bloc", texte: [
+          "Un doigt change de case sur la m\xEAme corde ? Fais-le glisser le long de la corde : il guide toute la main.",
+          "Rien en commun, comme entre Mi mineur et Sol ? D\xE9place tous les doigts ensemble, comme un tampon, pas un doigt apr\xE8s l'autre."
+        ] },
+        { type: "idee", titre: "Pars un peu en avance", texte: [
+          "Le changement doit \xEAtre D\xC9J\xC0 fait quand le temps arrive. Quitte l'accord sur le dernier coup de la mesure : sur les cordes \xE0 vide, personne ne l'entend.",
+          "Un trou dans le rythme, lui, s'entend tout de suite."
+        ] },
+        { type: "question", quizId: "q-debut-35" },
+        { type: "a-toi", titre: "Une minute de changements", consigne: "Mi mineur, La mineur, Mi mineur\u2026 Un coup par accord, le plus de changements possible en une minute. Ne compte que ceux qui sonnent bien et note ton score : demain, il grimpera. Puis Do et La mineur, Sol et R\xE9.", bloc: { type: "chord_diagram", caption: "La mineur (Am) \u2014 x02210 : le duo de Mi mineur une corde plus loin, plus l'index", data: { name: "Am", frets: [-1, 0, 2, 2, 1, 0], fingers: [0, 0, 2, 3, 1, 0], startFret: 1 } }, minuteur: 60 },
+        { type: "question", quizId: "q-debut-34" },
+        { type: "recap", points: [
+          "Garde en place les doigts communs aux deux accords.",
+          "Sinon, glisse le long de la corde ou d\xE9place la forme d'un bloc.",
+          "Quitte l'accord sur le dernier coup : le suivant tombe pile sur le temps."
+        ] }
+      ],
+      quiz: ["q-debut-33", "q-debut-34", "q-debut-35"]
+    };
+    quiz10 = [
+      { id: "q-debut-33", courseId: "debut", lessonId: "debut-c2-04", lvl: 1, q: "Entre Do et La mineur, combien de doigts doivent vraiment bouger ?", o: ["Aucun", "Un seul", "Deux", "Les trois"], a: 1, exp: "L'index (corde 2, case 1) et le majeur (corde 4, case 2) sont communs aux deux accords. Seul l'annulaire passe de la corde 5 case 3 \xE0 la corde 3 case 2.", xp: 25 },
+      { id: "q-debut-34", courseId: "debut", lessonId: "debut-c2-04", lvl: 1, q: "Quand aucun doigt n'est commun entre deux accords, comment les d\xE9placer ?", o: ["Un doigt apr\xE8s l'autre, en commen\xE7ant par l'index", "Tous ensemble, d'un bloc", "En regardant chaque doigt se poser un par un", "En s'arr\xEAtant de jouer une mesure"], a: 1, exp: "D\xE9placer la forme d'un bloc, comme un tampon, est bien plus rapide que de reconstruire l'accord doigt par doigt.", xp: 25 },
+      { id: "q-debut-35", courseId: "debut", lessonId: "debut-c2-04", lvl: 2, q: "Pourquoi quitter un accord un peu avant le temps suivant ?", o: ["Pour que le nouvel accord soit en place pile sur le temps", "Parce que le dernier coup doit toujours \xEAtre silencieux", "Pour reposer la main gauche", "Pour jouer plus vite que le m\xE9tronome"], a: 0, exp: "Le changement doit \xEAtre termin\xE9 quand le temps fort arrive. Un coup sur les cordes \xE0 vide juste avant passe inaper\xE7u ; un trou dans le rythme, non.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/debut/debut-c2-05.js
+var debut_c2_05_exports = {};
+__export(debut_c2_05_exports, {
+  default: () => debut_c2_05_default,
+  quiz: () => quiz11
+});
+var PASSE_PARTOUT, debut_c2_05_default, quiz11;
+var init_debut_c2_05 = __esm({
+  "src/content/cours/debut/debut-c2-05.js"() {
+    PASSE_PARTOUT = { type: "strum_pattern", caption: "Bas, bas-haut, haut-bas-haut \u2014 la main ne s'arr\xEAte jamais", data: { pattern: ["B", "-", "B", "H", "-", "H", "B", "H"], beats: 4, style: "folk", bpm: 70 } };
+    debut_c2_05_default = {
+      id: "debut-c2-05",
+      level: 0,
+      unite: 2,
+      title: "Tes premi\xE8res rythmiques",
+      duration: 7,
+      gropiTip: "Exercice muet : pose la main gauche \xE0 plat sur les cordes, sans appuyer, et joue la rythmique passe-partout. Sans les notes, tu n'entends plus que le rythme : id\xE9al pour v\xE9rifier ton balancier.",
+      cartes: [
+        { type: "idee", titre: "Faire danser les accords", texte: [
+          "Un accord, c'est une couleur ; la rythmique le fait danser.",
+          "On reste sur un seul accord, Mi mineur, pour que la main gauche se fasse oublier."
+        ] },
+        { type: "a-toi", titre: "Rythmique 1 : quatre coups vers le bas", consigne: "Un coup vers le bas sur chaque temps, en disant \xAB 1, 2, 3, 4 \xBB \xE0 voix haute. Lance le clic et reste r\xE9gulier, sans acc\xE9l\xE9rer. Simple, mais c'est la base de tout.", bloc: { type: "strum_pattern", caption: "4 noires vers le bas \u2014 compte \xAB 1, 2, 3, 4 \xBB", data: { pattern: ["B", "B", "B", "B"], beats: 4, style: "folk", bpm: 60 } }, bpm: 60 },
+        { type: "idee", titre: "Rythmique 2 : bas-haut", texte: [
+          "On ajoute un coup vers le haut entre les temps. Compte \xAB 1 et 2 et 3 et 4 et \xBB : vers le bas sur les chiffres, vers le haut sur les \xAB et \xBB.",
+          "Le coup vers le haut peut ne toucher que les cordes aigu\xEBs : c'est normal."
+        ], bloc: { type: "strum_pattern", caption: "8 croches \u2014 bas sur les temps, haut sur les \xAB et \xBB", data: { pattern: ["B", "H", "B", "H", "B", "H", "B", "H"], beats: 4, style: "folk", bpm: 60 } } },
+        { type: "question", quizId: "q-debut-36-app" },
+        { type: "idee", titre: "La rythmique passe-partout", texte: [
+          "Bas, bas-haut, haut-bas-haut : une des rythmiques les plus utilis\xE9es en pop et en folk.",
+          "Le secret : ta main garde le balancier de la rythmique 2, mais passe dans le vide sur le \xAB et \xBB du 1 et sur le temps 3."
+        ], bloc: PASSE_PARTOUT },
+        { type: "question", quizId: "q-debut-37" },
+        { type: "idee", titre: "Le balancier ne s'arr\xEAte jamais", texte: [
+          "Ta main droite est un pendule : elle descend sur les temps et remonte sur les \xAB et \xBB, qu'elle touche les cordes ou non.",
+          "Si elle s'arr\xEAte pour \xAB attendre \xBB, tu perds le rythme."
+        ] },
+        { type: "a-toi", titre: "La passe-partout au clic", consigne: "Joue la passe-partout sur Mi mineur pendant une minute, sans t'arr\xEAter, avec le clic \xE0 60 BPM. Quand c'est fluide, essaie \xE0 70. Ensuite, change d'accord toutes les deux mesures.", bloc: PASSE_PARTOUT, bpm: 60, minuteur: 60 },
+        { type: "question", quizId: "q-debut-38" },
+        { type: "recap", points: [
+          "Bas sur les temps, haut sur les \xAB et \xBB.",
+          "La passe-partout : bas, bas-haut, haut-bas-haut.",
+          "Le balancier ne s'arr\xEAte jamais : on rate les cordes, on ne s'arr\xEAte pas."
+        ] }
+      ],
+      quiz: ["q-debut-36", "q-debut-37", "q-debut-38", "q-debut-36-app"]
+    };
+    quiz11 = [
+      { id: "q-debut-36", courseId: "debut", lessonId: "debut-c2-05", lvl: 1, q: "En comptant \xAB 1 et 2 et 3 et 4 et \xBB, quand grattes-tu vers le haut ?", o: ["Sur les chiffres", "Sur les \xAB et \xBB", "Seulement sur le 1", "Jamais, on gratte toujours vers le bas"], a: 1, exp: "Bas sur les temps (les chiffres), haut sur les \xAB et \xBB. C'est le mouvement de balancier de base de la main droite.", xp: 25 },
+      { id: "q-debut-36-app", courseId: "debut", lessonId: "debut-c2-05", lvl: 1, q: "En bas-haut, tu comptes \xAB 1 et 2 et 3 et 4 et \xBB. Combien de coups vers le haut joues-tu par mesure ?", o: ["Quatre", "Huit", "Deux", "Un seul"], a: 0, exp: "Un coup vers le haut sur chaque \xAB et \xBB, et la mesure compte quatre \xAB et \xBB : quatre coups vers le haut, gliss\xE9s entre les quatre coups vers le bas.", xp: 25 },
+      { id: "q-debut-37", courseId: "debut", lessonId: "debut-c2-05", lvl: 2, q: "Dans la rythmique bas, bas-haut, haut-bas-haut, que fait la main sur le temps 3 ?", o: ["Elle s'arr\xEAte et attend", "Elle descend sans toucher les cordes", "Elle gratte deux fois", "Elle \xE9touffe les cordes avec la paume"], a: 1, exp: "Le balancier continue : la main descend sur le 3 comme d'habitude, mais passe dans le vide. C'est ce qui garde le rythme r\xE9gulier.", xp: 30 },
+      { id: "q-debut-38", courseId: "debut", lessonId: "debut-c2-05", lvl: 1, q: "\xC0 quel tempo travailler une nouvelle rythmique ?", o: ["Le plus vite possible", "Lentement, vers 60 \xE0 70 BPM, puis acc\xE9l\xE9rer", "Au tempo de la chanson originale, tout de suite", "Sans m\xE9tronome, au feeling"], a: 1, exp: "Lentement et r\xE9guli\xE8rement d'abord. La vitesse vient toute seule quand le geste est fluide ; l'inverse ne marche pas.", xp: 25 }
+    ];
+  }
+});
+
+// src/content/cours/debut/debut-c2-06.js
+var debut_c2_06_exports = {};
+__export(debut_c2_06_exports, {
+  default: () => debut_c2_06_default,
+  quiz: () => quiz12
+});
+var debut_c2_06_default, quiz12;
+var init_debut_c2_06 = __esm({
+  "src/content/cours/debut/debut-c2-06.js"() {
+    debut_c2_06_default = {
+      id: "debut-c2-06",
+      level: 0,
+      unite: 2,
+      title: "Ta premi\xE8re progression : Sol, R\xE9, Mi mineur, Do",
+      duration: 8,
+      gropiTip: "Dans le module Harmonie, tu verras cette boucle not\xE9e I-V-vi-IV : ce sont les degr\xE9s des accords dans la tonalit\xE9. Le m\xEAme code fonctionne dans toutes les tonalit\xE9s.",
+      cartes: [
+        { type: "idee", titre: "La boucle la plus c\xE9l\xE8bre", texte: [
+          "Une progression, c'est une suite d'accords qui tourne en boucle. Sol, R\xE9, Mi mineur, Do accompagne des centaines de chansons pop, rock et folk.",
+          "Tu connais d\xE9j\xE0 les quatre : Sol (320003), R\xE9 (xx0232), Mi mineur (022000) et Do (x32010)."
+        ] },
+        { type: "a-toi", titre: "\xC9tape 1 : une mesure par accord", consigne: "Quatre coups vers le bas sur Sol, puis R\xE9, Mi mineur, Do, et on recommence. Un accord rat\xE9 ? Ne t'arr\xEAte pas : garde le rythme, la main gauche rattrapera. Deux minutes de boucle.", bloc: { type: "chord_diagram", caption: "1. Sol (G) \u2014 320003, le d\xE9part de la boucle", data: { name: "G", frets: [3, 2, 0, 0, 0, 3], fingers: [2, 1, 0, 0, 0, 3], startFret: 1 } }, bpm: 60, minuteur: 120 },
+        { type: "question", quizId: "q-debut-39" },
+        { type: "idee", titre: "Isole le passage qui coince", texte: [
+          "Les changements qui coincent le plus ici : R\xE9 vers Mi mineur (tous les doigts bougent) et Mi mineur vers Do.",
+          "Travaille seul le passage difficile avec \xAB une minute de changements \xBB, puis remets-le dans la boucle."
+        ], bloc: { type: "chord_diagram", caption: "2. R\xE9 (D) \u2014 xx0232 : vers Mi mineur, tous les doigts bougent", data: { name: "D", frets: [-1, -1, 0, 2, 3, 2], fingers: [0, 0, 0, 1, 3, 2], startFret: 1 } } },
+        { type: "question", quizId: "q-debut-41" },
+        { type: "a-toi", titre: "\xC9tape 2 : avec la passe-partout", consigne: "Quand la boucle en quatre coups est fluide, joue la rythmique passe-partout, une mesure par accord. Trop rapide ? Garde deux mesures par accord, le temps de prendre tes marques.", bloc: { type: "strum_pattern", caption: "Une mesure par accord : bas, bas-haut, haut-bas-haut", data: { pattern: ["B", "-", "B", "H", "-", "H", "B", "H"], beats: 4, style: "folk", bpm: 70 } }, bpm: 70 },
+        { type: "idee", titre: "Pourquoi \xE7a sonne si bien ?", texte: [
+          "Les quatre accords appartiennent \xE0 la m\xEAme tonalit\xE9, Sol majeur. Sol est la \xAB maison \xBB, o\xF9 la musique se repose ; R\xE9 cr\xE9e une tension qui donne envie de revenir ; Mi mineur apporte de la m\xE9lancolie ; Do ouvre l'espace."
+        ] },
+        { type: "question", quizId: "q-debut-40-app" },
+        { type: "a-toi", titre: "Change de point de d\xE9part", consigne: "Pars de Mi mineur : Mi mineur, Do, Sol, R\xE9. M\xEAmes accords, et pourtant l'ambiance devient plus sombre.", bloc: { type: "chord_diagram", caption: "3. Mi mineur (Em) \u2014 022000, le nouveau d\xE9part", data: { name: "Em", frets: [0, 2, 2, 0, 0, 0], fingers: [0, 2, 3, 0, 0, 0], startFret: 1 } }, bpm: 60 },
+        { type: "recap", points: [
+          "Sol, R\xE9, Mi mineur, Do : une mesure chacun, sans jamais casser le rythme.",
+          "Le passage qui coince se travaille \xE0 part, puis revient dans la boucle.",
+          "Les quatre accords sont en Sol majeur ; partir de Mi mineur assombrit l'ambiance."
+        ] }
+      ],
+      quiz: ["q-debut-39", "q-debut-40", "q-debut-41", "q-debut-40-app"]
+    };
+    quiz12 = [
+      { id: "q-debut-39", courseId: "debut", lessonId: "debut-c2-06", lvl: 1, q: "Un accord ne sonne pas parfaitement pendant que tu fais tourner la progression. Que fais-tu ?", o: ["Tu t'arr\xEAtes et tu recommences du d\xE9but", "Tu gardes le rythme et tu continues", "Tu ralentis jusqu'\xE0 ce qu'il sonne", "Tu sautes l'accord suivant"], a: 1, exp: "Le rythme d'abord : la boucle doit continuer. Un accord imparfait passe, un arr\xEAt casse tout. Les passages difficiles se travaillent \xE0 part.", xp: 25 },
+      { id: "q-debut-40", courseId: "debut", lessonId: "debut-c2-06", lvl: 2, q: "Dans quelle tonalit\xE9 se trouve la progression Sol, R\xE9, Mi mineur, Do ?", o: ["Do majeur", "R\xE9 majeur", "Sol majeur", "La mineur"], a: 2, exp: "Les quatre accords appartiennent \xE0 Sol majeur, et Sol est l'accord sur lequel la boucle se repose. D\xE9marr\xE9e sur Mi mineur, la m\xEAme boucle prend une couleur plus sombre.", xp: 30 },
+      { id: "q-debut-40-app", courseId: "debut", lessonId: "debut-c2-06", lvl: 2, q: "La boucle Do, Sol, La mineur, Fa suit le m\xEAme sch\xE9ma que Sol, R\xE9, Mi mineur, Do. Dans quelle tonalit\xE9 est-elle ?", o: ["Do majeur", "Sol majeur", "Fa majeur", "R\xE9 mineur"], a: 0, exp: "M\xEAme sch\xE9ma : le premier accord est la \xAB maison \xBB. Sol, R\xE9, Mi mineur, Do est en Sol majeur ; Do, Sol, La mineur, Fa est en Do majeur.", xp: 30 },
+      { id: "q-debut-41", courseId: "debut", lessonId: "debut-c2-06", lvl: 1, q: "Le passage de R\xE9 \xE0 Mi mineur te bloque. Quelle est la m\xE9thode la plus efficace ?", o: ["Le travailler seul, puis le r\xE9int\xE9grer", "\xC9viter cette progression", "Jouer plus vite pour ne pas y penser", "Remplacer Mi mineur par un autre accord"], a: 0, exp: "On isole le changement difficile (exercice \xAB une minute de changements \xBB) puis on le r\xE9int\xE8gre. C'est comme \xE7a que tous les guitaristes progressent.", xp: 25 }
+    ];
+  }
+});
+
+// src/content/cours/debut/debut-c3-01.js
+var debut_c3_01_exports = {};
+__export(debut_c3_01_exports, {
+  default: () => debut_c3_01_default,
+  quiz: () => quiz13
+});
+var debut_c3_01_default, quiz13;
+var init_debut_c3_01 = __esm({
+  "src/content/cours/debut/debut-c3-01.js"() {
+    debut_c3_01_default = {
+      id: "debut-c3-01",
+      level: 0,
+      unite: 3,
+      title: "Lire une tablature",
+      duration: 7,
+      gropiTip: "M\xE9fie-toi des nombres \xE0 deux chiffres : \xAB 12 \xBB sur une ligne veut dire case 12, pas case 1 puis case 2. Un nombre coll\xE9 se lit toujours d'un bloc.",
+      cartes: [
+        { type: "idee", titre: "La tab : une corde, une case", texte: [
+          "La tablature (ou \xAB tab \xBB) est la fa\xE7on la plus r\xE9pandue d'\xE9crire la guitare. Pas besoin de solf\xE8ge : elle dit sur quelle corde et quelle case poser le doigt."
+        ] },
+        { type: "idee", titre: "Six lignes = six cordes", texte: [
+          "Une ligne par corde. En HAUT, la corde la plus fine (corde 1, Mi aigu) ; en BAS, la plus grosse (corde 6, Mi grave).",
+          "C'est l'inverse de ce que tu vois en baissant les yeux : retiens \xAB en haut = aigu \xBB. Les lettres e B G D A E nomment les cordes."
+        ] },
+        { type: "question", quizId: "q-debut-42" },
+        { type: "idee", titre: "Les chiffres = les cases", texte: [
+          "Un chiffre sur une ligne = la case \xE0 jouer sur cette corde : 0 = \xE0 vide, 3 = case 3, 12 = case 12. On lit de gauche \xE0 droite.",
+          "La tab ne dit pas quel doigt utiliser : en g\xE9n\xE9ral, un doigt par case."
+        ] },
+        { type: "question", quizId: "q-debut-43" },
+        { type: "a-toi", titre: "Ta premi\xE8re tab", consigne: "Corde 1 \xE0 vide (Mi), case 1 (Fa), case 3 (Sol), case 1, \xE0 vide. \xC9coute-la avec le bouton, puis joue-la lentement : tu viens de lire ta premi\xE8re tablature.", bloc: {
+          type: "tab",
+          caption: "Trois notes sur la corde 1 : Mi, Fa, Sol, puis retour",
+          text: "Tab \u2014 corde 1 (ligne du haut) : 0, 1, 3, 1, 0. Soit Mi \xE0 vide, Fa en case 1, Sol en case 3, Fa, Mi.",
+          data: { lines: [
+            "e|-0---1---3---1---0---|",
+            "B|---------------------|",
+            "G|---------------------|",
+            "D|---------------------|",
+            "A|---------------------|",
+            "E|---------------------|"
+          ] }
+        } },
+        { type: "idee", titre: "Chiffres empil\xE9s = accord", texte: [
+          "Des chiffres align\xE9s verticalement se jouent en m\xEAme temps : c'est un accord.",
+          "Ici, tu reconnais Mi mineur : cordes 5 et 4 en case 2, toutes les autres \xE0 vide."
+        ], bloc: {
+          type: "tab",
+          caption: "Mi mineur \xE9crit en tablature : les chiffres empil\xE9s se jouent ensemble",
+          text: "Tab \u2014 de la corde 1 \xE0 la corde 6 : 0, 0, 0, 2, 2, 0, jou\xE9s en m\xEAme temps. C'est Mi mineur (022000 lu de la corde 6 \xE0 la corde 1).",
+          data: { lines: [
+            "e|--0--|",
+            "B|--0--|",
+            "G|--0--|",
+            "D|--2--|",
+            "A|--2--|",
+            "E|--0--|"
+          ] }
+        } },
+        { type: "question", quizId: "q-debut-44" },
+        { type: "idee", titre: "Et le rythme ?", texte: [
+          "La tab donne les notes, pas leur dur\xE9e exacte. L'espacement en donne une id\xE9e ; les barres \xAB | \xBB s\xE9parent les mesures.",
+          "\xC9coute d'abord le morceau, lis ensuite. Outils \u2192 Tablature joue une tab au tempo de ton choix."
+        ] },
+        { type: "recap", points: [
+          "Ligne du haut = corde 1 (aigu), ligne du bas = corde 6 (grave).",
+          "Un chiffre = une case, 0 = corde \xE0 vide ; des chiffres empil\xE9s = un accord.",
+          "La tab ne donne pas les dur\xE9es : \xE9coute le morceau."
+        ] }
+      ],
+      quiz: ["q-debut-42", "q-debut-43", "q-debut-44", "q-debut-45"]
+    };
+    quiz13 = [
+      { id: "q-debut-42", courseId: "debut", lessonId: "debut-c3-01", lvl: 1, q: "Dans une tablature, que repr\xE9sente la ligne du haut ?", o: ["La corde de Mi grave (corde 6)", "La corde de Mi aigu (corde 1)", "Le rythme du morceau", "La corde de Sol"], a: 1, exp: "En haut = aigu : la ligne du haut est la corde 1 (Mi aigu), celle du bas la corde 6 (Mi grave). C'est l'inverse de ce qu'on voit en regardant son manche.", xp: 25 },
+      { id: "q-debut-43", courseId: "debut", lessonId: "debut-c3-01", lvl: 1, q: "Un 0 sur une ligne de tablature signifie\u2026", o: ["Une pause", "Jouer la corde \xE0 vide", "Ne pas jouer la corde", "Jouer la case 10"], a: 1, exp: "0 = corde \xE0 vide, sans poser de doigt. Les autres chiffres indiquent la case \xE0 jouer sur cette corde.", xp: 25 },
+      { id: "q-debut-44", courseId: "debut", lessonId: "debut-c3-01", lvl: 1, q: "Plusieurs chiffres sont align\xE9s verticalement. Comment les joue-t-on ?", o: ["Un par un, de haut en bas", "En m\xEAme temps, comme un accord", "Un par un, de bas en haut", "On choisit l'un d'eux"], a: 1, exp: "Des chiffres empil\xE9s se jouent ensemble : c'est la fa\xE7on d'\xE9crire un accord en tablature.", xp: 25 },
+      { id: "q-debut-45", courseId: "debut", lessonId: "debut-c3-01", lvl: 2, q: "Quelle information une tablature classique ne donne-t-elle PAS pr\xE9cis\xE9ment ?", o: ["La corde \xE0 jouer", "La case \xE0 jouer", "La dur\xE9e exacte des notes", "L'ordre des notes"], a: 2, exp: "La tab donne la corde, la case et l'ordre. Le rythme n'est sugg\xE9r\xE9 que par l'espacement : pour la dur\xE9e exacte, il faut \xE9couter le morceau.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/debut/debut-c3-02.js
+var debut_c3_02_exports = {};
+__export(debut_c3_02_exports, {
+  default: () => debut_c3_02_default,
+  quiz: () => quiz14
+});
+var debut_c3_02_default, quiz14;
+var init_debut_c3_02 = __esm({
+  "src/content/cours/debut/debut-c3-02.js"() {
+    debut_c3_02_default = {
+      id: "debut-c3-02",
+      level: 0,
+      unite: 3,
+      title: "Les symboles de la tablature",
+      duration: 7,
+      gropiTip: "Rejoue le riff de la le\xE7on en rempla\xE7ant le 2h3 par un gliss\xE9 2/3 : m\xEAmes notes, autre couleur. Tu entends tout de suite la diff\xE9rence entre frapper la note et la faire glisser.",
+      cartes: [
+        { type: "idee", titre: "Les signes disent COMMENT jouer", texte: [
+          "Au-del\xE0 des chiffres, une tab utilise quelques signes. Pas besoin de ma\xEEtriser ces techniques tout de suite : sache les reconna\xEEtre."
+        ] },
+        { type: "idee", titre: "h et p : les liaisons", texte: [
+          "h = hammer-on. 2h4 : joue la case 2, puis frappe la case 4 avec un autre doigt, sans regratter la corde.",
+          "p = pull-off. 4p2 : deux doigts pos\xE9s, joue la case 4, puis retire ce doigt en accrochant un peu la corde : la case 2 sonne, sans regratter."
+        ] },
+        { type: "question", quizId: "q-debut-46" },
+        { type: "idee", titre: "/ et \\ : les gliss\xE9s", texte: [
+          "/ = gliss\xE9 montant. 2/4 : joue la case 2 et glisse jusqu'\xE0 la case 4 sans d\xE9coller le doigt ni rel\xE2cher la pression.",
+          "\\ = gliss\xE9 descendant : 4\\2, m\xEAme geste en redescendant. On entend la note voyager."
+        ] },
+        { type: "idee", titre: "b et r : les tir\xE9s", texte: [
+          "b = bend (tir\xE9). 7b9 : joue la case 7 et pousse la corde vers le plafond jusqu'\xE0 ce qu'elle sonne comme la case 9.",
+          "r = release (rel\xE2ch\xE9). 7b9r7 : apr\xE8s le tir\xE9, ram\xE8ne doucement la corde. Surtout sur les cordes fines, plusieurs doigts poussant ensemble."
+        ] },
+        { type: "question", quizId: "q-debut-48" },
+        { type: "idee", titre: "~ et x : vibrato et notes \xE9touff\xE9es", texte: [
+          "~ = vibrato : de petits tir\xE9s r\xE9p\xE9t\xE9s font \xAB vivre \xBB la note.",
+          "x = note \xE9touff\xE9e : la main gauche touche la corde sans l'appuyer, d'o\xF9 un \xAB tchk \xBB percussif. Et PM (palm mute) : la tranche de la main droite \xE9touffe les cordes pr\xE8s du chevalet."
+        ] },
+        { type: "question", quizId: "q-debut-47" },
+        { type: "a-toi", titre: "Un riff avec un hammer-on", consigne: "La (corde 5 \xE0 vide), Do, R\xE9 (corde 4 \xE0 vide), puis Mi avec un hammer-on vers Fa, et on redescend : Mi, R\xE9, Do, La. \xC9coute-le, puis joue-le lentement, en ne grattant qu'une fois pour le 2h3.", bloc: {
+          type: "tab",
+          caption: "Un petit riff original en La mineur, avec un hammer-on",
+          text: "Tab \u2014 corde 5 : 0 puis 3 ; corde 4 : 0, puis 2h3 (case 2 et hammer-on sur la case 3) ; puis corde 4 : 2, 0 ; corde 5 : 3, 0.",
+          data: { lines: [
+            "e|---------------------|---------------------|",
+            "B|---------------------|---------------------|",
+            "G|---------------------|---------------------|",
+            "D|-----------0----2h3--|-2----0--------------|",
+            "A|-0----3--------------|-----------3----0----|",
+            "E|---------------------|---------------------|"
+          ] }
+        } },
+        { type: "recap", points: [
+          "h = hammer-on, p = pull-off : la seconde note sonne sans regratter.",
+          "/ glisse vers l'aigu, \\ vers le grave ; b tire la corde, r la rel\xE2che.",
+          "~ = vibrato, x = note \xE9touff\xE9e, PM = palm mute."
+        ] }
+      ],
+      quiz: ["q-debut-46", "q-debut-47", "q-debut-48", "q-debut-49"]
+    };
+    quiz14 = [
+      { id: "q-debut-46", courseId: "debut", lessonId: "debut-c3-02", lvl: 1, q: "Dans une tab, que signifie 5h7 ?", o: ["Glisser de la case 5 \xE0 la case 7", "Jouer la case 5, puis frapper la case 7 sans regratter", "Tirer la corde de la case 5 jusqu'\xE0 la hauteur de la case 7", "Jouer la case 5 et la case 7 en m\xEAme temps"], a: 1, exp: "h = hammer-on : la seconde note est obtenue en frappant la corde avec un doigt de la main gauche, sans nouvelle attaque de la main droite.", xp: 25 },
+      { id: "q-debut-47", courseId: "debut", lessonId: "debut-c3-02", lvl: 1, q: "Que veut dire le symbole x dans une tablature ?", o: ["Ne rien jouer pendant une mesure", "Une note \xE9touff\xE9e, percussive", "Jouer la case 10", "R\xE9p\xE9ter la mesure pr\xE9c\xE9dente"], a: 1, exp: "x = note \xE9touff\xE9e (ou \xAB morte \xBB) : la corde est touch\xE9e sans \xEAtre appuy\xE9e jusqu'\xE0 la frette, ce qui donne un son percussif, sans hauteur.", xp: 25 },
+      { id: "q-debut-48", courseId: "debut", lessonId: "debut-c3-02", lvl: 2, q: "Comment lire 7b9r7 ?", o: ["Glisser de la case 7 \xE0 la case 9, puis revenir", "Tirer jusqu'\xE0 la hauteur de la case 9, puis rel\xE2cher", "Jouer les cases 7, 9 et 7 en trois attaques", "Faire un vibrato large entre les cases 7 et 9"], a: 1, exp: "b = bend (tir\xE9), r = release (rel\xE2ch\xE9). On joue la case 7, on pousse la corde jusqu'\xE0 la hauteur de la case 9, puis on la ram\xE8ne, sans nouvelle attaque.", xp: 30 },
+      { id: "q-debut-49", courseId: "debut", lessonId: "debut-c3-02", lvl: 2, q: "Quelle est la diff\xE9rence entre 3/5 et 5\\3 ?", o: ["Aucune, ce sont deux notations du m\xEAme geste", "Le premier glisse vers l'aigu, le second vers le grave", "Le premier est un hammer-on, le second un pull-off", "Le premier se joue sur la corde 3, le second sur la corde 5"], a: 1, exp: "/ = gliss\xE9 montant (vers les cases plus hautes, donc plus aigu), \\ = gliss\xE9 descendant (vers le grave).", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/debut/debut-c3-03.js
+var debut_c3_03_exports = {};
+__export(debut_c3_03_exports, {
+  default: () => debut_c3_03_default,
+  quiz: () => quiz15
+});
+var debut_c3_03_default, quiz15;
+var init_debut_c3_03 = __esm({
+  "src/content/cours/debut/debut-c3-03.js"() {
+    debut_c3_03_default = {
+      id: "debut-c3-03",
+      level: 0,
+      unite: 3,
+      title: "Premi\xE8res m\xE9lodies en tablature",
+      duration: 8,
+      gropiTip: "Fr\xE8re Jacques est un canon : enregistre-toi avec ton t\xE9l\xE9phone, puis rejoue l'air par-dessus en d\xE9marrant quand l'enregistrement attaque Mi Fa Sol. Deux voix, une seule guitare !",
+      cartes: [
+        { type: "idee", titre: "Cinq notes, trois airs", texte: [
+          "Trois airs du domaine public, sur les deux cordes aigu\xEBs, avec cinq notes : Do (corde 2, case 1), R\xE9 (corde 2, case 3), Mi (corde 1 \xE0 vide), Fa (corde 1, case 1) et Sol (corde 1, case 3).",
+          "Index pour la case 1, annulaire pour la case 3 : ta main reste en place."
+        ], bloc: {
+          type: "fretboard",
+          caption: "Les 5 notes des m\xE9lodies, sur les cordes 2 et 1 (plus Mi, corde 1 \xE0 vide)",
+          data: {
+            frets: 4,
+            startFret: 0,
+            showStringNames: true,
+            showFretNumbers: true,
+            notes: [
+              { string: 2, fret: 1, label: "Do", color: "primary", root: true },
+              { string: 2, fret: 3, label: "R\xE9", color: "green" },
+              { string: 1, fret: 1, label: "Fa", color: "amber" },
+              { string: 1, fret: 3, label: "Sol", color: "pink" }
+            ]
+          }
+        } },
+        { type: "question", quizId: "q-debut-50" },
+        { type: "a-toi", titre: "Fr\xE8re Jacques (air traditionnel)", consigne: "D'abord lentement, en disant le nom des notes \xE0 voix haute : Do R\xE9 Mi Do, deux fois, puis Mi Fa Sol, deux fois. \xC9coute la tab avec le bouton si besoin.", bloc: {
+          type: "tab",
+          caption: "Fr\xE8re Jacques \u2014 d\xE9but de l'air",
+          text: "Tab \u2014 Do R\xE9 Mi Do, deux fois (corde 2 : 1, 3 ; corde 1 : 0 ; corde 2 : 1), puis Mi Fa Sol, deux fois (corde 1 : 0, 1, 3).",
+          data: { lines: [
+            "e|-------0-----|-------0-----|-0--1--3--|-0--1--3--|",
+            "B|-1--3-----1--|-1--3-----1--|----------|----------|",
+            "G|-------------|-------------|----------|----------|",
+            "D|-------------|-------------|----------|----------|",
+            "A|-------------|-------------|----------|----------|",
+            "E|-------------|-------------|----------|----------|"
+          ] }
+        } },
+        { type: "question", quizId: "q-debut-51" },
+        { type: "a-toi", titre: "Au clair de la lune (air traditionnel)", consigne: "Ici, la tab montre sa limite : dans la deuxi\xE8me et la derni\xE8re mesure, les notes sont longues, mais rien ne l'indique. Chante l'air dans ta t\xEAte en jouant : c'est ta m\xE9moire qui donne le rythme.", bloc: {
+          type: "tab",
+          caption: "Au clair de la lune \u2014 premi\xE8re phrase",
+          text: "Tab \u2014 Do Do Do R\xE9 (corde 2 : 1, 1, 1, 3), Mi R\xE9 (corde 1 : 0 ; corde 2 : 3), Do Mi R\xE9 R\xE9 (corde 2 : 1 ; corde 1 : 0 ; corde 2 : 3, 3), Do (corde 2 : 1).",
+          data: { lines: [
+            "e|-------------|-0-----|----0--------|----|",
+            "B|-1--1--1--3--|----3--|-1-----3--3--|-1--|",
+            "G|-------------|-------|-------------|----|",
+            "D|-------------|-------|-------------|----|",
+            "A|-------------|-------|-------------|----|",
+            "E|-------------|-------|-------------|----|"
+          ] }
+        } },
+        { type: "question", quizId: "q-debut-52" },
+        { type: "a-toi", titre: "L'Ode \xE0 la joie (Beethoven)", consigne: "Trois \xE9tapes : lentement en nommant les notes, puis sans t'arr\xEAter m\xEAme avec une erreur, enfin de m\xE9moire, sans regarder la tab. Et l'air est \xE0 toi.", bloc: {
+          type: "tab",
+          caption: "Ode \xE0 la joie \u2014 premi\xE8re phrase",
+          text: "Tab \u2014 Mi Mi Fa Sol, Sol Fa Mi R\xE9, Do Do R\xE9 Mi, Mi R\xE9 R\xE9. Corde 1 : 0, 0, 1, 3, 3, 1, 0 ; corde 2 : 3, 1, 1, 3 ; corde 1 : 0, 0 ; corde 2 : 3, 3.",
+          data: { lines: [
+            "e|-0--0--1--3--|-3--1--0-----|----------0--|-0--------|",
+            "B|-------------|----------3--|-1--1--3-----|----3--3--|",
+            "G|-------------|-------------|-------------|----------|",
+            "D|-------------|-------------|-------------|----------|",
+            "A|-------------|-------------|-------------|----------|",
+            "E|-------------|-------------|-------------|----------|"
+          ] }
+        } },
+        { type: "idee", titre: "Et ensuite ?", texte: [
+          "Tenir ta guitare, l'accorder, cinq accords, une progression rythm\xE9e, la tab : tu as le bagage pour attaquer des morceaux.",
+          "Va voir Outils \u2192 Morceaux. Ensuite, le parcours t'emm\xE8ne vers le manche, les gammes, l'harmonie et le rythme."
+        ] },
+        { type: "recap", points: [
+          "Do et R\xE9 sur la corde 2 (cases 1 et 3) ; Mi, Fa, Sol sur la corde 1 (\xE0 vide, cases 1 et 3).",
+          "Lentement en nommant les notes, puis sans t'arr\xEAter, puis de m\xE9moire.",
+          "La tab ne note pas les dur\xE9es : chante l'air dans ta t\xEAte."
+        ] }
+      ],
+      quiz: ["q-debut-50", "q-debut-51", "q-debut-52"]
+    };
+    quiz15 = [
+      { id: "q-debut-50", courseId: "debut", lessonId: "debut-c3-03", lvl: 1, q: "Quelle note obtiens-tu sur la corde 2, case 1 ?", o: ["Si", "Do", "R\xE9", "Mi"], a: 1, exp: "La corde 2 \xE0 vide donne Si ; une case plus haut (un demi-ton), on obtient Do.", xp: 25 },
+      { id: "q-debut-51", courseId: "debut", lessonId: "debut-c3-03", lvl: 1, q: "Sur la ligne du haut d'une tab, tu lis 0 puis 3. Quelles notes joues-tu ?", o: ["Mi puis Sol", "Si puis R\xE9", "Mi puis Fa", "La puis Do"], a: 0, exp: "Ligne du haut = corde 1 (Mi aigu). \xC0 vide : Mi ; case 3 : Sol.", xp: 25 },
+      { id: "q-debut-52", courseId: "debut", lessonId: "debut-c3-03", lvl: 2, q: "Comment savoir qu'une note est longue quand la tab ne le pr\xE9cise pas ?", o: ["Le chiffre est \xE9crit en plus gros", "En connaissant ou en \xE9coutant le morceau", "Le chiffre est toujours suivi d'un ~", "Une note longue est toujours jou\xE9e \xE0 vide"], a: 1, exp: "La tab classique ne note pas les dur\xE9es avec pr\xE9cision. C'est l'\xE9coute (ou la m\xE9moire de l'air) qui donne le rythme exact.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/neck/neck-03.js
+var neck_03_exports = {};
+__export(neck_03_exports, {
+  default: () => neck_03_default,
+  quiz: () => quiz16
+});
+var DEPUIS_DO, neck_03_default, quiz16;
+var init_neck_03 = __esm({
+  "src/content/cours/neck/neck-03.js"() {
+    DEPUIS_DO = {
+      type: "fretboard",
+      caption: "Intervalles depuis Do (c6 case 8) \u2014 lecture sur 2 cordes",
+      data: {
+        frets: 7,
+        startFret: 7,
+        showStringNames: true,
+        showFretNumbers: true,
+        markerFrets: [9, 12],
+        notes: [
+          { string: 6, fret: 8, label: "R", color: "amber", root: true },
+          { string: 6, fret: 9, label: "m2", color: "coral" },
+          { string: 6, fret: 10, label: "M2", color: "neutral" },
+          { string: 6, fret: 11, label: "m3", color: "primary" },
+          { string: 6, fret: 12, label: "M3", color: "green" },
+          { string: 6, fret: 13, label: "P4", color: "neutral" },
+          { string: 5, fret: 8, label: "P4", color: "neutral" },
+          { string: 5, fret: 9, label: "TT", color: "coral" },
+          { string: 5, fret: 10, label: "P5", color: "amber" },
+          { string: 5, fret: 11, label: "m6", color: "primary" },
+          { string: 5, fret: 12, label: "M6", color: "green" },
+          { string: 5, fret: 13, label: "m7", color: "amber" }
+        ]
+      }
+    };
+    neck_03_default = {
+      id: "neck-03",
+      level: 4,
+      title: "Intervalles : entendre les distances",
+      duration: 9,
+      gropiTip: "Entends la tierce changer de couleur : joue Mi mineur (022000), puis pose l'index corde 3 case 1 pour obtenir Mi majeur. Sol devient Sol# : de m3 \xE0 M3, de m\xE9lancolique \xE0 joyeux.",
+      cartes: [
+        { type: "idee", titre: "Douze distances", texte: [
+          "Un intervalle est la distance entre deux notes ; accords, gammes et m\xE9lodies en sont faits. Il y en a douze dans l'octave.",
+          "Tu les as compt\xE9s : maintenant, on les entend et on les voit sur le manche."
+        ], bloc: {
+          type: "interval_chart",
+          caption: "Les 12 intervalles \u2014 caract\xE8re sonore et couleur",
+          data: {
+            highlight: ["m3", "M3", "P5", "P4", "TT", "m7"],
+            showOnGuitar: true
+          }
+        } },
+        { type: "idee", titre: "Chaque intervalle a sa couleur", texte: [
+          "Tierce et sixte mineures : m\xE9lancolie. Majeures : joie. Quarte et quinte justes : stabilit\xE9.",
+          "Triton : tension extr\xEAme. Septi\xE8me mineure : tension douce ; majeure : couleur jazz."
+        ], bloc: { type: "fretboard_interactive", mode: "scale", root: "A", scale: "major", caption: "Intervalles de La majeur sur le manche", displayMode: "intervals", lang: "fr", compact: true } },
+        { type: "question", quizId: "q-neck-07" },
+        { type: "idee", titre: "Sur une corde, puis sur deux", texte: [
+          "Depuis Do (corde 6, case 8), compte les cases : tierce mineure en 11, majeure en 12.",
+          "Sur la corde 5, m\xEAme case : la quarte ; deux cases plus loin : la quinte."
+        ], bloc: DEPUIS_DO },
+        { type: "idee", titre: "Deux raccourcis entre cordes", texte: [
+          "Corde voisine plus aigu\xEB, m\xEAme case : quarte juste. Deux cases plus loin : quinte juste.",
+          "Exception, des cordes 3 \xE0 2 : m\xEAme case = tierce majeure, et la quinte est trois cases plus loin."
+        ] },
+        { type: "question", quizId: "q-neck-10-app" },
+        { type: "idee", titre: "Le renversement", texte: [
+          "Un intervalle et son renversement font 12 demi-tons : quarte + quinte, tierce mineure + sixte majeure.",
+          "Le majeur devient mineur, le juste reste juste."
+        ] },
+        { type: "question", quizId: "q-neck-09" },
+        {
+          type: "a-toi",
+          titre: "Quarte, quinte, octave depuis Do",
+          consigne: "Pose Do (corde 6, case 8). Joue la quarte (corde 5, m\xEAme case), la quinte (deux cases plus loin), puis l'octave (corde 4, case 10). Annonce chaque intervalle avant de le jouer, puis chante-le.",
+          bloc: DEPUIS_DO,
+          minuteur: 90
+        },
+        { type: "recap", points: [
+          "Douze intervalles dans l'octave, chacun avec sa couleur.",
+          "Corde voisine, m\xEAme case : quarte ; deux cases plus loin : quinte (sauf cordes 3-2).",
+          "Un intervalle et son renversement font 12 demi-tons."
+        ] }
+      ],
+      quiz: ["q-neck-07", "q-neck-08", "q-neck-09", "q-neck-10", "q-neck-10-app"]
+    };
+    quiz16 = [
+      { id: "q-neck-07", courseId: "neck", lessonId: "neck-03", lvl: 1, q: "Combien de demi-tons fait une tierce mineure ?", o: ["2", "3", "4", "5"], a: 1, exp: "Tierce mineure = 3 demi-tons. C'est cette tierce qui donne le caract\xE8re 'mineur' (sombre) \xE0 un accord ou une gamme.", xp: 25 },
+      { id: "q-neck-08", courseId: "neck", lessonId: "neck-03", lvl: 2, q: "L'intervalle Mi \u2192 Si\u266D s'\xE9crit\u2026", o: ["Quinte juste", "Quinte diminu\xE9e", "Quarte juste", "Sixte mineure"], a: 1, exp: "Mi \u2192 Si = quinte juste (7 demi-tons). Si\u266D est un demi-ton plus bas : quinte diminu\xE9e (6 demi-tons), le triton. On parle de quinte parce que Mi \u2192 Si s'\xE9tend sur cinq lettres (Mi Fa Sol La Si). La quarte augment\xE9e sonne pareil mais s'\xE9crit sur quatre lettres : Mi \u2192 La#.", xp: 45 },
+      { id: "q-neck-09", courseId: "neck", lessonId: "neck-03", lvl: 3, q: "Quel est l'intervalle inverse d'une tierce majeure ?", o: ["Tierce mineure", "Sixte majeure", "Quarte juste", "Sixte mineure"], a: 3, exp: "Inversion d'intervalle : la somme avec son inverse = octave (12dt). Tierce maj = 4dt. Inverse = 12-4 = 8dt = sixte mineure. R\xE8gle : maj\u2192min, juste\u2192juste.", xp: 50 },
+      { id: "q-neck-10", courseId: "neck", lessonId: "neck-03", lvl: 3, q: "Tu joues Do (corde 5 case 3) et Mi (corde 4 case 2). Quel intervalle s\xE9pare ces 2 notes ?", o: ["Tierce majeure", "Tierce mineure", "Quarte juste", "Sixte majeure"], a: 0, exp: "Do\u2192Mi = 4 demi-tons = tierce majeure. C'est la tierce de l'accord de Do majeur. V\xE9rification facile sur le manche : 4 demi-tons = 4 cases d'\xE9cart sur la m\xEAme corde.", xp: 45 },
+      { id: "q-neck-10-app", courseId: "neck", lessonId: "neck-03", lvl: 3, q: "Tu joues Sol (corde 6 case 3) puis Si\u266D (corde 5 case 1). Quel intervalle s\xE9pare ces 2 notes ?", o: ["Tierce mineure", "Tierce majeure", "Quarte juste", "Seconde majeure"], a: 0, exp: "Corde voisine, m\xEAme case : quarte juste, 5 demi-tons. Deux cases en arri\xE8re, il en reste 3 : une tierce mineure. Sol \u2192 Si\u266D, c'est la tierce de Sol mineur.", xp: 35 }
+    ];
+  }
+});
+
+// src/content/cours/neck/neck-04.js
+var neck_04_exports = {};
+__export(neck_04_exports, {
+  default: () => neck_04_default,
+  quiz: () => quiz17
+});
+var FORME_C, FORME_A, FORME_G, FORME_E, FORME_D, neck_04_default, quiz17;
+var init_neck_04 = __esm({
+  "src/content/cours/neck/neck-04.js"() {
+    FORME_C = { type: "chord_diagram", caption: "Forme C : le Do ouvert (x32010), fondamentale Do (corde 5 case 3)", data: { name: "C", frets: [-1, 3, 2, 0, 1, 0], fingers: [0, 3, 2, 0, 1, 0], startFret: 1 } };
+    FORME_A = { type: "chord_diagram", caption: "Forme A : barr\xE9 case 3 (x35553), fondamentale Do (corde 5 case 3)", data: { name: "C", frets: [-1, 3, 5, 5, 5, 3], fingers: [0, 1, 2, 3, 4, 1], startFret: 3, barre: { fret: 3, from: 1, to: 5 } } };
+    FORME_G = { type: "chord_diagram", caption: "Forme G : 875558, fondamentales Do (corde 6 case 8) et Do (corde 3 case 5)", data: { name: "C", frets: [8, 7, 5, 5, 5, 8], fingers: [3, 2, 1, 1, 1, 4], startFret: 5, barre: { fret: 5, from: 2, to: 4 } } };
+    FORME_E = {
+      type: "caged_form",
+      caption: "Forme E : barr\xE9 case 8 (8-10-10-9-8-8), fondamentale Do (corde 6 case 8)",
+      data: {
+        form: "E",
+        root: "Do",
+        rootFret: 8,
+        startFret: 7,
+        frets: 5,
+        notes: [
+          { string: 6, fret: 8, label: "Do", color: "amber", root: true },
+          { string: 5, fret: 10, label: "Sol", color: "primary" },
+          { string: 4, fret: 10, label: "Do", color: "amber", root: true },
+          { string: 3, fret: 9, label: "Mi", color: "primary" },
+          { string: 2, fret: 8, label: "Sol", color: "primary" },
+          { string: 1, fret: 8, label: "Do", color: "amber", root: true }
+        ]
+      }
+    };
+    FORME_D = { type: "chord_diagram", caption: "Forme D : x-x-10-12-13-12, fondamentale Do (corde 4 case 10)", data: { name: "C", frets: [-1, -1, 10, 12, 13, 12], fingers: [0, 0, 1, 2, 4, 3], startFret: 10 } };
+    neck_04_default = {
+      id: "neck-04",
+      level: 7,
+      title: "Le syst\xE8me CAGED : un accord, cinq formes",
+      duration: 12,
+      gropiTip: "Apr\xE8s la forme D de Do (case 10), la forme C revient en case 12, pile une octave au-dessus de la position ouverte. Le cycle C-A-G-E-D se r\xE9p\xE8te toutes les 12 cases.",
+      cartes: [
+        { type: "idee", titre: "Cinq accords ouverts, cinq formes", texte: [
+          "Do, La, Sol, Mi, R\xE9 : tu connais ces cinq accords ouverts. Leurs noms anglais donnent C-A-G-E-D.",
+          "Chaque forme se d\xE9place comme un barr\xE9. Le m\xEAme Do existe ainsi \xE0 cinq endroits du manche, du sillet \xE0 la case 13. On part du Do ouvert : la forme C."
+        ], bloc: FORME_C },
+        { type: "idee", titre: "Forme A : le barr\xE9 case 3", texte: [
+          "Tu la connais d\xE9j\xE0 : c'est le barr\xE9 forme La, index en case 3.",
+          "La fondamentale est sur la corde 5, sous l'index : Do (corde 5 case 3). La forme de La est simplement remont\xE9e de trois cases."
+        ], bloc: FORME_A },
+        { type: "question", quizId: "q-neck-14-app" },
+        { type: "idee", titre: "Forme G : la plus \xE9tir\xE9e", texte: [
+          "Le Sol ouvert (320003) remont\xE9 de cinq cases : 8-7-5-5-5-8. Do est \xE0 la basse, Do (corde 6 case 8), et au milieu, Do (corde 3 case 5).",
+          "Trop \xE9tir\xE9e ? Joue seulement les quatre cordes aigu\xEBs : index en barr\xE9 case 5 sur les cordes 4, 3 et 2, auriculaire en case 8 sur la corde 1."
+        ], bloc: FORME_G },
+        { type: "idee", titre: "Forme E : le barr\xE9 case 8", texte: [
+          "Le barr\xE9 forme Mi, index en case 8. Fondamentale sur la corde 6 : Do (corde 6 case 8), comme pour Fa, Sol et La.",
+          "Remarque : la forme G et la forme E partagent ce Do grave. Deux formes voisines se touchent toujours, c'est ce qui les relie."
+        ], bloc: FORME_E },
+        { type: "idee", titre: "Forme D : sur les quatre cordes aigu\xEBs", texte: [
+          "Le R\xE9 ouvert (xx0232) remont\xE9 de dix cases. La fondamentale est sur la corde 4 : Do (corde 4 case 10).",
+          "Index case 10 sur la corde 4, majeur case 12 sur la corde 3, auriculaire case 13 sur la corde 2, annulaire case 12 sur la corde 1."
+        ], bloc: FORME_D },
+        { type: "question", quizId: "q-neck-11" },
+        {
+          type: "a-toi",
+          titre: "Do en cinq formes, en montant",
+          consigne: "Forme C ouverte, forme A case 3, forme G case 5, forme E case 8, forme D case 10 : quatre coups par forme au clic \xE0 60, puis redescends. Avant chaque forme, pose d'abord le doigt de la fondamentale.",
+          bloc: { type: "fretboard_interactive", mode: "chord", root: "C", chord: "maj", caption: "Do majeur : Do, Mi et Sol sur tout le manche, les cinq formes s'y embo\xEEtent", displayMode: "notes", lang: "fr", compact: true },
+          bpm: 60,
+          minuteur: 180
+        },
+        { type: "question", quizId: "q-neck-12" },
+        { type: "recap", points: [
+          "C-A-G-E-D : cinq formes d'accords ouverts, d\xE9plac\xE9es sur le manche, donnent cinq fois le m\xEAme accord.",
+          "Pour Do : C ouvert, A case 3, G case 5, E case 8, D case 10, puis C revient en case 12.",
+          "La fondamentale guide chaque forme : corde 5 pour C et A, corde 6 pour G et E, corde 4 pour D."
+        ] }
+      ],
+      quiz: ["q-neck-11", "q-neck-12", "q-neck-13", "q-neck-14", "q-fret-neck-05", "q-neck-14-app"]
+    };
+    quiz17 = [
+      { id: "q-neck-11", courseId: "neck", lessonId: "neck-04", lvl: 2, q: "En partant de la forme de Do et en montant le manche, quelle forme vient juste apr\xE8s ?", o: ["La forme de Sol", "La forme de La", "La forme de Mi", "La forme de R\xE9"], a: 1, exp: "Ordre fixe et cyclique : C \u2192 A \u2192 G \u2192 E \u2192 D, puis retour \xE0 C une octave plus haut. Cet ordre est valable pour TOUS les accords majeurs.", xp: 30 },
+      { id: "q-neck-12", courseId: "neck", lessonId: "neck-04", lvl: 3, q: "La forme E barr\xE9e case 7 donne quel accord majeur ?", o: ["La majeur", "Sol majeur", "Si majeur", "Mi majeur"], a: 2, exp: "Forme E = E majeur. D\xE9cal\xE9e case 7, on monte de 7 demi-tons : Mi + 7dt = Si. Donc Si majeur. V\xE9rification : la fondamentale est sur corde 6 case 7 = Si.", xp: 45 },
+      { id: "q-neck-13", courseId: "neck", lessonId: "neck-04", lvl: 2, q: "Quelle forme du CAGED a sa fondamentale la plus grave sur la corde 4 ?", o: ["La forme D", "La forme A", "La forme E", "La forme G"], a: 0, exp: "Comme le R\xE9 ouvert (xx0232), la forme D part de la corde 4. Les formes C et A ont leur fondamentale grave sur la corde 5, les formes G et E sur la corde 6.", xp: 40 },
+      { id: "q-neck-14", courseId: "neck", lessonId: "neck-04", lvl: 3, q: "Tu joues un Do majeur en forme de La barr\xE9e. \xC0 quelle case se trouve le barr\xE9 ?", o: ["Case 3", "Case 5", "Case 8", "Case 10"], a: 0, exp: "En forme de La, la fondamentale est sur la corde 5, sous le barr\xE9. Do est \xE0 la case 3 de la corde 5 : barr\xE9 case 3. La case 8 donnerait Do en forme de Mi, fondamentale sur la corde 6.", xp: 55 },
+      { id: "q-neck-14-app", courseId: "neck", lessonId: "neck-04", lvl: 3, q: "Tu joues un Mi majeur en forme de La barr\xE9e. \xC0 quelle case se trouve le barr\xE9 ?", o: ["Case 7", "Case 5", "Case 9", "Case 12"], a: 0, exp: "En forme de La, la fondamentale est sur la corde 5, sous le barr\xE9. Mi est \xE0 la case 7 de la corde 5 : barr\xE9 case 7. La case 12 donnerait Mi en forme de Mi, fondamentale sur la corde 6.", xp: 35 },
+      { id: "q-fret-neck-05", type: "fretboard", courseId: "neck", lessonId: "neck-04", lvl: 3, q: "CAGED : trouve tous les Do du manche, les fondamentales des cinq formes de Do", concept: { type: "find_note", root: "C" }, selectionRules: { mode: "all" }, display: { showNotes: false }, hint: "Do est en case 3 sur la corde 5 et en case 8 sur la corde 6 : cherche ensuite leurs octaves.", xp: 50, exp: "Do en : corde 6 case 8, corde 5 case 3, corde 4 case 10, corde 3 case 5, corde 2 case 1, corde 1 case 8. Chaque forme du CAGED s'accroche \xE0 l'un d'eux." }
+    ];
+  }
+});
+
+// src/content/cours/neck/neck-05.js
+var neck_05_exports = {};
+__export(neck_05_exports, {
+  default: () => neck_05_default,
+  quiz: () => quiz18
+});
+var DO_FONDAMENTAL, neck_05_default, quiz18;
+var init_neck_05 = __esm({
+  "src/content/cours/neck/neck-05.js"() {
+    DO_FONDAMENTAL = {
+      type: "chord_diagram",
+      caption: "Do majeur \u2014 \xE9tat fondamental sur les cordes 3-2-1 (Do, Mi, Sol)",
+      data: { name: "Do", frets: [-1, -1, -1, 5, 5, 3], fingers: [0, 0, 0, 3, 4, 1], startFret: 3 }
+    };
+    neck_05_default = {
+      id: "neck-05",
+      level: 7,
+      title: "Triades \u2014 l'unit\xE9 minimale d'harmonie",
+      duration: 9,
+      gropiTip: "Pour passer d'une triade majeure \xE0 mineure, baisse seulement la tierce d'une case. Do sur cordes 3-2-1 (cases 5, 5, 3) devient Do mineur en reculant la corde 2 en case 4 (Mi\u266D).",
+      cartes: [
+        { type: "idee", titre: "Trois cordes, un accord", texte: [
+          "Tu connais les triades et leurs inversions. Ici, on les pose sur le manche, trois cordes voisines \xE0 la fois.",
+          "Le set le plus utilis\xE9 : cordes 3-2-1, aigu et brillant. Do \xE0 l'\xE9tat fondamental : Do (corde 3 case 5), Mi (corde 2 case 5), Sol (corde 1 case 3)."
+        ], bloc: DO_FONDAMENTAL },
+        { type: "idee", titre: "Les inversions, plus haut", texte: [
+          "1re inversion : Mi (corde 3 case 9), Sol (corde 2 case 8), Do (corde 1 case 8).",
+          "2e inversion : Sol (corde 3 case 12), Do (corde 2 case 13), Mi (corde 1 case 12).",
+          "C'est toujours la note la plus grave qui nomme la position."
+        ], bloc: {
+          type: "chord_diagram",
+          caption: "Do majeur \u2014 triade en 2e inversion, Sol \xE0 la basse (cordes 1-2-3, case 12)",
+          data: {
+            name: "Do",
+            frets: [-1, -1, -1, 12, 13, 12],
+            fingers: [0, 0, 0, 1, 3, 2],
+            startFret: 11
+          }
+        } },
+        { type: "question", quizId: "q-neck-15" },
+        { type: "idee", titre: "Les autres sets", texte: [
+          "Cordes 4-3-2, son plus rond : Do (corde 4 case 10), Mi (corde 3 case 9), Sol (corde 2 case 8).",
+          "Cordes 5-4-3, m\xE9dium-grave, id\xE9al pour les vamps funk : Do (corde 5 case 3), Mi (corde 4 case 2), Sol sur la corde 3 \xE0 vide."
+        ], bloc: { type: "fretboard_interactive", mode: "chord", root: "C", chord: "maj", caption: "Do majeur \u2014 visualise Do Mi Sol sur tout le manche", displayMode: "notes", lang: "fr", compact: true } },
+        { type: "idee", titre: "Majeur ou mineur : une case", texte: [
+          "Pour passer de majeur \xE0 mineur, baisse seulement la tierce d'un demi-ton.",
+          "Sur les cordes 3-2-1, le Mi (corde 2 case 5) recule en case 4 : Mi\u266D. Do devient Do mineur, les deux autres doigts ne bougent pas."
+        ], bloc: {
+          type: "chord_diagram",
+          caption: "Do mineur \u2014 cordes 3-2-1 : Do, Mi\u266D, Sol",
+          data: { name: "Cm", frets: [-1, -1, -1, 5, 4, 3], fingers: [0, 0, 0, 3, 2, 1], startFret: 3 }
+        } },
+        { type: "question", quizId: "q-neck-16" },
+        {
+          type: "a-toi",
+          titre: "Trois Do sur le set aigu",
+          consigne: "Joue Do \xE0 l'\xE9tat fondamental, puis en 1re et en 2e inversion, et redescends. Quatre temps chacun au clic, en grattant seulement les cordes 3-2-1. Dis \xE0 voix haute la note de basse de chaque position.",
+          bloc: {
+            type: "tab",
+            caption: "Do majeur sur les cordes 3-2-1 : fondamental, 1re inversion, 2e inversion, et retour",
+            text: "Tab \u2014 accords de trois notes : cases 5, 5, 3 (cordes 3, 2, 1) ; puis 9, 8, 8 ; puis 12, 13, 12 ; puis 9, 8, 8 ; puis 5, 5, 3.",
+            data: { lines: [
+              "e|-3-----8-----12----8-----3-----|",
+              "B|-5-----8-----13----8-----5-----|",
+              "G|-5-----9-----12----9-----5-----|",
+              "D|-------------------------------|",
+              "A|-------------------------------|",
+              "E|-------------------------------|"
+            ] }
+          },
+          bpm: 60,
+          minuteur: 90
+        },
+        { type: "idee", titre: "Inversions = mouvement", texte: [
+          "Au lieu de sauter de Do \xE0 Sol, choisis la forme de Sol la plus proche. Sur les cordes 3-2-1 : Si (corde 3 case 4), R\xE9 (corde 2 case 3), Sol (corde 1 case 3), sa 1re inversion.",
+          "Depuis Do (cases 5, 5, 3), le Sol reste et les deux autres notes glissent d'une ou deux cases : c'est le voice-leading."
+        ] },
+        { type: "question", quizId: "q-neck-17" },
+        { type: "recap", points: [
+          "Une triade tient sur trois cordes voisines : sets 3-2-1, 4-3-2 et 5-4-3.",
+          "Sur le set 3-2-1, Do se joue cases 5-5-3, 9-8-8 et 12-13-12 : la note grave nomme la position.",
+          "Majeur \u2192 mineur : la tierce recule d'une case ; entre deux accords, prends la forme la plus proche."
+        ] }
+      ],
+      quiz: ["q-neck-15", "q-neck-16", "q-neck-17"]
+    };
+    quiz18 = [
+      { id: "q-neck-15", courseId: "neck", lessonId: "neck-05", lvl: 3, q: "Sur les cordes 3-2-1, quelle note est sur la corde 3 dans Do majeur en 1re inversion ?", o: ["Mi", "Do", "Sol", "Si"], a: 0, exp: "1re inversion = la tierce \xE0 la basse. Sur le set 3-2-1 : Mi (corde 3 case 9), Sol (corde 2 case 8), Do (corde 1 case 8). La note la plus grave nomme la position.", xp: 45 },
+      { id: "q-neck-16", courseId: "neck", lessonId: "neck-05", lvl: 3, q: "Quelle triade contient les notes Mi-Sol-Si ?", o: ["Mi majeur", "Sol majeur", "Mi mineur", "Si diminu\xE9"], a: 2, exp: "Mi-Sol-Si : intervalle Mi\u2192Sol = 3dt (tierce mineure), Mi\u2192Si = 7dt (quinte juste). Triade mineure = 1-\u266D3-5. Donc Em (Mi mineur).", xp: 45 },
+      { id: "q-neck-17", courseId: "neck", lessonId: "neck-05", lvl: 3, q: "Tu joues une triade Sol-Do-Mi. Quel accord et quelle inversion ?", o: ["Do majeur, \xE9tat fondamental", "Sol majeur, 1\xE8re inversion", "Mi mineur, 2e inversion", "Do majeur, 2e inversion"], a: 3, exp: "Notes Sol-Do-Mi = Do-Mi-Sol r\xE9ordonn\xE9. C'est Do majeur. Basse = Sol (la 5e), donc 2e inversion. Indication 'Do/Sol' en symbole.", xp: 55 }
+    ];
+  }
+});
+
+// src/content/cours/neck/neck-06.js
+var neck_06_exports = {};
+__export(neck_06_exports, {
+  default: () => neck_06_default,
+  quiz: () => quiz19
+});
+var ZONE_CASE_8, ARPEGE_CMAJ7, neck_06_default, quiz19;
+var init_neck_06 = __esm({
+  "src/content/cours/neck/neck-06.js"() {
+    ZONE_CASE_8 = {
+      type: "fretboard",
+      caption: "Cmaj7 zone case 8 \u2014 notes d'accord (violet) + gamme de Do majeur (vert)",
+      data: {
+        frets: 6,
+        startFret: 7,
+        showStringNames: true,
+        showFretNumbers: true,
+        markerFrets: [9, 12],
+        notes: [
+          { string: 6, fret: 8, label: "Do", color: "primary", root: true },
+          { string: 6, fret: 10, label: "R\xE9", color: "green" },
+          { string: 5, fret: 10, label: "Sol", color: "primary" },
+          { string: 4, fret: 9, label: "Si", color: "primary" },
+          { string: 4, fret: 10, label: "Do", color: "primary", root: true },
+          { string: 3, fret: 9, label: "Mi", color: "primary" },
+          { string: 3, fret: 10, label: "Fa", color: "green" },
+          { string: 2, fret: 8, label: "Sol", color: "primary" },
+          { string: 2, fret: 10, label: "La", color: "green" },
+          { string: 1, fret: 8, label: "Do", color: "primary", root: true },
+          { string: 1, fret: 10, label: "R\xE9", color: "green" }
+        ]
+      }
+    };
+    ARPEGE_CMAJ7 = {
+      type: "tab",
+      caption: "L'arp\xE8ge de Cmaj7 dans la zone de la case 8, en montant",
+      text: "Tab \u2014 Do (corde 6 case 8), Mi (corde 5 case 7), Sol (corde 5 case 10), Si (corde 4 case 9), Do (corde 4 case 10), Mi (corde 3 case 9), Sol (corde 2 case 8), Si (corde 1 case 7), Do (corde 1 case 8).",
+      data: { lines: [
+        "e|---------------------------7--8--|",
+        "B|------------------------8--------|",
+        "G|---------------------9-----------|",
+        "D|---------------9--10-------------|",
+        "A|-------7--10---------------------|",
+        "E|-8-------------------------------|"
+      ] }
+    };
+    neck_06_default = {
+      id: "neck-06",
+      level: 9,
+      title: "Connexions accords-gammes-arp\xE8ges",
+      duration: 9,
+      gropiTip: "Teste les guide tones sur R\xE9m7 \u2192 Sol7 : la 7e de R\xE9m7 (Do) descend d'un demi-ton vers Si, tierce de Sol7, et le Fa reste en place. Deux notes suffisent pour entendre l'encha\xEEnement.",
+      cartes: [
+        { type: "idee", titre: "Trois vues d'une m\xEAme zone", texte: [
+          "L'accord plaque ses notes, l'arp\xE8ge les \xE9gr\xE8ne, la gamme ajoute celles qui manquent.",
+          "Les trois occupent la m\xEAme zone du manche : les voir ensemble, c'est jouer dans l'harmonie."
+        ] },
+        { type: "idee", titre: "Cmaj7 \xE0 la case 8", texte: [
+          "Forme de Mi barr\xE9e \xE0 la case 8 : Do, Sol, Si, Mi, Sol, Do.",
+          "Ses quatre notes, Do, Mi, Sol, Si, jou\xE9es une \xE0 une : l'arp\xE8ge."
+        ], bloc: { type: "chord_diagram", caption: "Cmaj7 \u2014 forme de Mi barr\xE9e, case 8 (8 10 9 9 8 8)", data: { name: "Cmaj7", frets: [8, 10, 9, 9, 8, 8], fingers: [1, 4, 2, 3, 1, 1], startFret: 8 } } },
+        { type: "idee", titre: "La gamme remplit les trous", texte: [
+          "La gamme de Do majeur ajoute R\xE9, Fa et La : 9e, 11e et 13e. Accord, arp\xE8ge, gamme : sans bouger la main."
+        ], bloc: ZONE_CASE_8 },
+        { type: "question", quizId: "q-neck-19-app" },
+        { type: "idee", titre: "Pos\xE9 ou en mouvement", texte: [
+          "Une phrase qui finit sur 1, 3, 5 ou 7 sonne pos\xE9e ; sur 2, 4 ou 6, elle reste en mouvement.",
+          "Sur Am7, La pentatonique mineure contient l'arp\xE8ge entier, plus le R\xE9."
+        ] },
+        { type: "question", quizId: "q-neck-18" },
+        {
+          type: "a-toi",
+          titre: "Un accord, une minute",
+          consigne: "Plaque Cmaj7 case 8, \xE9gr\xE8ne l'arp\xE8ge en noires au clic, puis une minute d'impro en Do majeur dans la zone : chaque phrase finit sur Do, Mi, Sol ou Si. Recommence avec Dm7 (forme de La barr\xE9e, case 5).",
+          bloc: ARPEGE_CMAJ7,
+          bpm: 60,
+          minuteur: 120
+        },
+        { type: "idee", titre: "Les guide tones", texte: [
+          "La 3e et la 7e d\xE9finissent l'accord, et bougent peu d'un accord \xE0 l'autre.",
+          "Dm7 \u2192 G7 : Do descend d'un demi-ton sur Si, Fa reste en place."
+        ] },
+        { type: "question", quizId: "q-neck-20" },
+        { type: "recap", points: [
+          "Accord, arp\xE8ge et gamme partagent la m\xEAme zone du manche.",
+          "La gamme ajoute 9e, 11e et 13e autour des quatre notes de l'accord.",
+          "La 3e et la 7e r\xE9sument l'accord : suis-les d'un accord \xE0 l'autre."
+        ] }
+      ],
+      quiz: ["q-neck-18", "q-neck-19", "q-neck-20", "q-neck-19-app"]
+    };
+    quiz19 = [
+      { id: "q-neck-18", courseId: "neck", lessonId: "neck-06", lvl: 2, q: "Quelles notes de La pentatonique mineure forment l'arp\xE8ge de Am7 ?", o: ["La, Do, Mi, Sol", "La, Do#, Mi, Sol", "La, Do, R\xE9, Mi", "La, R\xE9, Mi, Sol"], a: 0, exp: "La penta mineure = La Do R\xE9 Mi Sol. Am7 = La Do Mi Sol : quatre des cinq notes. Seul le R\xE9 (la quarte) n'appartient pas \xE0 l'accord. Viser ces quatre notes, c'est jouer \xAB dans \xBB l'accord sans changer de gamme.", xp: 40 },
+      { id: "q-neck-19", courseId: "neck", lessonId: "neck-06", lvl: 2, q: "Dans la zone de Cmaj7 \xE0 la case 8, quelles notes la gamme de Do majeur ajoute-t-elle \xE0 l'arp\xE8ge ?", o: ["R\xE9, Fa et La", "Do, Mi et Sol", "R\xE9, Fa# et La", "Si, R\xE9 et Fa"], a: 0, exp: "L'arp\xE8ge Cmaj7 donne Do Mi Sol Si. La gamme de Do majeur compl\xE8te avec les trois notes restantes : R\xE9, Fa et La (9e, 11e et 13e). Accord, arp\xE8ge et gamme occupent la m\xEAme zone du manche.", xp: 55 },
+      { id: "q-neck-19-app", courseId: "neck", lessonId: "neck-06", lvl: 2, q: "Dans la zone de Gmaj7, quelles notes la gamme de Sol majeur ajoute-t-elle \xE0 l'arp\xE8ge ?", o: ["La, Do et Mi", "Sol, Si et R\xE9", "La, Do# et Mi", "Si, R\xE9 et Fa#"], a: 0, exp: "L'arp\xE8ge Gmaj7 donne Sol Si R\xE9 Fa#. La gamme de Sol majeur compl\xE8te avec les trois notes restantes : La, Do et Mi (9e, 11e et 13e).", xp: 30 },
+      { id: "q-neck-20", courseId: "neck", lessonId: "neck-06", lvl: 3, q: "Sur G7, quelles notes sont les guide tones ?", o: ["Sol et R\xE9", "Sol et Si", "Si et Fa", "R\xE9 et Fa"], a: 2, exp: "G7 = Sol-Si-R\xE9-Fa. Guide tones = 3e (Si) + 7e (Fa). Ces 2 notes d\xE9finissent que c'est G7 (et pas Gm7 ou Gmaj7).", xp: 50 }
+    ];
+  }
+});
+
+// src/content/cours/neck/neck-c1-01.js
+var neck_c1_01_exports = {};
+__export(neck_c1_01_exports, {
+  default: () => neck_c1_01_default,
+  quiz: () => quiz20
+});
+var neck_c1_01_default, quiz20;
+var init_neck_c1_01 = __esm({
+  "src/content/cours/neck/neck-c1-01.js"() {
+    neck_c1_01_default = {
+      id: "neck-c1-01",
+      level: 1,
+      title: "Architecture du manche",
+      duration: 7,
+      gropiTip: "La case 12 est pile au milieu de la corde : mesure du sillet \xE0 la 12e frette, puis de la 12e frette au chevalet, c'est (presque) la m\xEAme longueur. Moiti\xE9 de corde = une octave.",
+      cartes: [
+        { type: "idee", titre: "1 case = 1 demi-ton", texte: [
+          "Tu connais les cordes, Mi La R\xE9 Sol Si Mi. Voyons comment le manche est construit : ce n'est pas un labyrinthe.",
+          "Chaque case monte d'un demi-ton, la plus petite distance de notre musique. Deux cases = un ton. Sur la corde 6, la case 12, marqu\xE9e d'un double point, ram\xE8ne Mi une octave plus haut."
+        ], bloc: {
+          type: "note_grid",
+          caption: "Corde 6 \u2014 1 case = 1 demi-ton. Mi grave \u2192 Mi aigu en 12 cases",
+          data: {
+            string: 6,
+            stringName: "Mi grave",
+            maxFret: 12,
+            highlights: [
+              { fret: 0, label: "Mi", color: "amber" },
+              { fret: 1, label: "Fa", color: "neutral" },
+              { fret: 3, label: "Sol", color: "neutral" },
+              { fret: 5, label: "La", color: "green" },
+              { fret: 7, label: "Si", color: "neutral" },
+              { fret: 8, label: "Do", color: "primary" },
+              { fret: 10, label: "R\xE9", color: "neutral" },
+              { fret: 12, label: "Mi", color: "amber" }
+            ]
+          }
+        } },
+        { type: "question", quizId: "q-base-02" },
+        { type: "idee", titre: "Des cordes espac\xE9es d'une quarte", texte: [
+          "Entre deux cordes voisines, il y a presque toujours une quarte juste : 5 demi-tons.",
+          "C'est le principe que tu utilises pour t'accorder : la case 5 d'une corde sonne comme la corde plus aigu\xEB voisine, \xE0 vide. Avec une exception, on y vient."
+        ] },
+        { type: "question", quizId: "q-base-01" },
+        { type: "idee", titre: "L'unique cassure : Sol \u2192 Si", texte: [
+          "Entre les cordes 3 (Sol) et 2 (Si), l'\xE9cart n'est que d'une tierce majeure : 4 demi-tons. Il rend Do, Sol et R\xE9 plus faciles \xE0 doigter.",
+          "Cons\xE9quence : pour d\xE9placer une forme d'une corde \xE0 la voisine, on d\xE9cale de 5 cases\u2026 sauf entre les cordes 3 et 2, o\xF9 l'on d\xE9cale de 4."
+        ], bloc: { type: "fretboard_interactive", mode: "quiz", quizTarget: "A", instructions: "Trouve toutes les positions de la note La sur le manche (indice : tu en connais d\xE9j\xE0 une, c'est une corde \xE0 vide)." } },
+        { type: "question", quizId: "q-neck-01-app" },
+        { type: "idee", titre: "Une m\xEAme note, six places", texte: [
+          "Do existe sur chaque corde, \xE0 une case diff\xE9rente. Sur les cordes 6 et 1, toutes deux en Mi, il tombe \xE0 la m\xEAme case, la 8.",
+          "Sur la corde 2, il arrive d\xE8s la case 1 : c'est la cassure qui produit ce d\xE9calage."
+        ], bloc: { type: "fretboard", caption: "Toutes les positions de la note Do sur le manche", data: { frets: 12, startFret: 0, showStringNames: true, showFretNumbers: true, markerFrets: [3, 5, 7, 9, 12], notes: [{ string: 6, fret: 8, label: "Do", color: "primary", root: true }, { string: 5, fret: 3, label: "Do", color: "primary", root: true }, { string: 4, fret: 10, label: "Do", color: "primary", root: true }, { string: 3, fret: 5, label: "Do", color: "primary", root: true }, { string: 2, fret: 1, label: "Do", color: "primary", root: true }, { string: 1, fret: 8, label: "Do", color: "primary", root: true }] } } },
+        { type: "a-toi", titre: "Entends la cassure", consigne: "Joue chaque paire : case 5, puis la corde suivante \xE0 vide. Les deux notes sont identiques\u2026 sauf entre les cordes 3 et 2, o\xF9 il faut la case 4. \xC9coute d'abord, puis joue-le lentement au clic.", bloc: {
+          type: "tab",
+          caption: "Les cordes deux par deux : case 5, puis corde \xE0 vide \u2014 case 4 sur la corde 3",
+          text: "Tab \u2014 corde 6 case 5, corde 5 \xE0 vide ; corde 5 case 5, corde 4 \xE0 vide ; corde 4 case 5, corde 3 \xE0 vide ; corde 3 case 4, corde 2 \xE0 vide ; corde 2 case 5, corde 1 \xE0 vide.",
+          data: { lines: [
+            "e|----------------------------0--|",
+            "B|----------------------0--5-----|",
+            "G|----------------0--4-----------|",
+            "D|----------0--5-----------------|",
+            "A|----0--5-----------------------|",
+            "E|-5-----------------------------|"
+          ] }
+        }, bpm: 60 },
+        { type: "question", quizId: "q-neck-03" },
+        { type: "recap", points: [
+          "1 case = 1 demi-ton, 2 cases = 1 ton, 12 cases = l'octave.",
+          "Cordes voisines \xE0 une quarte (5 cases), sauf Sol \u2192 Si : une tierce majeure (4 cases).",
+          "Chaque note existe \xE0 plusieurs endroits du manche, sur presque chaque corde."
+        ] }
+      ],
+      quiz: ["q-base-01", "q-base-02", "q-neck-01", "q-neck-02", "q-neck-03", "q-neck-04", "q-neck-01-app"]
+    };
+    quiz20 = [
+      { id: "q-base-01", courseId: "neck", lessonId: "neck-c1-01", lvl: 1, q: "La corde 6, case 5, sonne exactement comme quelle autre position ?", o: ["Corde 5 \xE0 vide", "Corde 4 \xE0 vide", "Corde 5, case 5", "Corde 6, case 7"], a: 0, exp: "Les cordes 6 et 5 sont \xE0 une quarte (5 demi-tons) : la case 5 de la corde 6 donne La, comme la corde 5 \xE0 vide. C'est le principe de l'accordage \xE0 la 5e case vu dans Premiers pas, et la cl\xE9 de toute la carte du manche.", xp: 25 },
+      { id: "q-base-02", courseId: "neck", lessonId: "neck-c1-01", lvl: 1, q: "Sur une guitare, avancer d'une case vers le corps de l'instrument fait\u2026", o: ["Monter d'un ton entier", "Monter d'un demi-ton", "Descendre d'un demi-ton", "Monter d'une quinte"], a: 1, exp: "Chaque case repr\xE9sente exactement un demi-ton. C'est la r\xE8gle de base qui rend le manche enti\xE8rement pr\xE9visible.", xp: 25 },
+      { id: "q-neck-01", courseId: "neck", lessonId: "neck-c1-01", lvl: 1, q: "Quel intervalle s\xE9pare les cordes 3 et 2 (Sol et Si) sur une guitare en accordage standard ?", o: ["Quarte juste", "Quinte juste", "Tierce mineure", "Tierce majeure"], a: 3, exp: "Sol\u2192Si = 4 demi-tons = tierce majeure. C'est l'unique 'cassure' de l'accordage standard, toutes les autres cordes cons\xE9cutives \xE9tant en quartes (5 demi-tons).", xp: 30 },
+      { id: "q-neck-01-app", courseId: "neck", lessonId: "neck-c1-01", lvl: 2, q: "Tu joues R\xE9 sur la corde 3, case 7. O\xF9 retrouves-tu ce m\xEAme R\xE9, \xE0 la m\xEAme hauteur, sur la corde 2 ?", o: ["Case 3", "Case 2", "Case 4", "Case 12"], a: 0, exp: "Entre les cordes 3 et 2, l'\xE9cart n'est que de 4 demi-tons : la m\xEAme note est 4 cases plus bas sur la corde 2, pas 5. R\xE9 (corde 3 case 7) = R\xE9 (corde 2 case 3).", xp: 30 },
+      { id: "q-neck-02", courseId: "neck", lessonId: "neck-c1-01", lvl: 1, q: "Pourquoi les cases 12, 24 sont-elles marqu\xE9es d'un double point ?", o: ["Elles marquent les octaves de la corde \xE0 vide", "Convention esth\xE9tique", "Elles indiquent les notes naturelles", "Elles s\xE9parent les zones graves/aigu\xEBs"], a: 0, exp: "Le double point marque l'octave (case 12 = m\xEAme note que corde \xE0 vide, +1 octave). Case 24 = +2 octaves. Rep\xE8res de navigation cruciaux.", xp: 25 },
+      { id: "q-neck-03", courseId: "neck", lessonId: "neck-c1-01", lvl: 2, q: "Sur la corde 6, o\xF9 se trouve la note Si ?", o: ["Case 5", "Case 7", "Case 9", "Case 11"], a: 1, exp: "Mi(0)-Fa(1)-Sol(3)-La(5)-Si(7). Le Si est case 7 sur la corde 6. C'est l'une des 4 notes-rep\xE8res principales (avec Sol-3, La-5, Do-8).", xp: 30 },
+      { id: "q-neck-04", courseId: "neck", lessonId: "neck-c1-01", lvl: 2, q: "Quel est l'intervalle entre une note sur la corde 6 et la m\xEAme case sur la corde 5 ?", o: ["Tierce majeure", "Quinte juste", "Quarte juste", "Octave"], a: 2, exp: "Cordes 6 et 5 : accordage en quarte juste (5 demi-tons). Mi\u2192La = quarte juste. C'est l'intervalle standard entre cordes adjacentes (sauf c3-c2 = tierce maj).", xp: 35 }
+    ];
+  }
+});
+
+// src/content/cours/neck/neck-c1-02.js
+var neck_c1_02_exports = {};
+__export(neck_c1_02_exports, {
+  default: () => neck_c1_02_default,
+  quiz: () => quiz21
+});
+var EM2, neck_c1_02_default, quiz21;
+var init_neck_c1_02 = __esm({
+  "src/content/cours/neck/neck-c1-02.js"() {
+    EM2 = { type: "chord_diagram", caption: "Mi mineur (Em) \u2014 022000 : trois Mi, sur les cordes 6, 4 et 1", data: { name: "Em", frets: [0, 2, 2, 0, 0, 0], fingers: [0, 2, 3, 0, 0, 0], startFret: 1 } };
+    neck_c1_02_default = {
+      id: "neck-c1-02",
+      level: 2,
+      title: "La logique des octaves",
+      duration: 6,
+      gropiTip: "Avant-go\xFBt du chapitre 3 : depuis la corde 6, l'octave la plus proche est deux cordes plus haut et deux cases plus loin. La corde 6 case 5 (La) \u2192 La corde 4 case 7.",
+      cartes: [
+        { type: "idee", titre: "+12 cases = une octave", texte: [
+          "Sur n'importe quelle corde, monter de 12 cases redonne la m\xEAme note, une octave plus aigu\xEB.",
+          "Mi \xE0 vide sur la corde 6, Mi case 12, Mi case 24 si ta guitare en a autant. D'o\xF9 le double point de la case 12 : tu es une octave au-dessus de la corde \xE0 vide."
+        ] },
+        { type: "question", quizId: "q-base-08" },
+        { type: "a-toi", titre: "Deux fois le m\xEAme Mi", consigne: "Sur la corde 6, joue la corde \xE0 vide puis la case 12, plusieurs fois au clic. M\xEAme nom, autre hauteur. Fais pareil sur la corde 5 : La \xE0 vide, puis La case 12.", bpm: 60 },
+        { type: "question", quizId: "q-neck-38" },
+        { type: "idee", titre: "L'octave sur une autre corde", texte: [
+          "Pas besoin de monter si haut : l'octave se trouve aussi sur une autre corde.",
+          "Mi existe \xE0 six endroits pour trois hauteurs : grave (corde 6 \xE0 vide), m\xE9dium (corde 5 case 7, corde 4 case 2), aigu (corde 3 case 9, corde 2 case 5, corde 1 \xE0 vide)."
+        ], bloc: {
+          type: "fretboard",
+          caption: "Mi \xE0 3 octaves \u2014 m\xEAme note, 3 timbres diff\xE9rents (grave \u2192 aigu)",
+          data: {
+            frets: 13,
+            startFret: 0,
+            showStringNames: true,
+            showFretNumbers: true,
+            markerFrets: [3, 5, 7, 9, 12],
+            notes: [
+              { string: 6, fret: 0, label: "Mi", color: "amber", root: true },
+              { string: 5, fret: 7, label: "Mi", color: "amber", root: true },
+              { string: 4, fret: 2, label: "Mi", color: "amber", root: true },
+              { string: 3, fret: 9, label: "Mi", color: "amber", root: true },
+              { string: 2, fret: 5, label: "Mi", color: "amber", root: true },
+              { string: 1, fret: 0, label: "Mi", color: "amber", root: true }
+            ]
+          }
+        } },
+        { type: "question", quizId: "q-neck-39-app" },
+        { type: "idee", titre: "Tu en joues d\xE9j\xE0 trois", texte: [
+          "Ton Mi mineur contient trois Mi : corde 6 \xE0 vide, corde 4 case 2, corde 1 \xE0 vide. Trois octaves dans un seul accord.",
+          "Choisir l'octave, c'est choisir un timbre : en solo, rejouer une phrase une octave plus haut fait monter l'intensit\xE9."
+        ], bloc: EM2 },
+        { type: "a-toi", titre: "Les Mi de ton Mi mineur", consigne: "Pose Em et joue seulement les cordes 6, 4 et 1 : trois Mi, du grave \xE0 l'aigu. Ensuite, sans accord, retrouve les trois autres : corde 5 case 7, corde 3 case 9, corde 2 case 5.", bloc: EM2, bpm: 60 },
+        { type: "recap", points: [
+          "M\xEAme corde, +12 cases = la m\xEAme note une octave plus haut.",
+          "Une note existe aussi \xE0 l'octave sur d'autres cordes, sans monter si haut.",
+          "M\xEAme note, autre corde ou autre octave = un autre timbre."
+        ] }
+      ],
+      quiz: ["q-base-08", "q-neck-38", "q-neck-39", "q-neck-39-app"]
+    };
+    quiz21 = [
+      { id: "q-base-08", courseId: "neck", lessonId: "neck-c1-02", lvl: 1, q: "Sur une m\xEAme corde, combien de cases faut-il monter pour retrouver la m\xEAme note \xE0 l'octave ?", o: ["7", "8", "10", "12"], a: 3, exp: "12 cases = 12 demi-tons = une octave compl\xE8te. La note porte le m\xEAme nom, une octave plus haut.", xp: 30 },
+      { id: "q-neck-38", courseId: "neck", lessonId: "neck-c1-02", lvl: 1, q: "Tu joues Sol sur la corde 6, case 3. O\xF9 rejoues-tu ce Sol une octave plus haut, sur la m\xEAme corde ?", o: ["Case 15", "Case 12", "Case 10", "Case 13"], a: 0, exp: "M\xEAme corde, +12 cases = une octave : 3 + 12 = 15. Le nom de la note ne change pas, seule sa hauteur double.", xp: 30 },
+      { id: "q-neck-39", courseId: "neck", lessonId: "neck-c1-02", lvl: 2, q: "Le Mi de la corde 6 \xE0 vide se retrouve une octave plus haut sur la corde 5. \xC0 quelle case ?", o: ["Case 7", "Case 5", "Case 2", "Case 12"], a: 0, exp: "Mi (corde 5, case 7) sonne une octave au-dessus de la corde 6 \xE0 vide. Le m\xEAme Mi existe aussi sur la corde 4, case 2 : deux positions pour une m\xEAme hauteur.", xp: 40 },
+      { id: "q-neck-39-app", courseId: "neck", lessonId: "neck-c1-02", lvl: 2, q: "Le La de la corde 5 \xE0 vide : o\xF9 le retrouves-tu une octave plus haut, deux cordes plus loin ?", o: ["Corde 3, case 2", "Corde 3, case 7", "Corde 4, case 2", "Corde 3, case 5"], a: 0, exp: "M\xEAme motif que pour Mi, de la corde 6 \xE0 vide \xE0 la corde 4 case 2 : deux cordes plus loin, deux cases plus haut. La (corde 3 case 2).", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/neck/neck-c1-03.js
+var neck_c1_03_exports = {};
+__export(neck_c1_03_exports, {
+  default: () => neck_c1_03_default,
+  quiz: () => quiz22
+});
+var CORDE_6, CORDES_6_ET_5, neck_c1_03_default, quiz22;
+var init_neck_c1_03 = __esm({
+  "src/content/cours/neck/neck-c1-03.js"() {
+    CORDE_6 = {
+      type: "fretboard",
+      caption: "Corde 6 \u2014 les notes sous les points des cases 3, 5, 7, 9 et 12",
+      data: {
+        frets: 12,
+        startFret: 0,
+        showStringNames: false,
+        showFretNumbers: true,
+        markerFrets: [3, 5, 7, 9, 12],
+        notes: [
+          { string: 6, fret: 3, label: "Sol", color: "amber" },
+          { string: 6, fret: 5, label: "La", color: "green" },
+          { string: 6, fret: 7, label: "Si", color: "neutral" },
+          { string: 6, fret: 9, label: "Do#", color: "neutral" },
+          { string: 6, fret: 12, label: "Mi", color: "amber", root: true }
+        ]
+      }
+    };
+    CORDES_6_ET_5 = {
+      type: "fretboard",
+      caption: "Tes ancres sur les cordes 6 et 5 \u2014 pars du point le plus proche",
+      data: {
+        frets: 12,
+        startFret: 0,
+        showStringNames: true,
+        showFretNumbers: true,
+        markerFrets: [3, 5, 7, 9, 12],
+        notes: [
+          { string: 6, fret: 3, label: "Sol", color: "amber" },
+          { string: 6, fret: 5, label: "La", color: "green" },
+          { string: 6, fret: 7, label: "Si", color: "neutral" },
+          { string: 6, fret: 12, label: "Mi", color: "amber", root: true },
+          { string: 5, fret: 3, label: "Do", color: "primary" },
+          { string: 5, fret: 5, label: "R\xE9", color: "green" },
+          { string: 5, fret: 7, label: "Mi", color: "neutral" },
+          { string: 5, fret: 12, label: "La", color: "amber", root: true }
+        ]
+      }
+    };
+    neck_c1_03_default = {
+      id: "neck-c1-03",
+      level: 3,
+      title: "Les amers visuels du manche",
+      duration: 6,
+      gropiTip: "Bonne nouvelle : la corde 1 porte exactement les m\xEAmes notes que la corde 6, deux octaves plus haut. Tes rep\xE8res Sol (3), La (5), Si (7) et Mi (12) valent pour les deux cordes de Mi.",
+      cartes: [
+        { type: "idee", titre: "Des points, pas des d\xE9corations", texte: [
+          "Les points incrust\xE9s sur le manche sont tes rep\xE8res de navigation. Sans eux, toutes les cases se ressemblent.",
+          "Presque toutes les guitares les placent aux cases 3, 5, 7, 9 et 12, avec un double point en 12 : l'octave de la corde \xE0 vide. Puis le cycle reprend : 15, 17, 19, 21."
+        ] },
+        { type: "question", quizId: "q-base-15" },
+        { type: "idee", titre: "Quatre notes-rep\xE8res sur la corde 6", texte: [
+          "Sous les points de la corde 6 : Sol en case 3, La en case 5, Si en case 7, et Mi en case 12, l'octave.",
+          "Le point de la case 9 tombe sur Do#. Ces quatre rep\xE8res sont ton GPS."
+        ], bloc: CORDE_6 },
+        { type: "question", quizId: "q-neck-40" },
+        { type: "idee", titre: "Sur la corde 5", texte: [
+          "M\xEAmes points, autres notes. Do sous le point de la case 3, R\xE9 sous celui de la case 5, La en case 12.",
+          "Et sous le point de la case 7 ? Compte deux cases depuis R\xE9."
+        ] },
+        { type: "question", quizId: "q-neck-p34-01" },
+        { type: "idee", titre: "Ancrer, puis compter", texte: [
+          "N'apprends pas les 12 notes de chaque corde d'un coup. Ancre d'abord celles des points, puis d\xE9duis le reste par voisinage.",
+          "Une case plus haut : un demi-ton plus haut. Une case plus bas : un demi-ton plus bas."
+        ] },
+        { type: "question", quizId: "q-neck-41" },
+        {
+          type: "a-toi",
+          titre: "Les yeux ferm\xE9s",
+          consigne: "Ferme les yeux et pose l'index sur la corde 6 ou 5, \xE0 une case au hasard entre 1 et 12. Ouvre-les, rep\xE8re le point le plus proche et nomme la note. Le plus d'essais possible en une minute.",
+          bloc: CORDES_6_ET_5,
+          minuteur: 60
+        },
+        { type: "recap", points: [
+          "Les points sont aux cases 3, 5, 7, 9 et 12 (double point : l'octave).",
+          "Corde 6 : Sol 3, La 5, Si 7, Mi 12. Corde 5 : Do 3, R\xE9 5, Mi 7, La 12.",
+          "Pars du point le plus proche et compte : une case = un demi-ton."
+        ] }
+      ],
+      quiz: ["q-base-15", "q-neck-40", "q-neck-41", "q-neck-p34-01"]
+    };
+    quiz22 = [
+      { id: "q-base-15", courseId: "neck", lessonId: "neck-c1-03", lvl: 2, q: "Quelle case porte traditionnellement un rep\xE8re double sur le manche ?", o: ["La 7e", "La 9e", "La 12e", "La 5e"], a: 2, exp: "Les rep\xE8res simples sont aux cases 3, 5, 7 et 9 ; la case 12 porte un rep\xE8re double car elle marque l'octave compl\xE8te.", xp: 35 },
+      { id: "q-neck-40", courseId: "neck", lessonId: "neck-c1-03", lvl: 1, q: "Sur la corde 6, quelle note se trouve sous le point de la case 5 ?", o: ["La", "Sol", "Si", "Do"], a: 0, exp: "Corde 6 : case 3 = Sol, case 5 = La, case 7 = Si, case 12 = Mi. Ces quatre notes-rep\xE8res, sous les points, servent d'ancres pour d\xE9duire les autres.", xp: 30 },
+      { id: "q-neck-41", courseId: "neck", lessonId: "neck-c1-03", lvl: 2, q: "Tu connais Sol \xE0 la case 3 de la corde 6. Quelle note joues-tu juste \xE0 c\xF4t\xE9, case 4 ?", o: ["Sol#", "La", "Fa#", "Sol\u266D"], a: 0, exp: "Une case plus haut = un demi-ton plus haut : Sol devient Sol# (qu'on peut aussi \xE9crire La\u266D). C'est la m\xE9thode des ancres : partir d'une note connue et compter les cases.", xp: 40 },
+      { id: "q-neck-p34-01", courseId: "neck", lessonId: "neck-c1-03", lvl: 1, q: "Sur la corde 5, quelle note se trouve sous le point de la case 7 ?", o: ["Mi", "R\xE9", "Fa", "Do"], a: 0, exp: "Corde 5 : Do en case 3, R\xE9 en case 5, puis deux cases plus haut (un ton) Mi en case 7. Les points de la corde 5 donnent Do, R\xE9, Mi : trois notes qui se suivent.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/neck/neck-c2-01.js
+var neck_c2_01_exports = {};
+__export(neck_c2_01_exports, {
+  default: () => neck_c2_01_default,
+  quiz: () => quiz23
+});
+var CORDE_62, neck_c2_01_default, quiz23;
+var init_neck_c2_01 = __esm({
+  "src/content/cours/neck/neck-c2-01.js"() {
+    CORDE_62 = {
+      type: "note_grid",
+      caption: "Corde 6 compl\xE8te \u2014 notes naturelles (color\xE9es) et demi-tons (gris)",
+      data: {
+        string: 6,
+        stringName: "Mi grave",
+        maxFret: 12,
+        highlights: [
+          { fret: 0, label: "Mi", color: "amber" },
+          { fret: 1, label: "Fa", color: "green" },
+          { fret: 3, label: "Sol", color: "green" },
+          { fret: 5, label: "La", color: "amber" },
+          { fret: 7, label: "Si", color: "green" },
+          { fret: 8, label: "Do", color: "primary" },
+          { fret: 10, label: "R\xE9", color: "green" },
+          { fret: 12, label: "Mi", color: "amber" }
+        ]
+      }
+    };
+    neck_c2_01_default = {
+      id: "neck-c2-01",
+      level: 3,
+      title: "Les notes de la corde de Mi grave (corde 6)",
+      duration: 7,
+      gropiTip: "Rep\xE8re imparable : sur la corde 6, le point de la case 7 tombe sur Si, et la case juste apr\xE8s donne Do. \xAB Point 7 = Si, case 8 = Do \xBB : plus jamais de doute sur le Do grave.",
+      cartes: [
+        { type: "idee", titre: "Ta corde-ancre", texte: [
+          "La corde 6 porte la fondamentale de la plupart des accords barr\xE9s : la conna\xEEtre, c'est tenir une bonne partie du manche.",
+          "Ses notes naturelles : Mi (0), Fa (1), Sol (3), La (5), Si (7), Do (8), R\xE9 (10), Mi (12). Entre elles, les cases grises : Fa#, Sol#, La#, Do#, R\xE9#."
+        ], bloc: CORDE_62 },
+        { type: "question", quizId: "q-base-16" },
+        { type: "idee", titre: "Deux paires coll\xE9es", texte: [
+          "Entre deux notes naturelles, il y a en g\xE9n\xE9ral deux cases : un ton. Deux paires font exception, avec une seule case d'\xE9cart : Mi-Fa et Si-Do.",
+          "Ce sont les deux demi-tons naturels. Ils sont au m\xEAme endroit de la suite des notes sur toutes les cordes."
+        ] },
+        { type: "question", quizId: "q-neck-p34-02" },
+        { type: "idee", titre: "Ancres et voisins", texte: [
+          "Tu cherches Do ? Juste apr\xE8s Si, sous le point de la case 7 : case 8. Fa# ? Juste apr\xE8s Fa : case 2. R\xE9 ? Deux cases apr\xE8s Do : case 10.",
+          "Avec les ancres et leurs voisines, chaque note se trouve en moins de deux secondes."
+        ] },
+        { type: "idee", titre: "Le nom de tes barr\xE9s", texte: [
+          "Un barr\xE9 en forme de Mi prend le nom de la note sous l'index, sur la corde 6. Barr\xE9 en case 5 : La majeur. En case 7 : Si majeur.",
+          "Conna\xEEtre cette corde, c'est transposer n'importe quel barr\xE9."
+        ] },
+        { type: "question", quizId: "q-neck-42" },
+        {
+          type: "a-toi",
+          titre: "La corde 6 \xE0 voix haute",
+          consigne: "Joue la corde 6 case par case, de 0 \xE0 12, en nommant chaque note \xE0 voix haute, puis redescends. Ensuite, vise au hasard Sol, Do, R\xE9 et La# : moins de deux secondes chacune.",
+          bloc: CORDE_62,
+          minuteur: 90
+        },
+        { type: "question", quizId: "q-neck-03" },
+        { type: "recap", points: [
+          "Corde 6 : Mi 0, Fa 1, Sol 3, La 5, Si 7, Do 8, R\xE9 10, Mi 12.",
+          "Mi-Fa et Si-Do sont coll\xE9s (une case) ; ailleurs, deux cases.",
+          "Un barr\xE9 en forme de Mi porte le nom de sa note sur la corde 6."
+        ] }
+      ],
+      quiz: ["q-base-16", "q-neck-03", "q-neck-42", "q-neck-p34-02"]
+    };
+    quiz23 = [
+      { id: "q-base-16", courseId: "neck", lessonId: "neck-c2-01", lvl: 2, q: "Sur la corde de Mi grave (corde 6), quelle note trouve-t-on case 3 ?", o: ["Fa", "La", "Fa#", "Sol"], a: 3, exp: "Depuis Mi \xE0 vide : case 1 Fa, case 2 Fa#, case 3 Sol. C'est cette corde qui porte la fondamentale des accords barr\xE9s en forme de Mi.", xp: 35 },
+      { id: "q-neck-42", courseId: "neck", lessonId: "neck-c2-01", lvl: 2, q: "Un accord barr\xE9 en forme de Mi, barr\xE9 \xE0 la case 8, donne quel accord majeur ?", o: ["Do majeur", "Si majeur", "R\xE9 majeur", "La majeur"], a: 0, exp: "En forme de Mi, la fondamentale est sur la corde 6, sous le barr\xE9. Corde 6 case 8 = Do : c'est un Do majeur. Case 5 donnerait La, case 7 Si, case 10 R\xE9.", xp: 40 },
+      { id: "q-neck-p34-02", courseId: "neck", lessonId: "neck-c2-01", lvl: 2, q: "Sur la corde 6, entre quelles cases tombe le demi-ton naturel Si-Do ?", o: ["Cases 7 et 8", "Cases 8 et 9", "Cases 6 et 7", "Cases 4 et 5"], a: 0, exp: "Corde 6 : Si en case 7, Do en case 8, une seule case d'\xE9cart. L'autre demi-ton naturel, Mi-Fa, tombe entre la corde \xE0 vide et la case 1.", xp: 35 }
+    ];
+  }
+});
+
+// src/content/cours/neck/neck-c2-02.js
+var neck_c2_02_exports = {};
+__export(neck_c2_02_exports, {
+  default: () => neck_c2_02_default,
+  quiz: () => quiz24
+});
+var CORDE_5, neck_c2_02_default, quiz24;
+var init_neck_c2_02 = __esm({
+  "src/content/cours/neck/neck-c2-02.js"() {
+    CORDE_5 = {
+      type: "note_grid",
+      caption: "Corde 5 (La) \u2014 notes naturelles \xE0 m\xE9moriser",
+      data: {
+        string: 5,
+        stringName: "La",
+        maxFret: 12,
+        highlights: [
+          { fret: 0, label: "La", color: "amber" },
+          { fret: 2, label: "Si", color: "green" },
+          { fret: 3, label: "Do", color: "primary" },
+          { fret: 5, label: "R\xE9", color: "amber" },
+          { fret: 7, label: "Mi", color: "green" },
+          { fret: 8, label: "Fa", color: "green" },
+          { fret: 10, label: "Sol", color: "green" },
+          { fret: 12, label: "La", color: "amber" }
+        ]
+      }
+    };
+    neck_c2_02_default = {
+      id: "neck-c2-02",
+      level: 3,
+      title: "Les notes de la corde de La (corde 5)",
+      duration: 7,
+      gropiTip: "Sur la corde 5, les points des cases 3, 5 et 7 donnent Do, R\xE9 et Mi, trois notes qui se suivent. Joue-les en remontant : un petit Do-R\xE9-Mi sous tes yeux, facile \xE0 retenir.",
+      cartes: [
+        { type: "idee", titre: "Ta deuxi\xE8me ancre", texte: [
+          "La corde 5 porte la fondamentale des barr\xE9s en forme de La. Ses notes naturelles : La (0), Si (2), Do (3), R\xE9 (5), Mi (7), Fa (8), Sol (10), La (12).",
+          "Les demi-tons Si-Do et Mi-Fa tombent entre les cases 2-3 et 7-8."
+        ], bloc: CORDE_5 },
+        { type: "question", quizId: "q-base-17" },
+        { type: "idee", titre: "Le d\xE9calage de 5 cases", texte: [
+          "La corde 5 est accord\xE9e 5 demi-tons plus haut que la corde 6. Pour une m\xEAme note, \xE0 la m\xEAme hauteur, recule donc de 5 cases.",
+          "Le La de la case 5 sur la corde 6, c'est la corde 5 \xE0 vide."
+        ], bloc: {
+          type: "fretboard",
+          caption: "M\xEAme note La \u2014 corde 6 case 5 et corde 5 \xE0 vide",
+          data: {
+            frets: 7,
+            startFret: 0,
+            showStringNames: true,
+            showFretNumbers: true,
+            markerFrets: [3, 5],
+            notes: [
+              { string: 6, fret: 5, label: "La", color: "amber", root: true },
+              { string: 5, fret: 0, label: "La", color: "amber", root: true }
+            ]
+          }
+        } },
+        { type: "question", quizId: "q-neck-44" },
+        { type: "idee", titre: "Les barr\xE9s en forme de La", texte: [
+          "Dans cette forme, la fondamentale est sur la corde 5. Barr\xE9 en case 3 : Do majeur. En case 5 : R\xE9 majeur. En case 7 : Mi majeur.",
+          "Avec la corde 6, tu sais nommer n'importe quel barr\xE9 majeur ou mineur."
+        ] },
+        { type: "question", quizId: "q-neck-43-app" },
+        { type: "idee", titre: "Une note, deux places", texte: [
+          "Mi (corde 6, case 0) et Mi (corde 5, case 7). Do (corde 6, case 8) et Do (corde 5, case 3).",
+          "Quand tu cherches une note, pense \xE0 ces paires : prends celle qui est la plus proche de ta main."
+        ] },
+        {
+          type: "a-toi",
+          titre: "Les paires en une minute",
+          consigne: "Pour chaque note naturelle, La, Si, Do, R\xE9, Mi, Fa, Sol : joue-la sur la corde 5, puis retrouve-la sur la corde 6. Nomme-la \xE0 voix haute. Tout le tour en 60 secondes, puis recommence plus vite.",
+          bloc: CORDE_5,
+          minuteur: 60
+        },
+        { type: "question", quizId: "q-neck-p34-03" },
+        { type: "recap", points: [
+          "Corde 5 : La 0, Si 2, Do 3, R\xE9 5, Mi 7, Fa 8, Sol 10, La 12.",
+          "M\xEAme note, m\xEAme hauteur : 5 cases plus t\xF4t sur la corde 5 que sur la corde 6.",
+          "Un barr\xE9 en forme de La porte le nom de sa note sur la corde 5."
+        ] }
+      ],
+      quiz: ["q-base-17", "q-neck-43", "q-neck-44", "q-neck-p34-03", "q-neck-43-app"]
+    };
+    quiz24 = [
+      { id: "q-base-17", courseId: "neck", lessonId: "neck-c2-02", lvl: 2, q: "Sur la corde de La (corde 5), quelle note trouve-t-on case 3 ?", o: ["Do", "Si", "R\xE9", "Do#"], a: 0, exp: "Depuis La \xE0 vide : case 1 La#, case 2 Si, case 3 Do. Cette corde porte la fondamentale des accords barr\xE9s en forme de La.", xp: 35 },
+      { id: "q-neck-43", courseId: "neck", lessonId: "neck-c2-02", lvl: 2, q: "Un barr\xE9 en forme de La, fondamentale sur la corde 5 case 5, donne quel accord majeur ?", o: ["R\xE9 majeur", "Do majeur", "Mi majeur", "Sol majeur"], a: 0, exp: "La forme de La place la fondamentale sur la corde 5. Corde 5 case 5 = R\xE9 : R\xE9 majeur. Case 3 donnerait Do, case 7 Mi, case 10 Sol.", xp: 40 },
+      { id: "q-neck-43-app", courseId: "neck", lessonId: "neck-c2-02", lvl: 2, q: "Un barr\xE9 en forme de La, fondamentale sur la corde 5 case 10, donne quel accord majeur ?", o: ["Sol majeur", "Fa majeur", "La majeur", "Mi majeur"], a: 0, exp: "La forme de La place la fondamentale sur la corde 5. Corde 5 case 10 = Sol : Sol majeur.", xp: 30 },
+      { id: "q-neck-44", courseId: "neck", lessonId: "neck-c2-02", lvl: 2, q: "Do est \xE0 la case 8 de la corde 6. O\xF9 joues-tu ce m\xEAme Do, \xE0 la m\xEAme hauteur, sur la corde 5 ?", o: ["Case 3", "Case 13", "Case 5", "Case 10"], a: 0, exp: "La corde 5 est accord\xE9e 5 demi-tons plus haut que la corde 6 : pour la m\xEAme note, on recule de 5 cases. 8 \u2212 5 = 3 : Do (corde 5, case 3).", xp: 40 },
+      { id: "q-neck-p34-03", courseId: "neck", lessonId: "neck-c2-02", lvl: 2, q: "Sur la corde 5, quelle note joues-tu \xE0 la case 10 ?", o: ["Sol", "Fa", "La", "Fa#"], a: 0, exp: "Corde 5 : Mi (7), Fa (8), Fa# (9), Sol (10). Autre chemin : la case 12 est l'octave, La ; deux cases plus bas, un ton en dessous, c'est Sol.", xp: 35 }
+    ];
+  }
+});
+
+// src/content/cours/neck/neck-pow-01.js
+var neck_pow_01_exports = {};
+__export(neck_pow_01_exports, {
+  default: () => neck_pow_01_default,
+  quiz: () => quiz25
+});
+var E5, G5, D5, neck_pow_01_default, quiz25;
+var init_neck_pow_01 = __esm({
+  "src/content/cours/neck/neck-pow-01.js"() {
+    E5 = { type: "chord_diagram", caption: "E5 \u2014 022xxx : corde 6 \xE0 vide, cordes 5 et 4 en case 2", data: { name: "E5", frets: [0, 2, 2, -1, -1, -1], fingers: [0, 1, 2, 0, 0, 0], startFret: 1 } };
+    G5 = { type: "chord_diagram", caption: "G5 \u2014 355xxx : la forme mobile, fondamentale sur la corde 6", data: { name: "G5", frets: [3, 5, 5, -1, -1, -1], fingers: [1, 3, 4, 0, 0, 0], startFret: 3 } };
+    D5 = { type: "chord_diagram", caption: "D5 \u2014 x577xx : la m\xEAme forme, fondamentale sur la corde 5", data: { name: "D5", frets: [-1, 5, 7, 7, -1, -1], fingers: [0, 1, 3, 4, 0, 0], startFret: 5 } };
+    neck_pow_01_default = {
+      id: "neck-pow-01",
+      level: 3,
+      title: "Power chords et premier riff rock",
+      duration: 8,
+      gropiTip: "Sur un power chord de la corde 5, laisse le bout de l'index effleurer la corde 6 sans appuyer : elle reste muette m\xEAme si ta main droite d\xE9borde. Le dessous de l'index fait pareil pour les cordes aigu\xEBs.",
+      cartes: [
+        { type: "idee", titre: "Deux notes, un gros son", texte: [
+          "Un power chord, c'est une fondamentale et sa quinte, souvent doubl\xE9e \xE0 l'octave. Pas de tierce : il n'est ni majeur ni mineur.",
+          "Il sonne bien partout, surtout avec de la saturation. On l'\xE9crit avec un 5 : E5 se dit \xAB Mi cinq \xBB."
+        ] },
+        { type: "idee", titre: "E5 et A5, \xE0 vide", texte: [
+          "E5 : la corde 6 \xE0 vide, plus les cordes 5 et 4 en case 2. Ne gratte que ces trois cordes.",
+          "A5 : la m\xEAme forme d\xE9cal\xE9e d'une corde vers l'aigu. Corde 5 \xE0 vide, cordes 4 et 3 en case 2."
+        ], bloc: E5 },
+        { type: "question", quizId: "q-neck-pow-new-01" },
+        { type: "idee", titre: "Une forme qui voyage", texte: [
+          "Index sur la corde 6, annulaire et auriculaire deux cases plus loin, sur les cordes 5 et 4. Cette forme se d\xE9place telle quelle.",
+          "La note de l'index donne le nom : Sol (corde 6, case 3) donne G5, La (corde 6, case 5) donne A5."
+        ], bloc: G5 },
+        { type: "idee", titre: "Fondamentale sur la corde 5", texte: [
+          "La m\xEAme forme part aussi de la corde 5 : Do (corde 5, case 3) donne C5, R\xE9 (corde 5, case 5) donne D5.",
+          "Les notes des cordes 6 et 5 que tu as apprises deviennent ta carte des power chords."
+        ], bloc: D5 },
+        { type: "question", quizId: "q-neck-pow-new-02" },
+        { type: "idee", titre: "Le palm mute, en bref", texte: [
+          "Pose le tranchant de la main droite sur les cordes, juste devant le chevalet, et gratte vers le bas. Le son devient sourd et percutant : le \xAB tchouk \xBB du rock.",
+          "Tout est \xE9touff\xE9 ? Recule la paume vers le chevalet."
+        ] },
+        {
+          type: "a-toi",
+          titre: "Ton premier riff rock",
+          consigne: "Tout en coups vers le bas, avec un palm mute l\xE9ger. Deux power chords par temps, au clic. Tu reconnais le motif ? C'est le \xAB Riff rock en Mi \xBB des Morceaux, jou\xE9 en power chords.",
+          bloc: {
+            type: "tab",
+            caption: "Riff en power chords : E5, G5 et A5, en croches",
+            text: "Tab \u2014 croches en power chords : E5, E5, G5, E5, A5, E5, G5, E5, deux fois. Corde 6 : 0, 0, 3, 0, 5, 0, 3, 0 ; cordes 5 et 4 deux cases plus loin \xE0 chaque fois.",
+            data: { lines: [
+              "e|----------------|----------------|",
+              "B|----------------|----------------|",
+              "G|----------------|----------------|",
+              "D|2-2-5-2-7-2-5-2-|2-2-5-2-7-2-5-2-|",
+              "A|2-2-5-2-7-2-5-2-|2-2-5-2-7-2-5-2-|",
+              "E|0-0-3-0-5-0-3-0-|0-0-3-0-5-0-3-0-|"
+            ] }
+          },
+          bpm: 70
+        },
+        { type: "question", quizId: "q-neck-pow-new-03" },
+        { type: "recap", points: [
+          "Power chord = fondamentale + quinte (+ octave) : ni majeur ni mineur.",
+          "Une seule forme mobile : la note de l'index, sur la corde 6 ou 5, donne le nom.",
+          "Coups vers le bas et palm mute devant le chevalet : le son du riff rock."
+        ] }
+      ],
+      quiz: ["q-neck-pow-new-01", "q-neck-pow-new-02", "q-neck-pow-new-03"]
+    };
+    quiz25 = [
+      { id: "q-neck-pow-new-01", courseId: "neck", lessonId: "neck-pow-01", lvl: 1, q: "Quelles notes joues-tu dans le power chord E5 ?", o: ["Mi, Si et Mi", "Mi, Sol# et Si", "Mi, Sol et Si", "Mi, La et Mi"], a: 0, exp: "Corde 6 \xE0 vide : Mi ; corde 5 case 2 : Si (la quinte) ; corde 4 case 2 : Mi (l'octave). Aucune tierce.", xp: 25 },
+      { id: "q-neck-pow-new-02", courseId: "neck", lessonId: "neck-pow-01", lvl: 1, q: "Power chord mobile, index sur la corde 6 en case 5 : quel accord joues-tu ?", o: ["A5", "G5", "D5", "C5"], a: 0, exp: "La corde 6 en case 5 donne La : c'est la fondamentale, donc A5.", xp: 25 },
+      { id: "q-neck-pow-new-03", courseId: "neck", lessonId: "neck-pow-01", lvl: 2, q: "Pourquoi un power chord convient-il aussi bien \xE0 un morceau majeur qu'\xE0 un morceau mineur ?", o: ["Il n'a pas de tierce", "Il n'a pas de quinte", "Il n'a que des cordes graves", "Il se joue toujours \xE9touff\xE9"], a: 0, exp: "C'est la tierce qui rend un accord majeur ou mineur. Le power chord n'a que la fondamentale et la quinte : il s'adapte aux deux.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/neck/neck-c2-03.js
+var neck_c2_03_exports = {};
+__export(neck_c2_03_exports, {
+  default: () => neck_c2_03_default,
+  quiz: () => quiz26
+});
+var neck_c2_03_default, quiz26;
+var init_neck_c2_03 = __esm({
+  "src/content/cours/neck/neck-c2-03.js"() {
+    neck_c2_03_default = {
+      id: "neck-c2-03",
+      level: 4,
+      title: "Les notes de la corde de R\xE9 (corde 4)",
+      duration: 7,
+      gropiTip: "Tu connais d\xE9j\xE0 la case 5 de la corde 4 : c'est le Sol qui sert \xE0 accorder la corde 3 \xE0 l'oreille. Pars de l\xE0 pour remonter : La en case 7, Si en 9, Do en 10.",
+      cartes: [
+        { type: "idee", titre: "La corde des accords ouverts", texte: [
+          "Moins utilis\xE9e comme ancre que les cordes 6 et 5, la corde 4 est au c\u0153ur des accords ouverts R\xE9, Sol et Do.",
+          "Ses notes naturelles : R\xE9 (0), Mi (2), Fa (3), Sol (5), La (7), Si (9), Do (10), R\xE9 (12)."
+        ], bloc: {
+          type: "note_grid",
+          caption: "Corde 4 (R\xE9) \u2014 notes naturelles",
+          data: {
+            string: 4,
+            stringName: "R\xE9",
+            maxFret: 12,
+            highlights: [
+              { fret: 0, label: "R\xE9", color: "amber" },
+              { fret: 2, label: "Mi", color: "green" },
+              { fret: 3, label: "Fa", color: "green" },
+              { fret: 5, label: "Sol", color: "amber" },
+              { fret: 7, label: "La", color: "green" },
+              { fret: 9, label: "Si", color: "green" },
+              { fret: 10, label: "Do", color: "primary" },
+              { fret: 12, label: "R\xE9", color: "amber" }
+            ]
+          }
+        } },
+        { type: "question", quizId: "q-neck-29" },
+        { type: "idee", titre: "Dix cases d'avance", texte: [
+          "Chaque corde sonne une quarte, 5 demi-tons, au-dessus de sa voisine grave. Deux cordes plus haut, c'est donc 10 cases d'avance.",
+          "La corde 4 \xE0 vide est le m\xEAme R\xE9 que celui de la corde 6, case 10."
+        ] },
+        { type: "question", quizId: "q-neck-31-app" },
+        { type: "idee", titre: "L'octave, deux cases plus loin", texte: [
+          "Une note de la corde 6 se retrouve une octave plus haut sur la corde 4, deux cases plus loin.",
+          "Sol (corde 6, case 3) devient Sol (corde 4, case 5). La (corde 6, case 5) devient La (corde 4, case 7)."
+        ] },
+        { type: "idee", titre: "Dans tes accords ouverts", texte: [
+          "Dans R\xE9, la corde 4 \xE0 vide est la fondamentale. Dans Sol, ce m\xEAme R\xE9 est la quinte.",
+          "Dans Do, la case 2 de la corde 4 donne Mi : la tierce de l'accord."
+        ] },
+        { type: "question", quizId: "q-neck-p34-04" },
+        {
+          type: "a-toi",
+          titre: "Tous les Sol des cordes graves",
+          consigne: "Trouve Sol sur la corde 6, puis sur la 5, puis sur la 4, et rejoue-les en boucle en nommant la corde. Recommence avec La, Do et R\xE9. Les quatre notes en 60 secondes.",
+          bloc: {
+            type: "fretboard",
+            caption: "Sol sur les trois cordes graves \u2014 cordes 6, 5 et 4",
+            data: {
+              frets: 12,
+              startFret: 0,
+              showStringNames: true,
+              showFretNumbers: true,
+              markerFrets: [3, 5, 7, 9, 12],
+              notes: [
+                { string: 6, fret: 3, label: "Sol", color: "amber", root: true },
+                { string: 5, fret: 10, label: "Sol", color: "amber", root: true },
+                { string: 4, fret: 5, label: "Sol", color: "amber", root: true }
+              ]
+            }
+          },
+          minuteur: 60
+        },
+        { type: "question", quizId: "q-neck-30" },
+        { type: "recap", points: [
+          "Corde 4 : R\xE9 0, Mi 2, Fa 3, Sol 5, La 7, Si 9, Do 10, R\xE9 12.",
+          "M\xEAme hauteur : corde 4 \xE0 vide = corde 6 case 10.",
+          "Octave : de la corde 6 \xE0 la corde 4, deux cases plus loin."
+        ] }
+      ],
+      quiz: ["q-neck-29", "q-neck-30", "q-neck-31", "q-neck-09", "q-neck-p34-04", "q-neck-31-app"]
+    };
+    quiz26 = [
+      { id: "q-neck-29", courseId: "neck", lessonId: "neck-c2-03", lvl: 1, q: "Sur la corde 4 (R\xE9), quelle note est \xE0 la case 5 ?", o: ["Sol", "Fa#", "La", "Mi"], a: 0, exp: "Corde 4 \xE0 vide = R\xE9, puis Mi (2), Fa (3), Sol (5).", xp: 30 },
+      { id: "q-neck-30", courseId: "neck", lessonId: "neck-c2-03", lvl: 1, q: "Sur la corde 4, o\xF9 sont les deux demi-tons naturels (Mi-Fa et Si-Do) ?", o: ["Cases 3-4 et 10-11", "Cases 2-3 et 9-10", "Cases 4-5 et 11-12", "Cases 1-2 et 8-9"], a: 1, exp: "Mi est case 2 et Fa case 3 ; Si est case 9 et Do case 10.", xp: 30 },
+      { id: "q-neck-31", courseId: "neck", lessonId: "neck-c2-03", lvl: 2, q: "La corde 4 \xE0 vide sonne exactement comme\u2026", o: ["La corde 6, case 5", "La corde 5, case 7", "La corde 6, case 10", "La corde 6, case 12"], a: 2, exp: "Corde 4 case X = corde 6 case X+10 : la corde 4 \xE0 vide (R\xE9) est la m\xEAme note, \xE0 la m\xEAme hauteur, que la corde 6 case 10.", xp: 40 },
+      { id: "q-neck-31-app", courseId: "neck", lessonId: "neck-c2-03", lvl: 2, q: "La corde 3 \xE0 vide sonne exactement comme\u2026", o: ["La corde 5, case 5", "La corde 5, case 10", "La corde 6, case 10", "La corde 4, case 7"], a: 1, exp: "Deux cordes plus grave, c'est 10 cases d'avance : la corde 3 \xE0 vide (Sol) est la m\xEAme note, \xE0 la m\xEAme hauteur, que la corde 5 case 10.", xp: 30 },
+      { id: "q-neck-p34-04", courseId: "neck", lessonId: "neck-c2-03", lvl: 2, q: "Sur la corde 4, quelle note joues-tu \xE0 la case 10 ?", o: ["Do", "Si", "Do#", "La#"], a: 0, exp: "Corde 4 : La (7), Si (9), puis Do (10), juste \xE0 c\xF4t\xE9, car Si-Do n'est qu'un demi-ton. L'octave R\xE9 est en case 12, un ton plus haut.", xp: 35 }
+    ];
+  }
+});
+
+// src/content/cours/neck/neck-c2-04.js
+var neck_c2_04_exports = {};
+__export(neck_c2_04_exports, {
+  default: () => neck_c2_04_default,
+  quiz: () => quiz27
+});
+var neck_c2_04_default, quiz27;
+var init_neck_c2_04 = __esm({
+  "src/content/cours/neck/neck-c2-04.js"() {
+    neck_c2_04_default = {
+      id: "neck-c2-04",
+      level: 4,
+      title: "Les notes de la corde de Sol (corde 3)",
+      duration: 7,
+      gropiTip: "Le Si de la case 4 est le rep\xE8re \xAB bizarre \xBB de la corde 3 : c'est le m\xEAme Si que la corde 2 \xE0 vide, celui qui sert \xE0 accorder \xE0 l'oreille. Joue les deux ensemble pour les entendre fusionner.",
+      cartes: [
+        { type: "idee", titre: "La corde 3, case par case", texte: [
+          "Ses notes naturelles : Sol (0), La (2), Si (4), Do (5), R\xE9 (7), Mi (9), Fa (10), Sol (12).",
+          "Demi-tons naturels : Si-Do entre les cases 4 et 5, Mi-Fa entre 9 et 10."
+        ], bloc: {
+          type: "note_grid",
+          caption: "Corde 3 (Sol) \u2014 attention : Si arrive d\xE8s la case 4",
+          data: {
+            string: 3,
+            stringName: "Sol",
+            maxFret: 12,
+            highlights: [
+              { fret: 0, label: "Sol", color: "amber" },
+              { fret: 2, label: "La", color: "green" },
+              { fret: 4, label: "Si", color: "green" },
+              { fret: 5, label: "Do", color: "primary" },
+              { fret: 7, label: "R\xE9", color: "amber" },
+              { fret: 9, label: "Mi", color: "green" },
+              { fret: 10, label: "Fa", color: "green" },
+              { fret: 12, label: "Sol", color: "amber" }
+            ]
+          }
+        } },
+        { type: "question", quizId: "q-neck-22" },
+        { type: "idee", titre: "Le Si de la case 4", texte: [
+          "De Sol \xE0 Si, il y a 4 demi-tons : Si arrive d\xE8s la case 4, pas en 7 comme sur les cordes de Mi.",
+          "C'est le m\xEAme Si que la corde 2 \xE0 vide : entre ces deux cordes, l'\xE9cart est une tierce majeure, pas une quarte."
+        ] },
+        { type: "question", quizId: "q-neck-21-app" },
+        { type: "idee", titre: "La corde des bends", texte: [
+          "M\xE9dium-aigu\xEB et souple, la corde 3 se pr\xEAte aux tir\xE9s. Le R\xE9 de la case 7, tir\xE9 d'un ton jusqu'\xE0 Mi, est un geste de base du blues.",
+          "En La pentatonique, les deux notes sont dans la gamme : ce bend sonne juste."
+        ] },
+        { type: "idee", titre: "Trois Sol, trois octaves", texte: [
+          "Sol (corde 6, case 3), Sol (corde 3, case 0), Sol (corde 1, case 3) : un m\xEAme nom, trois octaves.",
+          "Relier les cordes ainsi, c'est voir le manche en entier."
+        ] },
+        { type: "question", quizId: "q-neck-45" },
+        {
+          type: "a-toi",
+          titre: "Le bend de la case 7",
+          consigne: "Joue Mi (corde 3, case 9) pour avoir la note cible en t\xEAte. Puis joue R\xE9 (corde 3, case 7) et pousse la corde vers le plafond, avec deux doigts, jusqu'\xE0 retrouver ce Mi. Alterne note cible et bend pendant une minute.",
+          bloc: {
+            type: "tab",
+            caption: "Note cible, puis bend d'un ton de la case 7 \xE0 la hauteur de la case 9",
+            text: "Tab \u2014 corde 3 : 9, puis 7b9 (case 7 tir\xE9e d'un ton), puis 9, puis 7b9r7 (tir\xE9e puis rel\xE2ch\xE9e).",
+            data: { lines: [
+              "e|---------------------------|",
+              "B|---------------------------|",
+              "G|-9----7b9----9----7b9r7----|",
+              "D|---------------------------|",
+              "A|---------------------------|",
+              "E|---------------------------|"
+            ] }
+          },
+          minuteur: 60
+        },
+        { type: "recap", points: [
+          "Corde 3 : Sol 0, La 2, Si 4, Do 5, R\xE9 7, Mi 9, Fa 10, Sol 12.",
+          "Le Si de la case 4 sonne comme la corde 2 \xE0 vide.",
+          "R\xE9 (case 7) tir\xE9 d'un ton jusqu'\xE0 Mi : le bend de base du blues."
+        ] }
+      ],
+      quiz: ["q-neck-21", "q-neck-22", "q-neck-45", "q-neck-21-app"]
+    };
+    quiz27 = [
+      { id: "q-neck-21", courseId: "neck", lessonId: "neck-c2-04", lvl: 2, q: "Sur la corde 3 (Sol), \xE0 quelle case trouve-t-on la note Si ?", o: ["Case 7", "Case 5", "Case 2", "Case 4"], a: 3, exp: "De Sol \xE0 Si, il y a 4 demi-tons : Si arrive d\xE8s la case 4, alors qu'il est en case 7 sur les cordes de Mi. C'est le m\xEAme Si que la corde 2 \xE0 vide.", xp: 35 },
+      { id: "q-neck-21-app", courseId: "neck", lessonId: "neck-c2-04", lvl: 2, q: "Sur la corde 3 (Sol), \xE0 quelle case trouve-t-on la note Do ?", o: ["Case 8", "Case 5", "Case 3", "Case 6"], a: 1, exp: "Si est en case 4 sur la corde 3, et Si-Do n'est qu'un demi-ton : Do arrive juste apr\xE8s, case 5. La case 8, c'est Do sur les cordes de Mi.", xp: 30 },
+      { id: "q-neck-22", courseId: "neck", lessonId: "neck-c2-04", lvl: 2, q: "Sur la corde 3 (Sol), quelle note trouve-t-on \xE0 la case 5 ?", o: ["Do", "R\xE9", "La", "Si"], a: 0, exp: "Case 0 Sol, 2 La, 4 Si, 5 Do : le demi-ton Si-Do tombe entre les cases 4 et 5, exactement comme sur les autres cordes.", xp: 35 },
+      { id: "q-neck-45", courseId: "neck", lessonId: "neck-c2-04", lvl: 1, q: "Sur la corde 3, quelle note joues-tu \xE0 la case 9 ?", o: ["Mi", "R\xE9", "Fa", "Do#"], a: 0, exp: "Corde 3 : Sol (0), La (2), Si (4), Do (5), R\xE9 (7), Mi (9). Le demi-ton Mi-Fa tombe entre les cases 9 et 10.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/neck/neck-c2-05.js
+var neck_c2_05_exports = {};
+__export(neck_c2_05_exports, {
+  default: () => neck_c2_05_default,
+  quiz: () => quiz28
+});
+var neck_c2_05_default, quiz28;
+var init_neck_c2_05 = __esm({
+  "src/content/cours/neck/neck-c2-05.js"() {
+    neck_c2_05_default = {
+      id: "neck-c2-05",
+      level: 4,
+      title: "Les notes des cordes Si et Mi aigu (cordes 2 et 1)",
+      duration: 8,
+      gropiTip: "Pour la corde 2, retranche 7 aux cases de la corde 6 : Do (case 8) \u2192 case 1, R\xE9 (10) \u2192 case 3, Mi (12) \u2192 case 5. M\xEAme nom de note, \xE0 une autre octave.",
+      cartes: [
+        { type: "idee", titre: "Les cordes qui chantent", texte: [
+          "Les cordes 2 et 1 portent les m\xE9lodies et les solos aigus. On termine la carte du manche avec elles.",
+          "Corde 2 : Si (0), Do (1), R\xE9 (3), Mi (5), Fa (6), Sol (8), La (10), Si (12)."
+        ], bloc: {
+          type: "note_grid",
+          caption: "Corde 2 (Si) \u2014 Si-Do coll\xE9 d\xE8s la case 0-1",
+          data: {
+            string: 2,
+            stringName: "Si",
+            maxFret: 12,
+            highlights: [
+              { fret: 0, label: "Si", color: "amber" },
+              { fret: 1, label: "Do", color: "primary" },
+              { fret: 3, label: "R\xE9", color: "green" },
+              { fret: 5, label: "Mi", color: "amber" },
+              { fret: 6, label: "Fa", color: "green" },
+              { fret: 8, label: "Sol", color: "green" },
+              { fret: 10, label: "La", color: "green" },
+              { fret: 12, label: "Si", color: "amber" }
+            ]
+          }
+        } },
+        { type: "question", quizId: "q-neck-24" },
+        { type: "idee", titre: "La corde 1, tu la connais d\xE9j\xE0", texte: [
+          "La corde 1 porte exactement les m\xEAmes notes que la corde 6, deux octaves plus haut.",
+          "Mi (0), Fa (1), Sol (3), La (5), Si (7), Do (8), R\xE9 (10), Mi (12) : tout ce que tu as appris sur la corde 6 est gratuit ici."
+        ], bloc: {
+          type: "note_grid",
+          caption: "Corde 1 (Mi aigu) \u2014 identique \xE0 la corde 6, 2 octaves plus haut",
+          data: {
+            string: 1,
+            stringName: "Mi aigu",
+            maxFret: 12,
+            highlights: [
+              { fret: 0, label: "Mi", color: "amber" },
+              { fret: 1, label: "Fa", color: "green" },
+              { fret: 3, label: "Sol", color: "green" },
+              { fret: 5, label: "La", color: "green" },
+              { fret: 7, label: "Si", color: "green" },
+              { fret: 8, label: "Do", color: "primary" },
+              { fret: 10, label: "R\xE9", color: "green" },
+              { fret: 12, label: "Mi", color: "amber" }
+            ]
+          }
+        } },
+        { type: "question", quizId: "q-neck-25-app" },
+        { type: "idee", titre: "Une triade sur les cordes aigu\xEBs", texte: [
+          "Sol (corde 3, case 0), Do (corde 2, case 1), Mi (corde 1, case 0) : les trois notes de Do majeur, sur les trois cordes aigu\xEBs.",
+          "Ces petites formes \xE0 trois cordes sont partout en pop, en funk et en R&B."
+        ] },
+        { type: "question", quizId: "q-neck-26" },
+        { type: "idee", titre: "Les six cordes sont cartographi\xE9es", texte: [
+          "Tu as maintenant les notes des six cordes. Il faudra quelques semaines de jeu quotidien pour les automatiser.",
+          "Le meilleur exercice : chercher une m\xEAme note sur toutes les cordes."
+        ] },
+        {
+          type: "a-toi",
+          titre: "Tous les Do en 60 secondes",
+          consigne: "Trouve les six Do des 12 premi\xE8res cases, un par corde, de la corde 6 \xE0 la corde 1, puis redescends en les nommant. Essaie sans regarder, puis v\xE9rifie sur le sch\xE9ma. Recommence avec Sol, Mi et R\xE9.",
+          bloc: {
+            type: "fretboard",
+            caption: "Les six Do des cases 0 \xE0 12, un par corde",
+            data: {
+              frets: 12,
+              startFret: 0,
+              showStringNames: true,
+              showFretNumbers: true,
+              markerFrets: [3, 5, 7, 9, 12],
+              notes: [
+                { string: 6, fret: 8, label: "Do", color: "primary", root: true },
+                { string: 5, fret: 3, label: "Do", color: "primary", root: true },
+                { string: 4, fret: 10, label: "Do", color: "primary", root: true },
+                { string: 3, fret: 5, label: "Do", color: "primary", root: true },
+                { string: 2, fret: 1, label: "Do", color: "primary", root: true },
+                { string: 1, fret: 8, label: "Do", color: "primary", root: true }
+              ]
+            }
+          },
+          minuteur: 60
+        },
+        { type: "question", quizId: "q-neck-06" },
+        { type: "recap", points: [
+          "Corde 2 : Si 0, Do 1, R\xE9 3, Mi 5, Fa 6, Sol 8, La 10, Si 12.",
+          "Corde 1 = corde 6, deux octaves plus haut.",
+          "Chaque note appara\xEEt une fois par corde entre les cases 0 et 11."
+        ] }
+      ],
+      quiz: ["q-neck-06", "q-neck-24", "q-neck-25", "q-neck-26", "q-fret-neck-01", "q-fret-neck-02", "q-fret-neck-03", "q-fret-neck-04", "q-neck-25-app"]
+    };
+    quiz28 = [
+      { id: "q-neck-06", courseId: "neck", lessonId: "neck-c2-05", lvl: 3, q: "Combien y a-t-il de Do sur les 12 premi\xE8res cases d'une guitare 6 cordes en accordage standard ?", o: ["5", "3", "4", "6"], a: 3, exp: "Un Do par corde entre les cases 0 et 12 : corde 6 case 8, corde 5 case 3, corde 4 case 10, corde 3 case 5, corde 2 case 1, corde 1 case 8. Soit 6 en tout.", xp: 50 },
+      { id: "q-neck-24", courseId: "neck", lessonId: "neck-c2-05", lvl: 2, q: "Sur la corde 2 (Si), entre quelles cases trouve-t-on le demi-ton Si-Do ?", o: ["Case 4 et 5", "Case 9 et 10", "Case 0 et 1", "Case 7 et 8"], a: 2, exp: "Sur la corde 2, Si (\xE0 vide) et Do (case 1) sont imm\xE9diatement adjacents \u2014 le demi-ton naturel tombe d\xE8s le d\xE9but du manche.", xp: 35 },
+      { id: "q-neck-25", courseId: "neck", lessonId: "neck-c2-05", lvl: 2, q: "La corde 1 (Mi aigu) porte exactement les m\xEAmes notes qu'une autre corde, mais 2 octaves plus haut. Laquelle ?", o: ["La corde 5", "La corde 4", "La corde 2", "La corde 6"], a: 3, exp: "Cordes 1 et 6 sont toutes deux accord\xE9es en Mi, \xE0 2 octaves d'\xE9cart. Ce que tu apprends sur la corde 6 est donc gratuit sur la corde 1.", xp: 40 },
+      { id: "q-neck-25-app", courseId: "neck", lessonId: "neck-c2-05", lvl: 2, q: "Sur la corde 1 (Mi aigu), \xE0 quelle case trouve-t-on Fa# ?", o: ["Case 1", "Case 2", "Case 3", "Case 4"], a: 1, exp: "Comme sur la corde 6 : Fa en case 1, Sol en case 3, donc Fa# entre les deux, case 2.", xp: 30 },
+      { id: "q-neck-26", courseId: "neck", lessonId: "neck-c2-05", lvl: 3, q: "Sur la corde 1 (Mi aigu), quelle note trouve-t-on \xE0 la case 8 ?", o: ["Do", "Si", "R\xE9", "La"], a: 0, exp: "0 Mi, 1 Fa, 3 Sol, 5 La, 7 Si, 8 Do \u2014 identique \xE0 la corde 6, simplement 2 octaves plus haut.", xp: 45 },
+      { id: "q-fret-neck-01", type: "fretboard", courseId: "neck", lessonId: "neck-c2-05", lvl: 1, q: "Trouve toutes les notes Do (C) sur le manche", concept: { type: "find_note", root: "C" }, selectionRules: { mode: "all" }, display: { showNotes: false }, hint: "Case 8 corde 6, case 3 corde 5.", xp: 40, exp: "Do se trouve en corde 6 case 8, corde 5 case 3, corde 4 case 10, corde 3 case 5, corde 2 case 1, corde 1 case 8." },
+      { id: "q-fret-neck-02", type: "fretboard", courseId: "neck", lessonId: "neck-c2-05", lvl: 1, q: "Trouve toutes les notes Sol (G) sur le manche", concept: { type: "find_note", root: "G" }, selectionRules: { mode: "all" }, display: { showNotes: false }, hint: "Sol est la corde 3 \xE0 vide.", xp: 40, exp: "Sol en : corde 6 case 3, corde 5 case 10, corde 4 case 5, corde 3 \xE0 vide, corde 2 case 3, corde 1 case 3." },
+      { id: "q-fret-neck-03", type: "fretboard", courseId: "neck", lessonId: "neck-c2-05", lvl: 1, q: "Trouve toutes les notes Mi (E) sur le manche", concept: { type: "find_note", root: "E" }, selectionRules: { mode: "all" }, display: { showNotes: false }, hint: "Mi est \xE0 vide sur les cordes 6 et 1.", xp: 40, exp: "Mi en : corde 6 \xE0 vide, corde 5 case 7, corde 4 case 2, corde 3 case 9, corde 2 case 5, corde 1 \xE0 vide." },
+      { id: "q-fret-neck-04", type: "fretboard", courseId: "neck", lessonId: "neck-c2-05", lvl: 1, q: "Trouve toutes les notes R\xE9 (D) sur le manche", concept: { type: "find_note", root: "D" }, selectionRules: { mode: "all" }, display: { showNotes: false }, hint: "R\xE9 est \xE0 vide sur la corde 4.", xp: 40, exp: "R\xE9 en : corde 6 case 10, corde 5 case 5, corde 4 \xE0 vide, corde 3 case 7, corde 2 case 3, corde 1 case 10." }
+    ];
+  }
+});
+
+// src/content/cours/neck/neck-c3-01.js
+var neck_c3_01_exports = {};
+__export(neck_c3_01_exports, {
+  default: () => neck_c3_01_default,
+  quiz: () => quiz29
+});
+var OCTAVE_C6_C4, TAB_OCTAVES, neck_c3_01_default, quiz29;
+var init_neck_c3_01 = __esm({
+  "src/content/cours/neck/neck-c3-01.js"() {
+    OCTAVE_C6_C4 = {
+      type: "fretboard",
+      caption: "Pattern octave c6\u2192c4 (+2 cases) \u2014 La, Do, Sol et leurs octaves",
+      data: {
+        frets: 8,
+        startFret: 2,
+        showStringNames: true,
+        showFretNumbers: true,
+        markerFrets: [3, 5, 7],
+        notes: [
+          { string: 6, fret: 3, label: "Sol", color: "amber", root: true },
+          { string: 4, fret: 5, label: "Sol", color: "amber", root: true },
+          { string: 6, fret: 5, label: "La", color: "green", root: true },
+          { string: 4, fret: 7, label: "La", color: "green", root: true },
+          { string: 6, fret: 8, label: "Do", color: "primary", root: true },
+          { string: 4, fret: 10, label: "Do", color: "primary", root: true }
+        ]
+      }
+    };
+    TAB_OCTAVES = {
+      type: "tab",
+      caption: "Corde 6, puis son octave sur la corde 4 : Sol, La, Do, Si, R\xE9",
+      text: "Tab \u2014 corde 6 case 3 puis corde 4 case 5 ; corde 6 case 5 puis corde 4 case 7 ; corde 6 case 8 puis corde 4 case 10 ; corde 6 case 7 puis corde 4 case 9 ; corde 6 case 10 puis corde 4 case 12.",
+      data: { lines: [
+        "e|----------------------------------|",
+        "B|----------------------------------|",
+        "G|----------------------------------|",
+        "D|----5-----7-----10-----9------12--|",
+        "A|----------------------------------|",
+        "E|-3-----5-----8------7-----10------|"
+      ] }
+    };
+    neck_c3_01_default = {
+      id: "neck-c3-01",
+      level: 5,
+      title: "Pattern octave 1 : corde 6 \u2192 corde 4",
+      duration: 7,
+      gropiTip: "Pour des octaves doubl\xE9es propres : index sur la corde 6, annulaire sur la corde 4, et laisse l'index effleurer la corde 5 pour l'\xE9touffer. Tu peux alors gratter sans faire sonner celle du milieu.",
+      cartes: [
+        { type: "idee", titre: "Une note, deux places", texte: [
+          "Retrouver chaque note case par case, c'est long. Les formes d'octave te donnent la m\xEAme note ailleurs, instantan\xE9ment.",
+          "Premi\xE8re forme : de la corde 6 \xE0 la corde 4, deux cases plus haut. Mi \xE0 vide sur la corde 6 \u2192 Mi (corde 4 case 2). Sol (corde 6 case 3) \u2192 Sol (corde 4 case 5)."
+        ], bloc: OCTAVE_C6_C4 },
+        { type: "idee", titre: "Une forme qui voyage", texte: [
+          "Une corde saut\xE9e, deux cases plus loin : la forme dessine un \xAB L \xBB \xE0 l'envers.",
+          "Elle se d\xE9place telle quelle sur tout le manche. Tu la reconnais d'un coup d'\u0153il, quelle que soit la note."
+        ] },
+        { type: "question", quizId: "q-neck-32" },
+        { type: "idee", titre: "D\xE9duire la corde 4", texte: [
+          "Tu connais la corde 6 ? Alors tu connais la corde 4. Do est case 8 sur la corde 6, donc Do (corde 4 case 10).",
+          "Plus besoin d'apprendre la corde 4 \xE0 part : tu la d\xE9duis, deux cases plus loin."
+        ] },
+        { type: "question", quizId: "q-neck-33" },
+        { type: "idee", titre: "Les octaves doubl\xE9es", texte: [
+          "Joue les deux notes ensemble : la m\xE9lodie sonne plus large, plus pleine. C'est une technique courante en jazz et en funk, popularis\xE9e \xE0 la guitare par Wes Montgomery.",
+          "Un riff sur la corde 6 s'enrichit aussit\xF4t de son octave sur la corde 4."
+        ] },
+        { type: "question", quizId: "q-neck-34" },
+        {
+          type: "a-toi",
+          titre: "Cinq notes, dix positions",
+          consigne: "Joue chaque note sur la corde 6, puis son octave sur la corde 4 : Sol, La, Do, Si, R\xE9. Nomme-les \xE0 voix haute, au clic. Puis plaque chaque paire ensemble, la corde 5 \xE9touff\xE9e.",
+          bloc: TAB_OCTAVES,
+          bpm: 60,
+          minuteur: 120
+        },
+        { type: "recap", points: [
+          "Octave corde 6 \u2192 corde 4 : une corde saut\xE9e, deux cases plus haut.",
+          "La forme se d\xE9place telle quelle : la corde 6 te donne la corde 4.",
+          "Jou\xE9es ensemble, les deux notes font des octaves doubl\xE9es."
+        ] }
+      ],
+      quiz: ["q-neck-32", "q-neck-33", "q-neck-34"]
+    };
+    quiz29 = [
+      { id: "q-neck-32", courseId: "neck", lessonId: "neck-c3-01", lvl: 1, q: "Tu cherches La sur la corde 4. Il est case 5 sur la corde 6 : o\xF9 le trouves-tu ?", o: ["Case 5", "Case 9", "Case 7", "Case 3"], a: 2, exp: "Pattern c6 \u2192 c4 : deux cases plus loin. La, corde 6 case 5 \u2192 corde 4 case 7.", xp: 30 },
+      { id: "q-neck-33", courseId: "neck", lessonId: "neck-c3-01", lvl: 1, q: "Quelle forme dessine le pattern d'octave c6 \u2192 c4 sur le manche ?", o: ["Une ligne droite verticale", "Un carr\xE9 de quatre cases", "Une diagonale de trois cordes", "Un \xAB L \xBB \xE0 l'envers"], a: 3, exp: "Une corde saut\xE9e, deux cases plus loin : une forme en \xAB L \xBB \xE0 l'envers, qui se d\xE9place telle quelle sur tout le manche.", xp: 30 },
+      { id: "q-neck-34", courseId: "neck", lessonId: "neck-c3-01", lvl: 2, q: "\xC0 quoi ce pattern sert-il souvent en jeu ?", o: ["Jouer une m\xE9lodie en octaves doubl\xE9es", "Accorder la corde 4 \xE0 l'oreille", "Trouver rapidement les accords barr\xE9s en La", "\xC9viter les notes \xE0 vide dans un riff"], a: 0, exp: "Deux notes \xE0 une octave d'\xE9cart, jou\xE9es ensemble : la technique des octaves, popularis\xE9e \xE0 la guitare par Wes Montgomery.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/neck/neck-c3-02.js
+var neck_c3_02_exports = {};
+__export(neck_c3_02_exports, {
+  default: () => neck_c3_02_default,
+  quiz: () => quiz30
+});
+var OCTAVE_C5_C3, TAB_OCTAVES2, neck_c3_02_default, quiz30;
+var init_neck_c3_02 = __esm({
+  "src/content/cours/neck/neck-c3-02.js"() {
+    OCTAVE_C5_C3 = {
+      type: "fretboard",
+      caption: "Pattern octave c5\u2192c3 (+2 cases) \u2014 m\xEAme logique que c6\u2192c4",
+      data: {
+        frets: 8,
+        startFret: 2,
+        showStringNames: true,
+        showFretNumbers: true,
+        markerFrets: [3, 5, 7],
+        notes: [
+          { string: 5, fret: 3, label: "Do", color: "primary", root: true },
+          { string: 3, fret: 5, label: "Do", color: "primary", root: true },
+          { string: 5, fret: 5, label: "R\xE9", color: "amber", root: true },
+          { string: 3, fret: 7, label: "R\xE9", color: "amber", root: true },
+          { string: 5, fret: 7, label: "Mi", color: "green", root: true },
+          { string: 3, fret: 9, label: "Mi", color: "green", root: true }
+        ]
+      }
+    };
+    TAB_OCTAVES2 = {
+      type: "tab",
+      caption: "Corde 5, puis son octave sur la corde 3 : Do, R\xE9, Mi",
+      text: "Tab \u2014 corde 5 case 3 puis corde 3 case 5 ; corde 5 case 5 puis corde 3 case 7 ; corde 5 case 7 puis corde 3 case 9.",
+      data: { lines: [
+        "e|-------------------|",
+        "B|-------------------|",
+        "G|----5-----7-----9--|",
+        "D|-------------------|",
+        "A|-3-----5-----7-----|",
+        "E|-------------------|"
+      ] }
+    };
+    neck_c3_02_default = {
+      id: "neck-c3-02",
+      level: 5,
+      title: "Pattern octave 2 : corde 5 \u2192 corde 3",
+      duration: 6,
+      gropiTip: "Tu utilises d\xE9j\xE0 ce pattern sans le savoir : dans La mineur (x02210), la corde 5 \xE0 vide et la corde 3 case 2 sont deux La \xE0 une octave d'\xE9cart.",
+      cartes: [
+        { type: "idee", titre: "M\xEAme forme, une corde plus haut", texte: [
+          "Deuxi\xE8me forme d'octave : de la corde 5 \xE0 la corde 3, deux cases plus haut. Le m\xEAme \xAB L \xBB \xE0 l'envers que la forme corde 6 \u2192 corde 4.",
+          "La, corde 5 \xE0 vide \u2192 La (corde 3 case 2). Si (corde 5 case 2) \u2192 Si (corde 3 case 4)."
+        ], bloc: OCTAVE_C5_C3 },
+        { type: "question", quizId: "q-neck-27" },
+        { type: "idee", titre: "Pourquoi deux cases", texte: [
+          "De la corde 5 \xE0 la corde 3, il y a deux quartes : 5 + 5 = 10 demi-tons. L'octave en compte 12 : il manque 2 demi-tons, donc 2 cases.",
+          "M\xEAme calcul entre les cordes 6 et 4 : voil\xE0 pourquoi les deux formes sont identiques."
+        ] },
+        { type: "question", quizId: "q-neck-28" },
+        { type: "idee", titre: "Lire la forme \xE0 l'envers", texte: [
+          "De la corde 3 vers la corde 5, tu descends d'une octave en reculant de deux cases. Mi (corde 3 case 9) \u2192 Mi (corde 5 case 7).",
+          "Une note entendue dans le m\xE9dium se retrouve ainsi dans le grave."
+        ] },
+        { type: "idee", titre: "Quatre cordes reli\xE9es", texte: [
+          "Avec les deux formes, une note grave sur la corde 6 ou 5 trouve son octave deux cordes plus loin, deux cases plus haut.",
+          "On peut m\xEAme continuer : Sol (corde 4 case 5) \u2192 Sol (corde 2 case 8). Trois cases cette fois, on verra pourquoi dans la le\xE7on suivante."
+        ] },
+        { type: "question", quizId: "q-neck-05" },
+        {
+          type: "a-toi",
+          titre: "Quatre places pour une note",
+          consigne: "Joue Do, R\xE9 puis Mi sur la corde 5, chacun suivi de son octave sur la corde 3, comme la tab. Puis cherche les m\xEAmes notes sur la corde 6 avec leur octave sur la corde 4. Nomme chaque note, au clic.",
+          bloc: TAB_OCTAVES2,
+          bpm: 60,
+          minuteur: 120
+        },
+        { type: "recap", points: [
+          "Octave corde 5 \u2192 corde 3 : une corde saut\xE9e, deux cases plus haut.",
+          "Deux quartes font 10 demi-tons : il manque 2 cases pour l'octave.",
+          "\xC0 l'envers, de la corde 3 vers la corde 5 : on recule de deux cases."
+        ] }
+      ],
+      quiz: ["q-neck-05", "q-neck-27", "q-neck-28"]
+    };
+    quiz30 = [
+      { id: "q-neck-05", courseId: "neck", lessonId: "neck-c3-02", lvl: 2, q: "Tu joues Mi sur la corde 3, case 9. O\xF9 trouves-tu le Mi une octave plus bas, sur la corde 5 ?", o: ["Case 7", "Case 9", "Case 11", "Case 5"], a: 0, exp: "Le motif corde 5 \u2192 corde 3 (+2 cases) se lit aussi \xE0 l'envers : de la corde 3 vers la corde 5, on recule de 2 cases. Mi (corde 3 case 9) \u2192 Mi (corde 5 case 7).", xp: 40 },
+      { id: "q-neck-27", courseId: "neck", lessonId: "neck-c3-02", lvl: 1, q: "Tu joues Do sur la corde 5, case 3. O\xF9 est son octave la plus proche, sur la corde 3 ?", o: ["Case 5", "Case 3", "Case 1", "Case 7"], a: 0, exp: "Pattern c5 \u2192 c3 : deux cases plus haut. Do case 3 corde 5 \u2192 Do case 5 corde 3.", xp: 30 },
+      { id: "q-neck-28", courseId: "neck", lessonId: "neck-c3-02", lvl: 2, q: "Pourquoi faut-il +2 cases pour trouver l'octave de la corde 5 sur la corde 3 ?", o: ["Les cordes sont \xE9cart\xE9es de 12 demi-tons", "L'\xE9cart entre c5 et c3 vaut 10 demi-tons", "La corde 3 est accord\xE9e plus bas", "C'est une simple convention d'\xE9criture"], a: 1, exp: "Deux quartes cons\xE9cutives = 10 demi-tons. L'octave en faisant 12, il manque 2 demi-tons, donc 2 cases.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/neck/neck-c3-03.js
+var neck_c3_03_exports = {};
+__export(neck_c3_03_exports, {
+  default: () => neck_c3_03_default,
+  quiz: () => quiz31
+});
+var QUATRE_FORMES, TAB_LA, neck_c3_03_default, quiz31;
+var init_neck_c3_03 = __esm({
+  "src/content/cours/neck/neck-c3-03.js"() {
+    QUATRE_FORMES = {
+      type: "fretboard",
+      caption: "4 patterns d'octaves \u2014 +2 cases (grave) vs +3 cases (aigu, cassure c3\u2192c2)",
+      data: {
+        frets: 8,
+        startFret: 4,
+        showStringNames: true,
+        showFretNumbers: true,
+        markerFrets: [5, 7, 9],
+        notes: [
+          { string: 6, fret: 5, label: "La", color: "amber", root: true },
+          { string: 4, fret: 7, label: "La", color: "amber", root: true },
+          { string: 5, fret: 5, label: "R\xE9", color: "green", root: true },
+          { string: 3, fret: 7, label: "R\xE9", color: "green", root: true },
+          { string: 4, fret: 7, label: "La", color: "coral", root: false },
+          { string: 2, fret: 10, label: "La", color: "coral", root: false },
+          { string: 3, fret: 7, label: "R\xE9", color: "primary", root: false },
+          { string: 1, fret: 10, label: "R\xE9", color: "primary", root: false }
+        ]
+      }
+    };
+    TAB_LA = {
+      type: "tab",
+      caption: "Six La par sauts d'octave : 6 \u2192 4 \u2192 2, puis 5 \u2192 3 \u2192 1",
+      text: "Tab \u2014 corde 6 case 5, corde 4 case 7, corde 2 case 10 ; puis corde 5 \xE0 vide, corde 3 case 2, corde 1 case 5. Six La.",
+      data: { lines: [
+        "e|-----------------5--|",
+        "B|-------10-----------|",
+        "G|--------------2-----|",
+        "D|----7---------------|",
+        "A|-----------0--------|",
+        "E|-5------------------|"
+      ] }
+    };
+    neck_c3_03_default = {
+      id: "neck-c3-03",
+      level: 5,
+      title: "Patterns octaves 3 et 4 : l'asym\xE9trie corde 2-3",
+      duration: 7,
+      gropiTip: "Le pattern 3 se cache dans R\xE9 ouvert (xx0232) : corde 4 \xE0 vide = R\xE9, corde 2 case 3 = R\xE9, une octave pile \xE0 +3 cases. Et dans Sol (320003), corde 3 \xE0 vide et corde 1 case 3 font le pattern 4.",
+      cartes: [
+        { type: "idee", titre: "Dans l'aigu, trois cases", texte: [
+          "Les deux derni\xE8res formes d'octave partent des cordes 4 et 3. Elles traversent la cassure entre les cordes 3 et 2 : il faut trois cases au lieu de deux.",
+          "Forme 3 : corde 4 \u2192 corde 2, +3 cases. Mi (corde 4 case 2) \u2192 Mi (corde 2 case 5). Sol (corde 4 case 5) \u2192 Sol (corde 2 case 8)."
+        ] },
+        { type: "idee", titre: "D'o\xF9 vient la case en plus", texte: [
+          "Corde 4 \u2192 corde 3 : une quarte, 5 demi-tons. Corde 3 \u2192 corde 2 : seulement 4, une tierce majeure. Total : 9.",
+          "Pour l'octave, il en faut 12 : il manque 3 demi-tons, donc 3 cases."
+        ] },
+        { type: "question", quizId: "q-neck-36" },
+        { type: "idee", titre: "Forme 4 : corde 3 \u2192 corde 1", texte: [
+          "M\xEAme cassure, m\xEAme r\xE8gle : +3 cases.",
+          "Sol \xE0 vide \u2192 Sol (corde 1 case 3). Do (corde 3 case 5) \u2192 Do (corde 1 case 8)."
+        ] },
+        { type: "idee", titre: "Les quatre formes", texte: [
+          "+2 dans le grave : corde 6 \u2192 4, corde 5 \u2192 3.",
+          "+3 dans l'aigu : corde 4 \u2192 2, corde 3 \u2192 1, parce que l'octave passe par-dessus la cassure Sol-Si."
+        ], bloc: QUATRE_FORMES },
+        { type: "question", quizId: "q-neck-37" },
+        { type: "idee", titre: "Une note, trois octaves", texte: [
+          "Encha\xEEne les formes : Do (corde 5 case 3), puis Do (corde 3 case 5), puis Do (corde 1 case 8). Trois Do, chacun une octave au-dessus du pr\xE9c\xE9dent.",
+          "Avec la corde 6 et ces quatre formes, tu retrouves une note dans toutes les zones du manche."
+        ] },
+        {
+          type: "a-toi",
+          titre: "La chasse aux La",
+          consigne: "Pars de La (corde 6 case 5) et saute d'octave en octave : corde 4, puis corde 2. Recommence depuis la corde 5 \xE0 vide : corde 3, puis corde 1. Nomme chaque La \xE0 voix haute, au clic. Puis refais-le avec Do.",
+          bloc: TAB_LA,
+          bpm: 60,
+          minuteur: 120
+        },
+        { type: "question", quizId: "q-neck-35" },
+        { type: "recap", points: [
+          "+2 cases dans le grave : corde 6 \u2192 4, corde 5 \u2192 3.",
+          "+3 cases dans l'aigu : corde 4 \u2192 2, corde 3 \u2192 1.",
+          "La cassure Sol-Si (4 demi-tons au lieu de 5) explique la case en plus."
+        ] }
+      ],
+      quiz: ["q-neck-35", "q-neck-36", "q-neck-37", "q-neck-06", "q-neck-09"]
+    };
+    quiz31 = [
+      { id: "q-neck-35", courseId: "neck", lessonId: "neck-c3-03", lvl: 1, q: "R\xE9, corde 4 \xE0 vide. O\xF9 est son octave sur la corde 2 ?", o: ["Case 2", "Case 3", "Case 4", "Case 5"], a: 1, exp: "Pattern c4 \u2192 c2 : +3 cases (et non +2). Corde 2 case 3 = R\xE9.", xp: 30 },
+      { id: "q-neck-36", courseId: "neck", lessonId: "neck-c3-03", lvl: 2, q: "Pourquoi faut-il +3 cases, et non +2, de la corde 4 \xE0 la corde 2 ?", o: ["La corde 2 est plus fine que la 4", "Les cordes aigu\xEBs sont plus tendues", "L'\xE9cart c3-c2 n'est que d'une tierce", "Par convention d'\xE9criture des tablatures"], a: 2, exp: "Entre c3 et c2, l'accordage fait une tierce (4 demi-tons) au lieu d'une quarte (5) : il manque une case, qu'on compense en allant +3.", xp: 40 },
+      { id: "q-neck-37", courseId: "neck", lessonId: "neck-c3-03", lvl: 1, q: "Lequel de ces sauts d'octave demande +2 cases ?", o: ["Corde 4 \u2192 corde 2", "Corde 3 \u2192 corde 1", "Aucun, c'est toujours +3", "Corde 5 \u2192 corde 3"], a: 3, exp: "+2 dans le grave (c6 \u2192 c4, c5 \u2192 c3), +3 dans l'aigu (c4 \u2192 c2, c3 \u2192 c1), \xE0 cause de la cassure entre c3 et c2.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/scales/scales-c1-01.js
+var scales_c1_01_exports = {};
+__export(scales_c1_01_exports, {
+  default: () => scales_c1_01_default,
+  quiz: () => quiz32
+});
+var scales_c1_01_default, quiz32;
+var init_scales_c1_01 = __esm({
+  "src/content/cours/scales/scales-c1-01.js"() {
+    scales_c1_01_default = {
+      id: "scales-c1-01",
+      level: 1,
+      title: "L'alphabet musical : les 7 notes naturelles",
+      duration: 6,
+      gropiTip: "Sur la corde 5, joue La \xE0 vide puis les cases 2, 3, 5, 7, 8 et 10 : Si, Do, R\xE9, Mi, Fa, Sol. Nomme chaque note \xE0 voix haute, et la case 12 te ram\xE8ne sur La.",
+      cartes: [
+        { type: "idee", titre: "Sept notes, c'est tout", texte: [
+          "La musique occidentale repose sur 7 notes naturelles : Do, R\xE9, Mi, Fa, Sol, La, Si. Elles se r\xE9p\xE8tent ensuite sur tout le manche."
+        ] },
+        { type: "question", quizId: "q-base-03" },
+        { type: "idee", titre: "Deux noms pour chaque note", texte: [
+          "En notation anglaise : C, D, E, F, G, A, B. Do = C, R\xE9 = D, Mi = E, Fa = F, Sol = G, La = A, Si = B.",
+          "L'alphabet anglais d\xE9marre sur La (A). Tu le pratiques d\xE9j\xE0 : Em, Am, C, G et D, ce sont Mi mineur, La mineur, Do, Sol et R\xE9."
+        ] },
+        { type: "question", quizId: "q-scales-49" },
+        { type: "idee", titre: "La suite boucle", texte: [
+          "Une fois les sept notes jou\xE9es, l'alphabet repart du d\xE9but, une octave plus haut. Il boucle sans fin.",
+          "Sur la corde 5, \xE0 partir de La \xE0 vide, les notes naturelles se suivent jusqu'\xE0 la case 12, qui redonne La une octave plus haut."
+        ], bloc: { type: "note_grid", caption: "Corde 5 (La) : les notes naturelles \xE0 la suite, et la case 12 ram\xE8ne La une octave plus haut", data: { string: 5, stringName: "La", maxFret: 12, highlights: [{ fret: 0, label: "La", color: "amber" }, { fret: 2, label: "Si", color: "neutral" }, { fret: 3, label: "Do", color: "primary" }, { fret: 5, label: "R\xE9", color: "neutral" }, { fret: 7, label: "Mi", color: "neutral" }, { fret: 8, label: "Fa", color: "neutral" }, { fret: 10, label: "Sol", color: "neutral" }, { fret: 12, label: "La", color: "amber" }] } } },
+        { type: "question", quizId: "q-base-04" },
+        { type: "a-toi", titre: "Do-R\xE9-Mi en position ouverte", consigne: "\xC9coute, puis joue la gamme au clic, une note par temps, en disant son nom \xE0 voix haute. Monte jusqu'au Do aigu, redescends. Les deux Do et le Mi, ce sont trois doigts de ton accord de Do.", bloc: { type: "fretboard", caption: "Do-R\xE9-Mi-Fa-Sol-La-Si-Do en position ouverte : les 7 notes naturelles, puis Do \xE0 l'octave", data: { frets: 4, startFret: 0, showStringNames: true, showFretNumbers: true, markerFrets: [3], notes: [{ string: 5, fret: 3, label: "Do", color: "amber", root: true }, { string: 4, fret: 0, label: "R\xE9", color: "primary" }, { string: 4, fret: 2, label: "Mi", color: "primary" }, { string: 4, fret: 3, label: "Fa", color: "primary" }, { string: 3, fret: 0, label: "Sol", color: "primary" }, { string: 3, fret: 2, label: "La", color: "primary" }, { string: 2, fret: 0, label: "Si", color: "primary" }, { string: 2, fret: 1, label: "Do", color: "amber", root: true }] } }, bpm: 60 },
+        { type: "recap", points: [
+          "7 notes naturelles : Do, R\xE9, Mi, Fa, Sol, La, Si.",
+          "En anglais : C, D, E, F, G, A, B \u2014 les noms de tes accords.",
+          "Apr\xE8s Si revient Do : la suite boucle \xE0 l'octave."
+        ] }
+      ],
+      quiz: ["q-base-03", "q-base-04", "q-scales-49"]
+    };
+    quiz32 = [
+      { id: "q-base-03", courseId: "scales", lessonId: "scales-c1-01", lvl: 1, q: "Combien de notes naturelles (sans di\xE8se ni b\xE9mol) la musique occidentale utilise-t-elle ?", o: ["5", "8", "7", "12"], a: 2, exp: "Do, R\xE9, Mi, Fa, Sol, La, Si : 7 notes naturelles, qui se r\xE9p\xE8tent ensuite \xE0 l'octave.", xp: 25 },
+      { id: "q-base-04", courseId: "scales", lessonId: "scales-c1-01", lvl: 1, q: "Quelle note vient juste apr\xE8s Si quand on monte la gamme naturelle ?", o: ["R\xE9", "La", "Mi", "Do"], a: 3, exp: "Apr\xE8s Si, la suite recommence sur Do. L'alphabet musical boucle en permanence : Do R\xE9 Mi Fa Sol La Si Do\u2026", xp: 25 },
+      { id: "q-scales-49", courseId: "scales", lessonId: "scales-c1-01", lvl: 1, q: "En notation anglaise, quelle lettre d\xE9signe Sol ?", o: ["G", "A", "F", "D"], a: 0, exp: "Do = C, R\xE9 = D, Mi = E, Fa = F, Sol = G, La = A, Si = B. L'alphabet anglais commence sur La (A), d'o\xF9 ce d\xE9calage.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/scales/scales-c1-02.js
+var scales_c1_02_exports = {};
+__export(scales_c1_02_exports, {
+  default: () => scales_c1_02_default,
+  quiz: () => quiz33
+});
+var CHROMA, scales_c1_02_default, quiz33;
+var init_scales_c1_02 = __esm({
+  "src/content/cours/scales/scales-c1-02.js"() {
+    CHROMA = {
+      type: "note_grid",
+      caption: "Gamme chromatique sur corde 5 \u2014 12 sons, case par case",
+      data: {
+        string: 5,
+        stringName: "La",
+        maxFret: 12,
+        highlights: [
+          { fret: 0, label: "La", color: "amber" },
+          { fret: 1, label: "La#", color: "neutral" },
+          { fret: 2, label: "Si", color: "green" },
+          { fret: 3, label: "Do", color: "primary" },
+          { fret: 4, label: "Do#", color: "neutral" },
+          { fret: 5, label: "R\xE9", color: "amber" },
+          { fret: 6, label: "R\xE9#", color: "neutral" },
+          { fret: 7, label: "Mi", color: "green" },
+          { fret: 8, label: "Fa", color: "green" },
+          { fret: 9, label: "Fa#", color: "neutral" },
+          { fret: 10, label: "Sol", color: "green" },
+          { fret: 11, label: "Sol#", color: "neutral" },
+          { fret: 12, label: "La", color: "amber" }
+        ]
+      }
+    };
+    scales_c1_02_default = {
+      id: "scales-c1-02",
+      level: 2,
+      title: "Les alt\xE9rations : di\xE8ses et b\xE9mols",
+      duration: 7,
+      gropiTip: "Remonte la corde 6 case par case en nommant les notes avec des di\xE8ses, puis redescends en les nommant avec des b\xE9mols (Mi\u266D, R\xE9\u266D, Si\u266D...). M\xEAme case, autre nom.",
+      cartes: [
+        { type: "idee", titre: "Des notes entre les notes", texte: [
+          "Entre certaines notes naturelles se glissent des notes interm\xE9diaires, les alt\xE9rations : ce sont les cases que tu sautes en jouant Do, R\xE9, Mi sur une corde."
+        ] },
+        { type: "idee", titre: "Le di\xE8se (#) : une case vers l'aigu", texte: [
+          "Un di\xE8se monte la note d'un demi-ton. Fa (corde 6, case 1) devient Fa# (corde 6, case 2).",
+          "Tu en joues d\xE9j\xE0 un : dans ton accord de R\xE9, le majeur pose Fa# (corde 1, case 2)."
+        ] },
+        { type: "question", quizId: "q-base-10" },
+        { type: "idee", titre: "Le b\xE9mol (\u266D) : une case vers le grave", texte: [
+          "Un b\xE9mol baisse la note d'un demi-ton. Mi (corde 4, case 2) devient Mi\u266D en case 1.",
+          "Une m\xEAme case peut porter deux noms : La# et Si\u266D sonnent pareil. Di\xE8se en montant, b\xE9mol en descendant, le plus souvent."
+        ] },
+        { type: "question", quizId: "q-scales-50" },
+        { type: "idee", titre: "Mi-Fa et Si-Do : rien entre les deux", texte: [
+          "Entre Mi et Fa, et entre Si et Do, il n'y a pas de note interm\xE9diaire : elles sont d\xE9j\xE0 \xE0 une case l'une de l'autre.",
+          "Mi# sonnerait comme Fa, Fa\u266D comme Mi : des noms qui existent sur le papier, tu verras pourquoi plus tard."
+        ] },
+        { type: "idee", titre: "12 sons : la gamme chromatique", texte: [
+          "7 notes naturelles + 5 alt\xE9rations = 12 sons, puis l'octave. Monter case par case sur une corde, c'est jouer cette gamme chromatique."
+        ], bloc: CHROMA },
+        { type: "question", quizId: "q-base-09" },
+        { type: "a-toi", titre: "La chromatique sur la corde 5", consigne: "De La \xE0 vide jusqu'\xE0 la case 12, une case par clic, en nommant chaque note avec des di\xE8ses. Redescends avec des b\xE9mols : La\u266D, Sol\u266D\u2026 Rep\xE8re Si-Do et Mi-Fa, coll\xE9s.", bloc: CHROMA, bpm: 60 },
+        { type: "recap", points: [
+          "Di\xE8se (#) = un demi-ton plus haut, une case vers l'aigu.",
+          "B\xE9mol (\u266D) = un demi-ton plus bas, une case vers le grave.",
+          "Pas d'alt\xE9ration entre Mi-Fa ni entre Si-Do : 12 sons en tout."
+        ] }
+      ],
+      quiz: ["q-base-09", "q-base-10", "q-scales-50"]
+    };
+    quiz33 = [
+      { id: "q-base-09", courseId: "scales", lessonId: "scales-c1-02", lvl: 1, q: "Combien de sons diff\xE9rents existe-t-il avant que la boucle recommence \xE0 l'octave ?", o: ["12", "7", "5", "24"], a: 0, exp: "7 notes naturelles plus 5 alt\xE9rations donnent 12 sons \u2014 exactement les 12 cases d'une corde avant l'octave.", xp: 30 },
+      { id: "q-base-10", courseId: "scales", lessonId: "scales-c1-02", lvl: 1, q: "Un di\xE8se (#) plac\xE9 devant une note signifie\u2026", o: ["Un demi-ton plus bas", "Un demi-ton plus haut", "Un ton plus haut", "Une octave plus haut"], a: 1, exp: "Le di\xE8se monte la note d'un demi-ton, le b\xE9mol la descend d'un demi-ton. Sur la guitare : une case dans un sens ou dans l'autre.", xp: 30 },
+      { id: "q-scales-50", courseId: "scales", lessonId: "scales-c1-02", lvl: 1, q: "Si est \xE0 la case 7 de la corde 6. O\xF9 joues-tu Si\u266D sur cette corde ?", o: ["Case 6", "Case 8", "Case 5", "Case 9"], a: 0, exp: "Le b\xE9mol abaisse la note d'un demi-ton, soit une case vers le grave : Si\u266D est \xE0 la case 6. Case 8, ce serait Do.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/scales/scales-c1-03.js
+var scales_c1_03_exports = {};
+__export(scales_c1_03_exports, {
+  default: () => scales_c1_03_default,
+  quiz: () => quiz34
+});
+var scales_c1_03_default, quiz34;
+var init_scales_c1_03 = __esm({
+  "src/content/cours/scales/scales-c1-03.js"() {
+    scales_c1_03_default = {
+      id: "scales-c1-03",
+      level: 2,
+      title: "Tons et demi-tons : la mesure des distances",
+      duration: 7,
+      gropiTip: "V\xE9rifie les demi-tons naturels sur la corde 2 : Si \xE0 vide, Do case 1, puis Mi case 5, Fa case 6. Une seule case d'\xE9cart \xE0 chaque fois, alors que Do\u2192R\xE9 en demande deux.",
+      cartes: [
+        { type: "idee", titre: "Le demi-ton : une case", texte: [
+          "Pour comprendre une gamme, il faut mesurer les distances entre les notes. Deux unit\xE9s suffisent.",
+          "Le demi-ton, la plus petite : une case d'\xE9cart sur la m\xEAme corde. Do \u2192 Do#, Mi \u2192 Fa, Si \u2192 Do."
+        ] },
+        { type: "idee", titre: "Le ton : deux cases", texte: [
+          "Un ton = deux demi-tons = deux cases. Do \u2192 R\xE9 (en passant par Do#), Fa \u2192 Sol, Sol \u2192 La.",
+          "Sur la corde 4 : R\xE9 \xE0 vide, puis Mi en case 2, l\xE0 o\xF9 ton majeur se pose dans l'accord de Do. Un ton, deux cases."
+        ] },
+        { type: "question", quizId: "q-base-11" },
+        { type: "idee", titre: "Les demi-tons naturels", texte: [
+          "Entre deux notes naturelles voisines, l'\xE9cart est d'un ton\u2026 sauf entre Mi et Fa, et entre Si et Do : un demi-ton seulement.",
+          "Retiens-le : \xAB Mi-Fa, Si-Do, ce sont eux qui se collent \xBB."
+        ], bloc: {
+          type: "note_grid",
+          caption: "Demi-tons naturels \u2014 Mi\u2192Fa (cases 0-1) et Si\u2192Do (cases 7-8) coll\xE9s sur corde 6",
+          data: {
+            string: 6,
+            stringName: "Mi grave",
+            maxFret: 12,
+            highlights: [
+              { fret: 0, label: "Mi", color: "amber" },
+              { fret: 1, label: "Fa", color: "coral" },
+              { fret: 3, label: "Sol", color: "neutral" },
+              { fret: 5, label: "La", color: "neutral" },
+              { fret: 7, label: "Si", color: "amber" },
+              { fret: 8, label: "Do", color: "coral" },
+              { fret: 10, label: "R\xE9", color: "neutral" },
+              { fret: 12, label: "Mi", color: "amber" }
+            ]
+          }
+        } },
+        { type: "question", quizId: "q-base-12-app" },
+        { type: "idee", titre: "Le dessin des \xE9carts fait la gamme", texte: [
+          "De Do \xE0 Do, les \xE9carts sont : ton, ton, demi-ton, ton, ton, ton, demi-ton. Ce dessin, c'est la gamme majeure.",
+          "Change le dessin et tu changes de gamme : mineure, modes\u2026 Toute la th\xE9orie repose sur ces suites d'\xE9carts."
+        ] },
+        { type: "a-toi", titre: "Do majeur sur une seule corde", consigne: "Sur la corde 2, de Do (case 1) \xE0 Do (case 13), une note par clic. Dis l'\xE9cart \xE0 voix haute : \xAB ton, ton, demi \xBB, puis \xAB ton, ton, ton, demi \xBB. Les deux demi-tons tombent sur Mi-Fa et Si-Do.", bloc: {
+          type: "tab",
+          caption: "La gamme de Do majeur sur la corde 2 : Do R\xE9 Mi Fa Sol La Si Do",
+          text: "Tab \u2014 corde 2 : cases 1, 3, 5, 6, 8, 10, 12, 13.",
+          data: { lines: [
+            "e|----------------------------|",
+            "B|-1--3--5--6--8--10--12--13--|",
+            "G|----------------------------|",
+            "D|----------------------------|",
+            "A|----------------------------|",
+            "E|----------------------------|"
+          ] }
+        }, bpm: 60 },
+        { type: "question", quizId: "q-scales-51" },
+        { type: "recap", points: [
+          "Demi-ton = 1 case, ton = 2 cases.",
+          "Les deux demi-tons naturels : Mi-Fa et Si-Do.",
+          "Gamme majeure : ton, ton, demi-ton, ton, ton, ton, demi-ton."
+        ] }
+      ],
+      quiz: ["q-base-11", "q-base-12", "q-scales-51", "q-base-12-app"]
+    };
+    quiz34 = [
+      { id: "q-base-11", courseId: "scales", lessonId: "scales-c1-03", lvl: 1, q: "Un ton entier repr\xE9sente combien de demi-tons ?", o: ["1", "3", "2", "4"], a: 2, exp: "Un ton = 2 demi-tons = 2 cases sur la guitare. Le demi-ton reste la plus petite unit\xE9 du syst\xE8me occidental.", xp: 30 },
+      { id: "q-base-12", courseId: "scales", lessonId: "scales-c1-03", lvl: 1, q: "Entre lesquelles de ces paires de notes naturelles n'y a-t-il qu'un demi-ton ?", o: ["Do et R\xE9", "Sol et La", "La et Si", "Mi et Fa"], a: 3, exp: "Mi-Fa et Si-Do sont les deux seules paires naturelles s\xE9par\xE9es d'un simple demi-ton. Toutes les autres sont \xE0 un ton entier.", xp: 30 },
+      { id: "q-base-12-app", courseId: "scales", lessonId: "scales-c1-03", lvl: 1, q: "Sur une m\xEAme corde, combien de cases s\xE9parent Mi de Sol ?", o: ["3 cases", "4 cases", "2 cases", "5 cases"], a: 0, exp: "Mi-Fa n'est qu'un demi-ton (1 case), Fa-Sol un ton (2 cases) : 3 cases en tout. Sur la corde 6 : Mi \xE0 vide, Sol en case 3.", xp: 25 },
+      { id: "q-scales-51", courseId: "scales", lessonId: "scales-c1-03", lvl: 2, q: "De Mi \xE0 Sol en montant, quelle est la distance ?", o: ["Un ton et demi", "Deux tons", "Un ton", "Deux tons et demi"], a: 0, exp: "Mi \u2192 Fa = un demi-ton (demi-ton naturel), Fa \u2192 Sol = un ton. Total : un ton et demi, soit 3 demi-tons \u2014 3 cases sur une m\xEAme corde.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/scales/scales-c1-04.js
+var scales_c1_04_exports = {};
+__export(scales_c1_04_exports, {
+  default: () => scales_c1_04_default,
+  quiz: () => quiz35
+});
+var EN_DIESES, EN_BEMOLS, scales_c1_04_default, quiz35;
+var init_scales_c1_04 = __esm({
+  "src/content/cours/scales/scales-c1-04.js"() {
+    EN_DIESES = { type: "note_grid", caption: "Corde 5, de La \xE0 La : les 5 notes alt\xE9r\xE9es \xE9crites en di\xE8ses", data: { string: 5, stringName: "La", maxFret: 12, highlights: [{ fret: 0, label: "La", color: "neutral" }, { fret: 1, label: "La#", color: "coral" }, { fret: 2, label: "Si", color: "neutral" }, { fret: 3, label: "Do", color: "neutral" }, { fret: 4, label: "Do#", color: "coral" }, { fret: 5, label: "R\xE9", color: "neutral" }, { fret: 6, label: "R\xE9#", color: "coral" }, { fret: 7, label: "Mi", color: "neutral" }, { fret: 8, label: "Fa", color: "neutral" }, { fret: 9, label: "Fa#", color: "coral" }, { fret: 10, label: "Sol", color: "neutral" }, { fret: 11, label: "Sol#", color: "coral" }, { fret: 12, label: "La", color: "neutral" }] } };
+    EN_BEMOLS = { type: "note_grid", caption: "Les m\xEAmes cases \xE9crites en b\xE9mols : La# = Sib, Do# = R\xE9b, R\xE9# = Mib, Fa# = Solb, Sol# = Lab", data: { string: 5, stringName: "La", maxFret: 12, highlights: [{ fret: 0, label: "La", color: "neutral" }, { fret: 1, label: "Sib", color: "primary" }, { fret: 2, label: "Si", color: "neutral" }, { fret: 3, label: "Do", color: "neutral" }, { fret: 4, label: "R\xE9b", color: "primary" }, { fret: 5, label: "R\xE9", color: "neutral" }, { fret: 6, label: "Mib", color: "primary" }, { fret: 7, label: "Mi", color: "neutral" }, { fret: 8, label: "Fa", color: "neutral" }, { fret: 9, label: "Solb", color: "primary" }, { fret: 10, label: "Sol", color: "neutral" }, { fret: 11, label: "Lab", color: "primary" }, { fret: 12, label: "La", color: "neutral" }] } };
+    scales_c1_04_default = {
+      id: "scales-c1-04",
+      level: 3,
+      title: "Les enharmonies : pourquoi Do# = R\xE9b ?",
+      duration: 6,
+      gropiTip: "Rep\xE8re les 5 cases alt\xE9r\xE9es de la corde 6 (2, 4, 6, 9, 11) et donne \xE0 chacune ses deux noms : Fa#/Sol\u266D, Sol#/La\u266D, La#/Si\u266D, Do#/R\xE9\u266D, R\xE9#/Mi\u266D.",
+      cartes: [
+        { type: "idee", titre: "Deux noms, un seul son", texte: [
+          "La note entre Do et R\xE9 s'appelle Do# ou R\xE9\u266D : m\xEAme son, m\xEAme case.",
+          "Deux noms pour un son : on dit qu'ils sont enharmoniques."
+        ] },
+        { type: "idee", titre: "En montant : des di\xE8ses", texte: [
+          "Sur la corde 5, cinq cases sont alt\xE9r\xE9es. Vues depuis la note du dessous, elles prennent un di\xE8se : La#, Do#, R\xE9#, Fa#, Sol#."
+        ], bloc: EN_DIESES },
+        { type: "question", quizId: "q-base-18" },
+        { type: "idee", titre: "En descendant : des b\xE9mols", texte: [
+          "Vues depuis la note du dessus, les m\xEAmes cases prennent un b\xE9mol : Si\u266D, R\xE9\u266D, Mi\u266D, Sol\u266D, La\u266D."
+        ], bloc: EN_BEMOLS },
+        { type: "question", quizId: "q-scales-52" },
+        { type: "idee", titre: "Une lettre par note", texte: [
+          "Dans une gamme, chaque lettre sert une fois. Sol majeur : Sol, La, Si, Do, R\xE9, Mi, Fa#.",
+          "Avec Sol\u266D, il y aurait deux Sol et aucun Fa."
+        ] },
+        { type: "idee", titre: "Et les b\xE9mols ?", texte: [
+          "Mi\u266D majeur : Mi\u266D, Fa, Sol, La\u266D, Si\u266D, Do, R\xE9. La\u266D plut\xF4t que Sol#, car il faut un La.",
+          "Sur la guitare, m\xEAme case : la nuance compte pour lire, pas pour jouer."
+        ] },
+        { type: "question", quizId: "q-scales-53" },
+        {
+          type: "a-toi",
+          titre: "Deux noms par case",
+          consigne: "Joue la corde 5 de la case 0 \xE0 la case 12. Sur chaque case alt\xE9r\xE9e, dis ses deux noms : \xAB La di\xE8se, Si b\xE9mol \xBB. Puis redescends, b\xE9mol d'abord.",
+          bloc: EN_DIESES,
+          minuteur: 60
+        },
+        { type: "recap", points: [
+          "Enharmoniques : deux noms pour un m\xEAme son, une m\xEAme case.",
+          "Di\xE8se vu d'en dessous, b\xE9mol vu d'au-dessus : La# = Si\u266D.",
+          "Dans une gamme, une lettre par note : le contexte choisit le nom."
+        ] }
+      ],
+      quiz: ["q-base-18", "q-scales-52", "q-scales-53"]
+    };
+    quiz35 = [
+      { id: "q-base-18", courseId: "scales", lessonId: "scales-c1-04", lvl: 2, q: "Deux notes qui sonnent identiques mais portent deux noms diff\xE9rents sont dites\u2026", o: ["Dissonantes", "Enharmoniques", "Chromatiques", "Diatoniques"], a: 1, exp: "Do# et R\xE9b sont enharmoniques : m\xEAme case sur la guitare, m\xEAme son, deux \xE9critures selon le contexte tonal.", xp: 35 },
+      { id: "q-scales-52", courseId: "scales", lessonId: "scales-c1-04", lvl: 1, q: "Quel est l'autre nom de La# ?", o: ["Si\u266D", "La\u266D", "Si", "Do\u266D"], a: 0, exp: "La# est un demi-ton au-dessus de La, Si\u266D un demi-ton sous Si : c'est la m\xEAme case, deux noms enharmoniques du m\xEAme son.", xp: 30 },
+      { id: "q-scales-53", courseId: "scales", lessonId: "scales-c1-04", lvl: 2, q: "Dans Sol majeur, pourquoi \xE9crit-on Fa# plut\xF4t que Sol\u266D ?", o: ["Pour garder une note par lettre", "Parce que Sol\u266D sonne plus grave", "Parce que les b\xE9mols sont interdits", "Parce que Fa# se joue plus facilement"], a: 0, exp: "Une gamme utilise chaque lettre une fois : Sol La Si Do R\xE9 Mi Fa#. \xC9crire Sol\u266D donnerait deux \xAB Sol \xBB et aucun \xAB Fa \xBB. Fa# et Sol\u266D sonnent pareil : c'est une question d'orthographe.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/scales/scales-c1-05.js
+var scales_c1_05_exports = {};
+__export(scales_c1_05_exports, {
+  default: () => scales_c1_05_default,
+  quiz: () => quiz36
+});
+var scales_c1_05_default, quiz36;
+var init_scales_c1_05 = __esm({
+  "src/content/cours/scales/scales-c1-05.js"() {
+    scales_c1_05_default = {
+      id: "scales-c1-05",
+      level: 3,
+      title: "Les intervalles simples : seconde, tierce, quarte, quinte",
+      duration: 8,
+      gropiTip: "Erreur fr\xE9quente : oublier de compter la note de d\xE9part. Do\u2192Sol, c'est Do-R\xE9-Mi-Fa-Sol : 5 notes, donc une quinte, m\xEAme s'il n'y a que 4 pas entre elles.",
+      cartes: [
+        { type: "idee", titre: "Nommer une distance", texte: [
+          "Un intervalle, c'est la distance entre deux notes. Tu sais la mesurer en demi-tons ; elle porte aussi un nom : seconde, tierce, quarte, quinte\u2026",
+          "Toute la musique en parle ainsi, des accords aux solos."
+        ] },
+        { type: "idee", titre: "Compter les noms de notes", texte: [
+          "On compte les noms, bornes comprises. Do\u2192Mi : Do (1), R\xE9 (2), Mi (3), c'est une tierce.",
+          "Seconde : Do\u2192R\xE9. Tierce : Do\u2192Mi. Quarte : Do\u2192Fa. Quinte : Do\u2192Sol. Sixte : Do\u2192La."
+        ] },
+        { type: "question", quizId: "q-scales-22" },
+        { type: "idee", titre: "Majeure ou mineure ?", texte: [
+          "Un m\xEAme nom recouvre deux tailles. Tierce majeure : 4 demi-tons (Do\u2192Mi). Tierce mineure : 3 (Do\u2192Mi\u266D).",
+          "Ce seul demi-ton s\xE9pare un accord majeur d'un accord mineur. Quarte et quinte, elles, sont \xAB justes \xBB : 5 et 7 demi-tons."
+        ], bloc: {
+          type: "interval_chart",
+          caption: "Les intervalles \u2014 focus sur seconde, tierce, quarte, quinte",
+          data: { highlight: ["M2", "m3", "M3", "P4", "P5", "M6"] }
+        } },
+        { type: "question", quizId: "q-scales-23" },
+        { type: "idee", titre: "Sur une corde, des cases", texte: [
+          "Sur une seule corde, une case vaut un demi-ton. Tierce majeure : 4 cases. Quarte juste : 5. Quinte juste : 7. Octave : 12.",
+          "La th\xE9orie est litt\xE9ralement sous tes doigts."
+        ] },
+        { type: "question", quizId: "q-scales-24" },
+        {
+          type: "a-toi",
+          titre: "Tierce, quarte, quinte",
+          consigne: "Corde 5 : joue La \xE0 vide puis la case 4, une tierce majeure. Puis La et la case 5, une quarte. Puis La et la case 7, une quinte. Au clic, chante chaque intervalle juste apr\xE8s l'avoir jou\xE9.",
+          bloc: {
+            type: "tab",
+            caption: "Depuis La \xE0 vide : tierce majeure (Do#), quarte (R\xE9), quinte (Mi)",
+            text: "Tab \u2014 corde 5 : 0 puis 4 ; 0 puis 5 ; 0 puis 7.",
+            data: { lines: [
+              "e|----------------------|",
+              "B|----------------------|",
+              "G|----------------------|",
+              "D|----------------------|",
+              "A|-0--4----0--5----0--7-|",
+              "E|----------------------|"
+            ] }
+          },
+          bpm: 60
+        },
+        { type: "question", quizId: "q-scales-p34-01" },
+        { type: "recap", points: [
+          "On nomme un intervalle en comptant les notes, bornes comprises.",
+          "Tierce majeure 4 demi-tons, mineure 3 ; quarte juste 5, quinte juste 7.",
+          "Sur une corde, une case = un demi-ton : l'intervalle se lit en cases."
+        ] }
+      ],
+      quiz: ["q-scales-22", "q-scales-23", "q-scales-24", "q-scales-p34-01"]
+    };
+    quiz36 = [
+      { id: "q-scales-22", courseId: "scales", lessonId: "scales-c1-05", lvl: 2, q: "En montant de Sol \xE0 Do, quel intervalle obtiens-tu ?", o: ["Une tierce", "Une quinte", "Une quarte", "Une sixte"], a: 2, exp: "On compte les noms de notes, bornes comprises : Sol (1), La (2), Si (3), Do (4). Quatre notes, donc une quarte \u2014 ici une quarte juste, 5 demi-tons.", xp: 35 },
+      { id: "q-scales-23", courseId: "scales", lessonId: "scales-c1-05", lvl: 2, q: "Une tierce majeure correspond \xE0 combien de demi-tons ?", o: ["3", "5", "2", "4"], a: 3, exp: "Tierce majeure = 4 demi-tons (Do\u2192Mi). Tierce mineure = 3 demi-tons (Do\u2192Mib) \u2014 ce seul demi-ton distingue un accord majeur d'un accord mineur.", xp: 35 },
+      { id: "q-scales-24", courseId: "scales", lessonId: "scales-c1-05", lvl: 3, q: "Sur une seule corde de guitare, comment mesure-t-on visuellement un intervalle ?", o: ["Une case d'\xE9cart vaut un demi-ton", "Le nombre de cases divis\xE9 par 2", "Toujours 12 cases quel que soit l'intervalle", "\xC7a d\xE9pend de la corde utilis\xE9e"], a: 0, exp: "Sur une seule corde, l'intervalle en demi-tons correspond exactement au nombre de cases d'\xE9cart \u2014 tierce majeure = 4 cases, quinte = 7 cases.", xp: 45 },
+      { id: "q-scales-p34-01", courseId: "scales", lessonId: "scales-c1-05", lvl: 2, q: "En montant de R\xE9 \xE0 Si, quel intervalle obtiens-tu ?", o: ["Une sixte", "Une quinte", "Une septi\xE8me", "Une quarte"], a: 0, exp: "R\xE9 (1), Mi (2), Fa (3), Sol (4), La (5), Si (6) : six noms de notes, donc une sixte. Ici une sixte majeure, 9 demi-tons : 9 cases sur une m\xEAme corde.", xp: 35 }
+    ];
+  }
+});
+
+// src/content/cours/scales/scales-c1-06.js
+var scales_c1_06_exports = {};
+__export(scales_c1_06_exports, {
+  default: () => scales_c1_06_default,
+  quiz: () => quiz37
+});
+var scales_c1_06_default, quiz37;
+var init_scales_c1_06 = __esm({
+  "src/content/cours/scales/scales-c1-06.js"() {
+    scales_c1_06_default = {
+      id: "scales-c1-06",
+      level: 3,
+      title: "Les intervalles complets : sixtes, septi\xE8mes, octave",
+      duration: 7,
+      gropiTip: "Astuce de calcul : un intervalle et son renversement font toujours 12 demi-tons. Do\u2192La = sixte majeure (9), La\u2192Do = tierce mineure (3). Et le triton (6) se renverse en triton !",
+      cartes: [
+        { type: "idee", titre: "Sixtes : la couleur vocale", texte: [
+          "Sixte majeure : 9 demi-tons (Do\u2192La). Sixte mineure : 8 (Do\u2192La\u266D).",
+          "Chantantes, un peu romantiques : on les entend dans les ballades, le R&B, la bossa nova, et dans beaucoup de m\xE9lodies vocales."
+        ] },
+        { type: "idee", titre: "Septi\xE8mes : la tension", texte: [
+          "Septi\xE8me majeure : 11 demi-tons (Do\u2192Si), une couleur jazz, lumineuse.",
+          "Septi\xE8me mineure : 10 (Do\u2192Si\u266D), tendue, qui veut bouger. C'est elle qui colore les accords \xAB 7 \xBB comme G7 ou A7, au c\u0153ur du blues et du jazz."
+        ] },
+        { type: "question", quizId: "q-scales-25" },
+        { type: "idee", titre: "Le triton", texte: [
+          "6 demi-tons, entre la quarte juste (5) et la quinte juste (7) : trois tons entiers, d'o\xF9 son nom.",
+          "Tr\xE8s instable, surnomm\xE9 \xAB diabolus in musica \xBB, il a longtemps \xE9t\xE9 \xE9vit\xE9. C'est aujourd'hui un pilier du blues, du jazz et du metal."
+        ], bloc: {
+          type: "interval_chart",
+          caption: "Les 12 intervalles \u2014 triton (TT) et septi\xE8mes en surbrillance",
+          data: { highlight: ["TT", "m7", "M7", "P8"] }
+        } },
+        { type: "question", quizId: "q-scales-26" },
+        { type: "idee", titre: "Toute l'octave sur une corde", texte: [
+          "Depuis une note : +1 et +2 secondes, +3 et +4 tierces, +5 quarte, +6 triton, +7 quinte, +8 et +9 sixtes, +10 et +11 septi\xE8mes.",
+          "+12 : l'octave, m\xEAme note plus aigu\xEB, si consonante que l'oreille l'entend presque comme une seule."
+        ] },
+        { type: "question", quizId: "q-scales-27" },
+        {
+          type: "a-toi",
+          titre: "Les grands intervalles depuis La",
+          consigne: "Corde 5 : joue La \xE0 vide, puis la case 7 (quinte), 9 (sixte majeure), 10 (septi\xE8me mineure), 12 (octave), en revenant \xE0 vide entre chaque. Nomme chaque intervalle. Puis recommence depuis la case 2 : tout se d\xE9cale de deux cases.",
+          bloc: {
+            type: "tab",
+            caption: "Depuis La \xE0 vide : quinte, sixte majeure, septi\xE8me mineure, octave",
+            text: "Tab \u2014 corde 5 : 0 puis 7 ; 0 puis 9 ; 0 puis 10 ; 0 puis 12.",
+            data: { lines: [
+              "e|--------------------------------|",
+              "B|--------------------------------|",
+              "G|--------------------------------|",
+              "D|--------------------------------|",
+              "A|-0--7----0--9----0--10----0--12-|",
+              "E|--------------------------------|"
+            ] }
+          },
+          minuteur: 120
+        },
+        { type: "question", quizId: "q-scales-p34-02" },
+        { type: "recap", points: [
+          "Sixtes : 8 (mineure) et 9 (majeure) demi-tons. Septi\xE8mes : 10 et 11.",
+          "Le triton (6 demi-tons) est l'intervalle le plus instable.",
+          "Octave : 12 demi-tons, 12 cases sur une m\xEAme corde."
+        ] }
+      ],
+      quiz: ["q-scales-25", "q-scales-26", "q-scales-27", "q-scales-p34-02"]
+    };
+    quiz37 = [
+      { id: "q-scales-25", courseId: "scales", lessonId: "scales-c1-06", lvl: 2, q: "Combien de demi-tons contient une septi\xE8me mineure ?", o: ["9", "10", "11", "12"], a: 1, exp: "Septi\xE8me mineure = 10 demi-tons (Do\u2192Sib). C'est elle qui donne leur couleur \xE0 tous les accords '7' (G7, A7...) : l'\xE2me du blues et du jazz.", xp: 35 },
+      { id: "q-scales-26", courseId: "scales", lessonId: "scales-c1-06", lvl: 3, q: "Le triton se situe exactement entre quels deux intervalles ?", o: ["Tierce majeure et quarte juste", "Quinte juste et sixte mineure", "Quarte juste et quinte juste", "Sixte majeure et septi\xE8me"], a: 2, exp: "Le triton (6 demi-tons) tombe entre la quarte juste (5) et la quinte juste (7) \u2014 surnomm\xE9 'diabolus in musica' au Moyen-\xC2ge, aujourd'hui central dans le blues, le jazz et le metal.", xp: 45 },
+      { id: "q-scales-27", courseId: "scales", lessonId: "scales-c1-06", lvl: 2, q: "Une octave repr\xE9sente combien de demi-tons ?", o: ["10", "7", "14", "12"], a: 3, exp: "Octave = 12 demi-tons = 12 cases sur une m\xEAme corde. M\xEAme note, mais deux fois plus aigu\xEB (ou grave).", xp: 35 },
+      { id: "q-scales-p34-02", courseId: "scales", lessonId: "scales-c1-06", lvl: 2, q: "Tu joues Do, puis le La juste au-dessus. Combien de demi-tons as-tu franchis ?", o: ["9", "8", "10", "7"], a: 0, exp: "Do\u2192La est une sixte majeure : 9 demi-tons, soit 9 cases sur une m\xEAme corde. 8 demi-tons donneraient La\u266D, la sixte mineure.", xp: 35 }
+    ];
+  }
+});
+
+// src/content/cours/scales/scales-c2-01.js
+var scales_c2_01_exports = {};
+__export(scales_c2_01_exports, {
+  default: () => scales_c2_01_default,
+  quiz: () => quiz38
+});
+var DO_CORDE_5, DO_OUVERT, TAB_SOL_CORDE_6, scales_c2_01_default, quiz38;
+var init_scales_c2_01 = __esm({
+  "src/content/cours/scales/scales-c2-01.js"() {
+    DO_CORDE_5 = { type: "note_grid", caption: "Do majeur sur la seule corde 5 : la formule T-T-DT-T-T-T-DT se lit dans les \xE9carts (2-2-1-2-2-2-1 cases)", data: { string: 5, stringName: "La", maxFret: 15, highlights: [{ fret: 3, label: "Do", color: "amber" }, { fret: 5, label: "R\xE9", color: "primary" }, { fret: 7, label: "Mi", color: "primary" }, { fret: 8, label: "Fa", color: "primary" }, { fret: 10, label: "Sol", color: "primary" }, { fret: 12, label: "La", color: "primary" }, { fret: 14, label: "Si", color: "primary" }, { fret: 15, label: "Do", color: "amber" }] } };
+    DO_OUVERT = { type: "scale_pattern", caption: "Gamme de Do majeur \u2014 position ouverte : les m\xEAmes 7 notes, r\xE9parties sur les 6 cordes", data: { startFret: 0, endFret: 3, rootColor: "amber", noteColor: "primary", strings: [{ frets: [0, 1, 3], root: [] }, { frets: [0, 2, 3], root: [3] }, { frets: [0, 2, 3], root: [] }, { frets: [0, 2], root: [] }, { frets: [0, 1, 3], root: [1] }, { frets: [0, 1, 3], root: [] }], noteMap: { "0,0": "Mi", "1,0": "Fa", "3,0": "Sol", "0,1": "La", "2,1": "Si", "3,1": "Do", "0,2": "R\xE9", "2,2": "Mi", "3,2": "Fa", "0,3": "Sol", "2,3": "La", "0,4": "Si", "1,4": "Do", "3,4": "R\xE9", "0,5": "Mi", "1,5": "Fa", "3,5": "Sol" } } };
+    TAB_SOL_CORDE_6 = {
+      type: "tab",
+      caption: "Sol majeur sur la seule corde 6 : 2-2-1-2-2-2-1 cases",
+      text: "Tab \u2014 corde 6 : cases 3, 5, 7, 8, 10, 12, 14, 15. Sol, La, Si, Do, R\xE9, Mi, Fa#, Sol.",
+      data: { lines: [
+        "e|-----------------------------|",
+        "B|-----------------------------|",
+        "G|-----------------------------|",
+        "D|-----------------------------|",
+        "A|-----------------------------|",
+        "E|-3--5--7--8--10--12--14--15--|"
+      ] }
+    };
+    scales_c2_01_default = {
+      id: "scales-c2-01",
+      level: 5,
+      title: "Qu'est-ce qu'une gamme (vraiment) ?",
+      duration: 7,
+      gropiTip: "Applique la formule T-T-DT-T-T-T-DT sur la seule corde 5 depuis La \xE0 vide : cases 0, 2, 4, 5, 7, 9, 11, 12. Tu viens de construire La majeur sans conna\xEEtre ses notes.",
+      cartes: [
+        { type: "idee", titre: "Un menu de notes", texte: [
+          "Gamme majeure, mineure, pentatonique\u2026 Au fond, une gamme est une s\xE9lection ordonn\xE9e parmi les 12 sons disponibles : 5, 7 ou 8 notes qui vont bien ensemble.",
+          "Moins de choix, mais une garantie : chaque note de la gamme colle avec la tonalit\xE9 du morceau."
+        ] },
+        { type: "idee", titre: "Trois ingr\xE9dients", texte: [
+          "Une fondamentale, qui donne son nom \xE0 la gamme. Un nombre de notes : 5 pour une pentatonique, 7 pour la gamme majeure.",
+          "Et une formule d'intervalles : T-T-DT-T-T-T-DT pour le majeur (T = ton, DT = demi-ton)."
+        ] },
+        { type: "question", quizId: "q-scales-28" },
+        { type: "idee", titre: "La formule sur une corde", texte: [
+          "Applique T-T-DT-T-T-T-DT depuis Do (corde 5 case 3) : 2 cases, 2, 1, 2, 2, 2, 1.",
+          "Tu obtiens Do, R\xE9, Mi, Fa, Sol, La, Si, Do : les sept notes naturelles, sans un di\xE8se."
+        ], bloc: DO_CORDE_5 },
+        { type: "idee", titre: "Les m\xEAmes notes, en position", texte: [
+          "Sur une seule corde, la gamme s'\xE9tale sur douze cases. En position ouverte, les sept m\xEAmes notes tiennent dans les trois premi\xE8res cases, r\xE9parties sur les six cordes."
+        ], bloc: DO_OUVERT },
+        { type: "question", quizId: "q-scales-54" },
+        {
+          type: "a-toi",
+          titre: "Construis Sol majeur",
+          consigne: "Sur la seule corde 6, depuis Sol (corde 6 case 3), applique la formule : 2, 2, 1, 2, 2, 2, 1 cases. Monte, puis redescends, au clic, en nommant les notes. La septi\xE8me tombe sur Fa# : la formule l'impose.",
+          bloc: TAB_SOL_CORDE_6,
+          bpm: 60,
+          minuteur: 120
+        },
+        { type: "idee", titre: "Retiens la formule", texte: [
+          "Majeure, mineures, pentatoniques, blues, modes : quelques familles suffisent pour presque tout jouer.",
+          "Retiens chacune par sa formule, pas par ses notes. Tu la reconstruis alors depuis n'importe quelle fondamentale."
+        ] },
+        { type: "question", quizId: "q-scales-29" },
+        { type: "recap", points: [
+          "Une gamme : une fondamentale, un nombre de notes, une formule d'intervalles.",
+          "Gamme majeure : T-T-DT-T-T-T-DT, soit 2-2-1-2-2-2-1 cases sur une corde.",
+          "Retiens la formule : elle reconstruit la gamme dans toute tonalit\xE9."
+        ] }
+      ],
+      quiz: ["q-scales-28", "q-scales-29", "q-scales-54"]
+    };
+    quiz38 = [
+      { id: "q-scales-28", courseId: "scales", lessonId: "scales-c2-01", lvl: 2, q: "Deux gammes partent de La et ont 7 notes chacune, mais ne sonnent pas pareil. Qu'est-ce qui les distingue ?", o: ["Leur formule d'intervalles", "Leur note fondamentale", "Leur nombre de notes", "Le tempo auquel on les joue"], a: 0, exp: "Une gamme se d\xE9finit par sa fondamentale, son nombre de notes et sa formule d'intervalles. Ici les deux premiers sont identiques : seule la formule (T-T-DT\u2026 ou T-DT-T\u2026) change, et avec elle la couleur.", xp: 40 },
+      { id: "q-scales-29", courseId: "scales", lessonId: "scales-c2-01", lvl: 1, q: "Pourquoi m\xE9moriser une gamme sous forme de formule (T-T-DT\u2026) plut\xF4t que de notes ?", o: ["Pour la jouer plus vite", "Pour \xE9viter d'avoir \xE0 lire les di\xE8ses", "Pour la reconstruire dans toute tonalit\xE9", "Pour ne jouer que sur une corde"], a: 2, exp: "La formule ne d\xE9pend pas de la note de d\xE9part : appliqu\xE9e depuis n'importe quelle fondamentale, elle redonne la gamme.", xp: 30 },
+      { id: "q-scales-54", courseId: "scales", lessonId: "scales-c2-01", lvl: 2, q: "Tu appliques la formule T-T-DT-T-T-T-DT en partant de R\xE9. Quelle est la troisi\xE8me note ?", o: ["Fa#", "Fa", "Sol", "Mi"], a: 0, exp: "R\xE9 + un ton = Mi, Mi + un ton = Fa#. La formule impose un ton entier apr\xE8s Mi : Fa naturel ne serait qu'\xE0 un demi-ton. D'o\xF9 R\xE9 majeur : R\xE9 Mi Fa# Sol La Si Do#.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/scales/scales-c2-02.js
+var scales_c2_02_exports = {};
+__export(scales_c2_02_exports, {
+  default: () => scales_c2_02_default,
+  quiz: () => quiz39
+});
+var SOL_POSITION_1, scales_c2_02_default, quiz39;
+var init_scales_c2_02 = __esm({
+  "src/content/cours/scales/scales-c2-02.js"() {
+    SOL_POSITION_1 = {
+      type: "scale_pattern",
+      caption: "Sol majeur pos. 1 \u2014 fondamentale case 3, corde 6. Formule T-T-DT-T-T-T-DT",
+      data: {
+        startFret: 1,
+        endFret: 5,
+        rootColor: "green",
+        noteColor: "primary",
+        strings: [
+          { frets: [3, 5], root: [3] },
+          { frets: [2, 3, 5], root: [] },
+          { frets: [2, 4, 5], root: [] },
+          { frets: [2, 4], root: [] },
+          { frets: [1, 3, 5], root: [] },
+          { frets: [3, 5], root: [3] }
+        ],
+        noteMap: {
+          "3,0": "Sol",
+          "5,0": "La",
+          "2,1": "Si",
+          "3,1": "Do",
+          "5,1": "R\xE9",
+          "2,2": "Mi",
+          "4,2": "Fa#",
+          "5,2": "Sol",
+          "2,3": "La",
+          "4,3": "Si",
+          "1,4": "Do",
+          "3,4": "R\xE9",
+          "5,4": "Mi",
+          "3,5": "Sol",
+          "5,5": "La"
+        }
+      }
+    };
+    scales_c2_02_default = {
+      id: "scales-c2-02",
+      level: 5,
+      title: "La gamme majeure : la matrice de tout",
+      duration: 8,
+      gropiTip: "Moyen mn\xE9motechnique : la gamme majeure, c'est deux blocs T-T-DT s\xE9par\xE9s par un ton. Do-R\xE9-Mi-Fa, puis Sol-La-Si-Do. Retiens un bloc de 4 notes, tu as la gamme.",
+      cartes: [
+        { type: "idee", titre: "La formule", texte: [
+          "Ton, ton, demi-ton, ton, ton, ton, demi-ton : T-T-DT-T-T-T-DT. Depuis n'importe quelle note, cette formule donne une gamme majeure.",
+          "C'est la gamme de r\xE9f\xE9rence : on en d\xE9duit les modes et l'harmonie des accords."
+        ] },
+        { type: "question", quizId: "q-scales-01-app" },
+        { type: "idee", titre: "Do majeur, sans alt\xE9ration", texte: [
+          "Depuis Do : un ton, R\xE9 ; un ton, Mi ; un demi-ton, Fa. Puis Sol, La, Si, et un demi-ton pour retomber sur Do.",
+          "Les sept notes naturelles, pas un di\xE8se ni un b\xE9mol : c'est pour \xE7a que Do majeur sert de mod\xE8le."
+        ] },
+        { type: "idee", titre: "Les deux demi-tons", texte: [
+          "Ils tombent entre les degr\xE9s 3 et 4, puis 7 et 8 : Mi-Fa et Si-Do en Do majeur.",
+          "Ces petits pas, surtout Si qui tire vers Do, donnent au majeur son caract\xE8re lumineux et conclusif."
+        ] },
+        { type: "question", quizId: "q-scales-56" },
+        { type: "idee", titre: "Et depuis Sol ?", texte: [
+          "Depuis Sol : La, Si, demi-ton vers Do, puis R\xE9, Mi\u2026 et un ton apr\xE8s Mi.",
+          "Attention : de Mi \xE0 Fa, il n'y a qu'un demi-ton. \xC0 toi de trouver la note."
+        ] },
+        { type: "question", quizId: "q-scales-55" },
+        { type: "idee", titre: "Douze gammes majeures", texte: [
+          "Une par note. Plus on s'\xE9loigne de Do, plus il y a d'alt\xE9rations : Sol a 1 di\xE8se, R\xE9 2, La 3, Mi 4. C\xF4t\xE9 b\xE9mols : Fa en a 1, Si\u266D 2, Mi\u266D 3.",
+          "Cet ordre suit le cycle des quintes, qu'on retrouvera bient\xF4t."
+        ] },
+        {
+          type: "a-toi",
+          titre: "Sol majeur sous les doigts",
+          consigne: "Pose la fondamentale, Sol (corde 6 case 3). Monte la gamme note par note au clic, un doigt par case, en nommant chaque note, puis redescends. Le Fa# de la corde 4 fait toute la diff\xE9rence avec Do majeur.",
+          bloc: SOL_POSITION_1,
+          bpm: 60,
+          minuteur: 120
+        },
+        { type: "recap", points: [
+          "Gamme majeure : T-T-DT-T-T-T-DT, depuis n'importe quelle note.",
+          "Demi-tons entre les degr\xE9s 3-4 et 7-8 : Mi-Fa et Si-Do en Do.",
+          "Do majeur n'a aucune alt\xE9ration ; Sol majeur a un di\xE8se, Fa#."
+        ] }
+      ],
+      quiz: ["q-scales-01", "q-scales-55", "q-scales-56", "q-scales-01-app"]
+    };
+    quiz39 = [
+      { id: "q-scales-01", courseId: "scales", lessonId: "scales-c2-02", lvl: 1, q: "La formule en tons et demi-tons de la gamme majeure est\u2026", o: ["T-DT-T-T-DT-T-T", "T-T-DT-T-T-T-DT", "T-T-T-DT-T-T-DT", "DT-T-T-T-DT-T-T"], a: 1, exp: "T-T-DT-T-T-T-DT. Demi-tons entre 3-4 et 7-8. Cette structure asym\xE9trique cr\xE9e le 'son majeur' (sensation de luminosit\xE9, attraction du Si vers le Do).", xp: 30 },
+      { id: "q-scales-01-app", courseId: "scales", lessonId: "scales-c2-02", lvl: 1, q: "Applique la formule de la gamme majeure depuis R\xE9 : quelle est la 7e note ?", o: ["Do#", "Do", "Si", "La#"], a: 0, exp: "R\xE9, Mi, Fa#, Sol, La, Si, Do#, R\xE9 : apr\xE8s Si, un ton entier m\xE8ne \xE0 Do#, puis le demi-ton final ram\xE8ne \xE0 R\xE9.", xp: 25 },
+      { id: "q-scales-55", courseId: "scales", lessonId: "scales-c2-02", lvl: 1, q: "En construisant Sol majeur avec la formule, quelle note alt\xE9r\xE9e appara\xEEt ?", o: ["Fa#", "Do#", "Si\u266D", "Sol#"], a: 0, exp: "Sol La Si Do R\xE9 Mi, puis un ton apr\xE8s Mi : Fa#, et le demi-ton final ram\xE8ne \xE0 Sol. Sol majeur a un seul di\xE8se, Fa#.", xp: 30 },
+      { id: "q-scales-56", courseId: "scales", lessonId: "scales-c2-02", lvl: 2, q: "Dans la gamme majeure, entre quels degr\xE9s tombent les deux demi-tons ?", o: ["3-4 et 7-8", "2-3 et 6-7", "1-2 et 5-6", "4-5 et 7-8"], a: 0, exp: "T-T-DT-T-T-T-DT : le premier demi-ton arrive apr\xE8s deux tons (degr\xE9s 3-4), le second \xE0 la fin (7-8). En Do : Mi-Fa et Si-Do.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/scales/scales-c2-03.js
+var scales_c2_03_exports = {};
+__export(scales_c2_03_exports, {
+  default: () => scales_c2_03_default,
+  quiz: () => quiz40
+});
+var DEGRES_DO, scales_c2_03_default, quiz40;
+var init_scales_c2_03 = __esm({
+  "src/content/cours/scales/scales-c2-03.js"() {
+    DEGRES_DO = {
+      type: "degree_chart",
+      caption: "Les 7 degr\xE9s de Do majeur \u2014 I, IV, V en couleur (les piliers)",
+      data: {
+        boxes: [
+          { top: "I", label: "Tonique \u2014 Do", tint: "green" },
+          { top: "II", label: "Sus-tonique \u2014 R\xE9", tint: "neutral" },
+          { top: "III", label: "M\xE9diante \u2014 Mi", tint: "neutral" },
+          { top: "IV", label: "Sous-dominante \u2014 Fa", tint: "amber" },
+          { top: "V", label: "Dominante \u2014 Sol", tint: "coral" },
+          { top: "VI", label: "Sus-dominante \u2014 La", tint: "neutral" },
+          { top: "VII", label: "Sensible \u2014 Si", tint: "neutral" }
+        ]
+      }
+    };
+    scales_c2_03_default = {
+      id: "scales-c2-03",
+      level: 5,
+      title: "Les degr\xE9s et leurs noms",
+      duration: 7,
+      gropiTip: "Chante Do-R\xE9-Mi-Fa-Sol-La-Si et arr\xEAte-toi net sur le Si. Tu sens l'envie d'entendre Do ? C'est la Sensible (VII) qui tire vers la Tonique.",
+      cartes: [
+        { type: "idee", titre: "Des num\xE9ros plut\xF4t que des notes", texte: [
+          "Chaque note d'une gamme porte un num\xE9ro, son degr\xE9, de I \xE0 VII. En Do majeur, I = Do et V = Sol. En La majeur, I = La et V = Mi.",
+          "Le num\xE9ro reste, le contenu change : les degr\xE9s marchent dans toutes les tonalit\xE9s."
+        ] },
+        { type: "idee", titre: "Leurs noms", texte: [
+          "I tonique, II sus-tonique, III m\xE9diante, IV sous-dominante, V dominante, VI sus-dominante, VII sensible.",
+          "La tonique, c'est la maison. La sensible, un demi-ton sous elle, y ram\xE8ne."
+        ], bloc: DEGRES_DO },
+        { type: "question", quizId: "q-scales-04-app" },
+        { type: "idee", titre: "Trois piliers : I, IV, V", texte: [
+          "Tonique, sous-dominante et dominante organisent l'essentiel de la musique tonale.",
+          "Le blues 12 mesures n'utilise qu'eux, et bien des chansons aussi."
+        ] },
+        { type: "question", quizId: "q-scales-57" },
+        { type: "idee", titre: "La tension du V", texte: [
+          "L'accord b\xE2ti sur le V contient la sensible, \xE0 un demi-ton de la tonique. En Do, Sol contient Si.",
+          "L'oreille l'entend comme un d\xE9s\xE9quilibre qui demande \xE0 se r\xE9soudre : V \u2192 I est la cadence la plus forte."
+        ] },
+        { type: "idee", titre: "Parler en degr\xE9s", texte: [
+          "\xAB I-V-vi-IV \xBB d\xE9crit une suite d'accords dans toutes les tonalit\xE9s (en minuscules, l'accord est mineur). En Do : Do, Sol, Lam, Fa. En Sol : Sol, R\xE9, Mim, Do.",
+          "Entre musiciens, c'est le moyen le plus rapide de se comprendre."
+        ] },
+        {
+          type: "a-toi",
+          titre: "Entends la dominante",
+          consigne: "Encha\xEEne Do, Fa, Sol, Do \u2014 I, IV, V, I \u2014, quatre coups vers le bas par accord, au clic. \xC9coute la tension sur Sol et le soulagement au retour sur Do. Puis joue I-V-vi-IV : Do, Sol, Lam, Fa.",
+          bloc: { type: "chord_diagram", caption: "Sol \u2014 le V de Do majeur, la dominante", data: { name: "G", frets: [3, 2, 0, 0, 0, 3], fingers: [2, 1, 0, 0, 0, 3], startFret: 1 } },
+          bpm: 60,
+          minuteur: 120
+        },
+        { type: "question", quizId: "q-scales-58" },
+        { type: "recap", points: [
+          "Degr\xE9s I \xE0 VII : le num\xE9ro reste, la note change avec la tonalit\xE9.",
+          "I tonique, IV sous-dominante, V dominante : les trois piliers.",
+          "VII, la sensible, est \xE0 un demi-ton sous la tonique et y ram\xE8ne."
+        ] }
+      ],
+      quiz: ["q-scales-04", "q-scales-57", "q-scales-58", "q-scales-04-app"]
+    };
+    quiz40 = [
+      { id: "q-scales-04", courseId: "scales", lessonId: "scales-c2-03", lvl: 3, q: "Quelle est la fonction du 7e degr\xE9 dans une gamme majeure ?", o: ["Sensible", "Tonique", "Dominante", "Sus-dominante"], a: 0, exp: "VII = sensible. Note distante d'1 demi-ton de la tonique, qui cr\xE9e une attraction forte vers I. En Do : Si attire vers Do. Source de la cadence dominante.", xp: 40 },
+      { id: "q-scales-04-app", courseId: "scales", lessonId: "scales-c2-03", lvl: 2, q: "En R\xE9 majeur, quelle fonction a la note La ?", o: ["V, la dominante", "IV, la sous-dominante", "VI, la sus-dominante", "III, la m\xE9diante"], a: 0, exp: "R\xE9 majeur : R\xE9 (I), Mi (II), Fa# (III), Sol (IV), La (V), Si (VI), Do# (VII). La est le 5e degr\xE9 : la dominante.", xp: 30 },
+      { id: "q-scales-57", courseId: "scales", lessonId: "scales-c2-03", lvl: 2, q: "En Sol majeur, quels sont les trois degr\xE9s piliers I, IV et V ?", o: ["Sol, Do, R\xE9", "Sol, Si, R\xE9", "Sol, Do, Mi", "Sol, La, R\xE9"], a: 0, exp: "Sol majeur : Sol (I), La (II), Si (III), Do (IV), R\xE9 (V), Mi (VI), Fa# (VII). Tonique Sol, sous-dominante Do, dominante R\xE9.", xp: 40 },
+      { id: "q-scales-58", courseId: "scales", lessonId: "scales-c2-03", lvl: 2, q: "En Fa majeur, quelle note est la sensible ?", o: ["Mi", "Mi\u266D", "Si\u266D", "Do"], a: 0, exp: "Fa majeur : Fa Sol La Si\u266D Do R\xE9 Mi. Le VIIe degr\xE9, Mi, est \xE0 un demi-ton sous la tonique : c'est la sensible, qui \xAB tire \xBB vers Fa. Mi\u266D serait un ton entier en dessous.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/scales/scales-c2-04.js
+var scales_c2_04_exports = {};
+__export(scales_c2_04_exports, {
+  default: () => scales_c2_04_default,
+  quiz: () => quiz41
+});
+var CYCLE, scales_c2_04_default, quiz41;
+var init_scales_c2_04 = __esm({
+  "src/content/cours/scales/scales-c2-04.js"() {
+    CYCLE = {
+      type: "circle_of_fifths",
+      caption: "Cercle des quintes \u2014 Do, Sol, R\xE9, La, Fa en \xE9vidence (les 5 tonalit\xE9s les plus courantes)",
+      data: {
+        highlight: ["Do", "Sol", "R\xE9", "La", "Fa"],
+        showMinors: true
+      }
+    };
+    scales_c2_04_default = {
+      id: "scales-c2-04",
+      level: 6,
+      title: "Le cycle des quintes : la carte des tonalit\xE9s",
+      duration: 8,
+      gropiTip: "Pour lire une armure en di\xE8ses, prends le dernier di\xE8se et monte d'un demi-ton : Fa#, Do#, Sol# \u2192 le dernier est Sol#, donc La majeur.",
+      cartes: [
+        { type: "idee", titre: "Une horloge des tonalit\xE9s", texte: [
+          "Le cycle des quintes range les 12 tonalit\xE9s majeures comme une horloge. \xC0 midi, Do, sans alt\xE9ration.",
+          "En tournant d'un cran, on avance d'une quinte et on gagne une alt\xE9ration. Une carte mentale pour transposer, moduler et lire une armure."
+        ], bloc: CYCLE },
+        { type: "idee", titre: "Vers la droite : les di\xE8ses", texte: [
+          "Monte d'une quinte depuis Do : Sol majeur, 1 di\xE8se (Fa#). Encore une : R\xE9, 2 di\xE8ses. Puis La (3), Mi (4), Si (5), Fa# (6), Do# (7).",
+          "Chaque quinte garde les di\xE8ses pr\xE9c\xE9dents et en ajoute un."
+        ] },
+        { type: "question", quizId: "q-logic-02" },
+        { type: "idee", titre: "Vers la gauche : les b\xE9mols", texte: [
+          "Descends d'une quinte depuis Do : Fa majeur, 1 b\xE9mol (Si\u266D). Puis Si\u266D (2), Mi\u266D (3), La\u266D (4), R\xE9\u266D (5), Sol\u266D (6), Do\u266D (7).",
+          "En bas de l'horloge, Fa# et Sol\u266D se rejoignent : m\xEAme son, deux \xE9critures."
+        ] },
+        { type: "idee", titre: "L'ordre des alt\xE9rations", texte: [
+          "Les di\xE8ses arrivent toujours dans le m\xEAme ordre : Fa, Do, Sol, R\xE9, La, Mi, Si. Les b\xE9mols, dans l'ordre inverse : Si, Mi, La, R\xE9, Sol, Do, Fa.",
+          "Astuce c\xF4t\xE9 b\xE9mols : l'avant-dernier b\xE9mol de l'armure donne la tonalit\xE9. Si\u266D, Mi\u266D \u2192 Si\u266D majeur."
+        ] },
+        { type: "question", quizId: "q-scales-03" },
+        { type: "idee", titre: "Les relatives mineures", texte: [
+          "Chaque tonalit\xE9 majeure a une relative mineure, sur son 6e degr\xE9 : m\xEAmes notes, m\xEAme armure, autre fondamentale.",
+          "Do majeur et La mineur, Sol majeur et Mi mineur. Sur le cercle, elles occupent la m\xEAme case."
+        ] },
+        {
+          type: "a-toi",
+          titre: "Fais le tour \xE0 la guitare",
+          consigne: "Joue les accords ouverts dans l'ordre du cycle : Do, Sol, R\xE9, La, Mi. Quatre coups chacun, au clic. Sur chaque accord, dis \xE0 voix haute son nombre de di\xE8ses. Puis repars de Do vers Fa.",
+          bloc: CYCLE,
+          bpm: 60
+        },
+        { type: "question", quizId: "q-scales-02" },
+        { type: "recap", points: [
+          "Une quinte de plus = un di\xE8se de plus ; une quinte de moins = un b\xE9mol de plus.",
+          "Ordre des di\xE8ses : Fa Do Sol R\xE9 La Mi Si ; des b\xE9mols : Si Mi La R\xE9 Sol Do Fa.",
+          "La relative mineure, sur le 6e degr\xE9, partage l'armure de la majeure."
+        ] }
+      ],
+      quiz: ["q-scales-02", "q-scales-03", "q-logic-01", "q-logic-02", "q-scales-30", "q-scales-31"]
+    };
+    quiz41 = [
+      { id: "q-scales-02", courseId: "scales", lessonId: "scales-c2-04", lvl: 2, q: "La gamme de Mi majeur contient combien de di\xE8ses ?", o: ["2", "3", "4", "5"], a: 2, exp: "Mi majeur = Mi-Fa#-Sol#-La-Si-Do#-R\xE9#. Soit 4 di\xE8ses : Fa#, Sol#, Do#, R\xE9#. C'est l'armure de Mi majeur (et de Do# mineur, son relatif).", xp: 40 },
+      { id: "q-scales-03", courseId: "scales", lessonId: "scales-c2-04", lvl: 3, q: "Quelle gamme majeure contient exactement 3 b\xE9mols ?", o: ["Sib majeur", "Lab majeur", "R\xE9b majeur", "Mib majeur"], a: 3, exp: "Mib majeur = Mib-Fa-Sol-Lab-Sib-Do-R\xE9. 3 b\xE9mols : Mib, Lab, Sib. Sib maj = 2b. Lab maj = 4b. R\xE9b maj = 5b. Cycle des quintes.", xp: 45 },
+      { id: "q-logic-01", courseId: "scales", lessonId: "scales-c2-04", lvl: 2, q: "Combien de tonalit\xE9s majeures sonnent r\xE9ellement diff\xE9remment ?", o: ["12", "7", "10", "24"], a: 0, exp: "Une par note de la gamme chromatique : 12. Certaines s'\xE9crivent de deux fa\xE7ons (Fa# = Sol\u266D, Si = Do\u266D, Do# = R\xE9\u266D), d'o\xF9 15 armures sur le papier, de 0 \xE0 7 di\xE8ses ou 7 b\xE9mols.", xp: 35 },
+      { id: "q-logic-02", courseId: "scales", lessonId: "scales-c2-04", lvl: 2, q: "En passant de Sol majeur \xE0 R\xE9 majeur sur le cycle des quintes, quel di\xE8se s'ajoute ?", o: ["Do#", "Fa#", "Sol#", "R\xE9#"], a: 0, exp: "Sol majeur a d\xE9j\xE0 Fa#. R\xE9 majeur, une quinte plus haut, le garde et ajoute Do#. Les di\xE8ses arrivent toujours dans le m\xEAme ordre : Fa#, Do#, Sol#, R\xE9#, La#, Mi#, Si#.", xp: 55 },
+      { id: "q-scales-30", courseId: "scales", lessonId: "scales-c2-04", lvl: 1, q: "Combien de b\xE9mols compte la tonalit\xE9 de Fa majeur ?", o: ["1", "2", "0", "3"], a: 0, exp: "Fa majeur = Fa Sol La Si\u266D Do R\xE9 Mi : un seul b\xE9mol, Si\u266D. C'est le premier pas du cycle des quintes c\xF4t\xE9 b\xE9mols, une quinte sous Do.", xp: 30 },
+      { id: "q-scales-31", courseId: "scales", lessonId: "scales-c2-04", lvl: 2, q: "Quelle est la relative mineure de Sol majeur ?", o: ["Mi mineur", "R\xE9 mineur", "Si mineur", "La mineur"], a: 0, exp: "La relative mineure est sur le 6e degr\xE9 : Sol-La-Si-Do-R\xE9-Mi \u2192 Mi mineur, m\xEAmes notes que Sol majeur.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/scales/scales-c2-05.js
+var scales_c2_05_exports = {};
+__export(scales_c2_05_exports, {
+  default: () => scales_c2_05_default,
+  quiz: () => quiz42
+});
+var SOL_POSITION_12, DO_POSITION_2, scales_c2_05_default, quiz42;
+var init_scales_c2_05 = __esm({
+  "src/content/cours/scales/scales-c2-05.js"() {
+    SOL_POSITION_12 = {
+      type: "scale_pattern",
+      caption: "Sol majeur \u2014 Position 1 (fondamentale case 3, corde 6)",
+      data: {
+        startFret: 1,
+        endFret: 5,
+        rootColor: "green",
+        noteColor: "primary",
+        strings: [
+          { frets: [3, 5], root: [3] },
+          { frets: [2, 3, 5], root: [] },
+          { frets: [2, 4, 5], root: [] },
+          { frets: [2, 4], root: [] },
+          { frets: [1, 3, 5], root: [] },
+          { frets: [2, 3], root: [3] }
+        ],
+        noteMap: {
+          "3,0": "Sol",
+          "5,0": "La",
+          "2,1": "Si",
+          "3,1": "Do",
+          "5,1": "R\xE9",
+          "2,2": "Mi",
+          "4,2": "Fa#",
+          "5,2": "Sol",
+          "2,3": "La",
+          "4,3": "Si",
+          "1,4": "Do",
+          "3,4": "R\xE9",
+          "5,4": "Mi",
+          "2,5": "Fa#",
+          "3,5": "Sol"
+        }
+      }
+    };
+    DO_POSITION_2 = {
+      type: "scale_pattern",
+      caption: "Do majeur \u2014 Position 2 (fondamentale case 3, corde 5)",
+      data: {
+        startFret: 0,
+        endFret: 5,
+        rootColor: "primary",
+        noteColor: "green",
+        strings: [
+          { frets: [], root: [] },
+          { frets: [3, 5], root: [3] },
+          { frets: [2, 3, 5], root: [] },
+          { frets: [2, 4], root: [] },
+          { frets: [1, 3, 5], root: [1] },
+          { frets: [1, 3], root: [] }
+        ],
+        noteMap: {
+          "3,1": "Do",
+          "5,1": "R\xE9",
+          "2,2": "Mi",
+          "3,2": "Fa",
+          "5,2": "Sol",
+          "2,3": "La",
+          "4,3": "Si",
+          "1,4": "Do",
+          "3,4": "R\xE9",
+          "5,4": "Mi",
+          "1,5": "Fa",
+          "3,5": "Sol"
+        }
+      }
+    };
+    scales_c2_05_default = {
+      id: "scales-c2-05",
+      level: 5,
+      title: "Jouer la gamme majeure sur le manche",
+      duration: 9,
+      gropiTip: "Pi\xE8ge fr\xE9quent : jouer Fa au lieu de Fa# en Sol majeur. Dans la position 1, le Fa# est case 4 corde 4 et case 2 corde 1 : vise-les expr\xE8s en montant et en descendant.",
+      cartes: [
+        { type: "idee", titre: "Position 1 : fondamentale sur la corde 6", texte: [
+          "La th\xE9orie passe dans les doigts. Pour Sol majeur, pars de Sol (corde 6 case 3).",
+          "La forme tient entre les cases 1 et 5 : index en 2, majeur en 3, annulaire en 4, auriculaire en 5. L'index recule d'une case pour le Do de la corde 2."
+        ], bloc: SOL_POSITION_12 },
+        { type: "question", quizId: "q-scales-33" },
+        { type: "idee", titre: "Trois mots d'ordre", texte: [
+          "Lentement : 60 au clic, chaque note claire. \xC0 voix haute : nomme les notes en jouant, \xE7a relie les doigts \xE0 la t\xEAte.",
+          "Et rep\xE8re les Sol : ce sont tes points d'appui dans la position."
+        ] },
+        {
+          type: "a-toi",
+          titre: "Sol majeur, position 1",
+          consigne: "Monte et redescends la position au clic, une note par temps, en nommant chaque note. \xC0 chaque Sol, tiens la note deux temps. Trois allers-retours sans t'arr\xEAter.",
+          bloc: SOL_POSITION_12,
+          bpm: 60,
+          minuteur: 180
+        },
+        { type: "idee", titre: "Une forme qui se d\xE9place", texte: [
+          "Glisse la forme enti\xE8re le long du manche : la fondamentale change, la gamme suit.",
+          "Fondamentale en case 5 de la corde 6 : La majeur. En case 7 : Si majeur. M\xEAme doigt\xE9, autre tonalit\xE9."
+        ] },
+        { type: "question", quizId: "q-scales-p5-c205-01" },
+        { type: "idee", titre: "Position 2 : fondamentale sur la corde 5", texte: [
+          "M\xEAme principe, une corde plus haut. Pour Do majeur, pars de Do (corde 5 case 3) : la position couvre les cases 1 \xE0 5, dans le m\xE9dium."
+        ], bloc: DO_POSITION_2 },
+        { type: "idee", titre: "Une \xE0 la fois", texte: [
+          "Douze cases plus haut, Sol revient : Sol (corde 6 case 15). La position 1 s'y rejoue telle quelle, dans l'aigu.",
+          "Ma\xEEtrise une position \xE0 fond avant d'en ajouter une autre ; les relier viendra ensuite."
+        ] },
+        { type: "question", quizId: "q-scales-32" },
+        { type: "recap", points: [
+          "Position 1 : fondamentale sur la corde 6, un doigt par case.",
+          "Position 2 : fondamentale sur la corde 5, m\xEAme principe.",
+          "Glisser la forme change la tonalit\xE9 : case 5 sur la corde 6, La majeur."
+        ] }
+      ],
+      quiz: ["q-fret-scales-01", "q-scales-32", "q-scales-33", "q-scales-p5-c205-01"]
+    };
+    quiz42 = [
+      { id: "q-fret-scales-01", type: "fretboard", courseId: "scales", lessonId: "scales-c2-05", lvl: 1, q: "S\xE9lectionne les notes de Do majeur sur les cases 0-3", concept: { type: "find_scale", root: "C", quality: "major" }, selectionRules: { mode: "all" }, fretRange: [0, 3], display: { showNotes: false }, hint: "Do majeur = Do R\xE9 Mi Fa Sol La Si.", xp: 45, exp: "Do majeur en position ouverte : 7 notes naturelles cases 0-3." },
+      { id: "q-scales-32", courseId: "scales", lessonId: "scales-c2-05", lvl: 1, q: "Dans la position 1 de Sol majeur, o\xF9 se trouve la fondamentale ?", o: ["Corde 5, case 3", "Corde 6, case 3", "Corde 4, case 5", "Corde 6, case 5"], a: 1, exp: "Position 1 = fondamentale sur la corde 6. Sol est \xE0 la case 3 de la corde 6.", xp: 30 },
+      { id: "q-scales-33", courseId: "scales", lessonId: "scales-c2-05", lvl: 1, q: "Dans la position 1 de Sol majeur, o\xF9 se trouve le Sol situ\xE9 une octave au-dessus de la fondamentale ?", o: ["Corde 4, case 5", "Corde 5, case 5", "Corde 3, case 5", "Corde 4, case 3"], a: 0, exp: "Motif d'octave corde 6 \u2192 corde 4 : deux cordes plus loin, deux cases plus haut. Sol (corde 6 case 3) \u2192 Sol (corde 4 case 5). Rep\xE9rer les fondamentales donne les points d'appui de la position.", xp: 30 },
+      { id: "q-scales-p5-c205-01", courseId: "scales", lessonId: "scales-c2-05", lvl: 2, q: "Tu glisses la position 1 pour poser la fondamentale en case 8 de la corde 6. Quelle gamme joues-tu ?", o: ["Do majeur", "Si majeur", "R\xE9 majeur", "La majeur"], a: 0, exp: "Corde 6 case 8 = Do. M\xEAme forme, nouvelle fondamentale : Do majeur. Si majeur serait en case 7, La majeur en case 5.", xp: 35 }
+    ];
+  }
+});
+
+// src/content/cours/scales/scales-c3-01.js
+var scales_c3_01_exports = {};
+__export(scales_c3_01_exports, {
+  default: () => scales_c3_01_default,
+  quiz: () => quiz43
+});
+var POSITION_1, scales_c3_01_default, quiz43;
+var init_scales_c3_01 = __esm({
+  "src/content/cours/scales/scales-c3-01.js"() {
+    POSITION_1 = {
+      type: "scale_pattern",
+      caption: "La pentatonique mineure \u2014 Position 1 (case 5), la plus utilis\xE9e",
+      data: {
+        startFret: 4,
+        endFret: 9,
+        rootColor: "amber",
+        noteColor: "primary",
+        accentColor: "coral",
+        strings: [
+          { frets: [5, 8], root: [5] },
+          { frets: [5, 7], root: [] },
+          { frets: [5, 7], root: [7] },
+          { frets: [5, 7], root: [] },
+          { frets: [5, 8], root: [] },
+          { frets: [5, 8], root: [5] }
+        ],
+        noteMap: {
+          "5,0": "La",
+          "8,0": "Do",
+          "5,1": "R\xE9",
+          "7,1": "Mi",
+          "5,2": "Sol",
+          "7,2": "La",
+          "5,3": "Do",
+          "7,3": "R\xE9",
+          "5,4": "Mi",
+          "8,4": "Sol",
+          "5,5": "La",
+          "8,5": "Do"
+        }
+      }
+    };
+    scales_c3_01_default = {
+      id: "scales-c3-01",
+      level: 6,
+      title: "La pentatonique mineure : la gamme universelle",
+      duration: 8,
+      gropiTip: "Improvise 4 notes dans la position 1, puis termine toujours sur un La (case 5 corde 6, case 7 corde 4 ou case 5 corde 1). Ton oreille sentira qu'elle est rentr\xE9e \xE0 la maison.",
+      cartes: [
+        { type: "idee", titre: "Cinq notes, partout", texte: [
+          "\xAB Penta \xBB veut dire cinq : la pentatonique n'a que 5 notes, contre 7 pour la gamme majeure.",
+          "Blues, rock, pop, soul, funk : c'est la gamme la plus jou\xE9e \xE0 la guitare. Moins de notes, moins de risques de fausse note."
+        ] },
+        { type: "idee", titre: "La formule", texte: [
+          "Pentatonique mineure : 1 - \u266D3 - 4 - 5 - \u266D7. La fondamentale, la tierce mineure, la quarte, la quinte et la septi\xE8me mineure.",
+          "En La : La, Do, R\xE9, Mi, Sol."
+        ] },
+        { type: "question", quizId: "q-scales-05-app" },
+        { type: "idee", titre: "Pourquoi elle sonne juste", texte: [
+          "Elle part de la gamme mineure naturelle et en retire le 2e et le 6e degr\xE9, les deux notes qui forment des demi-tons tendus.",
+          "Restent 5 notes qui vont sur presque tout accord mineur et sur le blues."
+        ] },
+        { type: "question", quizId: "q-logic-10" },
+        { type: "idee", titre: "La position 1, case 5", texte: [
+          "Deux notes par corde, de la case 5 \xE0 la case 8 : index sur la case 5, annulaire sur la 7, auriculaire sur la 8.",
+          "Les La, en ambre, sont tes points d'appui : cordes 6 et 1 case 5, corde 4 case 7."
+        ], bloc: POSITION_1 },
+        {
+          type: "a-toi",
+          titre: "Monte, descends, au clic",
+          consigne: "Joue la position 1 de la corde 6 \xE0 la corde 1, puis redescends : une note par clic, \xE0 60 BPM. Pars et termine sur le La grave. Deux minutes, sans acc\xE9l\xE9rer. Refais-le chaque jour d'une semaine.",
+          bloc: POSITION_1,
+          bpm: 60,
+          minuteur: 120
+        },
+        { type: "idee", titre: "Sur quoi la jouer", texte: [
+          "Sur un blues, sur une progression en mineur, sur la plupart des solos rock. En La mineur, c'est ton terrain s\xFBr.",
+          "Ton outil de survie en improvisation : tu peux penser au rythme et au phras\xE9 avant de penser aux notes."
+        ] },
+        { type: "question", quizId: "q-impro-17" },
+        { type: "recap", points: [
+          "Pentatonique mineure : 1 - \u266D3 - 4 - 5 - \u266D7 ; en La, La Do R\xE9 Mi Sol.",
+          "Sans le 2 et le \u266D6, pas de demi-ton tendu : elle sonne juste presque partout.",
+          "Position 1 en La : cases 5 \xE0 8, deux notes par corde."
+        ] }
+      ],
+      quiz: ["q-scales-05", "q-logic-10", "q-fret-scales-02", "q-impro-16", "q-impro-17", "q-impro-20", "q-scales-05-app"]
+    };
+    quiz43 = [
+      { id: "q-scales-05", courseId: "scales", lessonId: "scales-c3-01", lvl: 1, q: "La pentatonique mineure suit la formule\u2026", o: ["1-2-3-5-6", "1-\u266D3-4-5-\u266D7", "1-2-\u266D3-4-5-\u266D6-\u266D7", "1-3-5-7"], a: 1, exp: "Penta mineure = 1-\u266D3-4-5-\u266D7. 5 notes seulement. Elle retire le 2 et le \u266D6 de la mineure naturelle (les notes qui cr\xE9ent les demi-tons les plus tendus).", xp: 30 },
+      { id: "q-scales-05-app", courseId: "scales", lessonId: "scales-c3-01", lvl: 1, q: "Applique la formule de la pentatonique mineure depuis Mi : quelles notes obtiens-tu ?", o: ["Mi, Sol, La, Si, R\xE9", "Mi, Sol#, La, Si, R\xE9", "Mi, Sol, La, Si\u266D, R\xE9", "Mi, Fa#, La, Si, R\xE9"], a: 0, exp: "1 Mi, \u266D3 Sol (3 demi-tons), 4 La, 5 Si, \u266D7 R\xE9. Sol# ferait une tierce majeure, Si\u266D une quinte diminu\xE9e.", xp: 25 },
+      { id: "q-logic-10", courseId: "scales", lessonId: "scales-c3-01", lvl: 3, q: "Pourquoi la pentatonique 'sonne juste' sur tant de progressions diff\xE9rentes ?", o: ["Elle retire les notes \xE0 risque, 2 et \u266D6", "Elle contient les notes de tous les accords", "Elle ne garde que les notes de l'accord", "Elle \xE9vite la tierce, ni majeure ni mineure"], a: 0, exp: "Penta mineure = 1-\u266D3-4-5-\u266D7. Elle \xE9vite le 2 (forme demi-ton avec \u266D3) et \u266D6 (forme demi-ton avec 5). Sans ces 2 demi-tons tendus, elle 'pose' sur quasi tous les accords mineurs et blues.", xp: 65 },
+      { id: "q-fret-scales-02", type: "fretboard", courseId: "scales", lessonId: "scales-c3-01", lvl: 1, q: "S\xE9lectionne les notes de la pentatonique mineure de La (cases 5-8)", concept: { type: "find_scale", root: "A", quality: "pentatonic_minor" }, selectionRules: { mode: "all" }, fretRange: [4, 9], display: { showNotes: false }, hint: "Position 1 classique autour de la case 5.", xp: 50, exp: "Pentatonique mineure de La position 1 : La-Do-R\xE9-Mi-Sol." },
+      { id: "q-impro-16", courseId: "impro", lessonId: "scales-c3-01", lvl: 1, q: "Improviser, c'est d'abord\u2026", o: ["Jouer le plus de notes possible", "Jouer sans r\xE9fl\xE9chir du tout", "Reproduire un solo appris par c\u0153ur", "Faire des choix dans un cadre connu"], a: 3, exp: "On n'improvise jamais \xE0 partir de rien : on choisit, en temps r\xE9el, parmi des possibilit\xE9s qu'on conna\xEEt. Plus le cadre est ma\xEEtris\xE9, plus les choix sont libres \u2014 c'est exactement l'inverse de l'intuition courante.", xp: 25 },
+      { id: "q-impro-17", courseId: "impro", lessonId: "scales-c3-01", lvl: 1, q: "Sur un morceau en La mineur, par quelle gamme commencer pour improviser ?", o: ["La pentatonique mineure de La", "La gamme chromatique compl\xE8te", "Mi phrygien", "Do majeur"], a: 0, exp: "La pentatonique mineure de La ne contient aucune note qui puisse sonner franchement fausse sur cette tonalit\xE9. C'est ce qui en fait le point de d\xE9part universel : on peut se concentrer sur le rythme et le phras\xE9 avant de penser aux notes.", xp: 25 },
+      { id: "q-impro-20", courseId: "impro", lessonId: "scales-c3-01", lvl: 2, q: "Un d\xE9butant en impro joue sans jamais s'arr\xEAter. Quel est le premier conseil ?", o: ["Apprendre davantage de gammes avant de jouer", "Monter progressivement en vitesse \xE0 chaque tour", "Changer de position sur le manche", "Laisser des silences entre des phrases courtes"], a: 3, exp: "Un flux ininterrompu ne s'entend pas comme de la musique mais comme un exercice. Jouer quatre notes puis se taire deux temps transforme imm\xE9diatement le r\xE9sultat, sans rien apprendre de nouveau.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/scales/scales-c3-02.js
+var scales_c3_02_exports = {};
+__export(scales_c3_02_exports, {
+  default: () => scales_c3_02_default,
+  quiz: () => quiz44
+});
+var POSITION_12, TROIS_LA, TAB_PAR_TROIS, scales_c3_02_default, quiz44;
+var init_scales_c3_02 = __esm({
+  "src/content/cours/scales/scales-c3-02.js"() {
+    POSITION_12 = {
+      type: "scale_pattern",
+      caption: "La pentatonique mineure \u2014 Position 1 (case 5) : les La en ambre",
+      data: {
+        startFret: 4,
+        endFret: 9,
+        rootColor: "amber",
+        noteColor: "primary",
+        strings: [
+          { frets: [5, 8], root: [5] },
+          { frets: [5, 7], root: [] },
+          { frets: [5, 7], root: [7] },
+          { frets: [5, 7], root: [] },
+          { frets: [5, 8], root: [] },
+          { frets: [5, 8], root: [5] }
+        ],
+        noteMap: {
+          "5,0": "La",
+          "8,0": "Do",
+          "5,1": "R\xE9",
+          "7,1": "Mi",
+          "5,2": "Sol",
+          "7,2": "La",
+          "5,3": "Do",
+          "7,3": "R\xE9",
+          "5,4": "Mi",
+          "8,4": "Sol",
+          "5,5": "La",
+          "8,5": "Do"
+        }
+      }
+    };
+    TROIS_LA = {
+      type: "fretboard",
+      caption: "Les trois La de la position 1 : grave, m\xE9dium, aigu",
+      data: {
+        frets: 5,
+        startFret: 4,
+        showStringNames: true,
+        showFretNumbers: true,
+        notes: [
+          { string: 6, fret: 5, label: "La", color: "amber", root: true },
+          { string: 4, fret: 7, label: "La", color: "amber", root: true },
+          { string: 1, fret: 5, label: "La", color: "amber", root: true }
+        ]
+      }
+    };
+    TAB_PAR_TROIS = {
+      type: "tab",
+      caption: "La position 1 par groupes de trois notes, en montant",
+      text: "Tab \u2014 en croches, par groupes de trois notes qui repartent chaque fois de la deuxi\xE8me note du groupe pr\xE9c\xE9dent : corde 6 cases 5 et 8, corde 5 case 5 ; puis corde 6 case 8, corde 5 cases 5 et 7 ; puis corde 5 cases 5 et 7, corde 4 case 5 ; et ainsi de suite jusqu'\xE0 la corde 3 case 7.",
+      data: { lines: [
+        "e|----------------|----------------|----------------|",
+        "B|----------------|----------------|----------------|",
+        "G|----------------|------------5---|5-7-------------|",
+        "D|----------------|5---5-7-5-7---7-|----------------|",
+        "A|----5---5-7-5-7-|--7-------------|----------------|",
+        "E|5-8---8---------|----------------|----------------|"
+      ] }
+    };
+    scales_c3_02_default = {
+      id: "scales-c3-02",
+      level: 6,
+      title: "La pentatonique, position 1 : la conna\xEEtre par c\u0153ur",
+      duration: 8,
+      gropiTip: "Joue la position 1 en ne nommant \xE0 voix haute que les La. Quand tu tombes sur les trois sans regarder, la forme est dans tes doigts.",
+      cartes: [
+        { type: "idee", titre: "Cinq positions, une \xE0 la fois", texte: [
+          "La pentatonique de La se joue en cinq formes qui couvrent tout le manche. On les apprend une par une, en commen\xE7ant par la position 1, case 5.",
+          "Cette le\xE7on la rend automatique ; les suivantes ajoutent les quatre autres, puis les relient."
+        ] },
+        { type: "question", quizId: "q-impro-18" },
+        { type: "idee", titre: "Un doigt par case", texte: [
+          "Index sur toute la case 5. Annulaire pour la case 7, auriculaire pour la case 8.",
+          "Le majeur se repose : il servira bient\xF4t \xE0 soutenir les bends. La main reste fixe, sans glisser."
+        ], bloc: POSITION_12 },
+        { type: "idee", titre: "Les trois La", texte: [
+          "La grave : corde 6, case 5. La m\xE9dium : corde 4, case 7. La aigu : corde 1, case 5.",
+          "Ce sont tes points d'arriv\xE9e : une phrase qui finit sur un La sonne conclue."
+        ], bloc: TROIS_LA },
+        { type: "question", quizId: "q-scales-pos1-01-app" },
+        {
+          type: "a-toi",
+          titre: "Par groupes de trois",
+          consigne: "Monte la position 1 par groupes de trois notes, comme la tab, au clic \xE0 60. Puis redescends de la m\xEAme fa\xE7on. \xC7a rompt l'automatisme de la gamme r\xE9cit\xE9e : tu dois voir la forme.",
+          bloc: TAB_PAR_TROIS,
+          bpm: 60,
+          minuteur: 120
+        },
+        { type: "idee", titre: "La case du bend", texte: [
+          "Sur la corde 3, la case 7 donne R\xE9. Tir\xE9e d'un ton, elle monte jusqu'\xE0 Mi, une autre note de la gamme : c'est le bend le plus jou\xE9 de la position.",
+          "Tu le travailleras dans la le\xE7on sur le bend juste."
+        ] },
+        { type: "question", quizId: "q-neck-23-app" },
+        { type: "question", quizId: "q-scales-pos1-02" },
+        { type: "recap", points: [
+          "Position 1 en La : cases 5 \xE0 8, index en 5, annulaire en 7, auriculaire en 8.",
+          "Trois La : corde 6 case 5, corde 4 case 7, corde 1 case 5.",
+          "Corde 3 case 7 : le R\xE9 qu'on tire d'un ton jusqu'au Mi."
+        ] }
+      ],
+      quiz: ["q-impro-18", "q-neck-23", "q-scales-pos1-01", "q-scales-pos1-02", "q-scales-pos1-01-app", "q-neck-23-app"]
+    };
+    quiz44 = [
+      { id: "q-impro-18", courseId: "impro", lessonId: "scales-c3-02", lvl: 1, q: "Pourquoi la pentatonique est-elle plus facile \xE0 improviser que la gamme majeure ?", o: ["Elle se joue \xE0 une vitesse plus \xE9lev\xE9e", "Elle retire les deux notes les plus instables", "Elle ne poss\xE8de qu'une seule position", "Elle n'a pas de tonique d\xE9finie"], a: 1, exp: "Cinq notes au lieu de sept : on a retir\xE9 la quarte et la septi\xE8me, celles qui demandent une r\xE9solution. Moins de notes \xE0 surveiller, donc plus d'attention disponible pour le placement rythmique.", xp: 25 },
+      { id: "q-neck-23", courseId: "scales", lessonId: "scales-c3-02", lvl: 3, q: "Dans la position 1 de La pentatonique mineure, le bend le plus naturel se joue sur la corde 3, \xE0 quelle case ?", o: ["Case 5", "Case 7", "Case 9", "Case 3"], a: 1, exp: "R\xE9 (corde 3 case 7), tir\xE9 d'un ton jusqu'au Mi : les deux notes sont dans la gamme, le bend sonne juste.", xp: 45 },
+      { id: "q-neck-23-app", courseId: "scales", lessonId: "scales-c3-02", lvl: 2, q: "Position 1 de La pentatonique mineure : tu tires d'un ton le Sol de la corde 2, case 8. Quelle note atteins-tu ?", o: ["La", "Sol#", "Si", "La#"], a: 0, exp: "Un ton = deux cases : Sol (corde 2 case 8) monte \xE0 la hauteur de La (corde 2 case 10), une note de la gamme. Le bend sonne juste.", xp: 30 },
+      { id: "q-scales-pos1-01", courseId: "scales", lessonId: "scales-c3-02", lvl: 1, q: "Position 1 de La pentatonique mineure : o\xF9 se trouve le La m\xE9dium, entre le grave et l'aigu ?", o: ["Corde 4, case 7", "Corde 5, case 7", "Corde 3, case 5", "Corde 2, case 8"], a: 0, exp: "La (corde 4 case 7). Corde 5 case 7 donne Mi, corde 3 case 5 donne Do, corde 2 case 8 donne Sol.", xp: 25 },
+      { id: "q-scales-pos1-01-app", courseId: "scales", lessonId: "scales-c3-02", lvl: 1, q: "La position 1 de Sol pentatonique mineure, c'est celle de La, deux cases plus bas. O\xF9 se trouve son Sol m\xE9dium ?", o: ["Corde 4, case 5", "Corde 4, case 7", "Corde 5, case 5", "Corde 3, case 5"], a: 0, exp: "Toute la forme descend de deux cases : le La m\xE9dium, corde 4 case 7, devient Sol (corde 4 case 5).", xp: 25 },
+      { id: "q-scales-pos1-02", courseId: "scales", lessonId: "scales-c3-02", lvl: 2, q: "Dans la position 1, quel doigt joue les notes de la case 8 ?", o: ["L'auriculaire", "L'annulaire", "Le majeur", "L'index"], a: 0, exp: "Un doigt par case : index en 5, (majeur en 6, inutilis\xE9 ici), annulaire en 7, auriculaire en 8. La main ne bouge pas.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/scales/scales-c3-03.js
+var scales_c3_03_exports = {};
+__export(scales_c3_03_exports, {
+  default: () => scales_c3_03_default,
+  quiz: () => quiz45
+});
+var DO_MAJ_LA_MIN, scales_c3_03_default, quiz45;
+var init_scales_c3_03 = __esm({
+  "src/content/cours/scales/scales-c3-03.js"() {
+    DO_MAJ_LA_MIN = {
+      type: "scale_pattern",
+      caption: "Do pentatonique majeure = La pentatonique mineure \u2014 m\xEAme forme, fondamentale diff\xE9rente",
+      data: {
+        startFret: 4,
+        endFret: 9,
+        rootColor: "green",
+        noteColor: "primary",
+        accentColor: "coral",
+        strings: [
+          { frets: [5, 8], root: [8] },
+          { frets: [5, 7], root: [] },
+          { frets: [5, 7], root: [] },
+          { frets: [5, 7], root: [5] },
+          { frets: [5, 8], root: [] },
+          { frets: [5, 8], root: [8] }
+        ],
+        noteMap: {
+          "5,0": "La",
+          "8,0": "Do",
+          "5,1": "R\xE9",
+          "7,1": "Mi",
+          "5,2": "Sol",
+          "7,2": "La",
+          "5,3": "Do",
+          "7,3": "R\xE9",
+          "5,4": "Mi",
+          "8,4": "Sol",
+          "5,5": "La",
+          "8,5": "Do"
+        }
+      }
+    };
+    scales_c3_03_default = {
+      id: "scales-c3-03",
+      level: 6,
+      title: "Pentatonique majeure et son lien avec la mineure",
+      duration: 7,
+      gropiTip: "Raccourci : pour une pentatonique majeure, place la forme mineure position 1 trois cases plus bas. R\xE9 majeur (case 10 corde 6) ? Forme mineure case 7, et pose tes phrases sur R\xE9.",
+      cartes: [
+        { type: "idee", titre: "La s\u0153ur lumineuse", texte: [
+          "Pentatonique majeure : 1 - 2 - 3 - 5 - 6. C'est la gamme majeure sans le 4 et le 7, ses notes les plus tendues. En Do : Do, R\xE9, Mi, Sol, La.",
+          "Son caract\xE8re : joyeux, ouvert. On l'entend beaucoup en country, en folk, en gospel et en pop."
+        ] },
+        { type: "question", quizId: "q-scales-06" },
+        { type: "idee", titre: "M\xEAmes notes, autre maison", texte: [
+          "Compare : Do pentatonique majeure = Do R\xE9 Mi Sol La. La pentatonique mineure = La Do R\xE9 Mi Sol.",
+          "Les cinq m\xEAmes notes ! Seule change la fondamentale, la note o\xF9 l'on se pose. Ce sont des pentatoniques relatives."
+        ], bloc: DO_MAJ_LA_MIN },
+        { type: "question", quizId: "q-scales-07" },
+        { type: "idee", titre: "Trois demi-tons plus bas", texte: [
+          "Toute pentatonique majeure a sa relative mineure 3 demi-tons plus bas : Do et La, Sol et Mi, R\xE9 et Si, La et Fa#, Fa et R\xE9.",
+          "Ce sont les m\xEAmes paires que les tonalit\xE9s relatives du cycle des quintes."
+        ] },
+        { type: "idee", titre: "Tu la connais d\xE9j\xE0", texte: [
+          "Ta position 1 de La mineure, case 5, est aussi la pentatonique majeure de Do. Rien ne change sous les doigts.",
+          "Sur un morceau en Do majeur, joue cette forme mais commence et termine tes phrases sur Do (case 8 corde 6). Le m\xEAme dessin sonne majeur."
+        ] },
+        { type: "question", quizId: "q-impro-21" },
+        {
+          type: "a-toi",
+          titre: "Une forme, deux couleurs",
+          consigne: "Au clic, monte et descends la forme en partant du Do (corde 6, case 8) et en finissant sur un Do. Puis rejoue-la en partant et finissant sur le La de la case 5. \xC9coute : m\xEAmes notes, l'une sonne claire, l'autre sombre.",
+          bloc: DO_MAJ_LA_MIN,
+          bpm: 60
+        },
+        { type: "question", quizId: "q-impro-05" },
+        { type: "recap", points: [
+          "Pentatonique majeure : 1 - 2 - 3 - 5 - 6 ; en Do, Do R\xE9 Mi Sol La.",
+          "Do pentatonique majeure = La pentatonique mineure : m\xEAmes notes, autre repos.",
+          "La relative mineure est 3 demi-tons sous la majeure : m\xEAme forme, autre note d'arriv\xE9e."
+        ] }
+      ],
+      quiz: ["q-scales-06", "q-scales-07", "q-impro-04", "q-impro-05", "q-impro-21"]
+    };
+    quiz45 = [
+      { id: "q-scales-06", courseId: "scales", lessonId: "scales-c3-03", lvl: 2, q: "La pentatonique majeure de Sol contient quelles notes ?", o: ["Sol-La-Do-R\xE9-Mi", "Sol-Si-Do-R\xE9-Fa", "Sol-La-Si-R\xE9-Mi", "Sol-La-Si-Do-R\xE9"], a: 2, exp: "Penta majeure = 1-2-3-5-6. Sol majeure = Sol-La-Si-Do-R\xE9-Mi-Fa#. Penta = retire 4 (Do) et 7 (Fa#). Donc Sol-La-Si-R\xE9-Mi.", xp: 40 },
+      { id: "q-scales-07", courseId: "scales", lessonId: "scales-c3-03", lvl: 2, q: "La pentatonique majeure de Do contient les M\xCAMES NOTES que la pentatonique mineure de\u2026", o: ["Mi", "Sol", "R\xE9", "La"], a: 3, exp: "Do penta maj = Do-R\xE9-Mi-Sol-La. La penta min = La-Do-R\xE9-Mi-Sol. M\xEAmes notes ! Relation de pentatoniques 'relatives' (la min = 6e degr\xE9 de maj).", xp: 50 },
+      { id: "q-impro-04", courseId: "impro", lessonId: "scales-c3-03", lvl: 2, q: "En jouant La pentatonique mineure sur un Cmaj7, \xE7a sonne\u2026", o: ["Juste : toutes ses notes vont", "Faux : la plupart des notes frottent", "Sombre : l'accord devient mineur", "Vide : il manque la tierce"], a: 0, exp: "La pentatonique mineure de La (La Do R\xE9 Mi Sol) contient exactement les notes de Do pentatonique majeure. Sur Cmaj7, tout sonne juste, et le Fa, la note \xE0 \xE9viter sur cet accord, en est absent.", xp: 55 },
+      { id: "q-impro-05", courseId: "impro", lessonId: "scales-c3-03", lvl: 3, q: "Une chanson country en Sol majeur. Quelle pentatonique mineure, d\xE9j\xE0 connue, te donne les notes de Sol pentatonique majeure ?", o: ["Mi pentatonique mineure", "Sol pentatonique mineure", "Si pentatonique mineure", "R\xE9 pentatonique mineure"], a: 0, exp: "Sol penta majeure = Sol La Si R\xE9 Mi. Mi penta mineure = Mi Sol La Si R\xE9 : les m\xEAmes notes, car Mi est la relative mineure de Sol. Tu reprends la forme de Mi mineure et tu te poses sur Sol.", xp: 60 },
+      { id: "q-impro-21", courseId: "impro", lessonId: "scales-c3-03", lvl: 2, q: "Tu connais La pentatonique mineure en position 1 (case 5). Pour jouer Do pentatonique majeure, que fais-tu ?", o: ["M\xEAme forme, repos sur Do", "M\xEAme forme, 3 cases plus haut", "M\xEAme forme, avec la \u266D5 en plus", "Nouvelle forme, 2 cases plus bas"], a: 0, exp: "Do pentatonique majeure et La pentatonique mineure ont les m\xEAmes cinq notes. Sous les doigts, rien ne change : c'est la note sur laquelle tu te poses (Do au lieu de La) qui fait entendre le majeur. D\xE9caler la forme de 3 cases donnerait Do pentatonique mineure.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/scales/scales-c3-04.js
+var scales_c3_04_exports = {};
+__export(scales_c3_04_exports, {
+  default: () => scales_c3_04_default,
+  quiz: () => quiz46
+});
+var BLUES_LA, scales_c3_04_default, quiz46;
+var init_scales_c3_04 = __esm({
+  "src/content/cours/scales/scales-c3-04.js"() {
+    BLUES_LA = {
+      type: "scale_pattern",
+      caption: "Gamme blues de La \u2014 penta mineure + note bleue R\xE9# (case 6 c5, case 8 c3)",
+      data: {
+        startFret: 4,
+        endFret: 9,
+        rootColor: "amber",
+        noteColor: "primary",
+        accentColor: "coral",
+        accentLabel: "note bleue",
+        strings: [
+          { frets: [5, 8], root: [5] },
+          { frets: [5, 6, 7], root: [], accent: [6] },
+          { frets: [5, 7], root: [7] },
+          { frets: [5, 7, 8], root: [], accent: [8] },
+          { frets: [5, 8], root: [] },
+          { frets: [5, 8], root: [5] }
+        ],
+        noteMap: {
+          "5,0": "La",
+          "8,0": "Do",
+          "5,1": "R\xE9",
+          "6,1": "R\xE9#",
+          "7,1": "Mi",
+          "5,2": "Sol",
+          "7,2": "La",
+          "5,3": "Do",
+          "7,3": "R\xE9",
+          "8,3": "R\xE9#",
+          "5,4": "Mi",
+          "8,4": "Sol",
+          "5,5": "La",
+          "8,5": "Do"
+        }
+      }
+    };
+    scales_c3_04_default = {
+      id: "scales-c3-04",
+      level: 6,
+      title: "La gamme blues : l'ajout de la blue note",
+      duration: 8,
+      gropiTip: "Fais chanter la blue note au bend : sur la corde 3, tire le R\xE9 (case 7) d'un demi-ton pour atteindre R\xE9#, ou d'un ton pour arriver sur Mi. \xC9coute bien la justesse.",
+      cartes: [
+        { type: "idee", titre: "Une note de plus", texte: [
+          "Gamme blues = pentatonique mineure + \u266D5 : 1 - \u266D3 - 4 - \u266D5 - 5 - \u266D7. Six notes.",
+          "En La : La, Do, R\xE9, R\xE9#, Mi, Sol. La nouvelle venue, R\xE9# (ou Mi\u266D), se glisse entre la quarte et la quinte."
+        ] },
+        { type: "idee", titre: "Pourquoi \xAB bleue \xBB", texte: [
+          "La \u266D5 sonne tr\xE8s tendue face \xE0 la fondamentale, et elle frotte d'un demi-ton contre la quinte.",
+          "Cette tension, proche d'une inflexion de voix, donne au blues sa couleur plaintive."
+        ] },
+        { type: "question", quizId: "q-impro-19" },
+        { type: "idee", titre: "Une note de passage", texte: [
+          "La r\xE8gle d'or : la blue note se traverse, elle ne se pose pas. Tenue longtemps, elle sonne fausse ; effleur\xE9e, elle sonne blues.",
+          "Le geste typique : R\xE9 (4), R\xE9# (\u266D5), Mi (5). La blue note sert de pont vers la quinte."
+        ] },
+        { type: "idee", titre: "Sur le manche", texte: [
+          "Reprends la position 1 de La, case 5, et ajoute R\xE9# (corde 5 case 6), entre le R\xE9 et le Mi.",
+          "Tu la retrouves aussi sur la corde 3 : R\xE9# (corde 3 case 8), juste apr\xE8s le R\xE9 de la case 7."
+        ], bloc: BLUES_LA },
+        { type: "question", quizId: "q-scales-p6-c34-01" },
+        {
+          type: "a-toi",
+          titre: "Ton premier lick blues",
+          consigne: "Corde 5 : R\xE9, R\xE9#, Mi en glissant d'un doigt \xE0 l'autre, sans t'arr\xEAter sur la case 6. Puis Sol et La sur la corde 4, et laisse sonner le La. Lentement au clic, puis improvise autour pendant une minute.",
+          bloc: {
+            type: "tab",
+            caption: "Lick blues en La : R\xE9, R\xE9#, Mi, puis Sol et La \u2014 la note bleue en passage",
+            text: "Tab \u2014 corde 5 : cases 5, 6, 7 (R\xE9, R\xE9#, Mi) ; puis corde 4 : cases 5 et 7 (Sol, La).",
+            data: { lines: [
+              "e|-------------------|",
+              "B|-------------------|",
+              "G|-------------------|",
+              "D|-------------5--7--|",
+              "A|-5--6--7-----------|",
+              "E|-------------------|"
+            ] }
+          },
+          bpm: 60,
+          minuteur: 60
+        },
+        { type: "question", quizId: "q-impro-01" },
+        { type: "recap", points: [
+          "Gamme blues = pentatonique mineure + \u266D5 ; en La, La Do R\xE9 R\xE9# Mi Sol.",
+          "La blue note se traverse : R\xE9 \u2192 R\xE9# \u2192 Mi, jamais tenue.",
+          "En position 1 : R\xE9# en case 6 sur la corde 5, en case 8 sur la corde 3."
+        ] }
+      ],
+      quiz: ["q-scales-08", "q-impro-01", "q-fret-scales-03", "q-impro-19", "q-scales-p6-c34-01"]
+    };
+    quiz46 = [
+      { id: "q-scales-08", courseId: "scales", lessonId: "scales-c3-04", lvl: 3, q: "La 'gamme blues' ajoute quelle note \xE0 la pentatonique mineure ?", o: ["La \u266D5", "La 2", "La 6", "La 7"], a: 0, exp: "Gamme blues = penta mineure + \u266D5 ('blue note'). En La : ajoute R\xE9# entre R\xE9 (4) et Mi (5). 6 notes au total. La \u266D5 cr\xE9e la tension blues caract\xE9ristique.", xp: 40 },
+      { id: "q-impro-01", courseId: "impro", lessonId: "scales-c3-04", lvl: 1, q: "Sur un blues en La majeur, quelle gamme commencer ?", o: ["La gamme majeure de La", "La pentatonique mineure", "Do majeur, la relative", "Mi pentatonique mineure"], a: 1, exp: "La pentatonique mineure de La sonne juste sur tout blues en La (A7-D7-E7). Le \u266D3 et la \u266D7 de la penta s'accordent avec les dominantes.", xp: 30 },
+      { id: "q-fret-scales-03", type: "fretboard", courseId: "scales", lessonId: "scales-c3-04", lvl: 2, q: "Trouve toutes les notes de la gamme blues de La sur le manche", concept: { type: "find_scale", root: "A", quality: "blues" }, selectionRules: { mode: "all" }, display: { showNotes: false }, hint: "Blues = pentatonique mineure + note bleue (\u266D5 = R\xE9#).", xp: 55, exp: "Blues de La : La-Do-R\xE9-R\xE9#-Mi-Sol. La note bleue R\xE9# est la caracteristique." },
+      { id: "q-impro-19", courseId: "impro", lessonId: "scales-c3-04", lvl: 1, q: "La \xAB blue note \xBB ajout\xE9e \xE0 la pentatonique mineure est\u2026", o: ["La seconde majeure", "La sixte majeure", "La quinte diminu\xE9e", "La septi\xE8me majeure"], a: 2, exp: "La quinte diminu\xE9e, entre la quarte et la quinte. Elle ne se tient pas : c'est une note de passage, \xE0 traverser plut\xF4t qu'\xE0 poser, et c'est cette tension fugace qui donne sa couleur au blues.", xp: 30 },
+      { id: "q-scales-p6-c34-01", courseId: "scales", lessonId: "scales-c3-04", lvl: 2, q: "Dans la position 1 de La, o\xF9 se joue la blue note sur la corde 5 ?", o: ["Case 6, entre R\xE9 et Mi", "Case 8, juste apr\xE8s le Mi", "Case 4, juste avant le R\xE9", "Case 7, \xE0 la place du Mi"], a: 0, exp: "Sur la corde 5, R\xE9 est en case 5 et Mi en case 7 : R\xE9#, la \u266D5 de La, tombe entre les deux, en case 6.", xp: 35 }
+    ];
+  }
+});
+
+// src/content/cours/scales/scales-c3-05.js
+var scales_c3_05_exports = {};
+__export(scales_c3_05_exports, {
+  default: () => scales_c3_05_default,
+  quiz: () => quiz47
+});
+var POSITION_2, TAB_POSITION_2, TAB_RACCORD, scales_c3_05_default, quiz47;
+var init_scales_c3_05 = __esm({
+  "src/content/cours/scales/scales-c3-05.js"() {
+    POSITION_2 = {
+      type: "scale_pattern",
+      caption: "La pentatonique mineure \u2014 Position 2 (case 8) : les La en ambre",
+      data: {
+        startFret: 6,
+        endFret: 11,
+        rootColor: "amber",
+        noteColor: "primary",
+        strings: [
+          { frets: [8, 10], root: [] },
+          { frets: [7, 10], root: [] },
+          { frets: [7, 10], root: [7] },
+          { frets: [7, 9], root: [] },
+          { frets: [8, 10], root: [10] },
+          { frets: [8, 10], root: [] }
+        ],
+        noteMap: {
+          "8,0": "Do",
+          "10,0": "R\xE9",
+          "7,1": "Mi",
+          "10,1": "Sol",
+          "7,2": "La",
+          "10,2": "Do",
+          "7,3": "R\xE9",
+          "9,3": "Mi",
+          "8,4": "Sol",
+          "10,4": "La",
+          "8,5": "Do",
+          "10,5": "R\xE9"
+        }
+      }
+    };
+    TAB_POSITION_2 = {
+      type: "tab",
+      caption: "La position 2 en montant, deux notes par corde",
+      text: "Tab \u2014 en croches : corde 6 cases 8 et 10, corde 5 cases 7 et 10, corde 4 cases 7 et 10, corde 3 cases 7 et 9, corde 2 cases 8 et 10, corde 1 cases 8 et 10.",
+      data: { lines: [
+        "e|----------------|------8-10------|",
+        "B|----------------|--8-10----------|",
+        "G|------------7-9-|----------------|",
+        "D|--------7-10----|----------------|",
+        "A|----7-10--------|----------------|",
+        "E|8-10------------|----------------|"
+      ] }
+    };
+    TAB_RACCORD = {
+      type: "tab",
+      caption: "Le raccord : la position 1 sur les cordes graves, la position 2 sur les aigu\xEBs",
+      text: "Tab \u2014 en croches : corde 6 cases 5 et 8, corde 5 cases 5 et 7, corde 4 cases 5 et 7 (position 1) ; puis corde 4 case 10, corde 3 cases 7 et 9, corde 2 cases 8 et 10, corde 1 cases 8 et 10 (position 2).",
+      data: { lines: [
+        "e|----------------|------8-10------|",
+        "B|----------------|--8-10----------|",
+        "G|--------------7-|9---------------|",
+        "D|--------5-7-10--|----------------|",
+        "A|----5-7---------|----------------|",
+        "E|5-8-------------|----------------|"
+      ] }
+    };
+    scales_c3_05_default = {
+      id: "scales-c3-05",
+      level: 6,
+      title: "Pentatonique, position 2 et le raccord 1\u21922",
+      duration: 8,
+      gropiTip: "Le passage se fait sur la corde 4 : le La de la case 7, jou\xE9 \xE0 l'annulaire en position 1, se rejoue \xE0 l'index. Ce simple changement de doigt t'a d\xE9plac\xE9 d'une position.",
+      cartes: [
+        { type: "idee", titre: "Elle part du Do", texte: [
+          "La position 2 commence l\xE0 o\xF9 la position 1 s'arr\xEAte : sur le Do de la corde 6, case 8, la \u266D3 de La.",
+          "M\xEAmes cinq notes, La Do R\xE9 Mi Sol, rang\xE9es autrement entre les cases 7 et 10."
+        ], bloc: POSITION_2 },
+        { type: "question", quizId: "q-scales-63" },
+        { type: "idee", titre: "Les doigts", texte: [
+          "Index sur la case 7 (cordes 5, 4 et 3), majeur sur la case 8 (cordes 6, 2 et 1), annulaire sur la 9, auriculaire sur la 10.",
+          "Les La sont sur la corde 4 case 7 et sur la corde 2 case 10."
+        ] },
+        { type: "question", quizId: "q-scales-pos2-01" },
+        {
+          type: "a-toi",
+          titre: "La position 2 seule",
+          consigne: "Monte la position 2 au clic \xE0 60, une note par croche, puis redescends. Pars et termine sur le La de la corde 4, case 7.",
+          bloc: TAB_POSITION_2,
+          bpm: 60,
+          minuteur: 90
+        },
+        { type: "idee", titre: "Des notes en commun", texte: [
+          "Le haut de la position 1 (cases 7 et 8) est exactement le bas de la position 2 : Do, Mi, La, R\xE9, Sol, Do.",
+          "Pour passer de l'une \xE0 l'autre, il suffit de changer de doigt sur une note commune, puis de continuer dans la nouvelle forme."
+        ] },
+        { type: "question", quizId: "q-scales-64" },
+        {
+          type: "a-toi",
+          titre: "Le raccord 1\u21922",
+          consigne: "Cordes 6 \xE0 4 en position 1 ; sur le La de la corde 4, case 7, change de doigt et finis en position 2. Puis redescends par le m\xEAme chemin. Au clic \xE0 60, puis \xE0 70.",
+          bloc: TAB_RACCORD,
+          bpm: 60,
+          minuteur: 120
+        },
+        { type: "recap", points: [
+          "Position 2 en La : cases 7 \xE0 10, elle d\xE9marre sur le Do de la corde 6, case 8.",
+          "Ses La : corde 4 case 7 et corde 2 case 10.",
+          "Le raccord : les cases 7 et 8 sont communes aux deux positions ; on change de doigt et on continue."
+        ] }
+      ],
+      quiz: ["q-scales-63", "q-scales-64", "q-scales-pos2-01"]
+    };
+    quiz47 = [
+      { id: "q-scales-63", courseId: "scales", lessonId: "scales-c3-05", lvl: 1, q: "En La pentatonique mineure, sur quelle note d\xE9marre la position 2 ?", o: ["Do", "R\xE9", "Mi", "Sol"], a: 0, exp: "Chaque position d\xE9marre sur une note de la gamme : position 1 sur La, position 2 sur Do (la \u266D3, case 8 de la corde 6), puis R\xE9, Mi et Sol.", xp: 30 },
+      { id: "q-scales-64", courseId: "scales", lessonId: "scales-c3-05", lvl: 2, q: "Quelle case sert de passage entre les positions 1 et 2 de La pentatonique mineure ?", o: ["Case 8", "Case 5", "Case 10", "Case 12"], a: 0, exp: "La position 1 s'\xE9tend des cases 5 \xE0 8, la position 2 des cases 7 \xE0 10 : leurs notes des cases 7 et 8 sont communes, dont le Do de la corde 6, case 8. Changer de doigt sur ce pivot relie les deux formes.", xp: 40 },
+      { id: "q-scales-pos2-01", courseId: "scales", lessonId: "scales-c3-05", lvl: 2, q: "Position 2 de La pentatonique mineure : sur quelles cases trouves-tu ses La ?", o: ["Corde 4 case 7, corde 2 case 10", "Corde 6 case 8, corde 1 case 8", "Corde 5 case 7, corde 3 case 9", "Corde 5 case 10, corde 2 case 8"], a: 0, exp: "Corde 4 case 7 et corde 2 case 10 donnent La. Les cases 8 des cordes 6 et 1 sont des Do, la corde 5 case 7 un Mi, la corde 2 case 8 un Sol.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/scales/scales-c3-06.js
+var scales_c3_06_exports = {};
+__export(scales_c3_06_exports, {
+  default: () => scales_c3_06_default,
+  quiz: () => quiz48
+});
+var POSITION_3, POSITION_4, POSITION_5, TAB_POSITION_3, scales_c3_06_default, quiz48;
+var init_scales_c3_06 = __esm({
+  "src/content/cours/scales/scales-c3-06.js"() {
+    POSITION_3 = {
+      type: "scale_pattern",
+      caption: "La pentatonique mineure \u2014 Position 3 (case 10) : les La en ambre",
+      data: {
+        startFret: 8,
+        endFret: 13,
+        rootColor: "amber",
+        noteColor: "primary",
+        strings: [
+          { frets: [10, 12], root: [] },
+          { frets: [10, 12], root: [12] },
+          { frets: [10, 12], root: [] },
+          { frets: [9, 12], root: [] },
+          { frets: [10, 13], root: [10] },
+          { frets: [10, 12], root: [] }
+        ],
+        noteMap: {
+          "10,0": "R\xE9",
+          "12,0": "Mi",
+          "10,1": "Sol",
+          "12,1": "La",
+          "10,2": "Do",
+          "12,2": "R\xE9",
+          "9,3": "Mi",
+          "12,3": "Sol",
+          "10,4": "La",
+          "13,4": "Do",
+          "10,5": "R\xE9",
+          "12,5": "Mi"
+        }
+      }
+    };
+    POSITION_4 = {
+      type: "scale_pattern",
+      caption: "La pentatonique mineure \u2014 Position 4 (case 12) : les La en ambre",
+      data: {
+        startFret: 11,
+        endFret: 16,
+        rootColor: "amber",
+        noteColor: "primary",
+        strings: [
+          { frets: [12, 15], root: [] },
+          { frets: [12, 15], root: [12] },
+          { frets: [12, 14], root: [] },
+          { frets: [12, 14], root: [14] },
+          { frets: [13, 15], root: [] },
+          { frets: [12, 15], root: [] }
+        ],
+        noteMap: {
+          "12,0": "Mi",
+          "15,0": "Sol",
+          "12,1": "La",
+          "15,1": "Do",
+          "12,2": "R\xE9",
+          "14,2": "Mi",
+          "12,3": "Sol",
+          "14,3": "La",
+          "13,4": "Do",
+          "15,4": "R\xE9",
+          "12,5": "Mi",
+          "15,5": "Sol"
+        }
+      }
+    };
+    POSITION_5 = {
+      type: "scale_pattern",
+      caption: "La pentatonique mineure \u2014 Position 5 (case 15) : les La en ambre",
+      data: {
+        startFret: 13,
+        endFret: 18,
+        rootColor: "amber",
+        noteColor: "primary",
+        strings: [
+          { frets: [15, 17], root: [17] },
+          { frets: [15, 17], root: [] },
+          { frets: [14, 17], root: [] },
+          { frets: [14, 17], root: [14] },
+          { frets: [15, 17], root: [] },
+          { frets: [15, 17], root: [17] }
+        ],
+        noteMap: {
+          "15,0": "Sol",
+          "17,0": "La",
+          "15,1": "Do",
+          "17,1": "R\xE9",
+          "14,2": "Mi",
+          "17,2": "Sol",
+          "14,3": "La",
+          "17,3": "Do",
+          "15,4": "R\xE9",
+          "17,4": "Mi",
+          "15,5": "Sol",
+          "17,5": "La"
+        }
+      }
+    };
+    TAB_POSITION_3 = {
+      type: "tab",
+      caption: "La position 3 en montant, une note par temps",
+      text: "Tab \u2014 une note par temps : corde 6 cases 10 et 12, corde 5 cases 10 et 12, corde 4 cases 10 et 12, corde 3 cases 9 et 12, corde 2 cases 10 et 13, corde 1 cases 10 et 12.",
+      data: { lines: [
+        "e|----------------|----------------|--------10--12--|",
+        "B|----------------|----------------|10--13----------|",
+        "G|----------------|--------9---12--|----------------|",
+        "D|----------------|10--12----------|----------------|",
+        "A|--------10--12--|----------------|----------------|",
+        "E|10--12----------|----------------|----------------|"
+      ] }
+    };
+    scales_c3_06_default = {
+      id: "scales-c3-06",
+      level: 6,
+      title: "Pentatonique, positions 3, 4 et 5",
+      duration: 9,
+      gropiTip: "Chaque position garde une corde \xAB \xE0 trois cases d'\xE9cart \xBB qui la trahit : corde 2 en position 3 (cases 10 et 13), corde 6 en position 4 (12 et 15). Rep\xE8re-la et la forme se reconstruit autour.",
+      cartes: [
+        { type: "idee", titre: "Trois formes de plus", texte: [
+          "Chaque position part de la note suivante de la gamme, sur la corde 6 : R\xE9 case 10 (position 3), Mi case 12 (position 4), Sol case 15 (position 5).",
+          "Le haut de chaque forme est le bas de la suivante, comme entre les positions 1 et 2."
+        ] },
+        { type: "idee", titre: "Position 3, case 10", texte: [
+          "De la case 9 \xE0 la case 13. La corde 3 descend d'une case (9 et 12), la corde 2 monte d'une case (10 et 13) : c'est le petit d\xE9calage de cette forme.",
+          "Ses La : corde 5 case 12, corde 2 case 10."
+        ], bloc: POSITION_3 },
+        { type: "question", quizId: "q-scales-pos345-01" },
+        { type: "idee", titre: "Position 4, case 12", texte: [
+          "De la case 12 \xE0 la case 15. Index sur la case 12, presque partout ; la corde 2 commence en case 13.",
+          "Ses La : corde 5 case 12 et corde 3 case 14. La case 12, c'est aussi l'octave des cordes \xE0 vide."
+        ], bloc: POSITION_4 },
+        { type: "question", quizId: "q-scales-pos345-02-app" },
+        { type: "idee", titre: "Position 5, case 15\u2026 ou case 3", texte: [
+          "De la case 14 \xE0 la case 17, elle part du Sol de la corde 6. Ses La : cordes 6 et 1 case 17, corde 3 case 14.",
+          "Douze cases plus bas, la m\xEAme forme se joue entre les cases 2 et 5 : c'est le \xAB sous-sol \xBB du manche, juste sous la position 1."
+        ], bloc: POSITION_5 },
+        { type: "question", quizId: "q-scales-pos345-03" },
+        {
+          type: "a-toi",
+          titre: "Une minute par position",
+          consigne: "Une minute sur la position 3 (la tab), une sur la position 4, une sur la position 5 : monte et descends au clic \xE0 60, en t'arr\xEAtant sur chaque La.",
+          bloc: TAB_POSITION_3,
+          bpm: 60,
+          minuteur: 180
+        },
+        { type: "recap", points: [
+          "Position 3 : case 10 (R\xE9) ; position 4 : case 12 (Mi) ; position 5 : case 15 (Sol).",
+          "Le haut d'une position est toujours le bas de la suivante.",
+          "La position 5 existe aussi douze cases plus bas, entre les cases 2 et 5."
+        ] }
+      ],
+      quiz: ["q-scales-pos345-01", "q-scales-pos345-02", "q-scales-pos345-03", "q-scales-pos345-02-app"]
+    };
+    quiz48 = [
+      { id: "q-scales-pos345-01", courseId: "scales", lessonId: "scales-c3-06", lvl: 2, q: "En La pentatonique mineure, quelle note de la corde 6 sert de d\xE9part \xE0 la position 3 ?", o: ["R\xE9, case 10", "Do, case 8", "Mi, case 12", "Sol, case 15"], a: 0, exp: "Les positions suivent les notes de la gamme sur la corde 6 : La (5), Do (8), R\xE9 (10), Mi (12), Sol (15). La position 3 part donc du R\xE9, case 10.", xp: 30 },
+      { id: "q-scales-pos345-02", courseId: "scales", lessonId: "scales-c3-06", lvl: 2, q: "Tu joues la position 4 de La pentatonique mineure. O\xF9 poses-tu l'index, sur presque toutes les cordes ?", o: ["Case 12", "Case 10", "Case 14", "Case 15"], a: 0, exp: "La position 4 s'\xE9tend de la case 12 \xE0 la case 15 : index en 12, sauf sur la corde 2 qui commence en 13.", xp: 30 },
+      { id: "q-scales-pos345-02-app", courseId: "scales", lessonId: "scales-c3-06", lvl: 2, q: "En Sol pentatonique mineure, tout est deux cases plus bas qu'en La. O\xF9 poses-tu l'index pour la position 4 ?", o: ["Case 10", "Case 12", "Case 8", "Case 14"], a: 0, exp: "En La, la position 4 commence en case 12. En Sol, deux cases plus bas : case 10, sur le R\xE9 de la corde 6, 4e note de Sol pentatonique mineure.", xp: 30 },
+      { id: "q-scales-pos345-03", courseId: "scales", lessonId: "scales-c3-06", lvl: 3, q: "Pourquoi la position 5 se joue-t-elle aussi bien entre les cases 2 et 5 qu'entre les cases 14 et 17 ?", o: ["Douze cases font une octave", "Les cordes graves sont plus tendues", "Les deux formes n'ont pas les m\xEAmes notes", "La case 12 inverse les cordes"], a: 0, exp: "Douze cases plus haut, chaque note revient \xE0 l'octave : la m\xEAme forme donne les m\xEAmes notes, une octave plus aigu\xEB.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/scales/scales-c3-07.js
+var scales_c3_07_exports = {};
+__export(scales_c3_07_exports, {
+  default: () => scales_c3_07_default,
+  quiz: () => quiz49
+});
+var CARTE_MANCHE, TAB_DIAGONALE, scales_c3_07_default, quiz49;
+var init_scales_c3_07 = __esm({
+  "src/content/cours/scales/scales-c3-07.js"() {
+    CARTE_MANCHE = {
+      type: "fretboard",
+      caption: "Le d\xE9part de chaque position sur la corde 6 : La, Do, R\xE9, Mi, Sol, La",
+      data: {
+        frets: 14,
+        startFret: 4,
+        showStringNames: true,
+        showFretNumbers: true,
+        notes: [
+          { string: 6, fret: 5, label: "La", color: "amber", root: true },
+          { string: 6, fret: 8, label: "Do", color: "primary" },
+          { string: 6, fret: 10, label: "R\xE9", color: "primary" },
+          { string: 6, fret: 12, label: "Mi", color: "primary" },
+          { string: 6, fret: 15, label: "Sol", color: "primary" },
+          { string: 6, fret: 17, label: "La", color: "amber", root: true }
+        ]
+      }
+    };
+    TAB_DIAGONALE = {
+      type: "tab",
+      caption: "La diagonale : deux notes par corde, une position de plus \xE0 chaque corde",
+      text: "Tab \u2014 une note par temps : corde 6 cases 5 et 8, corde 5 cases 7 et 10, corde 4 cases 10 et 12, corde 3 cases 12 et 14, corde 2 cases 15 et 17, puis corde 1 case 17, le La aigu.",
+      data: { lines: [
+        "e|----------------|----------------|--------17------|",
+        "B|----------------|----------------|15--17----------|",
+        "G|----------------|--------12--14--|----------------|",
+        "D|----------------|10--12----------|----------------|",
+        "A|--------7---10--|----------------|----------------|",
+        "E|5---8-----------|----------------|----------------|"
+      ] }
+    };
+    scales_c3_07_default = {
+      id: "scales-c3-07",
+      level: 6,
+      title: "Relier les 5 positions sur tout le manche",
+      duration: 9,
+      gropiTip: "Choisis une seule note, le Mi par exemple, et trouve-la dans chacune des cinq positions, de la case 5 \xE0 la case 17. Tu relies les formes par ce qu'elles ont en commun.",
+      cartes: [
+        { type: "idee", titre: "La carte du manche", texte: [
+          "Sur la corde 6, chaque position part d'une note de la gamme : La case 5, Do case 8, R\xE9 case 10, Mi case 12, Sol case 15.",
+          "Case 17, on retrouve La : c'est la position 1, une octave plus haut. Les cinq formes tournent en boucle."
+        ], bloc: CARTE_MANCHE },
+        { type: "question", quizId: "q-scales-relier-01-app" },
+        { type: "idee", titre: "Elles s'embo\xEEtent", texte: [
+          "Le haut d'une position est toujours le bas de la suivante : 1 et 2 partagent les cases 7 et 8, 2 et 3 les cases 9 et 10, 3 et 4 les cases 12 et 13.",
+          "Tu ne changes jamais de gamme, seulement de zone."
+        ] },
+        { type: "idee", titre: "Trois fa\xE7ons de changer", texte: [
+          "Changer de doigt sur une note commune, comme dans le raccord 1\u21922. Glisser vers une note de la position suivante, en gardant le doigt sur la corde. Ou monter deux notes par corde en diagonale.",
+          "La diagonale traverse les cinq positions en six cordes."
+        ] },
+        { type: "question", quizId: "q-scales-relier-02" },
+        {
+          type: "a-toi",
+          titre: "La diagonale",
+          consigne: "Du La grave (corde 6, case 5) au La aigu (corde 1, case 17), deux notes par corde, au clic \xE0 60. Puis redescends. Les changements de position se font en glissant l'index vers la note suivante.",
+          bloc: TAB_DIAGONALE,
+          bpm: 60,
+          minuteur: 120
+        },
+        { type: "question", quizId: "q-scales-relier-03" },
+        {
+          type: "a-toi",
+          titre: "Trois minutes sur tout le manche",
+          consigne: "Improvise en La mineur : une phrase courte par position, de la position 1 \xE0 la position 1 une octave plus haut, puis redescends. Termine chaque phrase sur un La.",
+          bloc: CARTE_MANCHE,
+          bpm: 70,
+          minuteur: 180
+        },
+        { type: "recap", points: [
+          "D\xE9parts sur la corde 6 : cases 5, 8, 10, 12, 15, puis 17 (position 1 \xE0 l'octave).",
+          "Le haut d'une position est le bas de la suivante : on change de zone, pas de gamme.",
+          "Pour passer d'une forme \xE0 l'autre : changer de doigt, glisser, ou la diagonale."
+        ] }
+      ],
+      quiz: ["q-scales-relier-01", "q-scales-relier-02", "q-scales-relier-03", "q-scales-relier-01-app"]
+    };
+    quiz49 = [
+      { id: "q-scales-relier-01", courseId: "scales", lessonId: "scales-c3-07", lvl: 2, q: "En La pentatonique mineure, apr\xE8s la position 5 (case 15), quelle forme trouves-tu \xE0 partir de la case 17 ?", o: ["La position 1, une octave plus haut", "La position 2, une octave plus haut", "Une sixi\xE8me position, propre \xE0 l'aigu", "La position 4, rejou\xE9e plus haut"], a: 0, exp: "Case 17 sur la corde 6, c'est La, comme en case 5 : douze cases plus haut, la position 1 recommence. Les cinq formes tournent en boucle.", xp: 35 },
+      { id: "q-scales-relier-01-app", courseId: "scales", lessonId: "scales-c3-07", lvl: 2, q: "En Fa pentatonique mineure, la position 1 part de la case 1 de la corde 6. \xC0 quelle case la retrouves-tu, une octave plus haut ?", o: ["Case 13", "Case 12", "Case 6", "Case 11"], a: 0, exp: "Une octave, c'est douze cases : la position 1 recommence en case 13, sur le Fa de la corde 6.", xp: 30 },
+      { id: "q-scales-relier-02", courseId: "scales", lessonId: "scales-c3-07", lvl: 2, q: "Tu passes de la position 3 \xE0 la position 4 en La mineur. Quelle case ont-elles en commun ?", o: ["Case 12", "Case 10", "Case 15", "Case 8"], a: 0, exp: "La position 3 va de la case 9 \xE0 la case 13, la position 4 de la case 12 \xE0 la case 15 : leurs notes des cases 12 et 13 sont communes.", xp: 35 },
+      { id: "q-scales-relier-03", courseId: "scales", lessonId: "scales-c3-07", lvl: 3, q: "Tu improvises en La mineur en position 4, autour de la case 12. Tu veux redescendre vers le grave sans quitter la gamme. Quelle position rejoins-tu ?", o: ["La position 3, autour de la case 10", "La position 5, autour de la case 15", "La position 1, autour de la case 17", "Aucune : il faut changer de gamme"], a: 0, exp: "Vers le grave, la position voisine de la 4 est la 3 (cases 9 \xE0 13). La 5 et la position 1 \xE0 l'octave sont plus haut, vers l'aigu.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/scales/scales-c4-01.js
+var scales_c4_01_exports = {};
+__export(scales_c4_01_exports, {
+  default: () => scales_c4_01_default,
+  quiz: () => quiz50
+});
+var scales_c4_01_default, quiz50;
+var init_scales_c4_01 = __esm({
+  "src/content/cours/scales/scales-c4-01.js"() {
+    scales_c4_01_default = {
+      id: "scales-c4-01",
+      level: 7,
+      title: "Mineur naturel et majeur : deux faces d'une m\xEAme pi\xE8ce",
+      duration: 7,
+      gropiTip: "Pour comparer les deux formules : la mineure naturelle, c'est la majeure avec la 3, la 6 et la 7 abaiss\xE9es d'un demi-ton. Do majeur devient Do mineur avec Mi\u266D, La\u266D et Si\u266D.",
+      cartes: [
+        { type: "idee", titre: "Pas des contraires", texte: [
+          "Avant les modes, une \xE9tape cl\xE9 : majeur et mineur ne s'opposent pas.",
+          "Ce sont deux fa\xE7ons d'\xE9couter les m\xEAmes notes. Tout d\xE9pend de la note sur laquelle ton oreille se repose."
+        ] },
+        { type: "idee", titre: "La formule mineure", texte: [
+          "Majeure : T-T-DT-T-T-T-DT. Mineure naturelle : T-DT-T-T-DT-T-T. Les demi-tons changent de place, et le caract\xE8re avec : plus sombre, plus introspectif.",
+          "Depuis La : La, Si, Do, R\xE9, Mi, Fa, Sol. Aucune alt\xE9ration."
+        ], bloc: {
+          type: "scale_pattern",
+          caption: "La mineur naturel (= \xE9olien) \u2014 position case 5. M\xEAmes notes que Do majeur",
+          data: {
+            startFret: 4,
+            endFret: 8,
+            rootColor: "primary",
+            noteColor: "green",
+            accentColor: "coral",
+            accentLabel: "Fa, sixte mineure (couleur de l'\xE9olien)",
+            strings: [
+              { frets: [5, 7, 8], root: [5] },
+              { frets: [5, 7, 8], root: [], accent: [8] },
+              { frets: [5, 7], root: [7] },
+              { frets: [4, 5, 7], root: [] },
+              { frets: [5, 6, 8], root: [], accent: [6] },
+              { frets: [5, 7, 8], root: [5] }
+            ],
+            noteMap: {
+              "5,0": "La",
+              "7,0": "Si",
+              "8,0": "Do",
+              "5,1": "R\xE9",
+              "7,1": "Mi",
+              "8,1": "Fa",
+              "5,2": "Sol",
+              "7,2": "La",
+              "4,3": "Si",
+              "5,3": "Do",
+              "7,3": "R\xE9",
+              "5,4": "Mi",
+              "6,4": "Fa",
+              "8,4": "Sol",
+              "5,5": "La",
+              "7,5": "Si",
+              "8,5": "Do"
+            }
+          }
+        } },
+        { type: "question", quizId: "q-scales-34-app" },
+        { type: "idee", titre: "Les tonalit\xE9s relatives", texte: [
+          "Do majeur et La mineur ont exactement les m\xEAmes sept notes : La mineur est la relative de Do. Elle se trouve sur le 6e degr\xE9, un ton et demi sous la tonique.",
+          "Autres paires : Sol / Mim, R\xE9 / Sim, La / Fa#m, Fa / R\xE9m."
+        ] },
+        { type: "question", quizId: "q-logic-04" },
+        { type: "idee", titre: "La note de repos d\xE9cide", texte: [
+          "Joue ces sept notes en commen\xE7ant et en finissant tes phrases sur Do : tu entends du majeur, lumineux.",
+          "M\xEAmes notes, mais tu reviens toujours sur La : \xE7a devient mineur, m\xE9lancolique. L'oreille recentre la gamme sur la note qu'elle entend comme repos. C'est ce qui rend les modes possibles."
+        ] },
+        {
+          type: "a-toi",
+          titre: "Deux phrases, deux ambiances",
+          consigne: "Plaque un Lam ouvert, puis joue la premi\xE8re phrase : elle se pose sur La. Plaque un Do, puis la seconde : elle se pose sur Do. Au clic \xE0 60, quatre fois chaque. M\xEAmes notes, \xE9coute l'ambiance basculer.",
+          bloc: {
+            type: "tab",
+            caption: "Phrase 1 qui se pose sur La (mineur), phrase 2 qui se pose sur Do (majeur) \u2014 position case 5",
+            text: "Tab \u2014 phrase 1 : corde 2 case 5, corde 3 cases 7, 5 et 4, corde 4 case 7, tenue (Mi, R\xE9, Do, Si, La). Phrase 2 : corde 2 cases 8, 6 et 5, corde 3 cases 7 et 5, tenue (Sol, Fa, Mi, R\xE9, Do).",
+            data: { lines: [
+              "e|-------------------------------------|",
+              "B|-5--------------------8--6--5--------|",
+              "G|----7--5--4--------------------7--5--|",
+              "D|-------------7-----------------------|",
+              "A|-------------------------------------|",
+              "E|-------------------------------------|"
+            ] }
+          },
+          bpm: 60,
+          minuteur: 120
+        },
+        { type: "question", quizId: "q-scales-35" },
+        { type: "recap", points: [
+          "Mineure naturelle : T-DT-T-T-DT-T-T ; La mineur = La Si Do R\xE9 Mi Fa Sol.",
+          "Chaque tonalit\xE9 majeure a sa relative mineure, sur son 6e degr\xE9 : m\xEAmes notes.",
+          "C'est la note de repos qui fait entendre majeur ou mineur."
+        ] }
+      ],
+      quiz: ["q-logic-04", "q-scales-34", "q-scales-35", "q-scales-34-app"]
+    };
+    quiz50 = [
+      { id: "q-logic-04", courseId: "harmony", lessonId: "scales-c4-01", lvl: 2, q: "Le 'relatif mineur' d'une tonalit\xE9 majeure est sur quel degr\xE9 ?", o: ["3e", "4e", "7e", "6e"], a: 3, exp: "Relatif mineur = 6e degr\xE9. Do majeur \u2192 La mineur (6e degr\xE9 = La). M\xEAmes notes, fondamentale diff\xE9rente, couleur oppos\xE9e.", xp: 45 },
+      { id: "q-scales-34", courseId: "scales", lessonId: "scales-c4-01", lvl: 1, q: "Quelle est la formule de la gamme mineure naturelle ?", o: ["T-T-DT-T-T-T-DT", "T-DT-T-T-T-T-DT", "DT-T-T-T-DT-T-T", "T-DT-T-T-DT-T-T"], a: 3, exp: "Mineure naturelle : T-DT-T-T-DT-T-T. Depuis La : La-Si-Do-R\xE9-Mi-Fa-Sol, sans alt\xE9ration.", xp: 30 },
+      { id: "q-scales-34-app", courseId: "scales", lessonId: "scales-c4-01", lvl: 2, q: "Applique la formule mineure naturelle depuis Mi : quelles notes sont alt\xE9r\xE9es ?", o: ["Fa# seulement", "Fa# et Do#", "Aucune", "Fa#, Do# et Sol#"], a: 0, exp: "Mi, Fa#, Sol, La, Si, Do, R\xE9 : un ton de Mi \xE0 Fa#, puis que des notes naturelles. Un seul di\xE8se, comme Sol majeur, sa relative.", xp: 30 },
+      { id: "q-scales-35", courseId: "scales", lessonId: "scales-c4-01", lvl: 2, q: "Do majeur et La mineur naturel ont les m\xEAmes notes. Qu'est-ce qui change l'ambiance ?", o: ["La note sur laquelle on se pose", "Le nombre de notes jou\xE9es dans la gamme", "Le tempo du morceau", "L'accordage de la guitare"], a: 0, exp: "M\xEAmes 7 notes, fondamentale diff\xE9rente : on entend du majeur en se posant sur Do, du mineur en se posant sur La.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/scales/scales-c4-02.js
+var scales_c4_02_exports = {};
+__export(scales_c4_02_exports, {
+  default: () => scales_c4_02_default,
+  quiz: () => quiz51
+});
+var scales_c4_02_default, quiz51;
+var init_scales_c4_02 = __esm({
+  "src/content/cours/scales/scales-c4-02.js"() {
+    scales_c4_02_default = {
+      id: "scales-c4-02",
+      level: 8,
+      title: "Qu'est-ce qu'un mode (la grande r\xE9v\xE9lation)",
+      duration: 9,
+      gropiTip: "Pour trouver la gamme parente d'un mode, remonte jusqu'au degr\xE9 I : La dorien est le IIe degr\xE9, donc la gamme parente commence un ton plus bas, sur Sol. La dorien = notes de Sol majeur.",
+      cartes: [
+        { type: "idee", titre: "Une gamme, un autre d\xE9part", texte: [
+          "Un mode, c'est la gamme majeure jou\xE9e \xE0 partir d'un autre degr\xE9 que sa tonique.",
+          "Prends Do majeur et pars de R\xE9 : R\xE9, Mi, Fa, Sol, La, Si, Do, R\xE9. M\xEAmes notes, mais R\xE9 devient la fondamentale, et les \xE9carts changent de place. Ce mode s'appelle R\xE9 dorien."
+        ], bloc: { type: "note_grid", caption: "R\xE9 dorien sur la corde 5 : les notes de Do majeur, mais de R\xE9 \xE0 R\xE9 \u2014 les \xE9carts deviennent T-DT-T-T-T-DT-T", data: { string: 5, stringName: "La", maxFret: 17, highlights: [{ fret: 5, label: "R\xE9", color: "amber" }, { fret: 7, label: "Mi", color: "primary" }, { fret: 8, label: "Fa", color: "primary" }, { fret: 10, label: "Sol", color: "primary" }, { fret: 12, label: "La", color: "primary" }, { fret: 14, label: "Si", color: "primary" }, { fret: 15, label: "Do", color: "primary" }, { fret: 17, label: "R\xE9", color: "amber" }] } } },
+        { type: "idee", titre: "Sept degr\xE9s, sept modes", texte: [
+          "I ionien (le majeur), II dorien, III phrygien, IV lydien, V mixolydien, VI \xE9olien (le mineur naturel), VII locrien.",
+          "Leurs noms sont emprunt\xE9s \xE0 des peuples et r\xE9gions de la Gr\xE8ce antique."
+        ] },
+        { type: "question", quizId: "q-scales-12" },
+        { type: "idee", titre: "M\xEAmes notes, autre ambiance", texte: [
+          "Les sept modes de Do majeur se partagent un seul r\xE9servoir de notes. Ce qui change, c'est la note sur laquelle l'oreille se pose.",
+          "Pos\xE9 sur Mi, \xE7a sonne espagnol et tendu. Sur Fa, flottant. Sur Sol, rock."
+        ], bloc: { type: "scale_pattern", caption: "R\xE9 dorien \u2014 le m\xEAme r\xE9servoir que la gamme parente, mais la fondamentale est R\xE9 (case 5 corde 5, case 7 corde 3)", data: { startFret: 4, endFret: 8, rootColor: "amber", noteColor: "primary", strings: [{ frets: [5, 7, 8], root: [] }, { frets: [5, 7, 8], root: [5] }, { frets: [5, 7], root: [] }, { frets: [4, 5, 7], root: [7] }, { frets: [5, 6, 8], root: [] }, { frets: [5, 7, 8], root: [] }], noteMap: { "5,0": "La", "7,0": "Si", "8,0": "Do", "5,1": "R\xE9", "7,1": "Mi", "8,1": "Fa", "5,2": "Sol", "7,2": "La", "4,3": "Si", "5,3": "Do", "7,3": "R\xE9", "5,4": "Mi", "6,4": "Fa", "8,4": "Sol", "5,5": "La", "7,5": "Si", "8,5": "Do" } } } },
+        { type: "question", quizId: "q-scales-13" },
+        { type: "idee", titre: "Modes majeurs, modes mineurs", texte: [
+          "La tierce donne la couleur de base. Tierce majeure, \xE0 4 demi-tons : ionien, lydien, mixolydien.",
+          "Tierce mineure, \xE0 3 demi-tons : dorien, phrygien, \xE9olien, locrien. Les le\xE7ons suivantes les prennent un par un."
+        ] },
+        {
+          type: "a-toi",
+          titre: "Deux drones, m\xEAmes notes",
+          consigne: "Laisse sonner la corde 4 \xE0 vide et joue la premi\xE8re mesure : Do majeur de R\xE9 \xE0 R\xE9, c'est du dorien. Puis corde 6 \xE0 vide, seconde mesure : les m\xEAmes notes depuis Mi, c'est du phrygien. Au clic \xE0 60, en laissant r\xE9sonner le drone. \xC9coute l'ambiance basculer.",
+          bloc: {
+            type: "tab",
+            caption: "Mesure 1 : R\xE9 dorien sur le drone de R\xE9. Mesure 2 : Mi phrygien sur le drone de Mi",
+            text: "Tab \u2014 mesure 1 : corde 4 cases 0, 2, 3, corde 3 cases 0, 2, 4, corde 2 cases 1 et 3 (R\xE9 \xE0 R\xE9). Mesure 2 : corde 6 cases 0, 1, 3, corde 5 cases 0, 2, 3, corde 4 cases 0 et 2 (Mi \xE0 Mi).",
+            data: { lines: [
+              "e|-------------------------|-------------------------|",
+              "B|-------------------1--3--|-------------------------|",
+              "G|----------0--2--4--------|-------------------------|",
+              "D|-0--2--3-----------------|-------------------0--2--|",
+              "A|-------------------------|----------0--2--3--------|",
+              "E|-------------------------|-0--1--3-----------------|"
+            ] }
+          },
+          bpm: 60,
+          minuteur: 120
+        },
+        { type: "question", quizId: "q-logic-08" },
+        { type: "recap", points: [
+          "Un mode = la gamme majeure jou\xE9e depuis un autre degr\xE9 : 7 degr\xE9s, 7 modes.",
+          "Les modes d'une m\xEAme gamme ont les m\xEAmes notes ; la fondamentale change l'ambiance.",
+          "Tierce majeure : ionien, lydien, mixolydien. Tierce mineure : les quatre autres."
+        ] }
+      ],
+      quiz: ["q-scales-09", "q-scales-12", "q-scales-13", "q-logic-03", "q-logic-08", "q-scales-03", "q-scales-04", "q-scales-08"]
+    };
+    quiz51 = [
+      { id: "q-scales-09", courseId: "scales", lessonId: "scales-c4-02", lvl: 2, q: "Le mode dorien correspond \xE0 quel degr\xE9 de la gamme majeure ?", o: ["1er", "2e", "3e", "4e"], a: 1, exp: "Dorien = 2e mode. R\xE9 dorien = jouer Do majeur en partant de R\xE9. I=Ionien, II=Dorien, III=Phrygien, IV=Lydien, V=Mixolydien, VI=\xC9olien, VII=Locrien.", xp: 35 },
+      { id: "q-scales-12", courseId: "scales", lessonId: "scales-c4-02", lvl: 3, q: "En La majeur, quel est le mode jou\xE9 en partant de Do# ?", o: ["Do# phrygien", "Do# dorien", "Do# lydien", "Do# locrien"], a: 0, exp: "En La majeur, Do# est le 3e degr\xE9. Le 3e mode = phrygien. Do# phrygien = La majeur en partant de Do#. Notes : Do#-R\xE9-Mi-Fa#-Sol#-La-Si.", xp: 55 },
+      { id: "q-scales-13", courseId: "scales", lessonId: "scales-c4-02", lvl: 3, q: "Quelle paire de modes a EXACTEMENT les m\xEAmes notes que Do majeur ?", o: ["Mi dorien et Fa lydien", "R\xE9 dorien et Sol mixolydien", "Sol dorien et La \xE9olien", "Si phrygien et Do# locrien"], a: 1, exp: "Tous les modes de Do majeur partagent les m\xEAmes 7 notes. R\xE9 dorien (II) et Sol mixolydien (V) sont 2 modes de Do majeur. Aussi : Mi phrygien, Fa lydien, La \xE9olien, Si locrien.", xp: 55 },
+      { id: "q-logic-03", courseId: "scales", lessonId: "scales-c4-02", lvl: 3, q: "Tous les modes de Do majeur (Ionien, Dorien, etc.) partagent\u2026", o: ["La m\xEAme fondamentale", "Le m\xEAme tempo", "Les m\xEAmes 7 notes", "La m\xEAme couleur"], a: 2, exp: "7 modes de Do majeur = 7 fondamentales diff\xE9rentes mais M\xCAMES NOTES (Do-R\xE9-Mi-Fa-Sol-La-Si). C'est la fondamentale qui change la couleur ressentie.", xp: 50 },
+      { id: "q-logic-08", courseId: "scales", lessonId: "scales-c4-02", lvl: 2, q: "Quel mode de Do majeur obtiens-tu en partant de Fa ?", o: ["Fa lydien", "Fa ionien", "Fa mixolydien", "Fa dorien"], a: 0, exp: "Fa est le 4e degr\xE9 de Do majeur ; le 4e mode est le lydien. Fa Sol La Si Do R\xE9 Mi : le Si (quarte augment\xE9e) est sa note caract\xE9ristique.", xp: 55 }
+    ];
+  }
+});
+
+// src/content/cours/scales/scales-c4-03.js
+var scales_c4_03_exports = {};
+__export(scales_c4_03_exports, {
+  default: () => scales_c4_03_default,
+  quiz: () => quiz52
+});
+var scales_c4_03_default, quiz52;
+var init_scales_c4_03 = __esm({
+  "src/content/cours/scales/scales-c4-03.js"() {
+    scales_c4_03_default = {
+      id: "scales-c4-03",
+      level: 8,
+      title: "Comment l'oreille per\xE7oit un mode (le r\xF4le du drone)",
+      duration: 8,
+      gropiTip: "Drone gratuit : pour Mi phrygien, laisse sonner la corde 6 \xE0 vide et joue les notes de Do majeur sur les cordes aigu\xEBs. Insiste sur le Fa (case 1 corde 1) pour entendre la \u266D2.",
+      cartes: [
+        { type: "idee", titre: "Sans ancre, pas de mode", texte: [
+          "Un mode n'existe que si l'oreille per\xE7oit une fondamentale stable.",
+          "Joue les notes de R\xE9 dorien sans rien autour : ton oreille retombe vite sur la gamme parente, le motif qu'elle conna\xEEt le mieux. Le dorien s'\xE9vanouit."
+        ] },
+        { type: "idee", titre: "Le drone", texte: [
+          "Un drone, c'est une note grave tenue sous la m\xE9lodie. Avec un R\xE9 qui sonne en continu, l'oreille prend R\xE9 comme fondamentale : le mode s'installe.",
+          "Une app de drone, une boucle enregistr\xE9e, ou ta guitare : laisse r\xE9sonner la corde 4 \xE0 vide entre tes phrases."
+        ] },
+        { type: "question", quizId: "q-scales-36" },
+        { type: "idee", titre: "Ou un accord en boucle", texte: [
+          "Autre ancre : un accord du mode tenu en boucle, une vamp. Dm7 pour R\xE9 dorien, G7 pour Sol mixolydien, Em pour Mi phrygien.",
+          "L'accord fixe la fondamentale, et ses notes colorent d\xE9j\xE0 le mode."
+        ], bloc: { type: "chord_diagram", caption: "Dm7 (xx0211) \u2014 la vamp qui ancre l'oreille en R\xE9 dorien", data: { name: "Dm7", frets: [-1, -1, 0, 2, 1, 1], fingers: [0, 0, 0, 2, 1, 1], startFret: 1 } } },
+        { type: "idee", titre: "La note caract\xE9ristique", texte: [
+          "Chaque mode a une note qui le distingue du majeur ou du mineur : la \u266D2 du phrygien, la #4 du lydien, la \u266D7 du mixolydien\u2026",
+          "Pose-la sur les temps forts, en notes longues : c'est elle qui affirme le mode. Sans elle, l'oreille glisse vers le majeur ou le mineur ordinaire."
+        ] },
+        { type: "question", quizId: "q-scales-37" },
+        {
+          type: "a-toi",
+          titre: "R\xE9 dorien sur son drone",
+          consigne: "Joue la tab au clic \xE0 60 : la corde 4 \xE0 vide revient sous chaque petite phrase. Puis improvise avec R\xE9, Mi, Fa, Sol, La, Si, Do sur les cordes 3 \xE0 1, en laissant sonner le R\xE9 grave et en revenant souvent sur Si (corde 3 case 4).",
+          bloc: { type: "tab", caption: "La corde de R\xE9 \xE0 vide sert de drone : elle revient sous chaque petite phrase de R\xE9 dorien (La, Si, Do)", text: "Tab : corde 4 \xE0 vide (R\xE9), puis corde 3 cases 2 et 4 (La, Si), corde 2 case 1 (Do), R\xE9 \xE0 vide, puis Si, La et R\xE9 \xE0 vide pour finir. Le Si, sixte majeure, donne la couleur dorienne.", data: { lines: ["e|------------------|", "B|-------1----------|", "G|---2-4-----4-2----|", "D|-0-------0-----0--|", "A|------------------|", "E|------------------|"] } },
+          bpm: 60,
+          minuteur: 120
+        },
+        { type: "question", quizId: "q-scales-59" },
+        { type: "recap", points: [
+          "Sans ancre, l'oreille entend la gamme parente : le mode dispara\xEEt.",
+          "Un drone ou un accord tenu en boucle fixe la fondamentale du mode.",
+          "Mets en valeur la note caract\xE9ristique pour affirmer le mode."
+        ] }
+      ],
+      quiz: ["q-scales-36", "q-scales-37", "q-scales-59"]
+    };
+    quiz52 = [
+      { id: "q-scales-36", courseId: "scales", lessonId: "scales-c4-03", lvl: 2, q: "Sans drone ni accord de soutien, les notes de R\xE9 dorien jou\xE9es seules sonnent souvent comme\u2026", o: ["R\xE9 mineur harmonique", "Do majeur", "La mineur", "Sol mixolydien"], a: 1, exp: "Sans ancre, l'oreille retombe sur la gamme parente qu'elle conna\xEEt le mieux : Do majeur. Le mode dorien s'\xE9vanouit.", xp: 40 },
+      { id: "q-scales-37", courseId: "scales", lessonId: "scales-c4-03", lvl: 2, q: "Quelle est la note caract\xE9ristique du mode dorien ?", o: ["La seconde mineure", "La quarte augment\xE9e", "La sixte majeure", "La septi\xE8me majeure"], a: 2, exp: "Dorien = mineur avec une sixte majeure. C'est la note \xE0 mettre en valeur pour que le mode s'entende.", xp: 40 },
+      { id: "q-scales-59", courseId: "scales", lessonId: "scales-c4-03", lvl: 2, q: "Tu veux faire entendre La dorien. Quel accord tenir en boucle sous ton impro ?", o: ["Am7", "Cmaj7", "G7", "Fmaj7"], a: 0, exp: "Un mode n'existe que si l'oreille entend sa fondamentale. Am7 ancre La ; les notes de La dorien (celles de Sol majeur) prennent alors leur couleur dorienne. Sur Cmaj7, l'oreille se poserait sur Do.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/scales/scales-c5-01.js
+var scales_c5_01_exports = {};
+__export(scales_c5_01_exports, {
+  default: () => scales_c5_01_default,
+  quiz: () => quiz53
+});
+var scales_c5_01_default, quiz53;
+var init_scales_c5_01 = __esm({
+  "src/content/cours/scales/scales-c5-01.js"() {
+    scales_c5_01_default = {
+      id: "scales-c5-01",
+      level: 8,
+      title: "Ionien \u2014 la lumi\xE8re pure (= majeur)",
+      duration: 7,
+      gropiTip: "Improvise en Do ionien sur une boucle Do-Fa-Sol et termine chaque phrase sur une note de l'accord de Do (Do, Mi ou Sol). C'est ce repos qui donne \xE0 l'ionien sa stabilit\xE9.",
+      cartes: [
+        { type: "idee", titre: "Le premier mode", texte: [
+          "L'ionien, c'est la gamme que tu connais depuis longtemps : 1-2-3-4-5-6-7, en Do : Do, R\xE9, Mi, Fa, Sol, La, Si. Aucune note alt\xE9r\xE9e.",
+          "C'est la r\xE9f\xE9rence \xE0 laquelle on compare les six autres modes."
+        ], bloc: { type: "scale_pattern", caption: "Do ionien (= Do majeur) \u2014 fondamentale case 3 sur la corde 5, aucune note alt\xE9r\xE9e", data: { startFret: 2, endFret: 5, rootColor: "amber", noteColor: "primary", strings: [{ frets: [3, 5], root: [] }, { frets: [2, 3, 5], root: [3] }, { frets: [2, 3, 5], root: [] }, { frets: [2, 4, 5], root: [5] }, { frets: [3, 5], root: [] }, { frets: [3, 5], root: [] }], noteMap: { "3,0": "Sol", "5,0": "La", "2,1": "Si", "3,1": "Do", "5,1": "R\xE9", "2,2": "Mi", "3,2": "Fa", "5,2": "Sol", "2,3": "La", "4,3": "Si", "5,3": "Do", "3,4": "R\xE9", "5,4": "Mi", "3,5": "Sol", "5,5": "La" } } } },
+        { type: "idee", titre: "Lumineux et stable", texte: [
+          "Ses demi-tons tombent entre 3 et 4, puis entre 7 et l'octave. La 7e, la sensible, tire vers la tonique : chaque phrase s'y pose avec une vraie sensation de repos.",
+          "Seul le lydien est plus lumineux."
+        ] },
+        { type: "question", quizId: "q-scales-38" },
+        { type: "idee", titre: "Sur quels accords", texte: [
+          "Son terrain : l'accord b\xE2ti sur ses 1, 3, 5 et 7 (Cmaj7 pour Do ionien), et toute chanson tonale en majeur.",
+          "Un seul pi\xE8ge : la quarte (Fa sur Cmaj7) frotte contre la tierce Mi. Passe dessus, ne la tiens pas."
+        ], bloc: { type: "chord_diagram", caption: "Cmaj7 (x32000) \u2014 l'accord type sur lequel jouer Do ionien", data: { name: "Cmaj7", frets: [-1, 3, 2, 0, 0, 0], fingers: [0, 3, 2, 0, 0, 0], startFret: 1 } } },
+        {
+          type: "a-toi",
+          titre: "La sensible qui se pose",
+          consigne: "Plaque Cmaj7, puis joue la tab quatre fois au clic \xE0 70 : Si finit par se poser sur Do. Ensuite, improvise dans la position en finissant chaque phrase sur Do (corde 5 case 3).",
+          bloc: {
+            type: "tab",
+            caption: "Do ionien : de Mi \xE0 Do, puis la sensible Si qui se r\xE9sout sur Do",
+            text: "Tab \u2014 corde 4 cases 2, 3, 5 (Mi, Fa, Sol), corde 3 cases 2, 4, 5 (La, Si, Do), puis corde 3 cases 4 et 5 (Si, Do).",
+            data: { lines: [
+              "e|-------------------------|",
+              "B|-------------------------|",
+              "G|----------2--4--5--4--5--|",
+              "D|-2--3--5-----------------|",
+              "A|-------------------------|",
+              "E|-------------------------|"
+            ] }
+          },
+          bpm: 70,
+          minuteur: 150
+        },
+        { type: "question", quizId: "q-scales-60" },
+        { type: "idee", titre: "Penser \xAB mode \xBB", texte: [
+          "Si tu improvises en majeur, tu sais jouer l'ionien : pense simplement \xAB Do ionien \xBB.",
+          "Il n'est entr\xE9 dans la th\xE9orie des modes qu'en 1547, avec le Dodecachordon de Glarean."
+        ] },
+        { type: "recap", points: [
+          "Ionien = gamme majeure : 1-2-3-4-5-6-7, sans alt\xE9ration.",
+          "Sa sensible tire vers la tonique : le plus stable des modes.",
+          "Terrain naturel : l'accord maj7 et les chansons tonales en majeur."
+        ] }
+      ],
+      quiz: ["q-scales-38", "q-scales-39", "q-scales-60"]
+    };
+    quiz53 = [
+      { id: "q-scales-38", courseId: "scales", lessonId: "scales-c5-01", lvl: 1, q: "\xC0 quoi correspond le mode ionien ?", o: ["\xC0 la gamme mineure naturelle", "\xC0 la pentatonique majeure", "\xC0 la gamme blues", "\xC0 la gamme majeure"], a: 3, exp: "Ionien = gamme majeure : 1-2-3-4-5-6-7. En Do : Do-R\xE9-Mi-Fa-Sol-La-Si.", xp: 30 },
+      { id: "q-scales-39", courseId: "scales", lessonId: "scales-c5-01", lvl: 2, q: "Du plus lumineux au plus sombre, quel mode vient juste apr\xE8s l'ionien ?", o: ["Le mixolydien", "Le lydien", "Le dorien", "L'\xE9olien"], a: 0, exp: "Lydien (#4) > ionien > mixolydien (\u266D7) > dorien (\u266D3) > \xE9olien (\u266D6) > phrygien (\u266D2) > locrien (\u266D5). Le mixolydien ne diff\xE8re de l'ionien que par sa 7e mineure.", xp: 40 },
+      { id: "q-scales-60", courseId: "scales", lessonId: "scales-c5-01", lvl: 1, q: "Sur quel type d'accord le mode ionien est-il le choix naturel ?", o: ["Un accord maj7", "Un accord m7", "Un accord 7", "Un accord m7\u266D5"], a: 0, exp: "Ionien = gamme majeure, avec tierce majeure et 7e majeure : il \xE9pouse un accord maj7 (Cmaj7 pour Do ionien). Sur un accord 7 de dominante, sa 7e majeure frotterait : c'est le terrain du mixolydien.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/scales/scales-c5-02.js
+var scales_c5_02_exports = {};
+__export(scales_c5_02_exports, {
+  default: () => scales_c5_02_default,
+  quiz: () => quiz54
+});
+var scales_c5_02_default, quiz54;
+var init_scales_c5_02 = __esm({
+  "src/content/cours/scales/scales-c5-02.js"() {
+    scales_c5_02_default = {
+      id: "scales-c5-02",
+      level: 8,
+      title: "Dorien \u2014 le mode cam\xE9l\xE9on",
+      duration: 9,
+      gropiTip: "Raccourci : ta gamme mineure naturelle avec la 6 mont\xE9e d'un demi-ton, c'est le dorien. La mineur devient La dorien en changeant juste Fa en Fa# (case 7 corde 2, position case 5).",
+      cartes: [
+        { type: "idee", titre: "Le 2e mode", texte: [
+          "Do majeur jou\xE9 depuis R\xE9 : R\xE9, Mi, Fa, Sol, La, Si, Do. C'est R\xE9 dorien.",
+          "Apr\xE8s l'\xE9olien, c'est le mode mineur le plus utilis\xE9 : jazz modal, funk, rock, musiques traditionnelles."
+        ] },
+        { type: "idee", titre: "Une seule note change", texte: [
+          "Formule : 1-2-\u266D3-4-5-6-\u266D7. Face \xE0 la mineure naturelle, seule la sixte diff\xE8re : elle est majeure.",
+          "En La dorien, Fa devient Fa#. M\xEAme position que La mineur, une case plus haut pour chaque Fa."
+        ], bloc: {
+          type: "scale_pattern",
+          caption: "La dorien \u2014 case 5. Note caract\xE9ristique : Fa#, la sixte majeure (case 4 c4, case 7 c2, case 9 c5)",
+          data: {
+            startFret: 4,
+            endFret: 9,
+            rootColor: "primary",
+            noteColor: "green",
+            accentColor: "coral",
+            accentLabel: "Fa#, sixte majeure",
+            strings: [
+              { frets: [5, 7, 8], root: [5] },
+              { frets: [5, 7, 9], root: [], accent: [9] },
+              { frets: [4, 5, 7], root: [7], accent: [4] },
+              { frets: [4, 5, 7], root: [] },
+              { frets: [5, 7, 8], root: [], accent: [7] },
+              { frets: [5, 7, 8], root: [5] }
+            ],
+            noteMap: {
+              "5,0": "La",
+              "7,0": "Si",
+              "8,0": "Do",
+              "5,1": "R\xE9",
+              "7,1": "Mi",
+              "9,1": "Fa#",
+              "4,2": "Fa#",
+              "5,2": "Sol",
+              "7,2": "La",
+              "4,3": "Si",
+              "5,3": "Do",
+              "7,3": "R\xE9",
+              "5,4": "Mi",
+              "7,4": "Fa#",
+              "8,4": "Sol",
+              "5,5": "La",
+              "7,5": "Si",
+              "8,5": "Do"
+            }
+          }
+        } },
+        { type: "question", quizId: "q-scales-15" },
+        { type: "idee", titre: "Mineur, pas triste", texte: [
+          "La sixte majeure apporte une touche de lumi\xE8re dans le mineur : sophistiqu\xE9, jazzy, parfois funky.",
+          "Pour l'affirmer, pose-la sur les temps forts, en notes longues. Sans elle, tu sonnes mineur naturel. \xAB So What \xBB (Miles Davis, 1959) tient seize mesures de Dm7 : du R\xE9 dorien pur."
+        ] },
+        { type: "idee", titre: "Sur quels accords", texte: [
+          "Un accord m7 tenu longtemps, ou une vamp Im \u2013 IV o\xF9 le IV est majeur.",
+          "Am7 \u2013 D7, par exemple : le Fa# de D7 est la sixte majeure de La. C'est la grille d'\xAB Oye Como Va \xBB (Santana)."
+        ] },
+        { type: "question", quizId: "q-impro-07" },
+        {
+          type: "a-toi",
+          titre: "La dorien sur Am7 \u2013 D7",
+          consigne: "Fais tourner Am7 (x02010) et D7 (xx0212), deux mesures chacun, au clic \xE0 70 : enregistre-toi ou utilise une boucle. Joue la tab, qui appuie le Fa# (corde 2 case 7), puis improvise dans la position case 5 en posant Fa# sur les temps forts du D7.",
+          bloc: {
+            type: "tab",
+            caption: "La dorien, position case 5 : une phrase qui met en avant Fa#, la sixte majeure",
+            text: "Tab \u2014 corde 2 cases 5 et 7 (Mi, Fa#), corde 1 cases 5, 7, 8, 7, 5 (La, Si, Do, Si, La), corde 2 case 7 (Fa#), puis corde 1 case 5 tenue (La).",
+            data: { lines: [
+              "e|-------5--7--8--7--5-----|-5--|",
+              "B|-5--7-----------------7--|----|",
+              "G|-------------------------|----|",
+              "D|-------------------------|----|",
+              "A|-------------------------|----|",
+              "E|-------------------------|----|"
+            ] }
+          },
+          bpm: 70,
+          minuteur: 150
+        },
+        { type: "question", quizId: "q-scales-14" },
+        { type: "recap", points: [
+          "Dorien = 1-2-\u266D3-4-5-6-\u266D7 : la mineure naturelle avec une sixte majeure.",
+          "Cette sixte est sa note caract\xE9ristique : mets-la en valeur.",
+          "Terrain : un m7 tenu, ou une vamp Im \u2013 IV majeur comme Am7 \u2013 D7."
+        ] }
+      ],
+      quiz: ["q-scales-14", "q-scales-15", "q-impro-07", "q-fret-scales-04"]
+    };
+    quiz54 = [
+      { id: "q-scales-14", courseId: "scales", lessonId: "scales-c5-02", lvl: 2, q: "Sur un accord Dm7 tenu (vamp modale), quel mode privil\xE9gier ?", o: ["R\xE9 phrygien", "R\xE9 locrien", "R\xE9 dorien", "R\xE9 mixolydien"], a: 2, exp: "Sur tout accord m7 dans un contexte modal, le dorien est le mode 'naturel'. R\xE9 dorien sur Dm7 = 'So What' (Miles Davis). Son polyvalent jazz/funk/rock.", xp: 45 },
+      { id: "q-scales-15", courseId: "scales", lessonId: "scales-c5-02", lvl: 3, q: "Quelle note de R\xE9 dorien faut-il mettre en valeur pour 'affirmer' le mode ?", o: ["Fa (tierce mineure)", "La (quinte juste)", "R\xE9 (fondamentale)", "Si (sixte majeure)"], a: 3, exp: "R\xE9 dorien = R\xE9-Mi-Fa-Sol-La-Si-Do. Le Si (6 majeure) distingue dorien d'\xE9olien. Mets-le en valeur (temps forts, notes longues) pour affirmer la couleur dorien.", xp: 50 },
+      { id: "q-impro-07", courseId: "impro", lessonId: "scales-c5-02", lvl: 3, q: "Sur la vamp Dm7 - G7, tu restes en R\xE9 dorien. Quelle note mettre en avant sur G7 pour faire entendre le changement ?", o: ["Si", "R\xE9", "La", "Do"], a: 0, exp: "Si est la sixte majeure de R\xE9 dorien et la tierce de G7 : sur Dm7 il colore, sur G7 il d\xE9finit l'accord. R\xE9 (quinte de G7) et La (9e) ne marquent pas le passage, et Do, la quarte de G7, frotte contre son Si.", xp: 65 },
+      { id: "q-fret-scales-04", type: "fretboard", courseId: "scales", lessonId: "scales-c5-02", lvl: 2, q: "Trouve toutes les notes du dorien de R\xE9 sur le manche", concept: { type: "find_scale", root: "D", quality: "dorian" }, selectionRules: { mode: "all" }, display: { showNotes: false }, hint: "Dorien = mineur avec 6te majeure. R\xE9 dorien = R\xE9 Mi Fa Sol La Si Do.", xp: 55, exp: "R\xE9 dorien = notes de Do majeur depuis R\xE9. Le Si (6te M) est la note caract\xE9ristique." }
+    ];
+  }
+});
+
+// src/content/cours/scales/scales-c5-03.js
+var scales_c5_03_exports = {};
+__export(scales_c5_03_exports, {
+  default: () => scales_c5_03_default,
+  quiz: () => quiz55
+});
+var scales_c5_03_default, quiz55;
+var init_scales_c5_03 = __esm({
+  "src/content/cours/scales/scales-c5-03.js"() {
+    scales_c5_03_default = {
+      id: "scales-c5-03",
+      level: 8,
+      title: "Phrygien \u2014 l'\xE2me andalouse",
+      duration: 9,
+      gropiTip: "Fais le test sur la corde 1 : joue Mi-Fa-Mi (cases 0-1-0), puis Mi-Fa#-Mi (cases 0-2-0). Le premier sonne andalou, le second bien plus neutre : un seul demi-ton change tout.",
+      cartes: [
+        { type: "idee", titre: "Le 3e mode", texte: [
+          "Do majeur jou\xE9 depuis Mi : Mi, Fa, Sol, La, Si, Do, R\xE9. C'est Mi phrygien.",
+          "Pour une oreille occidentale, c'est le plus \xAB exotique \xBB des modes : sombre, dramatique, aux couleurs espagnoles. On l'entend dans le flamenco comme dans le metal."
+        ] },
+        { type: "idee", titre: "La seconde mineure", texte: [
+          "Formule : 1-\u266D2-\u266D3-4-5-\u266D6-\u266D7. Face \xE0 la mineure naturelle, une seule diff\xE9rence : la seconde est mineure.",
+          "Coll\xE9e \xE0 un demi-ton de la fondamentale, cette note cr\xE9e une tension forte qui retombe sur la tonique. Fais-la entendre sur un temps fort."
+        ], bloc: {
+          type: "scale_pattern",
+          caption: "Mi phrygien \u2014 case 0. Note caract\xE9ristique : Fa, la seconde mineure (case 1 c6, case 1 c1)",
+          data: {
+            startFret: 0,
+            endFret: 4,
+            rootColor: "coral",
+            noteColor: "primary",
+            strings: [
+              { frets: [0, 1, 3], root: [0], accent: [1] },
+              { frets: [0, 2, 3], root: [] },
+              { frets: [0, 2], root: [] },
+              { frets: [0, 2, 4], root: [] },
+              { frets: [0, 1], root: [] },
+              { frets: [0, 1, 3], root: [0], accent: [1] }
+            ],
+            noteMap: {
+              "0,0": "Mi",
+              "1,0": "Fa",
+              "3,0": "Sol",
+              "0,1": "La",
+              "2,1": "Si",
+              "3,1": "Do",
+              "0,2": "R\xE9",
+              "2,2": "Mi",
+              "0,3": "Sol",
+              "2,3": "La",
+              "4,3": "Si",
+              "0,4": "Si",
+              "1,4": "Do",
+              "0,5": "Mi",
+              "1,5": "Fa",
+              "3,5": "Sol"
+            }
+          }
+        } },
+        { type: "question", quizId: "q-scales-p89-c503-01" },
+        { type: "idee", titre: "La cadence andalouse", texte: [
+          "Lam \u2013 Sol \u2013 Fa \u2013 Mi : la boucle du flamenco. Elle se repose sur Mi, avec les notes de Do majeur : c'est du Mi phrygien.",
+          "Le Fa \u2192 Mi des basses, \xE0 la fin, fait entendre la seconde mineure qui se r\xE9sout."
+        ] },
+        { type: "idee", titre: "Le phrygien dominant", texte: [
+          "Sur l'accord final, souvent Mi majeur, la tierce monte : Mi, Fa, Sol#, La, Si, Do, R\xE9. C'est le phrygien dominant, la couleur du flamenco, du klezmer et de bien des musiques du Moyen-Orient.",
+          "Il ne vient pas de la gamme majeure, mais de la mineure harmonique, au palier suivant."
+        ] },
+        { type: "question", quizId: "q-scales-18" },
+        {
+          type: "a-toi",
+          titre: "Fa qui retombe sur Mi",
+          consigne: "Fais tourner Am, G, F, E, une mesure chacun, au clic \xE0 70 : enregistre-toi ou utilise une boucle. Sur le Mi, joue la tab : elle descend de Fa \xE0 Fa et fait deux fois retomber Fa sur Mi. Puis improvise en position ouverte, en finissant tes phrases par Fa \u2192 Mi.",
+          bloc: {
+            type: "tab",
+            caption: "Mi phrygien en position ouverte : la seconde mineure Fa retombe sur Mi",
+            text: "Tab \u2014 corde 1 cases 1 et 0 (Fa, Mi), corde 2 cases 3, 1, 0 (R\xE9, Do, Si), corde 3 case 2 (La), corde 4 cases 3 et 2 (Fa, Mi).",
+            data: { lines: [
+              "e|-1--0--------------------|",
+              "B|-------3--1--0-----------|",
+              "G|----------------2--------|",
+              "D|-------------------3--2--|",
+              "A|-------------------------|",
+              "E|-------------------------|"
+            ] }
+          },
+          bpm: 70,
+          minuteur: 150
+        },
+        { type: "question", quizId: "q-scales-61" },
+        { type: "recap", points: [
+          "Phrygien = 1-\u266D2-\u266D3-4-5-\u266D6-\u266D7 ; Mi phrygien = notes de Do majeur depuis Mi.",
+          "Sa note caract\xE9ristique, la \u266D2, retombe d'un demi-ton sur la fondamentale.",
+          "Avec une tierce majeure, il devient phrygien dominant : la couleur flamenco."
+        ] }
+      ],
+      quiz: ["q-scales-18", "q-scales-61", "q-scales-62", "q-scales-p89-c503-01"]
+    };
+    quiz55 = [
+      { id: "q-scales-18", courseId: "scales", lessonId: "scales-c5-03", lvl: 3, q: "Le mode phrygien dominant a quelle formule ?", o: ["1-\u266D2-\u266D3-4-5-\u266D6-\u266D7", "1-2-\u266D3-4-5-6-7", "1-\u266D2-3-4-5-\u266D6-\u266D7", "1-\u266D2-\u266D3-4-\u266D5-\u266D6-\u266D7"], a: 2, exp: "Phrygien dominant = phrygien avec 3 majeure (au lieu de \u266D3). Formule 1-\u266D2-3-4-5-\u266D6-\u266D7. Mode du flamenco authentique, du klezmer juif, et du Moyen-Orient.", xp: 55 },
+      { id: "q-scales-61", courseId: "scales", lessonId: "scales-c5-03", lvl: 3, q: "La cadence andalouse Lam - Sol - Fa - Mi se pose sur quel accord, donc dans quel mode ?", o: ["Mi, en Mi phrygien", "La, en La \xE9olien", "Fa, en Fa lydien", "Sol, en Sol mixolydien"], a: 0, exp: "La boucle s'arr\xEAte et se repose sur Mi : c'est lui la tonique. Les notes sont celles de Do majeur jou\xE9es depuis Mi : Mi phrygien. Le Fa \u2192 Mi final fait entendre la \u266D2 caract\xE9ristique.", xp: 50 },
+      { id: "q-scales-62", courseId: "scales", lessonId: "scales-c5-03", lvl: 1, q: "En Mi phrygien, quelle note est la note caract\xE9ristique, la \u266D2 ?", o: ["Fa", "Fa#", "R\xE9", "Sol"], a: 0, exp: "Mi phrygien = Mi Fa Sol La Si Do R\xE9. Le Fa, \xE0 un demi-ton de la fondamentale, est sa signature. Avec Fa#, on retrouverait Mi \xE9olien.", xp: 30 },
+      { id: "q-scales-p89-c503-01", courseId: "scales", lessonId: "scales-c5-03", lvl: 2, q: "Tu joues La phrygien. Quelle note est sa \u266D2, \xE0 mettre en avant ?", o: ["Si\u266D", "Si", "Do", "Sol"], a: 0, exp: "La \u266D2 est \xE0 un demi-ton au-dessus de la fondamentale : La \u2192 Si\u266D. Si serait la seconde majeure (La \xE9olien ou dorien), Do la tierce mineure, Sol la septi\xE8me.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/scales/scales-c5-04.js
+var scales_c5_04_exports = {};
+__export(scales_c5_04_exports, {
+  default: () => scales_c5_04_default,
+  quiz: () => quiz56
+});
+var scales_c5_04_default, quiz56;
+var init_scales_c5_04 = __esm({
+  "src/content/cours/scales/scales-c5-04.js"() {
+    scales_c5_04_default = {
+      id: "scales-c5-04",
+      level: 8,
+      title: "Lydien \u2014 l'\xE9vasion onirique",
+      duration: 8,
+      gropiTip: "Trouve la #4 en une seconde : c'est un triton (6 cases) au-dessus de la fondamentale sur la m\xEAme corde. Fa case 1 corde 6 \u2192 Si case 7 corde 6. Le diabolus in musica, en version f\xE9erique !",
+      cartes: [
+        { type: "idee", titre: "Le 4e mode", texte: [
+          "Do majeur jou\xE9 depuis Fa : Fa, Sol, La, Si, Do, R\xE9, Mi. C'est Fa lydien.",
+          "Formule : 1-2-3-#4-5-6-7. C'est un mode majeur, avec une seule diff\xE9rence face \xE0 l'ionien : sa quarte est augment\xE9e."
+        ] },
+        { type: "idee", titre: "La note qui flotte", texte: [
+          "En Fa lydien, cette quarte augment\xE9e est Si. Elle est \xE0 un demi-ton de la quinte, Do, mais rien ne l'oblige \xE0 y descendre.",
+          "Laisse-la suspendue, en note longue : c'est tout l'effet lydien, brillant et flottant."
+        ], bloc: {
+          type: "scale_pattern",
+          caption: "Fa lydien \u2014 fondamentale case 8 c5. Note cl\xE9 : Si naturel, la quarte augment\xE9e (case 7 c6, case 9 c4, case 7 c1)",
+          data: {
+            startFret: 7,
+            endFret: 11,
+            rootColor: "pink",
+            noteColor: "primary",
+            accentColor: "coral",
+            accentLabel: "Si, quarte augment\xE9e",
+            strings: [
+              { frets: [7, 8, 10], root: [], accent: [7] },
+              { frets: [7, 8, 10], root: [8] },
+              { frets: [7, 9, 10], root: [], accent: [9] },
+              { frets: [7, 9, 10], root: [10] },
+              { frets: [8, 10], root: [] },
+              { frets: [7, 8, 10], root: [], accent: [7] }
+            ],
+            noteMap: {
+              "7,0": "Si",
+              "8,0": "Do",
+              "10,0": "R\xE9",
+              "7,1": "Mi",
+              "8,1": "Fa",
+              "10,1": "Sol",
+              "7,2": "La",
+              "9,2": "Si",
+              "10,2": "Do",
+              "7,3": "R\xE9",
+              "9,3": "Mi",
+              "10,3": "Fa",
+              "8,4": "Sol",
+              "10,4": "La",
+              "7,5": "Si",
+              "8,5": "Do",
+              "10,5": "R\xE9"
+            }
+          }
+        } },
+        { type: "question", quizId: "q-impro-11" },
+        { type: "idee", titre: "R\xEAve et espace", texte: [
+          "Du plus lumineux au plus sombre, il ouvre la liste : c'est le plus brillant des sept. Les musiques de film y puisent souvent le merveilleux, le jazz fusion aussi.",
+          "Son terrain : un accord maj7 qui ne r\xE9sout pas, ou deux accords majeurs \xE0 un ton d'\xE9cart. Sur Fa \u2013 Sol, le Si de Sol colore le Fa."
+        ] },
+        {
+          type: "a-toi",
+          titre: "Fa lydien sur Fa \u2013 Sol",
+          consigne: "Fais tourner Fa et Sol majeurs, deux mesures chacun, au clic \xE0 70 : enregistre-toi ou utilise une boucle. Joue la tab, qui finit suspendue sur Si (corde 4 case 9), puis improvise dans la position case 8 en laissant sonner ce Si sans le r\xE9soudre.",
+          bloc: {
+            type: "tab",
+            caption: "Fa lydien, position case 8 : une mont\xE9e qui reste suspendue sur Si, la quarte augment\xE9e",
+            text: "Tab \u2014 corde 5 cases 8 et 10 (Fa, Sol), corde 4 cases 7, 9, 10, puis 9 tenue (La, Si, Do, Si).",
+            data: { lines: [
+              "e|---------------------|",
+              "B|---------------------|",
+              "G|---------------------|",
+              "D|--------7--9--10--9--|",
+              "A|-8--10---------------|",
+              "E|---------------------|"
+            ] }
+          },
+          bpm: 70,
+          minuteur: 150
+        },
+        { type: "question", quizId: "q-scales-11" },
+        { type: "recap", points: [
+          "Lydien = 1-2-3-#4-5-6-7 ; Fa lydien = notes de Do majeur depuis Fa.",
+          "Sa #4, laiss\xE9e en suspension, donne la couleur flottante et brillante.",
+          "Terrain : un maj7 qui ne r\xE9sout pas, ou deux accords majeurs \xE0 un ton."
+        ] }
+      ],
+      quiz: ["q-scales-10", "q-scales-11", "q-scales-19", "q-impro-11"]
+    };
+    quiz56 = [
+      { id: "q-scales-10", courseId: "scales", lessonId: "scales-c5-04", lvl: 2, q: "Quel est le mode 'le plus brillant' dans l'ordre des modes ?", o: ["Ionien", "Mixolydien", "Lydien", "Phrygien"], a: 2, exp: "Lydien (#4) > Ionien > Mixolydien (\u266D7) > Dorien (\u266D3) > \xC9olien (\u266D6) > Phrygien (\u266D2) > Locrien (\u266D5). Plus on descend, plus le mode est sombre.", xp: 45 },
+      { id: "q-scales-11", courseId: "scales", lessonId: "scales-c5-04", lvl: 3, q: "Quelle note caract\xE9rise le mode lydien par rapport \xE0 l'ionien ?", o: ["\u266D7", "#5", "\u266D3", "#4"], a: 3, exp: "Lydien = ionien (majeur) avec #4. Do lydien = Do-R\xE9-Mi-Fa#-Sol-La-Si. Le Fa# cr\xE9e une couleur flottante, souvent entendue dans les musiques de film.", xp: 45 },
+      { id: "q-scales-19", courseId: "scales", lessonId: "scales-c5-04", lvl: 3, q: "Le mode lydien \xE9voque typiquement quelle ambiance ?", o: ["Tristesse", "Tension dramatique", "\xC9nergie blues", "Espace, r\xEAve, magie"], a: 3, exp: "Lydien (#4) cr\xE9e une couleur flottante, non r\xE9solue : ambiance ouverte, r\xEAveuse, souvent utilis\xE9e dans les musiques de film pour le merveilleux.", xp: 45 },
+      { id: "q-impro-11", courseId: "impro", lessonId: "scales-c5-04", lvl: 3, q: "Quelle gamme jouer sur un accord Cmaj7#11 ?", o: ["Do majeure", "Do mixolydien", "Do dorien", "Do lydien"], a: 3, exp: "Maj7#11 contient un #4. Le mode lydien (1-2-3-#4-5-6-7) correspond exactement. Do lydien sur Cmaj7#11 = match parfait.", xp: 65 }
+    ];
+  }
+});
+
+// src/content/cours/scales/scales-c5-05.js
+var scales_c5_05_exports = {};
+__export(scales_c5_05_exports, {
+  default: () => scales_c5_05_default,
+  quiz: () => quiz57
+});
+var scales_c5_05_default, quiz57;
+var init_scales_c5_05 = __esm({
+  "src/content/cours/scales/scales-c5-05.js"() {
+    scales_c5_05_default = {
+      id: "scales-c5-05",
+      level: 8,
+      title: "Mixolydien \u2014 le roi du rock",
+      duration: 9,
+      gropiTip: "Rep\xE8re la \u266D7 vite : elle est un ton (2 cases) sous l'octave de la fondamentale. Dans la position Sol case 3, le Sol de la corde 4 est case 5, et le Fa juste en dessous, case 3.",
+      cartes: [
+        { type: "idee", titre: "Le 5e mode", texte: [
+          "Do majeur jou\xE9 depuis Sol : Sol, La, Si, Do, R\xE9, Mi, Fa. C'est Sol mixolydien.",
+          "Formule : 1-2-3-4-5-6-\u266D7. Le mode du rock, du blues, du country et du funk : fait pour la guitare."
+        ] },
+        { type: "idee", titre: "La septi\xE8me mineure", texte: [
+          "Une seule note change par rapport au majeur : la 7e est mineure. En Sol, Fa remplace Fa#.",
+          "Fa est \xE0 un ton de Sol : il ne tire plus vers la tonique comme une sensible. R\xE9sultat : lumineux, mais d\xE9contract\xE9, comme une dominante qui ne r\xE9sout jamais."
+        ], bloc: {
+          type: "scale_pattern",
+          caption: "Sol mixolydien \u2014 case 3. Note cl\xE9 : Fa naturel, la septi\xE8me mineure (case 3 c4)",
+          data: {
+            startFret: 1,
+            endFret: 6,
+            rootColor: "coral",
+            noteColor: "primary",
+            strings: [
+              { frets: [3, 5], root: [3] },
+              { frets: [2, 3, 5], root: [] },
+              { frets: [2, 3, 5], root: [], accent: [3] },
+              { frets: [2, 4], root: [] },
+              { frets: [1, 3, 5], root: [] },
+              { frets: [3, 5], root: [3] }
+            ],
+            noteMap: {
+              "3,0": "Sol",
+              "5,0": "La",
+              "2,1": "Si",
+              "3,1": "Do",
+              "5,1": "R\xE9",
+              "2,2": "Mi",
+              "3,2": "Fa",
+              "5,2": "Sol",
+              "2,3": "La",
+              "4,3": "Si",
+              "1,4": "Do",
+              "3,4": "R\xE9",
+              "5,4": "Mi",
+              "3,5": "Sol",
+              "5,5": "La"
+            }
+          }
+        } },
+        { type: "question", quizId: "q-scales-16-app" },
+        { type: "idee", titre: "Coll\xE9 \xE0 l'accord 7", texte: [
+          "G7 contient Sol, Si, R\xE9 et Fa. Sol majeur, avec son Fa#, frotterait contre ce Fa ; le mixolydien \xE9pouse l'accord.",
+          "Autre terrain : les vamps I \u2013 \u266DVII du rock, comme Sol \u2013 Fa ou R\xE9 \u2013 Do."
+        ] },
+        {
+          type: "a-toi",
+          titre: "Sol mixolydien sur Sol \u2013 Fa",
+          consigne: "Fais tourner Sol et Fa majeurs, deux mesures chacun, au clic \xE0 70 : enregistre-toi ou utilise une boucle. Joue la tab, qui descend jusqu'au Fa (corde 4 case 3) et remonte sur Sol, puis improvise dans la position case 3 en appuyant Fa sur l'accord de Fa.",
+          bloc: {
+            type: "tab",
+            caption: "Sol mixolydien, position case 3 : une descente qui passe par la septi\xE8me mineure Fa",
+            text: "Tab \u2014 corde 2 cases 3 et 1 (R\xE9, Do), corde 3 cases 4 et 2 (Si, La), corde 4 cases 5, 3, 5 (Sol, Fa, Sol).",
+            data: { lines: [
+              "e|----------------------|",
+              "B|-3--1-----------------|",
+              "G|-------4--2-----------|",
+              "D|-------------5--3--5--|",
+              "A|----------------------|",
+              "E|----------------------|"
+            ] }
+          },
+          bpm: 70,
+          minuteur: 150
+        },
+        { type: "question", quizId: "q-scales-17" },
+        { type: "idee", titre: "Le raccourci des bluesmen", texte: [
+          "Tu connais la penta mineure de La. Ajoute-lui la tierce majeure Do# et la sixte Fa# : tu tiens les notes de La mixolydien, sans tout r\xE9apprendre.",
+          "Le m\xE9lange des deux couleurs, mineure et majeure, est au c\u0153ur du son blues."
+        ] },
+        { type: "question", quizId: "q-impro-14" },
+        { type: "recap", points: [
+          "Mixolydien = 1-2-3-4-5-6-\u266D7 ; Sol mixolydien = notes de Do majeur depuis Sol.",
+          "Sa \u266D7 colle \xE0 l'accord 7 : sur G7, Sol mixolydien plut\xF4t que Sol majeur.",
+          "Terrain : accords 7 qui ne r\xE9solvent pas, vamps I \u2013 \u266DVII, blues."
+        ] }
+      ],
+      quiz: ["q-scales-16", "q-scales-17", "q-impro-14", "q-fret-scales-05", "q-logic-03", "q-logic-08", "q-scales-16-app"]
+    };
+    quiz57 = [
+      { id: "q-scales-16", courseId: "scales", lessonId: "scales-c5-05", lvl: 2, q: "Sur un accord G7 (dominante non-r\xE9solue), quel mode utiliser ?", o: ["Sol mixolydien", "Sol ionien (majeur)", "Sol dorien", "Sol lydien"], a: 0, exp: "Sur tout accord 7 (dominante), le mixolydien correspond. Sol mixolydien = Sol-La-Si-Do-R\xE9-Mi-Fa. Le Fa naturel (\u266D7) = la 7e de l'accord G7.", xp: 40 },
+      { id: "q-scales-16-app", courseId: "scales", lessonId: "scales-c5-05", lvl: 2, q: "Quelle note distingue R\xE9 mixolydien de R\xE9 majeur ?", o: ["Do au lieu de Do#", "Fa au lieu de Fa#", "Sol# au lieu de Sol", "Si\u266D au lieu de Si"], a: 0, exp: "Le mixolydien, c'est le majeur avec une 7e mineure. En R\xE9, la 7e majeure Do# devient Do : R\xE9 mixolydien colle \xE0 l'accord D7 (R\xE9, Fa#, La, Do).", xp: 30 },
+      { id: "q-scales-17", courseId: "scales", lessonId: "scales-c5-05", lvl: 3, q: "Que se passe-t-il si tu joues Sol majeur (au lieu de Sol mixolydien) sur un accord G7 ?", o: ["Rien, les deux gammes sont identiques", "Le Fa# frotte contre le Fa de l'accord", "\xC7a sonne plus joyeux, sans aucun frottement", "\xC7a sonne plus mineur et plus sombre qu'avant"], a: 1, exp: "Sol majeur contient Fa#. G7 contient Fa naturel (la \u266D7). Le Fa# entre en conflit avec le Fa de l'accord. Mixolydien (Fa naturel) = match parfait avec G7.", xp: 55 },
+      { id: "q-impro-14", courseId: "impro", lessonId: "scales-c5-05", lvl: 3, q: "Sur un blues en La (A7-D7-E7), tu joues La mixolydien sur les trois accords. O\xF9 \xE7a frotte ?", o: ["Sur aucun des trois accords", "Sur A7 seulement", "Sur D7 et E7", "Sur E7 seulement"], a: 2, exp: "La mixolydien = La-Si-Do#-R\xE9-Mi-Fa#-Sol : parfait sur A7 (La-Do#-Mi-Sol). Mais D7 contient Do, qui frotte contre le Do#, et E7 contient Sol#, qui frotte contre le Sol. On adapte : R\xE9 mixolydien sur D7, Mi mixolydien sur E7 \u2014 ou la penta mineure de La, qui sonne blues sur les trois.", xp: 70 },
+      { id: "q-fret-scales-05", type: "fretboard", courseId: "scales", lessonId: "scales-c5-05", lvl: 2, q: "Trouve les notes du mixolydien de Sol (cases 0-5)", concept: { type: "find_scale", root: "G", quality: "mixolydian" }, selectionRules: { mode: "all" }, fretRange: [0, 5], display: { showNotes: false }, hint: "Mixolydien = majeure avec 7e mineure. Sol-La-Si-Do-R\xE9-Mi-Fa.", xp: 55, exp: "Sol mixolydien : le Fa naturel (pas Fa#) est la note caract\xE9ristique." }
+    ];
+  }
+});
+
+// src/content/cours/scales/scales-c5-06.js
+var scales_c5_06_exports = {};
+__export(scales_c5_06_exports, {
+  default: () => scales_c5_06_default,
+  quiz: () => quiz58
+});
+var scales_c5_06_default, quiz58;
+var init_scales_c5_06 = __esm({
+  "src/content/cours/scales/scales-c5-06.js"() {
+    scales_c5_06_default = {
+      id: "scales-c5-06",
+      level: 8,
+      title: "\xC9olien \u2014 la m\xE9lancolie naturelle",
+      duration: 8,
+      gropiTip: "\xC9coute la \u266D6 : dans la position case 5, joue Fa (case 6 corde 2) puis redescends sur Mi (case 5). Ce demi-ton qui retombe sur la quinte, c'est le soupir typique de l'\xE9olien.",
+      cartes: [
+        { type: "idee", titre: "Le 6e mode", texte: [
+          "Do majeur jou\xE9 depuis La : La, Si, Do, R\xE9, Mi, Fa, Sol. C'est La \xE9olien.",
+          "Tu le connais d\xE9j\xE0 sous un autre nom : c'est exactement la mineure naturelle, le \xAB son mineur \xBB de la plupart des ballades."
+        ] },
+        { type: "idee", titre: "Depuis la penta", texte: [
+          "La penta mineure de La, position 1, contient d\xE9j\xE0 cinq de ses notes. Ajoute Si et Fa dans la m\xEAme position et tu as l'\xE9olien complet.",
+          "Pas de nouvelle forme \xE0 apprendre : deux notes de plus dans des doigts familiers."
+        ], bloc: {
+          type: "scale_pattern",
+          caption: "La \xE9olien (mineur naturel) \u2014 case 5. M\xEAme forme que Am pentatonique + 2 notes (Si, Fa)",
+          data: {
+            startFret: 4,
+            endFret: 9,
+            rootColor: "primary",
+            noteColor: "green",
+            strings: [
+              { frets: [5, 7, 8], root: [5] },
+              { frets: [5, 7, 8], root: [] },
+              { frets: [5, 7], root: [] },
+              { frets: [5, 7], root: [] },
+              { frets: [5, 6, 8], root: [] },
+              { frets: [5, 7, 8], root: [5] }
+            ],
+            noteMap: {
+              "5,0": "La",
+              "7,0": "Si",
+              "8,0": "Do",
+              "5,1": "R\xE9",
+              "7,1": "Mi",
+              "8,1": "Fa",
+              "5,2": "Sol",
+              "7,2": "La",
+              "5,3": "Do",
+              "7,3": "R\xE9",
+              "5,4": "Mi",
+              "6,4": "Fa",
+              "8,4": "Sol",
+              "5,5": "La",
+              "7,5": "Si",
+              "8,5": "Do"
+            }
+          }
+        } },
+        { type: "question", quizId: "q-scales-42" },
+        { type: "idee", titre: "L'\xE9talon du mineur", texte: [
+          "Formule : 1-2-\u266D3-4-5-\u266D6-\u266D7. L'\xE9olien n'a pas de note caract\xE9ristique : c'est la r\xE9f\xE9rence.",
+          "Les autres modes mineurs se d\xE9finissent par rapport \xE0 lui : le dorien remonte une note, le phrygien en baisse une, le locrien en baisse deux."
+        ] },
+        { type: "idee", titre: "Sur quels accords", texte: [
+          "Son terrain : tout morceau tonal en mineur, et les grilles dont chaque accord vient de la gamme, comme Am \u2013 F \u2013 G ou Am \u2013 Dm \u2013 Em.",
+          "Couleur : m\xE9lancolique, introspective. Son Fa aime retomber d'un demi-ton sur Mi, la quinte."
+        ] },
+        { type: "question", quizId: "q-scales-41" },
+        {
+          type: "a-toi",
+          titre: "La \xE9olien sur Am \u2013 F \u2013 G",
+          consigne: "Fais tourner Am, F, G, Am, une mesure chacun, au clic \xE0 70 : enregistre-toi ou utilise une boucle. Joue la tab, qui fait deux fois retomber Fa sur Mi, puis improvise dans la position case 5 en finissant tes phrases sur La (corde 4 case 7).",
+          bloc: {
+            type: "tab",
+            caption: "La \xE9olien, position case 5 : la sixte mineure Fa qui retombe sur Mi, puis retour au La",
+            text: "Tab \u2014 mesure 1 : corde 1 cases 8, 7, 5 (Do, Si, La), corde 2 cases 6 et 5 (Fa, Mi). Mesure 2 : corde 2 cases 8, 6, 5 (Sol, Fa, Mi), corde 3 cases 7 et 5 (R\xE9, Do), corde 4 case 7 (La).",
+            data: { lines: [
+              "e|-8--7--5--------|-------------------|",
+              "B|----------6--5--|-8--6--5-----------|",
+              "G|----------------|----------7--5-----|",
+              "D|----------------|----------------7--|",
+              "A|----------------|-------------------|",
+              "E|----------------|-------------------|"
+            ] }
+          },
+          bpm: 70,
+          minuteur: 150
+        },
+        { type: "question", quizId: "q-scales-40" },
+        { type: "recap", points: [
+          "\xC9olien = mineure naturelle : 1-2-\u266D3-4-5-\u266D6-\u266D7.",
+          "Penta mineure + la 2 et la \u266D6 = l'\xE9olien complet, dans la m\xEAme position.",
+          "Les autres modes mineurs se mesurent \xE0 lui : dorien (6), phrygien (\u266D2), locrien (\u266D2, \u266D5)."
+        ] }
+      ],
+      quiz: ["q-scales-40", "q-scales-41", "q-scales-42", "q-logic-10", "q-scales-03"]
+    };
+    quiz58 = [
+      { id: "q-scales-40", courseId: "scales", lessonId: "scales-c5-06", lvl: 1, q: "\xC0 quelle gamme correspond le mode \xE9olien ?", o: ["La gamme mineure harmonique", "La pentatonique mineure", "La gamme blues", "La gamme mineure naturelle"], a: 3, exp: "\xC9olien = 1 - 2 - \u266D3 - 4 - 5 - \u266D6 - \u266D7 : la gamme mineure naturelle.", xp: 30 },
+      { id: "q-scales-41", courseId: "scales", lessonId: "scales-c5-06", lvl: 2, q: "Quelle note distingue l'\xE9olien du dorien ?", o: ["La sixte mineure (\u266D6)", "La septi\xE8me mineure (\u266D7)", "La tierce mineure (\u266D3)", "La seconde majeure (2)"], a: 0, exp: "Le dorien a une sixte majeure, l'\xE9olien une sixte mineure (\u266D6) : c'est la seule diff\xE9rence.", xp: 40 },
+      { id: "q-scales-42", courseId: "scales", lessonId: "scales-c5-06", lvl: 1, q: "Pour passer de la penta mineure \xE0 l'\xE9olien, quelles notes ajoute-t-on ?", o: ["La 3 et la 7", "La 2 et la \u266D6", "La \u266D2 et la \u266D5", "La 6 et la 7"], a: 1, exp: "Penta mineure = 1 - \u266D3 - 4 - 5 - \u266D7. On ajoute la seconde (2) et la sixte mineure (\u266D6) : on obtient l'\xE9olien complet.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/scales/scales-c5-07.js
+var scales_c5_07_exports = {};
+__export(scales_c5_07_exports, {
+  default: () => scales_c5_07_default,
+  quiz: () => quiz59
+});
+var scales_c5_07_default, quiz59;
+var init_scales_c5_07 = __esm({
+  "src/content/cours/scales/scales-c5-07.js"() {
+    scales_c5_07_default = {
+      id: "scales-c5-07",
+      level: 8,
+      title: "Locrien \u2014 le mode interdit",
+      duration: 7,
+      gropiTip: "Pour l'entendre sans te perdre : joue l'accord Bm7\u266D5 (Si-R\xE9-Fa-La), puis prom\xE8ne-toi dans les notes de Do majeur en partant de Si. Tu sentiras vite que le Fa emp\xEAche de se poser.",
+      cartes: [
+        { type: "idee", titre: "Le 7e mode", texte: [
+          "Do majeur jou\xE9 depuis Si : Si, Do, R\xE9, Mi, Fa, Sol, La. C'est Si locrien.",
+          "Formule : 1-\u266D2-\u266D3-4-\u266D5-\u266D6-\u266D7. Cinq notes abaiss\xE9es : le plus sombre des sept modes."
+        ] },
+        { type: "idee", titre: "Pas de quinte juste", texte: [
+          "Entre Si et Fa, pas de quinte juste mais un triton. Or la quinte est ce qui ancre la fondamentale dans tous les autres modes.",
+          "Sans elle, l'oreille ne sait pas o\xF9 se poser : le locrien sonne toujours instable. Le triton, surnomm\xE9 diabolus in musica, a longtemps \xE9t\xE9 \xE9vit\xE9."
+        ], bloc: { type: "scale_pattern", caption: "Si locrien \u2014 note cl\xE9 : Fa, la quinte diminu\xE9e (case 8 c5, case 10 c3)", data: { startFret: 7, endFret: 10, rootColor: "amber", noteColor: "primary", accentColor: "coral", accentLabel: "Fa, quinte diminu\xE9e", strings: [{ frets: [7, 8, 10], root: [7] }, { frets: [7, 8, 10], root: [], accent: [8] }, { frets: [7, 9, 10], root: [9] }, { frets: [7, 9, 10], root: [], accent: [10] }, { frets: [8, 10], root: [] }, { frets: [7, 8, 10], root: [7] }], noteMap: { "7,0": "Si", "8,0": "Do", "10,0": "R\xE9", "7,1": "Mi", "8,1": "Fa", "10,1": "Sol", "7,2": "La", "9,2": "Si", "10,2": "Do", "7,3": "R\xE9", "9,3": "Mi", "10,3": "Fa", "8,4": "Sol", "10,4": "La", "7,5": "Si", "8,5": "Do", "10,5": "R\xE9" } } } },
+        { type: "question", quizId: "q-scales-p89-c507-01" },
+        { type: "idee", titre: "Le demi-diminu\xE9", texte: [
+          "Son terrain : l'accord m7\u266D5, Bm7\u266D5 pour Si locrien. On le croise surtout comme ii d'un ii-V-i mineur : Bm7\u266D5 \u2013 E7 \u2013 Am.",
+          "L\xE0, le locrien ne dure qu'une mesure, en passage. Des morceaux entiers en locrien, il y en a tr\xE8s peu."
+        ], bloc: { type: "chord_diagram", caption: "Bm7b5 (x2323x) \u2014 l'accord demi-diminu\xE9, terrain naturel du Si locrien", data: { name: "Bm7b5", frets: [-1, 2, 3, 2, 3, -1], fingers: [0, 1, 3, 2, 4, 0], startFret: 1 } } },
+        { type: "question", quizId: "q-scales-43" },
+        {
+          type: "a-toi",
+          titre: "Un ii-V-i mineur",
+          consigne: "Encha\xEEne Bm7\u266D5, E7 et Am, une mesure chacun, au clic \xE0 60. Sur Bm7\u266D5, joue la tab : elle grimpe dans les notes de l'accord, de Si jusqu'au Fa (corde 3 case 10). Laisse sonner E7 puis Am. \xC9coute comme Am soulage la tension.",
+          bloc: {
+            type: "tab",
+            caption: "Si locrien, position case 7 : l'arp\xE8ge de Bm7\u266D5 (Si, R\xE9, Fa, La) jusqu'\xE0 la quinte diminu\xE9e",
+            text: "Tab \u2014 corde 6 cases 7 et 10 (Si, R\xE9), corde 5 case 8 (Fa), corde 4 cases 7 et 9 (La, Si), corde 3 cases 7 et 10 (R\xE9, Fa).",
+            data: { lines: [
+              "e|------------------------|",
+              "B|------------------------|",
+              "G|-----------------7--10--|",
+              "D|-----------7--9---------|",
+              "A|--------8---------------|",
+              "E|-7--10------------------|"
+            ] }
+          },
+          bpm: 60,
+          minuteur: 120
+        },
+        { type: "question", quizId: "q-scales-44" },
+        { type: "recap", points: [
+          "Locrien = 1-\u266D2-\u266D3-4-\u266D5-\u266D6-\u266D7 ; Si locrien = notes de Do majeur depuis Si.",
+          "Sa quinte diminu\xE9e lui retire tout point de repos : il sonne instable.",
+          "Usage r\xE9el : sur un m7\u266D5, souvent le ii d'un ii-V-i mineur."
+        ] }
+      ],
+      quiz: ["q-scales-43", "q-scales-44", "q-scales-45", "q-scales-04", "q-scales-08", "q-scales-p89-c507-01"]
+    };
+    quiz59 = [
+      { id: "q-scales-43", courseId: "scales", lessonId: "scales-c5-07", lvl: 1, q: "Quelle est la particularit\xE9 du locrien ?", o: ["Sa tierce est majeure", "Il n'a que 5 notes", "Sa quinte est diminu\xE9e", "Sa septi\xE8me est majeure"], a: 2, exp: "C'est le seul mode dont la quinte est diminu\xE9e (\u266D5) : sans quinte juste, l'oreille ne trouve pas o\xF9 se poser.", xp: 30 },
+      { id: "q-scales-44", courseId: "scales", lessonId: "scales-c5-07", lvl: 2, q: "Sur quel accord le locrien s'utilise-t-il surtout ?", o: ["Un accord maj7 de tonique", "Un accord de dominante 7", "Un accord mineur 7 de repos", "Un accord m7\u266D5"], a: 3, exp: "Sur le demi-diminu\xE9 (m7\u266D5), par exemple le ii d'un ii-V-i mineur : Bm7\u266D5 - E7 - Am7.", xp: 40 },
+      { id: "q-scales-45", courseId: "scales", lessonId: "scales-c5-07", lvl: 1, q: "Si locrien a les m\xEAmes notes que quelle gamme ?", o: ["Do majeur", "Si mineur", "Sol majeur", "Fa majeur"], a: 0, exp: "Le locrien est le 7e mode de la gamme majeure : Si locrien = Do majeur, jou\xE9 depuis Si.", xp: 30 },
+      { id: "q-scales-p89-c507-01", courseId: "scales", lessonId: "scales-c5-07", lvl: 3, q: "Mi locrien a les m\xEAmes notes que quelle gamme majeure ?", o: ["Fa majeur", "Mi majeur", "La majeur", "Sol majeur"], a: 0, exp: "Le locrien est le 7e mode : sa gamme parente commence un demi-ton au-dessus. Mi locrien = Fa majeur jou\xE9 depuis Mi (Mi Fa Sol La Si\u266D Do R\xE9).", xp: 45 }
+    ];
+  }
+});
+
+// src/content/cours/scales/scales-3nps-01.js
+var scales_3nps_01_exports = {};
+__export(scales_3nps_01_exports, {
+  default: () => scales_3nps_01_default,
+  quiz: () => quiz60
+});
+function forme(caption, cases) {
+  const noteMap = {};
+  const strings = cases.map((frets, idx) => {
+    for (const fr of frets) noteMap[`${fr},${idx}`] = NOM[(VIDE[idx] + fr) % 12];
+    return { frets, root: frets.filter((fr) => (VIDE[idx] + fr) % 12 === SOL) };
+  });
+  const toutes = cases.flat();
+  return {
+    type: "scale_pattern",
+    caption,
+    data: { startFret: Math.min(...toutes), endFret: Math.max(...toutes), rootColor: "amber", noteColor: "primary", strings, noteMap }
+  };
+}
+var VIDE, NOM, SOL, FORME_1, FORME_2, FORME_3, ALTERNE_FORME_1, scales_3nps_01_default, quiz60;
+var init_scales_3nps_01 = __esm({
+  "src/content/cours/scales/scales-3nps-01.js"() {
+    VIDE = [4, 9, 2, 7, 11, 4];
+    NOM = { 0: "Do", 2: "R\xE9", 4: "Mi", 6: "Fa#", 7: "Sol", 9: "La", 11: "Si" };
+    SOL = 7;
+    FORME_1 = forme(
+      "Gamme de Sol majeur \u2014 forme 1 en 3NPS, d\xE9part sur Sol (case 3)",
+      [[3, 5, 7], [3, 5, 7], [4, 5, 7], [4, 5, 7], [5, 7, 8], [5, 7, 8]]
+    );
+    FORME_2 = forme(
+      "Gamme de Sol majeur \u2014 forme 2 en 3NPS, d\xE9part sur La (case 5) : La dorien",
+      [[5, 7, 8], [5, 7, 9], [5, 7, 9], [5, 7, 9], [7, 8, 10], [7, 8, 10]]
+    );
+    FORME_3 = forme(
+      "Gamme de Sol majeur \u2014 forme 3 en 3NPS, d\xE9part sur Si (case 7) : Si phrygien",
+      [[7, 8, 10], [7, 9, 10], [7, 9, 10], [7, 9, 11], [8, 10, 12], [8, 10, 12]]
+    );
+    ALTERNE_FORME_1 = {
+      type: "tab",
+      caption: "La forme 1 en montant : trois notes par corde, en triolets",
+      text: "Tab \u2014 corde 6 cases 3, 5, 7 ; corde 5 cases 3, 5, 7 ; corde 4 cases 4, 5, 7 ; corde 3 cases 4, 5, 7 ; corde 2 cases 5, 7, 8 ; corde 1 cases 5, 7, 8. De Sol (corde 6 case 3) \xE0 Do (corde 1 case 8).",
+      data: { lines: [
+        "e|------------------------------5-7-8-|",
+        "B|------------------------5-7-8-------|",
+        "G|------------------4-5-7-------------|",
+        "D|------------4-5-7-------------------|",
+        "A|------3-5-7-------------------------|",
+        "E|3-5-7-------------------------------|"
+      ] }
+    };
+    scales_3nps_01_default = {
+      id: "scales-3nps-01",
+      level: 8,
+      title: "Les gammes en 3 notes par corde (3NPS)",
+      duration: 10,
+      gropiTip: "Dans la forme 1, rep\xE8re les trois Sol : Sol (corde 6 case 3), Sol (corde 4 case 5) et Sol (corde 2 case 8). Marque-les d'un accent en jouant : ces rep\xE8res t'\xE9vitent de te perdre quand les formes s'encha\xEEnent.",
+      cartes: [
+        { type: "idee", titre: "Pourquoi trois notes par corde", texte: [
+          "Dans les positions classiques, certaines cordes ont deux notes, d'autres trois : la main droite change sans cesse de sch\xE9ma.",
+          "En 3NPS, chaque corde a exactement trois notes. Le geste se r\xE9p\xE8te : id\xE9al pour le m\xE9diator altern\xE9, le legato et la vitesse."
+        ] },
+        { type: "idee", titre: "Sept formes", texte: [
+          "La gamme majeure a sept notes ; chaque forme 3NPS d\xE9marre sur l'une d'elles, sur la corde 6.",
+          "En Sol majeur : sur Sol, La, Si, Do, R\xE9, Mi et Fa#. Elles s'embo\xEEtent le long du manche, chacune chevauchant la suivante."
+        ] },
+        { type: "question", quizId: "q-scales-3nps-01-lot4" },
+        { type: "idee", titre: "Forme 1, sur Sol", texte: [
+          "D\xE9part sur Sol (corde 6 case 3), arriv\xE9e sur Do (corde 1 case 8). L'\xE9cart est large : six cases.",
+          "Ouvre la main, laisse le pouce descendre derri\xE8re le manche, et accepte de glisser l\xE9g\xE8rement d'une case sur les cordes 3 \xE0 1."
+        ], bloc: FORME_1 },
+        { type: "idee", titre: "Forme 2, sur La : le dorien", texte: [
+          "M\xEAme gamme, d\xE9part sur La (corde 6 case 5).",
+          "Jou\xE9e de La \xE0 La, en tournant autour de La, elle fait entendre La dorien : chaque forme 3NPS porte le nom d'un mode."
+        ], bloc: FORME_2 },
+        { type: "question", quizId: "q-scales-3nps-02-lot4" },
+        { type: "idee", titre: "Forme 3, sur Si : le phrygien", texte: [
+          "D\xE9part sur Si (corde 6 case 7). Centr\xE9e sur Si, la m\xEAme gamme sonne Si phrygien.",
+          "Les formes suivantes partent de Do (lydien), R\xE9 (mixolydien), Mi (\xE9olien) et Fa# (locrien) : continue le motif \xE0 la case suivante."
+        ], bloc: FORME_3 },
+        {
+          type: "a-toi",
+          titre: "Altern\xE9, de 60 \xE0 90",
+          consigne: "Forme 1 en montant puis en descendant, m\xE9diator altern\xE9 strict, trois notes par temps. Commence \xE0 60. Deux passages propres de suite : +10 BPM, jusqu'\xE0 90. Puis en legato : une attaque par corde, les deux autres notes en hammer-on.",
+          bloc: ALTERNE_FORME_1,
+          bpm: 60,
+          minuteur: 300
+        },
+        { type: "question", quizId: "q-scales-3nps-03-lot4" },
+        { type: "recap", points: [
+          "3NPS : trois notes sur chaque corde, un geste r\xE9gulier pour les deux mains.",
+          "Sept formes, une par note de la gamme : chacune d\xE9marre sur un mode.",
+          "M\xE9diator altern\xE9 en triolets de 60 \xE0 90 BPM, puis la version legato."
+        ] }
+      ],
+      quiz: ["q-scales-3nps-01-lot4", "q-scales-3nps-02-lot4", "q-scales-3nps-03-lot4"]
+    };
+    quiz60 = [
+      { id: "q-scales-3nps-01-lot4", courseId: "scales", lessonId: "scales-3nps-01", lvl: 3, q: "Combien de formes 3NPS faut-il pour couvrir une gamme majeure sur tout le manche ?", o: ["7", "5", "3", "12"], a: 0, exp: "Une forme par note de la gamme, soit sept : chacune d\xE9marre sur un degr\xE9 diff\xE9rent, sur la corde 6. Cinq, c'est le nombre de positions de la pentatonique (et du syst\xE8me CAGED).", xp: 40 },
+      { id: "q-scales-3nps-02-lot4", courseId: "scales", lessonId: "scales-3nps-01", lvl: 3, q: "Tu joues Sol majeur en 3NPS \xE0 partir de Si sur la corde 6. Si Si reste ton centre, quel mode fais-tu entendre ?", o: ["Si phrygien", "Si locrien", "Si dorien", "Si \xE9olien"], a: 0, exp: "Si est le 3e degr\xE9 de Sol majeur : centr\xE9 sur Si, on entend le 3e mode, le phrygien (Si Do R\xE9 Mi Fa# Sol La). Le locrien partirait de Fa#, le dorien de La, l'\xE9olien de Mi.", xp: 45 },
+      { id: "q-scales-3nps-03-lot4", courseId: "scales", lessonId: "scales-3nps-01", lvl: 3, q: "En 3NPS au m\xE9diator altern\xE9 strict, comment est attaqu\xE9e la premi\xE8re note de chaque nouvelle corde ?", o: ["Une corde vers le bas, la suivante vers le haut", "Toujours vers le bas", "Toujours vers le haut", "Au hasard, selon la position de la main"], a: 0, exp: "Trois notes, c'est un nombre impair : bas-haut-bas sur une corde, donc haut-bas-haut sur la suivante. Le sens d'attaque alterne d'une corde \xE0 l'autre, ce qui demande de travailler les deux passages de corde.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/scales/scales-c6-01.js
+var scales_c6_01_exports = {};
+__export(scales_c6_01_exports, {
+  default: () => scales_c6_01_default,
+  quiz: () => quiz61
+});
+var scales_c6_01_default, quiz61;
+var init_scales_c6_01 = __esm({
+  "src/content/cours/scales/scales-c6-01.js"() {
+    scales_c6_01_default = {
+      id: "scales-c6-01",
+      level: 9,
+      title: "La gamme mineure harmonique",
+      duration: 9,
+      gropiTip: "Joue Mi-Fa-Sol#-La sur la corde 2 (cases 5, 6, 9) puis La case 5 corde 1. Le saut de 3 cases entre Fa et Sol# te donne tout de suite la couleur orientale de la gamme.",
+      cartes: [
+        { type: "idee", titre: "Un V trop mou", texte: [
+          "En La mineur naturel, l'accord du 5e degr\xE9 est Em. Sa cadence vers Am manque de force : aucune note ne tire vers La \xE0 un demi-ton.",
+          "La solution : monter la 7e note d'un demi-ton. Sol devient Sol#, Em devient E (ou E7), et la cadence V \u2013 I retrouve son \xE9lan."
+        ] },
+        { type: "idee", titre: "Formule", texte: [
+          "1-2-\u266D3-4-5-\u266D6-7. En La : La, Si, Do, R\xE9, Mi, Fa, Sol#.",
+          "Entre Fa et Sol#, un \xE9cart d'un ton et demi : ce saut donne sa couleur orientale et dramatique, celle de la musique classique en mineur comme du metal n\xE9oclassique."
+        ], bloc: {
+          type: "scale_pattern",
+          caption: "La mineure harmonique \u2014 case 5. Note cl\xE9 : Sol#, la septi\xE8me majeure (case 6 c4, case 9 c2)",
+          data: {
+            startFret: 4,
+            endFret: 9,
+            rootColor: "amber",
+            noteColor: "primary",
+            strings: [
+              { frets: [5, 7, 8], root: [5] },
+              { frets: [5, 7], root: [] },
+              { frets: [6, 7], root: [], accent: [6] },
+              { frets: [4, 5, 7], root: [] },
+              { frets: [5, 6, 9], root: [], accent: [9] },
+              { frets: [5, 7, 8], root: [5] }
+            ],
+            noteMap: {
+              "5,0": "La",
+              "7,0": "Si",
+              "8,0": "Do",
+              "5,1": "R\xE9",
+              "7,1": "Mi",
+              "6,2": "Sol#",
+              "7,2": "La",
+              "4,3": "Si",
+              "5,3": "Do",
+              "7,3": "R\xE9",
+              "5,4": "Mi",
+              "6,4": "Fa",
+              "9,4": "Sol#",
+              "5,5": "La",
+              "7,5": "Si",
+              "8,5": "Do"
+            }
+          }
+        } },
+        { type: "question", quizId: "q-scales-p89-c601-01" },
+        { type: "idee", titre: "Sur le V7", texte: [
+          "Son terrain principal : le V7 d'une cadence mineure. Sur E7 \u2192 Am, joue La mineure harmonique.",
+          "Son Sol# est la tierce de E7, et il monte d'un demi-ton sur le La de Am : la r\xE9solution se fait toute seule."
+        ] },
+        { type: "idee", titre: "Vue depuis Mi", texte: [
+          "Joue La mineure harmonique en partant de Mi : Mi, Fa, Sol#, La, Si, Do, R\xE9. Tu retrouves le phrygien dominant, crois\xE9 au palier pr\xE9c\xE9dent : c'est le 5e mode de cette gamme.",
+          "Une m\xEAme gamme, deux fa\xE7ons de la penser sur E7."
+        ] },
+        { type: "question", quizId: "q-scales-20" },
+        {
+          type: "a-toi",
+          titre: "Un blues mineur",
+          consigne: "Fais tourner Am, Dm, E7, Am, une mesure chacun, au clic \xE0 60. Penta mineure de La sur Am et Dm ; sur E7, joue la tab, qui passe deux fois par Sol#, et finis sur La (corde 4 case 7) quand Am revient.",
+          bloc: {
+            type: "tab",
+            caption: "La mineure harmonique sur E7, position case 5 : Sol# qui monte sur La",
+            text: "Tab \u2014 mesure E7 : corde 1 cases 8 et 7 (Do, Si), corde 2 cases 9, 6, 5 (Sol#, Fa, Mi), corde 3 cases 7 et 4 (R\xE9, Si), corde 4 case 6 (Sol#). Mesure Am : corde 4 case 7 (La).",
+            data: { lines: [
+              "e|-8--7--------------------|----|",
+              "B|-------9--6--5-----------|----|",
+              "G|----------------7--4-----|----|",
+              "D|----------------------6--|-7--|",
+              "A|-------------------------|----|",
+              "E|-------------------------|----|"
+            ] }
+          },
+          bpm: 60,
+          minuteur: 150
+        },
+        { type: "question", quizId: "q-impro-09" },
+        { type: "recap", points: [
+          "Mineure harmonique = 1-2-\u266D3-4-5-\u266D6-7 : la mineure naturelle avec une 7e majeure.",
+          "Sa sensible rend au V sa force : E7 \u2192 Am en La mineur.",
+          "Jou\xE9e depuis le 5e degr\xE9, elle donne le phrygien dominant."
+        ] }
+      ],
+      quiz: ["q-scales-20", "q-impro-09", "q-scales-11", "q-scales-12", "q-scales-p89-c601-01"]
+    };
+    quiz61 = [
+      { id: "q-scales-20", courseId: "scales", lessonId: "scales-c6-01", lvl: 2, q: "La gamme mineure harmonique se distingue de la mineure naturelle par\u2026", o: ["Une 7e majeure", "Une 6e majeure", "Une 4e augment\xE9e", "Une 2e mineure"], a: 0, exp: "Mineure harmonique = mineure naturelle avec 7 majeure. La harmonique = La-Si-Do-R\xE9-Mi-Fa-Sol#. Le Sol# permet la cadence V-I forte en mineur.", xp: 50 },
+      { id: "q-impro-09", courseId: "impro", lessonId: "scales-c6-01", lvl: 3, q: "Sur E7 qui r\xE9sout vers Am, tu joues La mineure harmonique. Vue depuis Mi, quel nom porte cette gamme ?", o: ["Mi phrygien dominant", "Mi mixolydien", "Mi phrygien", "Mi locrien"], a: 0, exp: "La mineure harmonique (La Si Do R\xE9 Mi Fa Sol#) jou\xE9e depuis Mi donne Mi Fa Sol# La Si Do R\xE9 : 1-\u266D2-3-4-5-\u266D6-\u266D7, le phrygien dominant. Le Sol# est la tierce de E7 ; avec un Sol naturel, ce serait Mi phrygien.", xp: 70 },
+      { id: "q-scales-p89-c601-01", courseId: "scales", lessonId: "scales-c6-01", lvl: 2, q: "En Mi mineur harmonique, quelle note remplace le R\xE9 de Mi mineur naturel ?", o: ["R\xE9#", "Do#", "R\xE9\u266D", "Do"], a: 0, exp: "On monte la 7e d'un demi-ton : R\xE9 devient R\xE9#, la sensible qui tire vers Mi. Mi mineur harmonique = Mi Fa# Sol La Si Do R\xE9#, et l'accord du V devient B7.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/scales/scales-c6-02.js
+var scales_c6_02_exports = {};
+__export(scales_c6_02_exports, {
+  default: () => scales_c6_02_default,
+  quiz: () => quiz62
+});
+var scales_c6_02_default, quiz62;
+var init_scales_c6_02 = __esm({
+  "src/content/cours/scales/scales-c6-02.js"() {
+    scales_c6_02_default = {
+      id: "scales-c6-02",
+      level: 9,
+      title: "La gamme mineure m\xE9lodique",
+      duration: 9,
+      gropiTip: "Pour la retenir : c'est la gamme majeure avec la tierce abaiss\xE9e. La majeur (La-Si-Do#-R\xE9-Mi-Fa#-Sol#) devient La mineur m\xE9lodique d\xE8s que Do# redevient Do.",
+      cartes: [
+        { type: "idee", titre: "La 6 et la 7 remontent", texte: [
+          "Pars de La mineur naturel et monte deux notes d'un demi-ton : la 6e et la 7e. Tu obtiens La, Si, Do, R\xE9, Mi, Fa#, Sol# : La mineur m\xE9lodique.",
+          "Seule la tierce mineure, Do, la rend encore mineure."
+        ], bloc: {
+          type: "scale_pattern",
+          caption: "La mineure m\xE9lodique (jazz) \u2014 note cl\xE9 : Fa# (6M) et Sol# (7M) vs \xE9olien",
+          data: {
+            startFret: 4,
+            endFret: 9,
+            rootColor: "amber",
+            noteColor: "primary",
+            strings: [
+              { frets: [5, 7, 8], root: [5] },
+              { frets: [5, 7, 9], root: [] },
+              { frets: [6, 7, 9], root: [7] },
+              { frets: [5, 7, 9], root: [] },
+              { frets: [5, 7, 9], root: [] },
+              { frets: [5, 7, 8], root: [5] }
+            ],
+            noteMap: {
+              "5,0": "La",
+              "7,0": "Si",
+              "8,0": "Do",
+              "5,1": "R\xE9",
+              "7,1": "Mi",
+              "9,1": "Fa#",
+              "6,2": "Sol#",
+              "7,2": "La",
+              "9,2": "Si",
+              "5,3": "Do",
+              "7,3": "R\xE9",
+              "9,3": "Mi",
+              "5,4": "Mi",
+              "7,4": "Fa#",
+              "9,4": "Sol#",
+              "5,5": "La",
+              "7,5": "Si",
+              "8,5": "Do"
+            }
+          }
+        } },
+        { type: "idee", titre: "Deux versions", texte: [
+          "En musique classique, elle monte avec la 6 et la 7 majeures, puis redescend en mineure naturelle.",
+          "Le jazz garde la forme montante dans les deux sens. C'est celle qu'on travaille ici."
+        ] },
+        { type: "question", quizId: "q-scales-p89-c602-01" },
+        { type: "idee", titre: "Mineure, mais lumineuse", texte: [
+          "Une seule note dit \xAB mineur \xBB, tout le reste sonne majeur : une couleur ambigu\xEB, raffin\xE9e.",
+          "Sa place naturelle : l'accord mineur \xE0 7e majeure, Am(maj7), qui r\xE9unit la \u266D3 et la 7 majeure."
+        ] },
+        { type: "idee", titre: "Sept modes, trois tr\xE8s utiles", texte: [
+          "Elle a sept modes, elle aussi. En jazz, trois servent sans cesse : le 4e, lydien \u266D7, sur une dominante qui ne r\xE9sout pas ; le 6e, locrien #2, sur un m7\u266D5 ; le 7e, la gamme alt\xE9r\xE9e, sur un V7 qui r\xE9sout.",
+          "Pas d'urgence : ils viendront avec le jazz."
+        ] },
+        { type: "question", quizId: "q-scales-21" },
+        {
+          type: "a-toi",
+          titre: "Monter et descendre pareil",
+          consigne: "Fais sonner Am(maj7) en position ouverte (x02110), quatre temps, puis joue la tab au clic \xE0 60 : la m\xEAme gamme en montant et en descendant, Fa# et Sol# compris. Ensuite, deux minutes d'impro dans la position case 5 sur cet accord.",
+          bloc: {
+            type: "tab",
+            caption: "La mineure m\xE9lodique, position case 5 : mont\xE9e et descente avec les m\xEAmes notes",
+            text: "Tab \u2014 mesure 1 : corde 2 cases 5, 7, 9 (Mi, Fa#, Sol#), corde 1 cases 5, 7, 8 (La, Si, Do). Mesure 2 : corde 1 cases 7 et 5 (Si, La), corde 2 cases 9, 7, 5 (Sol#, Fa#, Mi), corde 3 cases 7 et 5 (R\xE9, Do), corde 4 case 7 (La).",
+            data: { lines: [
+              "e|----------5--7--8--|-7--5--------------------|",
+              "B|-5--7--9-----------|-------9--7--5-----------|",
+              "G|-------------------|----------------7--5-----|",
+              "D|-------------------|----------------------7--|",
+              "A|-------------------|-------------------------|",
+              "E|-------------------|-------------------------|"
+            ] }
+          },
+          bpm: 60,
+          minuteur: 150
+        },
+        { type: "question", quizId: "q-impro-12" },
+        { type: "recap", points: [
+          "Mineure m\xE9lodique (jazz) = 1-2-\u266D3-4-5-6-7, la m\xEAme en montant et en descendant.",
+          "C'est la majeure avec une tierce mineure ; son accord type : m(maj7).",
+          "Ses modes servent en jazz : lydien \u266D7, locrien #2, gamme alt\xE9r\xE9e."
+        ] }
+      ],
+      quiz: ["q-scales-21", "q-impro-12", "q-scales-13", "q-scales-15", "q-scales-p89-c602-01"]
+    };
+    quiz62 = [
+      { id: "q-scales-21", courseId: "scales", lessonId: "scales-c6-02", lvl: 3, q: "La gamme mineure m\xE9lodique 'jazz' a quelle formule ?", o: ["1-2-\u266D3-4-5-\u266D6-\u266D7", "1-2-\u266D3-4-5-6-7", "1-\u266D2-\u266D3-4-5-\u266D6-7", "1-2-3-4-5-6-\u266D7"], a: 1, exp: "M\xE9lodique jazz = 1-2-\u266D3-4-5-6-7. Mineure naturelle avec 6 ET 7 majeures. La m\xE9lodique jazz = La-Si-Do-R\xE9-Mi-Fa#-Sol#. Presque une majeure avec juste \u266D3.", xp: 55 },
+      { id: "q-impro-12", courseId: "impro", lessonId: "scales-c6-02", lvl: 3, q: "Sur un accord alt\xE9r\xE9 G7alt (V7 vers Cm), quelle gamme ?", o: ["Sol alt\xE9r\xE9", "Sol mixolydien", "Sol lydien", "Sol majeur"], a: 0, exp: "La gamme alt\xE9r\xE9e est le 7e mode de la mineure m\xE9lodique : Lab m\xE9lodique = Lab Sib Do\u266D R\xE9b Mib Fa Sol, donc Sol alt\xE9r\xE9 = Sol Lab Sib Do\u266D R\xE9b Mib Fa, avec toutes les alt\xE9rations possibles de G7 (\u266D9, #9, \u266D5, \u266D13). Mixolydien, lydien et majeur ignorent ces alt\xE9rations.", xp: 75 },
+      { id: "q-scales-p89-c602-01", courseId: "scales", lessonId: "scales-c6-02", lvl: 3, q: "Quelles sont les notes de R\xE9 mineur m\xE9lodique (forme jazz) ?", o: ["R\xE9 Mi Fa Sol La Si Do#", "R\xE9 Mi Fa Sol La Si\u266D Do#", "R\xE9 Mi Fa Sol La Si Do", "R\xE9 Mi Fa# Sol La Si Do#"], a: 0, exp: "R\xE9 mineur naturel (R\xE9 Mi Fa Sol La Si\u266D Do) avec la 6 et la 7 remont\xE9es : Si et Do#. Si\u266D + Do#, c'est l'harmonique ; Si + Do, le dorien ; avec Fa#, c'est R\xE9 majeur.", xp: 50 }
+    ];
+  }
+});
+
+// src/content/cours/scales/scales-c6-03.js
+var scales_c6_03_exports = {};
+__export(scales_c6_03_exports, {
+  default: () => scales_c6_03_default,
+  quiz: () => quiz63
+});
+var scales_c6_03_default, quiz63;
+var init_scales_c6_03 = __esm({
+  "src/content/cours/scales/scales-c6-03.js"() {
+    scales_c6_03_default = {
+      id: "scales-c6-03",
+      level: 9,
+      title: "Comment choisir une gamme en improvisation",
+      duration: 10,
+      gropiTip: "Mini-routine : sur une vamp Am7, joue 2 tours en pentatonique mineure, 2 en \xE9olien, puis 2 en dorien. Note la couleur que ton oreille pr\xE9f\xE8re : c'est comme \xE7a que l'instinct se construit.",
+      cartes: [
+        { type: "idee", titre: "1. La tonalit\xE9", texte: [
+          "Rep\xE8re l'accord sur lequel la grille revient et se termine. Do ? Tu es sans doute en Do majeur. Am ? En La mineur.",
+          "Tu tiens ta gamme par d\xE9faut : la majeure ou la mineure naturelle de cette tonique."
+        ] },
+        { type: "idee", titre: "2. Une tonalit\xE9, une gamme", texte: [
+          "Si tous les accords viennent de la m\xEAme tonalit\xE9, inutile de changer de gamme \xE0 chaque accord. La gamme parente fonctionne sur toute la grille.",
+          "Vise simplement les notes de l'accord du moment, surtout sa tierce. \xC7a marche tr\xE8s souvent en pop, en folk et en rock."
+        ] },
+        { type: "idee", titre: "3. Le style oriente", texte: [
+          "Pop, folk : majeur ou mineur naturel. Blues, rock : penta mineure, gamme blues, mixolydien. Musiques celtiques : souvent le dorien. Flamenco : phrygien dominant.",
+          "Le style ne d\xE9cide pas \xE0 ta place, mais il te donne une piste."
+        ] },
+        { type: "question", quizId: "q-scales-47" },
+        { type: "idee", titre: "4. Vamps et cas particuliers", texte: [
+          "Un seul accord tenu longtemps ? Prends son mode : Dm7 \u2192 R\xE9 dorien, G7 \u2192 Sol mixolydien, Cmaj7 \u2192 ionien ou lydien.",
+          "Un V7 qui r\xE9sout vers un accord mineur ? La mineure harmonique de l'accord d'arriv\xE9e."
+        ] },
+        { type: "question", quizId: "q-scales-46" },
+        { type: "idee", titre: "La r\xE8gle de survie", texte: [
+          "Dans le doute, la penta mineure de la tonique passe presque partout. En majeur, prends celle de la relative : La penta mineure sur un morceau en Do.",
+          "Puis affine \xE0 l'oreille : la th\xE9orie te donne les options, ton oreille choisit."
+        ], bloc: { type: "scale_pattern", caption: "La pentatonique mineure, case 5 \u2014 la gamme de survie, en La mineur comme en Do majeur", data: { startFret: 4, endFret: 9, rootColor: "amber", noteColor: "primary", strings: [{ frets: [5, 8], root: [5] }, { frets: [5, 7], root: [] }, { frets: [5, 7], root: [7] }, { frets: [5, 7], root: [] }, { frets: [5, 8], root: [] }, { frets: [5, 8], root: [5] }], noteMap: { "5,0": "La", "8,0": "Do", "5,1": "R\xE9", "7,1": "Mi", "5,2": "Sol", "7,2": "La", "5,3": "Do", "7,3": "R\xE9", "5,4": "Mi", "8,4": "Sol", "5,5": "La", "8,5": "Do" } } } },
+        {
+          type: "a-toi",
+          titre: "Une gamme, trois accords",
+          consigne: "Fais tourner Dm7, G7, Cmaj7, Cmaj7, une mesure chacun, au clic \xE0 70. Reste en Do majeur tout du long et vise la tierce de chaque accord : Fa, Si, puis Mi. La tab te montre le chemin ; ensuite, improvise en gardant ces trois cibles.",
+          bloc: {
+            type: "tab",
+            caption: "Do majeur sur Dm7 \u2013 G7 \u2013 Cmaj7 : chaque phrase se pose sur la tierce de l'accord (Fa, Si, Mi)",
+            text: "Tab \u2014 Dm7 : corde 2 cases 5 et 6 (Mi, Fa). G7 : corde 1 cases 5 et 7 (La, Si). Cmaj7 : corde 1 cases 8, 7, 5 (Do, Si, La), corde 2 case 5 (Mi).",
+            data: { lines: [
+              "e|-------|-5--7--|-8--7--5-----|",
+              "B|-5--6--|-------|----------5--|",
+              "G|-------|-------|-------------|",
+              "D|-------|-------|-------------|",
+              "A|-------|-------|-------------|",
+              "E|-------|-------|-------------|"
+            ] }
+          },
+          bpm: 70,
+          minuteur: 150
+        },
+        { type: "question", quizId: "q-scales-48" },
+        { type: "recap", points: [
+          "Trouve la tonalit\xE9 : l'accord de retour et de fin donne ta gamme par d\xE9faut.",
+          "Accords d'une m\xEAme tonalit\xE9 : une seule gamme, en visant les notes de chaque accord.",
+          "Vamp : le mode de l'accord ; V7 vers un mineur : mineure harmonique."
+        ] }
+      ],
+      quiz: ["q-scales-46", "q-scales-47", "q-scales-48", "q-scales-17", "q-scales-18"]
+    };
+    quiz63 = [
+      { id: "q-scales-46", courseId: "scales", lessonId: "scales-c6-03", lvl: 3, q: "Une vamp tourne sur Am7 - D7. Quel mode choisir sur La ?", o: ["La dorien", "La \xE9olien", "La phrygien", "La mineure harmonique"], a: 0, exp: "D7 contient Fa#, la sixte majeure de La : c'est la note du dorien. Am7 - D7 = ii-V de Sol majeur, dont La dorien est le 2e mode. Avec La \xE9olien (Fa naturel), le D7 frotterait. C'est la grille d'\xAB Oye Como Va \xBB (Santana).", xp: 50 },
+      { id: "q-scales-47", courseId: "scales", lessonId: "scales-c6-03", lvl: 2, q: "Sur Dm7 - G7 - Cmaj7 (tous diatoniques de Do), quelle gamme suffit ?", o: ["Une gamme diff\xE9rente par accord, obligatoirement", "Do majeur sur toute la grille", "La pentatonique de R\xE9 seulement", "La gamme blues de Sol"], a: 1, exp: "Tant que tous les accords appartiennent \xE0 une seule tonalit\xE9, la gamme parente (Do majeur) fonctionne sur toute la grille.", xp: 40 },
+      { id: "q-scales-48", courseId: "scales", lessonId: "scales-c6-03", lvl: 2, q: "Sur E7 qui r\xE9sout vers Am, quelle gamme utiliser ?", o: ["Mi mixolydien", "La pentatonique majeure", "La mineure harmonique", "Mi majeur"], a: 2, exp: "Sur un V7 qui r\xE9sout en mineur, on prend la mineure harmonique du I : La harmonique, avec son Sol# (la tierce de E7).", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/harmony/harm-c1-01.js
+var harm_c1_01_exports = {};
+__export(harm_c1_01_exports, {
+  default: () => harm_c1_01_default,
+  quiz: () => quiz64
+});
+var SOL2, harm_c1_01_default, quiz64;
+var init_harm_c1_01 = __esm({
+  "src/content/cours/harmony/harm-c1-01.js"() {
+    SOL2 = { type: "chord_diagram", caption: "Sol majeur (G) \u2014 320003 : la \xAB maison \xBB de la suite Sol, Do, R\xE9, Sol", data: { name: "G", frets: [3, 2, 0, 0, 0, 3], fingers: [2, 1, 0, 0, 0, 3], startFret: 1 } };
+    harm_c1_01_default = {
+      id: "harm-c1-01",
+      level: 1,
+      title: "Qu'est-ce que l'harmonie ?",
+      duration: 6,
+      gropiTip: "Fredonne un La pendant que tu grattes Lam, puis Fa, puis R\xE9 : la m\xEAme note change de couleur selon l'accord en dessous. C'est exactement \xE7a, l'harmonie.",
+      cartes: [
+        { type: "idee", titre: "Le troisi\xE8me pilier", texte: [
+          "La m\xE9lodie : des notes jou\xE9es une par une, \xE0 l'horizontale. Le rythme : leur dur\xE9e et leur place dans le temps.",
+          "L'harmonie : plusieurs notes jou\xE9es ensemble, \xE0 la verticale. Dans une chanson pop, le chant porte la m\xE9lodie, la batterie le rythme, les accords l'harmonie."
+        ] },
+        { type: "idee", titre: "Tu en fais d\xE9j\xE0", texte: [
+          "Chaque accord que tu grattes, c'est de l'harmonie : plusieurs notes qui sonnent ensemble et cr\xE9ent une couleur.",
+          "Do, par exemple, superpose cinq notes : Do, Mi, Sol, Do, Mi."
+        ], bloc: { type: "chord_diagram", caption: "Do (C) \u2014 x32010 : cinq notes jou\xE9es ensemble, c'est d\xE9j\xE0 de l'harmonie", data: { name: "C", frets: [-1, 3, 2, 0, 1, 0], fingers: [0, 3, 2, 0, 1, 0], startFret: 1 } } },
+        { type: "question", quizId: "q-base-05" },
+        { type: "a-toi", titre: "Horizontal, puis vertical", consigne: "Pose ton accord de Do. Joue ses cordes une \xE0 une, de la 5 \xE0 la 1 : c'est une m\xE9lodie. Puis gratte-les ensemble : c'est de l'harmonie. M\xEAmes notes, deux dimensions.", bloc: { type: "tab", caption: "Horizontal puis vertical : les notes de Do une par une (m\xE9lodie), puis toutes ensemble (harmonie)", text: "Tab : Do (corde 5 case 3), Mi (corde 4 case 2), Sol (corde 3 \xE0 vide), Do (corde 2 case 1), Mi (corde 1 \xE0 vide) l'une apr\xE8s l'autre, puis les cinq en m\xEAme temps.", data: { lines: ["e|---------0---0--|", "B|-------1-----1--|", "G|-----0-------0--|", "D|---2---------2--|", "A|-3-----------3--|", "E|----------------|"] } }, bpm: 60 },
+        { type: "question", quizId: "q-harm-53" },
+        { type: "idee", titre: "Une note centrale : la tonique", texte: [
+          "Pop, rock, folk, blues, jazz : presque tout repose sur le syst\xE8me tonal. Une note centrale, la tonique, attire toutes les autres.",
+          "Les accords s'en \xE9loignent puis y reviennent, comme on rentre \xE0 la maison. Comprendre \xE7a, c'est pouvoir analyser, improviser et transposer au lieu d'apprendre des recettes."
+        ] },
+        { type: "question", quizId: "q-harm-54-app" },
+        { type: "a-toi", titre: "Entends la maison", consigne: "Joue Sol, Do, R\xE9, Sol, quatre coups par accord au clic. Le dernier Sol sonne comme une arriv\xE9e. Rejoue la suite en t'arr\xEAtant sur R\xE9 : la phrase reste en suspens.", bloc: SOL2, bpm: 60 },
+        { type: "recap", points: [
+          "M\xE9lodie = horizontal, harmonie = vertical, rythme = le temps.",
+          "Un accord, c'est d\xE9j\xE0 de l'harmonie : plusieurs notes ensemble.",
+          "La musique tonale tourne autour d'une note maison, la tonique."
+        ] }
+      ],
+      quiz: ["q-base-05", "q-harm-53", "q-harm-54", "q-harm-54-app"]
+    };
+    quiz64 = [
+      { id: "q-base-05", courseId: "harmony", lessonId: "harm-c1-01", lvl: 1, q: "L'harmonie, en musique, d\xE9signe avant tout\u2026", o: ["Plusieurs sons jou\xE9s simultan\xE9ment", "Une suite de notes jou\xE9es seule", "La vitesse d'un morceau", "Le placement des accents"], a: 0, exp: "L'harmonie na\xEEt de la superposition des sons. La m\xE9lodie est horizontale (une note apr\xE8s l'autre), l'harmonie verticale (plusieurs notes ensemble).", xp: 25 },
+      { id: "q-harm-53", courseId: "harmony", lessonId: "harm-c1-01", lvl: 1, q: "Tu joues Do, Mi et Sol l'une apr\xE8s l'autre, puis les trois ensemble. Quand fais-tu de l'harmonie ?", o: ["Quand les trois sonnent ensemble", "Quand tu les joues l'une apr\xE8s l'autre", "Dans les deux cas, de la m\xEAme fa\xE7on", "Dans aucun des deux cas"], a: 0, exp: "Une note apr\xE8s l'autre, c'est une ligne m\xE9lodique (l'horizontal). Plusieurs notes ensemble, c'est de l'harmonie (le vertical) : ici, l'accord de Do.", xp: 30 },
+      { id: "q-harm-54", courseId: "harmony", lessonId: "harm-c1-01", lvl: 2, q: "Dans le syst\xE8me tonal de la pop, du rock ou du blues, autour de quoi la musique s'organise-t-elle ?", o: ["Une note centrale, la tonique", "Un tempo fixe, toujours le m\xEAme", "Une seule corde de la guitare", "Un accord unique, jou\xE9 en boucle"], a: 0, exp: "Le syst\xE8me tonal gravite autour d'une note de repos, la tonique. Notes et accords s'en \xE9loignent puis y reviennent : c'est ce qui donne \xE0 une chanson son sentiment de \xAB maison \xBB.", xp: 40 },
+      { id: "q-harm-54-app", courseId: "harmony", lessonId: "harm-c1-01", lvl: 1, q: "Tu joues Sol, Do, R\xE9, Sol, mais tu t'arr\xEAtes sur R\xE9. Pourquoi la phrase semble-t-elle inachev\xE9e ?", o: ["Elle n'est pas revenue sur Sol, la tonique", "R\xE9 est un accord trop aigu pour finir", "Le tempo ralentit sur le dernier accord", "R\xE9 se joue avec moins de cordes que Sol"], a: 0, exp: "Dans cette suite, Sol est la tonique, la maison. S'arr\xEAter sur R\xE9, c'est rester dehors : la musique r\xE9clame le retour sur Sol.", xp: 25 }
+    ];
+  }
+});
+
+// src/content/cours/harmony/harm-c1-02.js
+var harm_c1_02_exports = {};
+__export(harm_c1_02_exports, {
+  default: () => harm_c1_02_default,
+  quiz: () => quiz65
+});
+var harm_c1_02_default, quiz65;
+var init_harm_c1_02 = __esm({
+  "src/content/cours/harmony/harm-c1-02.js"() {
+    harm_c1_02_default = {
+      id: "harm-c1-02",
+      level: 2,
+      title: "Consonance et dissonance",
+      duration: 7,
+      gropiTip: "Joue le triton Si-Fa : Si (corde 5 case 2) et Fa (corde 4 case 3). Glisse ensuite vers Do (corde 5 case 3) et Mi (corde 4 case 2). Deux doigts bougent d'une case, et toute la tension se pose.",
+      cartes: [
+        { type: "idee", titre: "Stable ou tendu", texte: [
+          "Pourquoi certains accords sonnent \xAB bien \xBB et d'autres tendus ? Deux notes consonantes s'accordent et sonnent stables ; deux notes dissonantes cr\xE9ent une tension.",
+          "Aucune des deux n'est un d\xE9faut : c'est leur alternance qui cr\xE9e l'\xE9motion."
+        ] },
+        { type: "idee", titre: "Des rapports simples", texte: [
+          "Plus le rapport de fr\xE9quences est simple, plus c'est consonant : octave (2:1), puis quinte juste (3:2), puis tierce majeure (5:4), plus douce.",
+          "Seconde, septi\xE8me, triton : rapports complexes, battements audibles, tension. Le triton est le plus tendu, \xAB le diable en musique \xBB."
+        ], bloc: {
+          type: "interval_chart",
+          caption: "Consonance vs dissonance \u2014 les intervalles les plus consonants (quinte, octave) vs les plus dissonants (triton, 7e)",
+          data: { highlight: ["P5", "P8", "TT", "m7", "m2"] }
+        } },
+        { type: "question", quizId: "q-harm-55" },
+        { type: "a-toi", titre: "Trois intervalles depuis Do", consigne: "Garde Do (corde 5, case 3) et ajoute sur la corde 4 : Mi en case 2 (tierce majeure), Fa# en case 4 (triton), Sol en case 5 (quinte). Gratte chaque paire et \xE9coute laquelle grince.", bloc: {
+          type: "tab",
+          caption: "Do + Mi (tierce majeure), Do + Fa# (triton), Do + Sol (quinte juste)",
+          text: "Tab \u2014 trois paires jou\xE9es ensemble : corde 5 case 3 avec corde 4 case 2 ; corde 5 case 3 avec corde 4 case 4 ; corde 5 case 3 avec corde 4 case 5.",
+          data: { lines: [
+            "e|----------|",
+            "B|----------|",
+            "G|----------|",
+            "D|-2--4--5--|",
+            "A|-3--3--3--|",
+            "E|----------|"
+          ] }
+        }, bpm: 50 },
+        { type: "question", quizId: "q-base-13" },
+        { type: "idee", titre: "Tension, puis r\xE9solution", texte: [
+          "La musique tonale vit d'un cycle : tension, puis d\xE9tente. Un accord tendu, comme le V7, appelle un accord stable, le I.",
+          "Sans dissonance, pas de tension ; sans tension, pas d'\xE9motion. Le but n'est pas d'\xE9viter la dissonance, mais de la mener quelque part."
+        ] },
+        { type: "question", quizId: "q-harm-56" },
+        { type: "idee", titre: "Tout d\xE9pend du contexte", texte: [
+          "Une septi\xE8me sonne douce en jazz ; une quinte \xE0 vide peut sonner agressive en m\xE9tal.",
+          "Le triton, \xE9vit\xE9 au Moyen \xC2ge, est devenu ordinaire en blues et en rock : le riff de \xAB Black Sabbath \xBB (1970) est b\xE2ti dessus. L'oreille s'habitue, et les dissonances accept\xE9es s'\xE9largissent."
+        ] },
+        { type: "recap", points: [
+          "Consonance = stabilit\xE9 (octave, quinte), dissonance = tension (seconde, triton, septi\xE8me).",
+          "La tension se r\xE9sout vers un accord stable : V7 \u2192 I.",
+          "Ce qui sonne tendu d\xE9pend du style et de l'\xE9poque."
+        ] }
+      ],
+      quiz: ["q-base-13", "q-harm-55", "q-harm-56"]
+    };
+    quiz65 = [
+      { id: "q-base-13", courseId: "harmony", lessonId: "harm-c1-02", lvl: 1, q: "Deux notes qui sonnent tendues ensemble, sans stabilit\xE9, sont dites\u2026", o: ["Dissonantes", "Consonantes", "Enharmoniques", "Chromatiques"], a: 0, exp: "La dissonance cr\xE9e la tension, la consonance la stabilit\xE9. Aucune n'est un d\xE9faut : c'est leur alternance qui donne vie \xE0 la musique.", xp: 30 },
+      { id: "q-harm-55", courseId: "harmony", lessonId: "harm-c1-02", lvl: 1, q: "Lequel de ces intervalles sonne le plus consonant ?", o: ["L'octave", "La seconde majeure", "Le triton", "La septi\xE8me mineure"], a: 0, exp: "L'octave (rapport 2:1) est la consonance absolue : les deux notes se fondent presque en une. Seconde, triton et septi\xE8me produisent des battements, donc de la tension.", xp: 30 },
+      { id: "q-harm-56", courseId: "harmony", lessonId: "harm-c1-02", lvl: 2, q: "Un accord tendu (V7) laisse place \xE0 un accord stable (I). Comment appelle-t-on ce mouvement ?", o: ["Une r\xE9solution", "Une modulation", "Une syncope", "Une inversion"], a: 0, exp: "La tension cr\xE9\xE9e par la dissonance se r\xE9sout sur un accord consonant : c'est la r\xE9solution. Ce va-et-vient tension \u2192 d\xE9tente est le moteur de la musique tonale.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/harmony/harm-acc-01.js
+var harm_acc_01_exports = {};
+__export(harm_acc_01_exports, {
+  default: () => harm_acc_01_default,
+  quiz: () => quiz66
+});
+var LA, MI, REM, LAM, harm_acc_01_default, quiz66;
+var init_harm_acc_01 = __esm({
+  "src/content/cours/harmony/harm-acc-01.js"() {
+    LA = { type: "chord_diagram", caption: "La (A) \u2014 x02220 : trois doigts serr\xE9s en case 2", data: { name: "A", frets: [-1, 0, 2, 2, 2, 0], fingers: [0, 0, 1, 2, 3, 0], startFret: 1 } };
+    MI = { type: "chord_diagram", caption: "Mi (E) \u2014 022100 : les six cordes sonnent", data: { name: "E", frets: [0, 2, 2, 1, 0, 0], fingers: [0, 2, 3, 1, 0, 0], startFret: 1 } };
+    REM = { type: "chord_diagram", caption: "R\xE9 mineur (Dm) \u2014 xx0231 : quatre cordes, de la corde 4 \xE0 la corde 1", data: { name: "Dm", frets: [-1, -1, 0, 2, 3, 1], fingers: [0, 0, 0, 2, 3, 1], startFret: 1 } };
+    LAM = { type: "chord_diagram", caption: "La mineur (Am) \u2014 x02210 : la forme de Mi, une corde plus loin", data: { name: "Am", frets: [-1, 0, 2, 2, 1, 0], fingers: [0, 0, 2, 3, 1, 0], startFret: 1 } };
+    harm_acc_01_default = {
+      id: "harm-acc-01",
+      level: 2,
+      title: "Trois accords ouverts de plus : La, Mi et R\xE9 mineur",
+      duration: 8,
+      gropiTip: "Pour La, essaie aussi l'index sur la corde 3, le majeur sur la corde 4 et l'annulaire sur la corde 2 : selon la taille de tes doigts, l'une des deux fa\xE7ons laissera mieux sonner la corde 1.",
+      cartes: [
+        { type: "idee", titre: "Ta bo\xEEte \xE0 accords s'agrandit", texte: [
+          "Tu connais d\xE9j\xE0 Mi mineur, La mineur, Do, Sol et R\xE9. Avec La, Mi et R\xE9 mineur, tu as les huit accords ouverts les plus jou\xE9s.",
+          "De quoi accompagner des centaines de chansons, sans un seul barr\xE9."
+        ] },
+        { type: "idee", titre: "La (A)", texte: [
+          "Index, majeur et annulaire en case 2, sur les cordes 4, 3 et 2. La corde 6 ne joue pas : gratte \xE0 partir de la corde 5, \xE0 vide.",
+          "Les trois doigts sont serr\xE9s : arrondis-les pour que la corde 1, \xE0 vide, sonne aussi."
+        ], bloc: LA },
+        { type: "idee", titre: "Mi (E)", texte: [
+          "Mi mineur plus un doigt : majeur et annulaire en case 2 sur les cordes 5 et 4, et l'index sur la corde 3, case 1.",
+          "Ce Sol# (corde 3, case 1) change tout : la couleur passe de sombre \xE0 lumineuse. Les six cordes sonnent."
+        ], bloc: MI },
+        { type: "question", quizId: "q-harm-acc-new-01" },
+        { type: "idee", titre: "R\xE9 mineur (Dm)", texte: [
+          "Quatre cordes, de la corde 4 \xE0 vide \xE0 la corde 1. Majeur sur la corde 3 case 2, annulaire sur la corde 2 case 3, index sur la corde 1 case 1.",
+          "Compare avec R\xE9 : seule la note de la corde 1 change. Fa# devient Fa (corde 1, case 1), et l'accord devient mineur."
+        ], bloc: REM },
+        { type: "question", quizId: "q-harm-acc-new-02-app" },
+        { type: "idee", titre: "Trois changements \xE0 travailler", texte: [
+          "La \u2194 R\xE9 : la main reste autour de la case 2, les doigts bougent d'un bloc.",
+          "Mi \u2194 La mineur : c'est la m\xEAme forme ! Les trois doigts se d\xE9calent ensemble d'une corde vers l'aigu.",
+          "R\xE9 mineur \u2194 La mineur : l'index reste en case 1 et passe de la corde 1 \xE0 la corde 2."
+        ], bloc: LAM },
+        { type: "question", quizId: "q-harm-acc-new-03" },
+        {
+          type: "a-toi",
+          titre: "Trois paires, une minute chacune",
+          consigne: "Une minute par paire : La \u2194 R\xE9, puis Mi \u2194 La mineur, puis R\xE9 mineur \u2194 La mineur. Quatre coups vers le bas par accord, au clic. Si une paire accroche, offre-lui une minute de plus.",
+          bloc: REM,
+          bpm: 60,
+          minuteur: 180
+        },
+        { type: "recap", points: [
+          "La (x02220) : trois doigts serr\xE9s en case 2, on gratte depuis la corde 5.",
+          "Mi (022100) : Mi mineur plus l'index sur la corde 3, case 1.",
+          "R\xE9 mineur (xx0231) : seule la corde 1 diff\xE8re de R\xE9 ; Mi et La mineur ont la m\xEAme forme."
+        ] }
+      ],
+      quiz: ["q-harm-acc-new-01", "q-harm-acc-new-02", "q-harm-acc-new-03", "q-harm-acc-new-02-app"]
+    };
+    quiz66 = [
+      { id: "q-harm-acc-new-01", courseId: "harmony", lessonId: "harm-acc-01", lvl: 1, q: "Pour l'accord de La majeur, depuis quelle corde grattes-tu ?", o: ["Corde 5", "Corde 6", "Corde 4", "Corde 3"], a: 0, exp: "La corde 6 ne joue pas dans l'accord de La : on gratte de la corde 5 (La \xE0 vide, la fondamentale) \xE0 la corde 1.", xp: 25 },
+      { id: "q-harm-acc-new-02", courseId: "harmony", lessonId: "harm-acc-01", lvl: 1, q: "Entre R\xE9 et R\xE9 mineur, quelle note change ?", o: ["Fa# devient Fa", "La devient Sol", "R\xE9 devient Do", "Mi devient R\xE9"], a: 0, exp: "Sur la corde 1, la case 2 (Fa#) passe \xE0 la case 1 (Fa) : la tierce majeure devient mineure, le reste ne bouge pas.", xp: 25 },
+      { id: "q-harm-acc-new-02-app", courseId: "harmony", lessonId: "harm-acc-01", lvl: 1, q: "Entre La et La mineur, quelle note change ?", o: ["Do# devient Do", "Mi devient R\xE9", "La devient Sol", "Si devient La"], a: 0, exp: "Sur la corde 2, la case 2 (Do#) passe \xE0 la case 1 (Do) : la tierce majeure devient mineure, comme Fa# \u2192 Fa entre R\xE9 et R\xE9 mineur.", xp: 25 },
+      { id: "q-harm-acc-new-03", courseId: "harmony", lessonId: "harm-acc-01", lvl: 2, q: "De Mi \xE0 La mineur, comment bouge la main gauche ?", o: ["Toute la forme se d\xE9cale d'une corde", "Seul l'index change de case", "Les trois doigts montent d'une case", "Seul le majeur change de corde"], a: 0, exp: "Mi (022100) et La mineur (x02210) ont la m\xEAme forme : les trois doigts se d\xE9calent ensemble d'une corde vers l'aigu.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/harmony/harm-acc-02.js
+var harm_acc_02_exports = {};
+__export(harm_acc_02_exports, {
+  default: () => harm_acc_02_default,
+  quiz: () => quiz67
+});
+var E7, A7, D7, B7, harm_acc_02_default, quiz67;
+var init_harm_acc_02 = __esm({
+  "src/content/cours/harmony/harm-acc-02.js"() {
+    E7 = { type: "chord_diagram", caption: "E7 \u2014 020100 : Mi, sans l'annulaire", data: { name: "E7", frets: [0, 2, 0, 1, 0, 0], fingers: [0, 2, 0, 1, 0, 0], startFret: 1 } };
+    A7 = { type: "chord_diagram", caption: "A7 \u2014 x02020 : La, avec la corde 3 \xE0 vide", data: { name: "A7", frets: [-1, 0, 2, 0, 2, 0], fingers: [0, 0, 2, 0, 3, 0], startFret: 1 } };
+    D7 = { type: "chord_diagram", caption: "D7 \u2014 xx0212 : un triangle \xE0 l'envers", data: { name: "D7", frets: [-1, -1, 0, 2, 1, 2], fingers: [0, 0, 0, 2, 1, 3], startFret: 1 } };
+    B7 = { type: "chord_diagram", caption: "B7 \u2014 x21202 : quatre doigts, la corde 2 \xE0 vide", data: { name: "B7", frets: [-1, 2, 1, 2, 0, 2], fingers: [0, 2, 1, 3, 0, 4], startFret: 1 } };
+    harm_acc_02_default = {
+      id: "harm-acc-02",
+      level: 3,
+      title: "Les accords de septi\xE8me : E7, A7, D7 et B7",
+      duration: 8,
+      gropiTip: "Joue Mi puis E7, La puis A7 : quatre coups chacun. \xC9coute la septi\xE8me arriver : l'accord semble soudain vouloir aller ailleurs. Cette envie de bouger, c'est tout le moteur du blues.",
+      cartes: [
+        { type: "idee", titre: "Le son du blues", texte: [
+          "Ajoute \xE0 un accord majeur une note plac\xE9e un ton sous l'octave, la septi\xE8me : il se met \xE0 \xAB tirer \xBB vers un autre accord. C'est le son du blues et du vieux rock.",
+          "On l'\xE9crit avec un 7 : E7 se dit \xAB Mi sept \xBB."
+        ] },
+        { type: "idee", titre: "E7 : Mi, un doigt en moins", texte: [
+          "Plaque Mi, puis soul\xE8ve l'annulaire : la corde 4 sonne \xE0 vide.",
+          "Ce R\xE9 \xE0 vide est la septi\xE8me de Mi. Les six cordes sonnent."
+        ], bloc: E7 },
+        { type: "idee", titre: "A7 : La, avec un trou", texte: [
+          "Plaque La avec le majeur sur la corde 4 et l'annulaire sur la corde 2, case 2. La corde 3 reste \xE0 vide.",
+          "Ce Sol \xE0 vide est la septi\xE8me de La. On gratte depuis la corde 5."
+        ], bloc: A7 },
+        { type: "question", quizId: "q-harm-sept-new-01" },
+        { type: "idee", titre: "D7 : un triangle \xE0 l'envers", texte: [
+          "Majeur sur la corde 3 case 2, index sur la corde 2 case 1, annulaire sur la corde 1 case 2. Gratte de la corde 4 \xE0 la corde 1.",
+          "Le Do (corde 2, case 1) est la septi\xE8me de R\xE9."
+        ], bloc: D7 },
+        { type: "idee", titre: "B7 : le plus costaud", texte: [
+          "Quatre doigts : index sur la corde 4 case 1, majeur sur la corde 5 case 2, annulaire sur la corde 3 case 2, auriculaire sur la corde 1 case 2. La corde 2 sonne \xE0 vide.",
+          "B7 appelle Mi : on l'entend souvent juste avant de revenir sur Mi."
+        ], bloc: B7 },
+        { type: "question", quizId: "q-harm-sept-new-02" },
+        {
+          type: "a-toi",
+          titre: "Ton premier blues en La",
+          consigne: "La grille de 12 mesures : A7 (4 mesures), D7 (2), A7 (2), E7, D7, A7, E7 (1 chacun). Quatre coups vers le bas par mesure, au clic. Puis essaie un balancement \xAB long-court \xBB sur chaque temps.",
+          bloc: D7,
+          bpm: 70
+        },
+        { type: "question", quizId: "q-harm-sept-new-03" },
+        { type: "recap", points: [
+          "La septi\xE8me (un ton sous l'octave) donne \xE0 l'accord une envie de bouger : le son du blues.",
+          "E7 et A7 : Mi et La avec une corde \xE0 vide de plus ; D7 et B7 : de nouvelles formes.",
+          "Blues en La : A7, D7 et E7 sur 12 mesures ; B7 m\xE8ne vers Mi."
+        ] }
+      ],
+      quiz: ["q-harm-sept-new-01", "q-harm-sept-new-02", "q-harm-sept-new-03"]
+    };
+    quiz67 = [
+      { id: "q-harm-sept-new-01", courseId: "harmony", lessonId: "harm-acc-02", lvl: 1, q: "Tu tiens l'accord de Mi. Comment obtiens-tu E7 ?", o: ["Tu soul\xE8ves le doigt de la corde 4", "Tu ajoutes un doigt sur la corde 1", "Tu soul\xE8ves le doigt de la corde 3", "Tu \xE9touffes la corde 6"], a: 0, exp: "En lib\xE9rant la corde 4, on fait sonner R\xE9 \xE0 vide : la septi\xE8me de Mi. E7 = 020100.", xp: 25 },
+      { id: "q-harm-sept-new-02", courseId: "harmony", lessonId: "harm-acc-02", lvl: 2, q: "Quel accord de septi\xE8me appelle le plus naturellement Mi ?", o: ["B7", "A7", "D7", "E7"], a: 0, exp: "Si est la quinte de Mi : B7 est l'accord de dominante de Mi, sa tension se r\xE9sout sur Mi.", xp: 30 },
+      { id: "q-harm-sept-new-03", courseId: "harmony", lessonId: "harm-acc-02", lvl: 2, q: "Quels accords forment la grille d'un blues en La ?", o: ["A7, D7 et E7", "A7, B7 et E7", "B7, D7 et E7", "A7, D7 et B7"], a: 0, exp: "Le blues en La tourne sur La, R\xE9 et Mi (les degr\xE9s I, IV et V), souvent tous jou\xE9s en septi\xE8me.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/harmony/harm-acc-03.js
+var harm_acc_03_exports = {};
+__export(harm_acc_03_exports, {
+  default: () => harm_acc_03_default,
+  quiz: () => quiz68
+});
+var FA_PETIT, DO, FA, harm_acc_03_default, quiz68;
+var init_harm_acc_03 = __esm({
+  "src/content/cours/harmony/harm-acc-03.js"() {
+    FA_PETIT = { type: "chord_diagram", caption: "Petit Fa (F) \u2014 xx3211 : l'index appuie les cordes 1 et 2", data: { name: "F", frets: [-1, -1, 3, 2, 1, 1], fingers: [0, 0, 3, 2, 1, 1], startFret: 1, barre: { fret: 1, from: 4, to: 5 } } };
+    DO = { type: "chord_diagram", caption: "Do (C) \u2014 x32010 : le point de d\xE9part", data: { name: "C", frets: [-1, 3, 2, 0, 1, 0], fingers: [0, 3, 2, 0, 1, 0], startFret: 1 } };
+    FA = { type: "chord_diagram", caption: "Fa complet (F) \u2014 133211 : l'index barre les six cordes", data: { name: "F", frets: [1, 3, 3, 2, 1, 1], fingers: [1, 3, 4, 2, 1, 1], startFret: 1, barre: { fret: 1, from: 0, to: 5 } } };
+    harm_acc_03_default = {
+      id: "harm-acc-03",
+      level: 4,
+      title: "Le petit Fa, puis le Fa complet",
+      duration: 9,
+      gropiTip: "Si la corde 2 frise dans ton petit Fa, regarde o\xF9 tombe le pli de ton index : d\xE9place-le d'un millim\xE8tre vers la t\xEAte ou vers le chevalet, la corde trouvera la partie dure du doigt.",
+      cartes: [
+        { type: "idee", titre: "Pourquoi Fa fait peur", texte: [
+          "Fa n'a pas de forme simple \xE0 vide : un doigt doit appuyer plusieurs cordes \xE0 la fois. C'est le premier vrai cap du guitariste.",
+          "On y va par \xE9tapes : le petit Fa d'abord, le Fa complet ensuite."
+        ] },
+        { type: "idee", titre: "Le petit Fa (xx3211)", texte: [
+          "L'index se couche sur les cordes 1 et 2, case 1. Majeur sur la corde 3 case 2, annulaire sur la corde 4 case 3.",
+          "Gratte seulement les quatre cordes aigu\xEBs : Fa, La, Do et Fa."
+        ], bloc: FA_PETIT },
+        { type: "question", quizId: "q-harm-fa-new-01-app" },
+        { type: "idee", titre: "Faire sonner les cordes 1 et 2", texte: [
+          "Place l'index juste derri\xE8re la frette, un peu roul\xE9 sur son c\xF4t\xE9, c\xF4t\xE9 pouce : la partie osseuse appuie mieux que la pulpe.",
+          "Joue les cordes une par une. Une corde frise ? Rapproche l'index de la frette avant d'appuyer plus fort."
+        ] },
+        { type: "idee", titre: "De Do \xE0 Fa", texte: [
+          "Bonne nouvelle : la forme de Do se d\xE9cale d'une corde vers l'aigu. L'annulaire passe de la corde 5 \xE0 la corde 4, le majeur de la corde 4 \xE0 la corde 3, en gardant leurs cases.",
+          "L'index reste en case 1 et se couche sur la corde 1."
+        ], bloc: DO },
+        { type: "question", quizId: "q-harm-fa-new-02-app" },
+        {
+          type: "a-toi",
+          titre: "Do \u2194 petit Fa",
+          consigne: "Do, quatre coups, puis petit Fa, quatre coups. D\xE9place annulaire et majeur ensemble, d'un bloc. Deux minutes au clic : \xE0 la fin, le Fa doit sonner d\xE8s le premier coup.",
+          bloc: FA_PETIT,
+          bpm: 60,
+          minuteur: 120
+        },
+        { type: "idee", titre: "Vers le Fa complet", texte: [
+          "C'est la forme de Mi d\xE9cal\xE9e d'une case, l'index jouant le r\xF4le du sillet sur les six cordes. Majeur sur la corde 3 case 2, annulaire sur la corde 5 case 3, auriculaire sur la corde 4 case 3.",
+          "\xC9tape interm\xE9diaire : x33211, sans la corde 6. Le petit Fa suffit d\xE9j\xE0 pour la plupart des chansons."
+        ], bloc: FA },
+        { type: "question", quizId: "q-harm-fa-new-03-app" },
+        { type: "recap", points: [
+          "Petit Fa (xx3211) : l'index couch\xE9 sur les cordes 1 et 2, quatre cordes gratt\xE9es.",
+          "De Do \xE0 Fa, la forme se d\xE9cale d'une corde vers l'aigu ; l'index reste en case 1.",
+          "Fa complet (133211) = la forme de Mi, une case plus haut, l'index en barr\xE9."
+        ] }
+      ],
+      quiz: ["q-harm-fa-new-01", "q-harm-fa-new-02", "q-harm-fa-new-03", "q-harm-fa-new-01-app", "q-harm-fa-new-02-app", "q-harm-fa-new-03-app"]
+    };
+    quiz68 = [
+      { id: "q-harm-fa-new-01", courseId: "harmony", lessonId: "harm-acc-03", lvl: 1, q: "Dans le petit Fa, quel doigt appuie deux cordes \xE0 la fois ?", o: ["L'index", "Le majeur", "L'annulaire", "L'auriculaire"], a: 0, exp: "L'index se couche sur les cordes 1 et 2 en case 1 ; majeur et annulaire n'appuient qu'une corde chacun.", xp: 25 },
+      { id: "q-harm-fa-new-01-app", courseId: "harmony", lessonId: "harm-acc-03", lvl: 1, q: "Dans le petit Fa, l'index couch\xE9 en case 1 appuie les cordes 1 et 2. Quelles notes fait-il sonner ?", o: ["Fa et Do", "Fa et La", "Mi et Si", "Fa# et Do#"], a: 0, exp: "Corde 1 case 1 : Fa. Corde 2 case 1 : Do. Avec La (corde 3 case 2) et Fa (corde 4 case 3), on obtient Fa, La, Do : l'accord de Fa.", xp: 25 },
+      { id: "q-harm-fa-new-02", courseId: "harmony", lessonId: "harm-acc-03", lvl: 2, q: "Pour passer de Do au petit Fa, que font l'annulaire et le majeur ?", o: ["Ils se d\xE9calent d'une corde vers l'aigu", "Ils montent de deux cases", "Ils restent exactement en place", "Ils se d\xE9calent vers les graves"], a: 0, exp: "Annulaire de la corde 5 \xE0 la corde 4 (case 3), majeur de la corde 4 \xE0 la corde 3 (case 2) : m\xEAme forme, une corde plus loin.", xp: 30 },
+      { id: "q-harm-fa-new-03", courseId: "harmony", lessonId: "harm-acc-03", lvl: 2, q: "Le Fa complet reprend la forme de quel accord ouvert, une case plus haut ?", o: ["Mi", "La", "R\xE9", "Do"], a: 0, exp: "Mi = 022100. D\xE9cale-le d'une case et barre la case 1 avec l'index : 133211, c'est Fa.", xp: 30 },
+      { id: "q-harm-fa-new-02-app", courseId: "harmony", lessonId: "harm-acc-03", lvl: 2, q: "Tu joues la forme du petit Fa deux cases plus haut : index couch\xE9 en case 3 sur les cordes 1 et 2. Quel accord obtiens-tu ?", o: ["Sol majeur", "La majeur", "Mi majeur", "Fa# majeur"], a: 0, exp: "Deux cases = un ton : Fa monte \xE0 Sol. Les notes deviennent Sol (corde 4 case 5), Si (corde 3 case 4), R\xE9 (corde 2 case 3) et Sol (corde 1 case 3).", xp: 30 },
+      { id: "q-harm-fa-new-03-app", courseId: "harmony", lessonId: "harm-acc-03", lvl: 2, q: "Tu gardes la forme du Fa complet mais tu barres la case 5. Quel accord obtiens-tu ?", o: ["La majeur", "Sol majeur", "Si majeur", "Do majeur"], a: 0, exp: "Le Fa complet a sa fondamentale sur la corde 6 case 1. Quatre cases plus haut, la corde 6 case 5 donne La : c'est un La majeur.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/harmony/harm-acc-04.js
+var harm_acc_04_exports = {};
+__export(harm_acc_04_exports, {
+  default: () => harm_acc_04_default,
+  quiz: () => quiz69
+});
+var FA2, SOL3, LA2, harm_acc_04_default, quiz69;
+var init_harm_acc_04 = __esm({
+  "src/content/cours/harmony/harm-acc-04.js"() {
+    FA2 = { type: "chord_diagram", caption: "Fa (F) barr\xE9, case 1 \u2014 133211", data: { name: "F", frets: [1, 3, 3, 2, 1, 1], fingers: [1, 3, 4, 2, 1, 1], startFret: 1, barre: { fret: 1, from: 0, to: 5 } } };
+    SOL3 = { type: "chord_diagram", caption: "Sol (G) barr\xE9, case 3 \u2014 355433", data: { name: "G", frets: [3, 5, 5, 4, 3, 3], fingers: [1, 3, 4, 2, 1, 1], startFret: 3, barre: { fret: 3, from: 0, to: 5 } } };
+    LA2 = { type: "chord_diagram", caption: "La (A) barr\xE9, case 5 \u2014 577655", data: { name: "A", frets: [5, 7, 7, 6, 5, 5], fingers: [1, 3, 4, 2, 1, 1], startFret: 5, barre: { fret: 5, from: 0, to: 5 } } };
+    harm_acc_04_default = {
+      id: "harm-acc-04",
+      level: 4,
+      title: "Le barr\xE9 forme Mi : Fa, Sol et La",
+      duration: 9,
+      gropiTip: "Plaque le barr\xE9, puis rel\xE2che la pression jusqu'\xE0 ce que \xE7a frise, et remonte juste ce qu'il faut : tu d\xE9couvres la force minimale. Elle est bien plus faible que celle que tu mettais.",
+      cartes: [
+        { type: "idee", titre: "Une forme, douze accords", texte: [
+          "Le barr\xE9 forme Mi, c'est l'accord de Mi jou\xE9 avec le majeur, l'annulaire et l'auriculaire, l'index faisant le sillet.",
+          "D\xE9place la forme : la case de l'index sur la corde 6 donne le nom. Case 1 : Fa. Case 3 : Sol. Case 5 : La."
+        ], bloc: SOL3 },
+        { type: "idee", titre: "La m\xE9thode en deux temps", texte: [
+          "Plaque d'abord Mi avec le majeur, l'annulaire et l'auriculaire, en laissant l'index libre.",
+          "Glisse la forme d'une case vers le corps de la guitare, puis couche l'index sur les six cordes, en case 1 : tu tiens Fa."
+        ], bloc: FA2 },
+        { type: "question", quizId: "q-harm-barmi-new-01" },
+        { type: "idee", titre: "Le bon appui", texte: [
+          "L'index se pose tout pr\xE8s de la frette, l\xE9g\xE8rement roul\xE9 sur le c\xF4t\xE9. Le pouce, derri\xE8re le manche, \xE0 peu pr\xE8s face au majeur.",
+          "Le bras tire un peu le manche vers toi : c'est son poids qui appuie, pas la pince entre pouce et index."
+        ] },
+        { type: "idee", titre: "Les d\xE9fauts courants", texte: [
+          "Une corde \xE9touff\xE9e, souvent la 3 ou la 2 ? Elle tombe dans un pli de l'index : d\xE9cale-le un peu vers la t\xEAte ou vers le chevalet.",
+          "Une corde qui frise : rapproche le doigt de la frette. Mal au pouce : tu serres trop, rel\xE2che."
+        ] },
+        { type: "question", quizId: "q-harm-barmi-new-02" },
+        { type: "idee", titre: "Commence plus haut", texte: [
+          "Pr\xE8s du sillet, la corde est plus raide \xE0 enfoncer : le Fa en case 1 est le barr\xE9 le plus dur.",
+          "En case 5, le m\xEAme geste demande moins de force. Commence par La, puis descends vers Sol et Fa au fil des jours."
+        ], bloc: LA2 },
+        {
+          type: "a-toi",
+          titre: "Ta routine barr\xE9 de 5 minutes",
+          consigne: "1 min : index seul en barr\xE9 case 5, joue les cordes une par une. 1 min : La barr\xE9, pose et rel\xE2che. 2 min : Sol (case 3) \u2194 La (case 5), quatre coups chacun, au clic. 1 min : Fa (case 1).",
+          bloc: LA2,
+          bpm: 60,
+          minuteur: 300
+        },
+        { type: "question", quizId: "q-harm-barmi-new-03" },
+        { type: "recap", points: [
+          "Forme Mi + index en sillet : la case de l'index sur la corde 6 donne le nom (Fa 1, Sol 3, La 5).",
+          "Index pr\xE8s de la frette, roul\xE9 sur le c\xF4t\xE9 ; c'est le poids du bras qui appuie.",
+          "Corde \xE9touff\xE9e : d\xE9cale l'index. Commence en case 5, descends vers la case 1."
+        ] }
+      ],
+      quiz: ["q-harm-barmi-new-01", "q-harm-barmi-new-02", "q-harm-barmi-new-03"]
+    };
+    quiz69 = [
+      { id: "q-harm-barmi-new-01", courseId: "harmony", lessonId: "harm-acc-04", lvl: 2, q: "Barr\xE9 forme Mi, index en case 3 : quel accord joues-tu ?", o: ["Sol", "La", "Fa", "Si"], a: 0, exp: "La corde 6 en case 3 donne Sol : la forme de Mi barr\xE9e en case 3 est un Sol majeur (355433).", xp: 30 },
+      { id: "q-harm-barmi-new-02", courseId: "harmony", lessonId: "harm-acc-04", lvl: 2, q: "Dans ton barr\xE9, la corde 3 reste \xE9touff\xE9e. Quel est le premier r\xE9flexe ?", o: ["D\xE9caler un peu l'index", "Serrer plus fort avec le pouce", "Monter le pouce sur la touche", "Lever l'auriculaire"], a: 0, exp: "La corde tombe sans doute dans un pli de l'index : un l\xE9ger d\xE9calage vers la t\xEAte ou le chevalet la remet sous la partie dure du doigt.", xp: 30 },
+      { id: "q-harm-barmi-new-03", courseId: "harmony", lessonId: "harm-acc-04", lvl: 3, q: "Pourquoi le Fa barr\xE9 en case 1 est-il le plus dur \xE0 faire sonner ?", o: ["La corde est plus raide pr\xE8s du sillet", "Les cordes y sont plus fines", "Il compte plus de notes que les autres", "L'index y barre moins de cordes"], a: 0, exp: "Pr\xE8s du sillet, la longueur libre de corde entre le sillet et le doigt est courte : il faut plus de force pour l'enfoncer.", xp: 35 }
+    ];
+  }
+});
+
+// src/content/cours/harmony/harm-acc-05.js
+var harm_acc_05_exports = {};
+__export(harm_acc_05_exports, {
+  default: () => harm_acc_05_default,
+  quiz: () => quiz70
+});
+var SIM, DO2, RE2, harm_acc_05_default, quiz70;
+var init_harm_acc_05 = __esm({
+  "src/content/cours/harmony/harm-acc-05.js"() {
+    SIM = { type: "chord_diagram", caption: "Si mineur (Bm) \u2014 x24432 : La mineur d\xE9cal\xE9, index en barr\xE9 case 2", data: { name: "Bm", frets: [-1, 2, 4, 4, 3, 2], fingers: [0, 1, 3, 4, 2, 1], startFret: 2, barre: { fret: 2, from: 1, to: 5 } } };
+    DO2 = { type: "chord_diagram", caption: "Do (C) barr\xE9, case 3 \u2014 x35553", data: { name: "C", frets: [-1, 3, 5, 5, 5, 3], fingers: [0, 1, 2, 3, 4, 1], startFret: 3, barre: { fret: 3, from: 1, to: 5 } } };
+    RE2 = { type: "chord_diagram", caption: "R\xE9 (D) barr\xE9, case 5 \u2014 x57775", data: { name: "D", frets: [-1, 5, 7, 7, 7, 5], fingers: [0, 1, 2, 3, 4, 1], startFret: 5, barre: { fret: 5, from: 1, to: 5 } } };
+    harm_acc_05_default = {
+      id: "harm-acc-05",
+      level: 4,
+      title: "Le barr\xE9 forme La : Si mineur, Do et R\xE9",
+      duration: 9,
+      gropiTip: "R\xE9 ouvert puis Si mineur, c'est un encha\xEEnement qu'on croise partout en folk. Garde l'index pr\xEAt au-dessus de la case 2 pendant le R\xE9 : il n'aura plus qu'\xE0 se coucher.",
+      cartes: [
+        { type: "idee", titre: "Fondamentale sur la corde 5", texte: [
+          "Le barr\xE9 forme La reprend les accords de La et La mineur ouverts, l'index faisant le sillet. La corde 6 ne joue pas.",
+          "C'est la note de l'index sur la corde 5 qui donne le nom : Si (corde 5, case 2), Do (corde 5, case 3), R\xE9 (corde 5, case 5)."
+        ] },
+        { type: "idee", titre: "Si mineur (Bm), case 2", texte: [
+          "La mineur d\xE9cal\xE9 de deux cases : index en barr\xE9 sur les cordes 5 \xE0 1, case 2. Majeur sur la corde 2 case 3, annulaire sur la corde 4 et auriculaire sur la corde 3, case 4.",
+          "Bm est le barr\xE9 qu'on rencontre le plus vite dans les chansons en R\xE9 et en Sol."
+        ], bloc: SIM },
+        { type: "question", quizId: "q-harm-barla-new-01-app" },
+        { type: "idee", titre: "Do et R\xE9 : la forme majeure", texte: [
+          "Pour le majeur, trois doigts s'alignent sur les cordes 4, 3 et 2, deux cases apr\xE8s l'index. Case 3 : Do. Case 5 : R\xE9.",
+          "C'est serr\xE9 : beaucoup de guitaristes barrent ces trois cordes avec l'annulaire seul et laissent la corde 1 se taire."
+        ], bloc: DO2 },
+        { type: "idee", titre: "Les pi\xE8ges de la forme La", texte: [
+          "La corde 6 ne doit pas sonner : effleure-la du bout de l'index pour l'\xE9touffer.",
+          "La corde 1 \xE9touff\xE9e par les autres doigts ? Cambre-les bien, ou laisse-la de c\xF4t\xE9 au d\xE9but : l'accord reste juste."
+        ] },
+        {
+          type: "a-toi",
+          titre: "R\xE9 \u2194 Si mineur, puis Do \u2194 R\xE9",
+          consigne: "R\xE9 ouvert, quatre coups, puis Bm, quatre coups. Ensuite Do barr\xE9 (case 3) \u2194 R\xE9 barr\xE9 (case 5) : la m\xEAme forme glisse de deux cases, sans rel\xE2cher la main. Trois minutes au clic.",
+          bloc: RE2,
+          bpm: 60,
+          minuteur: 180
+        },
+        { type: "question", quizId: "q-harm-barla-new-02" },
+        { type: "idee", titre: "Forme Mi ou forme La ?", texte: [
+          "Un m\xEAme accord a deux places : Do en forme La (case 3) ou en forme Mi (case 8).",
+          "Choisis celle qui demande le moins de chemin depuis l'accord d'avant : souvent, la main ne bouge presque plus."
+        ] },
+        { type: "question", quizId: "q-harm-barla-new-03" },
+        { type: "recap", points: [
+          "Forme La : l'index barre en partant de la corde 5, dont la note donne le nom.",
+          "Bm en case 2 (x24432) ; Do en case 3 et R\xE9 en case 5 avec la forme majeure.",
+          "La corde 6 se tait ; entre forme Mi et forme La, prends la plus proche."
+        ] }
+      ],
+      quiz: ["q-harm-barla-new-01", "q-harm-barla-new-02", "q-harm-barla-new-03", "q-harm-barla-new-01-app"]
+    };
+    quiz70 = [
+      { id: "q-harm-barla-new-01", courseId: "harmony", lessonId: "harm-acc-05", lvl: 2, q: "Barr\xE9 forme La mineur, index sur la corde 5 en case 2 : quel accord ?", o: ["Si mineur", "Do mineur", "R\xE9 mineur", "Mi mineur"], a: 0, exp: "La corde 5 en case 2 donne Si : la forme de La mineur barr\xE9e en case 2 est Si mineur (x24432).", xp: 30 },
+      { id: "q-harm-barla-new-01-app", courseId: "harmony", lessonId: "harm-acc-05", lvl: 2, q: "Barr\xE9 forme La mineur, index sur la corde 5 en case 7 : quel accord ?", o: ["Mi mineur", "R\xE9 mineur", "Fa mineur", "Do mineur"], a: 0, exp: "La corde 5 en case 7 donne Mi : la forme de La mineur barr\xE9e en case 7 est Mi mineur.", xp: 30 },
+      { id: "q-harm-barla-new-02", courseId: "harmony", lessonId: "harm-acc-05", lvl: 2, q: "Dans un barr\xE9 forme La, quelle corde ne doit pas sonner ?", o: ["La corde 6", "La corde 5", "La corde 3", "La corde 1"], a: 0, exp: "La fondamentale est sur la corde 5 : la corde 6 n'appartient pas \xE0 la forme, on l'\xE9touffe du bout de l'index.", xp: 30 },
+      { id: "q-harm-barla-new-03", courseId: "harmony", lessonId: "harm-acc-05", lvl: 3, q: "Forme La majeure, index en case 5 : quel accord joues-tu ?", o: ["R\xE9", "Mi", "Do", "La"], a: 0, exp: "La corde 5 en case 5 donne R\xE9 : x57775 est un R\xE9 majeur.", xp: 35 }
+    ];
+  }
+});
+
+// src/content/cours/harmony/harm-c2-01.js
+var harm_c2_01_exports = {};
+__export(harm_c2_01_exports, {
+  default: () => harm_c2_01_default,
+  quiz: () => quiz71
+});
+var TAB_QUATRE_TRIADES, harm_c2_01_default, quiz71;
+var init_harm_c2_01 = __esm({
+  "src/content/cours/harmony/harm-c2-01.js"() {
+    TAB_QUATRE_TRIADES = {
+      type: "tab",
+      caption: "Les quatre triades de Do, fondamentale fixe : majeure, mineure, diminu\xE9e, augment\xE9e",
+      text: "Tab \u2014 \xE0 chaque fois Do (corde 5 case 3), puis la tierce et la quinte sur la corde 4 : cases 2 et 5 (majeure), 1 et 5 (mineure), 1 et 4 (diminu\xE9e), 2 et 6 (augment\xE9e).",
+      data: { lines: [
+        "e|-------------------------------------|",
+        "B|-------------------------------------|",
+        "G|-------------------------------------|",
+        "D|----2--5-----1--5-----1--4-----2--6--|",
+        "A|-3--------3--------3--------3--------|",
+        "E|-------------------------------------|"
+      ] }
+    };
+    harm_c2_01_default = {
+      id: "harm-c2-01",
+      level: 5,
+      title: "Les 4 types de triades",
+      duration: 8,
+      gropiTip: "Pour passer de majeur \xE0 mineur, baisse juste la tierce d'une case. Sur Mi ouvert, l\xE8ve le doigt de la corde 3 (case 1) : tu obtiens Mim, et toute l'ambiance bascule.",
+      cartes: [
+        { type: "idee", titre: "Trois notes empil\xE9es", texte: [
+          "Une triade, c'est trois notes empil\xE9es par tierces : 1, 3, 5. C'est l'unit\xE9 de base des accords.",
+          "Il en existe quatre types, chacun avec sa couleur. Tout d\xE9pend des deux tierces qui la composent."
+        ] },
+        { type: "idee", titre: "Majeure : 1-3-5", texte: [
+          "Tierce majeure (4 demi-tons), puis tierce mineure (3) : la quinte juste tombe \xE0 7 demi-tons de la fondamentale.",
+          "Son brillant, stable. La majeur : La, Do#, Mi."
+        ], bloc: {
+          type: "chord_diagram",
+          caption: "La majeur \u2014 triade majeure ouverte (1-3-5)",
+          data: { name: "A", frets: [-1, 0, 2, 2, 2, 0], fingers: [0, 0, 1, 2, 3, 0], startFret: 1 }
+        } },
+        { type: "question", quizId: "q-harm-03" },
+        { type: "idee", titre: "Mineure : 1-\u266D3-5", texte: [
+          "La tierce descend d'un demi-ton : 3 puis 4 demi-tons. La quinte ne bouge pas.",
+          "Un seul demi-ton d'\xE9cart, et le son devient doux, m\xE9lancolique. La mineur : La, Do, Mi."
+        ], bloc: {
+          type: "chord_diagram",
+          caption: "La mineur \u2014 triade mineure ouverte (1-\u266D3-5)",
+          data: { name: "Am", frets: [-1, 0, 2, 2, 1, 0], fingers: [0, 0, 2, 3, 1, 0], startFret: 1 }
+        } },
+        { type: "idee", titre: "Diminu\xE9e : 1-\u266D3-\u266D5", texte: [
+          "Deux tierces mineures, 3 + 3 : la quinte tombe \xE0 6 demi-tons. Son tendu, instable, qui demande \xE0 se r\xE9soudre.",
+          "On la trouve sur le 7e degr\xE9 de la gamme majeure : Si diminu\xE9 en Do."
+        ], bloc: {
+          type: "chord_diagram",
+          caption: "Si diminu\xE9 \u2014 triade diminu\xE9e (1-\u266D3-\u266D5)",
+          data: { name: "Bdim", frets: [-1, 2, 3, 4, 3, -1], fingers: [0, 1, 2, 4, 3, 0], startFret: 1 }
+        } },
+        { type: "question", quizId: "q-harm-02-app" },
+        { type: "idee", titre: "Augment\xE9e : 1-3-#5", texte: [
+          "Deux tierces majeures, 4 + 4 : la quinte monte \xE0 8 demi-tons. Son flottant, ambigu.",
+          "Elle est sym\xE9trique : Do augment\xE9, Mi augment\xE9 et Sol# augment\xE9 sonnent avec les m\xEAmes trois notes."
+        ] },
+        { type: "question", quizId: "q-harm-04" },
+        {
+          type: "a-toi",
+          titre: "Quatre couleurs depuis Do",
+          consigne: "Garde Do sur la corde 5 et joue les quatre triades en arp\xE8ge, comme la tab : majeure, mineure, diminu\xE9e, augment\xE9e. Seules la tierce et la quinte bougent. \xC9coute la couleur changer : brillant, sombre, tendu, flottant.",
+          bloc: TAB_QUATRE_TRIADES,
+          bpm: 60,
+          minuteur: 120
+        },
+        { type: "recap", points: [
+          "Majeure 4+3, mineure 3+4 : la tierce fait la diff\xE9rence.",
+          "Diminu\xE9e 3+3 (quinte \u266D5), augment\xE9e 4+4 (quinte #5).",
+          "Brillant, m\xE9lancolique, tendu, flottant : quatre couleurs."
+        ] }
+      ],
+      quiz: ["q-harm-01", "q-harm-02", "q-harm-03", "q-harm-04", "q-harm-02-app"]
+    };
+    quiz71 = [
+      { id: "q-harm-01", courseId: "harmony", lessonId: "harm-c2-01", lvl: 1, q: "Une triade majeure se compose de\u2026", o: ["1-3-5", "1-\u266D3-5", "1-3-\u266D5", "1-2-5"], a: 0, exp: "Triade majeure : fondamentale + tierce majeure (4dt) + quinte juste (7dt). Formule 1-3-5. C'est la triade de r\xE9f\xE9rence.", xp: 25 },
+      { id: "q-harm-02", courseId: "harmony", lessonId: "harm-c2-01", lvl: 2, q: "Une triade diminu\xE9e se compose de\u2026", o: ["1-3-5", "1-\u266D3-\u266D5", "1-\u266D3-5", "1-3-#5"], a: 1, exp: "Diminu\xE9e = 1-\u266D3-\u266D5. Tierce mineure (3dt) + quinte diminu\xE9e (6dt). Tr\xE8s instable. Trouv\xE9e sur le 7e degr\xE9 de la gamme majeure.", xp: 35 },
+      { id: "q-harm-02-app", courseId: "harmony", lessonId: "harm-c2-01", lvl: 2, q: "Quelles notes forment la triade diminu\xE9e construite sur Mi ?", o: ["Mi-Sol-Si\u266D", "Mi-Sol-Si", "Mi-Sol#-Si", "Mi-Sol-Do"], a: 0, exp: "Diminu\xE9e = 1-\u266D3-\u266D5, deux tierces mineures : Mi + 3 demi-tons = Sol, Sol + 3 demi-tons = Si\u266D. Mi-Sol-Si serait Mi mineur.", xp: 30 },
+      { id: "q-harm-03", courseId: "harmony", lessonId: "harm-c2-01", lvl: 2, q: "Quelles notes forment l'accord de Si majeur ?", o: ["Si-R\xE9-Fa#", "Si-R\xE9-Fa", "Si-R\xE9#-Fa#", "Si-R\xE9#-Fa"], a: 2, exp: "Si majeur = Si + (Si+4dt = R\xE9#) + (Si+7dt = Fa#). Notes : Si-R\xE9#-Fa#. Triade majeure classique.", xp: 40 },
+      { id: "q-harm-04", courseId: "harmony", lessonId: "harm-c2-01", lvl: 3, q: "Une triade augment\xE9e a quelle particularit\xE9 ?", o: ["Sa fondamentale est doubl\xE9e \xE0 l'octave", "Elle contient 4 notes au lieu de 3", "Sa tierce est mineure au lieu de majeure", "Sa quinte est augment\xE9e d'un demi-ton"], a: 3, exp: "Augment\xE9e = 1-3-#5. Quinte augment\xE9e (8dt au lieu de 7dt). Sym\xE9trique : on peut empiler des tierces majeures \xE0 l'infini. Aug = Caug = Eaug = Lab aug (m\xEAmes notes, fondamentales diff\xE9rentes).", xp: 50 }
+    ];
+  }
+});
+
+// src/content/cours/harmony/harm-c2-02.js
+var harm_c2_02_exports = {};
+__export(harm_c2_02_exports, {
+  default: () => harm_c2_02_default,
+  quiz: () => quiz72
+});
+var DO_SUR_CORDE_5, TAB_CORDE_5, harm_c2_02_default, quiz72;
+var init_harm_c2_02 = __esm({
+  "src/content/cours/harmony/harm-c2-02.js"() {
+    DO_SUR_CORDE_5 = {
+      type: "fretboard",
+      caption: "Triade de Do majeur sur la corde 5 \u2014 fondamentale, +4 cases, +7 cases",
+      data: {
+        frets: 8,
+        startFret: 2,
+        showStringNames: true,
+        showFretNumbers: true,
+        notes: [
+          { string: 5, fret: 3, label: "Do", color: "primary", root: true },
+          { string: 5, fret: 7, label: "Mi", color: "green" },
+          { string: 5, fret: 10, label: "Sol", color: "amber" }
+        ]
+      }
+    };
+    TAB_CORDE_5 = {
+      type: "tab",
+      caption: "Do majeur puis Do mineur sur la seule corde 5 : seule la tierce bouge",
+      text: "Tab \u2014 corde 5 : cases 3, 7, 10 (Do majeur), puis cases 3, 6, 10 (Do mineur).",
+      data: { lines: [
+        "e|---------------------|",
+        "B|---------------------|",
+        "G|---------------------|",
+        "D|---------------------|",
+        "A|-3--7--10--3--6--10--|",
+        "E|---------------------|"
+      ] }
+    };
+    harm_c2_02_default = {
+      id: "harm-c2-02",
+      level: 5,
+      title: "Construire une triade depuis n'importe quelle note",
+      duration: 7,
+      gropiTip: "Rep\xE8re la quinte sans compter : depuis une fondamentale sur la corde 6 ou 5, elle est sur la corde voisine plus aigu\xEB, deux cases plus loin (la forme du power chord). Il ne reste qu'\xE0 placer la tierce.",
+      cartes: [
+        { type: "idee", titre: "La m\xE9thode", texte: [
+          "Plus besoin d'apprendre chaque accord \xE0 part : tu le construis. Pour une triade majeure, la fondamentale, puis +4 demi-tons (la tierce), puis +7 depuis la fondamentale (la quinte).",
+          "R\xE9 majeur : R\xE9 + 4 = Fa#, R\xE9 + 7 = La. Donc R\xE9, Fa#, La."
+        ] },
+        { type: "question", quizId: "q-harm-p5-c202-01" },
+        { type: "idee", titre: "Les quatre types depuis Mi", texte: [
+          "Majeur (+4, +7) : Mi, Sol#, Si. Mineur (+3, +7) : Mi, Sol, Si.",
+          "Diminu\xE9 (+3, +6) : Mi, Sol, Si\u266D. Augment\xE9 (+4, +8) : Mi, Sol#, Do."
+        ] },
+        { type: "idee", titre: "Di\xE8ses, b\xE9mols, m\xEAme son", texte: [
+          "Avec des b\xE9mols, les formules ne changent pas, seuls les noms : Si\u266D majeur = Si\u266D, R\xE9, Fa.",
+          "R\xE9\u266D majeur (R\xE9\u266D, Fa, La\u266D) et Do# majeur sonnent pareil : autre \xE9criture, m\xEAmes cases sur la guitare."
+        ] },
+        { type: "question", quizId: "q-harm-p5-c202-02" },
+        { type: "idee", titre: "Compter en cases", texte: [
+          "Sur une m\xEAme corde, un demi-ton = une case. Depuis Do (corde 5 case 3) : la tierce majeure \xE0 +4 cases, la quinte \xE0 +7."
+        ], bloc: DO_SUR_CORDE_5 },
+        { type: "question", quizId: "q-harm-p5-c202-03" },
+        {
+          type: "a-toi",
+          titre: "Construis, puis joue",
+          consigne: "Joue la tab au clic : Do majeur puis Do mineur, note par note. Ensuite, choisis une autre note sur la corde 5 et construis sa triade majeure (+4, +7), puis mineure (+3, +7). Refais avec trois notes.",
+          bloc: TAB_CORDE_5,
+          bpm: 60,
+          minuteur: 180
+        },
+        { type: "recap", points: [
+          "En demi-tons depuis la fondamentale : majeure +4 +7, mineure +3 +7.",
+          "Diminu\xE9e +3 +6, augment\xE9e +4 +8.",
+          "Sur une m\xEAme corde, un demi-ton = une case."
+        ] }
+      ],
+      quiz: ["q-fret-harm-01", "q-fret-harm-02", "q-harm-02", "q-harm-03", "q-harm-p5-c202-01", "q-harm-p5-c202-02", "q-harm-p5-c202-03"]
+    };
+    quiz72 = [
+      { id: "q-fret-harm-01", type: "fretboard", courseId: "harmony", lessonId: "harm-c2-02", lvl: 1, q: "Trouve toutes les notes de Do majeur (Do Mi Sol) sur le manche", concept: { type: "find_chord", root: "C", quality: "maj" }, selectionRules: { mode: "all" }, display: { showNotes: false }, hint: "Do majeur = Do + Mi (3ce M) + Sol (5te).", xp: 45, exp: "Triade Do majeur : 3 notes distinctes, nombreuses positions sur le manche." },
+      { id: "q-fret-harm-02", type: "fretboard", courseId: "harmony", lessonId: "harm-c2-02", lvl: 2, q: "Trouve toutes les notes de La mineur (La Do Mi)", concept: { type: "find_chord", root: "A", quality: "min" }, selectionRules: { mode: "all" }, display: { showNotes: false }, hint: "La mineur = La + Do (3ce m) + Mi (5te). Compare avec La majeur (Do#).", xp: 45, exp: "Am : La-Do-Mi. La tierce mineure (Do vs Do#) fait toute la diff\xE9rence." },
+      { id: "q-harm-p5-c202-01", courseId: "harmony", lessonId: "harm-c2-02", lvl: 1, q: "Quelles notes forment l'accord de Fa majeur ?", o: ["Fa-La-Do", "Fa-La\u266D-Do", "Fa-La-Do#", "Fa-Sol-Do"], a: 0, exp: "Fa + 4 demi-tons = La (tierce majeure), Fa + 7 = Do (quinte juste). La\u266D donnerait Fa mineur.", xp: 30 },
+      { id: "q-harm-p5-c202-02", courseId: "harmony", lessonId: "harm-c2-02", lvl: 2, q: "Quelles notes forment l'accord de La augment\xE9 ?", o: ["La-Do#-Fa", "La-Do#-Mi", "La-Do-Mi\u266D", "La-Do-Fa"], a: 0, exp: "Augment\xE9 = +4 et +8 demi-tons : La + 4 = Do#, La + 8 = Fa (\xE9crit Mi# en notation stricte). La-Do#-Mi est La majeur, La-Do-Mi\u266D La diminu\xE9.", xp: 40 },
+      { id: "q-harm-p5-c202-03", courseId: "harmony", lessonId: "harm-c2-02", lvl: 2, q: "R\xE9 est en case 5 de la corde 5. Sur la m\xEAme corde, \xE0 quelle case est sa tierce majeure, Fa# ?", o: ["Case 9", "Case 8", "Case 10", "Case 7"], a: 0, exp: "Tierce majeure = 4 demi-tons = 4 cases : 5 + 4 = 9. La case 8 donne Fa, la tierce mineure (R\xE9 mineur) ; la case 12, la quinte La.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/harmony/harm-c2-03.js
+var harm_c2_03_exports = {};
+__export(harm_c2_03_exports, {
+  default: () => harm_c2_03_default,
+  quiz: () => quiz73
+});
+var DOUZE_TRIADES, harm_c2_03_default, quiz73;
+var init_harm_c2_03 = __esm({
+  "src/content/cours/harmony/harm-c2-03.js"() {
+    DOUZE_TRIADES = {
+      type: "degree_chart",
+      caption: "Les 12 triades majeures \u2014 vert : groupe 1, ambre : groupe 2, corail : groupe 3",
+      data: {
+        boxes: [
+          { top: "Do", label: "Do \u2013 Mi \u2013 Sol", sub: "0 alt.", tint: "green" },
+          { top: "Sol", label: "Sol \u2013 Si \u2013 R\xE9", sub: "1#", tint: "green" },
+          { top: "Fa", label: "Fa \u2013 La \u2013 Do", sub: "1\u266D", tint: "green" },
+          { top: "R\xE9", label: "R\xE9 \u2013 Fa# \u2013 La", sub: "2#", tint: "amber" },
+          { top: "La", label: "La \u2013 Do# \u2013 Mi", sub: "3#", tint: "amber" },
+          { top: "Mi", label: "Mi \u2013 Sol# \u2013 Si", sub: "4#", tint: "amber" },
+          { top: "Sib", label: "Sib \u2013 R\xE9 \u2013 Fa", sub: "2\u266D", tint: "amber" },
+          { top: "Mib", label: "Mib \u2013 Sol \u2013 Sib", sub: "3\u266D", tint: "amber" },
+          { top: "Si", label: "Si \u2013 R\xE9# \u2013 Fa#", sub: "5#", tint: "coral" },
+          { top: "Fa#", label: "Fa# \u2013 La# \u2013 Do#", sub: "6#", tint: "coral" },
+          { top: "Do#", label: "Do# \u2013 Mi# \u2013 Sol#", sub: "7#", tint: "coral" },
+          { top: "Sol#", label: "Sol# \u2013 Si# \u2013 R\xE9#", sub: "= Lab (4\u266D)", tint: "coral" }
+        ]
+      }
+    };
+    harm_c2_03_default = {
+      id: "harm-c2-03",
+      level: 6,
+      title: "Les 12 triades majeures \u2014 m\xE9morisation",
+      duration: 7,
+      gropiTip: "Retiens par familles : Do, Fa et Sol ont leurs trois notes naturelles ; R\xE9, Mi et La n'ont que leur tierce di\xE9s\xE9e (Fa#, Sol#, Do#). Six triades en une seule phrase.",
+      cartes: [
+        { type: "idee", titre: "12 triades, 3 groupes", texte: [
+          "12 notes, donc 12 triades majeures. Tout apprendre d'un coup d\xE9courage : on les range en trois groupes, du plus simple au plus alt\xE9r\xE9.",
+          "Sous chaque triade, l'armure de sa tonalit\xE9, qui suit le cycle des quintes."
+        ], bloc: DOUZE_TRIADES },
+        { type: "idee", titre: "Groupe 1 : Do, Sol, Fa", texte: [
+          "Do : Do-Mi-Sol. Sol : Sol-Si-R\xE9. Fa : Fa-La-Do.",
+          "Trois triades sans aucune alt\xE9ration, et trois accords que tu joues d\xE9j\xE0 en position ouverte. Commence par elles."
+        ] },
+        { type: "question", quizId: "q-harm-p6-c203-01" },
+        { type: "idee", titre: "Groupe 2 : les tonalit\xE9s courantes", texte: [
+          "R\xE9 : R\xE9-Fa#-La. La : La-Do#-Mi. Mi : Mi-Sol#-Si. Seule la tierce est di\xE9s\xE9e.",
+          "Si\u266D : Si\u266D-R\xE9-Fa. Mi\u266D : Mi\u266D-Sol-Si\u266D. Ce groupe couvre l'essentiel de la pop et du rock."
+        ] },
+        { type: "question", quizId: "q-harm-26-app" },
+        { type: "idee", titre: "Groupe 3 : les plus alt\xE9r\xE9es", texte: [
+          "Si : Si-R\xE9#-Fa#. Fa# : Fa#-La#-Do#. Do# : Do#-Mi#-Sol#. Sol# : Sol#-Si#-R\xE9#.",
+          "Mi# sonne comme Fa, Si# comme Do. Mais une tierce porte toujours le nom situ\xE9 deux lettres plus loin : Do \u2192 Mi, Sol \u2192 Si."
+        ] },
+        { type: "question", quizId: "q-harm-27" },
+        {
+          type: "a-toi",
+          titre: "Nomme les notes sous tes doigts",
+          consigne: "Plaque R\xE9 et nomme chaque corde : R\xE9 \xE0 vide, La (corde 3 case 2), R\xE9 (corde 2 case 3), Fa# (corde 1 case 2). Trois notes, la triade. Fais de m\xEAme avec La et Mi, puis change d'accord toutes les quatre mesures au clic.",
+          bloc: { type: "chord_diagram", caption: "R\xE9 majeur \u2014 xx0232 : R\xE9, La, R\xE9, Fa#", data: { name: "D", frets: [-1, -1, 0, 2, 3, 2], fingers: [0, 0, 0, 1, 3, 2], startFret: 1 } },
+          bpm: 60
+        },
+        { type: "question", quizId: "q-harm-57" },
+        { type: "recap", points: [
+          "Triade majeure = fondamentale, tierce majeure, quinte juste.",
+          "Do, Sol, Fa : sans alt\xE9ration ; R\xE9, La, Mi : tierce di\xE9s\xE9e.",
+          "La tierce est toujours deux lettres plus loin : Do# \u2192 Mi#, pas Fa."
+        ] }
+      ],
+      quiz: ["q-harm-26", "q-harm-27", "q-harm-57", "q-harm-p6-c203-01", "q-harm-26-app"]
+    };
+    quiz73 = [
+      { id: "q-harm-26", courseId: "harmony", lessonId: "harm-c2-03", lvl: 1, q: "Quelles sont les notes de la triade de R\xE9 majeur ?", o: ["R\xE9-Fa-La", "R\xE9-Fa#-La", "R\xE9-Fa#-La#", "R\xE9-Sol-La"], a: 1, exp: "Triade majeure = fondamentale, tierce majeure, quinte juste : R\xE9, Fa#, La.", xp: 30 },
+      { id: "q-harm-26-app", courseId: "harmony", lessonId: "harm-c2-03", lvl: 1, q: "Tu connais R\xE9 majeur. Quelles sont les notes de la triade de R\xE9 mineur ?", o: ["R\xE9-Fa-La", "R\xE9-Fa#-La", "R\xE9-Fa-La\u266D", "R\xE9-Mi-La"], a: 0, exp: "Mineur = 1-\u266D3-5 : on baisse la tierce d'un demi-ton. R\xE9-Fa#-La devient R\xE9-Fa-La.", xp: 25 },
+      { id: "q-harm-27", courseId: "harmony", lessonId: "harm-c2-03", lvl: 2, q: "Pourquoi la tierce de Do# majeur s'\xE9crit-elle Mi# et non Fa ?", o: ["Parce que Fa n'existe pas en Do#", "Pour \xE9viter d'\xE9crire un b\xE9mol dans l'accord", "Parce qu'une tierce est deux lettres plus loin", "Parce que Mi# sonne plus aigu que Fa"], a: 2, exp: "Une tierce est deux lettres plus loin : Do \u2192 Mi. \xC9lev\xE9 d'un demi-ton, c'est Mi#, qui sonne comme Fa.", xp: 40 },
+      { id: "q-harm-57", courseId: "harmony", lessonId: "harm-c2-03", lvl: 2, q: "Quelles sont les notes de la triade de Mi\u266D majeur ?", o: ["Mi\u266D - Sol - Si\u266D", "Mi\u266D - Sol\u266D - Si\u266D", "Mi\u266D - Sol - Si", "Mi\u266D - La\u266D - Si\u266D"], a: 0, exp: "Tierce majeure au-dessus de Mi\u266D : Sol (4 demi-tons). Quinte juste : Si\u266D (7 demi-tons). Mi\u266D - Sol\u266D - Si\u266D serait Mi\u266D mineur.", xp: 40 },
+      { id: "q-harm-p6-c203-01", courseId: "harmony", lessonId: "harm-c2-03", lvl: 1, q: "Laquelle de ces triades majeures ne contient aucune alt\xE9ration ?", o: ["Fa majeur", "R\xE9 majeur", "Mi majeur", "La majeur"], a: 0, exp: "Fa majeur = Fa, La, Do : trois notes naturelles. R\xE9, Mi et La majeurs ont chacun une tierce di\xE9s\xE9e (Fa#, Sol#, Do#).", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/harmony/harm-c2-04.js
+var harm_c2_04_exports = {};
+__export(harm_c2_04_exports, {
+  default: () => harm_c2_04_default,
+  quiz: () => quiz74
+});
+var harm_c2_04_default, quiz74;
+var init_harm_c2_04 = __esm({
+  "src/content/cours/harmony/harm-c2-04.js"() {
+    harm_c2_04_default = {
+      id: "harm-c2-04",
+      level: 6,
+      title: "Les inversions de triades et leur usage",
+      duration: 8,
+      gropiTip: "Joue Do, puis Sol/Si (x20003), puis Lam : gr\xE2ce \xE0 la 1re inversion de Sol, la basse descend Do-Si-La par degr\xE9s conjoints. Un encha\xEEnement tr\xE8s courant \xE0 garder sous les doigts.",
+      cartes: [
+        { type: "idee", titre: "\xC9tat fondamental : 1 \xE0 la basse", texte: [
+          "Une triade peut se ranger de trois fa\xE7ons. La position \xAB normale \xBB met la fondamentale au grave : Do, Mi, Sol.",
+          "L'accord sonne stable, ancr\xE9. C'est celle que tu plaques le plus souvent."
+        ], bloc: {
+          type: "chord_diagram",
+          caption: "Do maj \u2014 \xE9tat fondamental (Do en basse, corde 5 case 3)",
+          data: { name: "C", frets: [-1, 3, 2, 0, 1, 0], fingers: [0, 3, 2, 0, 1, 0], startFret: 1 }
+        } },
+        { type: "idee", titre: "1re inversion : 3 \xE0 la basse", texte: [
+          "La tierce passe au grave : Mi, Sol, Do. On l'\xE9crit Do/Mi, \xAB Do avec Mi \xE0 la basse \xBB.",
+          "Le son est plus ouvert, moins affirm\xE9. Sur ton Do ouvert, il suffit de laisser sonner la corde 6 \xE0 vide."
+        ], bloc: {
+          type: "chord_diagram",
+          caption: "Do/Mi \u2014 1\xE8re inversion (Mi en basse, corde 6 \xE0 vide)",
+          data: { name: "C/E", frets: [0, 3, 2, 0, 1, 0], fingers: [0, 3, 2, 0, 1, 0], startFret: 1 }
+        } },
+        { type: "question", quizId: "q-harm-28-app" },
+        { type: "idee", titre: "2e inversion : 5 \xE0 la basse", texte: [
+          "La quinte passe au grave : Sol, Do, Mi, not\xE9 Do/Sol.",
+          "C'est la moins stable des trois : la quinte \xE0 la basse cr\xE9e une l\xE9g\xE8re tension. On l'emploie surtout comme accord de passage."
+        ], bloc: {
+          type: "chord_diagram",
+          caption: "Do/Sol \u2014 2e inversion (Sol en basse, corde 6 case 3 ou corde 4 \xE0 vide)",
+          data: { name: "C/G", frets: [3, 3, 2, 0, 1, 0], fingers: [3, 4, 2, 0, 1, 0], startFret: 1 }
+        } },
+        { type: "question", quizId: "q-harm-p6-c204-01" },
+        { type: "idee", titre: "Le voice-leading", texte: [
+          "Passer d'un accord \xE0 l'autre en bougeant le moins possible : on garde les notes communes, on d\xE9place les autres d'un ton ou d'un demi-ton.",
+          "Dans Do - Sol - Lam - Fa, la basse saute Do \u2192 Sol \u2192 La. Avec Sol/Si, elle descend Do \u2192 Si \u2192 La : une vraie ligne m\xE9lodique."
+        ] },
+        { type: "idee", titre: "Trois cordes suffisent", texte: [
+          "Pour travailler les inversions, les triades sur trois cordes aigu\xEBs sont l'outil id\xE9al.",
+          "Do sur les cordes 3, 2 et 1 : corde 3 \xE0 vide, corde 2 case 1, corde 1 \xE0 vide donnent Sol, Do, Mi. Sol \xE0 la basse : 2e inversion."
+        ] },
+        {
+          type: "a-toi",
+          titre: "La basse qui descend",
+          consigne: "Encha\xEEne Do, Sol/Si, Lam, puis Fa (ou Fmaj7, xx3210), une mesure chacun, quatre coups au clic. \xC9coute la basse : Do, Si, La. Rejoue ensuite avec un Sol normal et compare.",
+          bloc: { type: "chord_diagram", caption: "Sol/Si \u2014 x20003 : Sol en 1re inversion, Si \xE0 la basse", data: { name: "G/B", frets: [-1, 2, 0, 0, 0, 3], fingers: [0, 2, 0, 0, 0, 3], startFret: 1 } },
+          bpm: 60
+        },
+        { type: "question", quizId: "q-harm-58" },
+        { type: "recap", points: [
+          "\xC9tat fondamental : 1 \xE0 la basse ; 1re inversion : 3 ; 2e inversion : 5.",
+          "Do/Mi se lit \xAB Do avec Mi \xE0 la basse \xBB.",
+          "Les inversions servent le voice-leading : Do \u2192 Sol/Si \u2192 Lam fait descendre la basse."
+        ] }
+      ],
+      quiz: ["q-harm-28", "q-harm-29", "q-harm-58", "q-harm-p6-c204-01", "q-harm-28-app"]
+    };
+    quiz74 = [
+      { id: "q-harm-28", courseId: "harmony", lessonId: "harm-c2-04", lvl: 1, q: "Dans une 1\xE8re inversion, quelle note de l'accord est \xE0 la basse ?", o: ["La fondamentale", "La quinte", "La septi\xE8me", "La tierce"], a: 3, exp: "1\xE8re inversion = tierce \xE0 la basse. Do majeur : Mi - Sol - Do, not\xE9 Do/Mi.", xp: 30 },
+      { id: "q-harm-28-app", courseId: "harmony", lessonId: "harm-c2-04", lvl: 1, q: "Tu joues Sol majeur en 1re inversion. Quelle note est \xE0 la basse ?", o: ["Si", "Sol", "R\xE9", "La"], a: 0, exp: "1re inversion = la tierce \xE0 la basse. Sol majeur = Sol, Si, R\xE9 : la tierce est Si, d'o\xF9 Sol/Si.", xp: 25 },
+      { id: "q-harm-29", courseId: "harmony", lessonId: "harm-c2-04", lvl: 2, q: "\xC0 quoi servent surtout les inversions dans un encha\xEEnement d'accords ?", o: ["\xC0 r\xE9duire les sauts entre les accords", "\xC0 changer la tonalit\xE9 du morceau", "\xC0 rendre chaque accord plus fort et plus riche", "\xC0 remplacer les accords mineurs"], a: 0, exp: "C'est le voice-leading : on garde les notes communes et on d\xE9place les autres au plus court.", xp: 40 },
+      { id: "q-harm-58", courseId: "harmony", lessonId: "harm-c2-04", lvl: 2, q: "Dans Do - Sol - Lam - Fa, quel Sol fait descendre la basse Do \u2192 Si \u2192 La ?", o: ["Sol/Si, 1re inversion", "Sol/R\xE9, 2e inversion", "Sol \xE0 l'\xE9tat fondamental", "Sol/La, avec la 9e en basse"], a: 0, exp: "En 1re inversion, la tierce de Sol (Si) passe \xE0 la basse : Do (Do) \u2192 Si (Sol/Si) \u2192 La (Lam). La basse descend par degr\xE9s au lieu de sauter Do \u2192 Sol \u2192 La.", xp: 40 },
+      { id: "q-harm-p6-c204-01", courseId: "harmony", lessonId: "harm-c2-04", lvl: 2, q: "Tu lis l'accord Do/Sol. Que joues-tu ?", o: ["Do, en 2e inversion", "Do, en 1re inversion", "Sol, en 2e inversion", "Sol, en 1re inversion"], a: 0, exp: "Do/Sol = l'accord de Do avec Sol \xE0 la basse. Sol est la quinte de Do : quinte \xE0 la basse, c'est la 2e inversion.", xp: 35 }
+    ];
+  }
+});
+
+// src/content/cours/harmony/harm-c3-01.js
+var harm_c3_01_exports = {};
+__export(harm_c3_01_exports, {
+  default: () => harm_c3_01_default,
+  quiz: () => quiz75
+});
+var harm_c3_01_default, quiz75;
+var init_harm_c3_01 = __esm({
+  "src/content/cours/harmony/harm-c3-01.js"() {
+    harm_c3_01_default = {
+      id: "harm-c3-01",
+      level: 7,
+      title: "Pourquoi ajouter une 7e ?",
+      duration: 8,
+      gropiTip: "Pour trouver la 7e mineure sans calcul, descends d'un ton depuis la fondamentale \xE0 l'octave : depuis Do, \xE7a donne Sib. Un demi-ton seulement sous l'octave, c'est la 7e majeure (Si).",
+      cartes: [
+        { type: "idee", titre: "Une quatri\xE8me note", texte: [
+          "Une triade empile 1-3-5. Un accord de septi\xE8me ajoute une tierce de plus : 1-3-5-7.",
+          "Cette 4e note change toute la couleur : plus riche, plus \xE9labor\xE9e. C'est le son de base du jazz, de la bossa et de la soul."
+        ] },
+        { type: "idee", titre: "Quelle 7e ?", texte: [
+          "Deux possibilit\xE9s. La 7e mineure est \xE0 10 demi-tons de la fondamentale : depuis Do, Sib. La 7e majeure est \xE0 11 demi-tons : Si.",
+          "Un seul demi-ton d'\xE9cart, deux couleurs tr\xE8s diff\xE9rentes."
+        ] },
+        { type: "question", quizId: "q-harm-32" },
+        { type: "idee", titre: "Cmaj7 : lumineux", texte: [
+          "Majeur + 7e majeure : Do, Mi, Sol, Si.",
+          "Le Si frotte \xE0 un demi-ton sous le Do de l'octave : une tension douce, r\xEAveuse. L'accord reste stable, avec une invitation \xE0 continuer."
+        ], bloc: {
+          type: "chord_diagram",
+          caption: "Cmaj7 \u2014 majeur + 7e maj = lumineux, jazz, stable",
+          data: { name: "Cmaj7", frets: [-1, 3, 2, 0, 0, 0], fingers: [0, 3, 2, 0, 0, 0], startFret: 1 }
+        } },
+        { type: "idee", titre: "Am7 : doux", texte: [
+          "Mineur + 7e mineure : La, Do, Mi, Sol.",
+          "Le Sol adoucit l'accord mineur et lui donne un c\xF4t\xE9 d\xE9tendu, funky, tr\xE8s pr\xE9sent en soul et en R&B."
+        ], bloc: {
+          type: "chord_diagram",
+          caption: "Am7 \u2014 mineur + 7e min = doux, funky, modal",
+          data: { name: "Am7", frets: [0, 0, 2, 0, 1, 0], fingers: [0, 0, 2, 0, 1, 0], startFret: 1 }
+        } },
+        { type: "idee", titre: "G7 : tendu", texte: [
+          "Majeur + 7e mineure : Sol, Si, R\xE9, Fa. C'est l'accord de dominante, cousin des E7, A7 et D7 que tu joues d\xE9j\xE0.",
+          "Entre Si et Fa : 6 demi-tons, un triton. Cette tension demande \xE0 se r\xE9soudre vers Do."
+        ], bloc: {
+          type: "chord_diagram",
+          caption: "G7 \u2014 majeur + 7e min = tendu, blues, dominant",
+          data: { name: "G7", frets: [3, 2, 0, 0, 0, 1], fingers: [3, 2, 0, 0, 0, 1], startFret: 1 }
+        } },
+        { type: "question", quizId: "q-harm-33" },
+        {
+          type: "a-toi",
+          titre: "Triades, puis 7e",
+          consigne: "Joue Do, Sol, Lam, Fa, une mesure chacun au clic. Puis la m\xEAme boucle en 7e : Cmaj7, G7, Am7, Fmaj7. Souvent, un seul doigt bouge ou se l\xE8ve. \xC9coute ce que la 7e ajoute.",
+          bloc: {
+            type: "chord_diagram",
+            caption: "Fmaj7 \u2014 accord Maj7 (\xD7 \xD7 3 2 1 0)",
+            data: { name: "Fmaj7", frets: [-1, -1, 3, 2, 1, 0], fingers: [0, 0, 3, 2, 1, 0], startFret: 1 }
+          },
+          bpm: 60,
+          minuteur: 120
+        },
+        { type: "question", quizId: "q-harm-34" },
+        { type: "recap", points: [
+          "Accord de 7e = triade + une 7e : mineure \xE0 10 demi-tons, majeure \xE0 11.",
+          "Cmaj7 lumineux, Am7 doux, G7 tendu.",
+          "G7 = majeur + 7e mineure : son triton Si-Fa appelle Do."
+        ] }
+      ],
+      quiz: ["q-harm-32", "q-harm-33", "q-harm-34"]
+    };
+    quiz75 = [
+      { id: "q-harm-32", courseId: "harmony", lessonId: "harm-c3-01", lvl: 1, q: "Depuis Do, combien de demi-tons s\xE9parent la fondamentale de sa 7e mineure (Sib) ?", o: ["9", "10", "11", "12"], a: 1, exp: "7e mineure = 10 demi-tons (Do \u2192 Sib). La 7e majeure en fait 11 (Do \u2192 Si) : un seul demi-ton d'\xE9cart, deux couleurs tr\xE8s diff\xE9rentes.", xp: 30 },
+      { id: "q-harm-33", courseId: "harmony", lessonId: "harm-c3-01", lvl: 2, q: "Qu'est-ce qui d\xE9finit un accord de dominante, comme G7 ?", o: ["Triade mineure + 7e mineure", "Triade majeure + 7e majeure", "Triade majeure + 7e mineure", "Triade diminu\xE9e + 7e mineure"], a: 2, exp: "Dominante = triade majeure + 7e mineure : G7 = Sol-Si-R\xE9-Fa.", xp: 40 },
+      { id: "q-harm-34", courseId: "harmony", lessonId: "harm-c3-01", lvl: 2, q: "Pourquoi G7 appelle-t-il une r\xE9solution vers Do ?", o: ["Il n'a pas de quinte juste", "Sa fondamentale est plus grave", "Il contient une 7e majeure", "Il contient un triton"], a: 3, exp: "Si et Fa sont s\xE9par\xE9s de 6 demi-tons : un triton, l'intervalle le plus instable. Il se r\xE9sout naturellement vers Do-Mi.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/harmony/harm-c3-02.js
+var harm_c3_02_exports = {};
+__export(harm_c3_02_exports, {
+  default: () => harm_c3_02_default,
+  quiz: () => quiz76
+});
+var harm_c3_02_default, quiz76;
+var init_harm_c3_02 = __esm({
+  "src/content/cours/harmony/harm-c3-02.js"() {
+    harm_c3_02_default = {
+      id: "harm-c3-02",
+      level: 7,
+      title: "Les 5 types d'accords de septi\xE8me",
+      duration: 9,
+      gropiTip: "Pars de Cmaj7 et baisse une note d'un demi-ton \xE0 chaque fois : la 7e (C7), puis la tierce (Cm7), puis la quinte (Cm7b5), puis encore la 7e (Cdim7). Les 5 types en un seul chemin.",
+      cartes: [
+        { type: "idee", titre: "Cinq couleurs", texte: [
+          "Une triade, plus une 7e mineure ou majeure : cinq combinaisons suffisent pour la grande majorit\xE9 des accords de pop, rock, jazz, bossa et soul.",
+          "Maj7, m7, 7, m7\u266D5 et dim7. Chacun a sa couleur et sa place dans la tonalit\xE9."
+        ] },
+        { type: "idee", titre: "Maj7 et m7", texte: [
+          "Maj7 = 1-3-5-7, Cmaj7 = Do Mi Sol Si : lumineux, r\xEAveur. Sa place : le I et le IV en majeur.",
+          "m7 = 1-\u266D3-5-\u266D7, Am7 = La Do Mi Sol : doux, d\xE9tendu. Sa place : les ii, iii et vi en majeur."
+        ], bloc: {
+          type: "chord_diagram",
+          caption: "Fmaj7 \u2014 accord Maj7 (\xD7 \xD7 3 2 1 0)",
+          data: { name: "Fmaj7", frets: [-1, -1, 3, 2, 1, 0], fingers: [0, 0, 3, 2, 1, 0], startFret: 1 }
+        } },
+        { type: "question", quizId: "q-harm-05-app" },
+        { type: "idee", titre: "7 : le moteur", texte: [
+          "Dominante = 1-3-5-\u266D7, G7 = Sol Si R\xE9 Fa. Tendu, bluesy, il veut avancer. Sa place : le V, en majeur comme en mineur.",
+          "Tu en joues d\xE9j\xE0 plusieurs : E7, A7, D7, B7."
+        ], bloc: {
+          type: "chord_diagram",
+          caption: "D7 \u2014 accord dominante (\xD7 \xD7 0 2 1 2)",
+          data: { name: "D7", frets: [-1, -1, 0, 2, 1, 2], fingers: [0, 0, 0, 2, 1, 3], startFret: 1 }
+        } },
+        { type: "idee", titre: "Le triton qui se r\xE9sout", texte: [
+          "Entre la 3e et la 7e d'une dominante, il y a toujours un triton. Dans G7 : Si et Fa, 6 demi-tons.",
+          "Vers Do, Si monte d'un demi-ton sur Do et Fa descend d'un demi-ton sur Mi. Ces deux petits pas rendent V7 \u2192 I si satisfaisant."
+        ] },
+        { type: "question", quizId: "q-harm-06" },
+        { type: "idee", titre: "m7\u266D5 et dim7", texte: [
+          "m7\u266D5 (demi-diminu\xE9) = 1-\u266D3-\u266D5-\u266D7, Bm7\u266D5 = Si R\xE9 Fa La : instable, sombre. Sa place : le vii en majeur, le ii d'un ii-V-i mineur.",
+          "dim7 = 1-\u266D3-\u266D5-\u{1D12B}7, Cdim7 = Do Mi\u266D Sol\u266D Si\u{1D12B} (qui sonne La). Toutes ses notes sont \xE0 3 demi-tons : un accord de passage, jamais de repos."
+        ] },
+        { type: "question", quizId: "q-harm-08" },
+        {
+          type: "a-toi",
+          titre: "Les cinq sur Do",
+          consigne: "Forme de La barr\xE9e en case 3 : Cmaj7, C7, Cm7, Cm7\u266D5, Cdim7. \xC0 chaque accord, une seule note descend d'un demi-ton. Quatre temps chacun, nomme le type \xE0 voix haute. Puis joue-les dans le d\xE9sordre, yeux ferm\xE9s, et reconnais-les \xE0 l'oreille.",
+          bloc: {
+            type: "tab",
+            caption: "Cmaj7 (x35453), C7 (x35353), Cm7 (x35343), Cm7\u266D5 (x3434x), Cdim7 (x3424x)",
+            text: "Tab \u2014 cinq accords, basse Do corde 5 case 3 : Cmaj7 cases 3, 5, 4, 5, 3 ; C7 cases 3, 5, 3, 5, 3 ; Cm7 cases 3, 5, 3, 4, 3 ; Cm7\u266D5 cases 3, 4, 3, 4 ; Cdim7 cases 3, 4, 2, 4 (cordes 5 \xE0 1).",
+            data: { lines: [
+              "e|-3----3----3--------------|",
+              "B|-5----5----4----4----4----|",
+              "G|-4----3----3----3----2----|",
+              "D|-5----5----5----4----4----|",
+              "A|-3----3----3----3----3----|",
+              "E|--------------------------|"
+            ] }
+          },
+          bpm: 60,
+          minuteur: 120
+        },
+        { type: "recap", points: [
+          "Maj7 (1-3-5-7) lumineux, m7 (1-\u266D3-5-\u266D7) doux, 7 (1-3-5-\u266D7) tendu.",
+          "m7\u266D5 (1-\u266D3-\u266D5-\u266D7) et dim7 (1-\u266D3-\u266D5-\u{1D12B}7) : instables, ils m\xE8nent ailleurs.",
+          "La dominante contient un triton entre 3e et 7e : il se r\xE9sout par deux demi-tons."
+        ] }
+      ],
+      quiz: ["q-harm-05", "q-harm-06", "q-harm-08", "q-logic-09", "q-fret-harm-03", "q-fret-harm-04", "q-fret-harm-05", "q-harm-02", "q-harm-05-app"]
+    };
+    quiz76 = [
+      { id: "q-harm-05", courseId: "harmony", lessonId: "harm-c3-02", lvl: 1, q: "Un accord m7 (mineur 7) contient les degr\xE9s\u2026", o: ["1-\u266D3-5-\u266D7", "1-3-5-7", "1-3-5-\u266D7", "1-\u266D3-5-7"], a: 0, exp: "m7 = mineur + septi\xE8me mineure = 1-\u266D3-5-\u266D7. Son funk, modal, jazz. Ex : Am7 = La-Do-Mi-Sol.", xp: 30 },
+      { id: "q-harm-05-app", courseId: "harmony", lessonId: "harm-c3-02", lvl: 1, q: "Quelles notes forment l'accord Dm7 ?", o: ["R\xE9-Fa-La-Do", "R\xE9-Fa#-La-Do", "R\xE9-Fa-La-Do#", "R\xE9-Fa#-La-Do#"], a: 0, exp: "m7 = 1-\u266D3-5-\u266D7 : R\xE9, Fa (tierce mineure), La, Do (septi\xE8me mineure).", xp: 25 },
+      { id: "q-harm-06", courseId: "harmony", lessonId: "harm-c3-02", lvl: 2, q: "Quel accord contient Sol-Si-R\xE9-Fa ?", o: ["Gmaj7", "G7", "Gm7", "Gm7b5"], a: 1, exp: "Sol-Si-R\xE9-Fa = 1-3-5-\u266D7 (Fa = 7e mineure de Sol). Donc G7 (dominante). Si c'\xE9tait Fa#, ce serait Gmaj7.", xp: 40 },
+      { id: "q-harm-08", courseId: "harmony", lessonId: "harm-c3-02", lvl: 3, q: "Quelle est la diff\xE9rence entre m7b5 et dim7 ?", o: ["Aucune, ce sont deux noms du m\xEAme accord", "La quinte : juste pour l'un, diminu\xE9e pour l'autre", "La fondamentale, un demi-ton plus haut", "La 7e : mineure pour m7\u266D5, diminu\xE9e pour dim7"], a: 3, exp: "m7b5 = 1-\u266D3-\u266D5-\u266D7. dim7 = 1-\u266D3-\u266D5-bb7 (= 6 enharmonique). Sur Si : Bm7b5 = Si-R\xE9-Fa-La. Bdim7 = Si-R\xE9-Fa-Lab.", xp: 55 },
+      { id: "q-logic-09", courseId: "harmony", lessonId: "harm-c3-02", lvl: 3, q: "Lequel de ces accords ne contient aucun triton ?", o: ["Cmaj7", "G7", "Bm7\u266D5", "Bdim7"], a: 0, exp: "G7 et Bm7\u266D5 contiennent Si-Fa, Bdim7 en contient deux (Si-Fa et R\xE9-La\u266D). Cmaj7 (Do Mi Sol Si) n'en a aucun : c'est un accord de repos, alors que le triton d'une dominante demande \xE0 se r\xE9soudre.", xp: 65 },
+      { id: "q-fret-harm-03", type: "fretboard", courseId: "harmony", lessonId: "harm-c3-02", lvl: 3, q: "Trouve toutes les notes de Am7 (La Do Mi Sol)", concept: { type: "find_chord", root: "A", quality: "min7" }, selectionRules: { mode: "all" }, display: { showNotes: false }, hint: "Am7 = Am + Sol (7e mineure). 4 notes sur tout le manche.", xp: 55, exp: "Am7 : La-Do-Mi-Sol. La 7e mineure Sol est la couleur funk/jazz." },
+      { id: "q-fret-harm-04", type: "fretboard", courseId: "harmony", lessonId: "harm-c3-02", lvl: 3, q: "Trouve toutes les notes de G7 (Sol Si R\xE9 Fa)", concept: { type: "find_chord", root: "G", quality: "dom7" }, selectionRules: { mode: "all" }, display: { showNotes: false }, hint: "G7 : guide tones = Si (3e) et Fa (7e mineure).", xp: 55, exp: "G7 : Sol-Si-R\xE9-Fa. Si et Fa sont les guide tones qui d\xE9finissent la tension dominante." },
+      { id: "q-fret-harm-05", type: "fretboard", courseId: "harmony", lessonId: "harm-c3-02", lvl: 3, q: "Trouve toutes les notes de Cmaj7 (Do Mi Sol Si)", concept: { type: "find_chord", root: "C", quality: "maj7" }, selectionRules: { mode: "all" }, display: { showNotes: false }, hint: "Cmaj7 : guide tones = Mi (3e) et Si (7e majeure).", xp: 60, exp: "Cmaj7 : Do-Mi-Sol-Si. La 7e majeure Si (vs Sib de C7) donne la couleur douce." }
+    ];
+  }
+});
+
+// src/content/cours/harmony/harmony-03.js
+var harmony_03_exports = {};
+__export(harmony_03_exports, {
+  default: () => harmony_03_default,
+  quiz: () => quiz77
+});
+var harmony_03_default, quiz77;
+var init_harmony_03 = __esm({
+  "src/content/cours/harmony/harmony-03.js"() {
+    harmony_03_default = {
+      id: "harmony-03",
+      level: 7,
+      title: "Arp\xE8ges \u2014 l'accord en m\xE9lodie",
+      duration: 8,
+      gropiTip: "Sur Cmaj7, joue l'arp\xE8ge de Mim (Mi-Sol-Si) : tu obtiens la 3e, la 5e et la 7e de l'accord, sans la fondamentale. Un son plus moderne, parfait quand la basse joue d\xE9j\xE0 le Do.",
+      cartes: [
+        { type: "idee", titre: "L'accord, note par note", texte: [
+          "Un arp\xE8ge, ce sont les notes d'un accord jou\xE9es une \xE0 une. C'est le pont entre l'harmonie, verticale, et la m\xE9lodie, horizontale.",
+          "Un solo fait seulement de gamme peut flotter au-dessus des accords. Des fragments d'arp\xE8ge le font tomber dessus aux moments cl\xE9s."
+        ] },
+        { type: "idee", titre: "Les formules, tu les as", texte: [
+          "Triades : majeure 1-3-5, mineure 1-\u266D3-5, diminu\xE9e 1-\u266D3-\u266D5, augment\xE9e 1-3-#5.",
+          "Accords de 7e : Maj7, m7, 7, m7\u266D5, dim7. Leur arp\xE8ge en donne les quatre notes, qui d\xE9finissent tout l'accord. Cmaj7 : Do, Mi, Sol, Si."
+        ], bloc: { type: "fretboard_interactive", mode: "chord", root: "C", chord: "maj7", caption: "Arp\xE8ge Cmaj7 \u2014 Do Mi Sol Si sur tout le manche", displayMode: "notes", lang: "fr", compact: true } },
+        { type: "question", quizId: "q-harm-09-app" },
+        { type: "idee", titre: "Un arp\xE8ge dans une position", texte: [
+          "Cmaj7 entre les cases 7 et 10, sur deux octaves : Do (corde 6 case 8), Mi (corde 5 case 7), Sol (corde 5 case 10), Si (corde 4 case 9), Do (corde 4 case 10), Mi (corde 3 case 9), Sol (corde 2 case 8), Si (corde 1 case 7), Do (corde 1 case 8).",
+          "Un doigt par case, la main ne bouge pas."
+        ] },
+        {
+          type: "a-toi",
+          titre: "Monte et descends Cmaj7",
+          consigne: "Joue l'arp\xE8ge en noires au clic, en montant puis en descendant. Nomme les Do \xE0 voix haute. Quand c'est fluide, commence sur le Mi ou le Sol plut\xF4t que sur le Do.",
+          bloc: {
+            type: "tab",
+            caption: "Arp\xE8ge de Cmaj7, cases 7 \xE0 10, deux octaves en montant",
+            text: "Tab \u2014 corde 6 case 8, corde 5 cases 7 et 10, corde 4 cases 9 et 10, corde 3 case 9, corde 2 case 8, corde 1 cases 7 et 8 (Do, Mi, Sol, Si, Do, Mi, Sol, Si, Do).",
+            data: { lines: [
+              "e|----------------------7--8--|",
+              "B|-------------------8--------|",
+              "G|----------------9-----------|",
+              "D|----------9--10-------------|",
+              "A|----7--10-------------------|",
+              "E|-8--------------------------|"
+            ] }
+          },
+          bpm: 60,
+          minuteur: 90
+        },
+        { type: "idee", titre: "Arp\xE8ge et gamme ensemble", texte: [
+          "En solo, ouvre ta phrase par deux ou trois notes d'arp\xE8ge, puis remplis avec la gamme entre elles.",
+          "Pose la fin sur une note de l'accord, sur un temps fort. Le solo suit l'harmonie et reste chantant."
+        ] },
+        { type: "question", quizId: "q-harm-10" },
+        { type: "idee", titre: "Un arp\xE8ge par accord", texte: [
+          "Sur Dm7 - G7 - Cmaj7, change d'arp\xE8ge \xE0 chaque mesure : R\xE9 Fa La Do, puis Sol Si R\xE9 Fa, puis Do Mi Sol Si.",
+          "Tes phrases bougent avec l'harmonie : c'est ce qui sonne jazz."
+        ], bloc: { type: "fretboard_interactive", mode: "chord", root: "D", chord: "min7", caption: "Arp\xE8ge Dm7 \u2014 R\xE9 Fa La Do sur tout le manche", displayMode: "notes", lang: "fr", compact: true } },
+        { type: "question", quizId: "q-harm-11" },
+        { type: "recap", points: [
+          "Un arp\xE8ge = les notes de l'accord une \xE0 une ; il sonne sur l'accord \xE0 coup s\xFBr.",
+          "Cmaj7 en case 7 : Do Mi Sol Si sur deux octaves, un doigt par case.",
+          "Change d'arp\xE8ge avec l'accord, et comble avec la gamme entre les notes cibles."
+        ] }
+      ],
+      quiz: ["q-harm-09", "q-harm-10", "q-harm-11", "q-fret-harm-06", "q-harm-09-app"]
+    };
+    quiz77 = [
+      { id: "q-harm-09", courseId: "harmony", lessonId: "harmony-03", lvl: 2, q: "L'arp\xE8ge d'un accord Cmaj7 contient quelles notes ?", o: ["Do-Mi-Sol-Si", "Do-Mi-Sol", "Do-Mi-Sol-Sib", "Do-Mib-Sol-Si"], a: 0, exp: "Cmaj7 = Do(1)-Mi(3)-Sol(5)-Si(7). L'arp\xE8ge = ces 4 notes jou\xE9es en m\xE9lodie. Tu peux les jouer dans n'importe quel ordre, sur plusieurs octaves.", xp: 35 },
+      { id: "q-harm-09-app", courseId: "harmony", lessonId: "harmony-03", lvl: 2, q: "L'arp\xE8ge d'un accord Fmaj7 contient quelles notes ?", o: ["Fa-La-Do-Mi", "Fa-La-Do-Mi\u266D", "Fa-La\u266D-Do-Mi", "Fa-La-Do"], a: 0, exp: "Maj7 = 1-3-5-7 : Fa (1), La (3), Do (5), Mi (7). Avec Mi\u266D, ce serait F7 ; avec La\u266D, la tierce deviendrait mineure ; sans Mi, il manque la 7e.", xp: 30 },
+      { id: "q-harm-10", courseId: "harmony", lessonId: "harmony-03", lvl: 3, q: "Pourquoi les arp\xE8ges sont-ils essentiels en improvisation jazz ?", o: ["Pour montrer sa technique au public", "Pour sonner \xAB sur l'accord \xBB \xE0 coup s\xFBr", "Pour pouvoir jouer plus vite qu'avec une gamme", "Pour transposer plus facilement"], a: 1, exp: "Les notes d'un arp\xE8ge = les notes de l'accord = celles qui sonnent imm\xE9diatement 'juste' sur cet accord. Construire ses phrases autour des arp\xE8ges = solo qui suit l'harmonie.", xp: 45 },
+      { id: "q-harm-11", courseId: "harmony", lessonId: "harmony-03", lvl: 3, q: "Sur la progression Dm7-G7-Cmaj7, quelle strat\xE9gie d'arp\xE8ges fonctionne ?", o: ["Arp\xE8ge Dm7 sur les trois accords", "Pentatonique de Do sur toute la grille", "Arp\xE8ge Dm7, puis G7, puis Cmaj7", "Arp\xE8ge Cmaj7 sur les trois accords"], a: 2, exp: "Changer d'arp\xE8ge \xE0 chaque accord = solo qui suit l'harmonie. C'est la base du jazz. Sur Dm7 : R\xE9-Fa-La-Do. Sur G7 : Sol-Si-R\xE9-Fa. Sur Cmaj7 : Do-Mi-Sol-Si.", xp: 55 },
+      { id: "q-fret-harm-06", type: "fretboard", courseId: "harmony", lessonId: "harmony-03", lvl: 3, q: "Trouve toutes les notes de l'arp\xE8ge Dm7 (R\xE9 Fa La Do)", concept: { type: "find_chord", root: "D", quality: "min7" }, selectionRules: { mode: "all" }, display: { showNotes: false }, hint: "Dm7 = ii de Do majeur. Guide tones : Fa (3e) + Do (7e).", xp: 55, exp: "Dm7 : R\xE9-Fa-La-Do. C'est le ii du ii-V-I en Do." }
+    ];
+  }
+});
+
+// src/content/cours/harmony/harm-c3-03.js
+var harm_c3_03_exports = {};
+__export(harm_c3_03_exports, {
+  default: () => harm_c3_03_default,
+  quiz: () => quiz78
+});
+var harm_c3_03_default, quiz78;
+var init_harm_c3_03 = __esm({
+  "src/content/cours/harmony/harm-c3-03.js"() {
+    harm_c3_03_default = {
+      id: "harm-c3-03",
+      level: 7,
+      title: "Les guide tones : 3e et 7e",
+      duration: 8,
+      gropiTip: "Dans un accord 7 (dominante), la 3e et la 7e sont toujours \xE0 un triton d'\xE9cart. Sur G7 : Si et Fa. Sur C7 : Mi et Sib. Sur D7 : Fa# et Do. Trouve l'une, l'autre est \xE0 6 demi-tons.",
+      cartes: [
+        { type: "idee", titre: "Les notes qui parlent", texte: [
+          "Dans un accord de 7e, la fondamentale et la quinte posent la hauteur, sans plus. Joue Do et Sol : majeur, mineur, Do7 ? Impossible \xE0 dire.",
+          "Ajoute Mi : c'est majeur. Ajoute Si : c'est Cmaj7. La 3e et la 7e disent la qualit\xE9 de l'accord. On les appelle les guide tones."
+        ] },
+        { type: "idee", titre: "Les guide tones des 7e", texte: [
+          "Cmaj7 : Mi et Si. Cm7 : Mi\u266D et Si\u266D. C7 : Mi et Si\u266D.",
+          "Dans un accord de dominante, les deux sont toujours \xE0 un triton l'une de l'autre. Sur G7 : Si et Fa."
+        ] },
+        { type: "question", quizId: "q-harm-07-app" },
+        { type: "idee", titre: "Le shell voicing", texte: [
+          "En jazz, on joue souvent la fondamentale, la 3e et la 7e, sans la quinte. Trois notes, l'accord est parfaitement d\xE9fini et le son reste a\xE9r\xE9.",
+          "G7 : Sol (corde 6 case 3), Fa (corde 4 case 3), Si (corde 3 case 4). \xC9touffe la corde 5 avec le doigt de la corde 6."
+        ], bloc: {
+          type: "chord_diagram",
+          caption: "G7 en shell : fondamentale, 7e, 3e (Sol, Fa, Si) \u2014 3 x 3 4 x x",
+          data: { name: "G7", frets: [3, -1, 3, 4, -1, -1], fingers: [2, 0, 3, 4, 0, 0], startFret: 1 }
+        } },
+        { type: "idee", titre: "Le fil rouge du ii-V-I", texte: [
+          "Dans Dm7 - G7 - Cmaj7, les guide tones bougent au plus court. Le Do, 7e de Dm7, descend sur Si, 3e de G7 ; le Fa reste et devient la 7e de G7.",
+          "Puis le Fa descend sur Mi, 3e de Cmaj7, et le Si reste : il devient la 7e."
+        ] },
+        { type: "question", quizId: "q-harm-p7-c303-01" },
+        {
+          type: "a-toi",
+          titre: "Trois shells, deux voix",
+          consigne: "Encha\xEEne Dm7, G7 et Cmaj7 en shells, une mesure chacun au clic. \xC9coute les cordes 4 et 3 : Fa reste puis descend sur Mi, Do descend sur Si puis reste. Ensuite, joue seulement ces deux notes : la ligne int\xE9rieure de l'harmonie.",
+          bloc: {
+            type: "tab",
+            caption: "Shells Dm7 (x535xx), G7 (3x34xx), Cmaj7 (x324xx) : les guide tones sur les cordes 4 et 3",
+            text: "Tab \u2014 Dm7 : corde 5 case 5, corde 4 case 3, corde 3 case 5 (R\xE9, Fa, Do). G7 : corde 6 case 3, corde 4 case 3, corde 3 case 4 (Sol, Fa, Si). Cmaj7 : corde 5 case 3, corde 4 case 2, corde 3 case 4 (Do, Mi, Si).",
+            data: { lines: [
+              "e|----------------|",
+              "B|----------------|",
+              "G|-5----4----4----|",
+              "D|-3----3----2----|",
+              "A|-5---------3----|",
+              "E|------3---------|"
+            ] }
+          },
+          bpm: 60,
+          minuteur: 120
+        },
+        { type: "question", quizId: "q-harm-06" },
+        { type: "recap", points: [
+          "Les guide tones, 3e et 7e, disent la qualit\xE9 de l'accord ; la quinte peut partir.",
+          "Shell voicing = fondamentale + 3e + 7e : G7 = 3x34xx.",
+          "Dans un ii-V-I, une guide tone reste, l'autre descend d'un demi-ton."
+        ] }
+      ],
+      quiz: ["q-harm-07", "q-fret-harm-08", "q-fret-harm-09", "q-harm-03", "q-harm-06", "q-harm-p7-c303-01", "q-harm-07-app"]
+    };
+    quiz78 = [
+      { id: "q-harm-07", courseId: "harmony", lessonId: "harm-c3-03", lvl: 3, q: "Sur un accord Cmaj7, les 'guide tones' sont\u2026", o: ["Do et Sol", "Do et Si", "Mi et Si", "Mi et Sol"], a: 2, exp: "Guide tones = 3e + 7e. Sur Cmaj7 : 3e = Mi, 7e = Si. Ces 2 notes d\xE9finissent que c'est un Maj7 (et pas un m7 ou un 7 dominante).", xp: 50 },
+      { id: "q-harm-07-app", courseId: "harmony", lessonId: "harm-c3-03", lvl: 3, q: "Sur un accord Fmaj7, les 'guide tones' sont\u2026", o: ["Fa et Do", "Fa et Mi", "La et Mi", "La et Do"], a: 2, exp: "Guide tones = 3e + 7e. Fmaj7 = Fa La Do Mi : 3e = La, 7e = Mi.", xp: 40 },
+      { id: "q-fret-harm-08", type: "fretboard", courseId: "harmony", lessonId: "harm-c3-03", lvl: 3, q: "Sur G7 : trouve toutes les notes Si (3e \u2014 guide tone principal)", concept: { type: "find_note", root: "B" }, selectionRules: { mode: "all" }, display: { showNotes: false }, hint: "Si est \xE0 vide sur la corde 2. C'est ta note cible d'arriv\xE9e sur G7.", xp: 60, exp: "Si en : corde 6 case 7, corde 5 case 2, corde 4 case 9, corde 3 case 4, corde 2 \xE0 vide, corde 1 case 7. Cibles d'arriv\xE9e sur G7." },
+      { id: "q-fret-harm-09", type: "fretboard", courseId: "harmony", lessonId: "harm-c3-03", lvl: 3, q: "Sur G7 : trouve toutes les notes Fa (7e \u2014 tension \xE0 r\xE9soudre)", concept: { type: "find_note", root: "F" }, selectionRules: { mode: "all" }, display: { showNotes: false }, hint: "Fa est case 1 corde 1. La 7e de G7 veut se r\xE9soudre vers Mi (Cmaj7).", xp: 60, exp: "Fa en : corde 6 case 1, corde 5 case 8, corde 4 case 3, corde 3 case 10, corde 2 case 6, corde 1 case 1. La r\xE9solution Fa\u2192Mi est le mouvement fondamental du ii-V-I." },
+      { id: "q-harm-p7-c303-01", courseId: "harmony", lessonId: "harm-c3-03", lvl: 3, q: "Dans Dm7 \u2192 G7, o\xF9 va le Do, 7e de Dm7, par le chemin le plus court ?", o: ["Il descend sur Si, la 3e de G7", "Il monte sur R\xE9, la 5e de G7", "Il descend sur Sol, la fondamentale", "Il monte sur Fa, la 7e de G7"], a: 0, exp: "Do \u2192 Si : un demi-ton. Pendant ce temps, le Fa (3e de Dm7) reste et devient la 7e de G7. Les guide tones avancent au plus court.", xp: 50 }
+    ];
+  }
+});
+
+// src/content/cours/harmony/harm-c3-04.js
+var harm_c3_04_exports = {};
+__export(harm_c3_04_exports, {
+  default: () => harm_c3_04_default,
+  quiz: () => quiz79
+});
+var harm_c3_04_default, quiz79;
+var init_harm_c3_04 = __esm({
+  "src/content/cours/harmony/harm-c3-04.js"() {
+    harm_c3_04_default = {
+      id: "harm-c3-04",
+      level: 8,
+      title: "Les voicings shell : \xE9conome et efficace",
+      duration: 8,
+      gropiTip: "Depuis le G7 shell (cases 3-2-3), monte le doigt de la corde 4 d'une case (Fa \u2192 Fa#) : Gmaj7. Recule plut\xF4t celui de la corde 5 (Si \u2192 Sib) : Gm7. Un doigt, un nouveau type.",
+      cartes: [
+        { type: "idee", titre: "Trois notes suffisent", texte: [
+          "Un voicing, c'est une fa\xE7on de disposer les notes d'un accord sur le manche. Le shell (\xAB coquille \xBB) n'en garde que trois : la fondamentale, la 3e et la 7e.",
+          "Trois cordes, trois doigts : la base du comping jazz."
+        ], bloc: {
+          type: "chord_diagram",
+          caption: "G7 shell \u2014 fondamentale c6 case 3 (Sol-Si-Fa)",
+          data: { name: "G7", frets: [3, 2, 3, -1, -1, -1], fingers: [2, 1, 3, 0, 0, 0], startFret: 1 }
+        } },
+        { type: "idee", titre: "La quinte, la moins utile", texte: [
+          "La 3e dit majeur ou mineur, la 7e dit maj7, 7 ou m7. La quinte, elle, est la m\xEAme dans Cmaj7, C7 et Cm7 : elle ne distingue rien.",
+          "On la laisse tomber sans que l'oreille perde le nom de l'accord."
+        ] },
+        { type: "question", quizId: "q-harm-38" },
+        { type: "idee", titre: "Les formes sur la corde 6", texte: [
+          "Fondamentale sur la corde 6, 7e sur la corde 4 : m\xEAme case pour une 7e mineure, une case plus haut pour une 7e majeure.",
+          "La 3e est sur la corde 5 : une case sous la fondamentale si elle est majeure, deux cases si elle est mineure. Ici Dm7 : R\xE9, Fa, Do."
+        ], bloc: {
+          type: "chord_diagram",
+          caption: "Dm7 shell \u2014 fondamentale c6 case 10 (R\xE9-Fa-Do)",
+          data: { name: "Dm7", frets: [10, 8, 10, -1, -1, -1], fingers: [2, 1, 3, 0, 0, 0], startFret: 7 }
+        } },
+        { type: "question", quizId: "q-harm-40" },
+        { type: "idee", titre: "Les formes sur la corde 5", texte: [
+          "M\xEAme logique un groupe de cordes plus haut. Cmaj7 : Do (corde 5 case 3), Mi (corde 4 case 2), Si (corde 3 case 4).",
+          "Alterner fondamentale corde 6 et corde 5 permet d'encha\xEEner les accords sans quitter une petite zone du manche."
+        ] },
+        {
+          type: "a-toi",
+          titre: "ii-V-I en shells",
+          consigne: "Dm7 (fondamentale corde 5 case 5), G7 (corde 6 case 3), Cmaj7 (corde 5 case 3) : quatre temps chacun au clic, en coups secs. Les doigts bougent \xE0 peine d'un accord \xE0 l'autre. Quand c'est fluide, joue un coup par temps, bien court : le son jazz est l\xE0.",
+          bloc: {
+            type: "tab",
+            caption: "Dm7 (x535xx), G7 (323xxx), Cmaj7 (x324xx) : trois shells dans la m\xEAme zone",
+            text: "Tab \u2014 Dm7 : corde 5 case 5, corde 4 case 3, corde 3 case 5 ; G7 : corde 6 case 3, corde 5 case 2, corde 4 case 3 ; Cmaj7 : corde 5 case 3, corde 4 case 2, corde 3 case 4.",
+            data: { lines: [
+              "e|-----------------|",
+              "B|-----------------|",
+              "G|-5-----------4---|",
+              "D|-3-----3-----2---|",
+              "A|-5-----2-----3---|",
+              "E|-------3---------|"
+            ] }
+          },
+          bpm: 70,
+          minuteur: 120
+        },
+        { type: "question", quizId: "q-harm-39" },
+        { type: "recap", points: [
+          "Shell = fondamentale + 3e + 7e : la quinte est omise.",
+          "Corde 6 : 3e sur la corde 5, 7e sur la corde 4 ; m\xEAme logique depuis la corde 5.",
+          "Dm7, G7, Cmaj7 en shells : un ii-V-I jazz sans quitter la position."
+        ] }
+      ],
+      quiz: ["q-harm-38", "q-harm-39", "q-harm-40", "q-harm-09", "q-harm-12"]
+    };
+    quiz79 = [
+      { id: "q-harm-38", courseId: "harmony", lessonId: "harm-c3-04", lvl: 1, q: "Quelles notes contient un voicing shell ?", o: ["Fondamentale, 3e et 5e", "Fondamentale, 3e et 7e", "3e, 5e et 7e", "Fondamentale, 5e et octave"], a: 1, exp: "Fondamentale + 3e + 7e : les notes qui d\xE9finissent la qualit\xE9 de l'accord. La quinte est omise.", xp: 30 },
+      { id: "q-harm-39", courseId: "harmony", lessonId: "harm-c3-04", lvl: 2, q: "Pourquoi peut-on omettre la quinte ?", o: ["Elle sonne faux sur tous les accords de 7e", "Elle est trop difficile \xE0 doigter ici", "Elle r\xE9sonne d\xE9j\xE0 dans la fondamentale", "Elle masque la tierce et la septi\xE8me"], a: 2, exp: "La quinte est le 3e harmonique naturel de la fondamentale : elle est d\xE9j\xE0 pr\xE9sente dans le son de la corde.", xp: 40 },
+      { id: "q-harm-40", courseId: "harmony", lessonId: "harm-c3-04", lvl: 2, q: "Cmaj7 shell, fondamentale corde 6 case 8 : o\xF9 placer la 3e (Mi) ?", o: ["Corde 5, case 8", "Corde 4, case 10", "Corde 5, case 10", "Corde 5, case 7"], a: 3, exp: "Corde 5 case 7 = Mi. Le shell complet : Do (c6 case 8), Mi (c5 case 7), Si (c4 case 9).", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/harmony/harm-c4-01.js
+var harm_c4_01_exports = {};
+__export(harm_c4_01_exports, {
+  default: () => harm_c4_01_default,
+  quiz: () => quiz80
+});
+var harm_c4_01_default, quiz80;
+var init_harm_c4_01 = __esm({
+  "src/content/cours/harmony/harm-c4-01.js"() {
+    harm_c4_01_default = {
+      id: "harm-c4-01",
+      level: 9,
+      title: "La 9e, la 11e, la 13e : les extensions",
+      duration: 9,
+      gropiTip: "Pour nommer une extension, ajoute 7 au degr\xE9 : 2 + 7 = 9, 4 + 7 = 11, 6 + 7 = 13. Sur Do, la 9e est donc R\xE9, la 11e Fa et la 13e La.",
+      cartes: [
+        { type: "idee", titre: "Au-del\xE0 de la 7e", texte: [
+          "Continue d'empiler des tierces apr\xE8s la 7e : tu obtiens la 9e, la 11e et la 13e. Ce sont les extensions.",
+          "9e = 2e \xE0 l'octave, 11e = 4e, 13e = 6e. Elles colorent l'accord sans changer sa fonction."
+        ] },
+        { type: "question", quizId: "q-harm-p89-c401-01" },
+        { type: "idee", titre: "La 9e, la plus facile", texte: [
+          "Cmaj9 = Do Mi Sol Si R\xE9, lumineux. Dm9 = R\xE9 Fa La Do Mi, doux. G9 = Sol Si R\xE9 Fa La, bluesy.",
+          "La 9e se pose sur presque tous les accords sans les d\xE9ranger."
+        ], bloc: {
+          type: "chord_diagram",
+          caption: "Am9 \u2014 Am7 + 9e (Si) : \xD7 0 5 5 0 0 = La Sol Do Si Mi. Doux, chaleureux, n\xE9o-soul",
+          data: { name: "Am9", frets: [-1, 0, 5, 5, 0, 0], fingers: [0, 0, 1, 2, 0, 0], startFret: 4 }
+        } },
+        { type: "idee", titre: "La 11e, d\xE9licate", texte: [
+          "Sur un accord majeur, la 11 naturelle tombe un demi-ton au-dessus de la 3e : elle frotte. On la hausse d'un demi-ton : Cmaj7#11 = Do Mi Sol Si Fa#, une couleur lydienne.",
+          "Sur un m7, la 11 passe sans probl\xE8me : Dm11 = R\xE9 Fa La Do Mi Sol."
+        ] },
+        { type: "idee", titre: "La 13e et les choix", texte: [
+          "G13 complet compte sept notes : injouable. On garde la fondamentale, la 3e, la 7e, puis l'extension voulue.",
+          "On sacrifie d'abord la quinte, puis la 9e et la 11e."
+        ] },
+        { type: "question", quizId: "q-harm-23" },
+        { type: "idee", titre: "Les extensions alt\xE9r\xE9es", texte: [
+          "Sur une dominante, on alt\xE8re : \u266D9, #9, #11, \u266D13.",
+          "Le 7#9, l'accord de \xAB Purple Haze \xBB de Jimi Hendrix, fait sonner la 3e majeure et la #9, qui sonne comme une 3e mineure : majeur et mineur \xE0 la fois."
+        ] },
+        { type: "question", quizId: "q-harm-p89-c401-02" },
+        {
+          type: "a-toi",
+          titre: "Ajoute la 9e",
+          consigne: "Alterne Am7 (x02010) et Am9 (x05500), quatre temps chacun au clic : \xE9coute le Si qui s'ajoute. Puis G (320003) contre Gmaj9 (300002) : le La de la 9e, sur la corde 5, et le Fa# sur la corde 1. Termine par Am9 - Gmaj9 en boucle.",
+          bloc: {
+            type: "chord_diagram",
+            caption: "Gmaj9 \u2014 Gmaj7 + 9e (La) : lumineux, jazz/bossa",
+            data: { name: "Gmaj9", frets: [3, 0, 0, 0, 0, 2], fingers: [2, 0, 0, 0, 0, 1], startFret: 1 }
+          },
+          bpm: 70,
+          minuteur: 120
+        },
+        { type: "recap", points: [
+          "9e = 2e, 11e = 4e, 13e = 6e, une octave plus haut.",
+          "Sur un accord majeur, pr\xE9f\xE8re la #11 ; sur un m7, la 11 passe.",
+          "\xC0 la guitare : fondamentale, 3e, 7e, puis l'extension. La quinte part en premier."
+        ] }
+      ],
+      quiz: ["q-harm-23", "q-harm-13", "q-harm-16", "q-harm-p89-c401-01", "q-harm-p89-c401-02"]
+    };
+    quiz80 = [
+      { id: "q-harm-23", courseId: "harmony", lessonId: "harm-c4-01", lvl: 3, q: "Dans le voicing pratique de G13 \xE0 quatre notes, lesquelles garde-t-on ?", o: ["Sol, Si, Fa, Mi", "Sol, R\xE9, La, Do", "Sol, Si, R\xE9, Mi", "Si, R\xE9, Fa, La"], a: 0, exp: "G13 complet = Sol Si R\xE9 Fa La Do Mi : sept notes, injouables telles quelles. On garde la fondamentale (Sol), la tierce (Si), la 7e (Fa) et la 13e (Mi), et on omet quinte, 9e et 11e. Sol Si R\xE9 Mi, sans 7e, serait un simple G6.", xp: 60 },
+      { id: "q-harm-p89-c401-01", courseId: "harmony", lessonId: "harm-c4-01", lvl: 2, q: "Quelle note est la 9e de Gmaj9 ?", o: ["La", "Do", "Mi", "Fa#"], a: 0, exp: "La 9e est la 2e une octave plus haut : sur Sol, c'est La. Do serait la 11e, Mi la 13e, et Fa# est la 7e majeure de l'accord.", xp: 35 },
+      { id: "q-harm-p89-c401-02", courseId: "harmony", lessonId: "harm-c4-01", lvl: 3, q: "Sur Cmaj7, quelle note donne une couleur de 11e sans frotter contre le Mi ?", o: ["Fa#", "Fa", "Sol", "Mi\u266D"], a: 0, exp: "Fa, la 11 naturelle, est coll\xE9 un demi-ton au-dessus du Mi : il frotte. Fa#, la #11, est \xE0 un ton du Mi : la couleur lydienne, sans friction. Sol est la quinte, et Mi\u266D entrerait en conflit avec la tierce majeure.", xp: 50 }
+    ];
+  }
+});
+
+// src/content/cours/harmony/harm-c4-02.js
+var harm_c4_02_exports = {};
+__export(harm_c4_02_exports, {
+  default: () => harm_c4_02_default,
+  quiz: () => quiz81
+});
+var harm_c4_02_default, quiz81;
+var init_harm_c4_02 = __esm({
+  "src/content/cours/harmony/harm-c4-02.js"() {
+    harm_c4_02_default = {
+      id: "harm-c4-02",
+      level: 9,
+      title: "Tensions et r\xE9solutions : comment les extensions fonctionnent",
+      duration: 9,
+      gropiTip: "Tiens un accord de Do et fais sonner un Fa par-dessus pendant 4 temps, puis un R\xE9. Le Fa frotte avec le Mi, le R\xE9 se fond dans l'accord : note \xE9vit\xE9e contre extension libre.",
+      cartes: [
+        { type: "idee", titre: "Libres ou tendues", texte: [
+          "Une extension n'est pas une d\xE9coration au hasard. Certaines notes sont libres : tenues sur l'accord, elles se fondent dedans.",
+          "D'autres sont tendues : elles frottent et demandent \xE0 bouger. Savoir lesquelles, c'est doser la tension de tes accords et de tes phrases."
+        ] },
+        { type: "idee", titre: "Le test sur Cmaj7", texte: [
+          "Laisse sonner Cmaj7 et joue par-dessus chaque note de Do majeur, en la tenant quatre temps.",
+          "Six notes sur sept se fondent dans l'accord. Une seule frotte nettement : la note \xE9vit\xE9e, l'\xAB avoid note \xBB."
+        ] },
+        { type: "question", quizId: "q-harm-41" },
+        { type: "idee", titre: "Coll\xE9 \xE0 la tierce", texte: [
+          "Le Fa est un demi-ton au-dessus du Mi, la tierce de Cmaj7. Tenu, ce frottement sonne faux.",
+          "Jou\xE9 court, en passage vers Mi ou Sol, il passe tr\xE8s bien. C'est la dur\xE9e qui d\xE9cide si une tension est agr\xE9able."
+        ], bloc: { type: "fretboard", caption: "Cmaj7 autour de la case 8 : notes de l'accord (violet) et Fa, la note \xE9vit\xE9e (corail), coll\xE9e au Mi", data: { frets: 6, startFret: 5, showStringNames: true, showFretNumbers: true, markerFrets: [7, 9], notes: [{ string: 6, fret: 8, label: "Do", color: "primary", root: true }, { string: 5, fret: 7, label: "Mi", color: "primary" }, { string: 5, fret: 8, label: "Fa", color: "coral" }, { string: 5, fret: 10, label: "Sol", color: "primary" }, { string: 4, fret: 9, label: "Si", color: "primary" }, { string: 4, fret: 10, label: "Do", color: "primary", root: true }, { string: 3, fret: 9, label: "Mi", color: "primary" }, { string: 3, fret: 10, label: "Fa", color: "coral" }] } } },
+        { type: "question", quizId: "q-harm-p89-c402-01" },
+        { type: "idee", titre: "R\xE9soudre par demi-ton", texte: [
+          "La r\xE9solution la plus forte avance d'un demi-ton. Dans G7 \u2192 Cmaj7, Si monte sur Do et Fa descend sur Mi.",
+          "Une dominante peut porter des tensions en plus : chacune glisse \xE0 son tour d'un demi-ton vers une note de l'accord suivant. Plus la tension monte, plus l'arriv\xE9e satisfait."
+        ] },
+        { type: "question", quizId: "q-impro-06" },
+        {
+          type: "a-toi",
+          titre: "Le Fa en passage",
+          consigne: "Gratte Cmaj7 (x32000) et laisse sonner. Joue la tab au clic, une note par temps : Sol, Fa, Mi, puis Mi, Fa, Sol, le Fa toujours bref. Pour finir, tiens le Fa quatre temps sur l'accord : entends le frottement. Puis reprends en sortant du Fa tout de suite.",
+          bloc: {
+            type: "tab",
+            caption: "Sur Cmaj7 : le Fa en passage (vers Mi, vers Sol), puis le Fa tenu",
+            text: "Tab, corde 1 : Sol (case 3), Fa (case 1), Mi (\xE0 vide) ; puis Mi (\xE0 vide), Fa (case 1), Sol (case 3) ; enfin Fa (case 1) tenu.",
+            data: { lines: [
+              "e|-3-1-0---0-1-3---1-------|",
+              "B|-------------------------|",
+              "G|-------------------------|",
+              "D|-------------------------|",
+              "A|-------------------------|",
+              "E|-------------------------|"
+            ] }
+          },
+          bpm: 60,
+          minuteur: 120
+        },
+        { type: "question", quizId: "q-harm-43" },
+        { type: "recap", points: [
+          "Sur Cmaj7, tout Do majeur sonne tenu, sauf le Fa : la note \xE9vit\xE9e.",
+          "Une note tendue passe tr\xE8s bien en passage ; c'est la dur\xE9e qui d\xE9cide.",
+          "Les tensions se r\xE9solvent par demi-ton vers l'accord suivant."
+        ] }
+      ],
+      quiz: ["q-harm-41", "q-harm-42", "q-harm-43", "q-harm-24", "q-impro-02", "q-impro-06", "q-harm-p89-c402-01"]
+    };
+    quiz81 = [
+      { id: "q-harm-41", courseId: "harmony", lessonId: "harm-c4-02", lvl: 1, q: "Sur Cmaj7, quelle est l'\xAB avoid note \xBB ?", o: ["R\xE9 (9e)", "La (13e)", "Si (7e)", "Fa (11e)"], a: 3, exp: "Fa est \xE0 un demi-ton au-dessus de Mi, la tierce de Cmaj7 : tenue, cette friction sonne dissonante.", xp: 30 },
+      { id: "q-harm-42", courseId: "harmony", lessonId: "harm-c4-02", lvl: 2, q: "Pourquoi le Fa frotte-t-il sur Cmaj7 ?", o: ["Il touche le Mi, \xE0 un demi-ton", "Il est \xE0 une quinte juste de Mi", "Il n'appartient pas \xE0 Do majeur", "Il double la fondamentale"], a: 0, exp: "Fa est coll\xE9 au Mi (3e de l'accord), un demi-ton au-dessus : c'est cette friction qui en fait l'avoid note.", xp: 40 },
+      { id: "q-harm-43", courseId: "harmony", lessonId: "harm-c4-02", lvl: 1, q: "Comment utiliser le Fa sur Cmaj7 ?", o: ["En note tenue sur le temps fort", "En passage, vers Mi ou Sol", "Jamais, c'est une note interdite", "En fin de phrase, pour conclure"], a: 1, exp: "En note de passage, courte, qui ressort aussit\xF4t sur Mi ou Sol : la tension se cr\xE9e puis se r\xE9sout.", xp: 30 },
+      { id: "q-harm-p89-c402-01", courseId: "harmony", lessonId: "harm-c4-02", lvl: 3, q: "Sur Gmaj7 (Sol Si R\xE9 Fa#), quelle note de Sol majeur frotte tenue, comme le Fa sur Cmaj7 ?", o: ["Do", "La", "Mi", "R\xE9"], a: 0, exp: "Do est un demi-ton au-dessus de Si, la tierce de Gmaj7 : m\xEAme friction que Fa contre Mi sur Cmaj7. La (9e) et Mi (13e) sont libres, R\xE9 est la quinte.", xp: 50 }
+    ];
+  }
+});
+
+// src/content/cours/harmony/harm-c5-01.js
+var harm_c5_01_exports = {};
+__export(harm_c5_01_exports, {
+  default: () => harm_c5_01_default,
+  quiz: () => quiz82
+});
+var harm_c5_01_default, quiz82;
+var init_harm_c5_01 = __esm({
+  "src/content/cours/harmony/harm-c5-01.js"() {
+    harm_c5_01_default = {
+      id: "harm-c5-01",
+      level: 7,
+      title: "Harmoniser la gamme majeure",
+      duration: 9,
+      gropiTip: "Chaque accord majeur de la gamme a son relatif mineur dans la m\xEAme gamme : I et vi, IV et ii, V et iii. En Do : Do/Lam, Fa/R\xE9m, Sol/Mim. Seul le vii\xB0 reste \xE0 part.",
+      cartes: [
+        { type: "idee", titre: "Un accord sur chaque note", texte: [
+          "Harmoniser une gamme : sur chaque note, empiler des tierces en n'utilisant que les notes de la gamme.",
+          "En Do : Do + Mi + Sol = Do majeur. R\xE9 + Fa + La = R\xE9 mineur, car la tierce de R\xE9 dans la gamme de Do est Fa, pas Fa#."
+        ], bloc: {
+          type: "chord_diagram",
+          caption: "ii \u2014 R\xE9 mineur (\xD7 \xD7 0 2 3 1)",
+          data: { name: "Dm (ii)", frets: [-1, -1, 0, 2, 3, 1], fingers: [0, 0, 0, 1, 3, 2], startFret: 1 }
+        } },
+        { type: "idee", titre: "Les 7 triades de Do", texte: [
+          "I Do, ii R\xE9m, iii Mim, IV Fa, V Sol, vi Lam, vii\xB0 Si diminu\xE9 (Si R\xE9 Fa).",
+          "Le motif des qualit\xE9s : majeur, mineur, mineur, majeur, majeur, mineur, diminu\xE9. Majuscule = majeur, minuscule = mineur, \xB0 = diminu\xE9."
+        ] },
+        { type: "question", quizId: "q-harm-12" },
+        { type: "idee", titre: "Le m\xEAme motif partout", texte: [
+          "Ce motif vient de la place des tons et demi-tons de la gamme majeure : il est identique dans toutes les tonalit\xE9s.",
+          "En Sol : Sol, Lam, Sim, Do, R\xE9, Mim, Fa#dim. Dire \xAB I-V-vi-IV \xBB d\xE9crit donc une grille dans n'importe quelle tonalit\xE9."
+        ] },
+        { type: "question", quizId: "q-harm-13" },
+        { type: "idee", titre: "Avec la 7e", texte: [
+          "Ajoute la 7e de la gamme sur chaque degr\xE9 : Cmaj7, Dm7, Em7, Fmaj7, G7, Am7, Bm7\u266D5.",
+          "Seul le V porte un accord de dominante. C'est lui qui cr\xE9e la tension principale, celle qui ram\xE8ne au I."
+        ], bloc: {
+          type: "chord_diagram",
+          caption: "V7 \u2014 Sol 7 (3 2 0 0 0 1) \u2014 dominante avec \u266D7, attraction maximale vers I",
+          data: { name: "G7 (V7)", frets: [3, 2, 0, 0, 0, 1], fingers: [3, 2, 0, 0, 0, 1], startFret: 1 }
+        } },
+        { type: "question", quizId: "q-harm-21" },
+        {
+          type: "a-toi",
+          titre: "Les degr\xE9s dans trois tonalit\xE9s",
+          consigne: "Une mesure par accord, au clic. I-IV-V-I puis I-V-vi-IV en Do (Do Fa Sol / Do Sol Lam Fa), en Sol (Sol Do R\xE9 / Sol R\xE9 Mim Do), en R\xE9 (R\xE9 Sol La / R\xE9 La Sim Sol). Dis les chiffres en jouant. Bonus : capo case 2 sur la version en Do, tu sonnes en R\xE9.",
+          bloc: {
+            type: "chord_diagram",
+            caption: "I \u2014 Do majeur (\xD7 3 2 0 1 0)",
+            data: { name: "C (I)", frets: [-1, 3, 2, 0, 1, 0], fingers: [0, 3, 2, 0, 1, 0], startFret: 1 }
+          },
+          bpm: 70,
+          minuteur: 180
+        },
+        { type: "question", quizId: "q-harm-24" },
+        { type: "recap", points: [
+          "Harmoniser = empiler des tierces avec les seules notes de la gamme.",
+          "En majeur : I, ii, iii, IV, V, vi, vii\xB0 \u2014 majeur, mineur, mineur, majeur, majeur, mineur, diminu\xE9.",
+          "Avec les 7e : Maj7, m7, m7, Maj7, 7, m7, m7\u266D5 ; seul le V est une dominante."
+        ] }
+      ],
+      quiz: ["q-harm-12", "q-harm-13", "q-harm-21", "q-harm-24", "q-fret-harm-10", "q-logic-04", "q-harm-02", "q-harm-03"]
+    };
+    quiz82 = [
+      { id: "q-harm-12", courseId: "harmony", lessonId: "harm-c5-01", lvl: 2, q: "En harmonisant la gamme majeure, le pattern de qualit\xE9s est\u2026", o: ["Maj-Maj-min-min-Maj-Maj-dim", "min-Maj-min-Maj-min-Maj-min", "Maj-min-Maj-min-Maj-min-Maj", "Maj-min-min-Maj-Maj-min-dim"], a: 3, exp: "Pattern invariant : I=Maj, ii=min, iii=min, IV=Maj, V=Maj, vi=min, vii\xB0=dim. Vrai dans toute tonalit\xE9 majeure.", xp: 40 },
+      { id: "q-harm-13", courseId: "harmony", lessonId: "harm-c5-01", lvl: 2, q: "En Sol majeur, le ii est\u2026", o: ["La mineur", "La majeur", "Si mineur", "Mi mineur"], a: 0, exp: "Sol majeur : Sol(I)-La(ii)-Si(iii)-Do(IV)-R\xE9(V)-Mi(vi)-Fa#(vii\xB0). Le ii = sur La. Pattern : ii = mineur. Donc La mineur (Am).", xp: 40 },
+      { id: "q-harm-21", courseId: "harmony", lessonId: "harm-c5-01", lvl: 3, q: "Tu es en Mi\u266D majeur. Quel accord pour le V7 ?", o: ["Sib7", "Si7", "La7", "Sol7"], a: 0, exp: "Mi\u266D majeur : Mi\u266D(I)-Fa(ii)-Sol(iii)-Lab(IV)-Sib(V)-Do(vi)-R\xE9(vii\xB0). V7 = Sib7 (= La#7 enharmonique).", xp: 55 },
+      { id: "q-harm-24", courseId: "harmony", lessonId: "harm-c5-01", lvl: 2, q: "La progression I-vi-IV-V en Do majeur donne\u2026", o: ["Do-Mim-Fa-Sol", "Do-Lam-Sol-Fa", "Do-Mim-Lam-Fa", "Do-Lam-Fa-Sol"], a: 3, exp: "I=Do, vi=Lam, IV=Fa, V=Sol. Do-Lam-Fa-Sol = doo-wop classique des ann\xE9es 50 ('Stand By Me', 'Earth Angel').", xp: 40 },
+      { id: "q-fret-harm-10", type: "fretboard", courseId: "harmony", lessonId: "harm-c5-01", lvl: 2, q: "Harmonisation Do majeur : trouve toutes les notes Mi (3e du I)", concept: { type: "find_note", root: "E" }, selectionRules: { mode: "all" }, display: { showNotes: false }, hint: "Mi \xE0 vide sur cordes 6 et 1. Tierce de Do majeur.", xp: 50, exp: "Mi en : corde 6 \xE0 vide, corde 5 case 7, corde 4 case 2, corde 3 case 9, corde 2 case 5, corde 1 \xE0 vide. La tierce majeure de Cmaj7." }
+    ];
+  }
+});
+
+// src/content/cours/harmony/harm-c5-02.js
+var harm_c5_02_exports = {};
+__export(harm_c5_02_exports, {
+  default: () => harm_c5_02_default,
+  quiz: () => quiz83
+});
+var harm_c5_02_default, quiz83;
+var init_harm_c5_02 = __esm({
+  "src/content/cours/harmony/harm-c5-02.js"() {
+    harm_c5_02_default = {
+      id: "harm-c5-02",
+      level: 7,
+      title: "Le chiffrage romain et le syst\xE8me Nashville",
+      duration: 8,
+      gropiTip: "Joue 1-5-6m-4 en Sol (Sol-R\xE9-Mim-Do), puis encha\xEEne les m\xEAmes chiffres en La : La-Mi-Fa#m-R\xE9. Quand \xE7a vient sans r\xE9fl\xE9chir, tu penses d\xE9j\xE0 en Nashville.",
+      cartes: [
+        { type: "idee", titre: "Parler en degr\xE9s", texte: [
+          "Le chiffrage romain d\xE9crit une grille sans nommer la tonalit\xE9 : I tonique, IV sous-dominante, V dominante.",
+          "Majuscule = majeur, minuscule = mineur, \xB0 = diminu\xE9. \xAB I-V-vi-IV \xBB se comprend dans n'importe quelle tonalit\xE9."
+        ], bloc: {
+          type: "degree_chart",
+          caption: "Chiffrage romain (gauche) \u2194 syst\xE8me Nashville (droite)",
+          data: {
+            boxes: [
+              { top: "I", label: "Tonique \u2014 majeur", sub: "1", tint: "green" },
+              { top: "ii", label: "Sus-tonique \u2014 mineur", sub: "2m", tint: "neutral" },
+              { top: "iii", label: "M\xE9diante \u2014 mineur", sub: "3m", tint: "neutral" },
+              { top: "IV", label: "Sous-dominante \u2014 majeur", sub: "4", tint: "amber" },
+              { top: "V", label: "Dominante \u2014 majeur", sub: "5", tint: "coral" },
+              { top: "vi", label: "Sus-dominante \u2014 mineur", sub: "6m", tint: "neutral" },
+              { top: "vii\xB0", label: "Sensible \u2014 diminu\xE9", sub: "7\xB0", tint: "neutral" }
+            ]
+          }
+        } },
+        { type: "idee", titre: "Le syst\xE8me Nashville", texte: [
+          "Les musiciens de studio de Nashville ont simplifi\xE9 l'id\xE9e avec des chiffres arabes : 1, 2m, 3m, 4, 5, 6m, 7\xB0.",
+          "I-V-vi-IV s'\xE9crit 1-5-6m-4. Une feuille de chiffres suffit pour jouer une chanson dans n'importe quelle tonalit\xE9."
+        ] },
+        { type: "question", quizId: "q-harm-14" },
+        { type: "idee", titre: "Transposer sans effort", texte: [
+          "Le chanteur veut monter d'un ton ? Les chiffres ne changent pas : seule la tonalit\xE9 de d\xE9part bouge.",
+          "1-5-6m-4 en Sol : Sol, R\xE9, Mim, Do. Un ton plus haut, en La : La, Mi, Fa#m, R\xE9."
+        ] },
+        { type: "question", quizId: "q-harm-p7-c502-01" },
+        { type: "idee", titre: "Quatre grilles \xE0 conna\xEEtre", texte: [
+          "1-4-5 : blues, rock'n'roll, country. 1-5-6m-4 : la pop. 2m-5-1 : le jazz. 1-6m-4-5 : les ballades des ann\xE9es 50.",
+          "Elles couvrent une immense partie du r\xE9pertoire."
+        ] },
+        { type: "question", quizId: "q-harm-p7-c502-02" },
+        { type: "idee", titre: "Et en mineur ?", texte: [
+          "La tonique devient i. Am-F-C-G en La mineur s'analyse i-\u266DVI-\u266DIII-\u266DVII.",
+          "Les \u266D se mesurent par rapport \xE0 La majeur : ce sont simplement les degr\xE9s naturels de la gamme mineure, rien n'est emprunt\xE9."
+        ] },
+        {
+          type: "a-toi",
+          titre: "Une grille, trois tonalit\xE9s",
+          consigne: "Joue 1-5-6m-4 en Sol (Sol R\xE9 Mim Do), puis en La (La Mi Fa#m R\xE9), puis en R\xE9 (R\xE9 La Sim Sol), une mesure par accord au clic. Dis les chiffres en jouant. Puis capo case 2 sur la version en Sol : m\xEAmes doigt\xE9s, tu sonnes en La.",
+          bloc: {
+            type: "chord_diagram",
+            caption: "Fa#m \u2014 barr\xE9 forme de Mi mineur, case 2 (le 6m de La)",
+            data: { name: "F#m", frets: [2, 4, 4, 2, 2, 2], fingers: [1, 3, 4, 1, 1, 1], startFret: 1 }
+          },
+          bpm: 70,
+          minuteur: 180
+        },
+        { type: "recap", points: [
+          "Chiffrage romain : majuscule majeur, minuscule mineur, \xB0 diminu\xE9.",
+          "Nashville : 1, 2m, 3m, 4, 5, 6m, 7\xB0 ; I-V-vi-IV = 1-5-6m-4.",
+          "Pour transposer, garde les chiffres et change seulement la tonique."
+        ] }
+      ],
+      quiz: ["q-harm-14", "q-harm-04", "q-harm-07", "q-harm-p7-c502-01", "q-harm-p7-c502-02"]
+    };
+    quiz83 = [
+      { id: "q-harm-14", courseId: "harmony", lessonId: "harm-c5-02", lvl: 3, q: "En chiffrage Nashville, la progression '1-6-4-5' en Sol donne\u2026", o: ["Sol-La-Do-R\xE9", "Sol-Mim-Do-R\xE9", "Sol-Mim-Lam-R\xE9", "Sol-Si-Do-R\xE9"], a: 1, exp: "En Sol : 1=Sol(maj), 6=Mim, 4=Do(maj), 5=R\xE9(maj). Donc Sol-Mim-Do-R\xE9. Le doo-wop classique des ann\xE9es 50.", xp: 50 },
+      { id: "q-harm-p7-c502-01", courseId: "harmony", lessonId: "harm-c5-02", lvl: 2, q: "Ta grille 1-5-6m-4 est en Do. Le chanteur demande un ton plus haut : que joues-tu ?", o: ["R\xE9-La-Sim-Sol", "R\xE9-Sol-Sim-La", "Do#-Sol#-La#m-Fa#", "Mi-Si-Do#m-La"], a: 0, exp: "Un ton au-dessus de Do : R\xE9. En R\xE9, 1 = R\xE9, 5 = La, 6m = Sim, 4 = Sol. Les chiffres restent, seule la tonique change.", xp: 45 },
+      { id: "q-harm-p7-c502-02", courseId: "harmony", lessonId: "harm-c5-02", lvl: 2, q: "En La majeur, que donne la grille Nashville 1-4-5 ?", o: ["La-R\xE9-Mi", "La-Do#m-Mi", "La-Sim-Mi", "La-R\xE9-Fa#m"], a: 0, exp: "En La majeur : 1 = La, 4 = R\xE9, 5 = Mi. La grille du blues et du rock\u2019n\u2019roll.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/harmony/harm-c5-03.js
+var harm_c5_03_exports = {};
+__export(harm_c5_03_exports, {
+  default: () => harm_c5_03_default,
+  quiz: () => quiz84
+});
+var harm_c5_03_default, quiz84;
+var init_harm_c5_03 = __esm({
+  "src/content/cours/harmony/harm-c5-03.js"() {
+    harm_c5_03_default = {
+      id: "harm-c5-03",
+      level: 8,
+      title: "Les familles fonctionnelles",
+      duration: 9,
+      gropiTip: "Deux accords qui partagent deux notes ont souvent la m\xEAme fonction : Do et Lam partagent Do et Mi, Fa et R\xE9m partagent Fa et La. Pratique pour deviner une substitution.",
+      cartes: [
+        { type: "idee", titre: "Trois familles", texte: [
+          "Les 7 accords d'une tonalit\xE9 se rangent en 3 familles, selon l'effet qu'ils produisent : le repos (tonique), le mouvement (sous-dominante), la tension (dominante).",
+          "C'est la grammaire de l'harmonie tonale : elle explique pourquoi un encha\xEEnement sonne logique."
+        ], bloc: {
+          type: "degree_chart",
+          caption: "Les 3 familles en Do majeur \u2014 T (vert) / SD (ambre) / D (corail)",
+          data: {
+            boxes: [
+              { top: "I", label: "Do \u2014 Tonique", sub: "T", tint: "green" },
+              { top: "ii", label: "R\xE9 mineur \u2014 Sous-Dom.", sub: "SD", tint: "amber" },
+              { top: "iii", label: "Mi mineur \u2014 Tonique", sub: "T", tint: "green" },
+              { top: "IV", label: "Fa \u2014 Sous-Dominante", sub: "SD", tint: "amber" },
+              { top: "V", label: "Sol \u2014 Dominante", sub: "D", tint: "coral" },
+              { top: "vi", label: "La mineur \u2014 Tonique", sub: "T", tint: "green" },
+              { top: "vii\xB0", label: "Si diminu\xE9 \u2014 Dominante", sub: "D", tint: "coral" }
+            ]
+          }
+        } },
+        { type: "idee", titre: "Repos et mouvement", texte: [
+          "Tonique : I, vi, iii. Do est le repos absolu, Lam un repos plus doux, Mim le plus instable des trois.",
+          "Sous-dominante : IV et ii. Fa et R\xE9m donnent envie d'avancer, sans la tension de la dominante. Le ii sert souvent \xE0 pr\xE9parer le V."
+        ] },
+        { type: "idee", titre: "La tension", texte: [
+          "Dominante : V et vii\xB0. G7 et Si diminu\xE9 partagent Si et Fa, deux notes qui tirent vers Do et Mi.",
+          "V \u2192 I est la r\xE9solution la plus forte de la musique tonale."
+        ] },
+        { type: "question", quizId: "q-logic-07" },
+        { type: "idee", titre: "La phrase compl\xE8te", texte: [
+          "Le sch\xE9ma de base : T \u2192 SD \u2192 D \u2192 T. Do, Fa, Sol, Do. Ou Do, R\xE9m, G7, Do.",
+          "Les boucles qu'on r\xE9p\xE8te sans fin suivent presque toutes ce chemin, ou une variante comme I-V-vi-IV."
+        ] },
+        { type: "idee", titre: "Remplacer dans la famille", texte: [
+          "Deux accords de la m\xEAme famille s'\xE9changent sans casser la phrase : le I peut devenir vi, le V peut devenir vii\xB0.",
+          "Le chemin reste le m\xEAme, seule la couleur change. C'est la base de la r\xE9harmonisation."
+        ] },
+        { type: "question", quizId: "q-harm-p89-c503-01" },
+        {
+          type: "a-toi",
+          titre: "Une phrase, trois couleurs",
+          consigne: "Quatre temps par accord au clic. Tour 1 : Do, Fa, Sol7, Do. Tour 2 : remplace Fa par R\xE9m. Tour 3 : remplace aussi le premier Do par Lam. \xC9coute : la phrase garde le m\xEAme chemin, repos, mouvement, tension, repos.",
+          bloc: { type: "chord_diagram", caption: "R\xE9m (\xD7 \xD7 0 2 3 1) : il remplace Fa dans la famille sous-dominante", data: { name: "Dm", frets: [-1, -1, 0, 2, 3, 1], fingers: [0, 0, 0, 2, 3, 1], startFret: 1 } },
+          bpm: 70,
+          minuteur: 180
+        },
+        { type: "question", quizId: "q-harm-p89-c503-02" },
+        { type: "recap", points: [
+          "Tonique (I, iii, vi) = repos ; sous-dominante (IV, ii) = mouvement ; dominante (V, vii\xB0) = tension.",
+          "La phrase type : T \u2192 SD \u2192 D \u2192 T.",
+          "Dans une m\xEAme famille, les accords se remplacent : IV par ii, I par vi."
+        ] }
+      ],
+      quiz: ["q-harm-15", "q-logic-07", "q-harm-08", "q-harm-10", "q-harm-11", "q-harm-p89-c503-01", "q-harm-p89-c503-02"]
+    };
+    quiz84 = [
+      { id: "q-harm-15", courseId: "harmony", lessonId: "harm-c5-03", lvl: 3, q: "Quelle famille fonctionnelle regroupe les accords ii et IV ?", o: ["Tonique", "Dominante secondaire", "Sous-dominante", "Aucune, ils sont ind\xE9pendants"], a: 2, exp: "Tonique = I, iii, vi (stable). Sous-dominante = IV, ii (mouvement, tension douce). Dominante = V, vii\xB0 (tension forte). ii et IV sont substituables fonctionnellement.", xp: 50 },
+      { id: "q-logic-07", courseId: "harmony", lessonId: "harm-c5-03", lvl: 3, q: "Pourquoi la cadence V-I est-elle plus 'forte' que IV-I ?", o: ["La sensible du V monte sur la tonique", "Le V contient la tonique, le IV non", "Le V est un accord mineur, plus tendu", "Le IV n'appartient pas \xE0 la tonalit\xE9"], a: 0, exp: "Le V contient la sensible (le 7e degr\xE9, Si en Do majeur), \xE0 un demi-ton sous la tonique : elle monte sur Do et cr\xE9e une attraction forte. Le IV n'a pas de sensible (il contient m\xEAme la tonique), d'o\xF9 une r\xE9solution plus douce.", xp: 60 },
+      { id: "q-harm-p89-c503-01", courseId: "harmony", lessonId: "harm-c5-03", lvl: 2, q: "En Do majeur, par quel accord remplacer Fa sans changer la fonction de la phrase ?", o: ["R\xE9 mineur", "Mi mineur", "Sol majeur", "Si diminu\xE9"], a: 0, exp: "Fa (IV) et R\xE9 mineur (ii) forment la famille sous-dominante : ils partagent Fa et La. Mi mineur est une tonique, Sol et Si diminu\xE9 des dominantes.", xp: 40 },
+      { id: "q-harm-p89-c503-02", courseId: "harmony", lessonId: "harm-c5-03", lvl: 3, q: "En Do majeur, quelle suite de fonctions donne Lam - R\xE9m - Sol7 - Do ?", o: ["T - SD - D - T", "T - D - SD - T", "SD - SD - D - T", "T - SD - SD - T"], a: 0, exp: "Lam (vi) est une tonique, R\xE9m (ii) une sous-dominante, Sol7 (V7) la dominante, Do (I) le repos : la phrase type T \u2192 SD \u2192 D \u2192 T.", xp: 50 }
+    ];
+  }
+});
+
+// src/content/cours/harmony/harm-c6-01.js
+var harm_c6_01_exports = {};
+__export(harm_c6_01_exports, {
+  default: () => harm_c6_01_default,
+  quiz: () => quiz85
+});
+var harm_c6_01_default, quiz85;
+var init_harm_c6_01 = __esm({
+  "src/content/cours/harmony/harm-c6-01.js"() {
+    harm_c6_01_default = {
+      id: "harm-c6-01",
+      level: 5,
+      title: "I-IV-V : le blues et le rock",
+      duration: 8,
+      gropiTip: "Astuce de manche : I = barr\xE9 avec la fondamentale sur la corde 6, IV = m\xEAme case mais fondamentale sur la corde 5, V = deux cases plus loin sur la corde 5. En La : cases 5, 5 et 7.",
+      cartes: [
+        { type: "idee", titre: "Trois accords, toute une histoire", texte: [
+          "I-IV-V : blues, rock'n'roll, country et folk reposent sur ces trois accords.",
+          "I, le repos ; IV, le d\xE9part ; V, la tension qui ram\xE8ne au I. En Mi : Mi, La, Si."
+        ] },
+        { type: "question", quizId: "q-harm-35" },
+        { type: "idee", titre: "En bref : l'accord 7", texte: [
+          "Le blues joue des accords 7 : A7, D7, E7. Un accord 7, c'est un accord majeur plus une 7e mineure, 10 demi-tons au-dessus de la fondamentale : A7 = La, Do#, Mi + Sol.",
+          "Cette note de plus le rend tendu : il \xAB veut bouger \xBB. Tu connais d\xE9j\xE0 leurs formes ouvertes."
+        ], bloc: {
+          type: "chord_diagram",
+          caption: "A7 \u2014 I7 du blues en La (0 0 2 0 2 0)",
+          data: { name: "A7 (I)", frets: [0, 0, 2, 0, 2, 0], fingers: [0, 0, 2, 0, 3, 0], startFret: 1 }
+        } },
+        { type: "idee", titre: "Le blues 12 mesures", texte: [
+          "Quatre mesures de I, deux de IV, deux de I, puis une de V, une de IV et deux de I.",
+          "En La : A7 \xD74, D7 \xD72, A7 \xD72, E7, D7, A7 \xD72."
+        ], bloc: {
+          type: "chord_diagram",
+          caption: "D7 \u2014 IV7 du blues en La (\xD7 \xD7 0 2 1 2)",
+          data: { name: "D7 (IV)", frets: [-1, -1, 0, 2, 1, 2], fingers: [0, 0, 0, 2, 1, 3], startFret: 1 }
+        } },
+        { type: "idee", titre: "Des 7 partout", texte: [
+          "Dans une gamme majeure, seul le V porte naturellement un accord 7. Le blues en met sur I, IV et V.",
+          "Cette licence fait toute sa couleur, rugueuse et tendue."
+        ], bloc: {
+          type: "chord_diagram",
+          caption: "E7 \u2014 V7 du blues en La (0 2 0 1 0 0)",
+          data: { name: "E7 (V)", frets: [0, 2, 0, 1, 0, 0], fingers: [0, 2, 0, 1, 0, 0], startFret: 1 }
+        } },
+        { type: "question", quizId: "q-harm-37" },
+        {
+          type: "a-toi",
+          titre: "Ta premi\xE8re grille",
+          consigne: "Accompagne la grille en La : A7 \xD74, D7 \xD72, A7 \xD72, E7, D7, A7 \xD72. Quatre coups vers le bas par mesure, au clic, en comptant les mesures. Change d'accord sans t'arr\xEAter : deux tours complets.",
+          bloc: { type: "strum_pattern", caption: "4 noires vers le bas \u2014 une mesure par case de la grille", data: { pattern: ["B", "B", "B", "B"], beats: 4, style: "folk", bpm: 70 } },
+          bpm: 70,
+          minuteur: 120
+        },
+        { type: "idee", titre: "Variantes et transposition", texte: [
+          "Quick change : le IV d\xE8s la mesure 2, puis retour au I. Turnaround : la derni\xE8re mesure passe sur le V pour relancer la grille.",
+          "M\xEAme grille en Mi : E7, A7, B7."
+        ] },
+        { type: "question", quizId: "q-harm-36" },
+        { type: "recap", points: [
+          "I-IV-V : repos, d\xE9part, tension. En La : La, R\xE9, Mi.",
+          "Accord 7 = majeur + 7e mineure (10 demi-tons) : A7 = La, Do#, Mi, Sol.",
+          "Blues 12 mesures : I \xD74, IV \xD72, I \xD72, V, IV, I \xD72, en accords 7."
+        ] }
+      ],
+      quiz: ["q-harm-35", "q-harm-36", "q-harm-37"]
+    };
+    quiz85 = [
+      { id: "q-harm-35", courseId: "harmony", lessonId: "harm-c6-01", lvl: 1, q: "En La, quels sont les accords I, IV et V ?", o: ["La - R\xE9 - Mi", "La - Do - Mi", "La - R\xE9 - Fa#", "La - Sol - R\xE9"], a: 0, exp: "Gamme de La majeur : La (I), Si, Do#, R\xE9 (IV), Mi (V)\u2026 Donc La - R\xE9 - Mi.", xp: 30 },
+      { id: "q-harm-36", courseId: "harmony", lessonId: "harm-c6-01", lvl: 1, q: "Dans un blues 12 mesures standard, combien de mesures de I au d\xE9but ?", o: ["2", "4", "1", "8"], a: 1, exp: "4 mesures de I, 2 de IV, 2 de I, 1 de V, 1 de IV, 2 de I.", xp: 30 },
+      { id: "q-harm-37", courseId: "harmony", lessonId: "harm-c6-01", lvl: 2, q: "Pourquoi I, IV et V sont-ils souvent des accords 7 dans un blues ?", o: ["C'est la r\xE8gle de la gamme majeure", "Pour \xE9viter les accords barr\xE9s", "C'est une licence propre au blues", "Parce que la basse joue la 7e"], a: 2, exp: "Dans une gamme majeure, seul le V porte naturellement un accord 7 (en Do : G7, alors que le I serait Cmaj7). Jouer des accords 7 sur I, IV et V est une licence propre au blues, qui fait toute sa couleur.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/harmony/harm-capo-01.js
+var harm_capo_01_exports = {};
+__export(harm_capo_01_exports, {
+  default: () => harm_capo_01_default,
+  quiz: () => quiz86
+});
+var SOL_CAPO_2, RE_CAPO_2, harm_capo_01_default, quiz86;
+var init_harm_capo_01 = __esm({
+  "src/content/cours/harmony/harm-capo-01.js"() {
+    SOL_CAPO_2 = { type: "chord_diagram", caption: "Forme de Sol, capo en case 2 : sonne La (A)", data: { name: "A", frets: [5, 4, 2, 2, 2, 5], fingers: [2, 1, 0, 0, 0, 3], startFret: 2, barre: { fret: 2, from: 0, to: 5 } } };
+    RE_CAPO_2 = { type: "chord_diagram", caption: "Forme de R\xE9, capo en case 2 : sonne Mi (E)", data: { name: "E", frets: [-1, -1, 2, 4, 5, 4], fingers: [0, 0, 0, 1, 3, 2], startFret: 2, barre: { fret: 2, from: 2, to: 5 } } };
+    harm_capo_01_default = {
+      id: "harm-capo-01",
+      level: 5,
+      title: "Le capodastre et la transposition",
+      duration: 9,
+      gropiTip: "Pose le capo juste derri\xE8re la frette, pas au milieu de la case, puis v\xE9rifie l'accordage : la pince tire souvent les cordes un peu vers l'aigu.",
+      cartes: [
+        { type: "idee", titre: "Un sillet que tu d\xE9places", texte: [
+          "Le capodastre, ou capo, pince toutes les cordes sur une m\xEAme case : il remplace le sillet, plus haut sur le manche.",
+          "Capo en case 2, ta forme de Sol sonne deux demi-tons plus haut : La. Tes doigts ne changent pas, la tonalit\xE9 si."
+        ], bloc: SOL_CAPO_2 },
+        { type: "idee", titre: "Compter en demi-tons", texte: [
+          "Chaque case de capo monte tout d'un demi-ton. Pour savoir ce qui sonne, avance chaque accord d'autant de demi-tons : Do, Do#, R\xE9, R\xE9#, Mi, Fa, Fa#, Sol, Sol#, La, La#, Si.",
+          "Attention aux deux paires sans di\xE8se : de Mi \xE0 Fa et de Si \xE0 Do, un seul demi-ton. La couleur, majeure ou mineure, ne change jamais."
+        ] },
+        { type: "question", quizId: "q-harm-capo-01-lot3" },
+        { type: "idee", titre: "Une grille transpos\xE9e", texte: [
+          "Sol \u2013 R\xE9 \u2013 Mim \u2013 Do avec le capo en case 2 : chaque accord monte d'un ton.",
+          "Sol devient La, R\xE9 devient Mi, Mim devient Fa#m, Do devient R\xE9. Tes doigts jouent toujours Sol \u2013 R\xE9 \u2013 Mim \u2013 Do, l'oreille entend La \u2013 Mi \u2013 Fa#m \u2013 R\xE9."
+        ], bloc: RE_CAPO_2 },
+        {
+          type: "a-toi",
+          titre: "La grille, avec et sans capo",
+          consigne: "Sol \u2013 R\xE9 \u2013 Mim \u2013 Do, quatre coups par accord au clic \xE0 70, sans capo. Pose le capo en case 2 et rejoue : m\xEAme doigt\xE9, un ton plus haut. Pas de capo sous la main ? Joue la grille et nomme \xE0 voix haute ce qu'elle donnerait.",
+          bloc: SOL_CAPO_2,
+          bpm: 70,
+          minuteur: 120
+        },
+        { type: "question", quizId: "q-harm-capo-02-lot3" },
+        { type: "idee", titre: "Le chemin inverse", texte: [
+          "Une grille \xE9crite La \u2013 Mi \u2013 Fa#m \u2013 R\xE9 demande un barr\xE9 pour Fa#m. Cherche le capo qui la ram\xE8ne \xE0 des formes ouvertes.",
+          "Retire \xE0 chaque accord autant de demi-tons qu'il y a de cases de capo : en case 2, tu joues Sol \u2013 R\xE9 \u2013 Mim \u2013 Do."
+        ] },
+        { type: "idee", titre: "Choisir la tonalit\xE9 d'une voix", texte: [
+          "Une chanson trop grave pour ta voix ? Monte le capo case par case en chantant le refrain, jusqu'\xE0 trouver le confort.",
+          "Trop aigu\xEB m\xEAme sans capo ? Change de formes : la m\xEAme grille jou\xE9e \xE0 partir de R\xE9 au lieu de Mi descend d'un ton."
+        ] },
+        { type: "question", quizId: "q-harm-capo-03-lot3" },
+        { type: "recap", points: [
+          "Le capo est un sillet mobile : chaque case monte tous les accords d'un demi-ton.",
+          "Transposer, c'est avancer chaque accord d'autant de demi-tons ; mineur reste mineur.",
+          "Pour une voix ou pour \xE9viter un barr\xE9, choisis la case de capo et les formes qui vont avec."
+        ] }
+      ],
+      quiz: ["q-harm-capo-01-lot3", "q-harm-capo-02-lot3", "q-harm-capo-03-lot3"]
+    };
+    quiz86 = [
+      { id: "q-harm-capo-01-lot3", courseId: "harmony", lessonId: "harm-capo-01", lvl: 2, q: "Capo en case 3, tu joues une forme de Mi mineur. Quel accord entend-on ?", o: ["Sol mineur", "Fa# mineur", "La mineur", "Sol# mineur"], a: 0, exp: "Trois demi-tons au-dessus de Mi : Fa, Fa#, Sol. La forme reste mineure : Sol mineur.", xp: 30 },
+      { id: "q-harm-capo-02-lot3", courseId: "harmony", lessonId: "harm-capo-01", lvl: 2, q: "Capo en case 2, tu joues les formes de Sol, Do et R\xE9. Dans quelle tonalit\xE9 sonne le morceau ?", o: ["La majeur", "Sol majeur", "Si majeur", "R\xE9 majeur"], a: 0, exp: "Les formes sont celles de Sol majeur ; deux demi-tons plus haut, elles sonnent La, R\xE9 et Mi : tonalit\xE9 de La majeur.", xp: 30 },
+      { id: "q-harm-capo-03-lot3", courseId: "harmony", lessonId: "harm-capo-01", lvl: 3, q: "Une grille Sib \u2013 Fa \u2013 Solm \u2013 Mib \xE0 jouer sans aucun barr\xE9 : quel capo et quelles formes ?", o: ["Capo 3 : Sol \u2013 R\xE9 \u2013 Mim \u2013 Do", "Capo 1 : Sol \u2013 R\xE9 \u2013 Mim \u2013 Do", "Capo 3 : La \u2013 Mi \u2013 Fa#m \u2013 R\xE9", "Capo 2 : Sol \u2013 R\xE9 \u2013 Mim \u2013 Do"], a: 0, exp: "Trois demi-tons sous Sib, Fa, Solm et Mib, on trouve Sol, R\xE9, Mim et Do : quatre formes ouvertes. Capo en case 3, elles sonnent dans la tonalit\xE9 d'origine.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/harmony/harm-c6-02.js
+var harm_c6_02_exports = {};
+__export(harm_c6_02_exports, {
+  default: () => harm_c6_02_default,
+  quiz: () => quiz87
+});
+var harm_c6_02_default, quiz87;
+var init_harm_c6_02 = __esm({
+  "src/content/cours/harmony/harm-c6-02.js"() {
+    harm_c6_02_default = {
+      id: "harm-c6-02",
+      level: 7,
+      title: "I-V-vi-IV : la progression pop",
+      duration: 7,
+      gropiTip: "Joue la boucle en Sol (Sol-R\xE9-Mim-Do) avec un capodaste en case 2 : m\xEAmes doigt\xE9s, mais tu sonnes en La (La-Mi-Fa#m-R\xE9). Le r\xE9flexe id\xE9al pour s'adapter \xE0 la voix d'un chanteur.",
+      cartes: [
+        { type: "idee", titre: "La grille de la pop", texte: [
+          "Si I-IV-V est l'ADN du blues, I-V-vi-IV est celui de la pop : d'innombrables chansons reposent dessus.",
+          "En Do : Do, Sol, Lam, Fa. En Sol : Sol, R\xE9, Mim, Do."
+        ], bloc: {
+          type: "degree_chart",
+          caption: "I-V-vi-IV en Do majeur",
+          data: {
+            boxes: [
+              { top: "I", label: "Do \u2014 Tonique", sub: "T", tint: "green" },
+              { top: "V", label: "Sol \u2014 Dominante", sub: "D", tint: "coral" },
+              { top: "vi", label: "La mineur \u2014 Tonique", sub: "T", tint: "green" },
+              { top: "IV", label: "Fa \u2014 Sous-dominante", sub: "SD", tint: "amber" }
+            ]
+          }
+        } },
+        { type: "question", quizId: "q-harm-30" },
+        { type: "idee", titre: "Pourquoi elle marche", texte: [
+          "Le vi, relatif mineur, apporte une touche de m\xE9lancolie sans casser l'ambiance majeure.",
+          "La boucle est circulaire : le IV ram\xE8ne vers le I sans jamais conclure pour de bon. Elle peut tourner tout un couplet, tout un refrain."
+        ] },
+        { type: "question", quizId: "q-harm-31" },
+        { type: "idee", titre: "M\xEAmes accords, autre ordre", texte: [
+          "Commence sur le mineur, vi-IV-I-V, et la m\xEAme palette sonne plus sombre. IV-I-V-vi part de la sous-dominante et laisse la boucle en suspens.",
+          "Quatre accords, plusieurs \xE9motions."
+        ] },
+        {
+          type: "a-toi",
+          titre: "La boucle en trois tonalit\xE9s",
+          consigne: "Une mesure par accord, au clic : en Do (Do Sol Lam Fa), en Sol (Sol R\xE9 Mim Do), en R\xE9 (R\xE9 La Sim Sol). Puis capo case 2 sur la version en Sol : tu sonnes en La (La Mi Fa#m R\xE9), pour suivre la voix d'un chanteur.",
+          bloc: {
+            type: "chord_diagram",
+            caption: "Sim \u2014 barr\xE9 forme de La mineur, case 2 (le vi de R\xE9)",
+            data: { name: "Bm", frets: [-1, 2, 4, 4, 3, 2], fingers: [0, 1, 3, 4, 2, 1], startFret: 1 }
+          },
+          bpm: 70,
+          minuteur: 180
+        },
+        { type: "question", quizId: "q-harm-59" },
+        { type: "idee", titre: "Le support, pas la star", texte: [
+          "Une grille aussi courante peut sembler paresseuse. Mais sa simplicit\xE9 laisse toute la place \xE0 la m\xE9lodie, aux paroles et \xE0 l'arrangement.",
+          "Change la main droite : gratt\xE9e, arp\xE9g\xE9e, en palm mute, lente ou rapide. M\xEAme grille, autre morceau."
+        ] },
+        {
+          type: "a-toi",
+          titre: "Change la main droite",
+          consigne: "Garde la boucle en Do et joue-la trois fois : d'abord gratt\xE9e, puis arp\xE9g\xE9e note \xE0 note, puis en accords courts et \xE9touff\xE9s. Une mesure par accord. \xC9coute \xE0 quel point le morceau change.",
+          bpm: 80,
+          minuteur: 120
+        },
+        { type: "recap", points: [
+          "I-V-vi-IV : en Do, Do Sol Lam Fa ; en Sol, Sol R\xE9 Mim Do ; en R\xE9, R\xE9 La Sim Sol.",
+          "Le vi apporte la m\xE9lancolie, le IV relance la boucle vers le I.",
+          "Le capo transpose sans changer de doigt\xE9s ; la main droite fait le style."
+        ] }
+      ],
+      quiz: ["q-harm-30", "q-harm-31", "q-harm-59"]
+    };
+    quiz87 = [
+      { id: "q-harm-30", courseId: "harmony", lessonId: "harm-c6-02", lvl: 1, q: "En Do majeur, que donne la progression I-V-vi-IV ?", o: ["Do-Fa-Sol-La m", "Do-Sol-La m-Fa", "Do-La m-Fa-Sol", "Do-Sol-Fa-Mi m"], a: 1, exp: "I = Do, V = Sol, vi = La mineur, IV = Fa.", xp: 30 },
+      { id: "q-harm-31", courseId: "harmony", lessonId: "harm-c6-02", lvl: 2, q: "Dans I-V-vi-IV, quel r\xF4le joue l'accord vi ?", o: ["Il cr\xE9e la tension principale", "Il change de tonalit\xE9", "Il apporte une touche m\xE9lancolique", "Il remplace la tonique \xE0 la fin de la grille"], a: 2, exp: "Le vi, relatif mineur, ajoute une couleur m\xE9lancolique sans casser l'ambiance majeure du morceau.", xp: 40 },
+      { id: "q-harm-59", courseId: "harmony", lessonId: "harm-c6-02", lvl: 2, q: "En R\xE9 majeur, que donne la progression I-V-vi-IV ?", o: ["R\xE9 - La - Si m - Sol", "R\xE9 - Sol - Si m - La", "R\xE9 - La - Fa# m - Sol", "R\xE9 - Mi m - Si m - Sol"], a: 0, exp: "R\xE9 majeur : I = R\xE9, V = La, vi = Si mineur, IV = Sol.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/harmony/harm-c6-03.js
+var harm_c6_03_exports = {};
+__export(harm_c6_03_exports, {
+  default: () => harm_c6_03_default,
+  quiz: () => quiz88
+});
+var CMAJ7, harm_c6_03_default, quiz88;
+var init_harm_c6_03 = __esm({
+  "src/content/cours/harmony/harm-c6-03.js"() {
+    CMAJ7 = {
+      type: "chord_diagram",
+      caption: "Cmaj7 \u2014 I, r\xE9solution (\xD7 3 2 0 0 0)",
+      data: { name: "Cmaj7 (I)", frets: [-1, 3, 2, 0, 0, 0], fingers: [0, 3, 2, 0, 0, 0], startFret: 1 }
+    };
+    harm_c6_03_default = {
+      id: "harm-c6-03",
+      level: 8,
+      title: "ii-V-I : le moteur du jazz",
+      duration: 10,
+      gropiTip: "Chasse aux ii-V cach\xE9s : d\xE8s qu'un accord m7 est suivi d'un accord 7 dont la fondamentale est une quarte plus haut (Am7-D7, Em7-A7), tu en tiens un. Entoure-les sur tes grilles.",
+      cartes: [
+        { type: "idee", titre: "La cellule du jazz", texte: [
+          "Dm7, G7, Cmaj7 : le ii, le V et le I de Do majeur. Le ii pr\xE9pare, le V tend, le I r\xE9sout.",
+          "Ce que I-IV-V est au blues, ii-V-I l'est au jazz : la plupart des standards en encha\xEEnent, souvent dans plusieurs tonalit\xE9s d'affil\xE9e."
+        ], bloc: {
+          type: "chord_diagram",
+          caption: "Dm7 \u2014 ii de Do majeur (\xD7 \xD7 0 2 1 1)",
+          data: { name: "Dm7 (ii)", frets: [-1, -1, 0, 2, 1, 1], fingers: [0, 0, 0, 2, 1, 1], startFret: 1 }
+        } },
+        { type: "idee", titre: "Presque rien ne bouge", texte: [
+          "De Dm7 \xE0 G7, le Do (7e de Dm7) descend d'un demi-ton sur Si, la 3e de G7. Le Fa, lui, reste.",
+          "De G7 \xE0 Cmaj7, m\xEAme \xE9conomie : la 3e et la 7e de G7 avancent chacune d'un demi-ton vers une note de Cmaj7."
+        ], bloc: {
+          type: "chord_diagram",
+          caption: "G7 \u2014 V de Do majeur, tension (3 2 0 0 0 1)",
+          data: { name: "G7 (V)", frets: [3, 2, 0, 0, 0, 1], fingers: [3, 2, 0, 0, 0, 1], startFret: 1 }
+        } },
+        { type: "question", quizId: "q-impro-03" },
+        { type: "idee", titre: "La basse", texte: [
+          "R\xE9, Sol, Do : chaque fondamentale descend d'une quinte, ou monte d'une quarte. C'est le mouvement de basse le plus attractif de la musique tonale.",
+          "Pour trouver un ii-V-I dans n'importe quelle tonalit\xE9 : pars du I, remonte d'une quinte pour le V, puis encore d'une quinte pour le ii."
+        ] },
+        { type: "question", quizId: "q-harm-16" },
+        { type: "idee", titre: "En mineur", texte: [
+          "En La mineur : Bm7\u266D5, E7, Am7. Le ii devient demi-diminu\xE9.",
+          "Le V devient une dominante (E7 plut\xF4t que Em7) : son Sol#, emprunt\xE9 \xE0 la mineure harmonique, tire vers La et rend la r\xE9solution aussi forte qu'en majeur."
+        ] },
+        { type: "question", quizId: "q-logic-05" },
+        {
+          type: "a-toi",
+          titre: "Boucle ii-V-I",
+          consigne: "Dm7, G7, Cmaj7, Cmaj7 : quatre temps par accord au clic. Tour 1 : les accords seuls. Ensuite, improvise en Do majeur et vise une note par accord au temps 1 : Fa sur Dm7, Si sur G7, Mi sur Cmaj7. Les m\xEAmes sept notes, mais la grille s'entend.",
+          bloc: CMAJ7,
+          bpm: 70,
+          minuteur: 180
+        },
+        { type: "question", quizId: "q-harm-17" },
+        { type: "recap", points: [
+          "ii-V-I : le ii pr\xE9pare, le V tend, le I r\xE9sout (Dm7 - G7 - Cmaj7 en Do).",
+          "La basse descend de quinte en quinte ; les guide tones bougent par demi-tons.",
+          "En mineur : ii demi-diminu\xE9 et V dominante (Bm7\u266D5 - E7 - Am7 en La mineur)."
+        ] }
+      ],
+      quiz: ["q-harm-16", "q-harm-17", "q-impro-03", "q-logic-05", "q-fret-harm-07", "q-harm-19", "q-harm-20", "q-harm-21"]
+    };
+    quiz88 = [
+      { id: "q-harm-16", courseId: "harmony", lessonId: "harm-c6-03", lvl: 2, q: "En La majeur, le ii-V-I est\u2026", o: ["Bm-E-A", "Cm7-F7-Bbmaj7", "Em7-A7-Dmaj7", "Bm7-E7-Amaj7"], a: 3, exp: "En La majeur : ii=Si mineur, V=Mi (majeur), I=La. En accords 7 : Bm7-E7-Amaj7. Cellule fondamentale du jazz dans cette tonalit\xE9.", xp: 45 },
+      { id: "q-harm-17", courseId: "harmony", lessonId: "harm-c6-03", lvl: 3, q: "Pourquoi le ii-V-I sonne 'r\xE9solu' ?", o: ["La basse descend de quinte en quinte", "Une co\xEFncidence historique, rien de plus", "Le tempo acc\xE9l\xE8re avant l'accord final", "Toutes les notes montent vers l'aigu"], a: 0, exp: "La basse descend de quinte en quinte (R\xE9 \u2192 Sol \u2192 Do, soit une quarte vers le haut \xE0 chaque fois), et les guide tones avancent par demi-tons : Do \u2192 Si et Fa reste (ii \u2192 V), puis Fa \u2192 Mi et Si reste (V \u2192 I). Double mouvement, r\xE9solution tr\xE8s forte.", xp: 55 },
+      { id: "q-impro-03", courseId: "impro", lessonId: "harm-c6-03", lvl: 3, q: "Dans Dm7 - G7 - Cmaj7, quelle note de G7 rejoint le Mi de Cmaj7 par un simple demi-ton ?", o: ["Fa", "R\xE9", "Sol", "Si"], a: 0, exp: "Le Fa, 7e de G7, descend d'un demi-ton sur Mi, la tierce de Cmaj7. R\xE9 monte d'un ton entier, Sol saute d'une tierce, et Si monte plut\xF4t sur Do. Viser ce Fa \u2192 Mi fait entendre la r\xE9solution, m\xEAme en jouant Do majeur sur toute la grille.", xp: 60 },
+      { id: "q-logic-05", courseId: "harmony", lessonId: "harm-c6-03", lvl: 3, q: "En Mi mineur, quel est le ii-V-i ?", o: ["F#m7\u266D5 - B7 - Em7", "F#m7 - B7 - Em7", "F#m7\u266D5 - Bm7 - Em7", "Am7 - D7 - Em7"], a: 0, exp: "En mineur, le ii est demi-diminu\xE9 (F#m7\u266D5) et le V devient une dominante (B7, avec le R\xE9# de Mi mineure harmonique) pour r\xE9soudre fort sur Em7. C'est l'une des deux cellules d'\xAB Autumn Leaves \xBB, en alternance avec le ii-V-I de Sol majeur.", xp: 65 },
+      { id: "q-fret-harm-07", type: "fretboard", courseId: "harmony", lessonId: "harm-c6-03", lvl: 3, q: "ii-V-I : trouve toutes les fondamentales R\xE9 (ancres du ii)", concept: { type: "find_note", root: "D" }, selectionRules: { mode: "all" }, display: { showNotes: false }, hint: "R\xE9 est \xE0 vide sur la corde 4.", xp: 50, exp: "R\xE9 en : corde 6 case 10, corde 5 case 5, corde 4 \xE0 vide, corde 3 case 7, corde 2 case 3, corde 1 case 10. Ancres du ii dans le ii-V-I." }
+    ];
+  }
+});
+
+// src/content/cours/harmony/harm-c6-04.js
+var harm_c6_04_exports = {};
+__export(harm_c6_04_exports, {
+  default: () => harm_c6_04_default,
+  quiz: () => quiz89
+});
+var DM7, harm_c6_04_default, quiz89;
+var init_harm_c6_04 = __esm({
+  "src/content/cours/harmony/harm-c6-04.js"() {
+    DM7 = { type: "chord_diagram", caption: "Vamp dorienne en R\xE9 (1/2) \u2014 Dm7, xx0211", data: { name: "Dm7", frets: [-1, -1, 0, 2, 1, 1], fingers: [0, 0, 0, 2, 1, 1], startFret: 1 } };
+    harm_c6_04_default = {
+      id: "harm-c6-04",
+      level: 8,
+      title: "Les progressions modales",
+      duration: 9,
+      gropiTip: "Sur une vamp Lam7-R\xE97 (La dorien), insiste sur le Fa# : c'est la note qui distingue le dorien du La mineur naturel. Sans elle, ton impro perd la couleur dorienne.",
+      cartes: [
+        { type: "idee", titre: "Tourner plut\xF4t que voyager", texte: [
+          "Une progression tonale voyage : tension, r\xE9solution, retour \xE0 la tonique. Une progression modale tourne : deux accords en boucle autour d'un centre, sans cadence V-I qui ram\xE8nerait ailleurs.",
+          "L'accord qui revient devient la tonique, et la gamme s'entend depuis lui. Ambiance statique, hypnotique."
+        ] },
+        { type: "question", quizId: "q-harm-60" },
+        { type: "idee", titre: "La vamp dorienne", texte: [
+          "Im7 - IV7 : Dm7 - G7 en boucle. Le Si de G7 est la sixte majeure de R\xE9, la note qui fait dorien.",
+          "On peut m\xEAme rester sur un seul accord : dans \xAB So What \xBB de Miles Davis, Dm7 tient des sections enti\xE8res."
+        ], bloc: { type: "chord_diagram", caption: "Vamp dorienne en R\xE9 (2/2) \u2014 G7, 320001 : son Si est la sixte majeure de R\xE9", data: { name: "G7", frets: [3, 2, 0, 0, 0, 1], fingers: [3, 2, 0, 0, 0, 1], startFret: 1 } } },
+        { type: "idee", titre: "Mixolydien et phrygien", texte: [
+          "Mixolydien : I - \u266DVII, un accord majeur et celui un ton plus bas. R\xE9 - Do, La - Sol : son rock, ouvert.",
+          "Phrygien : Im - \u266DII, le demi-ton au-dessus de la tonique. Am - Si\u266D sonne tout de suite espagnol."
+        ] },
+        { type: "idee", titre: "La cadence andalouse", texte: [
+          "Am - G - F - E : on la croit en La mineur, mais elle se pose sur Mi. C'est du Mi phrygien : iv - \u266DIII - \u266DII - I.",
+          "Le demi-ton entre le \u266DII et la tonique, dans la basse, signe le phrygien. Flamenco, musique latine, m\xE9tal : on l'entend partout."
+        ] },
+        { type: "question", quizId: "q-harm-61" },
+        { type: "idee", titre: "La vamp lydienne", texte: [
+          "Imaj7 - II : Cmaj7 - D en boucle. Le Fa# de l'accord de R\xE9 est la quarte augment\xE9e de Do, la couleur du lydien.",
+          "Un son suspendu, lumineux, souvent entendu dans les musiques de film."
+        ] },
+        {
+          type: "a-toi",
+          titre: "Trois vamps, trois couleurs",
+          consigne: "Deux mesures par accord au clic. Vamp 1 : Dm7 - G7, improvise en R\xE9 dorien et appuie le Si. Vamp 2 : D - C, R\xE9 mixolydien, appuie le Do. Vamp 3 : Em - F, Mi phrygien, appuie le Fa. M\xEAme id\xE9e : la note caract\xE9ristique sur un temps fort.",
+          bloc: DM7,
+          bpm: 80,
+          minuteur: 240
+        },
+        { type: "question", quizId: "q-impro-02" },
+        { type: "recap", points: [
+          "Modal : une boucle qui tourne autour d'un centre, sans cadence V-I.",
+          "Dorien Im7-IV7, mixolydien I-\u266DVII, phrygien Im-\u266DII, lydien Imaj7-II.",
+          "Fais entendre la note caract\xE9ristique du mode sur les temps forts."
+        ] }
+      ],
+      quiz: ["q-impro-02", "q-harm-60", "q-harm-61"]
+    };
+    quiz89 = [
+      { id: "q-impro-02", courseId: "impro", lessonId: "harm-c6-04", lvl: 2, q: "Sur une vamp Em7-A7 modale (= ii-V sans r\xE9solution), quel mode utiliser ?", o: ["Mi phrygien", "Mi locrien", "Mi dorien", "Mi ionien"], a: 2, exp: "Em7-A7 = ii-V en R\xE9 majeur sans r\xE9solution sur Dmaj7. Sur le ii d'un ii-V modal = dorien du ii. Donc Mi dorien (= R\xE9 majeur en partant de Mi).", xp: 50 },
+      { id: "q-harm-60", courseId: "harmony", lessonId: "harm-c6-04", lvl: 2, q: "Une vamp tourne sur Dm7 - G7 sans jamais aller vers Cmaj7. O\xF9 l'oreille se pose-t-elle ?", o: ["Sur R\xE9 : R\xE9 dorien", "Sur Do : Do majeur", "Sur Sol : Sol mixolydien", "Sur La : La \xE9olien"], a: 0, exp: "Sans r\xE9solution vers Do, c'est Dm7, l'accord qui revient, qui devient le centre. Les notes de Do majeur s'entendent alors depuis R\xE9 : R\xE9 dorien. C'est le principe d'une progression modale.", xp: 40 },
+      { id: "q-harm-61", courseId: "harmony", lessonId: "harm-c6-04", lvl: 2, q: "Quelle vamp \xE9voque imm\xE9diatement le phrygien ?", o: ["Em - F en boucle", "Em - D en boucle", "Em - A en boucle", "Em - B7 en boucle"], a: 0, exp: "F est le \u266DII de Mi : le demi-ton Mi-Fa, signature du phrygien, s'entend dans la basse. Em - D sonne \xE9olien ou dorien, Em - A dorien, Em - B7 mineur harmonique.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/harmony/harm-c7-01.js
+var harm_c7_01_exports = {};
+__export(harm_c7_01_exports, {
+  default: () => harm_c7_01_default,
+  quiz: () => quiz90
+});
+var harm_c7_01_default, quiz90;
+var init_harm_c7_01 = __esm({
+  "src/content/cours/harmony/harm-c7-01.js"() {
+    harm_c7_01_default = {
+      id: "harm-c7-01",
+      level: 9,
+      title: "Les accords emprunt\xE9s",
+      duration: 9,
+      gropiTip: "En Do majeur, un accord qui contient Mib, Lab ou Sib vient en g\xE9n\xE9ral de Do mineur : Fam (Lab), Sib (Sib), Lab (Lab, Mib). \xC9coute comme ces notes assombrissent la couleur.",
+      cartes: [
+        { type: "idee", titre: "Le mineur parall\xE8le", texte: [
+          "Do majeur : Do R\xE9 Mi Fa Sol La Si. Do mineur : Do R\xE9 Mi\u266D Fa Sol La\u266D Si\u266D. M\xEAme tonique, trois notes diff\xE9rentes.",
+          "Un morceau en Do majeur peut emprunter un accord \xE0 Do mineur le temps d'une mesure : c'est l'emprunt."
+        ] },
+        { type: "question", quizId: "q-harm-45" },
+        { type: "idee", titre: "Le iv mineur", texte: [
+          "Fa devient Fam : son La\u266D apporte une couleur soul, m\xE9lancolique, m\xEAme dans un morceau majeur.",
+          "Do - Fa - Fam - Do : le La de Fa descend sur La\u266D, puis sur Sol dans l'accord de Do."
+        ], bloc: {
+          type: "chord_diagram",
+          caption: "Fm \u2014 sous-dominante mineure emprunt\xE9e (1 3 3 1 1 1, barr\xE9 case 1)",
+          data: { name: "Fm (iv)", frets: [1, 3, 3, 1, 1, 1], fingers: [1, 3, 4, 1, 1, 1], startFret: 1, barre: { fret: 1, from: 0, to: 5 } }
+        } },
+        { type: "idee", titre: "Le \u266DVI", texte: [
+          "Sur le 6e degr\xE9 de Do mineur, La\u266D : La\u266D Do Mi\u266D, un accord majeur absent de Do majeur.",
+          "Plac\xE9 avant un retour \xE0 Do, il donne une touche dramatique, \xE9pique."
+        ] },
+        { type: "question", quizId: "q-harm-44" },
+        { type: "idee", titre: "Le \u266DVII", texte: [
+          "Si\u266D - R\xE9 - Fa en Do majeur : un emprunt tr\xE8s fr\xE9quent. Do - Si\u266D - Fa - Do sonne rock, brut, presque modal.",
+          "Associ\xE9 au \u266DVI, il forme une mont\xE9e qui revient \xE0 la tonique : Do - La\u266D - Si\u266D - Do."
+        ], bloc: {
+          type: "chord_diagram",
+          caption: "Bb \u2014 \u266DVII emprunt\xE9 (\xD7 1 3 3 3 1 barr\xE9 case 1)",
+          data: { name: "Bb (\u266DVII)", frets: [-1, 1, 3, 3, 3, 1], fingers: [0, 1, 2, 3, 4, 1], startFret: 1, barre: { fret: 1, from: 1, to: 5 } }
+        } },
+        {
+          type: "a-toi",
+          titre: "Deux emprunts au clic",
+          consigne: "Quatre temps par accord. Tour 1 : Do, Fa, Fam, Do. Tour 2 : Do, La\u266D, Si\u266D, Do. Les barr\xE9s sont dans la tab. Puis rejoue Do, Fa, Sol, Do : entends ce que chaque emprunt change \xE0 la couleur.",
+          bloc: {
+            type: "tab",
+            caption: "Do (x32010), Fa (133211), Fam (133111), Do ; puis Do, La\u266D (466544), Si\u266D (x13331), Do",
+            text: "Tab \u2014 huit accords de la corde 6 \xE0 la corde 1 : Do x-3-2-0-1-0 ; Fa 1-3-3-2-1-1 ; Fam 1-3-3-1-1-1 ; Do ; Do ; La\u266D 4-6-6-5-4-4 ; Si\u266D x-1-3-3-3-1 ; Do.",
+            data: { lines: [
+              "e|-0---1---1---0---0---4---1---0---|",
+              "B|-1---1---1---1---1---4---3---1---|",
+              "G|-0---2---1---0---0---5---3---0---|",
+              "D|-2---3---3---2---2---6---3---2---|",
+              "A|-3---3---3---3---3---6---1---3---|",
+              "E|-----1---1-----------4-----------|"
+            ] }
+          },
+          bpm: 70,
+          minuteur: 180
+        },
+        { type: "idee", titre: "Dominantes secondaires", texte: [
+          "Autre fa\xE7on de sortir de la gamme : faire pr\xE9c\xE9der un accord de sa propre dominante. D7 \u2192 Sol : le Fa# de D7 tire vers Sol comme une sensible.",
+          "E7 \u2192 Lam marche de m\xEAme. L'accord vis\xE9 sonne un instant comme une tonique."
+        ] },
+        { type: "question", quizId: "q-harm-46" },
+        { type: "recap", points: [
+          "Emprunter = prendre un accord au mineur parall\xE8le (Do mineur pour Do majeur).",
+          "Les classiques : iv (Fam), \u266DVI (La\u266D), \u266DVII (Si\u266D).",
+          "Une dominante secondaire pr\xE9pare un accord de la tonalit\xE9 comme une mini-tonique."
+        ] }
+      ],
+      quiz: ["q-harm-44", "q-harm-45", "q-harm-46", "q-impro-03"]
+    };
+    quiz90 = [
+      { id: "q-harm-44", courseId: "harmony", lessonId: "harm-c7-01", lvl: 1, q: "En Do majeur, quel est l'accord \u266DVII emprunt\xE9 \xE0 Do mineur ?", o: ["Si diminu\xE9", "Si mineur", "Si\u266D majeur", "La\u266D majeur"], a: 2, exp: "Le VII de Do majeur est Si diminu\xE9 ; emprunt\xE9 \xE0 Do mineur, le \u266DVII devient Si\u266D majeur (Si\u266D-R\xE9-Fa).", xp: 30 },
+      { id: "q-harm-45", courseId: "harmony", lessonId: "harm-c7-01", lvl: 2, q: "D'o\xF9 vient l'accord Fa mineur dans une chanson en Do majeur ?", o: ["De La mineur, la relative de Do", "De Fa majeur, la sous-dominante", "D'une simple erreur de transcription", "De Do mineur, la tonalit\xE9 parall\xE8le"], a: 3, exp: "Fa mineur est le iv de Do mineur, la tonalit\xE9 parall\xE8le (m\xEAme tonique) : c'est un accord emprunt\xE9.", xp: 40 },
+      { id: "q-harm-46", courseId: "harmony", lessonId: "harm-c7-01", lvl: 2, q: "En Do majeur, quel accord pr\xE9pare Dm comme une dominante ?", o: ["A7", "G7", "E7", "D7"], a: 0, exp: "A7 est la dominante de R\xE9 : une dominante secondaire, qui fait de Dm une mini-r\xE9solution.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/harmony/harm-c7-02.js
+var harm_c7_02_exports = {};
+__export(harm_c7_02_exports, {
+  default: () => harm_c7_02_default,
+  quiz: () => quiz91
+});
+var harm_c7_02_default, quiz91;
+var init_harm_c7_02 = __esm({
+  "src/content/cours/harmony/harm-c7-02.js"() {
+    harm_c7_02_default = {
+      id: "harm-c7-02",
+      level: 9,
+      title: "La substitution tritonique",
+      duration: 9,
+      gropiTip: "Moyen mn\xE9motechnique : la substitution tritonique a sa fondamentale un demi-ton au-dessus de l'accord vis\xE9. Vers Do : R\xE9b7. Vers Sol : Lab7. Vers Fa : Solb7.",
+      cartes: [
+        { type: "idee", titre: "Un V7 en remplace un autre", texte: [
+          "Le principe : un accord de dominante peut \xEAtre remplac\xE9 par l'accord 7 situ\xE9 un triton plus loin, 6 demi-tons.",
+          "Exemple en Sol majeur : D7, la dominante, devient Ab7. M\xEAme fonction, couleur inattendue. Un outil central du jazz moderne."
+        ] },
+        { type: "question", quizId: "q-harm-47" },
+        { type: "idee", titre: "Les guide tones de G7", texte: [
+          "G7 = Sol Si R\xE9 Fa : la 3e est Si, la 7e est Fa. Entre elles, un triton.",
+          "Db7 = R\xE9\u266D Fa La\u266D Do\u266D. Regarde ses 3e et 7e, et compare avec celles de G7."
+        ], bloc: { type: "chord_diagram", caption: "G7 \xAB shell \xBB (3x34xx) \u2014 Sol \xE0 la basse, Fa (7e) et Si (3e) au-dessus", data: { name: "G7", frets: [3, -1, 3, 4, -1, -1], fingers: [1, 0, 2, 3, 0, 0], startFret: 1 } } },
+        { type: "idee", titre: "Seule la basse bouge", texte: [
+          "En shell, passer de G7 \xE0 Db7 ne change que la basse : les deux notes du haut restent sur les m\xEAmes cases.",
+          "Comme ces deux notes disent la couleur de l'accord, Db7 tire vers Cmaj7 exactement comme G7."
+        ], bloc: { type: "chord_diagram", caption: "Db7 \xAB shell \xBB (x434xx) \u2014 seule la basse bouge : Fa et Si (Dob) restent sur les m\xEAmes cases", data: { name: "Db7", frets: [-1, 4, 3, 4, -1, -1], fingers: [0, 2, 1, 3, 0, 0], startFret: 1 } } },
+        { type: "question", quizId: "q-harm-48" },
+        { type: "idee", titre: "La basse chromatique", texte: [
+          "Le gain principal : la ligne de basse. Am7 - D7 - Gmaj7 saute de quarte en quarte : La, R\xE9, Sol.",
+          "Am7 - Ab7 - Gmaj7 descend par demi-tons : La, La\u266D, Sol. Plus lisse, plus \xAB jazz \xBB."
+        ] },
+        { type: "question", quizId: "q-harm-49" },
+        { type: "idee", titre: "Quand l'utiliser", texte: [
+          "Sur n'importe quel V7 qui r\xE9sout vers son I. Alterne les deux versions d'une grille \xE0 l'autre : V7 la premi\xE8re fois, la substitution la suivante.",
+          "On peut aussi l'enrichir d'extensions alt\xE9r\xE9es (\u266D9, #9) pour encore plus de tension avant la r\xE9solution."
+        ] },
+        {
+          type: "a-toi",
+          titre: "Dm7 - Db7 - Cmaj7 en shells",
+          consigne: "Joue la tab au clic, quatre temps par accord : Dm7, Db7, Cmaj7, Cmaj7. \xC9coute la basse descendre R\xE9, R\xE9\u266D, Do. Tour suivant, remplace Db7 par G7 (3x34xx) : compare les deux chemins. Alterne une grille sur deux.",
+          bloc: {
+            type: "tab",
+            caption: "Dm7 (x535xx), Db7 (x434xx), Cmaj7 (x324xx) : la basse descend par demi-tons",
+            text: "Tab \u2014 Dm7 : corde 5 case 5, corde 4 case 3, corde 3 case 5 ; Db7 : corde 5 case 4, corde 4 case 3, corde 3 case 4 ; Cmaj7 : corde 5 case 3, corde 4 case 2, corde 3 case 4.",
+            data: { lines: [
+              "e|-----------------|",
+              "B|-----------------|",
+              "G|-5-----4-----4---|",
+              "D|-3-----3-----2---|",
+              "A|-5-----4-----3---|",
+              "E|-----------------|"
+            ] }
+          },
+          bpm: 70,
+          minuteur: 120
+        },
+        { type: "recap", points: [
+          "Un V7 se remplace par l'accord 7 un triton plus loin : G7 \u2192 Db7.",
+          "Les deux accords partagent leurs guide tones, r\xF4les invers\xE9s.",
+          "Dm7 - Db7 - Cmaj7 : la basse descend par demi-tons, R\xE9, R\xE9\u266D, Do."
+        ] }
+      ],
+      quiz: ["q-harm-47", "q-harm-48", "q-harm-49", "q-impro-08", "q-impro-06"]
+    };
+    quiz91 = [
+      { id: "q-harm-47", courseId: "harmony", lessonId: "harm-c7-02", lvl: 1, q: "Avec la substitution tritonique, par quel accord remplace-t-on G7 ?", o: ["D7", "Db7", "C7", "Ab7"], a: 1, exp: "Un triton (6 demi-tons) au-dessus de Sol : R\xE9b. G7 devient Db7.", xp: 30 },
+      { id: "q-harm-48", courseId: "harmony", lessonId: "harm-c7-02", lvl: 2, q: "Pourquoi G7 et Db7 sont-ils interchangeables ?", o: ["Ils ont la m\xEAme fondamentale", "Ils ont le m\xEAme nombre de notes", "Ils partagent les m\xEAmes guide tones", "Ils sont dans la m\xEAme gamme majeure"], a: 2, exp: "G7 a Si et Fa ; Db7 a Fa et Do\u266D (= Si). M\xEAmes guide tones, r\xF4les invers\xE9s : ils r\xE9solvent de la m\xEAme fa\xE7on.", xp: 40 },
+      { id: "q-harm-49", courseId: "harmony", lessonId: "harm-c7-02", lvl: 1, q: "Dm7 - Db7 - Cmaj7 : que fait la basse ?", o: ["Elle saute de quarte en quarte", "Elle reste sur Do", "Elle monte par tons", "Elle descend par demi-tons"], a: 3, exp: "R\xE9 \u2192 R\xE9b \u2192 Do : une descente chromatique, au lieu des sauts R\xE9 \u2192 Sol \u2192 Do.", xp: 30 },
+      { id: "q-impro-08", courseId: "impro", lessonId: "harm-c7-02", lvl: 3, q: "Substitution tritonique appliqu\xE9e \xE0 Dm7-G7-Cmaj7 donne\u2026", o: ["Dm7-Db7-Cmaj7", "Dm7-G7-C#maj7", "D#m7-G7-Cmaj7", "Dm7-Bb7-Cmaj7"], a: 0, exp: "Sub trito du V (G7) = Db7. Donc Dm7-Db7-Cmaj7. La basse descend chromatiquement R\xE9\u2192R\xE9b\u2192Do. Mouvement tr\xE8s \xE9l\xE9gant.", xp: 65 }
+    ];
+  }
+});
+
+// src/content/cours/harmony/harm-c7-03.js
+var harm_c7_03_exports = {};
+__export(harm_c7_03_exports, {
+  default: () => harm_c7_03_default,
+  quiz: () => quiz92
+});
+var harm_c7_03_default, quiz92;
+var init_harm_c7_03 = __esm({
+  "src/content/cours/harmony/harm-c7-03.js"() {
+    harm_c7_03_default = {
+      id: "harm-c7-03",
+      level: 9,
+      title: "Les modulations : changer de tonalit\xE9",
+      duration: 9,
+      gropiTip: "Pour moduler vers une tonalit\xE9, glisse son accord V7 juste avant : de Do vers Mi, passe par Si7 ; de Do vers Fa, par Do7. Un seul accord, et l'oreille suit.",
+      cartes: [
+        { type: "idee", titre: "Changer de tonalit\xE9", texte: [
+          "Moduler, c'est d\xE9placer le centre du morceau vers une autre tonique, en cours de route.",
+          "Pour quoi faire ? Relancer l'\xE9nergie (un dernier refrain plus haut), changer d'ambiance, ou explorer, comme le jazz qui passe d'une tonalit\xE9 \xE0 l'autre en permanence."
+        ] },
+        { type: "idee", titre: "Par accord pivot", texte: [
+          "La plus douce : un accord commun aux deux tonalit\xE9s sert de charni\xE8re. De Do vers Fa, R\xE9m est le ii de Do et le vi de Fa : Do - R\xE9m - C7 - Fa.",
+          "Plus deux tonalit\xE9s sont voisines sur le cercle, plus elles partagent d'accords."
+        ], bloc: {
+          type: "circle_of_fifths",
+          caption: "Do et Sol sont voisins sur le cercle \u2014 elles partagent presque toutes leurs notes",
+          data: {
+            highlight: ["Do", "Sol"],
+            showMinors: true
+          }
+        } },
+        { type: "question", quizId: "q-harm-22" },
+        { type: "idee", titre: "Par la dominante", texte: [
+          "On annonce la nouvelle tonique avec son propre V7. Vers Mi mineur : B7, puis Em. Vers Fa : C7, puis Fa.",
+          "Le V7 contient la sensible de la nouvelle tonalit\xE9 : l'oreille comprend avant m\xEAme d'y arriver. C'est la modulation la plus courante en jazz."
+        ] },
+        { type: "question", quizId: "q-harm-p89-c703-01" },
+        { type: "idee", titre: "Relative", texte: [
+          "Do majeur et La mineur ont les m\xEAmes notes. Passer de l'un \xE0 l'autre d\xE9place seulement le centre : le repos se fait sur Lam au lieu de Do.",
+          "Beaucoup de chansons alternent ainsi couplet mineur et refrain majeur."
+        ] },
+        { type: "idee", titre: "Directe", texte: [
+          "Aucune pr\xE9paration : on saute dans la nouvelle tonalit\xE9. L'effet est franc, parfois spectaculaire.",
+          "C'est le coup classique du dernier refrain mont\xE9 d'un demi-ton ou d'un ton en pop."
+        ] },
+        { type: "question", quizId: "q-harm-p89-c703-02" },
+        {
+          type: "a-toi",
+          titre: "Deux chemins vers R\xE9",
+          consigne: "Quatre temps par accord au clic. Tour 1, direct : Do, Fa, Sol, Do, puis tout de suite R\xE9, Sol, La, R\xE9. Tour 2, pr\xE9par\xE9 : Do, Fa, Sol, Do, A7, R\xE9, Sol, La, R\xE9. \xC9coute comme A7 annonce l'arriv\xE9e.",
+          bloc: { type: "chord_diagram", caption: "A7 (\xD7 0 2 0 2 0) : la dominante de R\xE9, avec son Do#", data: { name: "A7", frets: [-1, 0, 2, 0, 2, 0], fingers: [0, 0, 2, 0, 3, 0], startFret: 1 } },
+          bpm: 70,
+          minuteur: 180
+        },
+        { type: "recap", points: [
+          "Pivot : un accord commun aux deux tonalit\xE9s sert de charni\xE8re.",
+          "Dominante : le V7 de la nouvelle tonalit\xE9 l'annonce.",
+          "Relative : m\xEAmes notes, autre centre ; directe : un saut sans pr\xE9paration."
+        ] }
+      ],
+      quiz: ["q-harm-22", "q-impro-08", "q-impro-10", "q-harm-p89-c703-01", "q-harm-p89-c703-02"]
+    };
+    quiz92 = [
+      { id: "q-harm-22", courseId: "harmony", lessonId: "harm-c7-03", lvl: 3, q: "Pour moduler de Do majeur \xE0 Sol majeur, lequel de ces accords peut servir de pivot ?", o: ["La mineur", "Fa majeur", "R\xE9 majeur", "Si mineur"], a: 0, exp: "Un pivot appartient aux deux tonalit\xE9s. La mineur est le vi de Do et le ii de Sol : Do - Lam - D7 - Sol module sans choc. Fa majeur (Fa naturel) n'existe qu'en Do ; R\xE9 majeur et Si mineur (avec Fa#) n'existent qu'en Sol.", xp: 55 },
+      { id: "q-harm-p89-c703-01", courseId: "harmony", lessonId: "harm-c7-03", lvl: 2, q: "Tu es en Do majeur et tu veux arriver en R\xE9 majeur. Quel accord glisser juste avant le R\xE9 ?", o: ["A7", "D7", "G7", "E7"], a: 0, exp: "A7 est le V7 de R\xE9 : son Do# est la sensible de R\xE9 majeur. D7 est l'accord d'arriv\xE9e lui-m\xEAme, G7 ram\xE8ne vers Do, E7 pr\xE9pare La.", xp: 40 },
+      { id: "q-harm-p89-c703-02", courseId: "harmony", lessonId: "harm-c7-03", lvl: 2, q: "Un morceau passe de Do majeur \xE0 La mineur. Qu'est-ce qui change vraiment ?", o: ["Le centre, avec les m\xEAmes notes", "Trois notes de la gamme", "Toutes les notes, un ton plus bas", "Une note : le Fa devient Fa#"], a: 0, exp: "La mineur est la relative de Do majeur : m\xEAme armure, m\xEAmes sept notes. Seul le repos se d\xE9place, de Do vers La.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/harmony/harm-c8-01.js
+var harm_c8_01_exports = {};
+__export(harm_c8_01_exports, {
+  default: () => harm_c8_01_default,
+  quiz: () => quiz93
+});
+var harm_c8_01_default, quiz93;
+var init_harm_c8_01 = __esm({
+  "src/content/cours/harmony/harm-c8-01.js"() {
+    harm_c8_01_default = {
+      id: "harm-c8-01",
+      level: 7,
+      title: "Cibler les notes d'accord en temps r\xE9el",
+      duration: 9,
+      gropiTip: "Sur un blues en La, passe du Do# (3e de La7) au Do (7e de R\xE97) pile au changement d'accord. Un seul demi-ton, et tout le monde entend que l'harmonie a boug\xE9.",
+      cartes: [
+        { type: "idee", titre: "Suivre les accords", texte: [
+          "Improviser avec la seule gamme de la tonalit\xE9, \xE7a sonne correct, mais le solo flotte : il ne r\xE9agit pas aux changements d'accords.",
+          "Le ciblage consiste \xE0 choisir, sur chaque accord, une ou deux notes qui le d\xE9finissent, et \xE0 faire arriver tes phrases dessus."
+        ] },
+        { type: "idee", titre: "Quelles cibles ?", texte: [
+          "D'abord la 3e et la 7e, les guide tones : elles disent la qualit\xE9 de l'accord. Ensuite la fondamentale, stable mais moins color\xE9e. Puis la quinte, assez neutre.",
+          "Les extensions (9, 11, 13) viendront plus tard. Pour commencer, vise les guide tones."
+        ] },
+        { type: "idee", titre: "Sur les temps forts", texte: [
+          "Une cible porte le plus sur un temps fort, le 1 ou le 3 en 4/4. Les notes de passage vont sur les temps faibles et les contretemps.",
+          "Chaque temps fort confirme alors l'accord en cours. Entre deux cibles, le couloir est libre."
+        ] },
+        { type: "question", quizId: "q-harm-19" },
+        { type: "idee", titre: "Approche et enclosure", texte: [
+          "Pour arriver en douceur, joue juste avant la cible la note un demi-ton au-dessus ou en dessous. Sur G7, vers le Si : Do puis Si, ou Si\u266D puis Si.",
+          "L'enclosure encadre la cible : au-dessus, en dessous, puis la cible. Do, Si\u266D, Si : une petite suspension, une arriv\xE9e plus nette. Un son typique du bebop."
+        ], bloc: { type: "fretboard", caption: "Enclosure sur G7 : Do (au-dessus), Sib (en dessous), puis Si, la cible \u2014 corde 3", data: { frets: 4, startFret: 2, showStringNames: true, showFretNumbers: true, markerFrets: [3, 5], notes: [{ string: 3, fret: 5, label: "Do", color: "neutral" }, { string: 3, fret: 3, label: "Sib", color: "neutral" }, { string: 3, fret: 4, label: "Si", color: "primary", root: true }] } } },
+        { type: "question", quizId: "q-impro-10" },
+        {
+          type: "a-toi",
+          titre: "Atterrir sur le ii-V-I",
+          consigne: "Boucle Dm7, G7, Cmaj7, une mesure chacun au clic. Tour 1 : joue seulement les guide tones de la tab, une note par temps. Tour 2 : improvise librement, mais pose une guide tone au temps 1 de chaque accord. Tour 3 : arrive-y par une enclosure.",
+          bloc: { type: "tab", caption: "Guide tones sur Dm7 \u2013 G7 \u2013 Cmaj7 : Fa/Do, puis Fa/Si, puis Mi/Si \u2014 une seule note bouge \xE0 chaque accord", text: "Tab : Dm7 = Fa (corde 2 case 6) et Do (corde 3 case 5) ; G7 = Fa (corde 2 case 6) et Si (corde 3 case 4) ; Cmaj7 = Mi (corde 2 case 5) et Si (corde 3 case 4).", data: { lines: ["e|---------------------|", "B|-6-------6-------5---|", "G|-5-------4-------4---|", "D|---------------------|", "A|---------------------|", "E|---------------------|"] } },
+          bpm: 60,
+          minuteur: 180
+        },
+        { type: "question", quizId: "q-harm-20" },
+        { type: "recap", points: [
+          "Sur chaque accord, vise d'abord la 3e et la 7e.",
+          "Les cibles sur les temps forts, les notes de passage entre elles.",
+          "Arrive sur la cible par un demi-ton, ou encadre-la : enclosure."
+        ] }
+      ],
+      quiz: ["q-harm-19", "q-harm-20", "q-impro-06", "q-impro-10", "q-impro-15"]
+    };
+    quiz93 = [
+      { id: "q-harm-19", courseId: "harmony", lessonId: "harm-c8-01", lvl: 3, q: "Sur un solo, o\xF9 placer id\xE9alement les 'notes cibles' (3e/7e) ?", o: ["N'importe o\xF9, le placement ne compte pas", "Sur les contretemps (les \xAB et \xBB)", "Sur les temps forts (1 et 3)", "Uniquement sur le 4e temps"], a: 2, exp: "Notes cibles sur les temps forts (1 et 3) = solo qui 'tombe' sur l'harmonie. Notes de passage sur les temps faibles. Cette r\xE9partition cr\xE9e le swing rythmique-harmonique.", xp: 50 },
+      { id: "q-harm-20", courseId: "harmony", lessonId: "harm-c8-01", lvl: 3, q: "Sur G7, jouer un Lab juste avant un Sol cr\xE9e\u2026", o: ["Une dissonance qui reste sans r\xE9solution", "Un changement d'accord implicite", "Une modulation vers une autre tonalit\xE9", "Une approche chromatique vers Sol"], a: 3, exp: "Approche chromatique = note 1 demi-ton au-dessus ou en dessous de la cible. Lab\u2192Sol cr\xE9e une 'arriv\xE9e' \xE9l\xE9gante sur Sol. Technique de bebop classique.", xp: 55 },
+      { id: "q-impro-06", courseId: "impro", lessonId: "harm-c8-01", lvl: 3, q: "Sur G7 qui va vers Cmaj7, laquelle de ces notes apporte le plus de tension ?", o: ["Lab, la \u266D9", "La, la 9e", "Mi, la 13e", "R\xE9, la quinte"], a: 0, exp: "Le Lab (\u266D9) frotte un demi-ton au-dessus de la fondamentale Sol : c'est l'extension la plus tendue d'un accord de dominante. Il se r\xE9sout en descendant sur Sol, la quinte de Cmaj7. La 9e et la 13e colorent sans cette friction, et R\xE9 est une note stable de l'accord.", xp: 65 },
+      { id: "q-impro-10", courseId: "impro", lessonId: "harm-c8-01", lvl: 3, q: "L''enclosure' (encadrement chromatique) consiste \xE0\u2026", o: ["Jouer un accord enrichi \xE0 la place", "Rester dans une seule position du manche", "Entourer la note cible de ses voisines", "Jouer la note cible plus fort que les autres"], a: 2, exp: "Enclosure = note cible Si encadr\xE9e par Do (chrome au-dessus) et Sib (chrome en dessous). Joue Do-Sib-Si. Cr\xE9e une 'arriv\xE9e' \xE9l\xE9gante sur la cible.", xp: 65 },
+      { id: "q-impro-15", courseId: "impro", lessonId: "harm-c8-01", lvl: 3, q: "Tu finis ta phrase sur la 9e d'un accord Maj7 (ex: R\xE9 sur Cmaj7). Effet ?", o: ["Dissonant", "Identique \xE0 finir sur la tonique", "Mauvaise note", "Couleur jazz sophistiqu\xE9e, 'flottante'"], a: 3, exp: "Finir sur la 9 (R\xE9 sur Cmaj7) cr\xE9e une couleur 'colored' = pas de r\xE9solution compl\xE8te, tension douce qui invite \xE0 continuer. Tr\xE8s utilis\xE9 en jazz/bossa.", xp: 65 }
+    ];
+  }
+});
+
+// src/content/cours/harmony/harm-c8-02.js
+var harm_c8_02_exports = {};
+__export(harm_c8_02_exports, {
+  default: () => harm_c8_02_default,
+  quiz: () => quiz94
+});
+var MOTIF, harm_c8_02_default, quiz94;
+var init_harm_c8_02 = __esm({
+  "src/content/cours/harmony/harm-c8-02.js"() {
+    MOTIF = { type: "tab", caption: "Un motif de 4 notes (Do-R\xE9-Mi-Sol), puis sa s\xE9quence un degr\xE9 plus haut (R\xE9-Mi-Fa-La)", text: "Tab : Do (corde 3 case 5), R\xE9 (corde 3 case 7), Mi (corde 2 case 5), Sol (corde 2 case 8) ; puis R\xE9 (corde 3 case 7), Mi (corde 3 case 9), Fa (corde 2 case 6), La (corde 2 case 10).", data: { lines: ["e|---------------------|", "B|-----5-8-------6-10--|", "G|-5-7-------7-9-------|", "D|---------------------|", "A|---------------------|", "E|---------------------|"] } };
+    harm_c8_02_default = {
+      id: "harm-c8-02",
+      level: 9,
+      title: "Construire un solo qui suit les accords",
+      duration: 10,
+      gropiTip: "Enregistre-toi 2 minutes sur une boucle ii-V-I, puis r\xE9\xE9coute en notant deux choses : o\xF9 sont tes silences, et as-tu r\xE9p\xE9t\xE9 un motif ? Corrige l'un des deux \xE0 la prise suivante.",
+      cartes: [
+        { type: "idee", titre: "Suivre la grille", texte: [
+          "Rester dans la gamme de la tonalit\xE9, c'est correct, mais g\xE9n\xE9rique : le solo flotte au-dessus des accords.",
+          "Un solo qui suit la grille fait entendre chaque changement d'accord dans la m\xE9lodie elle-m\xEAme. Puis il raconte quelque chose : des motifs, une forme."
+        ] },
+        { type: "question", quizId: "q-harm-50" },
+        { type: "idee", titre: "Le squelette : les arp\xE8ges", texte: [
+          "Sur chaque accord, ses propres notes : R\xE9 Fa La Do sur Dm7, Sol Si R\xE9 Fa sur G7, Do Mi Sol Si sur Cmaj7.",
+          "Les arp\xE8ges sont la charpente. On l'habille ensuite de notes de gamme et de chromatismes."
+        ], bloc: { type: "degree_chart", caption: "Le squelette du ii-V-I en Do : les arp\xE8ges de Dm7, G7 et Cmaj7", data: { boxes: [{ top: "Dm7", label: "R\xE9 \u2013 Fa \u2013 La \u2013 Do", sub: "ii", tint: "neutral" }, { top: "G7", label: "Sol \u2013 Si \u2013 R\xE9 \u2013 Fa", sub: "V", tint: "coral" }, { top: "Cmaj7", label: "Do \u2013 Mi \u2013 Sol \u2013 Si", sub: "I", tint: "green" }] } } },
+        { type: "idee", titre: "Gamme et cibles", texte: [
+          "Plus fluide : joue la gamme de Do majeur, mais pose une note de l'accord en cours sur les temps forts.",
+          "La gamme donne la couleur de fond, les cibles donnent les rep\xE8res. Les autres notes passent sans s'attarder."
+        ] },
+        { type: "question", quizId: "q-harm-11" },
+        { type: "idee", titre: "Le motif", texte: [
+          "Une courte phrase de 3 \xE0 6 notes, r\xE9p\xE9t\xE9e puis transform\xE9e : d\xE9cal\xE9e d'un degr\xE9 (s\xE9quence), avec un autre rythme, ou en miroir.",
+          "Quatre notes suffisent pour b\xE2tir un solo entier, et l'auditeur suit ton id\xE9e."
+        ], bloc: MOTIF },
+        {
+          type: "a-toi",
+          titre: "Un motif sur le ii-V-I",
+          consigne: "Boucle Dm7, G7, Cmaj7, Cmaj7 au clic, une mesure chacun. Tour 1 : joue le motif, puis sa s\xE9quence. Tour 2 : invente ton propre motif et transforme-le. Tour 3 : commence tes phrases sur le \xAB et \xBB du 4 de la mesure d'avant, et laisse une mesure de silence entre deux phrases.",
+          bloc: MOTIF,
+          bpm: 70,
+          minuteur: 240
+        },
+        { type: "idee", titre: "La forme du solo", texte: [
+          "Un solo a un d\xE9but, un milieu et une fin : intro calme, d\xE9veloppement, climax, r\xE9solution vers la tonique.",
+          "Les silences en font partie. Apr\xE8s une phrase tendue, un temps de pause met en valeur ce qui suit."
+        ] },
+        { type: "question", quizId: "q-impro-29" },
+        { type: "recap", points: [
+          "Arp\xE8ges et cibles sur les temps forts : la grille s'entend dans ton solo.",
+          "Un motif r\xE9p\xE9t\xE9 et transform\xE9 donne une identit\xE9 au solo.",
+          "Une forme qui monte puis se r\xE9sout, des silences, des d\xE9parts vari\xE9s."
+        ] }
+      ],
+      quiz: ["q-harm-50", "q-harm-51", "q-harm-52", "q-harm-11", "q-impro-29"]
+    };
+    quiz94 = [
+      { id: "q-harm-50", courseId: "harmony", lessonId: "harm-c8-02", lvl: 2, q: "Sur Dm7 - G7 - Cmaj7, tu restes en Do majeur mais ton solo sonne g\xE9n\xE9rique. Quel changement le fait \xAB suivre \xBB la grille ?", o: ["Viser 3e et 7e aux changements", "Jouer deux fois plus de notes", "Monter d'une octave \xE0 chaque accord", "Finir chaque phrase sur Do"], a: 0, exp: "La gamme seule \xAB flotte \xBB sur la grille. En atterrissant sur les guide tones de chaque accord au moment o\xF9 il arrive (Fa ou Do sur Dm7, Si ou Fa sur G7, Mi ou Si sur Cmaj7), l'oreille entend les changements. Finir toujours sur Do ignore justement les accords.", xp: 30 },
+      { id: "q-harm-51", courseId: "harmony", lessonId: "harm-c8-02", lvl: 1, q: "Quelles sont les 4 parties de l'arc narratif d'un solo ?", o: ["Couplet, refrain, pont, puis refrain final", "Intro, d\xE9veloppement, climax, r\xE9solution", "Lent, puis rapide, puis lent, puis rapide", "Grave, aigu, grave, aigu"], a: 1, exp: "Une intro calme, un d\xE9veloppement qui monte, un climax, puis une r\xE9solution vers la tonique.", xp: 30 },
+      { id: "q-harm-52", courseId: "harmony", lessonId: "harm-c8-02", lvl: 2, q: "Une phrase qui commence sur le \xAB et \xBB du 4 de la mesure d'avant sonne\u2026", o: ["Plus carr\xE9e et plus rigide qu'avant", "Toujours fausse rythmiquement", "Plus fluide, plus syncop\xE9e", "Plus lente que le tempo"], a: 2, exp: "Commencer avant le temps 1 donne une phrase plus fluide et syncop\xE9e ; commencer toujours sur le 1 sonne carr\xE9.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/rhythm/rhy-c1-01.js
+var rhy_c1_01_exports = {};
+__export(rhy_c1_01_exports, {
+  default: () => rhy_c1_01_default,
+  quiz: () => quiz95
+});
+var rhy_c1_01_default, quiz95;
+var init_rhy_c1_01 = __esm({
+  "src/content/cours/rhythm/rhy-c1-01.js"() {
+    rhy_c1_01_default = {
+      id: "rhy-c1-01",
+      level: 1,
+      title: "Qu'est-ce que le rythme ?",
+      duration: 6,
+      gropiTip: "Mets le m\xE9tronome \xE0 60 BPM, compte 4 temps avec lui, puis coupe le son et continue \xE0 taper du pied. Rallume-le au bout de 8 temps : tombes-tu encore pile sur le clic ?",
+      cartes: [
+        { type: "idee", titre: "La pulsation, l'ancre", texte: [
+          "Le rythme m\xE9lange trois id\xE9es souvent confondues. La premi\xE8re, la pulsation : un battement r\xE9gulier, celui que tu tapes du pied, celui que produit le m\xE9tronome.",
+          "Sans pulsation stable, pas de groove ni de jeu \xE0 plusieurs. Jouer \xAB en mesure \xBB, c'est rester cal\xE9 dessus."
+        ], bloc: {
+          type: "rhythm_grid",
+          caption: "La pulsation \u2014 4 battements strictement \xE9gaux",
+          data: {
+            beats: 4,
+            subdivision: 4,
+            accents: [],
+            label: "1 \xB7 2 \xB7 3 \xB7 4 \u2014 m\xEAme dur\xE9e, sans exception"
+          }
+        } },
+        { type: "question", quizId: "q-base-07" },
+        { type: "idee", titre: "Le tempo, en BPM", texte: [
+          "Le tempo, c'est la vitesse de la pulsation, en battements par minute (BPM). \xC0 60 BPM, un battement par seconde.",
+          "Il donne aussi l'ambiance : ballades vers 60\u201380 BPM, funk souvent 90\u2013110, rock \xE9nergique 120\u2013160."
+        ] },
+        { type: "question", quizId: "q-base-06" },
+        { type: "a-toi", titre: "Une minute sur la pulsation", consigne: "Pose Mi mineur. Tape du pied avec le clic et gratte un coup vers le bas par battement, en comptant \xAB 1, 2, 3, 4 \xBB. Une minute sans acc\xE9l\xE9rer ni ralentir : plus dur qu'il n'y para\xEEt.", bloc: { type: "strum_pattern", caption: "4 noires vers le bas \u2014 compte \xAB 1, 2, 3, 4 \xBB", data: { pattern: ["B", "B", "B", "B"], beats: 4, style: "folk", bpm: 60 } }, bpm: 60, minuteur: 60 },
+        { type: "idee", titre: "Le rythme, ce qu'on pose dessus", texte: [
+          "Troisi\xE8me id\xE9e : le rythme musical, la fa\xE7on dont les notes se placent par rapport \xE0 la pulsation. Longues ou courtes, sur le temps ou entre les temps.",
+          "M\xEAmes notes, autre rythme : un tout autre morceau."
+        ] },
+        { type: "question", quizId: "q-rhy-28" },
+        { type: "idee", titre: "Le temps int\xE9rieur", texte: [
+          "Les grands musiciens ont une pulsation int\xE9gr\xE9e, qui ne d\xE9pend ni d'un m\xE9tronome ni d'un batteur. James Brown arr\xEAtait et relan\xE7ait son orchestre d'un claquement de doigts.",
+          "Ce n'est pas un don : \xE7a se construit, s\xE9ance apr\xE8s s\xE9ance, au m\xE9tronome."
+        ] },
+        { type: "question", quizId: "q-rhy-27" },
+        { type: "recap", points: [
+          "Pulsation = le battement r\xE9gulier ; tempo = sa vitesse, en BPM.",
+          "Le rythme, c'est la place des notes sur cette pulsation.",
+          "Le m\xE9tronome construit ton temps int\xE9rieur."
+        ] }
+      ],
+      quiz: ["q-base-06", "q-base-07", "q-rhy-27", "q-rhy-28"]
+    };
+    quiz95 = [
+      { id: "q-base-06", courseId: "rhythm", lessonId: "rhy-c1-01", lvl: 1, q: "Ton m\xE9tronome est r\xE9gl\xE9 \xE0 120 BPM. Combien de battements entends-tu par seconde ?", o: ["2", "1", "4", "12"], a: 0, exp: "BPM = battements par minute : 120 battements en 60 secondes, soit 2 par seconde. \xC0 60 BPM, c'est un battement par seconde, un bon rep\xE8re pour estimer un tempo.", xp: 25 },
+      { id: "q-base-07", courseId: "rhythm", lessonId: "rhy-c1-01", lvl: 1, q: "La 'pulsation' d'un morceau correspond \xE0\u2026", o: ["La hauteur des notes jou\xE9es", "Le nombre de cordes utilis\xE9es", "Le battement r\xE9gulier de fond", "La dur\xE9e totale du morceau"], a: 2, exp: "La pulsation est ce battement r\xE9gulier qu'on tape du pied naturellement. Tout le rythme s'organise autour d'elle.", xp: 25 },
+      { id: "q-rhy-27", courseId: "rhythm", lessonId: "rhy-c1-01", lvl: 1, q: "Entre un guitariste qui joue des notes savantes mal plac\xE9es et un autre qui joue des notes simples bien plac\xE9es\u2026", o: ["Le second sonne nettement mieux", "Les deux sonnent \xE9quivalents", "Le premier sonne nettement mieux", "Tout d\xE9pend de l'accordage employ\xE9"], a: 0, exp: "Une note juste au mauvais moment s'entend comme une erreur ; une note simple bien plac\xE9e s'entend comme de la musique. C'est le rythme, pas le vocabulaire, qui s\xE9pare le plus nettement l'amateur du professionnel.", xp: 25 },
+      { id: "q-rhy-28", courseId: "rhythm", lessonId: "rhy-c1-01", lvl: 2, q: "La pulsation d'un morceau, c'est\u2026", o: ["Le dessin rythmique de la m\xE9lodie", "La r\xE9gularit\xE9 sur laquelle on tape du pied", "La vitesse des notes les plus rapides du morceau", "L'accentuation des temps forts"], a: 1, exp: "La pulsation est la grille r\xE9guli\xE8re ; le rythme est ce qu'on pose dessus. On peut jouer beaucoup de notes sur une pulsation lente, et peu sur une rapide \u2014 ce sont deux choses distinctes.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/rhythm/rhy-c1-02.js
+var rhy_c1_02_exports = {};
+__export(rhy_c1_02_exports, {
+  default: () => rhy_c1_02_default,
+  quiz: () => quiz96
+});
+var rhy_c1_02_default, quiz96;
+var init_rhy_c1_02 = __esm({
+  "src/content/cours/rhythm/rhy-c1-02.js"() {
+    rhy_c1_02_default = {
+      id: "rhy-c1-02",
+      level: 2,
+      title: "La mesure \xE0 4/4 : le temps de r\xE9f\xE9rence",
+      duration: 7,
+      gropiTip: "Quand tu grattes en 4/4, appuie un peu plus le coup du temps 1 que les trois autres. Ton oreille apprend \xE0 rep\xE9rer le d\xE9but de chaque mesure, et tu ne te perds plus dans la grille.",
+      cartes: [
+        { type: "idee", titre: "Lire 4/4", texte: [
+          "La mesure range la pulsation en groupes r\xE9guliers. Elle s'\xE9crit comme une fraction.",
+          "Le chiffre du haut donne le nombre de temps par mesure ; celui du bas, la valeur d'un temps (4 = la noire). En 4/4 : quatre temps, une noire chacun. C'est le cadre de presque tout le rock, la pop et le blues."
+        ] },
+        { type: "question", quizId: "q-base-14-app" },
+        { type: "idee", titre: "Temps forts, temps faibles", texte: [
+          "Les quatre temps n'ont pas le m\xEAme poids : 1 et 3 sont forts, 2 et 4 faibles.",
+          "En rock et en pop, la caisse claire frappe souvent sur 2 et 4 : ce contre-accent, le backbeat, fait le groove moderne."
+        ], bloc: {
+          type: "rhythm_grid",
+          caption: "4/4 en noires \u2014 temps forts (1+3) vs temps faibles (2+4)",
+          data: {
+            beats: 4,
+            subdivision: 4,
+            accents: [0, 2],
+            label: "1 fort \xB7 2 faible \xB7 3 fort \xB7 4 faible"
+          }
+        } },
+        { type: "idee", titre: "Compter les mesures", texte: [
+          "Chaque groupe \xAB 1-2-3-4 \xBB forme une mesure. Les chansons pop vont par blocs de 4 : intro de 4 ou 8 mesures, couplet de 8 ou 16\u2026",
+          "Cette structure s'appelle la grille. Le blues, par exemple, tient sur une grille de 12 mesures en 4/4. Conna\xEEtre la grille, c'est savoir o\xF9 tu en es."
+        ] },
+        { type: "question", quizId: "q-rhy-29" },
+        { type: "a-toi", titre: "Compte tes mesures", consigne: "Sur Mi mineur, quatre coups vers le bas par mesure, le 1 un peu plus appuy\xE9. Compte \xE0 voix haute \xAB 1-2-3-4, 2-2-3-4, 3-2-3-4\u2026 \xBB : num\xE9ro de mesure, puis temps. Change pour La mineur toutes les 4 mesures.", bloc: { type: "strum_pattern", caption: "4 noires vers le bas \u2014 compte \xAB 1, 2, 3, 4 \xBB", data: { pattern: ["B", "B", "B", "B"], beats: 4, style: "folk", bpm: 70 } }, bpm: 70, minuteur: 120 },
+        { type: "idee", titre: "Les autres mesures", texte: [
+          "3/4 : trois temps, la valse. 6/8 : six croches, ressenties en deux groupes de trois. 12/8 : quatre groupes de trois, le slow blues.",
+          "Plus rares : 5/4 (\xAB Take Five \xBB) ou 7/4 (\xAB Money \xBB de Pink Floyd), qu'on \xE9coute en comptant pour sentir l'asym\xE9trie."
+        ] },
+        { type: "question", quizId: "q-rhy-30" },
+        { type: "recap", points: [
+          "4/4 : en haut le nombre de temps, en bas la valeur du temps (la noire).",
+          "Temps forts 1 et 3 ; le backbeat accentue 2 et 4.",
+          "Les chansons s'organisent en grilles de 4, 8, 12 ou 16 mesures."
+        ] }
+      ],
+      quiz: ["q-base-14", "q-rhy-29", "q-rhy-30", "q-base-14-app"]
+    };
+    quiz96 = [
+      { id: "q-base-14", courseId: "rhythm", lessonId: "rhy-c1-02", lvl: 1, q: "Dans une signature en 4/4, que repr\xE9sente le chiffre du haut ?", o: ["La dur\xE9e de chaque note dans la mesure", "Le nombre de temps par mesure", "Le tempo, en battements par minute", "Le nombre de mesures du morceau"], a: 1, exp: "Le chiffre du haut donne le nombre de temps par mesure, celui du bas l'unit\xE9 de temps (4 = la noire).", xp: 30 },
+      { id: "q-base-14-app", courseId: "rhythm", lessonId: "rhy-c1-02", lvl: 1, q: "Une chanson est \xE9crite en 3/4. Combien de temps compte chaque mesure ?", o: ["Trois", "Quatre", "Deux", "Six"], a: 0, exp: "Le chiffre du haut donne le nombre de temps : 3/4 = trois temps par mesure, une noire chacun. C'est la mesure de la valse.", xp: 25 },
+      { id: "q-rhy-29", courseId: "rhythm", lessonId: "rhy-c1-02", lvl: 2, q: "Dans une signature 4/4, que signifie le chiffre du bas ?", o: ["Le nombre de mesures du morceau", "Le tempo auquel jouer", "L'unit\xE9 de temps : la noire", "Le nombre de cordes \xE0 gratter"], a: 2, exp: "Le haut dit combien de temps par mesure, le bas dit quelle valeur vaut un temps \u2014 4 d\xE9signe la noire. En 6/8, le 8 d\xE9signe la croche, et tout le comptage change.", xp: 30 },
+      { id: "q-rhy-30", courseId: "rhythm", lessonId: "rhy-c1-02", lvl: 2, q: "Comment remplit-on exactement une mesure de 3/4 ?", o: ["Trois noires", "Quatre noires", "Six noires", "Trois blanches"], a: 0, exp: "3/4 : 3 temps par mesure, la noire valant un temps. Trois noires, ou une blanche et une noire, ou une blanche point\xE9e. C'est la mesure de la valse.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/rhythm/rhy-c1-03.js
+var rhy_c1_03_exports = {};
+__export(rhy_c1_03_exports, {
+  default: () => rhy_c1_03_default,
+  quiz: () => quiz97
+});
+var rhy_c1_03_default, quiz97;
+var init_rhy_c1_03 = __esm({
+  "src/content/cours/rhythm/rhy-c1-03.js"() {
+    rhy_c1_03_default = {
+      id: "rhy-c1-03",
+      level: 2,
+      title: "Le m\xE9tronome : ton meilleur ennemi",
+      duration: 7,
+      gropiTip: "Note dans un carnet le tempo propre de chaque exercice, avec la date. En relisant ton mois (60, 65, 70 BPM\u2026), tu verras noir sur blanc que les petits paliers finissent par payer.",
+      cartes: [
+        { type: "idee", titre: "Ce que le clic r\xE9v\xE8le", texte: [
+          "Sans rep\xE8re ext\xE9rieur, on acc\xE9l\xE8re dans les passages faciles et on ralentit dans les difficiles. C'est naturel, et on ne l'entend pas.",
+          "Le m\xE9tronome montre ces \xE9carts sans piti\xE9. S'en servir pour progresser, au lieu de les cacher, c'est \xE7a, le travail s\xE9rieux."
+        ] },
+        { type: "question", quizId: "q-rhy-13" },
+        { type: "idee", titre: "Commence lentement", texte: [
+          "Joue toujours au tempo o\xF9 tout est propre. Une erreur ? Ralentis.",
+          "D\xE9marre vers 50 \xE0 60 % du tempo vis\xE9. Quand c'est net plusieurs fois de suite, monte de 5 BPM et recommence. La vitesse vient de la r\xE9p\xE9tition propre, pas de l'effort."
+        ] },
+        { type: "question", quizId: "q-rhy-14" },
+        { type: "a-toi", titre: "Trouve ton tempo propre", consigne: "Encha\xEEne Mi mineur et Do, quatre coups vers le bas chacun, au clic. Quatre tours sans accroc ? Monte de 5 BPM. Un changement en retard ? Redescends. Note le tempo o\xF9 tu t'arr\xEAtes : c'est ton tempo propre du jour.", bloc: { type: "chord_diagram", caption: "Do majeur (C) \u2014 x32010, cordes 5 \xE0 1", data: { name: "C", frets: [-1, 3, 2, 0, 1, 0], fingers: [0, 3, 2, 0, 1, 0], startFret: 1 } }, bpm: 60, minuteur: 120 },
+        { type: "idee", titre: "Le clic sur 2 et 4", texte: [
+          "R\xE8gle le m\xE9tronome \xE0 la moiti\xE9 de ton tempo et entends chaque clic comme le temps 2 ou le 4. Pour jouer \xE0 80, clic \xE0 40.",
+          "Les temps 1 et 3, c'est toi qui les portes. Tu sens le backbeat, comme avec un batteur."
+        ], bloc: {
+          type: "rhythm_grid",
+          caption: "M\xE9tronome sur 2 et 4 \u2014 les temps 1 et 3 sont \xE0 imaginer",
+          data: {
+            beats: 4,
+            subdivision: 4,
+            accents: [1, 3],
+            muted: [0, 2],
+            label: "(1) \xB7 CLIC \xB7 (3) \xB7 CLIC \u2014 le clic ne marque que 2 et 4"
+          }
+        } },
+        { type: "question", quizId: "q-rhy-15" },
+        { type: "a-toi", titre: "Le clic sur 2 et 4", consigne: "Clic \xE0 40 BPM, entendu comme 2 et 4 : tu joues donc \xE0 80. Sur Mi mineur, un coup vers le bas par temps, en comptant \xAB 1, 2, 3, 4 \xBB ; le clic doit tomber sur 2 et 4. Perdu ? Arr\xEAte, recompte, reprends.", bpm: 40, minuteur: 60 },
+        { type: "idee", titre: "Pour plus tard", texte: [
+          "Deux variantes plus dures. Un clic par mesure : \xE0 30 BPM pour jouer \xE0 120, tu comptes 1-2-3-4 entre deux clics.",
+          "Le clic en contretemps : chaque clic devient un \xAB et \xBB. Id\xE9al pour le groove syncop\xE9. Et pour tout le reste, cinq minutes de clic par jour suffisent \xE0 transformer ton sens du temps."
+        ] },
+        { type: "recap", points: [
+          "Le m\xE9tronome r\xE9v\xE8le o\xF9 tu acc\xE9l\xE8res et o\xF9 tu ralentis.",
+          "Tempo propre d'abord, puis paliers de 5 BPM.",
+          "Clic sur 2 et 4 : c'est toi qui portes les temps 1 et 3."
+        ] }
+      ],
+      quiz: ["q-rhy-13", "q-rhy-14", "q-rhy-15"]
+    };
+    quiz97 = [
+      { id: "q-rhy-13", courseId: "rhythm", lessonId: "rhy-c1-03", lvl: 1, q: "\xC0 quoi sert d'abord un m\xE9tronome quand on travaille ?", o: ["\xC0 rendre le jeu plus m\xE9canique", "\xC0 compter les mesures d'un morceau", "\xC0 r\xE9v\xE9ler o\xF9 on acc\xE9l\xE8re ou on ralentit", "\xC0 jouer plus vite qu'on ne le pourrait"], a: 2, exp: "Le m\xE9tronome ne te fait pas jouer plus vite : il te montre o\xF9 tu d\xE9cales. On acc\xE9l\xE8re presque toujours dans les passages faciles et on ralentit dans les difficiles \u2014 sans r\xE9f\xE9rence ext\xE9rieure, on ne l'entend pas.", xp: 25 },
+      { id: "q-rhy-14", courseId: "rhythm", lessonId: "rhy-c1-03", lvl: 2, q: "Un passage ne passe pas \xE0 100 bpm. Que fais-tu ?", o: ["Tu sautes le passage pour y revenir plus tard", "Tu r\xE9p\xE8tes \xE0 100 jusqu'\xE0 ce que \xE7a finisse par passer", "Tu joues plus fort pour te donner de l'\xE9lan", "Tu descends au tempo o\xF9 c'est propre, puis tu montes par paliers"], a: 3, exp: "R\xE9p\xE9ter \xE0 un tempo o\xF9 c'est rat\xE9, c'est m\xE9moriser l'erreur. On descend jusqu'au tempo o\xF9 les notes sont justes et r\xE9guli\xE8res, puis on monte de 5 en 5. Plus lent sur une s\xE9ance, bien plus rapide sur un mois.", xp: 30 },
+      { id: "q-rhy-15", courseId: "rhythm", lessonId: "rhy-c1-03", lvl: 3, q: "Mettre le m\xE9tronome sur les temps 2 et 4 seulement, \xE7a sert \xE0\u2026", o: ["Renforcer sa pulsation int\xE9rieure", "R\xE9duire le bruit pendant le travail", "Simplifier le comptage des mesures", "Pouvoir jouer deux fois plus vite"], a: 0, exp: "Avec un clic seulement sur 2 et 4, c'est toi qui portes les temps 1 et 3. C'est l'exercice de tempo le plus r\xE9v\xE9lateur qui soit \u2014 et c'est aussi la place du clic dans le jazz et la soul.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/rhythm/rhy-routine-01.js
+var rhy_routine_01_exports = {};
+__export(rhy_routine_01_exports, {
+  default: () => rhy_routine_01_default,
+  quiz: () => quiz98
+});
+var LAM2, rhy_routine_01_default, quiz98;
+var init_rhy_routine_01 = __esm({
+  "src/content/cours/rhythm/rhy-routine-01.js"() {
+    LAM2 = { type: "chord_diagram", caption: "La mineur (Am) \u2014 x02210", data: { name: "Am", frets: [-1, 0, 2, 2, 1, 0], fingers: [0, 0, 2, 3, 1, 0], startFret: 1 } };
+    rhy_routine_01_default = {
+      id: "rhy-routine-01",
+      level: 2,
+      title: "Ta routine de 15 minutes et comment travailler un morceau",
+      duration: 7,
+      gropiTip: "Laisse ta guitare sortie, sur un stand, plut\xF4t que dans sa housse : moins il y a d'obstacles entre toi et elle, plus tes 15 minutes deviennent une habitude.",
+      cartes: [
+        { type: "idee", titre: "Un peu chaque jour", texte: [
+          "Tes doigts et ton oreille progressent aussi pendant le repos qui suit la pratique. Quinze minutes chaque jour valent mieux qu'une longue s\xE9ance par semaine.",
+          "Le plus dur n'est pas de jouer longtemps : c'est de prendre la guitare."
+        ] },
+        { type: "idee", titre: "La routine en quatre temps", texte: [
+          "3 min : \xE9chauffement, doigts et poignets. 4 min : changements d'accords \xE0 la minute. 5 min : ta le\xE7on ou ton morceau du moment. 3 min : joue pour le plaisir, sans t'arr\xEAter."
+        ] },
+        { type: "question", quizId: "q-rhy-routine-new-01" },
+        {
+          type: "a-toi",
+          titre: "La minute de changements",
+          consigne: "Choisis deux accords qui te r\xE9sistent, par exemple Do et La mineur. Une minute de changements au clic, un coup par accord, et note ton score : c'est le deuxi\xE8me temps de ta routine, \xE0 refaire chaque jour.",
+          bloc: LAM2,
+          bpm: 60,
+          minuteur: 60
+        },
+        { type: "idee", titre: "Un morceau : lent d'abord", texte: [
+          "Dans Outils \u203A Morceaux, baisse la vitesse jusqu'\xE0 jouer sans une seule erreur, m\xEAme \xE0 50 %.",
+          "Lent et juste, c'est le chemin le plus court vers rapide et juste."
+        ] },
+        { type: "idee", titre: "La boucle A\u2013B", texte: [
+          "Rep\xE8re le passage qui coince : deux \xE0 quatre mesures, pas plus. Choisis-le en A\u2013B et active \xAB En boucle \xBB : rejoue-le jusqu'\xE0 ce qu'il roule.",
+          "Puis recolle-le au reste du morceau."
+        ] },
+        { type: "question", quizId: "q-rhy-routine-new-02" },
+        { type: "idee", titre: "Puis remonte le tempo", texte: [
+          "Trois passages propres d'affil\xE9e ? Monte la vitesse de 5 \xE0 10 %. Une erreur ? Redescends d'un cran.",
+          "Au fil des jours, tu atteins 100 % presque sans t'en rendre compte."
+        ] },
+        { type: "question", quizId: "q-rhy-routine-new-03" },
+        { type: "recap", points: [
+          "15 minutes par jour : \xE9chauffement, changements, le\xE7on ou morceau, jeu libre.",
+          "Un morceau se travaille lent et juste, le passage difficile en boucle A\u2013B.",
+          "Trois fois propre : +5 \xE0 10 % de vitesse ; une erreur : on redescend."
+        ] }
+      ],
+      quiz: ["q-rhy-routine-new-01", "q-rhy-routine-new-02", "q-rhy-routine-new-03"]
+    };
+    quiz98 = [
+      { id: "q-rhy-routine-new-01", courseId: "rhythm", lessonId: "rhy-routine-01", lvl: 1, q: "Quelle fa\xE7on de pratiquer fait le plus progresser ?", o: ["15 minutes chaque jour", "Une heure le dimanche", "Deux heures une fois par mois", "Seulement quand l'envie vient"], a: 0, exp: "Des s\xE9ances courtes et r\xE9guli\xE8res : la main et l'oreille consolident entre deux s\xE9ances, et l'habitude s'installe.", xp: 25 },
+      { id: "q-rhy-routine-new-02", courseId: "rhythm", lessonId: "rhy-routine-01", lvl: 1, q: "Deux mesures d'un morceau te font tr\xE9bucher \xE0 chaque fois. Que fais-tu ?", o: ["Tu les boucles en A\u2013B, plus lentement", "Tu rejoues tout le morceau du d\xE9but", "Tu les joues plus vite pour les passer", "Tu les sautes et tu continues"], a: 0, exp: "On isole le passage difficile, on le ralentit et on le boucle jusqu'\xE0 ce qu'il roule, puis on le recolle au reste.", xp: 25 },
+      { id: "q-rhy-routine-new-03", courseId: "rhythm", lessonId: "rhy-routine-01", lvl: 2, q: "Tu joues ton passage trois fois sans faute \xE0 70 % de la vitesse. \xC9tape suivante ?", o: ["Passer \xE0 75 ou 80 %", "Passer directement \xE0 100 %", "Rester \xE0 70 % une semaine", "Revenir \xE0 50 %"], a: 0, exp: "On monte par petits paliers de 5 \xE0 10 % : assez pour progresser, pas assez pour perdre la propret\xE9.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/rhythm/rhy-c2-01.js
+var rhy_c2_01_exports = {};
+__export(rhy_c2_01_exports, {
+  default: () => rhy_c2_01_default,
+  quiz: () => quiz99
+});
+var NOIRES, rhy_c2_01_default, quiz99;
+var init_rhy_c2_01 = __esm({
+  "src/content/cours/rhythm/rhy-c2-01.js"() {
+    NOIRES = {
+      type: "rhythm_grid",
+      caption: "Noire \u2014 1 attaque par temps",
+      data: {
+        beats: 4,
+        subdivision: 4,
+        highlights: [0, 1, 2, 3],
+        label: "4 attaques sur 4 temps"
+      }
+    };
+    rhy_c2_01_default = {
+      id: "rhy-c2-01",
+      level: 3,
+      title: "Rondes, blanches, noires : les valeurs de base",
+      duration: 7,
+      gropiTip: "Retiens la blanche point\xE9e : 2 temps + la moiti\xE9 (1 temps) = 3 temps, soit une mesure enti\xE8re de 3/4. Tiens-en une en comptant \xAB 1-2-3 \xBB \xE0 voix haute pour la sentir.",
+      cartes: [
+        { type: "idee", titre: "La noire : l'unit\xE9", texte: [
+          "Les valeurs rythmiques mesurent la dur\xE9e des sons. La r\xE9f\xE9rence en 4/4 : la noire, qui vaut 1 temps, un clic du m\xE9tronome.",
+          "\xC0 60 BPM, une noire dure une seconde ; \xE0 120 BPM, une demi-seconde."
+        ], bloc: NOIRES },
+        { type: "idee", titre: "La blanche : 2 temps", texte: [
+          "La blanche vaut 2 noires : deux blanches remplissent une mesure de 4/4.",
+          "Tiens la note pendant les deux temps, et rel\xE2che-la pile au moment de jouer la suivante."
+        ], bloc: {
+          type: "rhythm_grid",
+          caption: "Blanche \u2014 1 attaque toutes les 2 cases, la case grise reste tenue",
+          data: {
+            beats: 4,
+            subdivision: 4,
+            highlights: [0, 2],
+            muted: [1, 3],
+            label: "2 attaques, chacune tenue 2 temps"
+          }
+        } },
+        { type: "question", quizId: "q-rhy-25" },
+        { type: "idee", titre: "La ronde : 4 temps", texte: [
+          "La ronde vaut 4 temps : une seule note pour toute la mesure. \xC0 60 BPM, elle dure quatre secondes.",
+          "Les solos l'adorent pour tenir une note avec du vibrato ou un bend."
+        ], bloc: {
+          type: "rhythm_grid",
+          caption: "Ronde \u2014 1 seule attaque, tenue toute la mesure",
+          data: {
+            beats: 4,
+            subdivision: 4,
+            highlights: [0],
+            muted: [1, 2, 3],
+            label: "1 attaque, tenue 4 temps"
+          }
+        } },
+        { type: "question", quizId: "q-base-19" },
+        { type: "idee", titre: "Toujours la moiti\xE9", texte: [
+          "Chaque valeur vaut la moiti\xE9 de la pr\xE9c\xE9dente : ronde = 2 blanches = 4 noires = 8 croches = 16 doubles-croches.",
+          "On peut toujours diviser une valeur en deux."
+        ] },
+        { type: "idee", titre: "Le point", texte: [
+          "Un point apr\xE8s une note ajoute la moiti\xE9 de sa valeur. Noire point\xE9e : 1 temps et demi. Blanche point\xE9e : 3 temps.",
+          "Noire point\xE9e puis croche, longue-courte : c'est le balancement de base du shuffle."
+        ] },
+        { type: "question", quizId: "q-rhy-26" },
+        {
+          type: "a-toi",
+          titre: "Rondes, blanches, noires",
+          consigne: "Sur La (corde 5 \xE0 vide), au clic : 4 mesures en rondes, 4 en blanches, 4 en noires, puis redescends. Compte \xAB 1, 2, 3, 4 \xBB \xE0 voix haute. Le tempo ne bouge pas : seule la densit\xE9 change.",
+          bloc: NOIRES,
+          bpm: 60
+        },
+        { type: "recap", points: [
+          "Noire = 1 temps, blanche = 2, ronde = 4 (une mesure de 4/4).",
+          "Chaque valeur vaut la moiti\xE9 de la pr\xE9c\xE9dente.",
+          "Le point ajoute la moiti\xE9 : blanche point\xE9e = 3 temps."
+        ] }
+      ],
+      quiz: ["q-base-19", "q-rhy-25", "q-rhy-26"]
+    };
+    quiz99 = [
+      { id: "q-base-19", courseId: "rhythm", lessonId: "rhy-c2-01", lvl: 2, q: "En 4/4, combien de temps dure une ronde ?", o: ["2", "1", "4", "8"], a: 2, exp: "La ronde vaut 4 temps, la blanche 2, la noire 1. Chaque valeur vaut la moiti\xE9 de la pr\xE9c\xE9dente.", xp: 35 },
+      { id: "q-rhy-25", courseId: "rhythm", lessonId: "rhy-c2-01", lvl: 1, q: "Une mesure de 4/4 contient une blanche et une noire. Que manque-t-il pour la compl\xE9ter ?", o: ["Encore une noire", "Encore une blanche", "Une ronde enti\xE8re", "Rien, elle est pleine"], a: 0, exp: "Blanche (2 temps) + noire (1 temps) = 3 temps. Il en manque un : une noire.", xp: 25 },
+      { id: "q-rhy-26", courseId: "rhythm", lessonId: "rhy-c2-01", lvl: 2, q: "En 3/4, une blanche point\xE9e occupe\u2026", o: ["La moiti\xE9 de la mesure", "Deux mesures compl\xE8tes", "Un temps et demi seulement", "La mesure enti\xE8re"], a: 3, exp: "La blanche vaut 2 temps, le point en ajoute 1 : 3 temps, soit toute la mesure en 3/4. C'est l'accord tenu typique de la valse.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/rhythm/rhy-c2-02.js
+var rhy_c2_02_exports = {};
+__export(rhy_c2_02_exports, {
+  default: () => rhy_c2_02_default,
+  quiz: () => quiz100
+});
+var DOUBLES, rhy_c2_02_default, quiz100;
+var init_rhy_c2_02 = __esm({
+  "src/content/cours/rhythm/rhy-c2-02.js"() {
+    DOUBLES = {
+      type: "strum_pattern",
+      caption: "Balancier en doubles-croches \u2014 bas sur le chiffre et le \xAB et \xBB, haut sur le \xAB e \xBB et le \xAB a \xBB",
+      data: { pattern: ["B", "H", "B", "H", "B", "H", "B", "H", "B", "H", "B", "H", "B", "H", "B", "H"], beats: 4, style: "funk", bpm: 60 }
+    };
+    rhy_c2_02_default = {
+      id: "rhy-c2-02",
+      level: 4,
+      title: "Croches et doubles-croches",
+      duration: 8,
+      gropiTip: "Dis les syllabes \xE0 voix haute avant de jouer : \xAB 1 e et a \xBB \xE0 60 BPM. Ta main descend sur le chiffre et le \xAB et \xBB, remonte sur le \xAB e \xBB et le \xAB a \xBB. Toujours dans cet ordre.",
+      cartes: [
+        { type: "idee", titre: "La croche : un demi-temps", texte: [
+          "La croche vaut la moiti\xE9 d'une noire : 8 par mesure de 4/4.",
+          "On compte \xAB 1 et 2 et 3 et 4 et \xBB : les chiffres tombent sur les temps, les \xAB et \xBB entre eux, sur les contretemps."
+        ], bloc: {
+          type: "rhythm_grid",
+          caption: "1 mesure de croches en 4/4",
+          data: {
+            beats: 4,
+            subdivision: 8,
+            accents: [0, 2, 4, 6],
+            label: "1 \xB7 et \xB7 2 \xB7 et \xB7 3 \xB7 et \xB7 4 \xB7 et"
+          }
+        } },
+        { type: "question", quizId: "q-rhy-01" },
+        { type: "idee", titre: "La double-croche : un quart de temps", texte: [
+          "La moiti\xE9 d'une croche : 16 par mesure. On compte \xAB 1 e et a, 2 e et a\u2026 \xBB.",
+          "Chaque syllabe nomme un emplacement : c'est ce qui permet de placer une note exactement o\xF9 tu veux."
+        ], bloc: {
+          type: "rhythm_grid",
+          caption: "1 mesure de doubles-croches en 4/4",
+          data: {
+            beats: 4,
+            subdivision: 16,
+            accents: [0, 4, 8, 12],
+            label: "1 e et a \xB7 2 e et a \xB7 3 e et a \xB7 4 e et a"
+          }
+        } },
+        { type: "question", quizId: "q-rhy-17-app" },
+        { type: "idee", titre: "Le balancier en croches", texte: [
+          "Bas sur chaque chiffre, haut sur chaque \xAB et \xBB. Les coups hauts comptent autant que les bas.",
+          "Travaille-le \xE0 60 BPM sur La mineur jusqu'\xE0 une r\xE9gularit\xE9 parfaite : c'est la base du rock et de la pop."
+        ] },
+        { type: "idee", titre: "Le balancier en doubles-croches", texte: [
+          "Base du funk : 16 allers-retours par mesure, un balancier deux fois plus rapide.",
+          "On ne touche les cordes qu'aux coups choisis ; le mouvement, lui, ne s'arr\xEAte jamais, comme un essuie-glace."
+        ], bloc: DOUBLES },
+        { type: "question", quizId: "q-rhy-02" },
+        {
+          type: "a-toi",
+          titre: "Noires, croches, doubles",
+          consigne: "Sur La mineur, au clic : 2 mesures de noires, 2 de croches, 2 de doubles-croches, puis le chemin inverse, sans t'arr\xEAter. Compte \xE0 voix haute : \xAB 1, 2\u2026 \xBB, \xAB 1 et\u2026 \xBB, \xAB 1 e et a\u2026 \xBB.",
+          bloc: DOUBLES,
+          bpm: 70
+        },
+        { type: "question", quizId: "q-rhy-18" },
+        { type: "recap", points: [
+          "Croche = un demi-temps (8 par mesure), double-croche = un quart (16).",
+          "On compte \xAB 1 et \xBB en croches, \xAB 1 e et a \xBB en doubles.",
+          "Le balancier ne s'arr\xEAte jamais : on choisit seulement quand toucher."
+        ] }
+      ],
+      quiz: ["q-rhy-01", "q-rhy-02", "q-rhy-16", "q-rhy-17", "q-rhy-18", "q-rhy-17-app"]
+    };
+    quiz100 = [
+      { id: "q-rhy-01", courseId: "rhythm", lessonId: "rhy-c2-02", lvl: 1, q: "Une mesure \xE0 4/4 contient combien de croches ?", o: ["4", "8", "6", "16"], a: 1, exp: "4/4 = 4 noires par mesure. 1 noire = 2 croches. Donc 8 croches par mesure de 4/4.", xp: 25 },
+      { id: "q-rhy-02", courseId: "rhythm", lessonId: "rhy-c2-02", lvl: 2, q: "Combien de doubles-croches dans une mesure de 4/4 ?", o: ["8", "12", "16", "24"], a: 2, exp: "4/4 = 4 noires. 1 noire = 4 doubles-croches. Donc 16 doubles-croches par mesure.", xp: 30 },
+      { id: "q-rhy-16", courseId: "rhythm", lessonId: "rhy-c2-02", lvl: 1, q: "Une croche dure combien par rapport \xE0 une noire ?", o: ["Le double", "La moiti\xE9", "Le quart", "La m\xEAme chose"], a: 1, exp: "Chaque valeur vaut la moiti\xE9 de la pr\xE9c\xE9dente : ronde, blanche, noire, croche, double-croche. Deux croches remplissent exactement un temps en 4/4.", xp: 25 },
+      { id: "q-rhy-17", courseId: "rhythm", lessonId: "rhy-c2-02", lvl: 2, q: "Comment compte-t-on \xE0 voix haute une mesure de doubles-croches ?", o: ["1-et, 2-et, 3-et, 4-et", "1-2-3-4, en acc\xE9l\xE9rant", "1-e-et-a, 2-e-et-a\u2026", "1-2-3, 1-2-3, 1-2-3"], a: 2, exp: "Quatre syllabes par temps, une par double-croche. Ce comptage n'est pas d\xE9coratif : il donne un nom \xE0 chaque emplacement, et c'est ce qui permet de placer une note exactement o\xF9 tu veux.", xp: 30 },
+      { id: "q-rhy-17-app", courseId: "rhythm", lessonId: "rhy-c2-02", lvl: 2, q: "En comptant \xAB 1 e et a \xBB, sur quelle syllabe tombe la 3e double-croche du temps ?", o: ["Sur \xAB et \xBB", "Sur \xAB e \xBB", "Sur \xAB a \xBB", "Sur le chiffre"], a: 0, exp: "1 (1re), e (2e), et (3e), a (4e) : la 3e double-croche tombe sur \xAB et \xBB, exactement l\xE0 o\xF9 tomberait la 2e croche.", xp: 30 },
+      { id: "q-rhy-18", courseId: "rhythm", lessonId: "rhy-c2-02", lvl: 3, q: "Une croche point\xE9e suivie d'une double-croche occupe\u2026", o: ["Deux temps, soit la moiti\xE9 d'une mesure", "Un temps et demi, comme la blanche point\xE9e", "Un demi-temps, comme deux doubles-croches", "Un temps, d\xE9coup\xE9 en trois quarts puis un quart"], a: 3, exp: "Le point ajoute la moiti\xE9 de la valeur : la croche point\xE9e vaut trois doubles-croches, la double qui suit en vaut une. Total : un temps. C'est le rythme de base du rock des ann\xE9es 50 et de quantit\xE9 de riffs.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/rhythm/rhy-c2-03.js
+var rhy_c2_03_exports = {};
+__export(rhy_c2_03_exports, {
+  default: () => rhy_c2_03_default,
+  quiz: () => quiz101
+});
+var TRIOLETS, rhy_c2_03_default, quiz101;
+var init_rhy_c2_03 = __esm({
+  "src/content/cours/rhythm/rhy-c2-03.js"() {
+    TRIOLETS = {
+      type: "rhythm_grid",
+      caption: "1 mesure en triolets de croches \u2014 4 groupes de 3 notes \xE9gales",
+      data: {
+        beats: 4,
+        subdivision: 12,
+        accents: [0, 3, 6, 9],
+        counters: ["1", "trip", "let", "2", "trip", "let", "3", "trip", "let", "4", "trip", "let"],
+        label: "1-trip-let \xB7 2-trip-let \xB7 3-trip-let \xB7 4-trip-let"
+      }
+    };
+    rhy_c2_03_default = {
+      id: "rhy-c2-03",
+      level: 6,
+      title: "Les triolets : le feel ternaire",
+      duration: 8,
+      gropiTip: "Pour sentir le triolet, dis \xAB cho-co-lat \xBB sur chaque clic du m\xE9tronome \xE0 60 BPM : trois syllabes \xE9gales par temps, l'appui sur \xAB cho \xBB. D\xE8s qu'une syllabe tra\xEEne, ce n'est plus un triolet.",
+      cartes: [
+        { type: "idee", titre: "Trois dans un temps", texte: [
+          "Un triolet de croches, c'est 3 notes \xE9gales dans un temps, au lieu de 2. Sur une mesure de 4/4 : 12 notes.",
+          "On compte \xAB 1-trip-let, 2-trip-let\u2026 \xBB ou \xAB tri-o-let \xBB : une syllabe par note, l'appui sur la premi\xE8re."
+        ], bloc: TRIOLETS },
+        { type: "question", quizId: "q-rhy-31" },
+        { type: "idee", titre: "Binaire ou ternaire", texte: [
+          "Binaire : chaque temps coup\xE9 en 2. Un son r\xE9gulier, carr\xE9 : le rock et la pop, le plus souvent.",
+          "Ternaire : chaque temps coup\xE9 en 3. Un son qui balance : le blues, le swing, le shuffle."
+        ] },
+        { type: "idee", titre: "Le shuffle", texte: [
+          "Dans chaque triolet, on ne joue que la 1re et la 3e note. La premi\xE8re dure deux tiers du temps, la seconde un tiers : une paire longue-courte.",
+          "Le swing jazz assouplit ce rapport selon le tempo et le musicien : \xE7a s'imite \xE0 l'\xE9coute."
+        ] },
+        {
+          type: "a-toi",
+          titre: "Binaire, ternaire, sans s'arr\xEAter",
+          consigne: "Sur une corde \xE0 vide, au clic : 2 mesures de croches (\xAB 1 et 2 et \xBB), puis 2 mesures de triolets (\xAB 1-trip-let \xBB), en boucle. Passe de l'un \xE0 l'autre sans t'arr\xEAter. Si tu te perds, ralentis.",
+          bloc: TRIOLETS,
+          bpm: 60,
+          minuteur: 120
+        },
+        { type: "idee", titre: "Ternaire sans triolets \xE9crits", texte: [
+          "Souvent, la partition note des croches normales et indique \xAB shuffle \xBB ou \xAB swing \xBB en t\xEAte : \xE0 toi de jouer ternaire.",
+          "Les mesures compos\xE9es le notent d'office. En 6/8, deux groupes de 3 croches, \xAB 1-2-3 4-5-6 \xBB, accents sur 1 et 4. En 12/8 : quatre groupes de 3."
+        ] },
+        { type: "question", quizId: "q-rhy-04" },
+        { type: "idee", titre: "3 contre 2", texte: [
+          "Quand tu joues des triolets pendant que la basse joue des croches, deux d\xE9coupages du m\xEAme temps cohabitent : c'est un polyrythme.",
+          "\xC0 ne pas confondre avec le polym\xE8tre, qui superpose deux signatures, par exemple 4/4 et 3/4."
+        ] },
+        { type: "question", quizId: "q-logic-06" },
+        { type: "recap", points: [
+          "Triolet de croches = 3 notes \xE9gales par temps : \xAB 1-trip-let \xBB.",
+          "Shuffle = 1re et 3e note du triolet : long-court.",
+          "6/8 et 12/8 sont ternaires d'office : groupes de 3 croches."
+        ] }
+      ],
+      quiz: ["q-rhy-03", "q-rhy-04", "q-logic-06", "q-rhy-31", "q-rhy-32"]
+    };
+    quiz101 = [
+      { id: "q-rhy-03", courseId: "rhythm", lessonId: "rhy-c2-03", lvl: 2, q: "Un triolet de croches contient combien de notes par temps ?", o: ["2", "4", "6", "3"], a: 3, exp: "Triolet de croches = 3 notes \xE9gales sur 1 temps. Subdivision impaire. Base du shuffle blues, du swing, du feel ternaire.", xp: 30 },
+      { id: "q-rhy-04", courseId: "rhythm", lessonId: "rhy-c2-03", lvl: 3, q: "En 6/8, on compte typiquement\u2026", o: ["2 groupes de 3 croches", "6 temps \xE9gaux, comme en 6/4", "3 noires par mesure", "6 noires par mesure"], a: 0, exp: "6/8 se compte en 2 grands temps de 3 croches : '1-2-3 4-5-6' avec accents sur 1 et 4. Feel ternaire. Folk celtique, ballades.", xp: 45 },
+      { id: "q-logic-06", courseId: "rhythm", lessonId: "rhy-c2-03", lvl: 2, q: "Tu joues des triolets pendant que la basse joue des croches. Comment s'appelle cette superposition ?", o: ["Un polyrythme 3 contre 2", "Un polym\xE8tre 3/4 contre 4/4", "Une syncope sur les \xAB et \xBB", "Un shuffle jou\xE9 en binaire"], a: 0, exp: "M\xEAme tempo, deux d\xE9coupages diff\xE9rents du temps : 3 notes contre 2. C'est un polyrythme. Le polym\xE8tre, lui, superpose deux signatures, donc des mesures de longueurs diff\xE9rentes.", xp: 50 },
+      { id: "q-rhy-31", courseId: "rhythm", lessonId: "rhy-c2-03", lvl: 2, q: "Comment compte-t-on un triolet de croches \xE0 voix haute ?", o: ["1-o-let, 2-o-let", "1-et, 2-et, 3-et", "1-e-et-a, 2-e-et-a", "1-2-3-4"], a: 0, exp: "\xAB Tri-o-let \xBB ou \xAB 1-o-let \xBB : trois syllabes r\xE9guli\xE8res par temps. Prononcer le d\xE9coupage est le moyen le plus fiable de sentir un ternaire quand on vient d'un binaire.", xp: 30 },
+      { id: "q-rhy-32", courseId: "rhythm", lessonId: "rhy-c2-03", lvl: 3, q: "Quelle est la diff\xE9rence entre jouer en 12/8 et jouer des triolets en 4/4 ?", o: ["Le 12/8 se joue n\xE9cessairement plus vite", "Aucune \xE0 l'oreille : seule l'\xE9criture change", "Le 12/8 compte quatre temps de moins", "Le 12/8 se joue aux doigts, sans m\xE9diator"], a: 1, exp: "Les deux donnent quatre temps subdivis\xE9s en trois. La diff\xE9rence est d'\xE9criture et d'intention : on note en 12/8 quand le ternaire est la norme du morceau, et en triolets quand c'est un \xE9cart ponctuel dans un contexte binaire.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/rhythm/rhy-c2-04.js
+var rhy_c2_04_exports = {};
+__export(rhy_c2_04_exports, {
+  default: () => rhy_c2_04_default,
+  quiz: () => quiz102
+});
+var SILENCE_ET_DU_2, rhy_c2_04_default, quiz102;
+var init_rhy_c2_04 = __esm({
+  "src/content/cours/rhythm/rhy-c2-04.js"() {
+    SILENCE_ET_DU_2 = {
+      type: "rhythm_grid",
+      caption: "Silence rythmique sur le 'et' du 2 \u2014 la case grise ne sonne pas",
+      data: {
+        beats: 4,
+        subdivision: 8,
+        accents: [0, 2, 4, 6],
+        muted: [3],
+        label: "1 \xB7 et \xB7 2 \xB7 [silence] \xB7 3 \xB7 et \xB7 4 \xB7 et"
+      }
+    };
+    rhy_c2_04_default = {
+      id: "rhy-c2-04",
+      level: 4,
+      title: "Les silences : la musique dans le vide",
+      duration: 7,
+      gropiTip: "Un silence se joue aussi pr\xE9cis\xE9ment qu'une note : sur le pattern du cours, \xE9touffe l'accord pile sur le \xAB et \xBB du 2, et relance pile sur le 3. Compte le silence \xE0 voix basse.",
+      cartes: [
+        { type: "idee", titre: "Chaque valeur a son silence", texte: [
+          "Un silence bien plac\xE9 p\xE8se autant qu'une note : en jazz, on parle d'\xAB espace \xBB.",
+          "Soupir : une noire. Demi-soupir : une croche. Quart de soupir : une double-croche. Demi-pause : deux temps. Pause : une mesure enti\xE8re."
+        ] },
+        { type: "question", quizId: "q-rhy-49-app" },
+        { type: "idee", titre: "Couper le son", texte: [
+          "Deux gestes. La paume droite se pose sur les cordes juste apr\xE8s l'attaque.",
+          "Ou le doigt gauche rel\xE2che sa pression sans quitter la corde : la note s'\xE9teint aussit\xF4t. Plus rapide, parfait pour les silences courts d'un riff."
+        ] },
+        { type: "question", quizId: "q-rhy-50" },
+        { type: "idee", titre: "Un silence \xE9crit", texte: [
+          "Un silence rythmique fait partie du riff : il se place aussi pr\xE9cis\xE9ment qu'une note.",
+          "Ici, l'accord s'\xE9teint pile sur le \xAB et \xBB du 2 et repart sur le 3."
+        ], bloc: SILENCE_ET_DU_2 },
+        { type: "idee", titre: "Le ghost strum", texte: [
+          "Pendant le silence, la main droite continue son balancier sans toucher les cordes : le groove reste vivant.",
+          "En solo, un silence apr\xE8s une phrase intense cr\xE9e une attente, et la note suivante frappe plus fort."
+        ] },
+        { type: "question", quizId: "q-rhy-51" },
+        {
+          type: "a-toi",
+          titre: "Joue le silence",
+          consigne: "Sur La mineur, au clic : des croches, avec l'accord \xE9touff\xE9 pile sur le \xAB et \xBB du 2, par la paume ou en rel\xE2chant les doigts. Ta main droite remonte quand m\xEAme, dans le vide. Compte \xAB 1 et 2 chut 3 et 4 et \xBB.",
+          bloc: SILENCE_ET_DU_2,
+          bpm: 60,
+          minuteur: 60
+        },
+        { type: "question", quizId: "q-rhy-p34-01" },
+        { type: "recap", points: [
+          "Soupir = une noire, demi-soupir = une croche, pause = une mesure.",
+          "Pour couper : paume droite sur les cordes, ou doigt gauche qui rel\xE2che.",
+          "Pendant le silence, la main droite continue son balancier."
+        ] }
+      ],
+      quiz: ["q-rhy-49", "q-rhy-50", "q-rhy-51", "q-rhy-02", "q-rhy-p34-01", "q-rhy-49-app"]
+    };
+    quiz102 = [
+      { id: "q-rhy-49", courseId: "rhythm", lessonId: "rhy-c2-04", lvl: 1, q: "Quelle dur\xE9e vaut un soupir ?", o: ["Une croche", "Une blanche", "Une ronde", "Une noire"], a: 3, exp: "Soupir = silence d'une noire. Demi-soupir = une croche, demi-pause = 2 temps, pause = une mesure enti\xE8re.", xp: 30 },
+      { id: "q-rhy-49-app", courseId: "rhythm", lessonId: "rhy-c2-04", lvl: 1, q: "Combien de soupirs faut-il pour remplir une mesure de 4/4 ?", o: ["Quatre", "Deux", "Huit", "Un seul"], a: 0, exp: "Un soupir vaut une noire, et une mesure de 4/4 contient quatre noires : quatre soupirs, autant qu'une pause.", xp: 25 },
+      { id: "q-rhy-50", courseId: "rhythm", lessonId: "rhy-c2-04", lvl: 1, q: "Comment couper une note proprement, sans bouger la main gauche ?", o: ["Rel\xE2cher la pression du doigt", "Gratter plus fort la corde suivante", "Appuyer plus fort sur la case", "Changer de position sur le manche"], a: 0, exp: "Sans d\xE9placer le doigt, rel\xE2che l\xE9g\xE8rement la pression : la note s'\xE9teint aussit\xF4t. L'autre technique : poser la paume droite sur les cordes.", xp: 30 },
+      { id: "q-rhy-51", courseId: "rhythm", lessonId: "rhy-c2-04", lvl: 2, q: "\xC0 quoi sert le ghost strum pendant un silence ?", o: ["\xC0 faire sonner les cordes \xE0 vide", "\xC0 garder le mouvement et le groove", "\xC0 accorder la guitare entre deux phrases", "\xC0 marquer la fin du morceau"], a: 1, exp: "La main droite continue son mouvement sans toucher les cordes : le groove reste vivant, m\xEAme quand rien ne sonne.", xp: 40 },
+      { id: "q-rhy-p34-01", courseId: "rhythm", lessonId: "rhy-c2-04", lvl: 2, q: "En 4/4, une mesure contient une demi-pause et une blanche. Combien de temps de silence ?", o: ["2 temps", "1 temps", "4 temps", "3 temps"], a: 0, exp: "La demi-pause vaut une blanche de silence : 2 temps. La blanche jou\xE9e occupe les 2 autres. Une pause, elle, ferait taire toute la mesure.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/rhythm/rhy-c3-01.js
+var rhy_c3_01_exports = {};
+__export(rhy_c3_01_exports, {
+  default: () => rhy_c3_01_default,
+  quiz: () => quiz103
+});
+var rhy_c3_01_default, quiz103;
+var init_rhy_c3_01 = __esm({
+  "src/content/cours/rhythm/rhy-c3-01.js"() {
+    rhy_c3_01_default = {
+      id: "rhy-c3-01",
+      level: 5,
+      title: "La syncope : d\xE9caler l'accent",
+      duration: 7,
+      gropiTip: "Tape du pied sur 1-2-3-4 et frappe dans tes mains uniquement sur les \xAB et \xBB. Si ton pied se met \xE0 suivre tes mains, ralentis \xE0 60 BPM : c'est lui qui doit tenir la pulsation.",
+      cartes: [
+        { type: "idee", titre: "L'accent d\xE9plac\xE9", texte: [
+          "Une syncope, c'est un accent sur un temps faible ou un contretemps, l\xE0 o\xF9 l'oreille ne l'attend pas.",
+          "Cette petite surprise cr\xE9e le groove du funk, du reggae, du jazz. Sans elle, le rythme sonne carr\xE9."
+        ] },
+        { type: "question", quizId: "q-rhy-05-app" },
+        { type: "idee", titre: "Jouer sur les \xAB et \xBB", texte: [
+          "Compte \xAB 1 et 2 et 3 et 4 et \xBB, puis joue seulement sur les \xAB et \xBB : l'accent glisse d'une croche.",
+          "La basse marque les temps, toi tu joues entre. C'est le principe du skank reggae."
+        ] },
+        { type: "idee", titre: "La syncope par tenue", texte: [
+          "Attaque sur un temps faible et tiens la note par-dessus le temps fort suivant, sans la rejouer.",
+          "Elle \xAB vole \xBB l'accent du temps fort. Tr\xE8s courant en bossa nova et en jazz."
+        ] },
+        { type: "idee", titre: "Le backbeat", texte: [
+          "En rock et en pop, la caisse claire frappe les temps faibles. Ces accents invers\xE9s sont la base rythmique du rock'n'roll.",
+          "Avec un batteur, sens-les et joue avec eux."
+        ] },
+        { type: "question", quizId: "q-rhy-53" },
+        { type: "idee", titre: "Un motif syncop\xE9", texte: [
+          "Accord sur 1, sur le \xAB et \xBB du 2, sur 3, sur le \xAB et \xBB du 4. Les temps 2 et 4 restent muets.",
+          "Compte \xE0 voix haute pour placer chaque coup. Une syncope n'est pas du hasard : c'est un d\xE9calage pr\xE9cis, r\xE9gulier dans son irr\xE9gularit\xE9."
+        ], bloc: {
+          type: "rhythm_grid",
+          caption: "Syncope classique \u2014 accents sur 1, 'et-du-2' et 3, 'et-du-4'",
+          data: {
+            beats: 4,
+            subdivision: 8,
+            highlights: [0, 3, 4, 7],
+            muted: [1, 2, 5, 6],
+            label: "1 \xB7 \u2013 \xB7 [et] \xB7 \u2013 \xB7 3 \xB7 \u2013 \xB7 [et] \xB7 \u2013"
+          }
+        } },
+        {
+          type: "a-toi",
+          titre: "Le motif sur La mineur",
+          consigne: "Sur La mineur, joue le motif : bas sur 1 et 3, haut sur les \xAB et \xBB du 2 et du 4. Entre les coups, la main continue d'aller et venir sans toucher les cordes. Compte \xAB 1 et 2 et 3 et 4 et \xBB \xE0 voix haute, au clic.",
+          bloc: { type: "strum_pattern", caption: "Bas sur 1 et 3, haut sur le \xAB et \xBB du 2 et du 4", data: { pattern: ["B", "-", "-", "H", "B", "-", "-", "H"], beats: 4, style: "folk", bpm: 60 } },
+          bpm: 60,
+          minuteur: 120
+        },
+        { type: "question", quizId: "q-rhy-52" },
+        { type: "recap", points: [
+          "Syncope : un accent sur un temps faible ou un contretemps.",
+          "Deux fa\xE7ons : jouer sur les \xAB et \xBB, ou tenir une note par-dessus le temps fort.",
+          "Le backbeat accentue les temps faibles : la base du rock."
+        ] }
+      ],
+      quiz: ["q-rhy-05", "q-rhy-52", "q-rhy-53", "q-rhy-05-app"]
+    };
+    quiz103 = [
+      { id: "q-rhy-05", courseId: "rhythm", lessonId: "rhy-c3-01", lvl: 2, q: "Une 'syncope' place l'accent sur\u2026", o: ["Le temps fort de chaque mesure", "Un temps faible ou un contretemps", "La toute fin de la mesure", "Le silence entre deux notes"], a: 1, exp: "Syncope = accent sur les temps faibles (les 'et' ou les 'e/a'). Source du groove en funk, jazz, reggae, R&B.", xp: 30 },
+      { id: "q-rhy-05-app", courseId: "rhythm", lessonId: "rhy-c3-01", lvl: 2, q: "Tu comptes \xAB 1 et 2 et 3 et 4 et \xBB. Quel accent cr\xE9e une syncope ?", o: ["Sur le \xAB et \xBB du 2", "Sur le 1", "Sur le 1 et le 3", "Sur chaque temps, \xE0 \xE9galit\xE9"], a: 0, exp: "Le \xAB et \xBB est un contretemps : l'oreille n'y attend pas d'accent. Le 1 et le 3 sont les appuis naturels de la mesure.", xp: 30 },
+      { id: "q-rhy-52", courseId: "rhythm", lessonId: "rhy-c3-01", lvl: 1, q: "En rock, sur quels temps la caisse claire frappe-t-elle le plus souvent ?", o: ["2 et 4", "1 et 3", "Seulement le 1", "Tous les \xAB et \xBB"], a: 0, exp: "C'est le backbeat : l'accent passe sur les temps faibles 2 et 4. Cette inversion des accents est la syncope de base du rock et de la pop.", xp: 30 },
+      { id: "q-rhy-53", courseId: "rhythm", lessonId: "rhy-c3-01", lvl: 2, q: "Tu joues un accord sur le \xAB et \xBB du 2 et tu le tiens par-dessus le temps 3. Qu'as-tu cr\xE9\xE9 ?", o: ["Une syncope par tenue", "Un triolet de croches", "Un backbeat sur le 3", "Un temps fort doubl\xE9"], a: 0, exp: "La note attaqu\xE9e sur le temps faible et tenue sur le temps fort lui \xAB vole \xBB son accent : c'est une syncope par tenue, typique de la bossa et du jazz.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/rhythm/rhy-doigts-01.js
+var rhy_doigts_01_exports = {};
+__export(rhy_doigts_01_exports, {
+  default: () => rhy_doigts_01_default,
+  quiz: () => quiz104
+});
+var TAB_AM, TAB_GRILLE, rhy_doigts_01_default, quiz104;
+var init_rhy_doigts_01 = __esm({
+  "src/content/cours/rhythm/rhy-doigts-01.js"() {
+    TAB_AM = {
+      type: "tab",
+      caption: "La mineur en p-i-m-a : basse au pouce, puis cordes 3, 2, 1",
+      text: "Tab \u2014 La mineur : corde 5 \xE0 vide (pouce), corde 3 case 2 (index), corde 2 case 1 (majeur), corde 1 \xE0 vide (annulaire). Deux fois par mesure, en croches.",
+      data: { lines: [
+        "e|------0-------0-|",
+        "B|----1-------1---|",
+        "G|--2-------2-----|",
+        "D|----------------|",
+        "A|0-------0-------|",
+        "E|----------------|"
+      ] }
+    };
+    TAB_GRILLE = {
+      type: "tab",
+      caption: "La mineur, Do, Sol, Mi mineur : seul le pouce change de corde",
+      text: "Tab \u2014 une mesure par accord, p-i-m-a deux fois. La mineur : basse corde 5 \xE0 vide. Do : basse corde 5 case 3. Sol : basse corde 6 case 3, corde 1 case 3. Mi mineur : basse corde 6 \xE0 vide, cordes aigu\xEBs \xE0 vide.",
+      data: { lines: [
+        "e|------0-------0-|------0-------0-|------3-------3-|------0-------0-|",
+        "B|----1-------1---|----1-------1---|----0-------0---|----0-------0---|",
+        "G|--2-------2-----|--0-------0-----|--0-------0-----|--0-------0-----|",
+        "D|----------------|----------------|----------------|----------------|",
+        "A|0-------0-------|3-------3-------|----------------|----------------|",
+        "E|----------------|----------------|3-------3-------|0-------0-------|"
+      ] }
+    };
+    rhy_doigts_01_default = {
+      id: "rhy-doigts-01",
+      level: 5,
+      title: "Jouer aux doigts : p-i-m-a",
+      duration: 9,
+      gropiTip: "Avant de jouer, pose l'index, le majeur et l'annulaire sur les cordes 3, 2 et 1, comme sur des touches : la main trouve sa place, et le pouce n'a plus qu'\xE0 chercher la basse.",
+      cartes: [
+        { type: "idee", titre: "Quatre doigts, quatre lettres", texte: [
+          "p pour le pouce, i pour l'index, m pour le majeur, a pour l'annulaire : les initiales viennent de l'espagnol, la langue de la guitare classique.",
+          "Le pouce joue les basses, cordes 6, 5 et 4. Les trois autres doigts se partagent les aigu\xEBs, un doigt par corde : i sur la 3, m sur la 2, a sur la 1."
+        ] },
+        { type: "idee", titre: "La main en place", texte: [
+          "Poignet l\xE9g\xE8rement arqu\xE9, au-dessus de la rosace. Le pouce pousse sa corde vers le bas, un peu en avant des autres doigts.",
+          "L'index, le majeur et l'annulaire tirent leur corde vers la paume, sans la soulever. Pas de m\xE9diator : c'est la pulpe du doigt qui fait sonner."
+        ] },
+        { type: "question", quizId: "q-rhy-pima-01-lot3" },
+        { type: "idee", titre: "Le motif p-i-m-a sur La mineur", texte: [
+          "Plaque La mineur. Le pouce joue la corde 5 \xE0 vide, la fondamentale. Puis i, m et a montent : cordes 3, 2 et 1.",
+          "Quatre notes \xE9gales en croches, deux motifs par mesure : p-i-m-a, p-i-m-a."
+        ], bloc: TAB_AM },
+        {
+          type: "a-toi",
+          titre: "p-i-m-a au clic",
+          consigne: "La mineur, motif p-i-m-a deux fois par mesure, au clic \xE0 60 : deux notes par clic. Chaque note au m\xEAme volume, le pouce ne cogne pas plus fort que les autres doigts.",
+          bloc: TAB_AM,
+          bpm: 60,
+          minuteur: 120
+        },
+        { type: "idee", titre: "Le pouce cherche la basse", texte: [
+          "Chaque accord a sa basse : la corde 5 \xE0 vide pour La mineur, Do (corde 5 case 3) pour Do, Sol (corde 6 case 3) pour Sol, la corde 6 \xE0 vide pour Mi mineur.",
+          "La main droite ne change pas : seul le pouce saute de corde. L'index, le majeur et l'annulaire restent sur les cordes 3, 2 et 1."
+        ], bloc: TAB_GRILLE },
+        { type: "question", quizId: "q-rhy-pima-02-lot3" },
+        {
+          type: "a-toi",
+          titre: "La grille aux doigts",
+          consigne: "La mineur, Do, Sol, Mi mineur : une mesure chacun, p-i-m-a deux fois, au clic \xE0 60. Pr\xE9pare la basse suivante pendant le dernier \xAB a \xBB de la mesure.",
+          bloc: TAB_GRILLE,
+          bpm: 60,
+          minuteur: 180
+        },
+        { type: "question", quizId: "q-rhy-pima-03-lot3" },
+        { type: "recap", points: [
+          "p = pouce sur les basses ; i, m, a = un doigt par corde, sur les cordes 3, 2 et 1.",
+          "Le motif p-i-m-a : basse, puis les trois cordes aigu\xEBs en montant, en notes \xE9gales.",
+          "D'un accord \xE0 l'autre, seul le pouce change de corde : il cherche la fondamentale."
+        ] }
+      ],
+      quiz: ["q-rhy-pima-01-lot3", "q-rhy-pima-02-lot3", "q-rhy-pima-03-lot3"]
+    };
+    quiz104 = [
+      { id: "q-rhy-pima-01-lot3", courseId: "rhythm", lessonId: "rhy-doigts-01", lvl: 1, q: "Avec la r\xE8gle \xAB un doigt par corde \xBB, quel doigt joue la corde 2 ?", o: ["Le majeur (m)", "L'index (i)", "L'annulaire (a)", "Le pouce (p)"], a: 0, exp: "L'index sur la corde 3, le majeur sur la corde 2, l'annulaire sur la corde 1 ; le pouce garde les basses.", xp: 25 },
+      { id: "q-rhy-pima-02-lot3", courseId: "rhythm", lessonId: "rhy-doigts-01", lvl: 2, q: "Tu passes de La mineur \xE0 Sol en arp\xE8ge p-i-m-a. Qu'est-ce qui change \xE0 la main droite ?", o: ["Le pouce passe de la corde 5 \xE0 la 6", "L'index passe de la corde 3 \xE0 la 4", "Les trois doigts descendent d'une corde", "Rien, le pouce reste sur la corde 5"], a: 0, exp: "La basse de Sol est sur la corde 6, case 3 : seul le pouce se d\xE9place. L'index, le majeur et l'annulaire restent sur les cordes 3, 2 et 1.", xp: 30 },
+      { id: "q-rhy-pima-03-lot3", courseId: "rhythm", lessonId: "rhy-doigts-01", lvl: 2, q: "En arp\xE8ge p-i-m-a, ta basse sonne bien plus fort que les trois autres notes. Que corriges-tu ?", o: ["Le pouce attaque plus doucement", "L'index tire plus fort que les autres", "Tu joues la basse avec l'index", "Tu grattes la basse au m\xE9diator"], a: 0, exp: "Un arp\xE8ge sonne quand ses notes sont \xE9gales : on dose l'attaque du pouce plut\xF4t que de forcer les autres doigts.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/rhythm/rhy-mes-01.js
+var rhy_mes_01_exports = {};
+__export(rhy_mes_01_exports, {
+  default: () => rhy_mes_01_default,
+  quiz: () => quiz105
+});
+var TROIS_TEMPS, SIX_HUIT, TAB_VALSE, TAB_SIX_HUIT, rhy_mes_01_default, quiz105;
+var init_rhy_mes_01 = __esm({
+  "src/content/cours/rhythm/rhy-mes-01.js"() {
+    TROIS_TEMPS = { type: "strum_pattern", caption: "3/4 : trois coups par mesure, le premier appuy\xE9", data: { pattern: ["B", "B", "B"], beats: 3, style: "folk", bpm: 90 } };
+    SIX_HUIT = { type: "strum_pattern", caption: "6/8 : six croches en deux groupes de trois, appuis sur 1 et sur 4", data: { pattern: ["B", "B", "B", "B", "B", "B"], beats: 2, style: "folk", bpm: 50 } };
+    TAB_VALSE = {
+      type: "tab",
+      caption: "Valse : la basse sur 1, deux gratt\xE9s l\xE9gers sur 2 et 3 (Do, Do, Sol, Sol)",
+      text: "Tab \u2014 Do : corde 5 case 3 seule sur le temps 1, puis cordes 3, 2, 1 ensemble (\xE0 vide, case 1, \xE0 vide) sur les temps 2 et 3, deux mesures. Sol : corde 6 case 3 sur le temps 1, puis cordes 3, 2, 1 (\xE0 vide, \xE0 vide, case 3) sur 2 et 3, deux mesures.",
+      data: { lines: [
+        "e|----0---0---|----0---0---|----3---3---|----3---3---|",
+        "B|----1---1---|----1---1---|----0---0---|----0---0---|",
+        "G|----0---0---|----0---0---|----0---0---|----0---0---|",
+        "D|------------|------------|------------|------------|",
+        "A|3-----------|3-----------|------------|------------|",
+        "E|------------|------------|3-----------|3-----------|"
+      ] }
+    };
+    TAB_SIX_HUIT = {
+      type: "tab",
+      caption: "Arp\xE8ge en 6/8 : La mineur puis Do, une note par croche",
+      text: "Tab \u2014 La mineur : corde 5 \xE0 vide, corde 3 case 2, corde 2 case 1, corde 1 \xE0 vide, corde 2 case 1, corde 3 case 2. Do : corde 5 case 3, corde 3 \xE0 vide, corde 2 case 1, corde 1 \xE0 vide, corde 2 case 1, corde 3 \xE0 vide.",
+      data: { lines: [
+        "e|------0-----|------0-----|",
+        "B|----1---1---|----1---1---|",
+        "G|--2-------2-|--0-------0-|",
+        "D|------------|------------|",
+        "A|0-----------|3-----------|",
+        "E|------------|------------|"
+      ] }
+    };
+    rhy_mes_01_default = {
+      id: "rhy-mes-01",
+      level: 5,
+      title: "Valse et 6/8 \xE0 la guitare",
+      duration: 9,
+      gropiTip: "Pour sentir le 6/8, dis \xAB a-na-nas, a-na-nas \xBB en jouant : deux groupes de trois syllabes, l'appui sur chaque \xAB a \xBB. Ton pied ne tape que sur ces deux appuis.",
+      cartes: [
+        { type: "idee", titre: "Compter jusqu'\xE0 trois", texte: [
+          "Une valse compte ses mesures par trois : UN-deux-trois, UN-deux-trois. C'est la mesure \xE0 3/4, trois noires par mesure.",
+          "Le premier temps porte l'appui, les deux autres r\xE9pondent, plus l\xE9gers."
+        ], bloc: TROIS_TEMPS },
+        { type: "idee", titre: "Basse, gratt\xE9, gratt\xE9", texte: [
+          "\xC0 la guitare, le temps 1 se joue avec la basse seule : la fondamentale de l'accord, au pouce ou au m\xE9diator.",
+          "Sur 2 et 3, deux petits gratt\xE9s vers le bas, sur les trois cordes aigu\xEBs seulement. Pour Do : basse Do (corde 5 case 3), puis cordes 3, 2 et 1."
+        ], bloc: TAB_VALSE },
+        { type: "question", quizId: "q-rhy-valse-01-app" },
+        {
+          type: "a-toi",
+          titre: "Ta premi\xE8re valse",
+          consigne: "Do, Do, Sol, Sol : basse puis deux gratt\xE9s, au clic \xE0 90, un clic par temps. Compte \xAB UN-deux-trois \xBB \xE0 voix haute pendant les deux premiers tours.",
+          bloc: TAB_VALSE,
+          bpm: 90,
+          minuteur: 120
+        },
+        { type: "idee", titre: "Le 6/8 : deux grands temps", texte: [
+          "En 6/8, six croches se groupent par trois : UN-deux-trois-QUATRE-cinq-six. Deux pulsations par mesure, sur 1 et sur 4.",
+          "Le 3/4 contient aussi six croches, mais group\xE9es par deux : UN-et-deux-et-trois-et, trois pulsations. M\xEAme nombre de notes, un tout autre balancement."
+        ], bloc: SIX_HUIT },
+        { type: "question", quizId: "q-rhy-valse-02-app" },
+        { type: "idee", titre: "L'arp\xE8ge en 6/8", texte: [
+          "House of the Rising Sun se joue ainsi : sur La mineur, la basse au pouce, puis les cordes 3, 2, 1, 2, 3, une note par croche.",
+          "La basse tombe sur la premi\xE8re pulsation, la corde 1 sur la seconde : ce sont elles qu'on appuie un peu."
+        ], bloc: TAB_SIX_HUIT },
+        {
+          type: "a-toi",
+          titre: "Six croches, deux appuis",
+          consigne: "La mineur puis Do, une mesure chacun, une note par croche. Le clic, \xE0 50, marque les deux pulsations : basse sur l'un, corde 1 sur l'autre. Compte \xAB UN-deux-trois-QUATRE-cinq-six \xBB.",
+          bloc: TAB_SIX_HUIT,
+          bpm: 50,
+          minuteur: 120
+        },
+        { type: "question", quizId: "q-rhy-valse-03-lot3" },
+        { type: "recap", points: [
+          "3/4 : trois temps, appui sur le 1 ; \xE0 la guitare, basse puis deux gratt\xE9s l\xE9gers.",
+          "6/8 : six croches group\xE9es par trois, deux pulsations, sur 1 et sur 4.",
+          "M\xEAme nombre de croches en 3/4 et en 6/8 : c'est leur groupement qui change le balancement."
+        ] }
+      ],
+      quiz: ["q-rhy-valse-01-lot3", "q-rhy-valse-02-lot3", "q-rhy-valse-03-lot3", "q-rhy-valse-01-app", "q-rhy-valse-02-app"]
+    };
+    quiz105 = [
+      { id: "q-rhy-valse-01-lot3", courseId: "rhythm", lessonId: "rhy-mes-01", lvl: 1, q: "En valse \xAB basse, gratt\xE9, gratt\xE9 \xBB, sur quel temps joues-tu la basse ?", o: ["Sur le temps 1", "Sur le temps 2", "Sur le temps 3", "Sur les temps 1 et 3"], a: 0, exp: "La basse marque le premier temps, l'appui de la mesure ; les temps 2 et 3 sont les deux gratt\xE9s plus l\xE9gers.", xp: 25 },
+      { id: "q-rhy-valse-01-app", courseId: "rhythm", lessonId: "rhy-mes-01", lvl: 1, q: "Valse sur l'accord de Sol : quelle note joues-tu \xE0 la basse, sur le temps 1 ?", o: ["Sol", "R\xE9", "Si", "Do"], a: 0, exp: "Le temps 1 porte la basse seule, la fondamentale de l'accord : Sol (corde 6 case 3). Les temps 2 et 3 sont les deux gratt\xE9s l\xE9gers.", xp: 25 },
+      { id: "q-rhy-valse-02-lot3", courseId: "rhythm", lessonId: "rhy-mes-01", lvl: 1, q: "En 6/8, combien de pulsations le pied bat-il par mesure ?", o: ["Deux", "Trois", "Six", "Quatre"], a: 0, exp: "Six croches group\xE9es par trois donnent deux pulsations, sur 1 et sur 4. Le 3/4, lui, en a trois.", xp: 25 },
+      { id: "q-rhy-valse-02-app", courseId: "rhythm", lessonId: "rhy-mes-01", lvl: 2, q: "En 12/8, les douze croches se groupent par trois. Combien de pulsations le pied bat-il par mesure ?", o: ["4", "3", "6", "12"], a: 0, exp: "Comme en 6/8, chaque pulsation regroupe trois croches : douze croches font quatre pulsations, sur 1, 4, 7 et 10. C'est le balancement du blues lent.", xp: 30 },
+      { id: "q-rhy-valse-03-lot3", courseId: "rhythm", lessonId: "rhy-mes-01", lvl: 2, q: "Une mesure contient six croches, group\xE9es 1-2-3 puis 4-5-6. Quelle mesure est-ce ?", o: ["Du 6/8", "Du 3/4", "Du 4/4", "Du 12/8"], a: 0, exp: "Group\xE9es par trois, les six croches font deux pulsations : c'est le 6/8. Group\xE9es par deux, elles feraient les trois temps d'un 3/4.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/rhythm/rhy-doigts-02.js
+var rhy_doigts_02_exports = {};
+__export(rhy_doigts_02_exports, {
+  default: () => rhy_doigts_02_default,
+  quiz: () => quiz106
+});
+var DO3, SOL4, TAB_BASSES, TAB_ENTRE, TAB_MELODIE, rhy_doigts_02_default, quiz106;
+var init_rhy_doigts_02 = __esm({
+  "src/content/cours/rhythm/rhy-doigts-02.js"() {
+    DO3 = { type: "chord_diagram", caption: "Do (x32010) : le pouce alterne la corde 5 et la corde 4", data: { name: "C", frets: [-1, 3, 2, 0, 1, 0], fingers: [0, 3, 2, 0, 1, 0], startFret: 1 } };
+    SOL4 = { type: "chord_diagram", caption: "Sol (320033) : le pouce alterne la corde 6 et la corde 4", data: { name: "G", frets: [3, 2, 0, 0, 3, 3], fingers: [2, 1, 0, 0, 3, 4], startFret: 1 } };
+    TAB_BASSES = {
+      type: "tab",
+      caption: "Le pouce seul : une basse par temps, Do puis Sol",
+      text: "Tab \u2014 Do : corde 5 case 3, corde 4 case 2, corde 5 case 3, corde 4 case 2. Sol : corde 6 case 3, corde 4 \xE0 vide, corde 6 case 3, corde 4 \xE0 vide. Une note par temps.",
+      data: { lines: [
+        "e|----------------|----------------|",
+        "B|----------------|----------------|",
+        "G|----------------|----------------|",
+        "D|----2-------2---|----0-------0---|",
+        "A|3-------3-------|----------------|",
+        "E|----------------|3-------3-------|"
+      ] }
+    };
+    TAB_ENTRE = {
+      type: "tab",
+      caption: "Basses sur les temps, notes aigu\xEBs sur les \xAB et \xBB",
+      text: "Tab \u2014 Do : les basses de la corde 5 case 3 et de la corde 4 case 2 sur les temps ; corde 3 \xE0 vide et corde 2 case 1 sur les \xAB et \xBB. Sol : basses corde 6 case 3 et corde 4 \xE0 vide ; corde 3 \xE0 vide et corde 2 case 3 sur les \xAB et \xBB.",
+      data: { lines: [
+        "e|----------------|----------------|",
+        "B|------1-------1-|------3-------3-|",
+        "G|--0-------0-----|--0-------0-----|",
+        "D|----2-------2---|----0-------0---|",
+        "A|3-------3-------|----------------|",
+        "E|----------------|3-------3-------|"
+      ] }
+    };
+    TAB_MELODIE = {
+      type: "tab",
+      caption: "Travis complet : la m\xE9lodie pinc\xE9e sur la corde 1, avec la basse",
+      text: "Tab \u2014 comme la pr\xE9c\xE9dente, avec en plus la corde 1 pinc\xE9e en m\xEAme temps que la basse. Do : corde 1 \xE0 vide sur le temps 1, corde 1 case 3 sur le temps 3. Sol : corde 1 case 3 sur le temps 1.",
+      data: { lines: [
+        "e|0-------3-------|3---------------|",
+        "B|------1-------1-|------3-------3-|",
+        "G|--0-------0-----|--0-------0-----|",
+        "D|----2-------2---|----0-------0---|",
+        "A|3-------3-------|----------------|",
+        "E|----------------|3-------3-------|"
+      ] }
+    };
+    rhy_doigts_02_default = {
+      id: "rhy-doigts-02",
+      level: 7,
+      title: "Le picking Travis : le pouce altern\xE9",
+      duration: 10,
+      gropiTip: "Commence chaque s\xE9ance par trente secondes de pouce seul, en chantonnant autre chose : s'il tient sans que tu y penses, il est pr\xEAt \xE0 porter la m\xE9lodie.",
+      cartes: [
+        { type: "idee", titre: "Un pouce m\xE9tronome", texte: [
+          "Le picking Travis, du nom du guitariste Merle Travis, repose sur le pouce : il alterne deux basses, une par temps, sans jamais s'arr\xEAter. Les doigts ajoutent les notes aigu\xEBs par-dessus.",
+          "Sur Do, le pouce alterne Do (corde 5 case 3) et Mi (corde 4 case 2) : corde 5, corde 4, corde 5, corde 4."
+        ], bloc: DO3 },
+        { type: "question", quizId: "q-rhy-travis-01-lot3" },
+        { type: "idee", titre: "Les basses de Sol", texte: [
+          "Sur Sol, jou\xE9 320033, le pouce alterne Sol (corde 6 case 3) et la corde 4 \xE0 vide, R\xE9.",
+          "Les basses sautent une corde : 6, 4, 6, 4. Garde le pouce souple, il rebondit de l'une \xE0 l'autre sans que la main bouge."
+        ], bloc: SOL4 },
+        {
+          type: "a-toi",
+          titre: "Le pouce seul",
+          consigne: "Do une mesure, Sol une mesure : uniquement les basses, une par clic, \xE0 70. Deux minutes sans que le pouce ne s'arr\xEAte, m\xEAme au changement d'accord.",
+          bloc: TAB_BASSES,
+          bpm: 70,
+          minuteur: 120
+        },
+        { type: "idee", titre: "Une note entre les basses", texte: [
+          "Ajoute l'index et le majeur sur les \xAB et \xBB : entre deux basses, une note aigu\xEB, corde 3 puis corde 2.",
+          "Le pouce tient les temps, les doigts se glissent sur les contretemps : basse, aigu, basse, aigu."
+        ], bloc: TAB_ENTRE },
+        { type: "question", quizId: "q-rhy-travis-02-lot3" },
+        { type: "idee", titre: "La m\xE9lodie par-dessus", texte: [
+          "Derni\xE8re \xE9tape : l'annulaire pince la corde 1 en m\xEAme temps que la basse, sur les temps 1 et 3.",
+          "Sur Do : Mi (corde 1 \xE0 vide), puis Sol (corde 1 case 3) avec l'auriculaire. Sur Sol : Sol (corde 1 case 3). Le pouce, lui, continue exactement comme avant."
+        ], bloc: TAB_MELODIE },
+        {
+          type: "a-toi",
+          titre: "Travis complet",
+          consigne: "Do une mesure, Sol une mesure, au clic \xE0 60 : un clic par basse. D'abord basses et notes des \xAB et \xBB, puis ajoute la m\xE9lodie pinc\xE9e. Si le pouce h\xE9site, retire la m\xE9lodie le temps qu'il se stabilise.",
+          bloc: TAB_MELODIE,
+          bpm: 60,
+          minuteur: 180
+        },
+        { type: "question", quizId: "q-rhy-travis-03-lot3" },
+        { type: "recap", points: [
+          "Le pouce alterne deux basses, une par temps : cordes 5 et 4 sur Do, 6 et 4 sur Sol.",
+          "Les doigts jouent les notes aigu\xEBs sur les \xAB et \xBB, entre les basses.",
+          "La m\xE9lodie se pince avec la basse ; si le pouce flanche, on la retire et on ralentit."
+        ] }
+      ],
+      quiz: ["q-rhy-travis-01-lot3", "q-rhy-travis-02-lot3", "q-rhy-travis-03-lot3"]
+    };
+    quiz106 = [
+      { id: "q-rhy-travis-01-lot3", courseId: "rhythm", lessonId: "rhy-doigts-02", lvl: 2, q: "En picking Travis sur Do, entre quelles cordes le pouce alterne-t-il ?", o: ["Cordes 5 et 4", "Cordes 6 et 5", "Cordes 4 et 3", "Cordes 3 et 2"], a: 0, exp: "La fondamentale Do est sur la corde 5, case 3 ; la basse suivante, Mi, sur la corde 4, case 2. Le pouce va de l'une \xE0 l'autre.", xp: 30 },
+      { id: "q-rhy-travis-02-lot3", courseId: "rhythm", lessonId: "rhy-doigts-02", lvl: 2, q: "Dans le picking Travis de base, o\xF9 tombent les notes aigu\xEBs jou\xE9es aux doigts ?", o: ["Sur les \xAB et \xBB, entre les basses", "Sur les temps, avec les basses", "Seulement sur le temps 1", "Seulement en fin de mesure"], a: 0, exp: "Le pouce tient les temps 1, 2, 3, 4 ; les doigts se glissent sur les contretemps. Une note de m\xE9lodie peut ensuite \xEAtre pinc\xE9e avec une basse.", xp: 30 },
+      { id: "q-rhy-travis-03-lot3", courseId: "rhythm", lessonId: "rhy-doigts-02", lvl: 2, q: "Ton pouce s'arr\xEAte d\xE8s que tu ajoutes la m\xE9lodie. Que fais-tu ?", o: ["Tu retires la m\xE9lodie et ralentis", "Tu joues la m\xE9lodie plus fort", "Tu supprimes une basse sur deux", "Tu acc\xE9l\xE8res pour garder l'\xE9lan"], a: 0, exp: "Le pouce est la base du picking Travis : on le stabilise d'abord, seul puis avec les notes des \xAB et \xBB, et on r\xE9introduit la m\xE9lodie \xE0 un tempo plus lent.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/rhythm/rhy-c3-02.js
+var rhy_c3_02_exports = {};
+__export(rhy_c3_02_exports, {
+  default: () => rhy_c3_02_default,
+  quiz: () => quiz107
+});
+var ET_DU_4, rhy_c3_02_default, quiz107;
+var init_rhy_c3_02 = __esm({
+  "src/content/cours/rhythm/rhy-c3-02.js"() {
+    ET_DU_4 = {
+      type: "rhythm_grid",
+      caption: "L'accord change sur le 'et du 4', une croche avant le prochain temps 1",
+      data: {
+        beats: 4,
+        subdivision: 8,
+        highlights: [7],
+        label: "1 \xB7 et \xB7 2 \xB7 et \xB7 3 \xB7 et \xB7 4 \xB7 et \u2190 nouvel accord ici, tenu sur le 1 suivant"
+      }
+    };
+    rhy_c3_02_default = {
+      id: "rhy-c3-02",
+      level: 6,
+      title: "L'anticipation : jouer avant le temps",
+      duration: 7,
+      gropiTip: "Pi\xE8ge classique : jouer le nouvel accord sur le \xAB et \xBB du 4, puis le rejouer sur le 1. Laisse-le sonner sans rien rejouer sur le 1 : c'est cette tenue qui fait l'anticipation.",
+      cartes: [
+        { type: "idee", titre: "Arriver avant l'heure", texte: [
+          "L'anticipation est une syncope pr\xE9cise : au lieu de jouer l'accord sur le 1, tu le joues sur le \xAB et \xBB du 4 de la mesure d'avant, et tu le tiens par-dessus le 1.",
+          "Le temps 1 est anticip\xE9 d'une croche."
+        ], bloc: ET_DU_4 },
+        { type: "idee", titre: "Un \xE9lan vers l'avant", texte: [
+          "Sur le temps, un changement sonne solide mais statique. Anticip\xE9, il donne de l'\xE9lan : la phrase semble se pencher vers la suite.",
+          "Le tempo, lui, ne bouge pas."
+        ] },
+        { type: "question", quizId: "q-rhy-06" },
+        { type: "idee", titre: "Bossa, jazz, pop", texte: [
+          "En bossa nova, les accords changent souvent un \xAB et \xBB avant le temps : c'est une part de sa l\xE9g\xE8ret\xE9.",
+          "En jazz, on parle aussi de jouer \xAB devant \xBB le temps, qui pousse, ou \xAB derri\xE8re \xBB, qui d\xE9tend. Le placement est un choix."
+        ] },
+        { type: "idee", titre: "D\xE9lib\xE9r\xE9e, pas approximative", texte: [
+          "Une anticipation tombe exactement sur le \xAB et \xBB du 4. Arriver \xAB \xE0 peu pr\xE8s \xBB en avance sonne comme une erreur de timing.",
+          "La pr\xE9cision fait toute la diff\xE9rence."
+        ] },
+        { type: "question", quizId: "q-rhy-43" },
+        {
+          type: "a-toi",
+          titre: "Anticipe tes changements",
+          consigne: "Am, F, C, G, une mesure chacun, en croches au clic. D'abord, change sur le 1. Puis change sur le \xAB et \xBB du 4 de la mesure d'avant, et tiens l'accord par-dessus le 1. Compare les deux versions.",
+          bloc: ET_DU_4,
+          bpm: 70
+        },
+        { type: "question", quizId: "q-rhy-42" },
+        { type: "recap", points: [
+          "Anticiper : jouer l'accord du 1 sur le \xAB et \xBB du 4 pr\xE9c\xE9dent.",
+          "On le tient par-dessus le 1, sans le rejouer.",
+          "Pr\xE9cise et voulue, elle donne de l'\xE9lan ; approximative, c'est une erreur."
+        ] }
+      ],
+      quiz: ["q-rhy-06", "q-rhy-42", "q-rhy-43"]
+    };
+    quiz107 = [
+      { id: "q-rhy-06", courseId: "rhythm", lessonId: "rhy-c3-02", lvl: 3, q: "L''anticipation harmonique' en jazz/bossa consiste \xE0\u2026", o: ["Ralentir l\xE9g\xE8rement le tempo avant chaque accord", "Ajouter un silence juste avant le temps 1", "Jouer la note du 1 sur le \xAB et \xBB du 4 pr\xE9c\xE9dent", "Jouer plus fort sur le premier temps"], a: 2, exp: "Anticipation = jouer la note/accord cible un demi-temps avant le temps fort. Cr\xE9e fluidit\xE9, 'glisse' rythmique. Tr\xE8s utilis\xE9 en bossa nova.", xp: 50 },
+      { id: "q-rhy-42", courseId: "rhythm", lessonId: "rhy-c3-02", lvl: 1, q: "Tu as anticip\xE9 l'accord sur le \xAB et \xBB du 4. Que fais-tu sur le temps 1 suivant ?", o: ["Tu le laisses sonner, sans regratter", "Tu le grattes \xE0 nouveau, plus fort", "Tu reviens \xE0 l'accord pr\xE9c\xE9dent", "Tu \xE9touffes toutes les cordes"], a: 0, exp: "L'anticipation remplace l'attaque du 1 : l'accord arrive une croche plus t\xF4t et on le tient par-dessus le temps fort. Le regratter sur le 1 annulerait l'effet.", xp: 30 },
+      { id: "q-rhy-43", courseId: "rhythm", lessonId: "rhy-c3-02", lvl: 2, q: "Qu'est-ce qui distingue une anticipation d'une erreur de timing ?", o: ["Elle tombe pr\xE9cis\xE9ment sur le \xAB et \xBB", "Elle est jou\xE9e plus doucement", "Elle n'arrive qu'\xE0 la toute fin du morceau", "Elle se joue sans m\xE9diator"], a: 0, exp: "L'anticipation est d\xE9lib\xE9r\xE9e et pr\xE9cise : exactement sur le \xAB et \xBB du 4. Approximative, elle sonne comme une erreur.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/rhythm/rhy-c3-03.js
+var rhy_c3_03_exports = {};
+__export(rhy_c3_03_exports, {
+  default: () => rhy_c3_03_default,
+  quiz: () => quiz108
+});
+var FUNK, rhy_c3_03_default, quiz108;
+var init_rhy_c3_03 = __esm({
+  "src/content/cours/rhythm/rhy-c3-03.js"() {
+    FUNK = { type: "strum_pattern", caption: "Groove funk \u2014 quelques coups francs (B/H), des ghost notes (\xD7) partout ailleurs : la main ne s'arr\xEAte jamais", data: { pattern: ["B", "x", "x", "H", "x", "x", "B", "x", "x", "x", "B", "x", "B", "x", "x", "x"], beats: 4, style: "funk", bpm: 90 } };
+    rhy_c3_03_default = {
+      id: "rhy-c3-03",
+      level: 6,
+      title: "Le groove : qu'est-ce qui fait qu'un rythme 'sent bon' ?",
+      duration: 8,
+      gropiTip: "Joue des croches sur Am en ne faisant vraiment sonner que les temps 2 et 4, comme la caisse claire, et effleure \xE0 peine les autres coups. Le flux reste continu et le groove appara\xEEt.",
+      cartes: [
+        { type: "idee", titre: "Ce qui fait bouger", texte: [
+          "Le groove, c'est la sensation physique de mouvement : ton pied tape tout seul.",
+          "Trois ingr\xE9dients reviennent toujours : la pr\xE9cision du placement, des accents bien choisis et la r\xE9p\xE9tition d'un motif. Le squelette le plus courant : le backbeat, accent sur 2 et 4."
+        ], bloc: { type: "rhythm_grid", caption: "Le backbeat \u2014 8 croches r\xE9guli\xE8res, accent sur 2 et 4 : le squelette de la plupart des grooves", data: { beats: 4, subdivision: 8, accents: [2, 6], label: "1 \xB7 et \xB7 2 \xB7 et \xB7 3 \xB7 et \xB7 4 \xB7 et" } } },
+        { type: "idee", titre: "La pr\xE9cision d'abord", texte: [
+          "Pas \xAB \xE0 peu pr\xE8s \xBB sur le temps : exactement sur le temps, ou exactement sur le contretemps.",
+          "Ce n'est pas de la rigidit\xE9 : cette ancre stable donne \xE0 l'oreille un rep\xE8re, et c'est elle qui lib\xE8re le groove."
+        ] },
+        { type: "question", quizId: "q-rhy-33" },
+        { type: "idee", titre: "R\xE9p\xE9ter, placer", texte: [
+          "Un motif jou\xE9 une fois int\xE9resse ; r\xE9p\xE9t\xE9 huit fois, il groove. Le corps de l'auditeur l'anticipe.",
+          "Puis vient le micro-timing : jouer un rien apr\xE8s le clic d\xE9tend (\xAB laid-back \xBB), un rien avant pousse (\xAB on top \xBB). \xC7a vient avec l'\xE9coute et la pratique."
+        ] },
+        { type: "idee", titre: "Les ghost notes", texte: [
+          "Des coups de m\xE9diator sur des cordes \xE9touff\xE9es par la main gauche : un \xAB tchk \xBB \xE0 peine audible entre les coups francs.",
+          "Elles ne sont pas l\xE0 pour \xEAtre entendues, mais pour que le flux ne s'arr\xEAte jamais."
+        ], bloc: FUNK },
+        { type: "question", quizId: "q-rhy-34" },
+        { type: "idee", titre: "Se caler sur le grave", texte: [
+          "En groupe, le groove na\xEEt du verrouillage entre la basse et la grosse caisse. Quand elles tombent ensemble, tout tient.",
+          "Ton travail de guitariste : \xE9couter ce grave et t'y accrocher."
+        ] },
+        { type: "question", quizId: "q-rhy-56-app" },
+        {
+          type: "a-toi",
+          titre: "Ton premier groove funk",
+          consigne: "Sur Am, la main gauche rel\xE2ch\xE9e pour \xE9touffer : les \xD7 en ghost notes, puis serre l'accord juste pour les coups francs. Lentement au clic, la main droite en doubles-croches sans jamais s'arr\xEAter. Enregistre-toi et \xE9coute si le temps \xAB coule \xBB.",
+          bloc: FUNK,
+          bpm: 60,
+          minuteur: 120
+        },
+        { type: "recap", points: [
+          "Groove = pr\xE9cision, accents et r\xE9p\xE9tition.",
+          "Les ghost notes gardent le flux continu sans encombrer.",
+          "En groupe, cale-toi sur la basse et la grosse caisse."
+        ] }
+      ],
+      quiz: ["q-rhy-33", "q-rhy-34", "q-rhy-56", "q-rhy-56-app"]
+    };
+    quiz108 = [
+      { id: "q-rhy-33", courseId: "rhythm", lessonId: "rhy-c3-03", lvl: 2, q: "Deux guitaristes jouent les m\xEAmes notes au m\xEAme tempo, et un seul \xAB groove \xBB. Qu'est-ce qui change ?", o: ["Le choix des positions d'accords sur le manche", "Le volume g\xE9n\xE9ral de l'instrument", "Le placement et le dosage des accents", "Le type de cordes install\xE9es"], a: 2, exp: "Le groove tient \xE0 des \xE9carts de quelques millisecondes et \xE0 la hi\xE9rarchie des accents. C'est mesurable, et c'est travaillable \u2014 contrairement \xE0 ce que laisse croire le mot \xAB feeling \xBB.", xp: 30 },
+      { id: "q-rhy-34", courseId: "rhythm", lessonId: "rhy-c3-03", lvl: 3, q: "Les ghost notes servent \xE0\u2026", o: ["Remplir les silences avec des notes bien audibles", "Marquer plus nettement les temps forts", "Atteindre des tempos plus rapides", "Garder le mouvement avec des attaques \xE9touff\xE9es"], a: 3, exp: "Ce sont des attaques \xE9touff\xE9es par la main gauche : on entend la percussion, pas la hauteur. Elles remplissent la grille rythmique sans encombrer l'harmonie, et c'est le c\u0153ur du jeu funk.", xp: 40 },
+      { id: "q-rhy-56", courseId: "rhythm", lessonId: "rhy-c3-03", lvl: 1, q: "En groupe, avec quels instruments le guitariste rythmique doit-il d'abord se caler ?", o: ["La basse et la grosse caisse", "Le chant et les ch\u0153urs", "Le clavier et les nappes", "Les cymbales et la cloche"], a: 0, exp: "Le groove d'un groupe repose sur le verrouillage entre la basse et la grosse caisse. Le guitariste s'accroche \xE0 ce grave pour que tout le monde tombe au m\xEAme endroit.", xp: 30 },
+      { id: "q-rhy-56-app", courseId: "rhythm", lessonId: "rhy-c3-03", lvl: 2, q: "Le batteur frappe la grosse caisse sur le 1 et sur le \xAB et \xBB du 2. O\xF9 places-tu tes accents ?", o: ["Sur le 1 et le \xAB et \xBB du 2", "Sur le 2 et le 4, avec la caisse claire", "Sur chaque croche, \xE0 \xE9galit\xE9", "Sur le 4 seulement"], a: 0, exp: "Le guitariste rythmique se cale sur le grave : accentuer avec la grosse caisse verrouille le groove du groupe.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/rhythm/rhy-tech-01.js
+var rhy_tech_01_exports = {};
+__export(rhy_tech_01_exports, {
+  default: () => rhy_tech_01_default,
+  quiz: () => quiz109
+});
+var TAB_VERIFIER, TAB_RELACHE, rhy_tech_01_default, quiz109;
+var init_rhy_tech_01 = __esm({
+  "src/content/cours/rhythm/rhy-tech-01.js"() {
+    TAB_VERIFIER = {
+      type: "tab",
+      caption: "La cible d'abord, puis le bend : case 9, puis case 7 tir\xE9e jusqu'\xE0 la 9",
+      text: "Tab \u2014 corde 3 : case 9 (Mi), tenue deux temps ; puis case 7 tir\xE9e d'un ton jusqu'\xE0 la hauteur de la case 9, tenue deux temps. Deux fois.",
+      data: { lines: [
+        "e|----------------|----------------|",
+        "B|----------------|----------------|",
+        "G|9-------7b9-----|9-------7b9-----|",
+        "D|----------------|----------------|",
+        "A|----------------|----------------|",
+        "E|----------------|----------------|"
+      ] }
+    };
+    TAB_RELACHE = {
+      type: "tab",
+      caption: "Demi-ton, ton, puis tir\xE9-rel\xE2ch\xE9 sur les cordes 3 et 2",
+      text: "Tab \u2014 corde 3 : case 7 tir\xE9e d'un demi-ton (hauteur de la case 8) ; case 7 tir\xE9e d'un ton jusqu'\xE0 la 9 puis rel\xE2ch\xE9e vers la 7. Corde 2 : case 8 tir\xE9e jusqu'\xE0 la 10 puis rel\xE2ch\xE9e vers la 8 ; enfin case 8 tir\xE9e jusqu'\xE0 la 10, tenue.",
+      data: { lines: [
+        "e|----------------|----------------|",
+        "B|----------------|8b10r8--8b10----|",
+        "G|7b8-----7b9r7---|----------------|",
+        "D|----------------|----------------|",
+        "A|----------------|----------------|",
+        "E|----------------|----------------|"
+      ] }
+    };
+    rhy_tech_01_default = {
+      id: "rhy-tech-01",
+      level: 6,
+      title: "Le bend juste",
+      duration: 8,
+      gropiTip: "Enregistre-toi : la case 9, puis ton bend depuis la case 7. \xC0 la r\xE9\xE9coute, un bend un peu trop bas s'entend bien mieux que pendant que tu joues.",
+      cartes: [
+        { type: "idee", titre: "Tirer pour monter", texte: [
+          "Un bend, c'est pousser la corde sur le c\xF4t\xE9 pendant qu'elle sonne : elle se tend, la note monte.",
+          "Un demi-ton monte \xE0 la hauteur de la case suivante, un ton \xE0 celle de deux cases plus loin. Dans une tab : 7b8 et 7b9."
+        ] },
+        { type: "idee", titre: "Trois doigts pour un", texte: [
+          "L'annulaire tire, le majeur et l'index sont pos\xE9s derri\xE8re lui sur la m\xEAme corde et poussent avec lui.",
+          "Le pouce s'accroche au-dessus du manche ; la force vient du poignet qui tourne, comme une cl\xE9 dans une serrure, pas des doigts seuls."
+        ] },
+        { type: "question", quizId: "q-rhy-bend-02-tech" },
+        { type: "idee", titre: "V\xE9rifier la cible", texte: [
+          "Un bend trop court sonne faux. Joue d'abord la note vis\xE9e, la case 9 de la corde 3 : c'est Mi.",
+          "Puis tire depuis la case 7 jusqu'\xE0 entendre exactement ce Mi. Ni moins, ni plus."
+        ], bloc: TAB_VERIFIER },
+        {
+          type: "a-toi",
+          titre: "Le ton, v\xE9rifi\xE9",
+          consigne: "Case 9, puis case 7 tir\xE9e jusqu'\xE0 la m\xEAme hauteur, chacune deux temps au clic \xE0 60. Compare les deux Mi \xE0 l'oreille. Deux minutes, en rel\xE2chant la main entre chaque bend.",
+          bloc: TAB_VERIFIER,
+          bpm: 60,
+          minuteur: 120
+        },
+        { type: "question", quizId: "q-rhy-bend-01-tech" },
+        { type: "idee", titre: "Le demi-ton et le rel\xE2ch\xE9", texte: [
+          "7b8 sur la corde 3 monte de R\xE9 \xE0 R\xE9# : la blue note, \xE0 peine tir\xE9e.",
+          "7b9r7 : tu tires, tu tiens, puis tu ram\xE8nes la corde doucement en gardant la pression. La note redescend en sonnant, sans nouvelle attaque."
+        ], bloc: TAB_RELACHE },
+        {
+          type: "a-toi",
+          titre: "Bend et rel\xE2ch\xE9",
+          consigne: "Joue la tab au clic \xE0 60 : demi-ton, ton rel\xE2ch\xE9, puis le m\xEAme geste sur la corde 2, case 8. V\xE9rifie de temps en temps la cible en jouant la case 10.",
+          bloc: TAB_RELACHE,
+          bpm: 60,
+          minuteur: 90
+        },
+        { type: "question", quizId: "q-rhy-bend-03-tech" },
+        { type: "recap", points: [
+          "Demi-ton = hauteur de la case suivante, ton = deux cases plus loin.",
+          "Trois doigts sur la corde, pouce au-dessus du manche, rotation du poignet.",
+          "Joue la cible avant de tirer ; au rel\xE2ch\xE9, garde la pression jusqu'en bas."
+        ] }
+      ],
+      quiz: ["q-rhy-bend-01-tech", "q-rhy-bend-02-tech", "q-rhy-bend-03-tech", "q-debut-48"]
+    };
+    quiz109 = [
+      { id: "q-rhy-bend-01-tech", courseId: "rhythm", lessonId: "rhy-tech-01", lvl: 2, q: "Tu veux tirer la corde 3 de la case 7 jusqu'\xE0 la hauteur de la case 9. Comment v\xE9rifier que ton bend est juste ?", o: ["Jouer la case 9, puis tirer jusqu'\xE0 ce son", "Tirer jusqu'\xE0 ce que la corde r\xE9siste", "Regarder la corde arriver sur la case 9", "Tirer tr\xE8s vite pour cacher l'\xE9cart"], a: 0, exp: "La note vis\xE9e (Mi, case 9) sert de rep\xE8re \xE0 l'oreille : on la joue, puis on tire depuis la case 7 jusqu'\xE0 l'entendre exactement.", xp: 30 },
+      { id: "q-rhy-bend-02-tech", courseId: "rhythm", lessonId: "rhy-tech-01", lvl: 1, q: "Bend d'un ton \xE0 l'annulaire : que font l'index et le majeur ?", o: ["Ils poussent avec lui, sur la m\xEAme corde", "Ils \xE9touffent les cordes plus graves", "Ils restent lev\xE9s, loin du manche", "Ils tiennent une note sur la corde voisine"], a: 0, exp: "Trois doigts sur la m\xEAme corde poussent plus fort et plus juste qu'un seul. Le pouce, accroch\xE9 au-dessus du manche, sert de pivot.", xp: 25 },
+      { id: "q-rhy-bend-03-tech", courseId: "rhythm", lessonId: "rhy-tech-01", lvl: 1, q: "Dans une tab, 10b13 sur la corde 1 te demande de monter de\u2026", o: ["Un demi-ton", "Un ton", "Un ton et demi", "Deux tons"], a: 2, exp: "Trois cases d'\xE9cart = un ton et demi : la case 10 (R\xE9) tir\xE9e jusqu'\xE0 la hauteur de la case 13 (Fa). Un bend rare et exigeant, mais il se lit comme les autres.", xp: 25 }
+    ];
+  }
+});
+
+// src/content/cours/rhythm/rhy-tech-02.js
+var rhy_tech_02_exports = {};
+__export(rhy_tech_02_exports, {
+  default: () => rhy_tech_02_default,
+  quiz: () => quiz110
+});
+var TAB_VIBRATO, rhy_tech_02_default, quiz110;
+var init_rhy_tech_02 = __esm({
+  "src/content/cours/rhythm/rhy-tech-02.js"() {
+    TAB_VIBRATO = {
+      type: "tab",
+      caption: "Trois notes tenues avec vibrato, puis un bend avec vibrato",
+      text: "Tab \u2014 chaque note tenue deux temps avec vibrato : corde 1 case 5 (La), corde 2 case 8 (Sol), corde 3 case 7 (R\xE9), puis corde 3 case 7 tir\xE9e d'un ton jusqu'\xE0 la hauteur de la case 9, avec vibrato.",
+      data: { lines: [
+        "e|5~~~~~----------|----------------|",
+        "B|--------8~~~~~--|----------------|",
+        "G|----------------|7~~~~~--7b9~~~~-|",
+        "D|----------------|----------------|",
+        "A|----------------|----------------|",
+        "E|----------------|----------------|"
+      ] }
+    };
+    rhy_tech_02_default = {
+      id: "rhy-tech-02",
+      level: 6,
+      title: "Le vibrato : faire chanter une note",
+      duration: 8,
+      gropiTip: "Laisse la note se poser une fraction de seconde avant de lancer le vibrato : attaque nette, puis la note se met \xE0 chanter. Le contraste rend le vibrato plus expressif.",
+      cartes: [
+        { type: "idee", titre: "Une note qui vit", texte: [
+          "Le vibrato, c'est une petite variation r\xE9guli\xE8re de la hauteur d'une note tenue. Dans une tab, il s'\xE9crit avec un ou plusieurs ~ apr\xE8s la case : 5~~~.",
+          "On le met surtout sur les notes longues et les fins de phrase."
+        ] },
+        { type: "idee", titre: "Le vibrato du poignet", texte: [
+          "C'est un tout petit bend r\xE9p\xE9t\xE9 : pouce accroch\xE9 au-dessus du manche, doigt ferme sur la case, le poignet tourne et revient.",
+          "La note monte un peu, puis retombe sur sa hauteur exacte. Elle ne descend jamais en dessous."
+        ] },
+        { type: "question", quizId: "q-rhy-vib-01-tech" },
+        { type: "idee", titre: "Le vibrato du doigt", texte: [
+          "Plus discret : le pouce reste derri\xE8re le manche et seul le doigt pousse et rel\xE2che la corde, de tr\xE8s peu.",
+          "Utile sur les cordes graves, dans un accord ou quand la main ne peut pas pivoter."
+        ] },
+        { type: "idee", titre: "Largeur et vitesse", texte: [
+          "La largeur, c'est jusqu'o\xF9 monte la note : d'un soup\xE7on \xE0 presque un demi-ton. La vitesse, c'est le nombre d'oscillations.",
+          "Cale-la sur le tempo : deux oscillations par temps, puis trois. Lent et large sur une ballade, plus serr\xE9 sur un rock rapide."
+        ] },
+        { type: "question", quizId: "q-rhy-vib-02-tech" },
+        { type: "idee", titre: "Sur un bend", texte: [
+          "Apr\xE8s un bend, tiens la note vis\xE9e et rel\xE2che-la un tout petit peu, puis repousse-la, en rythme.",
+          "La note oscille juste sous la cible et y revient : c'est le son des fins de solos de blues."
+        ], bloc: TAB_VIBRATO },
+        {
+          type: "a-toi",
+          titre: "Vibrato au clic",
+          consigne: "Chaque note de la tab deux temps au clic \xE0 60 : deux oscillations par clic, au poignet. Recommence avec un vibrato du doigt, puis \xE0 trois oscillations par clic. Termine par le bend avec vibrato.",
+          bloc: TAB_VIBRATO,
+          bpm: 60,
+          minuteur: 120
+        },
+        { type: "question", quizId: "q-rhy-vib-03-tech" },
+        { type: "recap", points: [
+          "Vibrato du poignet : pouce au-dessus du manche, la note monte un peu et revient.",
+          "Vibrato du doigt : pouce derri\xE8re le manche, mouvement plus petit et plus discret.",
+          "Largeur et vitesse se r\xE8glent sur le tempo et le style ; ~ dans une tab."
+        ] }
+      ],
+      quiz: ["q-rhy-vib-01-tech", "q-rhy-vib-02-tech", "q-rhy-vib-03-tech"]
+    };
+    quiz110 = [
+      { id: "q-rhy-vib-01-tech", courseId: "rhythm", lessonId: "rhy-tech-02", lvl: 1, q: "Vibrato du poignet : sur quoi la main prend-elle appui pour pivoter ?", o: ["Le pouce, au-dessus du manche", "Le coude, sur la caisse", "L'auriculaire, sur la touche", "Le m\xE9diator, sur la corde"], a: 0, exp: "Comme pour un bend, le pouce accroch\xE9 au-dessus du manche sert de pivot : le poignet tourne autour de lui.", xp: 25 },
+      { id: "q-rhy-vib-02-tech", courseId: "rhythm", lessonId: "rhy-tech-02", lvl: 2, q: "Ton vibrato sonne nerveux sur une ballade lente. Que changes-tu d'abord ?", o: ["Tu le ralentis, cal\xE9 sur le tempo", "Tu l'\xE9largis jusqu'\xE0 un ton", "Tu appuies plus fort sur la case", "Tu le lances d\xE8s l'attaque"], a: 0, exp: "Un vibrato trop rapide pour le tempo sonne crisp\xE9. On le cale sur la pulsation (deux oscillations par temps, par exemple) ; la largeur se r\xE8gle ensuite.", xp: 30 },
+      { id: "q-rhy-vib-03-tech", courseId: "rhythm", lessonId: "rhy-tech-02", lvl: 2, q: "Vibrato du poignet sur une note frett\xE9e : comment bouge sa hauteur ?", o: ["Elle monte un peu, puis revient", "Elle descend un peu, puis revient", "Elle monte, puis passe en dessous", "Elle reste fixe, seul le volume varie"], a: 0, exp: "Pousser la corde ne peut que la tendre : la note monte, puis retombe sur sa hauteur de d\xE9part, jamais en dessous.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/rhythm/rhy-c4-01.js
+var rhy_c4_01_exports = {};
+__export(rhy_c4_01_exports, {
+  default: () => rhy_c4_01_default,
+  quiz: () => quiz111
+});
+var BALANCIER, rhy_c4_01_default, quiz111;
+var init_rhy_c4_01 = __esm({
+  "src/content/cours/rhythm/rhy-c4-01.js"() {
+    BALANCIER = {
+      type: "strum_pattern",
+      caption: "Mouvement pendulaire de base \u2014 bas-haut sur chaque temps, sans s'arr\xEAter",
+      data: { pattern: ["B", "H", "B", "H", "B", "H", "B", "H"], beats: 4, style: "folk", bpm: 80 }
+    };
+    rhy_c4_01_default = {
+      id: "rhy-c4-01",
+      level: 3,
+      title: "La main droite : mouvement pendulaire et continuit\xE9",
+      duration: 8,
+      gropiTip: "Ne laisse pas ta main droite s'arr\xEAter quand la gauche change d'accord : mieux vaut un coup dans le vide ou sur des cordes \xE0 vide qu'un trou dans le rythme.",
+      cartes: [
+        { type: "idee", titre: "Plus loin que le balancier", texte: [
+          "Dans Premiers pas, tu as d\xE9couvert le balancier bas-haut. On l'affine ici : r\xE9gularit\xE9, son des coups bas et hauts, tenue du m\xE9diator.",
+          "Le but : un geste solide, qui tiendra jusqu'aux doubles-croches."
+        ] },
+        { type: "idee", titre: "Chaque position a sa place", texte: [
+          "Bas sur les temps, haut sur les \xAB et \xBB : chaque position de la main correspond \xE0 un emplacement pr\xE9cis de la mesure.",
+          "Un silence, c'est la main qui passe dans le vide ; jamais la main qui s'arr\xEAte."
+        ], bloc: BALANCIER },
+        { type: "question", quizId: "q-rhy-20" },
+        { type: "idee", titre: "Ta main, ton m\xE9tronome", texte: [
+          "Une main qui s'arr\xEAte doit red\xE9marrer, et chaque red\xE9marrage d\xE9cale un peu le temps.",
+          "En mouvement continu, elle garde le tempo dans ton corps, quoi que fasse la main gauche."
+        ] },
+        { type: "question", quizId: "q-rhy-19" },
+        { type: "idee", titre: "Bas \xE9pais, haut l\xE9ger", texte: [
+          "Le coup bas attaque du grave vers l'aigu : un son plein, qui marque les temps. Le coup haut part de l'aigu et touche souvent les cordes fines : un son l\xE9ger.",
+          "Cette diff\xE9rence cr\xE9e d'elle-m\xEAme un accent sur les temps : c'est le groove de base."
+        ] },
+        { type: "idee", titre: "Poignet souple, m\xE9diator tenu juste", texte: [
+          "Le geste vient du poignet, comme une charni\xE8re de porte, pas du bras entier qui fatigue et manque de pr\xE9cision.",
+          "Tiens le m\xE9diator juste assez pour qu'il ne tourne pas, sans crisper, l\xE9g\xE8rement inclin\xE9 par rapport aux cordes."
+        ] },
+        {
+          type: "a-toi",
+          titre: "Une corde, deux minutes",
+          consigne: "Corde 5 \xE0 vide seulement. Balancier bas-haut continu au clic, coups bas un peu plus appuy\xE9s, sans regarder ta main. Apr\xE8s une minute, passe en doubles-croches : quatre coups par clic, bas-haut-bas-haut, toujours du poignet.",
+          bloc: BALANCIER,
+          bpm: 60,
+          minuteur: 120
+        },
+        { type: "question", quizId: "q-rhy-21" },
+        { type: "recap", points: [
+          "La main droite ne s'arr\xEAte jamais : un silence, c'est un passage dans le vide.",
+          "Bas sur les temps, haut sur les \xAB et \xBB : le geste te dit le coup.",
+          "Le mouvement vient du poignet, m\xE9diator tenu sans crispation."
+        ] }
+      ],
+      quiz: ["q-rhy-19", "q-rhy-20", "q-rhy-21"]
+    };
+    quiz111 = [
+      { id: "q-rhy-19", courseId: "rhythm", lessonId: "rhy-c4-01", lvl: 1, q: "En strumming, pourquoi garder la main droite en mouvement continu ?", o: ["Pour garder la pulsation, m\xEAme sans toucher", "Pour user moins vite le m\xE9diator et les cordes", "Pour jouer plus fort et mieux projeter le son", "Pour \xE9conomiser son \xE9nergie sur les longs morceaux"], a: 0, exp: "Le bras devient le m\xE9tronome. Si le mouvement s'arr\xEAte entre deux accords, le tempo s'arr\xEAte avec lui. On continue le balancier et on ne touche les cordes qu'aux moments voulus.", xp: 25 },
+      { id: "q-rhy-20", courseId: "rhythm", lessonId: "rhy-c4-01", lvl: 2, q: "Une figure en croches commence sur le \xAB et \xBB du 2. Avec quel coup l'attaques-tu ?", o: ["Un coup vers le haut", "Un coup vers le bas", "Un coup bas puis un haut", "Peu importe, au choix"], a: 0, exp: "Dans le balancier en croches, la main descend sur les temps et remonte sur les \xAB et \xBB, sans exception. Une note sur le \xAB et \xBB du 2 se joue donc vers le haut : la correspondance te dit le coup de n'importe quelle figure \xE9crite.", xp: 30 },
+      { id: "q-rhy-21", courseId: "rhythm", lessonId: "rhy-c4-01", lvl: 3, q: "Pour jouer un rythme en doubles-croches \xE0 tempo rapide, la main droite doit\u2026", o: ["Acc\xE9l\xE9rer progressivement ses allers-retours en croches", "Ne faire que des coups vers le bas, plus rapproch\xE9s", "Doubler la vitesse du balancier", "R\xE9duire son amplitude de moiti\xE9 \xE0 chaque note"], a: 2, exp: "On ne joue pas des doubles-croches en acc\xE9l\xE9rant un mouvement de croches : on installe un balancier deux fois plus rapide d\xE8s le d\xE9part. Le rep\xE8re reste le temps, jamais la note.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/rhythm/rhy-med-01.js
+var rhy_med_01_exports = {};
+__export(rhy_med_01_exports, {
+  default: () => rhy_med_01_default,
+  quiz: () => quiz112
+});
+var PENDULE, TAB_CORDE_1, rhy_med_01_default, quiz112;
+var init_rhy_med_01 = __esm({
+  "src/content/cours/rhythm/rhy-med-01.js"() {
+    PENDULE = { type: "strum_pattern", caption: "8 croches : aller sur les chiffres, retour sur les \xAB et \xBB", data: { pattern: ["B", "H", "B", "H", "B", "H", "B", "H"], beats: 4, style: "folk", bpm: 60 } };
+    TAB_CORDE_1 = {
+      type: "tab",
+      caption: "Une corde, huit croches par mesure : aller, retour, aller, retour\u2026",
+      text: "Tab \u2014 corde 1 : huit fois 0 (Mi \xE0 vide), puis quatre fois case 1 et quatre fois case 3. Aller sur chaque temps, retour sur chaque \xAB et \xBB.",
+      data: { lines: [
+        "e|0-0-0-0-0-0-0-0-|1-1-1-1-3-3-3-3-|",
+        "B|----------------|----------------|",
+        "G|----------------|----------------|",
+        "D|----------------|----------------|",
+        "A|----------------|----------------|",
+        "E|----------------|----------------|"
+      ] }
+    };
+    rhy_med_01_default = {
+      id: "rhy-med-01",
+      level: 3,
+      title: "Le m\xE9diator altern\xE9 : aller, retour",
+      duration: 8,
+      gropiTip: "Pose l'auriculaire droit ou le tranchant de la main pr\xE8s du chevalet pendant l'exercice, sans t'appuyer : ce petit rep\xE8re garde le m\xE9diator \xE0 la m\xEAme hauteur au-dessus de la corde.",
+      cartes: [
+        { type: "idee", titre: "Une note en bas, la suivante en haut", texte: [
+          "Le m\xE9diator altern\xE9, c'est le pendule du grattage appliqu\xE9 \xE0 une seule corde : un aller vers le sol, un retour vers le plafond.",
+          "Aucun geste perdu : c'est ce qui permet de jouer vite et r\xE9gulier."
+        ] },
+        { type: "idee", titre: "Le geste", texte: [
+          "Tiens le m\xE9diator entre le pouce et le c\xF4t\xE9 de l'index, avec 2 \xE0 3 mm de pointe qui d\xE9passent.",
+          "Le mouvement vient du poignet, petit et souple, pas du coude. Apr\xE8s l'attaque, le m\xE9diator ne s'\xE9loigne que de quelques millim\xE8tres de la corde."
+        ] },
+        { type: "question", quizId: "q-rhy-med-new-01-app" },
+        { type: "idee", titre: "Le rythme d\xE9cide du sens", texte: [
+          "Au clic, deux notes par temps : aller sur \xAB 1, 2, 3, 4 \xBB, retour sur chaque \xAB et \xBB.",
+          "M\xEAme quand la note se r\xE9p\xE8te ou change de case, le sens du m\xE9diator suit le rythme, jamais la m\xE9lodie."
+        ], bloc: PENDULE },
+        {
+          type: "a-toi",
+          titre: "Corde 1, au clic \xE0 60",
+          consigne: "Huit croches sur la corde 1 \xE0 vide, puis quatre en case 1 et quatre en case 3, toujours aller-retour. Quand c'est propre quatre fois de suite, passe \xE0 la carte suivante.",
+          bloc: TAB_CORDE_1,
+          bpm: 60
+        },
+        { type: "question", quizId: "q-rhy-med-new-02" },
+        { type: "idee", titre: "De 60 \xE0 90, sans tricher", texte: [
+          "Monte le tempo par paliers de 5 BPM, avec le M\xE9tronome des Outils. Un palier est valid\xE9 quand tu le joues propre quatre fois de suite, sans te crisper.",
+          "\xC7a accroche ? Redescends d'un cran : la vitesse vient de la r\xE9gularit\xE9, pas de l'effort."
+        ] },
+        {
+          type: "a-toi",
+          titre: "Le d\xE9fi des 90",
+          consigne: "M\xEAme tab, \xE0 90. Deux minutes : tiens le plus longtemps possible sans casser l'alternance. Trop rapide aujourd'hui ? Note ton meilleur tempo propre : c'est ton point de d\xE9part de demain.",
+          bloc: TAB_CORDE_1,
+          bpm: 90,
+          minuteur: 120
+        },
+        { type: "question", quizId: "q-rhy-med-new-03" },
+        { type: "recap", points: [
+          "Aller sur les temps, retour sur les \xAB et \xBB : le rythme d\xE9cide du sens du m\xE9diator.",
+          "Petit geste du poignet, pointe courte, m\xE9diator toujours pr\xE8s de la corde.",
+          "On monte de 5 BPM apr\xE8s quatre passages propres, et on redescend si \xE7a accroche."
+        ] }
+      ],
+      quiz: ["q-rhy-med-new-01", "q-rhy-med-new-02", "q-rhy-med-new-03", "q-rhy-med-new-01-app"]
+    };
+    quiz112 = [
+      { id: "q-rhy-med-new-01", courseId: "rhythm", lessonId: "rhy-med-01", lvl: 1, q: "En m\xE9diator altern\xE9, d'o\xF9 vient surtout le mouvement ?", o: ["Du poignet", "Du coude", "De l'\xE9paule", "Des doigts"], a: 0, exp: "Un petit mouvement souple du poignet : le coude et l'\xE9paule donnent un geste trop ample et trop lent.", xp: 25 },
+      { id: "q-rhy-med-new-01-app", courseId: "rhythm", lessonId: "rhy-med-01", lvl: 1, q: "Ton bras entier bouge \xE0 chaque note et tu fatigues vite. Que corriges-tu ?", o: ["Tu laisses le poignet faire le geste", "Tu serres davantage le m\xE9diator", "Tu grattes plus fort pour compenser", "Tu joues tout vers le bas"], a: 0, exp: "Le mouvement doit venir du poignet, petit et souple. Le bras entier donne un geste trop ample : plus lent, moins pr\xE9cis, plus fatigant.", xp: 25 },
+      { id: "q-rhy-med-new-02", courseId: "rhythm", lessonId: "rhy-med-01", lvl: 1, q: "Tu joues huit croches par mesure au clic. Sur quels comptes vas-tu vers le haut ?", o: ["Sur les \xAB et \xBB", "Sur les chiffres", "Sur les temps 2 et 4", "Sur les temps 1 et 3"], a: 0, exp: "L'aller tombe sur chaque temps (1, 2, 3, 4), le retour sur chaque \xAB et \xBB entre les temps.", xp: 25 },
+      { id: "q-rhy-med-new-03", courseId: "rhythm", lessonId: "rhy-med-01", lvl: 2, q: "\xC0 80 BPM, tes croches deviennent brouillonnes. Que fais-tu ?", o: ["Tu redescends \xE0 75", "Tu montes \xE0 90", "Tu joues tout vers le bas", "Tu serres le m\xE9diator"], a: 0, exp: "On redescend d'un cran jusqu'au tempo o\xF9 tout est propre. Serrer ou forcer ne fait que crisper la main.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/rhythm/rhy-c4-02.js
+var rhy_c4_02_exports = {};
+__export(rhy_c4_02_exports, {
+  default: () => rhy_c4_02_default,
+  quiz: () => quiz113
+});
+var POP, rhy_c4_02_default, quiz113;
+var init_rhy_c4_02 = __esm({
+  "src/content/cours/rhythm/rhy-c4-02.js"() {
+    POP = {
+      type: "strum_pattern",
+      caption: "Pattern pop syncop\xE9 \u2014 silence sur le 3, accents contretemps",
+      data: { pattern: ["B", "-", "B", "H", "-", "H", "B", "H"], beats: 4, style: "pop", bpm: 90 }
+    };
+    rhy_c4_02_default = {
+      id: "rhy-c4-02",
+      level: 4,
+      title: "Patterns de strumming : folk, pop, rock",
+      duration: 9,
+      gropiTip: "Chante le pattern pop avant de le jouer : \xAB bas, bas-haut, haut-bas-haut \xBB. Le pi\xE8ge : sur le 3, ta main doit quand m\xEAme descendre dans le vide, sinon le haut qui suit tombe \xE0 c\xF4t\xE9.",
+      cartes: [
+        { type: "idee", titre: "\xC9crire un pattern", texte: [
+          "Dans Premiers pas, tu as jou\xE9 la passe-partout. Ici, on \xE9crit les patterns et on les range par style.",
+          "B = coup bas, H = coup haut, - = la main passe dans le vide, x = accord \xE9touff\xE9, un \xAB tchk \xBB. Une virgule s\xE9pare les temps."
+        ] },
+        { type: "question", quizId: "q-rhy-p34-02" },
+        { type: "idee", titre: "Folk : tout sonne", texte: [
+          "BH, BH, BH, BH : huit croches, et tous les coups touchent les cordes.",
+          "Un son \xE9quilibr\xE9, r\xE9gulier : la base d'innombrables chansons folk acoustiques."
+        ], bloc: {
+          type: "strum_pattern",
+          caption: "Pattern folk \u2014 B H B H B H B H (8 croches uniformes)",
+          data: { pattern: ["B", "H", "B", "H", "B", "H", "B", "H"], beats: 4, style: "folk", bpm: 90 }
+        } },
+        { type: "idee", titre: "Pop : deux trous", texte: [
+          "B-, BH, -H, BH : c'est ta passe-partout, \xE9crite.",
+          "Le \xAB et \xBB du 1 et le temps 3 passent dans le vide, sans que la main s'arr\xEAte : ces deux trous cr\xE9ent la syncope."
+        ], bloc: POP },
+        { type: "question", quizId: "q-rhy-23" },
+        { type: "idee", titre: "Rock : tout vers le bas", texte: [
+          "B, B, B, B : quatre coups bas par mesure, souvent en power chords, avec du palm mute. Un son compact et direct.",
+          "Version plus groovy : le geste pop, en power chords, palm mute sur les coups bas et accent sur le 2 et le 4."
+        ], bloc: {
+          type: "strum_pattern",
+          caption: "Pattern rock \u2014 4 downstrokes, toute l'\xE9nergie vers le bas",
+          data: { pattern: ["B", "B", "B", "B"], beats: 4, style: "rock", bpm: 120 }
+        } },
+        { type: "question", quizId: "q-rhy-24" },
+        { type: "idee", titre: "Choisir son pattern", texte: [
+          "\xC9coute la chanson et imite ce que tu entends. Lent et intime : arp\xE8ge ou noires. \xC9nergique : coups bas rock. L\xE9ger : folk ou pop.",
+          "Dans le doute, le folk BH, BH, BH, BH passe presque partout."
+        ] },
+        {
+          type: "a-toi",
+          titre: "Trois styles, un accord",
+          consigne: "Sur Sol, au clic : 4 mesures de folk, 4 de pop, 4 de rock tout en coups bas. Puis rejoue le pop en power chord Sol5, palm mute sur les coups bas : m\xEAme geste, autre style.",
+          bloc: POP,
+          bpm: 80
+        },
+        { type: "recap", points: [
+          "B bas, H haut, - dans le vide, x \xE9touff\xE9 : un pattern s'\xE9crit temps par temps.",
+          "Folk BH \xD74, pop B-, BH, -H, BH, rock B B B B.",
+          "Un m\xEAme geste change de style par les accents et l'\xE9touffement."
+        ] }
+      ],
+      quiz: ["q-rhy-22", "q-rhy-23", "q-rhy-24", "q-rhy-p34-02"]
+    };
+    quiz113 = [
+      { id: "q-rhy-22", courseId: "rhythm", lessonId: "rhy-c4-02", lvl: 1, q: "Le pattern de strumming le plus r\xE9pandu en pop tient en combien de temps ?", o: ["Un seul temps, r\xE9p\xE9t\xE9", "Deux temps, r\xE9p\xE9t\xE9s deux fois", "Quatre mesures compl\xE8tes", "Une mesure de quatre temps"], a: 3, exp: "La quasi-totalit\xE9 des patterns pop se bouclent sur une mesure de 4/4 et se r\xE9p\xE8tent. En apprendre un solide t'ouvre des centaines de morceaux \u2014 c'est le meilleur rapport effort/r\xE9pertoire de la guitare.", xp: 25 },
+      { id: "q-rhy-23", courseId: "rhythm", lessonId: "rhy-c4-02", lvl: 2, q: "Dans le pattern pop B-, BH, -H, BH, quand la main passe-t-elle dans le vide ?", o: ["Sur le \xAB et \xBB du 1 et le temps 3", "Sur le temps 1 et le \xAB et \xBB du 3", "Sur les temps 2 et 4", "Jamais, tous les coups sonnent"], a: 0, exp: "B- : le 1 sonne, le \xAB et \xBB du 1 est manqu\xE9. BH : le 2 et son \xAB et \xBB sonnent. -H : le 3 est manqu\xE9, son \xAB et \xBB sonne. Le bras ne s'arr\xEAte jamais : il passe au-dessus des cordes sur ces deux trous, ce qui cr\xE9e la syncope du pattern.", xp: 30 },
+      { id: "q-rhy-24", courseId: "rhythm", lessonId: "rhy-c4-02", lvl: 3, q: "Pourquoi un m\xEAme pattern sonne folk sur une guitare et rock sur une autre ?", o: ["Parce que le tempo employ\xE9 n'est pas le m\xEAme", "Les accents, l'\xE9touffement, les cordes jou\xE9es", "Parce que les accords choisis sont compl\xE8tement diff\xE9rents", "\xC0 cause du nombre de cordes de l'instrument"], a: 1, exp: "Le squelette rythmique est identique ; ce qui change est l'interpr\xE9tation \u2014 accents plus marqu\xE9s, palm mute, attaque limit\xE9e aux cordes graves. Un pattern n'est pas un genre, c'est une grille qu'on habille.", xp: 40 },
+      { id: "q-rhy-p34-02", courseId: "rhythm", lessonId: "rhy-c4-02", lvl: 1, q: "Dans un pattern not\xE9 B-, BH, -H, BH, que demande le tiret ?", o: ["Un passage de la main dans le vide", "Un accord \xE9touff\xE9, un \xAB tchk \xBB", "Un coup bas plus appuy\xE9", "Une pause d'une mesure enti\xE8re"], a: 0, exp: "Le tiret marque un coup manqu\xE9 : la main continue son balancier mais ne touche pas les cordes. L'accord \xE9touff\xE9, lui, s'\xE9crit x : on touche les cordes, sans les laisser sonner.", xp: 25 }
+    ];
+  }
+});
+
+// src/content/cours/rhythm/rhy-med-02.js
+var rhy_med_02_exports = {};
+__export(rhy_med_02_exports, {
+  default: () => rhy_med_02_default,
+  quiz: () => quiz114
+});
+var TAB_EXTERIEUR, TAB_TROIS_CORDES, rhy_med_02_default, quiz114;
+var init_rhy_med_02 = __esm({
+  "src/content/cours/rhythm/rhy-med-02.js"() {
+    TAB_EXTERIEUR = {
+      type: "tab",
+      caption: "Cordes 3 et 2 \xE0 vide : aller sur la corde 3, retour sur la corde 2",
+      text: "Tab \u2014 en croches : corde 3 \xE0 vide (Sol), corde 2 \xE0 vide (Si), quatre fois. Aller sur la corde 3, retour sur la corde 2.",
+      data: { lines: [
+        "e|----------------|",
+        "B|--0---0---0---0-|",
+        "G|0---0---0---0---|",
+        "D|----------------|",
+        "A|----------------|",
+        "E|----------------|"
+      ] }
+    };
+    TAB_TROIS_CORDES = {
+      type: "tab",
+      caption: "Trois cordes en croches : Sol, Si, Mi, Si\u2026 puis Sol, Do, Mi, Do",
+      text: "Tab \u2014 mesure 1 : corde 3 \xE0 vide, corde 2 \xE0 vide, corde 1 \xE0 vide, corde 2 \xE0 vide, deux fois. Mesure 2 : pareil avec la corde 2 en case 1 (Do). M\xE9diator toujours altern\xE9.",
+      data: { lines: [
+        "e|----0-------0---|----0-------0---|",
+        "B|--0---0---0---0-|--1---1---1---1-|",
+        "G|0-------0-------|0-------0-------|",
+        "D|----------------|----------------|",
+        "A|----------------|----------------|",
+        "E|----------------|----------------|"
+      ] }
+    };
+    rhy_med_02_default = {
+      id: "rhy-med-02",
+      level: 4,
+      title: "Changer de corde au m\xE9diator",
+      duration: 8,
+      gropiTip: "Filme ta main droite au ralenti avec ton t\xE9l\xE9phone : tu verras tout de suite si le m\xE9diator fait un grand d\xE9tour pour enjamber une corde. Le bon geste ressemble \xE0 un petit arc, pas \xE0 un saut.",
+      cartes: [
+        { type: "idee", titre: "Le vrai pi\xE8ge : changer de corde", texte: [
+          "Sur une seule corde, l'aller-retour roule tout seul. D\xE8s que la m\xE9lodie change de corde, le m\xE9diator doit enjamber une corde ou se glisser entre deux.",
+          "Garde l'alternance quoi qu'il arrive : c'est la trajectoire qui s'adapte, pas le sens du coup."
+        ] },
+        { type: "idee", titre: "Par l'ext\xE9rieur", texte: [
+          "Aller sur la corde 3, retour sur la corde 2 : chaque corde est attaqu\xE9e depuis l'ext\xE9rieur de la paire. Le m\xE9diator enjambe une corde \xE0 chaque changement."
+        ], bloc: TAB_EXTERIEUR },
+        { type: "idee", titre: "Par l'int\xE9rieur", texte: [
+          "Commence maintenant par un retour sur la corde 3, puis un aller sur la corde 2. Le m\xE9diator attaque depuis l'espace entre les deux cordes : il reste \xAB coinc\xE9 \xBB au milieu.",
+          "Les deux sensations sont diff\xE9rentes : travaille les deux, la m\xE9lodie ne te laissera pas choisir."
+        ] },
+        { type: "question", quizId: "q-rhy-corde-new-01-app" },
+        { type: "idee", titre: "Des gestes petits", texte: [
+          "Moins la pointe du m\xE9diator d\xE9passe de la corde, moins elle a de chemin pour l'enjamber. Garde le poignet souple et le geste court.",
+          "Quand tu passes vers les cordes aigu\xEBs, l'avant-bras glisse un peu avec la main : ne l'\xE9tire pas."
+        ] },
+        {
+          type: "a-toi",
+          titre: "Trois cordes, sans casser l'alternance",
+          consigne: "Sol, Si, Mi, Si\u2026 puis Sol, Do, Mi, Do. Aller, retour, sans jamais deux coups dans le m\xEAme sens : tu passes tour \xE0 tour par l'ext\xE9rieur et par l'int\xE9rieur. Au clic \xE0 60.",
+          bloc: TAB_TROIS_CORDES,
+          bpm: 60,
+          minuteur: 120
+        },
+        { type: "question", quizId: "q-rhy-corde-new-02" },
+        { type: "idee", titre: "Quand \xE7a accroche", texte: [
+          "Rep\xE8re les deux notes qui coincent, souvent un changement de corde pr\xE9cis. Joue-les seules, en boucle, dix fois, plus lentement.",
+          "Puis remets-les dans la phrase compl\xE8te."
+        ] },
+        { type: "question", quizId: "q-rhy-corde-new-03" },
+        { type: "recap", points: [
+          "L'alternance ne s'arr\xEAte jamais : le m\xE9diator adapte sa trajectoire, pas son sens.",
+          "Par l'ext\xE9rieur : il enjambe une corde ; par l'int\xE9rieur : il attaque depuis l'espace entre les deux.",
+          "Un changement qui coince se travaille seul, lentement, en boucle."
+        ] }
+      ],
+      quiz: ["q-rhy-corde-new-01", "q-rhy-corde-new-02", "q-rhy-corde-new-03", "q-rhy-corde-new-01-app"]
+    };
+    quiz114 = [
+      { id: "q-rhy-corde-new-01", courseId: "rhythm", lessonId: "rhy-med-02", lvl: 2, q: "Retour sur la corde 3, puis aller sur la corde 2 : comment passe le m\xE9diator ?", o: ["Par l'int\xE9rieur", "Par l'ext\xE9rieur", "En balayage", "En aller simple"], a: 0, exp: "Les deux attaques partent de l'espace entre les cordes 3 et 2 : c'est le passage par l'int\xE9rieur.", xp: 30 },
+      { id: "q-rhy-corde-new-01-app", courseId: "rhythm", lessonId: "rhy-med-02", lvl: 2, q: "Aller sur la corde 2, puis retour sur la corde 1 : comment passe le m\xE9diator ?", o: ["Par l'int\xE9rieur", "Par l'ext\xE9rieur", "En balayage", "En aller simple"], a: 1, exp: "L'aller part au-dessus de la corde 2, le retour part sous la corde 1 : chaque corde est attaqu\xE9e depuis l'ext\xE9rieur de la paire, et le m\xE9diator enjambe la corde 1 entre les deux.", xp: 30 },
+      { id: "q-rhy-corde-new-02", courseId: "rhythm", lessonId: "rhy-med-02", lvl: 2, q: "En croches, ta m\xE9lodie change de corde sur un \xAB et \xBB. Quel coup joues-tu ?", o: ["Un retour, comme pr\xE9vu", "Un aller, pour la corde neuve", "Deux allers d'affil\xE9e", "Celui qui te para\xEEt facile"], a: 0, exp: "Le \xAB et \xBB est toujours un retour : on garde l'alternance, m\xEAme au changement de corde.", xp: 30 },
+      { id: "q-rhy-corde-new-03", courseId: "rhythm", lessonId: "rhy-med-02", lvl: 1, q: "\xC0 70 BPM, ton passage de la corde 3 \xE0 la corde 2 accroche. Que travailles-tu ?", o: ["Ces deux notes en boucle, plus lentement", "Tout l'exercice, un peu plus vite", "Le passage, mais tout vers le bas", "Un autre exercice, pour oublier"], a: 0, exp: "On isole le changement qui coince et on le r\xE9p\xE8te lentement, puis on le remet dans la phrase.", xp: 25 }
+    ];
+  }
+});
+
+// src/content/cours/rhythm/rhy-c4-03.js
+var rhy_c4_03_exports = {};
+__export(rhy_c4_03_exports, {
+  default: () => rhy_c4_03_default,
+  quiz: () => quiz115
+});
+var rhy_c4_03_default, quiz115;
+var init_rhy_c4_03 = __esm({
+  "src/content/cours/rhythm/rhy-c4-03.js"() {
+    rhy_c4_03_default = {
+      id: "rhy-c4-03",
+      level: 6,
+      title: "Le palm mute : \xE9touffer pour cr\xE9er du groove",
+      duration: 7,
+      gropiTip: "Si ton palm mute tue compl\xE8tement la note, recule un peu la paume vers le chevalet. Tu dois encore entendre la hauteur de la note, juste raccourcie, pas un simple \xAB tchk \xBB.",
+      cartes: [
+        { type: "idee", titre: "La paume sur le chevalet", texte: [
+          "Pose le tranchant de la paume droite, la partie charnue c\xF4t\xE9 petit doigt, sur les cordes, juste devant le chevalet. Pression l\xE9g\xE8re.",
+          "Trop pr\xE8s du chevalet, le son reste ouvert. Trop loin vers le manche, il s'\xE9teint. Cherche l'endroit o\xF9 la note sonne courte, mais sonne."
+        ] },
+        { type: "idee", titre: "Le son \xAB chunk \xBB", texte: [
+          "Palm mute = notes courtes, percussives, peu de sustain. Avec de la distorsion, c'est le riff rock ou metal compact ; en son clair, une rythmique country ou funk.",
+          "Alterner notes \xE9touff\xE9es et notes ouvertes cr\xE9e un contraste puissant."
+        ] },
+        { type: "question", quizId: "q-rhy-46" },
+        { type: "idee", titre: "Doser l'\xE9touffement", texte: [
+          "Plus de pression ou une paume plus avanc\xE9e : le son raccourcit. PM l\xE9ger, la note garde un peu de sustain ; PM fort, ce n'est presque plus qu'un clic.",
+          "Tu peux ainsi nuancer un m\xEAme riff : l\xE9ger au couplet, ouvert au refrain."
+        ] },
+        { type: "idee", titre: "Lire un palm mute", texte: [
+          "En tablature : \xAB PM \xBB ou \xAB P.M. \xBB, avec une ligne pointill\xE9e sous les notes concern\xE9es.",
+          "Le sch\xE9ma de base du rock : \xE9touff\xE9 sur 1, 2, 3, puis une note ouverte sur le 4 pour l'accent."
+        ], bloc: {
+          type: "strum_pattern",
+          caption: "Drill palm mute \u2014 PM (\xD7) sur 1, 2, 3, note ouverte (B) sur le 4",
+          data: { pattern: ["x", "x", "x", "B"], beats: 4, style: "rock", bpm: 80 }
+        } },
+        { type: "question", quizId: "q-rhy-47" },
+        {
+          type: "a-toi",
+          titre: "Ton riff en palm mute",
+          consigne: "Tout en coups vers le bas, \xE0 80 BPM : six Mi graves \xE9touff\xE9s, en croches, puis E5 ouvert, laiss\xE9 sonner. Boucle deux minutes. V\xE9rifie que chaque Mi \xE9touff\xE9 garde sa hauteur.",
+          bloc: {
+            type: "tab",
+            caption: "PM sur les six Mi graves, puis E5 ouvert (corde 6 \xE0 vide + corde 5 case 2)",
+            text: "Tab \u2014 corde 6 \xE0 vide six fois en palm mute, puis E5 sans palm mute : corde 6 \xE0 vide et corde 5 case 2 ensemble.",
+            data: { lines: [
+              "e|-------------------------|",
+              "B|-------------------------|",
+              "G|-------------------------|",
+              "D|-------------------------|",
+              "A|-------------------2-----|",
+              "E|-0--0--0--0--0--0--0-----|"
+            ] }
+          },
+          bpm: 80,
+          minuteur: 120
+        },
+        { type: "idee", titre: "Chug et scratch", texte: [
+          "En metal, le \xAB chug \xBB : des coups tr\xE8s rapproch\xE9s sur des cordes graves fortement \xE9touff\xE9es, presque une caisse claire.",
+          "En funk, autre geste : c'est la main gauche qui \xE9touffe toutes les cordes, et le m\xE9diator frappe un \xAB scratch \xBB court. M\xEAme effet, autre technique."
+        ] },
+        { type: "question", quizId: "q-rhy-48" },
+        { type: "recap", points: [
+          "Tranchant de la paume juste devant le chevalet, pression l\xE9g\xE8re.",
+          "Plus ou moins de pression : la note s'\xE9courte, mais garde sa hauteur.",
+          "En tab : \xAB PM \xBB et une ligne pointill\xE9e ; le scratch funk \xE9touffe \xE0 la main gauche."
+        ] }
+      ],
+      quiz: ["q-rhy-46", "q-rhy-47", "q-rhy-48"]
+    };
+    quiz115 = [
+      { id: "q-rhy-46", courseId: "rhythm", lessonId: "rhy-c4-03", lvl: 1, q: "O\xF9 pose-t-on la paume pour un palm mute ?", o: ["Sur les cordes, au milieu du manche, en appuyant", "Sur les cordes, juste avant le chevalet", "Sur les frettes, pr\xE8s de la t\xEAte", "Sous les cordes, contre la rosace"], a: 1, exp: "Le bord de la paume se pose juste avant le chevalet, avec une pression l\xE9g\xE8re : assez pour \xE9touffer, pas assez pour tuer tout le sustain.", xp: 30 },
+      { id: "q-rhy-47", courseId: "rhythm", lessonId: "rhy-c4-03", lvl: 1, q: "Comment le palm mute se note-t-il dans une tablature ?", o: ["Un \xAB x \xBB \xE0 la place du num\xE9ro de case", "Un \xAB h \xBB entre deux notes", "Une fl\xE8che vers le haut", "\xAB PM \xBB avec une ligne pointill\xE9e"], a: 3, exp: "\xAB PM \xBB (ou \xAB P.M. \xBB), avec une ligne pointill\xE9e sous les notes concern\xE9es. Le \xAB x \xBB note une note \xE9touff\xE9e, ce n'est pas la m\xEAme chose.", xp: 30 },
+      { id: "q-rhy-48", courseId: "rhythm", lessonId: "rhy-c4-03", lvl: 2, q: "En funk, avec quoi \xE9touffe-t-on surtout les cordes pour le \xAB scratch \xBB ?", o: ["La paume droite, pos\xE9e pr\xE8s du chevalet", "Le pouce, sur la corde grave", "La main gauche, pos\xE9e sur les cordes", "Un chiffon gliss\xE9 sous les cordes"], a: 2, exp: "En funk, c'est la main gauche (souvent l'index) qui \xE9touffe toutes les cordes ; le m\xE9diator frappe ces cordes \xE9touff\xE9es : un \xAB scratch \xBB court et percussif.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/rhythm/rhy-tech-03.js
+var rhy_tech_03_exports = {};
+__export(rhy_tech_03_exports, {
+  default: () => rhy_tech_03_default,
+  quiz: () => quiz116
+});
+var TAB_PAIRES, TAB_TRILLE, rhy_tech_03_default, quiz116;
+var init_rhy_tech_03 = __esm({
+  "src/content/cours/rhythm/rhy-tech-03.js"() {
+    TAB_PAIRES = {
+      type: "tab",
+      caption: "Hammer-ons en montant, pull-offs en descendant, dans la position 1",
+      text: "Tab \u2014 corde 3 : 5h7 puis 7p5 ; corde 2 : 5h8 puis 8p5 ; corde 1 : 5h8 puis 8p5 ; on redescend par 8p5 sur la corde 2 et 7p5 sur la corde 3. Une attaque par paire.",
+      data: { lines: [
+        "e|----------------|5h8-8p5---------|",
+        "B|--------5h8-8p5-|--------8p5-----|",
+        "G|5h7-7p5---------|------------7p5-|",
+        "D|----------------|----------------|",
+        "A|----------------|----------------|",
+        "E|----------------|----------------|"
+      ] }
+    };
+    TAB_TRILLE = {
+      type: "tab",
+      caption: "Le trille : hammer-ons et pull-offs encha\xEEn\xE9s, une seule attaque",
+      text: "Tab \u2014 corde 3 : 5h7p5h7p5h7p5h7, une seule attaque au d\xE9but ; corde 2 : 5h8p5h8p5h8p5h8, m\xEAme chose.",
+      data: { lines: [
+        "e|----------------|----------------|",
+        "B|----------------|5h8p5h8p5h8p5h8-|",
+        "G|5h7p5h7p5h7p5h7-|----------------|",
+        "D|----------------|----------------|",
+        "A|----------------|----------------|",
+        "E|----------------|----------------|"
+      ] }
+    };
+    rhy_tech_03_default = {
+      id: "rhy-tech-03",
+      level: 6,
+      title: "Hammer-on et pull-off : le legato",
+      duration: 8,
+      gropiTip: "Mesure ton legato \xE0 l'oreille : la note li\xE9e doit sonner aussi fort que la note attaqu\xE9e. Si elle s'\xE9teint, frappe plus pr\xE8s de la frette plut\xF4t que plus fort.",
+      cartes: [
+        { type: "idee", titre: "Jouer sans regratter", texte: [
+          "Legato veut dire \xAB li\xE9 \xBB. La main droite attaque une fois, la main gauche fait sonner les notes suivantes : h pour hammer-on, p pour pull-off.",
+          "Le son devient plus fluide, et les traits plus rapides demandent moins d'effort au m\xE9diator."
+        ] },
+        { type: "idee", titre: "Le hammer-on", texte: [
+          "5h7 sur la corde 3 : attaque la case 5 \xE0 l'index, puis frappe la case 7 avec l'annulaire, du bout du doigt, juste derri\xE8re la frette.",
+          "C'est la vitesse du doigt qui fait sonner la note, pas la force : un petit coup sec, d'un ou deux centim\xE8tres de haut."
+        ] },
+        { type: "question", quizId: "q-rhy-legato-01-tech-app" },
+        { type: "idee", titre: "Le pull-off", texte: [
+          "7p5 : les deux doigts sont pos\xE9s, cases 5 et 7. Attaque, puis retire l'annulaire en accrochant l\xE9g\xE8rement la corde vers le sol.",
+          "Ce petit pincement de la main gauche fait sonner la case 5. Lever le doigt tout droit ne laisserait qu'un son mou."
+        ] },
+        { type: "question", quizId: "q-rhy-legato-02-tech" },
+        {
+          type: "a-toi",
+          titre: "Paires li\xE9es",
+          consigne: "Joue la tab au clic \xE0 60, une paire par temps : une seule attaque par paire. Les deux notes de chaque paire doivent sonner au m\xEAme volume.",
+          bloc: TAB_PAIRES,
+          bpm: 60,
+          minuteur: 120
+        },
+        { type: "idee", titre: "Le trille", texte: [
+          "Un trille, c'est un hammer-on et un pull-off encha\xEEn\xE9s tr\xE8s vite sur deux cases, sans regratter : 5h7p5h7\u2026 Il fait vibrer une note de fa\xE7on spectaculaire.",
+          "Commence par des paires bien r\xE9guli\xE8res, puis serre le mouvement."
+        ] },
+        {
+          type: "a-toi",
+          titre: "Une minute de trille",
+          consigne: "Gratte une seule fois la case 5 de la corde 3, puis encha\xEEne hammer-on et pull-off entre les cases 5 et 7 au clic \xE0 70, sans regratter, aussi longtemps que la note tient. M\xEAme chose sur la corde 2, cases 5 et 8.",
+          bloc: TAB_TRILLE,
+          bpm: 70,
+          minuteur: 60
+        },
+        { type: "question", quizId: "q-rhy-legato-03-tech" },
+        { type: "recap", points: [
+          "Hammer-on (h) : frappe s\xE8che du bout du doigt, juste derri\xE8re la frette.",
+          "Pull-off (p) : les deux doigts pos\xE9s, on retire en accrochant la corde vers le sol.",
+          "Trille : hammer-on et pull-off encha\xEEn\xE9s, sans regratter."
+        ] }
+      ],
+      quiz: ["q-rhy-legato-01-tech", "q-rhy-legato-02-tech", "q-rhy-legato-03-tech", "q-debut-46", "q-rhy-legato-01-tech-app"]
+    };
+    quiz116 = [
+      { id: "q-rhy-legato-01-tech", courseId: "rhythm", lessonId: "rhy-tech-03", lvl: 1, q: "Pour qu'un hammer-on sonne bien, o\xF9 le doigt frappe-t-il la corde ?", o: ["Juste derri\xE8re la frette", "Au milieu de la case", "Sur la frette elle-m\xEAme", "Loin derri\xE8re, vers la t\xEAte"], a: 0, exp: "Juste derri\xE8re la frette, la corde se plaque net et la note sonne fort. Plus loin, il faut beaucoup plus de force pour un son plus faible.", xp: 25 },
+      { id: "q-rhy-legato-01-tech-app", courseId: "rhythm", lessonId: "rhy-tech-03", lvl: 2, q: "Ton hammer-on sonne faible : l'annulaire frappe lentement, au milieu de la case. Que changes-tu ?", o: ["Frapper plus vite, pr\xE8s de la frette", "Appuyer plus fort, au m\xEAme endroit", "Regratter la seconde note au m\xE9diator", "Frapper avec l'index, plus solide"], a: 0, exp: "C'est la vitesse du doigt qui fait sonner la note, et la corde se plaque net juste derri\xE8re la frette. Appuyer plus fort au milieu de la case ne fait que fatiguer la main.", xp: 30 },
+      { id: "q-rhy-legato-02-tech", courseId: "rhythm", lessonId: "rhy-tech-03", lvl: 2, q: "Pull-off de la case 7 vers la case 5 : comment retires-tu le doigt de la case 7 ?", o: ["En accrochant la corde vers le sol", "En le levant tout droit, vers le haut", "En glissant jusqu'\xE0 la case 5", "En \xE9touffant la corde avec la paume"], a: 0, exp: "Le doigt pince l\xE9g\xE8rement la corde en partant, vers le sol : c'est cette petite attaque de la main gauche qui fait sonner la case 5.", xp: 30 },
+      { id: "q-rhy-legato-03-tech", courseId: "rhythm", lessonId: "rhy-tech-03", lvl: 2, q: "Que joues-tu dans un trille entre les cases 5 et 7 ?", o: ["Les deux notes en alternance rapide, li\xE9es", "La case 5 tir\xE9e jusqu'\xE0 la hauteur de la 7", "Un gliss\xE9 aller-retour entre les deux cases", "Les deux notes ensemble, comme un accord"], a: 0, exp: "Un trille encha\xEEne hammer-on et pull-off entre deux cases, tr\xE8s vite, avec une seule attaque de la main droite.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/rhythm/rhy-tech-04.js
+var rhy_tech_04_exports = {};
+__export(rhy_tech_04_exports, {
+  default: () => rhy_tech_04_default,
+  quiz: () => quiz117
+});
+var TAB_GLISSES, TAB_CHANGEMENT, rhy_tech_04_default, quiz117;
+var init_rhy_tech_04 = __esm({
+  "src/content/cours/rhythm/rhy-tech-04.js"() {
+    TAB_GLISSES = {
+      type: "tab",
+      caption: "Arriver en glissant, puis sortir en glissant, dans la position 1",
+      text: "Tab \u2014 corde 3 : gliss\xE9 de la case 5 \xE0 la case 7 (R\xE9), tenu ; corde 2 : cases 5 puis 8 ; corde 1 : case 5 (La) ; pour finir, corde 3 : gliss\xE9 descendant de la case 7 \xE0 la case 5.",
+      data: { lines: [
+        "e|----------------|5---------------|",
+        "B|--------5---8---|----------------|",
+        "G|5/7-------------|--------7\\5-----|",
+        "D|----------------|----------------|",
+        "A|----------------|----------------|",
+        "E|----------------|----------------|"
+      ] }
+    };
+    TAB_CHANGEMENT = {
+      type: "tab",
+      caption: "Le gliss\xE9 qui change de position : corde 3, case 7 vers case 9, et retour",
+      text: "Tab \u2014 une note par temps : corde 4 cases 5 et 7, corde 3 case 5, puis gliss\xE9 de la case 7 \xE0 la case 9 (on passe en position 2) ; corde 2 cases 8 et 10, corde 1 cases 8 et 10. Retour : corde 1 cases 10 et 8, corde 2 cases 10 et 8, gliss\xE9 de la case 9 \xE0 la case 7 sur la corde 3 (retour en position 1), corde 3 case 5, corde 4 cases 7 et 5.",
+      data: { lines: [
+        "e|----------------|--------8---10--|10--8-----------|----------------|",
+        "B|----------------|8---10----------|--------10--8---|----------------|",
+        "G|--------5---7/9-|----------------|----------------|9\\7-5-----------|",
+        "D|5---7-----------|----------------|----------------|--------7---5---|",
+        "A|----------------|----------------|----------------|----------------|",
+        "E|----------------|----------------|----------------|----------------|"
+      ] }
+    };
+    rhy_tech_04_default = {
+      id: "rhy-tech-04",
+      level: 6,
+      title: "Les slides : glisser d'une note \xE0 l'autre",
+      duration: 8,
+      gropiTip: "Pour un gliss\xE9 de sortie, rel\xE2che la pression en route : la note s'\xE9teint pendant qu'elle descend, sans gr\xE9sillement au bout. Aucun besoin de viser une case d'arriv\xE9e.",
+      cartes: [
+        { type: "idee", titre: "Glisser sans rel\xE2cher", texte: [
+          "5/7 : attaque la case 5, puis glisse le doigt jusqu'\xE0 la case 7 sans le d\xE9coller ni rel\xE2cher la pression. Une seule attaque, la note voyage.",
+          "7\\5, c'est le m\xEAme geste vers le grave."
+        ] },
+        { type: "idee", titre: "Arriver sur le temps", texte: [
+          "Dans une phrase, c'est la note d'arriv\xE9e qui compte : elle tombe sur le temps. Le d\xE9part se joue donc un peu avant.",
+          "Glisse vite, et tiens la note d'arriv\xE9e : on doit l'entendre clairement."
+        ] },
+        { type: "question", quizId: "q-rhy-slide-01-tech" },
+        { type: "idee", titre: "Entrer dans une note, en sortir", texte: [
+          "Gliss\xE9 d'arriv\xE9e : pars une ou deux cases sous la note vis\xE9e et glisse jusqu'\xE0 elle, comme 5/7 vers le R\xE9 de la corde 3. La note s'annonce.",
+          "Gliss\xE9 de sortie : apr\xE8s la note, glisse vers le grave en rel\xE2chant peu \xE0 peu. Elle s'\xE9teint en descendant."
+        ], bloc: TAB_GLISSES },
+        {
+          type: "a-toi",
+          titre: "Gliss\xE9s d'arriv\xE9e et de sortie",
+          consigne: "Joue la tab au clic \xE0 60 : le R\xE9 de la corde 3 arrive par un gliss\xE9, pile sur le premier temps. La derni\xE8re note sort en glissant vers le grave.",
+          bloc: TAB_GLISSES,
+          bpm: 60,
+          minuteur: 90
+        },
+        { type: "question", quizId: "q-rhy-slide-02-tech" },
+        { type: "idee", titre: "Changer de position", texte: [
+          "Un gliss\xE9 d\xE9place toute la main. En position 1, l'annulaire joue la corde 3, case 7. Glisse-le jusqu'\xE0 la case 9 : la main est en position 2, et l'annulaire y joue justement cette case 9.",
+          "Au retour, 9\\7 te ram\xE8ne en position 1."
+        ] },
+        {
+          type: "a-toi",
+          titre: "D'une position \xE0 l'autre",
+          consigne: "Monte en position 1, glisse de la case 7 \xE0 la case 9 sur la corde 3, finis en position 2, puis reviens par le m\xEAme gliss\xE9. Au clic \xE0 60, puis 70. La main suit le doigt sans \xE0-coup.",
+          bloc: TAB_CHANGEMENT,
+          bpm: 60,
+          minuteur: 120
+        },
+        { type: "question", quizId: "q-rhy-slide-03-tech" },
+        { type: "recap", points: [
+          "/ glisse vers l'aigu, \\ vers le grave : pression constante, une seule attaque.",
+          "La note d'arriv\xE9e tombe sur le temps ; le gliss\xE9 de sortie s'\xE9teint en descendant.",
+          "Un gliss\xE9 change de position : corde 3, case 7 vers 9, de la position 1 \xE0 la 2."
+        ] }
+      ],
+      quiz: ["q-rhy-slide-01-tech", "q-rhy-slide-02-tech", "q-rhy-slide-03-tech", "q-debut-49"]
+    };
+    quiz117 = [
+      { id: "q-rhy-slide-01-tech", courseId: "rhythm", lessonId: "rhy-tech-04", lvl: 1, q: "Pendant un gliss\xE9 de la case 5 \xE0 la case 7, que fait le doigt ?", o: ["Il garde la pression tout du long", "Il se soul\xE8ve \xE0 mi-chemin", "Il rel\xE2che, puis r\xE9appuie en 7", "Il frappe la case 7 en arrivant"], a: 0, exp: "La pression reste constante : la corde continue de sonner pendant que le doigt glisse, et la note voyage sans nouvelle attaque.", xp: 25 },
+      { id: "q-rhy-slide-02-tech", courseId: "rhythm", lessonId: "rhy-tech-04", lvl: 2, q: "Au clic, tu joues 5/7 sur un temps. Quelle note doit tomber pile sur le temps ?", o: ["La case 7, celle d'arriv\xE9e", "La case 5, celle de d\xE9part", "La case 6, au milieu", "Aucune : le gliss\xE9 est libre"], a: 0, exp: "C'est la note d'arriv\xE9e qui porte la m\xE9lodie : elle tombe sur le temps, le d\xE9part du gliss\xE9 se joue juste avant.", xp: 30 },
+      { id: "q-rhy-slide-03-tech", courseId: "rhythm", lessonId: "rhy-tech-04", lvl: 2, q: "En La pentatonique mineure, position 1, tu glisses sur la corde 3 de la case 7 \xE0 la case 9. Dans quelle position arrives-tu ?", o: ["La position 2", "La position 3", "La position 5", "Toujours la position 1"], a: 0, exp: "La position 2 couvre les cases 7 \xE0 10, et sa corde 3 se joue en cases 7 et 9 : le gliss\xE9 te d\xE9pose dedans, l'annulaire sur le Mi de la case 9.", xp: 35 }
+    ];
+  }
+});
+
+// src/content/cours/rhythm/rhy-c5-01.js
+var rhy_c5_01_exports = {};
+__export(rhy_c5_01_exports, {
+  default: () => rhy_c5_01_default,
+  quiz: () => quiz118
+});
+var RIFF_SHUFFLE, rhy_c5_01_default, quiz118;
+var init_rhy_c5_01 = __esm({
+  "src/content/cours/rhythm/rhy-c5-01.js"() {
+    RIFF_SHUFFLE = {
+      type: "tab",
+      caption: "Riff shuffle en La : corde 5 \xE0 vide + corde 4 case 2, puis case 4 \u2014 jou\xE9 long-court",
+      text: "Tab \u2014 corde 5 \xE0 vide jou\xE9e avec la corde 4, case 2 deux fois, puis case 4 deux fois ; deux fois de suite. Chaque paire de coups se joue long-court.",
+      data: { lines: [
+        "e|-------------------------|",
+        "B|-------------------------|",
+        "G|-------------------------|",
+        "D|-2--2--4--4--2--2--4--4--|",
+        "A|-0--0--0--0--0--0--0--0--|",
+        "E|-------------------------|"
+      ] }
+    };
+    rhy_c5_01_default = {
+      id: "rhy-c5-01",
+      level: 6,
+      title: "Blues shuffle : le feel ternaire appliqu\xE9",
+      duration: 8,
+      gropiTip: "Erreur fr\xE9quente : un shuffle trop sautillant. La note courte tombe sur la 3e note du triolet, pas sur la derni\xE8re double-croche du temps : compte \xAB 1-trip-let \xBB et joue sur \xAB 1 \xBB et \xAB let \xBB.",
+      cartes: [
+        { type: "idee", titre: "Long-court", texte: [
+          "Rappel : le shuffle d\xE9coupe chaque temps en triolet et ne joue que la 1re et la 3e note. On obtient une paire longue-courte : \xAB DAH-dah, DAH-dah \xBB.",
+          "Sur la partition, souvent de simples croches, avec \xAB shuffle \xBB en t\xEAte."
+        ], bloc: {
+          type: "rhythm_grid",
+          caption: "Blues shuffle \u2014 feel longue-courte par temps (triolets : 1er + 3e seulement)",
+          data: {
+            beats: 4,
+            subdivision: 12,
+            highlights: [0, 2, 3, 5, 6, 8, 9, 11],
+            muted: [1, 4, 7, 10],
+            label: "DAH (1 + trip) \xB7 dah (let) \u2014 la note du milieu du triolet ne sonne pas"
+          }
+        } },
+        { type: "question", quizId: "q-rhy-07" },
+        { type: "idee", titre: "Le riff shuffle", texte: [
+          "Le riff le plus jou\xE9 du blues : la corde 5 \xE0 vide sonne en continu, et la corde 4 alterne Mi (corde 4 case 2) et Fa# (corde 4 case 4).",
+          "Quinte, puis sixte, au-dessus de La : deux doigts suffisent."
+        ], bloc: RIFF_SHUFFLE },
+        {
+          type: "a-toi",
+          titre: "Le riff au clic",
+          consigne: "Joue le riff en coups vers le bas, chaque paire en long-court : \xAB DAH-dah \xBB. Lance le clic \xE0 70 BPM, un temps par paire. Garde le poignet souple et laisse un l\xE9ger palm mute. Deux minutes sans t'arr\xEAter.",
+          bloc: RIFF_SHUFFLE,
+          bpm: 70,
+          minuteur: 120
+        },
+        { type: "idee", titre: "La grille de 12 mesures", texte: [
+          "4 mesures de I (A7), 2 de IV (D7), 2 de I, puis V (E7), IV, et 2 mesures de I.",
+          "Le m\xEAme riff se transpose : sur R\xE9, pars de la corde 4 \xE0 vide ; sur Mi, de la corde 6 \xE0 vide."
+        ] },
+        { type: "idee", titre: "Quick change", texte: [
+          "Variante tr\xE8s courante : on passe au IV d\xE8s la mesure 2, puis on revient au I.",
+          "A7, D7, A7, A7, D7, D7, A7, A7, E7, D7, A7, E7. La derni\xE8re mesure sur E7 relance la grille."
+        ] },
+        { type: "question", quizId: "q-rhy-45" },
+        { type: "idee", titre: "Le shuffle aux doigts", texte: [
+          "Sur une acoustique, le pouce peut tenir le shuffle sur les cordes graves pendant que les doigts jouent la m\xE9lodie sur les aigu\xEBs.",
+          "Basse, rythme et m\xE9lodie \xE0 la fois : un seul guitariste fait tout l'orchestre."
+        ] },
+        { type: "question", quizId: "q-rhy-44" },
+        { type: "recap", points: [
+          "Shuffle = 1re et 3e note du triolet : long-court sur chaque temps.",
+          "Le riff : corde \xE0 vide + quinte, puis sixte, sur I, IV et V.",
+          "Blues 12 mesures : I \xD74, IV \xD72, I \xD72, V, IV, I \xD72 ; quick change : IV d\xE8s la mesure 2."
+        ] }
+      ],
+      quiz: ["q-rhy-07", "q-rhy-44", "q-rhy-45"]
+    };
+    quiz118 = [
+      { id: "q-rhy-07", courseId: "rhythm", lessonId: "rhy-c5-01", lvl: 3, q: "Le 'shuffle' blues subdivise le temps en\u2026", o: ["2 croches \xE9gales, jou\xE9es droites", "4 doubles-croches, toutes jou\xE9es", "3 notes \xE9gales, toutes les trois jou\xE9es", "Un triolet : on joue la 1re et la 3e"], a: 3, exp: "Shuffle = chaque temps en triolet, on joue uniquement la 1\xE8re et la 3e note. 'Long-court'. Feel ternaire du blues classique.", xp: 50 },
+      { id: "q-rhy-44", courseId: "rhythm", lessonId: "rhy-c5-01", lvl: 2, q: "En shuffle, quelle part du temps dure la premi\xE8re note de chaque paire ?", o: ["Les deux tiers", "La moiti\xE9", "Le tiers", "Les trois quarts"], a: 0, exp: "Le temps est d\xE9coup\xE9 en triolet : la premi\xE8re note couvre les deux premi\xE8res parts (2/3), la seconde la derni\xE8re (1/3). D'o\xF9 le balancement long-court. Avec la moiti\xE9, on retombe sur des croches droites.", xp: 30 },
+      { id: "q-rhy-45", courseId: "rhythm", lessonId: "rhy-c5-01", lvl: 2, q: "Dans un blues 12 mesures en \xAB quick change \xBB, que se passe-t-il \xE0 la mesure 2 ?", o: ["On reste sur l'accord I", "On joue d\xE9j\xE0 l'accord V, la dominante", "On passe au IV, puis on revient", "On s'arr\xEAte une mesure"], a: 2, exp: "Quick change : IV d\xE8s la mesure 2 (A7-D7-A7-A7\u2026), au lieu de 4 mesures de I en slow change.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/rhythm/rhy-c5-02.js
+var rhy_c5_02_exports = {};
+__export(rhy_c5_02_exports, {
+  default: () => rhy_c5_02_default,
+  quiz: () => quiz119
+});
+var SKANK, rhy_c5_02_default, quiz119;
+var init_rhy_c5_02 = __esm({
+  "src/content/cours/rhythm/rhy-c5-02.js"() {
+    SKANK = {
+      type: "strum_pattern",
+      caption: "Reggae skank \u2014 uniquement sur les contretemps (les 'et')",
+      data: { pattern: ["-", "H", "-", "H", "-", "H", "-", "H"], beats: 4, style: "reggae", bpm: 80 }
+    };
+    rhy_c5_02_default = {
+      id: "rhy-c5-02",
+      level: 8,
+      title: "Reggae et ska : jouer sur les contretemps",
+      duration: 9,
+      gropiTip: "Tape du pied sur 1-2-3-4 et dis \xAB pied-tchk \xBB \xE0 chaque temps : ton accord ne sonne que sur le \xAB tchk \xBB, jamais en m\xEAme temps que ton pied. Si les deux se rejoignent, ralentis.",
+      cartes: [
+        { type: "idee", titre: "Le skank", texte: [
+          "Compte \xAB 1 et 2 et 3 et 4 et \xBB. La guitare reggae se tait sur les chiffres et joue un accord bref sur chaque \xAB et \xBB : c'est le skank.",
+          "Elle joue en n\xE9gatif, l\xE0 o\xF9 les autres ne jouent pas."
+        ], bloc: SKANK },
+        { type: "idee", titre: "Chacun sa fen\xEAtre", texte: [
+          "La basse, tr\xE8s pr\xE9sente, et la grosse caisse occupent les temps. La guitare et le clavier laissent ces places vides.",
+          "Personne ne double son voisin : c'est cet espace qui donne au reggae son balancement."
+        ] },
+        { type: "question", quizId: "q-rhy-08" },
+        { type: "idee", titre: "Court et net", texte: [
+          "Un skank qui tra\xEEne ne sonne pas reggae. Joue l'accord, puis rel\xE2che aussit\xF4t la pression de la main gauche : les cordes restent pos\xE9es sous les doigts mais ne sonnent plus.",
+          "La nettet\xE9 vient de ce rel\xE2chement, pas de la main droite."
+        ] },
+        {
+          type: "a-toi",
+          titre: "Skank au clic",
+          consigne: "Sur Am, joue le skank du sch\xE9ma : un coup vers le haut, bref, sur chaque \xAB et \xBB. Le clic tombe sur les chiffres : ta guitare ne doit jamais sonner avec lui. Quand c'est stable, alterne Am et Dm, deux mesures chacun.",
+          bloc: SKANK,
+          bpm: 70,
+          minuteur: 120
+        },
+        { type: "question", quizId: "q-rhy-p89-c502-01" },
+        { type: "idee", titre: "Le ska", texte: [
+          "N\xE9 en Jama\xEFque avant le reggae, le ska place lui aussi l'accord sur les contretemps.",
+          "Mais le tempo est bien plus rapide, autour de 120 \xE0 160 BPM, contre 70 \xE0 90 pour le reggae, et les accords sont encore plus courts, presque percussifs."
+        ] },
+        { type: "idee", titre: "Une \xE9cole du contretemps", texte: [
+          "Le skank est une syncope extr\xEAme : toutes les notes tombent hors des temps.",
+          "Quelques s\xE9ances suffisent pour que le \xAB et \xBB devienne un rep\xE8re naturel. Les syncopes du funk ou du jazz deviennent alors bien plus faciles."
+        ] },
+        { type: "question", quizId: "q-rhy-37" },
+        { type: "recap", points: [
+          "Skank : un accord bref sur chaque \xAB et \xBB, rien sur les temps.",
+          "Rel\xE2che la main gauche juste apr\xE8s le coup : le son doit \xEAtre court.",
+          "Ska : m\xEAme placement, tempo bien plus rapide (120-160 BPM)."
+        ] }
+      ],
+      quiz: ["q-rhy-08", "q-rhy-37", "q-rhy-04", "q-rhy-06", "q-rhy-p89-c502-01"]
+    };
+    quiz119 = [
+      { id: "q-rhy-08", courseId: "rhythm", lessonId: "rhy-c5-02", lvl: 2, q: "Le pattern reggae 'skank' joue\u2026", o: ["Uniquement sur les contretemps", "Sur tous les temps", "Uniquement sur les temps 2 et 4", "Sur le 1 et le 3"], a: 0, exp: "Skank reggae = guitare uniquement sur les contretemps (les 'et'). Le 1 et le 3 sont silence c\xF4t\xE9 guitare. La basse marque les temps.", xp: 35 },
+      { id: "q-rhy-37", courseId: "rhythm", lessonId: "rhy-c5-02", lvl: 2, q: "Pourquoi la guitare reggae sonne-t-elle \xAB en l'air \xBB ?", o: ["Elle joue dans un registre tr\xE8s aigu, au-dessus du chant", "Elle utilise un accordage volontairement plus haut", "Elle joue sur les contretemps, laissant les temps aux autres", "Elle se place syst\xE9matiquement en retard sur le tempo"], a: 2, exp: "La guitare occupe les espaces que les autres laissent vides. Ce partage est la d\xE9finition m\xEAme d'un arrangement : chacun sa place dans la mesure, personne ne double le voisin.", xp: 30 },
+      { id: "q-rhy-p89-c502-01", courseId: "rhythm", lessonId: "rhy-c5-02", lvl: 2, q: "Ton skank sonne baveux, les accords se touchent. Que corriger en premier ?", o: ["Rel\xE2cher la main gauche apr\xE8s chaque coup", "Gratter plus fort de la main droite", "Ajouter les temps 1 et 3 \xE0 la guitare", "Ralentir le clic de moiti\xE9"], a: 0, exp: "La longueur de l'accord se r\xE8gle \xE0 la main gauche : on rel\xE2che la pression juste apr\xE8s le coup, les doigts restent pos\xE9s et coupent le son. Ajouter les temps casserait le skank ; ralentir aide, mais ne raccourcit pas le son.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/rhythm/rhy-c5-03.js
+var rhy_c5_03_exports = {};
+__export(rhy_c5_03_exports, {
+  default: () => rhy_c5_03_default,
+  quiz: () => quiz120
+});
+var rhy_c5_03_default, quiz120;
+var init_rhy_c5_03 = __esm({
+  "src/content/cours/rhythm/rhy-c5-03.js"() {
+    rhy_c5_03_default = {
+      id: "rhy-c5-03",
+      level: 8,
+      title: "Funk : les 16e notes et les ghost notes",
+      duration: 10,
+      gropiTip: "Commence ta s\xE9ance funk sans accord : \xE9touffe toutes les cordes de la main gauche et joue 16 doubles-croches par mesure \xE0 70 BPM. Quand le flux est r\xE9gulier, ajoute un seul accent sur le 1.",
+      cartes: [
+        { type: "idee", titre: "La guitare-batterie", texte: [
+          "En funk, la guitare rythmique joue presque comme une batterie : chaque coup, chaque silence est une pi\xE8ce du groove.",
+          "L'harmonie compte moins que le placement. Des accords courts, sur deux \xE0 quatre cordes, suffisent."
+        ] },
+        { type: "idee", titre: "Le flux de 16e", texte: [
+          "Chaque temps se d\xE9coupe en quatre : \xAB 1 e et a, 2 e et a\u2026 \xBB. La main droite descend sur le chiffre et le \xAB et \xBB, remonte sur le \xAB e \xBB et le \xAB a \xBB.",
+          "Ce va-et-vient ne s'arr\xEAte jamais, m\xEAme quand rien ne doit sonner."
+        ] },
+        { type: "question", quizId: "q-rhy-10" },
+        { type: "idee", titre: "Les ghost notes", texte: [
+          "La main gauche reste pos\xE9e sur l'accord sans appuyer : le m\xE9diator ne tire qu'un \xAB tchk \xBB sourd, sans hauteur.",
+          "Ces ghost notes ne sont pas l\xE0 pour l'harmonie. Elles tiennent le flux et donnent sa texture au groove."
+        ] },
+        { type: "idee", titre: "Accents et ghosts", texte: [
+          "Le groove na\xEEt du choix : sur les 16 cases, quelques-unes sonnent (main gauche qui appuie), les autres restent \xE9touff\xE9es.",
+          "Le 1 est presque toujours marqu\xE9 : c'est l'ancre autour de laquelle tout le reste se syncope."
+        ], bloc: {
+          type: "rhythm_grid",
+          caption: "Pattern funk 16e \u2014 accents (orange) vs ghost notes (gris) sur 1 mesure",
+          data: {
+            beats: 4,
+            subdivision: 16,
+            highlights: [0, 2, 6, 8, 14],
+            muted: [1, 3, 4, 5, 7, 9, 10, 11, 12, 13, 15],
+            label: "1 \xB7 e \xB7 et \xB7 a \xB7 2 \xB7 e \xB7 et \xB7 a \xB7 3 \xB7 e \xB7 et \xB7 a \xB7 4 \xB7 e \xB7 et \xB7 a"
+          }
+        } },
+        { type: "question", quizId: "q-rhy-p89-c503-02" },
+        {
+          type: "a-toi",
+          titre: "Le pattern au clic",
+          consigne: "Prends Am7 en barr\xE9 case 5, sur les quatre cordes aigu\xEBs. \xC9tape 1 : main gauche pos\xE9e sans appuyer, quatre coups par clic, bas-haut sans arr\xEAt. \xC9tape 2 : appuie seulement sur les fl\xE8ches du sch\xE9ma, ghost notes partout ailleurs. Monte le tempo quand la main droite ne s'arr\xEAte plus.",
+          bloc: {
+            type: "strum_pattern",
+            caption: "Le m\xEAme pattern \xE0 la main droite \u2014 accents sur 1, et-1, et-2, 3, et-4 (tous en bas), ghost notes (\xD7) ailleurs",
+            data: { pattern: ["B", "x", "B", "x", "x", "x", "B", "x", "B", "x", "x", "x", "x", "x", "B", "x"], beats: 4, style: "funk", bpm: 95 }
+          },
+          bpm: 70,
+          minuteur: 180
+        },
+        { type: "idee", titre: "Le son funk", texte: [
+          "Un son clair, un peu de compression, pas de distorsion : elle gomme les ghost notes et noie le groove.",
+          "Des accords de 7e et de 9e (m7, 7, 9) dans l'aigu du manche, sur peu de cordes. Une p\xE9dale wah, ouverte sur les accents, est une couleur classique mais pas obligatoire."
+        ] },
+        { type: "question", quizId: "q-rhy-38" },
+        { type: "recap", points: [
+          "Main droite en 16e continues : bas sur le chiffre et le \xAB et \xBB, haut sur \xAB e \xBB et \xAB a \xBB.",
+          "Ghost note = main gauche pos\xE9e sans appuyer ; accent = main gauche qui appuie.",
+          "Le 1 marqu\xE9, des accents choisis, un son clair et court : c'est le groove."
+        ] }
+      ],
+      quiz: ["q-rhy-10", "q-rhy-38", "q-rhy-07", "q-rhy-p89-c503-01", "q-rhy-p89-c503-02"]
+    };
+    quiz120 = [
+      { id: "q-rhy-10", courseId: "rhythm", lessonId: "rhy-c5-03", lvl: 3, q: "En funk, la main droite reste continue en doubles-croches m\xEAme quand on ne 'joue' pas. Pourquoi ?", o: ["Pour pouvoir jouer plus vite", "Pour \xE9conomiser son \xE9nergie sur la dur\xE9e", "Pour garder le groove et le timing", "Par simple convention historique du funk"], a: 2, exp: "Main droite continue D-U-D-U... = ghost notes \xE9touff\xE9es entre les accents. Maintient le 'pulse' rythmique r\xE9gulier, cr\xE9e le groove.", xp: 55 },
+      { id: "q-rhy-38", courseId: "rhythm", lessonId: "rhy-c5-03", lvl: 3, q: "En funk, le temps 1 est le plus souvent\u2026", o: ["Purement et simplement ignor\xE9", "Syst\xE9matiquement jou\xE9 en ghost note", "Jou\xE9 deux fois de suite pour l'appuyer", "Le point d'ancrage le plus marqu\xE9 de la mesure"], a: 3, exp: "Le funk repose sur un temps 1 tr\xE8s affirm\xE9 \u2014 \xAB the One \xBB \u2014 autour duquel tout le reste peut se syncoper. Sans ce point fixe, la syncope n'a plus de r\xE9f\xE9rence et le groove se dissout.", xp: 40 },
+      { id: "q-rhy-p89-c503-01", courseId: "rhythm", lessonId: "rhy-c5-03", lvl: 2, q: "Sur une ghost note funk, que fait la main gauche ?", o: ["Elle reste pos\xE9e sans appuyer", "Elle appuie l'accord \xE0 fond", "Elle quitte compl\xE8tement le manche", "Elle glisse d'une case vers l'aigu"], a: 0, exp: "Pos\xE9e sur les cordes sans les enfoncer, la main gauche les \xE9touffe : le m\xE9diator ne tire qu'un \xAB tchk \xBB sans hauteur. L\xE2cher le manche ferait sonner les cordes \xE0 vide.", xp: 35 },
+      { id: "q-rhy-p89-c503-02", courseId: "rhythm", lessonId: "rhy-c5-03", lvl: 3, q: "En 16e continues, dans quel sens joues-tu un accent plac\xE9 sur le \xAB a \xBB du 2 ?", o: ["Vers le haut", "Vers le bas", "Vers le bas, puis vers le haut", "Au choix, selon le confort"], a: 0, exp: "La main descend sur le chiffre et le \xAB et \xBB, remonte sur le \xAB e \xBB et le \xAB a \xBB. Le \xAB a \xBB est donc toujours un coup vers le haut : garder ce va-et-vient fixe place chaque accent sans r\xE9fl\xE9chir.", xp: 45 }
+    ];
+  }
+});
+
+// src/content/cours/rhythm/rhy-c5-04.js
+var rhy_c5_04_exports = {};
+__export(rhy_c5_04_exports, {
+  default: () => rhy_c5_04_default,
+  quiz: () => quiz121
+});
+var AM7_BASSES, DEMI_BOSSA, ANTICIPATION, rhy_c5_04_default, quiz121;
+var init_rhy_c5_04 = __esm({
+  "src/content/cours/rhythm/rhy-c5-04.js"() {
+    AM7_BASSES = { type: "chord_diagram", caption: "Am7 avec ses deux basses \xE0 vide : La (corde 5) et Mi (corde 6)", data: { name: "Am7", frets: [0, 0, 2, 0, 1, 0], fingers: [0, 0, 2, 0, 1, 0], startFret: 1 } };
+    DEMI_BOSSA = {
+      type: "tab",
+      caption: "Bossa simplifi\xE9e : le pouce sur les temps, les doigts sur les \xAB et \xBB \u2014 Am7 puis D7",
+      text: "Tab \u2014 mesure 1, Am7 : pouce sur La (corde 5 \xE0 vide) aux temps 1 et 3, sur Mi (corde 6 \xE0 vide) aux temps 2 et 4 ; doigts sur les cordes 4, 3 et 2 (cases 2, 0, 1) \xE0 chaque \xAB et \xBB. Mesure 2, D7 : pouce sur R\xE9 (corde 4 \xE0 vide) et La (corde 5 \xE0 vide), doigts sur les cordes 3, 2 et 1 (cases 2, 1, 2).",
+      data: { lines: [
+        "e|----------------|--2---2---2---2-|",
+        "B|--1---1---1---1-|--1---1---1---1-|",
+        "G|--0---0---0---0-|--2---2---2---2-|",
+        "D|--2---2---2---2-|0-------0-------|",
+        "A|0-------0-------|----0-------0---|",
+        "E|----0-------0---|----------------|"
+      ] }
+    };
+    ANTICIPATION = {
+      type: "tab",
+      caption: "L'anticipation : D7 arrive sur le \xAB et \xBB du 4, avant la barre de mesure",
+      text: "Tab \u2014 mesure 1 comme avant, sauf le dernier \xAB et \xBB : les doigts jouent d\xE9j\xE0 D7 (cordes 3, 2 et 1, cases 2, 1, 2). Mesure 2 : la basse R\xE9 (corde 4 \xE0 vide) tombe sur le 1, sous un accord d\xE9j\xE0 l\xE0.",
+      data: { lines: [
+        "e|--------------2-|------2---2---2-|",
+        "B|--1---1---1---1-|------1---1---1-|",
+        "G|--0---0---0---2-|------2---2---2-|",
+        "D|--2---2---2-----|0-------0-------|",
+        "A|0-------0-------|----0-------0---|",
+        "E|----0-------0---|----------------|"
+      ] }
+    };
+    rhy_c5_04_default = {
+      id: "rhy-c5-04",
+      level: 9,
+      title: "Bossa nova : le pattern classique",
+      duration: 9,
+      gropiTip: "\xC9coute ton pouce : la basse doit tomber sur chaque temps comme une horloge, en alternant fondamentale et quinte. Sur Am7, c'est La (corde 5 \xE0 vide) puis Mi (corde 6 \xE0 vide).",
+      cartes: [
+        { type: "idee", titre: "Une guitare, une voix", texte: [
+          "La bossa nova na\xEEt \xE0 Rio \xE0 la fin des ann\xE9es 1950 : le rythme de la samba, simplifi\xE9 pour une seule guitare sous la voix, avec des accords venus du jazz.",
+          "Un son \xE9pur\xE9 et intime, et une difficult\xE9 : la main droite."
+        ] },
+        { type: "idee", titre: "Deux couches, une main", texte: [
+          "Le pouce tient la basse sur les cordes graves, r\xE9guli\xE8re, en alternant fondamentale et quinte.",
+          "Index, majeur et annulaire pincent l'accord sur les cordes aigu\xEBs, entre les basses. Pas de m\xE9diator."
+        ], bloc: AM7_BASSES },
+        { type: "question", quizId: "q-rhy-54" },
+        { type: "idee", titre: "Des accords de septi\xE8me", texte: [
+          "La bossa joue rarement des triades simples : m7, maj7, 7, souvent avec une 9e. Peu de cordes, beaucoup de couleur.",
+          "Pour commencer : Am7 et D7, deux accords que tu connais, avec des basses \xE0 vide."
+        ] },
+        { type: "question", quizId: "q-rhy-39" },
+        {
+          type: "a-toi",
+          titre: "Le pouce, puis les doigts",
+          consigne: "Au clic : d'abord le pouce seul, une basse par temps, La et Mi sur Am7, R\xE9 et La sur D7. Puis les doigts seuls, sur les \xAB et \xBB. Puis les deux ensemble, comme dans la tab. Lentement : l'ind\xE9pendance vient en jouant, pas en for\xE7ant.",
+          bloc: DEMI_BOSSA,
+          bpm: 60,
+          minuteur: 180
+        },
+        { type: "idee", titre: "L'accord en avance", texte: [
+          "Ce qui fait glisser la bossa : l'accord suivant arrive souvent sur le \xAB et \xBB du 4, un demi-temps avant la barre de mesure.",
+          "Le pouce, lui, reste sur le temps : la basse du nouvel accord tombe sur le 1."
+        ], bloc: ANTICIPATION },
+        { type: "question", quizId: "q-rhy-06" },
+        {
+          type: "a-toi",
+          titre: "Am7, D7 en avance",
+          consigne: "Boucle Am7 et D7 avec l'anticipation de la tab : D7 sur le dernier \xAB et \xBB, et Am7 de m\xEAme en revenant. Quand c'est fluide, monte de 60 \xE0 70.",
+          bloc: ANTICIPATION,
+          bpm: 60,
+          minuteur: 120
+        },
+        { type: "recap", points: [
+          "Aux doigts : le pouce sur les temps, les doigts sur les \xAB et \xBB.",
+          "Des accords de septi\xE8me, peu de cordes : Am7 et D7 pour commencer.",
+          "L'accord suivant arrive sur le \xAB et \xBB du 4 ; la basse reste sur le 1."
+        ] }
+      ],
+      quiz: ["q-rhy-39", "q-rhy-54", "q-rhy-06", "q-rhy-10"]
+    };
+    quiz121 = [
+      { id: "q-rhy-39", courseId: "rhythm", lessonId: "rhy-c5-04", lvl: 3, q: "Dans la bossa nova, que fait le pouce pendant que les doigts jouent le motif syncop\xE9 ?", o: ["Il tient une pulsation r\xE9guli\xE8re sur les cordes graves", "Il double exactement le motif jou\xE9 par les doigts", "Il reste immobile pendant toute la mesure", "Il \xE9touffe les cordes entre chaque accord"], a: 0, exp: "Le pouce maintient une base r\xE9guli\xE8re, les doigts syncopent au-dessus : deux couches ind\xE9pendantes jou\xE9es par une seule main. C'est ce qui rend la bossa difficile \u2014 et c'est l'exercice d'ind\xE9pendance le plus payant qui soit.", xp: 40 },
+      { id: "q-rhy-54", courseId: "rhythm", lessonId: "rhy-c5-04", lvl: 1, q: "Comment joue-t-on habituellement la bossa nova \xE0 la guitare ?", o: ["Aux doigts, sans m\xE9diator", "Au m\xE9diator, en aller-retour", "Au m\xE9diator, en coups bas", "Au bottleneck, en slide"], a: 0, exp: "La bossa se joue en fingerstyle : le pouce tient la basse, les doigts placent les accords syncop\xE9s. C'est ce qui permet \xE0 une seule main de jouer deux couches ind\xE9pendantes.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/rhythm/rhy-c5-05.js
+var rhy_c5_05_exports = {};
+__export(rhy_c5_05_exports, {
+  default: () => rhy_c5_05_default,
+  quiz: () => quiz122
+});
+var AM6, DM6, rhy_c5_05_default, quiz122;
+var init_rhy_c5_05 = __esm({
+  "src/content/cours/rhythm/rhy-c5-05.js"() {
+    AM6 = { type: "chord_diagram", caption: "Am6 \u2014 accord compact de pompe, corde 5 \xE9touff\xE9e (5 \xD7 4 5 5 \xD7)", data: { name: "Am6", frets: [5, -1, 4, 5, 5, -1], fingers: [2, 0, 1, 3, 4, 0], startFret: 4 } };
+    DM6 = { type: "chord_diagram", caption: "Dm6 \u2014 la m\xEAme id\xE9e, fondamentale sur la corde 5 (\xD7 5 \xD7 4 6 5)", data: { name: "Dm6", frets: [-1, 5, -1, 4, 6, 5], fingers: [0, 2, 0, 1, 4, 3], startFret: 4 } };
+    rhy_c5_05_default = {
+      id: "rhy-c5-05",
+      level: 9,
+      title: "Gypsy jazz : la pompe Django",
+      duration: 9,
+      gropiTip: "Tape du pied sur chaque temps et dis \xAB boum, tchac, boum, tchac \xBB en jouant : le boum un peu plus grave et plus long, le tchac court. Si ta voix swingue, ta main suivra.",
+      cartes: [
+        { type: "idee", titre: "Le swing manouche", texte: [
+          "Paris, ann\xE9es 1930 : Django Reinhardt et le Quintette du Hot Club de France inventent un jazz jou\xE9 aux cordes, sans batterie.",
+          "Derri\xE8re le soliste, une ou deux guitares tiennent la pompe : c'est elle, le moteur rythmique."
+        ] },
+        { type: "idee", titre: "Quatre coups vers le bas", texte: [
+          "Un coup par temps, tous vers le bas, jamais vers le haut.",
+          "Temps 1 et 3 : un peu plus graves et plus longs. Temps 2 et 4 : accentu\xE9s et tr\xE8s courts, coup\xE9s aussit\xF4t."
+        ], bloc: { type: "rhythm_grid", caption: "La pompe : quatre coups bas, les temps 2 et 4 accentu\xE9s et courts", data: { beats: 4, subdivision: 4, accents: [1, 3], label: "1 \xB7 2 \xB7 3 \xB7 4" } } },
+        { type: "question", quizId: "q-rhy-09" },
+        { type: "idee", titre: "Le coup court", texte: [
+          "Pour couper l'accord sur 2 et 4, la main gauche rel\xE2che sa pression juste apr\xE8s le coup, sans quitter les cordes.",
+          "D'o\xF9 des accords compacts, sans corde \xE0 vide : rien ne doit continuer \xE0 sonner."
+        ], bloc: AM6 },
+        { type: "question", quizId: "q-rhy-pompe-lot4" },
+        {
+          type: "a-toi",
+          titre: "Pompe sur Am6 et Dm6",
+          consigne: "Deux mesures d'Am6, deux de Dm6, en boucle au clic. Quatre coups bas par mesure, 2 et 4 courts et accentu\xE9s. Cinq minutes au plus : la pompe fatigue l'avant-bras, garde-le rel\xE2ch\xE9.",
+          bloc: DM6,
+          bpm: 100,
+          minuteur: 180
+        },
+        { type: "idee", titre: "Monter le tempo", texte: [
+          "Les morceaux rapides du r\xE9pertoire d\xE9passent souvent 200 BPM. On y arrive par paliers : +5 BPM quand la pompe est propre deux fois de suite.",
+          "Un son net \xE0 120 vaut mieux qu'une bouillie \xE0 180."
+        ] },
+        { type: "question", quizId: "q-rhy-chunk-lot4" },
+        { type: "recap", points: [
+          "Quatre coups bas par mesure, jamais de coup vers le haut.",
+          "1 et 3 plus longs, 2 et 4 courts et accentu\xE9s : la main gauche rel\xE2che aussit\xF4t.",
+          "Accords compacts sans corde \xE0 vide ; le tempo monte par paliers de 5 BPM."
+        ] }
+      ],
+      quiz: ["q-rhy-09", "q-rhy-pompe-lot4", "q-rhy-chunk-lot4"]
+    };
+    quiz122 = [
+      { id: "q-rhy-09", courseId: "rhythm", lessonId: "rhy-c5-05", lvl: 3, q: "La 'pompe' gypsy jazz utilise\u2026", o: ["Un aller-retour bas-haut continu", "Des coups bas, secs puis \xE9touff\xE9s", "Des triolets jou\xE9s en continu", "Des doubles-croches altern\xE9es bas-haut"], a: 1, exp: "Pompe gypsy = down strokes sur chaque temps, alternant 'sec' (note tenue) et '\xE9touff\xE9' (chuck). Style Django Reinhardt. Effet percussif.", xp: 50 },
+      { id: "q-rhy-pompe-lot4", courseId: "rhythm", lessonId: "rhy-c5-05", lvl: 3, q: "Dans la pompe manouche, quels temps sont jou\xE9s courts et accentu\xE9s ?", o: ["Les temps 2 et 4", "Les temps 1 et 3", "Le temps 1 seulement", "Les quatre temps, \xE0 \xE9galit\xE9"], a: 0, exp: "Les temps 1 et 3, un peu plus graves, sonnent plus longtemps ; les temps 2 et 4 sont accentu\xE9s et coup\xE9s aussit\xF4t. C'est ce contraste qui fait swinguer la pompe, comme la caisse claire d'une batterie sur 2 et 4.", xp: 40 },
+      { id: "q-rhy-chunk-lot4", courseId: "rhythm", lessonId: "rhy-c5-05", lvl: 3, q: "Ta pompe sonne brouillonne : les accords des temps 2 et 4 tra\xEEnent. Que corriger ?", o: ["Rel\xE2cher la main gauche juste apr\xE8s le coup", "Gratter plus fort sur les temps 2 et 4", "Ajouter un coup vers le haut entre les temps", "Choisir des accords avec des cordes \xE0 vide"], a: 0, exp: "Le coup court vient de la main gauche : elle rel\xE2che sa pression sans quitter les cordes, et l'accord s'arr\xEAte net. Gratter plus fort ou ajouter des cordes \xE0 vide fait encore plus tra\xEEner le son.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/rhythm/rhy-c6-01.js
+var rhy_c6_01_exports = {};
+__export(rhy_c6_01_exports, {
+  default: () => rhy_c6_01_default,
+  quiz: () => quiz123
+});
+var GAMME_DO, rhy_c6_01_default, quiz123;
+var init_rhy_c6_01 = __esm({
+  "src/content/cours/rhythm/rhy-c6-01.js"() {
+    GAMME_DO = { type: "tab", caption: "La gamme de Do de l'exercice : joue-la pile sur le clic, puis derri\xE8re, puis devant", text: "Tab : Do (corde 5 case 3), R\xE9 (corde 4 \xE0 vide), Mi (corde 4 case 2), Fa (corde 4 case 3), Sol (corde 3 \xE0 vide), La (corde 3 case 2), Si (corde 2 \xE0 vide), Do (corde 2 case 1).", data: { lines: ["e|------------------|", "B|-------------0-1--|", "G|---------0-2------|", "D|---0-2-3----------|", "A|-3----------------|", "E|------------------|"] } };
+    rhy_c6_01_default = {
+      id: "rhy-c6-01",
+      level: 9,
+      title: "Jouer laid-back, on-top, in-the-pocket",
+      duration: 8,
+      gropiTip: "Enregistre une minute de noires sur un clic \xE0 60 BPM, puis r\xE9\xE9coute. Si le clic dispara\xEEt presque, c'est que tu es pile dessus : ta note le masque. S'il ressort, tu es devant ou derri\xE8re.",
+      cartes: [
+        { type: "idee", titre: "M\xEAmes notes, autre feel", texte: [
+          "Deux guitaristes jouent les m\xEAmes notes au m\xEAme tempo, et pourtant l'un sonne d\xE9tendu, l'autre press\xE9.",
+          "La diff\xE9rence tient en quelques millisecondes : o\xF9 tombe l'attaque par rapport au temps. Derri\xE8re, dessus ou devant."
+        ], bloc: { type: "rhythm_grid", caption: "L'attaque tombe pile sur le temps. Laid-back la glisse un rien vers la droite, on-top un rien vers la gauche", data: { beats: 4, subdivision: 16, highlights: [0, 4, 8, 12], muted: [1, 2, 3, 5, 6, 7, 9, 10, 11, 13, 14, 15], label: "1 \xB7 e \xB7 et \xB7 a \xB7 2 \xB7 e \xB7 et \xB7 a \xB7 3 \xB7 e \xB7 et \xB7 a \xB7 4 \xB7 e \xB7 et \xB7 a" } } },
+        { type: "idee", titre: "Laid-back : derri\xE8re", texte: [
+          "L'attaque arrive un rien apr\xE8s le clic, sans que le tempo ralentisse.",
+          "Le son se pose, d\xE9tendu, chaleureux : un placement fr\xE9quent en blues et en soul."
+        ] },
+        { type: "question", quizId: "q-rhy-35" },
+        { type: "idee", titre: "On-top : devant", texte: [
+          "L'attaque arrive un rien avant le clic. Le son pousse, urgent, plein d'\xE9nergie : celui du rock nerveux et des tempos rapides."
+        ] },
+        { type: "idee", titre: "In the pocket", texte: [
+          "\xCAtre dans la poche, ce n'est pas forc\xE9ment \xEAtre pile sur le clic : c'est tomber au m\xEAme endroit que la basse et la batterie.",
+          "Un groupe dans la poche sonne comme une seule main."
+        ] },
+        { type: "question", quizId: "q-rhy-40" },
+        { type: "idee", titre: "Un choix, pas une erreur", texte: [
+          "Un retard involontaire est une erreur de tempo. Un retard choisi, et tenu du d\xE9but \xE0 la fin, est un feel.",
+          "Ce qui les s\xE9pare : la r\xE9gularit\xE9."
+        ] },
+        {
+          type: "a-toi",
+          titre: "Trois placements",
+          consigne: "Clic \xE0 60, enregistre-toi. Joue la gamme deux fois pile sur le clic : ta note doit le couvrir. Puis deux fois juste derri\xE8re, puis deux fois juste devant, sans changer de tempo. R\xE9\xE9coute : entends-tu les trois feels ?",
+          bloc: GAMME_DO,
+          bpm: 60,
+          minuteur: 180
+        },
+        { type: "question", quizId: "q-rhy-timing-lot4" },
+        { type: "recap", points: [
+          "Laid-back : un rien derri\xE8re le temps, son pos\xE9. On-top : un rien devant, son qui pousse.",
+          "In the pocket : au m\xEAme endroit que la basse et la batterie.",
+          "Un feel est un choix tenu ; enregistre-toi pour l'entendre."
+        ] }
+      ],
+      quiz: ["q-rhy-35", "q-rhy-40", "q-rhy-timing-lot4", "q-rhy-07", "q-rhy-09"]
+    };
+    quiz123 = [
+      { id: "q-rhy-35", courseId: "rhythm", lessonId: "rhy-c6-01", lvl: 3, q: "Jouer \xAB laid-back \xBB signifie placer les notes\u2026", o: ["Tr\xE8s l\xE9g\xE8rement apr\xE8s le temps", "Juste avant le temps, en avance", "Exactement sur le temps", "En dehors de la mesure"], a: 0, exp: "Un placement tr\xE8s l\xE9g\xE8rement en retard, sans perdre le tempo \u2014 d'o\xF9 l'impression de d\xE9tente du jazz et de la soul. Jouer \xAB on top \xBB (juste devant) produit l'effet inverse : urgence, pouss\xE9e, et c'est le placement du rock.", xp: 40 },
+      { id: "q-rhy-40", courseId: "rhythm", lessonId: "rhy-c6-01", lvl: 3, q: "Jouer \xAB in the pocket \xBB, c'est\u2026", o: ["Jouer le plus vite possible sans perdre la justesse", "S'aligner pr\xE9cis\xE9ment sur le placement de la section rythmique", "Jouer syst\xE9matiquement en avance sur le temps", "Jouer tr\xE8s fort pour dominer le reste du groupe"], a: 1, exp: "Le \xAB pocket \xBB est le placement collectif du groupe. \xCAtre dedans, ce n'est pas \xEAtre math\xE9matiquement sur le clic : c'est \xEAtre au m\xEAme endroit que la basse et la batterie, quel que soit cet endroit.", xp: 40 },
+      { id: "q-rhy-timing-lot4", courseId: "rhythm", lessonId: "rhy-c6-01", lvl: 3, q: "Tu te r\xE9\xE9coutes sur un clic : on entend nettement le clic juste avant chacune de tes notes. O\xF9 te places-tu ?", o: ["Derri\xE8re le temps", "Devant le temps", "Pile sur le temps", "En dehors du tempo"], a: 0, exp: "Le clic sonne d'abord, ta note ensuite : tu joues derri\xE8re le temps. Pile dessus, ta note masquerait le clic ; devant, c'est ta note qu'on entendrait en premier.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/rhythm/rhy-c6-02.js
+var rhy_c6_02_exports = {};
+__export(rhy_c6_02_exports, {
+  default: () => rhy_c6_02_default,
+  quiz: () => quiz124
+});
+var RIFF_MI, rhy_c6_02_default, quiz124;
+var init_rhy_c6_02 = __esm({
+  "src/content/cours/rhythm/rhy-c6-02.js"() {
+    RIFF_MI = { type: "tab", caption: "Un riff d'une mesure en Mi : la corde grave \xE0 vide comme pivot, deux notes de la pentatonique pour la signature", text: "Tab : corde 6 \xE0 vide, \xE0 vide, case 3 (Sol), \xE0 vide, case 5 (La), \xE0 vide, case 3 (Sol), puis corde 5 case 2 (Si) pour relancer la boucle.", data: { lines: ["e|------------------|", "B|------------------|", "G|------------------|", "D|------------------|", "A|---------------2--|", "E|-0-0-3-0-5-0-3----|"] } };
+    rhy_c6_02_default = {
+      id: "rhy-c6-02",
+      level: 9,
+      title: "Construire un riff rythmique personnel",
+      duration: 9,
+      gropiTip: "Pour ton premier riff, impose-toi une contrainte : une seule corde, trois notes maximum. Sans pouvoir te cacher derri\xE8re les notes, c'est le rythme qui fait tout le travail.",
+      cartes: [
+        { type: "idee", titre: "Ta signature", texte: [
+          "Un riff, c'est une cellule courte qu'on reconna\xEEt en deux secondes et qu'on rejoue en boucle.",
+          "Sa force vient d'abord du rythme, rarement du nombre de notes."
+        ] },
+        { type: "idee", titre: "Quatre ingr\xE9dients", texte: [
+          "Un rythme qu'on retient. Une id\xE9e harmonique simple : une \xE0 trois notes ou accords. Un d\xE9tail signature : un accent, un mute, une note de passage.",
+          "Et la r\xE9p\xE9tabilit\xE9 : pouvoir le jouer vingt fois \xE0 l'identique."
+        ] },
+        { type: "question", quizId: "q-rhy-41" },
+        { type: "idee", titre: "Le feel, puis la zone", texte: [
+          "Choisis d'abord le feel : shuffle, funk en doubles-croches, rock en croches, skank reggae.",
+          "Puis la zone : une corde grave \xE0 vide, un power chord, quelques notes de pentatonique. Ce cadre guide tous tes choix."
+        ] },
+        { type: "idee", titre: "Une mesure, en boucle", texte: [
+          "Quatre \xE0 huit coups sur une mesure, avec un accent clair. Joue-la dix fois de suite.",
+          "Si elle tourne seule apr\xE8s trois ou quatre passages, c'est bon signe. Si tu cherches la note suivante, simplifie."
+        ], bloc: RIFF_MI },
+        { type: "question", quizId: "q-rhy-55" },
+        {
+          type: "a-toi",
+          titre: "Le riff en Mi",
+          consigne: "Joue le riff au clic \xE0 80, en palm mute sur la corde \xE0 vide. Laisse sonner le Sol et le La. Quand il tourne seul, change une seule chose (un accent, une note, un silence) et garde tout le reste.",
+          bloc: RIFF_MI,
+          bpm: 80,
+          minuteur: 120
+        },
+        { type: "idee", titre: "Version A, version B", texte: [
+          "Trois fois la version A, la quatri\xE8me fois une version B : une fin diff\xE9rente, une note qui monte d'une corde, une note de passage.",
+          "La r\xE9p\xE9tition ancre le riff, la variation relance l'\xE9coute."
+        ] },
+        {
+          type: "a-toi",
+          titre: "Ton riff",
+          consigne: "Une corde, trois notes au plus, une mesure : invente ton riff au clic. Joue A, A, A, puis B. D\xE8s qu'il sonne, enregistre-le avec ton t\xE9l\xE9phone : les bonnes id\xE9es s'oublient vite.",
+          bpm: 80,
+          minuteur: 300
+        },
+        { type: "recap", points: [
+          "Un riff tient sur une cellule courte : le rythme avant les notes.",
+          "Choisis le feel et la zone, puis une mesure qui tourne seule en boucle.",
+          "Trois fois A, une fois B ; enregistre tout de suite ce qui sonne."
+        ] }
+      ],
+      quiz: ["q-rhy-41", "q-rhy-10", "q-rhy-55"]
+    };
+    quiz124 = [
+      { id: "q-rhy-41", courseId: "rhythm", lessonId: "rhy-c6-02", lvl: 3, q: "Qu'est-ce qui rend un riff rythmique m\xE9morable ?", o: ["Le nombre de notes qu'il contient au total", "La vitesse \xE0 laquelle il est ex\xE9cut\xE9", "Une cellule courte, r\xE9p\xE9t\xE9e puis vari\xE9e", "L'usage de nombreux accords diff\xE9rents"], a: 2, exp: "R\xE9p\xE9tition pour ancrer, variation pour relancer. Cette structure \u2014 trois fois pareil, la quatri\xE8me diff\xE9rente \u2014 porte l'immense majorit\xE9 des riffs c\xE9l\xE8bres, et elle est directement applicable \xE0 l'improvisation.", xp: 40 },
+      { id: "q-rhy-55", courseId: "rhythm", lessonId: "rhy-c6-02", lvl: 2, q: "En jouant ton riff, tu dois chercher la note suivante \xE0 chaque passage. Que faire ?", o: ["Le simplifier jusqu'\xE0 ce qu'il tourne", "L'acc\xE9l\xE9rer pour qu'il paraisse fluide", "Lui ajouter des notes de passage", "Changer d'accordage pour le jouer"], a: 0, exp: "Un bon riff se joue en boucle sans y penser. S'il faut chercher, il est trop complexe : on retire des \xE9l\xE9ments jusqu'\xE0 ce qu'il sonne naturellement apr\xE8s 3 ou 4 r\xE9p\xE9titions.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/impro/impro-intro-01.js
+var impro_intro_01_exports = {};
+__export(impro_intro_01_exports, {
+  default: () => impro_intro_01_default,
+  quiz: () => quiz125
+});
+var TROIS_NOTES, impro_intro_01_default, quiz125;
+var init_impro_intro_01 = __esm({
+  "src/content/cours/impro/impro-intro-01.js"() {
+    TROIS_NOTES = { type: "fretboard", caption: "Tes 3 notes en La mineur : La (fondamentale), Do (tierce mineure), Mi (quinte)", data: { frets: 5, startFret: 4, showStringNames: true, showFretNumbers: true, markerFrets: [5, 7, 9], notes: [{ string: 6, fret: 5, label: "La", color: "amber", root: true }, { string: 6, fret: 8, label: "Do", color: "primary" }, { string: 5, fret: 7, label: "Mi", color: "primary" }] } };
+    impro_intro_01_default = {
+      id: "impro-intro-01",
+      level: 2,
+      title: "Ta premi\xE8re improvisation : 3 notes, en rythme",
+      duration: 7,
+      gropiTip: "Choisis un motif noire-noire-blanche et place La, Do et Mi une fois chacun : il existe 6 ordres possibles, donc d\xE9j\xE0 6 phrases diff\xE9rentes sur le m\xEAme rythme.",
+      cartes: [
+        { type: "idee", titre: "Improviser, c'est choisir", texte: [
+          "Improviser, ce n'est ni conna\xEEtre toute la pentatonique, ni jouer vite : c'est faire des choix, m\xEAme avec tr\xE8s peu de mati\xE8re.",
+          "Trois notes bien plac\xE9es, c'est d\xE9j\xE0 improviser."
+        ] },
+        { type: "idee", titre: "Trois notes que tu joues d\xE9j\xE0", texte: [
+          "Tes trois notes : La, Do et Mi. Tu les joues d\xE9j\xE0 ensemble, dans un des accords de Premiers pas. Plus tard, tu les retrouveras dans la pentatonique mineure."
+        ] },
+        { type: "question", quizId: "q-impro-33" },
+        { type: "idee", titre: "Sous la main, case 5", texte: [
+          "Pour improviser, on les prend sur les cordes graves, group\xE9es : La (corde 6, case 5), Mi (corde 5, case 7).",
+          "Et Do ? Sur la corde 6 lui aussi, trois demi-tons au-dessus de La. La main ne bouge pas."
+        ] },
+        { type: "question", quizId: "q-impro-36" },
+        { type: "idee", titre: "Le rythme d'abord", texte: [
+          "Ta seule variable : QUAND tu joues, pas QUOI. Une note bien plac\xE9e vaut mieux qu'une gamme jou\xE9e sans intention : B.B. King l'a prouv\xE9 toute sa carri\xE8re, avec peu de notes."
+        ], bloc: { type: "rhythm_grid", caption: "Une id\xE9e rythmique pour tes 3 notes : une attaque sur le 1, le \xAB et de 2 \xBB et le 4, du silence ailleurs", data: { beats: 4, subdivision: 8, highlights: [0, 3, 6], muted: [1, 2, 4, 5, 7], label: "1 \xB7 \u2013 \xB7 \u2013 \xB7 [et] \xB7 \u2013 \xB7 \u2013 \xB7 4 \xB7 \u2013" } } },
+        { type: "a-toi", titre: "Deux minutes, trois notes", consigne: "Index sur La, auriculaire sur Do, annulaire sur Mi. Au clic, varie le rythme et les silences, jamais les notes. Pars du motif 1, \xAB et \xBB du 2, 4, puis invente les tiens.", bloc: TROIS_NOTES, bpm: 70, minuteur: 120 },
+        { type: "question", quizId: "q-impro-32" },
+        { type: "recap", points: [
+          "Improviser = faire des choix, m\xEAme avec trois notes.",
+          "La, Do, Mi : les notes de La mineur, case 5 sur les cordes 6 et 5.",
+          "Le rythme d'abord : varie quand tu joues, pas quoi."
+        ] }
+      ],
+      quiz: ["q-impro-32", "q-impro-33", "q-impro-36"]
+    };
+    quiz125 = [
+      { id: "q-impro-32", courseId: "impro", lessonId: "impro-intro-01", lvl: 1, q: "Dans l'exercice des 3 notes, sur quoi porte l'attention principale ?", o: ["Jouer le plus de notes possible", "La vitesse d'ex\xE9cution", "Utiliser toute la gamme pentatonique", "Le rythme et le placement des notes"], a: 3, exp: "L'exercice isole volontairement le choix des notes (3 seulement) pour que toute l'attention se porte sur QUAND elles sont jou\xE9es, pas lesquelles.", xp: 25 },
+      { id: "q-impro-33", courseId: "impro", lessonId: "impro-intro-01", lvl: 1, q: "Tes trois notes La, Do et Mi sont les notes de quel accord ?", o: ["La mineur", "Do majeur", "Mi mineur", "La majeur"], a: 0, exp: "La, Do, Mi = La mineur (Am), l'accord vu dans Premiers pas. C'est pour \xE7a qu'elles sonnent juste sur un fond en La mineur : ce sont les notes m\xEAmes de l'accord. La majeur aurait Do# \xE0 la place de Do.", xp: 25 },
+      { id: "q-impro-36", courseId: "impro", lessonId: "impro-intro-01", lvl: 1, q: "La est \xE0 la case 5 de la corde 6. Sur cette m\xEAme corde, o\xF9 trouves-tu Do ?", o: ["Case 8", "Case 7", "Case 9", "Case 3"], a: 0, exp: "Do est 3 demi-tons au-dessus de La : 5 + 3 = 8. Tes trois notes tiennent sous la main : La (corde 6, case 5), Do (corde 6, case 8), Mi (corde 5, case 7).", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/impro/impro-intro-02.js
+var impro_intro_02_exports = {};
+__export(impro_intro_02_exports, {
+  default: () => impro_intro_02_default,
+  quiz: () => quiz126
+});
+var QUESTION_REPONSE, impro_intro_02_default, quiz126;
+var init_impro_intro_02 = __esm({
+  "src/content/cours/impro/impro-intro-02.js"() {
+    QUESTION_REPONSE = { type: "tab", caption: "Question (La-Do-Mi, qui monte et reste en suspens), silence, puis r\xE9ponse (Mi-Do-La, qui redescend se poser)", text: "Tab : question = La (corde 6 case 5), Do (corde 6 case 8), Mi (corde 5 case 7) ; un silence ; r\xE9ponse = Mi (corde 5 case 7), Do (corde 6 case 8), La (corde 6 case 5).", data: { lines: ["e|----------------------|", "B|----------------------|", "G|----------------------|", "D|----------------------|", "A|-----7---------7------|", "E|-5-8-------------8-5--|"] } };
+    impro_intro_02_default = {
+      id: "impro-intro-02",
+      level: 4,
+      title: "Question et r\xE9ponse : ta premi\xE8re vraie phrase",
+      duration: 7,
+      gropiTip: "Chante ta question \xE0 voix basse avant de la jouer : si tu peux la fredonner, tu sauras lui r\xE9pondre. Astuce : ta r\xE9ponse peut reprendre le d\xE9but de la question et changer seulement la fin.",
+      cartes: [
+        { type: "idee", titre: "Une conversation", texte: [
+          "Tu sais placer La, Do et Mi en rythme. \xC9tape suivante : le phras\xE9.",
+          "Une courte \xAB question \xBB, puis une \xAB r\xE9ponse \xBB qui lui fait \xE9cho, comme dans une conversation."
+        ] },
+        { type: "idee", titre: "En suspens, puis pos\xE9e", texte: [
+          "Blues, gospel, chants de travail : une phrase en appelle une autre.",
+          "La question finit en l'air, sur une note instable ; la r\xE9ponse reprend son mat\xE9riau et se pose, souvent sur la tonique."
+        ] },
+        { type: "question", quizId: "q-impro-34" },
+        { type: "idee", titre: "Ta premi\xE8re question-r\xE9ponse", texte: [
+          "La, Do, Mi monte et reste en suspens. Un silence. Puis les m\xEAmes notes redescendent se poser sur La.",
+          "\xC9coute, puis joue lentement."
+        ], bloc: QUESTION_REPONSE },
+        { type: "idee", titre: "Le silence est une note", texte: [
+          "On a souvent peur du vide et on remplit tout. Pourtant l'espace rend la phrase lisible, comme la ponctuation \xE0 l'oral."
+        ] },
+        { type: "question", quizId: "q-impro-35" },
+        {
+          type: "a-toi",
+          titre: "Cinq conversations",
+          consigne: "Au clic, joue la question de la tab, laisse un temps de silence, puis invente ta r\xE9ponse avec La, Do et Mi, en finissant sur La. Cinq fois, avec un rythme diff\xE9rent.",
+          bloc: QUESTION_REPONSE,
+          bpm: 70
+        },
+        { type: "question", quizId: "q-rhy-11" },
+        { type: "recap", points: [
+          "Une question finit en suspens, la r\xE9ponse se pose sur une note stable.",
+          "La r\xE9ponse reprend les notes de la question et change la fin.",
+          "Le silence entre les deux ponctue la phrase : ne le remplis pas."
+        ] }
+      ],
+      quiz: ["q-rhy-11", "q-impro-34", "q-impro-35"]
+    };
+    quiz126 = [
+      { id: "q-rhy-11", courseId: "rhythm", lessonId: "impro-intro-02", lvl: 2, q: "Dans une phrase musicale type 'question-r\xE9ponse', la phrase 'question' finit typiquement sur\u2026", o: ["La tonique, pour bien conclure", "Une note stable et reposante", "Un silence de toute une mesure", "Une note instable, en suspens"], a: 3, exp: "Question = tension = fin sur note instable (3, 6, 7). R\xE9ponse = r\xE9solution = fin sur tonique ou note stable. Structure universelle.", xp: 40 },
+      { id: "q-impro-34", courseId: "impro", lessonId: "impro-intro-02", lvl: 2, q: "Ta question monte La - Do - Mi et reste en suspens. Quelle r\xE9ponse la conclut le mieux ?", o: ["Mi - Do - La, qui redescend sur La", "La - Do - Mi, rejou\xE9e \xE0 l'identique", "Mi - Mi - Mi, sur la note du haut", "Do - Mi - Do, qui s'arr\xEAte sur Do"], a: 0, exp: "Une r\xE9ponse reprend le mat\xE9riau de la question et le m\xE8ne vers un point de repos. Redescendre jusqu'\xE0 La, la note de base en La mineur, ferme la phrase. R\xE9p\xE9ter la question ou finir en l'air laisse l'oreille en attente.", xp: 40 },
+      { id: "q-impro-35", courseId: "impro", lessonId: "impro-intro-02", lvl: 2, q: "Dans une phrase de question-r\xE9ponse, le silence entre les deux sert \xE0\u2026", o: ["Rien, c'est un vide \xE0 \xE9viter", "\xC9conomiser de l'\xE9nergie entre deux phrases", "Ponctuer, comme dans une phrase parl\xE9e", "Attendre que le rythme reparte"], a: 2, exp: "Le silence fonctionne comme la ponctuation d'une phrase parl\xE9e \u2014 sans lui, la question et la r\xE9ponse se m\xE9langent en un flux confus.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/impro/impro-01.js
+var impro_01_exports = {};
+__export(impro_01_exports, {
+  default: () => impro_01_default,
+  quiz: () => quiz127
+});
+var impro_01_default, quiz127;
+var init_impro_01 = __esm({
+  "src/content/cours/impro/impro-01.js"() {
+    impro_01_default = {
+      id: "impro-01",
+      level: 6,
+      title: "Penser en phrases musicales",
+      duration: 8,
+      gropiTip: "Pour savoir o\xF9 finit ta phrase, respire avec elle : commence \xE0 jouer en expirant et arr\xEAte-toi quand tu dois reprendre ton souffle. Ton solo se met \xE0 respirer comme un chanteur.",
+      cartes: [
+        { type: "idee", titre: "Une conversation", texte: [
+          "Improviser, ce n'est pas aligner des notes au hasard : c'est parler. Comme une phrase dite, une phrase musicale a un d\xE9but, un d\xE9veloppement et une fin.",
+          "On pense en phrases, pas en gammes."
+        ] },
+        { type: "idee", titre: "La r\xE8gle du silence", texte: [
+          "Une note seule, bien plac\xE9e apr\xE8s un silence, porte plus qu'une cascade de doubles-croches.",
+          "Le d\xE9butant remplit tout. Le silence est une note \xE0 part enti\xE8re : c'est lui qui donne du sens \xE0 ce qui suit."
+        ] },
+        { type: "question", quizId: "q-rhy-36" },
+        { type: "idee", titre: "Question, puis r\xE9ponse", texte: [
+          "Une bonne phrase dure 2 \xE0 4 mesures. La question finit sur une note instable, la 2e ou la 7e ; la r\xE9ponse se pose sur une note stable.",
+          "En La mineur, tes cibles de repos : La, Do et Mi, les notes de l'accord."
+        ], bloc: { type: "fretboard_interactive", mode: "highlight", notes: ["A", "C", "E"], caption: "Notes stables de Am \u2014 cibles de r\xE9solution id\xE9ales", displayMode: "notes", lang: "fr", compact: true } },
+        { type: "question", quizId: "q-impro-23" },
+        { type: "idee", titre: "Call & response", texte: [
+          "Joue 2 mesures, puis tais-toi 2 mesures. Pendant le silence, \xE9coute ce que tu viens de jouer et pr\xE9pare ta r\xE9ponse.",
+          "Cette alternance est au c\u0153ur du blues, du jazz et du rock."
+        ] },
+        {
+          type: "a-toi",
+          titre: "Une question, une r\xE9ponse",
+          consigne: "Au clic, joue la question et tiens le Sol : \xE7a reste en suspens. Deux mesures de silence. Puis la r\xE9ponse, qui se pose sur La. Ensuite, invente tes propres questions et r\xE9ponses dans la pentatonique, pendant deux minutes.",
+          bloc: {
+            type: "tab",
+            caption: "Question qui finit sur Sol (\u266D7), r\xE9ponse qui se pose sur La (tonique) \u2014 La pentatonique mineure, position 1",
+            text: "Tab \u2014 question : corde 3 cases 5 et 7, corde 2 cases 5 et 8 (Do, R\xE9, Mi, Sol), tenue. Silence. R\xE9ponse : corde 2 cases 8 et 5, corde 3 cases 7 et 5, corde 4 case 7 (Sol, Mi, R\xE9, Do, La).",
+            data: { lines: [
+              "e|-----------------------------------|",
+              "B|-------5--8--------8--5------------|",
+              "G|-5--7--------------------7--5------|",
+              "D|-------------------------------7---|",
+              "A|-----------------------------------|",
+              "E|-----------------------------------|"
+            ] }
+          },
+          bpm: 70,
+          minuteur: 120
+        },
+        { type: "idee", titre: "Varie le rythme, pas les notes", texte: [
+          "Le d\xE9butant change de notes en gardant le m\xEAme rythme. Fais l'inverse : prends La, Do, Mi et joue-les en blanches, en croches, en syncopes, en triolets.",
+          "Trois notes, dix phrases. Cinq notes de pentatonique suffisent pour des heures."
+        ], bloc: { type: "fretboard_interactive", mode: "scale", root: "A", scale: "pentatonic_minor", caption: "Pentatonique de La \u2014 5 notes suffisent pour des heures d'impro", displayMode: "notes", lang: "fr", compact: true } },
+        { type: "question", quizId: "q-impro-24" },
+        { type: "recap", points: [
+          "Le silence fait la phrase : joue, puis laisse respirer.",
+          "Question sur une note instable, r\xE9ponse sur une note stable (La, Do, Mi en Am).",
+          "Varie le rythme sur peu de notes avant d'en ajouter."
+        ] }
+      ],
+      quiz: ["q-rhy-36", "q-impro-23", "q-impro-24", "q-impro-01"]
+    };
+    quiz127 = [
+      { id: "q-rhy-36", courseId: "rhythm", lessonId: "impro-01", lvl: 2, q: "\xC0 quoi sert un silence apr\xE8s quelques notes de solo ?", o: ["\xC0 masquer une h\xE9sitation sur la suite", "\xC0 donner le temps d'entendre ce qui vient d'\xEAtre jou\xE9", "\xC0 marquer la fin d'un morceau lent", "\xC0 rien : cela casse l'\xE9lan et fait retomber l'\xE9nergie"], a: 1, exp: "Sans silence, les phrases se fondent en un flux continu que l'oreille ne peut plus d\xE9couper. Le silence est ce qui transforme une suite de notes en phrase \u2014 c'est la ponctuation.", xp: 30 },
+      { id: "q-impro-23", courseId: "impro", lessonId: "impro-01", lvl: 2, q: "Une phrase de solo qui se termine sur la tonique donne une impression de\u2026", o: ["Question laiss\xE9e ouverte", "Tension port\xE9e \xE0 son maximum", "Conclusion", "Fausse note"], a: 2, exp: "La tonique est le point d'arriv\xE9e de la tonalit\xE9 : y finir ferme la phrase. Finir sur la seconde ou la septi\xE8me laisse l'oreille en attente \u2014 c'est comme cela qu'on construit un dialogue question-r\xE9ponse.", xp: 30 },
+      { id: "q-impro-24", courseId: "impro", lessonId: "impro-01", lvl: 2, q: "Tu viens de jouer une phrase de quatre notes. Quelle suite construit le mieux un solo ?", o: ["Une phrase enti\xE8rement diff\xE9rente", "Un trait rapide d'une dizaine de notes", "La m\xEAme phrase \xE0 l'identique, dix fois", "La m\xEAme phrase d\xE9plac\xE9e ou l\xE9g\xE8rement modifi\xE9e"], a: 3, exp: "R\xE9p\xE9ter en transformant : l'oreille reconna\xEEt le motif et suit son \xE9volution. Tout changer \xE0 chaque phrase donne du d\xE9cousu, ne rien changer donne de la monotonie. C'est la m\xEAme logique que pour un riff.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/impro/impro-02.js
+var impro_02_exports = {};
+__export(impro_02_exports, {
+  default: () => impro_02_default,
+  quiz: () => quiz128
+});
+var impro_02_default, quiz128;
+var init_impro_02 = __esm({
+  "src/content/cours/impro/impro-02.js"() {
+    impro_02_default = {
+      id: "impro-02",
+      level: 7,
+      title: "Cibler les notes d'accord",
+      duration: 9,
+      gropiTip: "Avant d'improviser sur Am7, \xE9gr\xE8ne La, Do, Mi, Sol en noires \xE0 60 BPM, en montant puis en descendant, dans une seule position. Ces 4 notes dans les doigts, tes atterrissages deviennent r\xE9flexes.",
+      cartes: [
+        { type: "idee", titre: "Dedans ou \xE0 c\xF4t\xE9", texte: [
+          "Ce qui fait sonner un solo sur l'accord : arriver sur une note de l'accord, une chord tone, sur les temps forts.",
+          "Sur Am7 : La, Do, Mi, Sol. Sur G7 : Sol, Si, R\xE9, Fa. Elles font partie de l'accord, elles sonnent juste \xE0 coup s\xFBr."
+        ], bloc: { type: "fretboard_interactive", mode: "chord", root: "A", chord: "min7", caption: "Am7 \u2014 toutes les chord tones sur le manche", displayMode: "notes", lang: "fr", compact: true } },
+        { type: "question", quizId: "q-impro-22" },
+        { type: "idee", titre: "La 3e et la 7e d'abord", texte: [
+          "Parmi les chord tones, la 3e dit majeur ou mineur, la 7e dit quel type de 7e. Ce sont les guide tones.",
+          "Sur Am7 : Do et Sol. Sur G7 : Si et Fa."
+        ], bloc: { type: "fretboard_interactive", mode: "chord", root: "G", chord: "dom7", caption: "G7 \u2014 guide tones : Si (3e) et Fa (7e mineure)", displayMode: "intervals", lang: "fr", compact: true } },
+        { type: "idee", titre: "Les notes de passage", texte: [
+          "Entre deux cibles, tu peux jouer n'importe quelle note de la gamme, et m\xEAme une note hors gamme si elle passe vite.",
+          "Ce qui compte : atterrir sur une chord tone au temps fort."
+        ] },
+        { type: "question", quizId: "q-impro-25" },
+        {
+          type: "a-toi",
+          titre: "Atterrir sur Am7",
+          consigne: "\xC9gr\xE8ne les notes de Am7 de la tab en noires au clic, en montant puis en descendant. Puis, sur un Lam tenu ou en boucle, improvise dans la pentatonique, position 1 : chaque phrase finit sur La, Do, Mi ou Sol, au temps 1.",
+          bloc: {
+            type: "tab",
+            caption: "Les notes de Am7 (La Do Mi Sol) dans la position 1 de la pentatonique, case 5",
+            text: "Tab \u2014 corde 6 cases 5 et 8, corde 5 case 7, corde 4 cases 5 et 7, corde 3 case 5, corde 2 cases 5 et 8, corde 1 cases 5 et 8 (La, Do, Mi, Sol, La, Do, Mi, Sol, La, Do).",
+            data: { lines: [
+              "e|-------------------------5--8--|",
+              "B|-------------------5--8--------|",
+              "G|----------------5--------------|",
+              "D|----------5--7-----------------|",
+              "A|-------7-----------------------|",
+              "E|-5--8--------------------------|"
+            ] }
+          },
+          bpm: 60,
+          minuteur: 120
+        },
+        { type: "idee", titre: "Quand l'accord change", texte: [
+          "Sur un blues en La, la pentatonique de La sert toute la grille. L'\xE9tape suivante : suivre chaque accord.",
+          "A7 contient Do# (corde 3 case 6). Quand D7 arrive, vise Do (corde 3 case 5), sa 7e : un demi-ton plus bas, et le changement s'entend. Ses autres guide tones aussi sont de bonnes cibles."
+        ], bloc: {
+          type: "chord_diagram",
+          caption: "D7 \u2014 accord dominante (\xD7 \xD7 0 2 1 2)",
+          data: { name: "D7", frets: [-1, -1, 0, 2, 1, 2], fingers: [0, 0, 0, 2, 1, 3], startFret: 1 }
+        } },
+        { type: "question", quizId: "q-impro-26" },
+        {
+          type: "a-toi",
+          titre: "A7, D7 : un demi-ton",
+          consigne: "Alterne A7 et D7, deux mesures chacun au clic. Sur A7, pose Do# (corde 3 case 6) au temps 1. Sur D7, glisse d'une case vers Do (corde 3 case 5). Puis improvise autour, en gardant ces deux arriv\xE9es.",
+          bpm: 70,
+          minuteur: 120
+        },
+        { type: "recap", points: [
+          "Les chord tones sonnent juste : place-les sur les temps forts.",
+          "La 3e et la 7e r\xE9sument l'accord : Do et Sol sur Am7, Si et Fa sur G7.",
+          "Quand l'accord change, change de cible : Do# sur A7, Do ou Fa# sur D7."
+        ] }
+      ],
+      quiz: ["q-impro-25", "q-impro-26", "q-impro-22", "q-impro-04"]
+    };
+    quiz128 = [
+      { id: "q-impro-25", courseId: "impro", lessonId: "impro-02", lvl: 2, q: "Sur un blues en La, on peut jouer La pentatonique mineure sur les trois accords. Pourquoi ?", o: ["Parce que la gamme sert la tonalit\xE9 enti\xE8re", "Parce que le blues ne suit aucune r\xE8gle", "Parce que les trois accords sont mineurs", "Parce que le tempo d'un blues reste toujours lent"], a: 0, exp: "On improvise sur la tonalit\xE9, pas sur chaque accord. C'est ce qui rend le blues abordable \u2014 et suivre les accords un par un, en ciblant leurs notes, est justement l'\xE9tape suivante.", xp: 30 },
+      { id: "q-impro-26", courseId: "impro", lessonId: "impro-02", lvl: 2, q: "Blues en La : l'accord passe de A7 \xE0 D7. Quelle note est la tierce de D7 ?", o: ["Fa#", "Fa", "Do#", "La"], a: 0, exp: "D7 = R\xE9 Fa# La Do. Sa tierce, Fa#, n'existe ni dans A7 ni dans La pentatonique mineure : la viser quand D7 arrive fait entendre le changement, tout comme le Do (sa 7e), qui remplace le Do# de A7. Ce sont les guide tones de D7.", xp: 40 },
+      { id: "q-impro-22", courseId: "impro", lessonId: "impro-02", lvl: 2, q: "Pendant un solo, poser une note de l'accord en cours produit\u2026", o: ["Une tension \xE0 r\xE9soudre", "Une sensation de stabilit\xE9", "Une dissonance marqu\xE9e", "Un effet de surprise"], a: 1, exp: "Les notes de l'accord sont les points de repos. Celles qui n'en font pas partie cr\xE9ent du mouvement. Savoir alterner les deux est la m\xE9canique de base du phras\xE9, bien avant tout vocabulaire.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/impro/impro-03.js
+var impro_03_exports = {};
+__export(impro_03_exports, {
+  default: () => impro_03_default,
+  quiz: () => quiz129
+});
+var APPROCHES_DO, impro_03_default, quiz129;
+var init_impro_03 = __esm({
+  "src/content/cours/impro/impro-03.js"() {
+    APPROCHES_DO = {
+      type: "tab",
+      caption: "Trois arriv\xE9es sur Do (3e de Am) : par en dessous, par au-dessus, puis encadr\xE9",
+      text: "Tab \u2014 corde 3 : Si (corde 3 case 4) puis Do (corde 3 case 5) ; Do# (corde 3 case 6) puis Do ; enfin Do#, Si, Do : l'enclosure. Chaque Do tombe sur un temps fort.",
+      data: { lines: [
+        "e|----------------|----------------|----------------|----------------|",
+        "B|----------------|----------------|----------------|----------------|",
+        "G|------------4---|5-----------6---|5-------6---4---|5---------------|",
+        "D|----------------|----------------|----------------|----------------|",
+        "A|----------------|----------------|----------------|----------------|",
+        "E|----------------|----------------|----------------|----------------|"
+      ] }
+    };
+    impro_03_default = {
+      id: "impro-03",
+      level: 8,
+      title: "Tension et r\xE9solution : les approches",
+      duration: 8,
+      gropiTip: "Une note d'approche ne se tient pas : joue Si ou Do# sur le contretemps, puis pose Do sur le temps fort. Si tu t'attardes sur l'approche, la tension sonne comme une fausse note.",
+      cartes: [
+        { type: "idee", titre: "Tendre, puis d\xE9tendre", texte: [
+          "Une note instable cr\xE9e une attente ; la note stable qui suit la comble.",
+          "Plus l'attente est nette, plus l'arriv\xE9e fait du bien. C'est le moteur de toute phrase."
+        ] },
+        { type: "idee", titre: "L'approche chromatique", texte: [
+          "Une note \xE0 un demi-ton de ta cible, jou\xE9e juste avant elle.",
+          "Pour viser Do, la 3e de Am : Si par en dessous, Do# par au-dessus. L'oreille devine l'arriv\xE9e et la savoure."
+        ], bloc: { type: "fretboard_interactive", mode: "highlight", notes: ["C", "C#", "B"], caption: "Approches chromatiques de Do \u2014 Si (bas) et Do# (haut)", displayMode: "notes", lang: "fr", compact: true } },
+        { type: "question", quizId: "q-impro-27" },
+        { type: "idee", titre: "Courte, sur le contretemps", texte: [
+          "L'approche passe vite, de pr\xE9f\xE9rence sur un temps faible ; la cible tombe sur le temps fort.",
+          "Tenue sur le temps, la m\xEAme note sonne fausse. Ce n'est pas la note qui compte, c'est o\xF9 elle va."
+        ] },
+        { type: "question", quizId: "q-impro-approche-lot4" },
+        { type: "idee", titre: "L'enclosure", texte: [
+          "Encadre la cible par ses deux voisines : au-dessus, en dessous, puis la cible. Pour Do : Do#, Si, Do.",
+          "L'oreille tourne autour avant d'atterrir. C'est un geste typique du bebop."
+        ] },
+        { type: "question", quizId: "q-impro-10" },
+        {
+          type: "a-toi",
+          titre: "Trois arriv\xE9es sur Do",
+          consigne: "Fais tourner un Lam (en boucle, ou la Jam en Blues mineur, tonalit\xE9 La). Joue la tab : Si \u2192 Do, Do# \u2192 Do, puis l'enclosure, chaque Do sur un temps fort. Ensuite, improvise dans la pentatonique et glisse une approche avant chaque fin de phrase.",
+          bloc: APPROCHES_DO,
+          bpm: 70,
+          minuteur: 180
+        },
+        { type: "recap", points: [
+          "Une approche est \xE0 un demi-ton de la cible, juste avant elle.",
+          "L'approche passe sur un temps faible, la cible tombe sur le temps fort.",
+          "L'enclosure encadre la cible : au-dessus, en dessous, puis la cible."
+        ] }
+      ],
+      quiz: ["q-impro-27", "q-impro-approche-lot4", "q-impro-10"]
+    };
+    quiz129 = [
+      { id: "q-impro-27", courseId: "impro", lessonId: "impro-03", lvl: 2, q: "Une note qui n'appartient pas \xE0 l'accord en cours est\u2026", o: ["Toujours une faute \xE0 \xE9viter", "R\xE9serv\xE9e au r\xE9pertoire jazz", "Utilisable si elle se r\xE9sout ensuite", "\xC0 placer uniquement en toute fin de phrase"], a: 2, exp: "Ce qui rend une note \xAB fausse \xBB n'est pas son choix mais son traitement. Pos\xE9e et tenue, elle heurte ; travers\xE9e vers une note stable, elle cr\xE9e le mouvement dont la phrase a besoin.", xp: 30 },
+      { id: "q-impro-approche-lot4", courseId: "impro", lessonId: "impro-03", lvl: 2, q: "Tu vises Mi au temps 1. Quelle note jouer juste avant, en approche chromatique par en dessous ?", o: ["R\xE9#", "R\xE9", "Fa", "Do"], a: 0, exp: "R\xE9# (ou Mib) est un demi-ton sous Mi : c'est l'approche chromatique par en dessous. R\xE9 est \xE0 un ton entier, Fa approche par au-dessus, et Do est une tierce plus bas.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/impro/impro-03b.js
+var impro_03b_exports = {};
+__export(impro_03b_exports, {
+  default: () => impro_03b_default,
+  quiz: () => quiz130
+});
+var CADENCE, impro_03b_default, quiz130;
+var init_impro_03b = __esm({
+  "src/content/cours/impro/impro-03b.js"() {
+    CADENCE = {
+      type: "tab",
+      caption: "G7 \u2192 Cmaj7 : Lab se pose sur Sol, puis Si et Fa se resserrent sur Do et Mi",
+      text: "Tab \u2014 mesure 1 (G7) : Si (corde 3 case 4), R\xE9 (corde 2 case 3), Fa (corde 2 case 6), Lab (corde 1 case 4). Mesure 2 (Cmaj7) : Sol (corde 1 case 3), tenu. Mesure 3 (G7) : Si et Fa ensemble. Mesure 4 (Cmaj7) : Do (corde 3 case 5) et Mi (corde 2 case 5) ensemble.",
+      data: { lines: [
+        "e|------------4---|3---------------|----------------|----------------|",
+        "B|----3---6-------|----------------|6---------------|5---------------|",
+        "G|4---------------|----------------|4---------------|5---------------|",
+        "D|----------------|----------------|----------------|----------------|",
+        "A|----------------|----------------|----------------|----------------|",
+        "E|----------------|----------------|----------------|----------------|"
+      ] }
+    };
+    impro_03b_default = {
+      id: "impro-03b",
+      level: 8,
+      title: "Tension et r\xE9solution : notes \xE0 \xE9viter et dominante",
+      duration: 8,
+      gropiTip: "Pose Si (corde 3 case 4) et Fa (corde 2 case 6) ensemble, puis ram\xE8ne les deux doigts sur la case 5 : Do et Mi. Deux doigts qui se resserrent, c'est toute la cadence V-I.",
+      cartes: [
+        { type: "idee", titre: "Les notes \xE0 \xE9viter", texte: [
+          "Certaines notes de la gamme frottent trop si on les tient sur l'accord : les avoid notes.",
+          "Sur Cmaj7, le Fa (degr\xE9 4) est un demi-ton au-dessus de Mi, la tierce. Pas interdit : en passage, vers Mi ou Sol, jamais tenu sur le temps fort."
+        ], bloc: { type: "fretboard_interactive", mode: "scale", root: "C", scale: "major", caption: "Do majeur sur Cmaj7 \u2014 Fa (4e, degr\xE9 4) est l'avoid note", displayMode: "degrees", lang: "fr", compact: true } },
+        { type: "question", quizId: "q-impro-avoid-lot4" },
+        { type: "idee", titre: "La dominante veut r\xE9soudre", texte: [
+          "G7 contient Si et Fa. Vers Do, Si monte d'un demi-ton sur Do, Fa descend d'un demi-ton sur Mi.",
+          "Ce double glissement est le moteur de la cadence V-I. Le viser dans un solo, c'est faire entendre la r\xE9solution."
+        ] },
+        { type: "question", quizId: "q-impro-28" },
+        { type: "idee", titre: "Plus de tension sur G7", texte: [
+          "Sur la dominante, tu peux pousser encore : Lab, la \u266D9, frotte un demi-ton au-dessus de Sol.",
+          "Il descend se poser sur Sol, la quinte de Cmaj7. Sur G7 seulement : sur Cmaj7, il sonnerait faux."
+        ] },
+        { type: "question", quizId: "q-impro-06-app" },
+        {
+          type: "a-toi",
+          titre: "G7, Cmaj7 : r\xE9soudre",
+          consigne: "Alterne G7 et Cmaj7, une mesure chacun (enregistre la boucle, ou lance la Jam en Jazz ii-V-I, tonalit\xE9 Do). Joue la tab : Lab sur Sol, puis Si et Fa qui se resserrent sur Do et Mi. Ensuite, improvise en Do majeur : sur chaque Cmaj7, arrive sur Mi ou Do.",
+          bloc: CADENCE,
+          bpm: 70,
+          minuteur: 180
+        },
+        { type: "recap", points: [
+          "Une note \xE0 \xE9viter passe, elle ne se pose pas : Fa sur Cmaj7.",
+          "Sur G7 \u2192 Do, Si monte sur Do et Fa descend sur Mi.",
+          "La \u266D9 (Lab) tend la dominante et se pose sur Sol."
+        ] }
+      ],
+      quiz: ["q-impro-avoid-lot4", "q-impro-28", "q-impro-06", "q-impro-06-app"]
+    };
+    quiz130 = [
+      { id: "q-impro-28", courseId: "impro", lessonId: "impro-03b", lvl: 3, q: "Sur Sol7 qui r\xE9sout vers Do, vers quelle note le Si (tierce de Sol7) a-t-il tendance \xE0 monter ?", o: ["Do", "R\xE9", "Si\u266D", "La"], a: 0, exp: "Le Si est la sensible de Do : un demi-ton sous la tonique, il monte naturellement sur Do. Avec le Fa (7e de Sol7) qui descend sur Mi, c'est ce double mouvement par demi-tons qui donne \xE0 la dominante sa force d'appel.", xp: 40 },
+      { id: "q-impro-avoid-lot4", courseId: "impro", lessonId: "impro-03b", lvl: 2, q: "Tu improvises en Do majeur sur un Cmaj7. Quelle note \xE9viter de tenir sur un temps fort ?", o: ["Fa", "Mi", "Sol", "Si"], a: 0, exp: "Fa, la quarte, est un demi-ton au-dessus de Mi, la tierce de l'accord : tenu, il brouille Cmaj7. Mi, Sol et Si font partie de l'accord. Le Fa reste utilisable en passage, vers Mi ou Sol.", xp: 30 },
+      { id: "q-impro-06-app", courseId: "impro", lessonId: "impro-03b", lvl: 3, q: "Sur D7 qui va vers Gmaj7, laquelle de ces notes apporte le plus de tension ?", o: ["Mi\u266D, la \u266D9", "Mi, la 9e", "Si, la 13e", "La, la quinte"], a: 0, exp: "Mi\u266D (\u266D9) frotte un demi-ton au-dessus de la fondamentale R\xE9 : c'est l'extension la plus tendue de la dominante. Il descend se poser sur R\xE9, la quinte de Gmaj7. La 9e et la 13e colorent sans cette friction, et La est une note stable de l'accord.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/impro/impro-04.js
+var impro_04_exports = {};
+__export(impro_04_exports, {
+  default: () => impro_04_default,
+  quiz: () => quiz131
+});
+var GUIDE_TONES, impro_04_default, quiz131;
+var init_impro_04 = __esm({
+  "src/content/cours/impro/impro-04.js"() {
+    GUIDE_TONES = {
+      type: "tab",
+      caption: "Les guide tones du ii-V-I en Do : une seule note bouge \xE0 chaque accord",
+      text: "Tab \u2014 Dm7 : Do (corde 3 case 5) et Fa (corde 2 case 6). G7 : Si (corde 3 case 4) et Fa. Cmaj7 : Si et Mi (corde 2 case 5), deux mesures.",
+      data: { lines: [
+        "e|--------|--------|--------|--------|",
+        "B|6-------|6-------|5-------|5-------|",
+        "G|5-------|4-------|4-------|4-------|",
+        "D|--------|--------|--------|--------|",
+        "A|--------|--------|--------|--------|",
+        "E|--------|--------|--------|--------|"
+      ] }
+    };
+    impro_04_default = {
+      id: "impro-04",
+      level: 9,
+      title: "Jouer les changements : le ii-V-I",
+      duration: 8,
+      gropiTip: "Fredonne l'autre ligne de guide tones du ii-V-I : Fa sur Dm7, Fa sur G7, Mi sur Cmaj7. Une seule note qui descend d'un demi-ton : si tu l'entends, tu entends le changement.",
+      cartes: [
+        { type: "idee", titre: "Entendre l'accord changer", texte: [
+          "La pentatonique de La sur tout un blues, \xE7a marche. L'\xE9tape suivante : entendre chaque changement d'accord et adapter tes cibles.",
+          "M\xEAme sans changer de gamme, tes phrases refl\xE8tent alors l'harmonie."
+        ] },
+        { type: "question", quizId: "q-impro-31" },
+        { type: "idee", titre: "Le ii-V-I", texte: [
+          "En Do : Dm7, G7, Cmaj7. Tension douce, tension forte, repos.",
+          "Dm7 = R\xE9 Fa La Do ; G7 = Sol Si R\xE9 Fa ; Cmaj7 = Do Mi Sol Si. C'est la cadence centrale du jazz."
+        ], bloc: { type: "fretboard_interactive", mode: "chord", root: "G", chord: "dom7", caption: "V \u2014 G7 : Sol Si R\xE9 Fa (tension maximale)", displayMode: "notes", lang: "fr", compact: true } },
+        { type: "idee", titre: "Deux lignes qui glissent", texte: [
+          "Fa, 3e de Dm7, reste et devient la 7e de G7, puis descend sur Mi, 3e de Cmaj7.",
+          "Do, 7e de Dm7, descend sur Si, 3e de G7, qui reste et devient la 7e de Cmaj7. Ces demi-tons sont le moteur de la progression."
+        ], bloc: { type: "fretboard_interactive", mode: "quiz", quizTarget: "F", caption: "Quiz : trouve tous les Fa \u2014 guide tone pivot du ii-V-I", lang: "fr", compact: true } },
+        { type: "question", quizId: "q-impro-guide-lot4" },
+        {
+          type: "a-toi",
+          titre: "Une case bouge",
+          consigne: "Boucle Dm7, G7, Cmaj7 (ou la Jam en Jazz ii-V-I, tonalit\xE9 Do). Joue les deux notes de la tab sur le 1 de chaque accord : une seule case bouge \xE0 chaque fois. Puis garde une seule note par accord et brode autour.",
+          bloc: GUIDE_TONES,
+          bpm: 60,
+          minuteur: 180
+        },
+        { type: "question", quizId: "q-impro-03" },
+        { type: "recap", points: [
+          "ii-V-I en Do : Dm7, G7, Cmaj7, tension douce, tension forte, repos.",
+          "Fa reste puis descend sur Mi ; Do descend sur Si, qui reste.",
+          "Une note par accord bien choisie suffit \xE0 faire entendre le changement."
+        ] }
+      ],
+      quiz: ["q-impro-31", "q-impro-guide-lot4", "q-impro-03"]
+    };
+    quiz131 = [
+      { id: "q-impro-31", courseId: "impro", lessonId: "impro-04", lvl: 3, q: "Sur une grille o\xF9 les accords changent toutes les deux mesures, quelle approche donne le plus de relief ?", o: ["Rester sur la m\xEAme gamme sans rien ajuster", "Acc\xE9l\xE9rer le d\xE9bit \xE0 chaque changement", "Viser une note de l'accord au changement", "S'arr\xEAter de jouer \xE0 chaque changement"], a: 2, exp: "Ce qui rend un solo \xAB dedans \xBB, c'est de tomber sur une note de l'accord au moment pr\xE9cis o\xF9 il arrive. Une seule note bien plac\xE9e au changement s'entend davantage que quinze notes entre deux changements.", xp: 40 },
+      { id: "q-impro-guide-lot4", courseId: "impro", lessonId: "impro-04", lvl: 3, q: "Dans Dm7 - G7 - Cmaj7, lequel des guide tones de Dm7 (sa tierce ou sa septi\xE8me) se retrouve tel quel dans G7 ?", o: ["Fa", "Do", "Si", "Mi"], a: 0, exp: "Fa, la tierce de Dm7, devient la 7e de G7 sans bouger. Do, la 7e de Dm7, descend d'un demi-ton sur Si. Si et Mi ne sont pas dans Dm7 : ce sont les guide tones d'arriv\xE9e de G7 et de Cmaj7.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/impro/impro-04b.js
+var impro_04b_exports = {};
+__export(impro_04b_exports, {
+  default: () => impro_04b_default,
+  quiz: () => quiz132
+});
+var ENJAMBER, impro_04b_default, quiz132;
+var init_impro_04b = __esm({
+  "src/content/cours/impro/impro-04b.js"() {
+    ENJAMBER = {
+      type: "tab",
+      caption: "Dm7 \u2192 G7 \u2192 Cmaj7 : Do glisse sur Si au changement, Fa sur Mi au suivant",
+      text: "Tab \u2014 mesure 1 (Dm7) : Fa (corde 2 case 6), Mi (corde 2 case 5), R\xE9 (corde 2 case 3), puis Do (corde 3 case 5) en fin de mesure. Mesure 2 (G7) : Si (corde 3 case 4) sur le 1, R\xE9, puis Fa (corde 2 case 6). Mesure 3 (Cmaj7) : Mi (corde 2 case 5) sur le 1, tenu.",
+      data: { lines: [
+        "e|----------------|----------------|----------------|",
+        "B|6---5---3-------|----3---6-------|5---------------|",
+        "G|--------------5-|4---------------|----------------|",
+        "D|----------------|----------------|----------------|",
+        "A|----------------|----------------|----------------|",
+        "E|----------------|----------------|----------------|"
+      ] }
+    };
+    impro_04b_default = {
+      id: "impro-04b",
+      level: 9,
+      title: "Jouer les changements : des phrases qui atterrissent",
+      duration: 8,
+      gropiTip: "Chante la cible avant de la jouer : sur la fin de Dm7, fredonne d\xE9j\xE0 le Si de G7. Si ta voix la trouve avant le changement, tes doigts sauront o\xF9 aller.",
+      cartes: [
+        { type: "idee", titre: "Arriver au bon moment", texte: [
+          "La cible compte surtout au temps 1 du nouvel accord. Entre deux cibles, les notes de passage sont libres.",
+          "Un bon rep\xE8re : une phrase qui arrive, pas une phrase qui s'arr\xEAte."
+        ] },
+        { type: "idee", titre: "Enjamber la barre de mesure", texte: [
+          "Termine la mesure de Dm7 sur une note \xE0 un demi-ton de la cible de G7 : Do, puis Si au temps 1.",
+          "La phrase traverse le changement au lieu de s'arr\xEAter devant. L'oreille entend l'accord arriver avant m\xEAme la basse."
+        ], bloc: ENJAMBER },
+        { type: "question", quizId: "q-impro-ciblage-lot4" },
+        { type: "idee", titre: "Quand le V ne r\xE9sout pas", texte: [
+          "Une vamp Em7 - A7 ne va jamais sur Dmaj7 : c'est un ii-V modal, qui tourne sur lui-m\xEAme.",
+          "On reste en Mi dorien, et on fait entendre A7 par sa tierce, Do#."
+        ] },
+        { type: "question", quizId: "q-impro-02-app" },
+        { type: "idee", titre: "M\xEAme id\xE9e sur Dm7 - G7", texte: [
+          "En R\xE9 dorien sur Dm7 - G7, le Si colore Dm7 et d\xE9finit G7.",
+          "Mets-le en avant au moment o\xF9 G7 arrive : une seule gamme, et pourtant le changement s'entend."
+        ] },
+        { type: "question", quizId: "q-impro-07" },
+        {
+          type: "a-toi",
+          titre: "Des phrases qui enjambent",
+          consigne: "Boucle Dm7, G7, Cmaj7 (ou la Jam en Jazz ii-V-I, tonalit\xE9 Do). Joue la tab : Do glisse sur Si au changement, Fa sur Mi au suivant. Puis improvise : chaque fin de mesure pr\xE9pare, \xE0 un demi-ton, la cible de l'accord suivant.",
+          bloc: ENJAMBER,
+          bpm: 70,
+          minuteur: 180
+        },
+        { type: "recap", points: [
+          "La cible tombe au temps 1 du nouvel accord ; entre deux cibles, tout est permis.",
+          "Pr\xE9pare la cible \xE0 un demi-ton en fin de mesure : la phrase enjambe le changement.",
+          "Sur un ii-V modal, une seule gamme, mais la tierce du V mise en avant."
+        ] }
+      ],
+      quiz: ["q-impro-ciblage-lot4", "q-impro-02", "q-impro-07", "q-impro-02-app"]
+    };
+    quiz132 = [
+      { id: "q-impro-ciblage-lot4", courseId: "impro", lessonId: "impro-04b", lvl: 3, q: "Fin de mesure sur Dm7 : ta phrase doit tomber sur Si au temps 1 de G7. Quelle note de Dm7 est \xE0 un demi-ton de cette cible ?", o: ["Do", "R\xE9", "La", "Fa"], a: 0, exp: "Do, la 7e de Dm7, est un demi-ton au-dessus de Si : jou\xE9 en fin de mesure, il glisse sur la cible au changement. R\xE9 et La sont \xE0 un ton entier de Si, Fa \xE0 trois tons.", xp: 40 },
+      { id: "q-impro-02-app", courseId: "impro", lessonId: "impro-04b", lvl: 2, q: "Sur une vamp Am7-D7 qui ne r\xE9sout jamais sur Gmaj7, quel mode joues-tu ?", o: ["La phrygien", "La locrien", "La dorien", "La ionien"], a: 2, exp: "Am7-D7 = ii-V de Sol majeur, sans r\xE9solution. Sur un ii-V modal, on joue le dorien du ii : La dorien, soit les notes de Sol majeur en partant de La.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/impro/impro-05.js
+var impro_05_exports = {};
+__export(impro_05_exports, {
+  default: () => impro_05_default,
+  quiz: () => quiz133
+});
+var MOTIF2, impro_05_default, quiz133;
+var init_impro_05 = __esm({
+  "src/content/cours/impro/impro-05.js"() {
+    MOTIF2 = {
+      type: "tab",
+      caption: "Un motif de trois notes, puis deux variantes : d\xE9plac\xE9 d'un cran, puis \xE9tir\xE9",
+      text: "Tab \u2014 mesure 1 : Do (corde 3 case 5), R\xE9 (corde 3 case 7), Mi (corde 2 case 5). Mesure 2, d\xE9plac\xE9 : R\xE9, Mi, Sol (corde 2 case 8). Mesure 3, \xE9tir\xE9 : Do tenu, puis R\xE9 et Mi. Mesure 4 : La (corde 4 case 7), tenu.",
+      data: { lines: [
+        "e|----------------|----------------|----------------|----------------|",
+        "B|----5-----------|--5-8-----------|------------5---|----------------|",
+        "G|5-7-------------|7---------------|5-------7-------|----------------|",
+        "D|----------------|----------------|----------------|7---------------|",
+        "A|----------------|----------------|----------------|----------------|",
+        "E|----------------|----------------|----------------|----------------|"
+      ] }
+    };
+    impro_05_default = {
+      id: "impro-05",
+      level: 9,
+      title: "Construire un solo : motif et trois actes",
+      duration: 8,
+      gropiTip: "Prends les trois premi\xE8res notes que tu joues, m\xEAme par hasard, et r\xE9p\xE8te-les en changeant une seule chose \xE0 la fois. Un accident r\xE9p\xE9t\xE9 devient une intention.",
+      cartes: [
+        { type: "idee", titre: "Une histoire, pas une liste", texte: [
+          "Un solo n'est pas une suite de licks bout \xE0 bout. Il a un d\xE9but, un d\xE9veloppement et une fin, comme un r\xE9cit."
+        ] },
+        { type: "idee", titre: "Le motif", texte: [
+          "Une cellule de trois \xE0 six notes, pos\xE9e puis transform\xE9e : d\xE9plac\xE9e, \xE9tir\xE9e, rythme chang\xE9.",
+          "L'oreille la reconna\xEEt et suit son \xE9volution. C'est le fil qui relie tes phrases."
+        ] },
+        { type: "question", quizId: "q-rhy-12" },
+        { type: "idee", titre: "Trois actes", texte: [
+          "Acte 1, environ un quart du solo : peu de notes, longues, registre m\xE9dium.",
+          "Acte 2, la moiti\xE9 : densit\xE9, registre et intensit\xE9 montent. Acte 3 : le sommet, puis la descente vers la tonique."
+        ] },
+        { type: "question", quizId: "q-impro-acte1-lot4" },
+        {
+          type: "a-toi",
+          titre: "Un motif qui \xE9volue",
+          consigne: "Fais tourner un Lam (en boucle, ou la Jam en Blues mineur, tonalit\xE9 La). Joue le motif, puis ses deux variantes, et finis sur La. Ensuite, deux minutes : invente un motif de trois notes et fais-le \xE9voluer en ne changeant qu'un \xE9l\xE9ment \xE0 la fois.",
+          bloc: MOTIF2,
+          bpm: 70,
+          minuteur: 180
+        },
+        { type: "idee", titre: "Monter la courbe", texte: [
+          "Registre, densit\xE9, tension : fais-les monter ensemble, peu \xE0 peu.",
+          "Commencer au maximum ne laisse nulle part o\xF9 aller, et l'oreille s'habitue en quelques secondes."
+        ] },
+        { type: "question", quizId: "q-impro-29" },
+        { type: "recap", points: [
+          "Un solo raconte : un d\xE9but, un d\xE9veloppement, une fin.",
+          "Un motif court, r\xE9p\xE9t\xE9 et transform\xE9, relie les phrases.",
+          "Acte 1 calme et m\xE9dium ; l'intensit\xE9 monte peu \xE0 peu."
+        ] }
+      ],
+      quiz: ["q-rhy-12", "q-impro-acte1-lot4", "q-impro-29"]
+    };
+    quiz133 = [
+      { id: "q-rhy-12", courseId: "rhythm", lessonId: "impro-05", lvl: 3, q: "Un 'motif' musical est\u2026", o: ["Une phrase courte, r\xE9p\xE9t\xE9e et transform\xE9e", "Un th\xE8me complet de plusieurs mesures", "Un solo entier, du d\xE9but \xE0 la fin", "Un riff de 16 mesures qui tourne en boucle"], a: 0, exp: "Motif = cellule m\xE9lodique courte (3-6 notes), r\xE9p\xE9t\xE9e et d\xE9velopp\xE9e. Outils : transposition, augmentation, inversion, s\xE9quence. Base de la composition.", xp: 50 },
+      { id: "q-impro-29", courseId: "impro", lessonId: "impro-05", lvl: 3, q: "Comment construire l'intensit\xE9 d'un solo dans la dur\xE9e ?", o: ["En faisant monter registre, densit\xE9 et tension", "En r\xE9p\xE9tant la m\xEAme phrase du d\xE9but \xE0 la fin", "En jouant fort et vite d\xE8s la premi\xE8re note", "En alternant au hasard les nuances et les tempos"], a: 0, exp: "Un solo est une courbe, pas un plateau. Commencer bas et clairsem\xE9 laisse de la place pour monter \u2014 commencer au maximum ne laisse nulle part o\xF9 aller, et l'oreille s'habitue en quelques secondes.", xp: 40 },
+      { id: "q-impro-acte1-lot4", courseId: "impro", lessonId: "impro-05", lvl: 2, q: "Les quatre premi\xE8res mesures de ton solo : quel jeu choisir ?", o: ["Peu de notes, longues, en m\xE9dium", "Un trait rapide dans l'aigu", "Ton lick le plus spectaculaire", "Un bend sur chaque note"], a: 0, exp: "Le premier acte pose le d\xE9cor : peu de notes, longues, dans le m\xE9dium. Le trait rapide, l'aigu et le lick spectaculaire servent plus tard, quand l'intensit\xE9 doit monter.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/impro/impro-05b.js
+var impro_05b_exports = {};
+__export(impro_05b_exports, {
+  default: () => impro_05b_default,
+  quiz: () => quiz134
+});
+var SOMMET, impro_05b_default, quiz134;
+var init_impro_05b = __esm({
+  "src/content/cours/impro/impro-05b.js"() {
+    SOMMET = {
+      type: "tab",
+      caption: "Un lick de sommet dans l'aigu, La pentatonique mineure \xE0 la case 15",
+      text: "Tab \u2014 R\xE9 (corde 2 case 15) tir\xE9 d'un ton jusqu'\xE0 Mi, puis Sol (corde 1 case 15) et La (corde 1 case 17), tenu avec vibrato.",
+      data: { lines: [
+        "e|-------15--17~~~|",
+        "B|15b17-----------|",
+        "G|----------------|",
+        "D|----------------|",
+        "A|----------------|",
+        "E|----------------|"
+      ] }
+    };
+    impro_05b_default = {
+      id: "impro-05b",
+      level: 9,
+      title: "Construire un solo : le sommet",
+      duration: 8,
+      gropiTip: "Garde ta meilleure id\xE9e pour le climax : choisis un lick qui t'enthousiasme et interdis-toi de le jouer avant le dernier tiers du solo. Sa premi\xE8re apparition n'en aura que plus d'impact.",
+      cartes: [
+        { type: "idee", titre: "Le sommet aux deux tiers", texte: [
+          "Le moment le plus intense arrive vers les deux tiers du solo, pas \xE0 la fin.",
+          "Sur 12 mesures, vers la mesure 8 ; sur 32, vers la 21. Le dernier tiers redescend et conclut."
+        ] },
+        { type: "question", quizId: "q-impro-13" },
+        { type: "idee", titre: "Voyager sur le manche", texte: [
+          "En La : le m\xE9dium d'abord, autour des cases 5 \xE0 8 ; l'aigu pour le sommet, des cases 12 \xE0 17 ; puis le retour.",
+          "Les notes aigu\xEBs portent plus d'\xE9nergie : garde-les pour le moment cl\xE9."
+        ], bloc: { type: "fretboard_interactive", mode: "scale", root: "A", scale: "pentatonic_minor", caption: "Pentatonique mineure de La \u2014 registre complet pour ton voyage", displayMode: "notes", lang: "fr", compact: true } },
+        { type: "question", quizId: "q-impro-registre-lot4" },
+        { type: "idee", titre: "Conclure", texte: [
+          "Apr\xE8s le sommet, redescends en registre et en densit\xE9.",
+          "Termine sur la tonique, une note longue, avec vibrato : l'oreille sait que c'est fini."
+        ] },
+        { type: "question", quizId: "q-impro-fin-lot4" },
+        {
+          type: "a-toi",
+          titre: "Douze mesures, un sommet",
+          consigne: "Lance la Jam en Blues 12 mesures, tonalit\xE9 La (ou un La7 en boucle), et enregistre-toi. Quatre mesures calmes en position 1, puis monte vers la case 12, place ce lick vers la mesure 8, redescends et finis sur La. Rejoue plusieurs grilles.",
+          bloc: SOMMET,
+          bpm: 80,
+          minuteur: 240
+        },
+        { type: "idee", titre: "\xC9couter sa courbe", texte: [
+          "R\xE9\xE9coute-toi et note l'intensit\xE9 de chaque mesure, de 1 \xE0 10.",
+          "Le sommet est-il vers les deux tiers ? Sinon, rejoue en t'imposant la contrainte."
+        ] },
+        { type: "recap", points: [
+          "Le sommet vers les deux tiers, puis une descente qui conclut.",
+          "Le registre raconte l'histoire : m\xE9dium, aigu au sommet, retour.",
+          "Finis sur la tonique, en note longue, et r\xE9\xE9coute ta courbe."
+        ] }
+      ],
+      quiz: ["q-impro-13", "q-impro-registre-lot4", "q-impro-fin-lot4"]
+    };
+    quiz134 = [
+      { id: "q-impro-13", courseId: "impro", lessonId: "impro-05b", lvl: 2, q: "Ton solo dure 24 mesures. O\xF9 placer son point culminant ?", o: ["Vers la mesure 16", "D\xE8s la mesure 1", "Pile \xE0 la mesure 12", "Sur la toute derni\xE8re mesure"], a: 0, exp: "Un climax vers les deux tiers (16 mesures sur 24) laisse le temps de monter, puis de redescendre et de conclure. Trop t\xF4t, il ne reste nulle part o\xF9 aller ; tout \xE0 la fin, le solo s'arr\xEAte sans r\xE9solution.", xp: 50 },
+      { id: "q-impro-registre-lot4", courseId: "impro", lessonId: "impro-05b", lvl: 2, q: "Ton solo commence en position 1, case 5. O\xF9 placer tes notes les plus aigu\xEBs ?", o: ["Au sommet, vers les deux tiers", "D\xE8s la toute premi\xE8re phrase", "Partout, en quantit\xE9 \xE9gale", "Seulement sur la note finale"], a: 0, exp: "L'aigu porte le plus d'\xE9nergie : r\xE9serv\xE9 au sommet, il fait monter la courbe. Jou\xE9 d\xE8s le d\xE9but ou partout, il ne surprend plus ; sur la note finale, il emp\xEAche de conclure en douceur.", xp: 30 },
+      { id: "q-impro-fin-lot4", courseId: "impro", lessonId: "impro-05b", lvl: 2, q: "Ton solo se termine. Quelle derni\xE8re phrase conclut le mieux ?", o: ["Une descente qui finit sur la tonique", "Un trait rapide arr\xEAt\xE9 net", "Une note tenue sur la 7e", "Le lick du d\xE9but, en plus fort"], a: 0, exp: "La tonique est le point de repos : y arriver en redescendant ferme le r\xE9cit. Un trait coup\xE9 net ou une 7e tenue laissent l'oreille en attente, et rejouer plus fort relance au lieu de conclure.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/impro/impro-06.js
+var impro_06_exports = {};
+__export(impro_06_exports, {
+  default: () => impro_06_default,
+  quiz: () => quiz135
+});
+var LICK_BLUES, impro_06_default, quiz135;
+var init_impro_06 = __esm({
+  "src/content/cours/impro/impro-06.js"() {
+    LICK_BLUES = {
+      type: "tab",
+      caption: "Un lick blues en La : bend, approche chromatique, vibrato",
+      text: "Tab \u2014 R\xE9 (corde 3 case 7) tir\xE9 d'un ton jusqu'\xE0 Mi ; Sol (corde 2 case 8), Mi (corde 2 case 5) ; puis R\xE9 (corde 5 case 5), R\xE9# (corde 5 case 6), Mi (corde 5 case 7) qui montent vers La (corde 4 case 7), tenu avec vibrato.",
+      data: { lines: [
+        "e|----------------|----------------|",
+        "B|------8-5-------|----------------|",
+        "G|7b9-------------|----------------|",
+        "D|----------------|----7~~~--------|",
+        "A|--------------5-|6-7-------------|",
+        "E|----------------|----------------|"
+      ] }
+    };
+    impro_06_default = {
+      id: "impro-06",
+      level: 8,
+      title: "Vocabulaire blues : les licks",
+      duration: 8,
+      gropiTip: "La note bleue R\xE9# se joue surtout en passage : glisse R\xE9\u2192R\xE9#\u2192Mi plut\xF4t que de t'arr\xEAter dessus. Elle sonne alors blues, et non fausse, sur la grille en La.",
+      cartes: [
+        { type: "idee", titre: "Un vocabulaire", texte: [
+          "Improviser, c'est parler avec des mots d\xE9j\xE0 appris. Un lick est un mot : on l'emprunte, on le transforme, on le combine avec d'autres."
+        ] },
+        { type: "question", quizId: "q-impro-30" },
+        { type: "idee", titre: "Trois gestes blues", texte: [
+          "Un bend qui monte vers une note de la gamme. Une approche chromatique vers une note de l'accord. Un vibrato sur la note finale.",
+          "Avec la pentatonique mineure, ces trois gestes font d\xE9j\xE0 un langage."
+        ] },
+        { type: "idee", titre: "La note bleue", texte: [
+          "Ajoute R\xE9#, la \u266D5, \xE0 La pentatonique mineure : c'est la gamme blues.",
+          "R\xE9# se traverse : R\xE9, R\xE9#, Mi. Tenu, il frotte ; en passage, il sonne blues."
+        ], bloc: { type: "fretboard_interactive", mode: "scale", root: "A", scale: "blues", caption: "Gamme blues de La \u2014 la \u266D5 (R\xE9#) est ta note bleue caract\xE9ristique", displayMode: "notes", lang: "fr", compact: true } },
+        { type: "question", quizId: "q-impro-blues-lot4" },
+        {
+          type: "a-toi",
+          titre: "Un lick, trois gestes",
+          consigne: "Lance la Jam en Blues 12 mesures, tonalit\xE9 La (ou un La7 en boucle). Joue le lick : bend de R\xE9 \xE0 Mi, Sol, Mi, puis R\xE9, R\xE9#, Mi qui montent vers La, avec vibrato. Puis transforme-le : un autre rythme, une note de moins, une autre fin.",
+          bloc: LICK_BLUES,
+          bpm: 70,
+          minuteur: 180
+        },
+        { type: "idee", titre: "Un lick, partout", texte: [
+          "Apprendre un lick, c'est savoir le jouer ailleurs : dans une autre tonalit\xE9, sur un autre rythme, avec une autre fin.",
+          "Le m\xEAme lick en R\xE9 : tout se joue cinq cases plus haut, \xE0 partir de la case 10."
+        ] },
+        { type: "question", quizId: "q-impro-transpo-lot4" },
+        { type: "recap", points: [
+          "Un lick est un mot : on l'apprend pour le transformer.",
+          "Bend, approche chromatique, vibrato : trois gestes du blues.",
+          "La note bleue (R\xE9# en La) se traverse, elle ne se tient pas."
+        ] }
+      ],
+      quiz: ["q-impro-30", "q-impro-blues-lot4", "q-impro-transpo-lot4", "q-impro-14"]
+    };
+    quiz135 = [
+      { id: "q-impro-30", courseId: "impro", lessonId: "impro-06", lvl: 2, q: "Apprendre des licks par c\u0153ur, c'est\u2026", o: ["Inutile : l'improvisation doit rester spontan\xE9e", "Se constituer un vocabulaire \xE0 r\xE9utiliser et transformer", "Suffisant pour savoir improviser", "Une \xE9tape r\xE9serv\xE9e aux tout d\xE9butants"], a: 1, exp: "Personne n'improvise sans vocabulaire, pas plus qu'on ne parle une langue sans mots. Le lick n'est pas l\xE0 pour \xEAtre replac\xE9 tel quel : il est l\xE0 pour \xEAtre d\xE9coup\xE9, transpos\xE9 et recombin\xE9.", xp: 30 },
+      { id: "q-impro-blues-lot4", courseId: "impro", lessonId: "impro-06", lvl: 2, q: "Dans un lick en La, comment placer R\xE9#, la note bleue ?", o: ["En passage, entre R\xE9 et Mi", "Tenu, sur le temps 1", "En note finale de la phrase", "R\xE9p\xE9t\xE9 sur chaque temps"], a: 0, exp: "La \u266D5 est une note de couleur fugace : gliss\xE9e entre R\xE9 et Mi, elle sonne blues. Tenue sur un temps fort ou en fin de phrase, elle frotte contre l'accord et sonne fausse.", xp: 30 },
+      { id: "q-impro-transpo-lot4", courseId: "impro", lessonId: "impro-06", lvl: 2, q: "Ton lick en La se joue autour de la case 5. Pour le jouer en R\xE9, tu le d\xE9places\u2026", o: ["De cinq cases vers l'aigu", "De deux cases vers l'aigu", "D'une corde vers l'aigu", "De cinq cases vers le grave"], a: 0, exp: "De La \xE0 R\xE9, il y a cinq demi-tons en montant : cinq cases. Le lick garde la m\xEAme forme, \xE0 partir de la case 10. Cinq cases vers le grave m\xE8nerait \xE0 Mi.", xp: 30 }
+    ];
+  }
+});
+
+// src/content/cours/impro/impro-06b.js
+var impro_06b_exports = {};
+__export(impro_06b_exports, {
+  default: () => impro_06b_default,
+  quiz: () => quiz136
+});
+var LICK_MI_PENTA, impro_06b_default, quiz136;
+var init_impro_06b = __esm({
+  "src/content/cours/impro/impro-06b.js"() {
+    LICK_MI_PENTA = {
+      type: "tab",
+      caption: "Sur Am7, un lick en Mi pentatonique mineure qui finit sur Si, la 9e",
+      text: "Tab \u2014 R\xE9 (corde 1 case 10), Si (corde 1 case 7), La (corde 2 case 10), Sol (corde 2 case 8), Mi (corde 3 case 9), R\xE9 (corde 3 case 7), puis Si (corde 4 case 9), tenu avec vibrato.",
+      data: { lines: [
+        "e|-10-7-----------|----------------|",
+        "B|------10-8------|----------------|",
+        "G|-----------9-7--|----------------|",
+        "D|----------------|9~~~------------|",
+        "A|----------------|----------------|",
+        "E|----------------|----------------|"
+      ] }
+    };
+    impro_06b_default = {
+      id: "impro-06b",
+      level: 8,
+      title: "Vocabulaire jazz : 9e, 11e et pentatonique d\xE9cal\xE9e",
+      duration: 8,
+      gropiTip: "Sur un Lam7 qui sonne, joue Si (corde 1 case 7), puis La (corde 1 case 5) : la premi\xE8re flotte, la seconde conclut. Garde la 9 pour les phrases qui doivent relancer.",
+      cartes: [
+        { type: "idee", titre: "Au-del\xE0 de l'accord", texte: [
+          "La 9e et la 11e colorent un accord sans le contredire. Sur Am7 : Si (9e) et R\xE9 (11e).",
+          "On les vise pour la couleur, pas pour conclure."
+        ] },
+        { type: "idee", titre: "Finir sur la 9", texte: [
+          "Sur Cmaj7, finir sur R\xE9, la 9e, laisse la phrase flotter : ni tension franche, ni repos complet.",
+          "Un effet tr\xE8s pr\xE9sent en jazz et en bossa."
+        ] },
+        { type: "question", quizId: "q-impro-15" },
+        { type: "idee", titre: "La pentatonique de la quinte", texte: [
+          "Sur Am7, joue Mi pentatonique mineure : Mi, Sol, La, Si, R\xE9, soit 5, \u266D7, 1, 9 et 11 de l'accord.",
+          "Le Do (\u266D3) dispara\xEEt, la 9e et la 11e arrivent : le son reste mineur, en plus ouvert."
+        ], bloc: { type: "fretboard_interactive", mode: "scale", root: "E", scale: "pentatonic_minor", caption: "Pentatonique mineure de Mi sur Am7 \u2014 la 9 et la 11 en couleur", displayMode: "notes", lang: "fr", compact: true } },
+        { type: "question", quizId: "q-impro-subpenta-lot4-app" },
+        { type: "idee", titre: "Le pi\xE8ge", texte: [
+          "Do pentatonique majeure sur Am7 n'est pas une substitution : Do, R\xE9, Mi, Sol, La, ce sont exactement les notes de La pentatonique mineure.",
+          "M\xEAme gamme, autre point de d\xE9part : rien de neuf pour l'oreille."
+        ] },
+        { type: "question", quizId: "q-impro-piege-lot4" },
+        {
+          type: "a-toi",
+          titre: "Am7 en couleurs",
+          consigne: "Fais tourner Am7 (en boucle, ou la Jam en Modal Dorien, tonalit\xE9 La). Une minute en La pentatonique mineure, puis la tab en Mi pentatonique mineure, qui finit sur la 9e. Laquelle sonne plus ouverte ? Puis improvise en passant de l'une \xE0 l'autre.",
+          bloc: LICK_MI_PENTA,
+          bpm: 70,
+          minuteur: 180
+        },
+        { type: "recap", points: [
+          "La 9e et la 11e colorent sans conclure : finir sur la 9 laisse flotter.",
+          "Sur un m7, la pentatonique mineure de sa quinte apporte la 9e et la 11e.",
+          "La pentatonique majeure de la relative n'est pas une substitution : m\xEAmes notes."
+        ] }
+      ],
+      quiz: ["q-impro-subpenta-lot4", "q-impro-piege-lot4", "q-impro-15", "q-impro-11", "q-impro-subpenta-lot4-app"]
+    };
+    quiz136 = [
+      { id: "q-impro-subpenta-lot4", courseId: "impro", lessonId: "impro-06b", lvl: 3, q: "Sur Am7, tu remplaces La pentatonique mineure par Mi pentatonique mineure. Quelles couleurs gagnes-tu ?", o: ["La 9e et la 11e", "La 3e majeure et la 7e majeure", "La \u266D5 et la \u266D9", "Aucune, les notes sont identiques"], a: 0, exp: "Mi penta mineure = Mi Sol La Si R\xE9 : sur Am7, Si est la 9e et R\xE9 la 11e. Le Do (\u266D3) dispara\xEEt, la couleur reste mineure mais s'ouvre. Ni tierce majeure, ni \u266D5, ni \u266D9 n'y figurent.", xp: 45 },
+      { id: "q-impro-subpenta-lot4-app", courseId: "impro", lessonId: "impro-06b", lvl: 3, q: "Sur Dm7, tu joues La pentatonique mineure, celle de la quinte. Quelles notes deviennent la 9e et la 11e ?", o: ["Mi et Sol", "Fa et La", "Do et Mi", "Si et R\xE9"], a: 0, exp: "La penta mineure = La Do R\xE9 Mi Sol. Sur Dm7 : La est la quinte, Do la \u266D7, R\xE9 la fondamentale, Mi la 9e et Sol la 11e. Fa (\u266D3) dispara\xEEt.", xp: 40 },
+      { id: "q-impro-piege-lot4", courseId: "impro", lessonId: "impro-06b", lvl: 3, q: "Pourquoi Do pentatonique majeure n'apporte-t-elle rien de neuf sur Am7 ?", o: ["Elle a les notes de La penta mineure", "Elle contient la tierce majeure de La", "Elle n'a pas la 7e mineure de La", "Elle sort de la tonalit\xE9 de La mineur"], a: 0, exp: "Do penta majeure = Do R\xE9 Mi Sol La, les cinq notes de La penta mineure. C'est la m\xEAme gamme vue depuis un autre point de d\xE9part : aucune couleur nouvelle. Elle contient bien Sol, la 7e de Am7, et pas de Do#.", xp: 40 }
+    ];
+  }
+});
+
+// src/content/cours/annexes/annexes-cordes.js
+var annexes_cordes_exports = {};
+__export(annexes_cordes_exports, {
+  default: () => annexes_cordes_default,
+  quiz: () => quiz137
+});
+var annexes_cordes_default, quiz137;
+var init_annexes_cordes = __esm({
+  "src/content/cours/annexes/annexes-cordes.js"() {
+    annexes_cordes_default = {
+      id: "annexes-cordes",
+      annexe: true,
+      title: "Changer ses cordes",
+      duration: 8,
+      gropiTip: "Garde ton ancien jeu de cordes dans l'\xE9tui : si une corde casse un soir de r\xE9p\xE9tition, tu la remplaces en deux minutes au lieu de t'arr\xEAter.",
+      cartes: [
+        { type: "idee", titre: "Quand les changer ?", texte: [
+          "Des cordes neuves sonnent brillant et tiennent l'accord. La sueur et l'usure les rendent peu \xE0 peu ternes : son mat, accord qui bouge, toucher rugueux, traces de rouille.",
+          "Si tu joues souvent, compte un changement tous les un \xE0 trois mois ; plus t\xF4t si tes mains transpirent beaucoup."
+        ] },
+        { type: "question", quizId: "q-cordes-1-annexe" },
+        { type: "idee", titre: "Une \xE0 une ou toutes ensemble ?", texte: [
+          "Sur la plupart des guitares, tu peux tout retirer d'un coup : c'est l'occasion d'essuyer la touche.",
+          "Exception : le vibrato flottant, ce chevalet qui bascule, retenu par des ressorts. L\xE0, change-les une \xE0 une pour garder l'\xE9quilibre entre ressorts et cordes."
+        ] },
+        { type: "idee", titre: "Poser la nouvelle corde", texte: [
+          "Fixe le bout \xE0 boule au chevalet (sur une folk, la cheville le bloque). Passe l'autre bout dans le trou de la m\xE9canique, tends-le, puis laisse environ 5 cm de mou.",
+          "Enroule vers le bas, la corde partant de l'int\xE9rieur de la t\xEAte : deux \xE0 trois tours pour une corde fil\xE9e, un peu plus pour une corde lisse."
+        ] },
+        { type: "question", quizId: "q-cordes-4-annexe" },
+        { type: "idee", titre: "Pourquoi elle se d\xE9saccorde", texte: [
+          "Une corde neuve s'allonge pendant ses premi\xE8res heures : elle descend sans cesse vers le grave.",
+          "Pour gagner du temps : accorde, tire doucement chaque corde vers le haut \xE0 quelques endroits du manche, puis r\xE9accorde. Deux ou trois passages suffisent.",
+          "Coupe l'exc\xE9dent \xE0 quelques millim\xE8tres une fois l'accord stable."
+        ] },
+        { type: "question", quizId: "q-cordes-2-annexe" },
+        {
+          type: "a-toi",
+          titre: "Tends, r\xE9accorde, recommence",
+          consigne: "Cordes neuves pos\xE9es : accorde avec l'accordeur, puis tire doucement chaque corde vers le haut, au milieu du manche. R\xE9accorde. Refais-le deux fois. Joue ensuite Mi mineur et Sol pendant une minute et contr\xF4le l'accord : il doit \xE0 peine bouger.",
+          minuteur: 300
+        },
+        { type: "question", quizId: "q-cordes-3-annexe" },
+        { type: "recap", points: [
+          "Son mat, accord qui bouge, toucher rugueux : il est temps de changer (souvent tous les un \xE0 trois mois).",
+          "Quelques tours vers le bas sur la m\xE9canique, la corde partant de l'int\xE9rieur de la t\xEAte ; une \xE0 une sur un vibrato flottant.",
+          "Une corde neuve s'allonge : tends-la doucement et r\xE9accorde deux ou trois fois."
+        ] }
+      ],
+      quiz: ["q-cordes-1-annexe", "q-cordes-2-annexe", "q-cordes-3-annexe", "q-cordes-4-annexe"]
+    };
+    quiz137 = [
+      { id: "q-cordes-1-annexe", courseId: "annexes", lessonId: "annexes-cordes", lvl: 1, q: "Ta guitare sonne mat et se d\xE9saccorde en plein morceau ; tes cordes ont quatre mois. Premier r\xE9flexe ?", o: ["Changer le jeu de cordes", "Changer de m\xE9diator", "Resserrer la vis du chevalet", "Monter les aigus de l'ampli"], a: 0, exp: "Son terne et accord instable sont les signes classiques de cordes us\xE9es. Le m\xE9diator ou l'\xE9galiseur ne rendront pas leur brillance \xE0 des cordes fatigu\xE9es.", xp: 20 },
+      { id: "q-cordes-2-annexe", courseId: "annexes", lessonId: "annexes-cordes", lvl: 1, q: "\xC0 quoi servent les quelques tours de corde enroul\xE9s sur la m\xE9canique ?", o: ["\xC0 emp\xEAcher la corde de glisser", "\xC0 rendre la corde plus aigu\xEB", "\xC0 prot\xE9ger la touche de l'usure", "\xC0 \xE9touffer les harmoniques"], a: 0, exp: "Les tours serr\xE9s les uns sur les autres bloquent la corde par friction : sans eux, elle glisse dans la m\xE9canique et l'accord ne tient pas.", xp: 20 },
+      { id: "q-cordes-3-annexe", courseId: "annexes", lessonId: "annexes-cordes", lvl: 2, q: "Tes cordes neuves redescendent vers le grave toutes les cinq minutes. Que fais-tu ?", o: ["Les tendre doucement, puis r\xE9accorder", "Les remplacer par un autre jeu", "Resserrer les vis des m\xE9caniques", "Accorder un demi-ton plus haut"], a: 0, exp: "Une corde neuve s'allonge pendant ses premi\xE8res heures. La tendre doucement \xE0 la main acc\xE9l\xE8re cette phase : deux ou trois passages, puis l'accord tient.", xp: 25 },
+      { id: "q-cordes-4-annexe", courseId: "annexes", lessonId: "annexes-cordes", lvl: 2, q: "Ta guitare a un vibrato flottant. Comment changes-tu ses cordes ?", o: ["Une \xE0 une, pour garder l'\xE9quilibre", "Toutes d'un coup, c'est plus rapide", "Les graves d'abord, toutes ensemble", "Sans les d\xE9tendre, \xE0 la pince"], a: 0, exp: "Un vibrato flottant est tenu en \xE9quilibre entre la tension des cordes et celle des ressorts. Tout retirer d'un coup le fait basculer, et il faut ensuite tout rer\xE9gler.", xp: 25 }
+    ];
+  }
+});
+
+// src/content/cours/annexes/annexes-ampli.js
+var annexes_ampli_exports = {};
+__export(annexes_ampli_exports, {
+  default: () => annexes_ampli_default,
+  quiz: () => quiz138
+});
+var annexes_ampli_default, quiz138;
+var init_annexes_ampli = __esm({
+  "src/content/cours/annexes/annexes-ampli.js"() {
+    annexes_ampli_default = {
+      id: "annexes-ampli",
+      annexe: true,
+      title: "R\xE9gler son ampli et ses effets",
+      duration: 9,
+      gropiTip: "Baisse toujours le volume de l'ampli avant de brancher ou de d\xE9brancher ton c\xE2ble : tu \xE9vites un gros \xAB pop \xBB dans le haut-parleur, et dans tes oreilles.",
+      cartes: [
+        { type: "idee", titre: "Gain et volume, deux r\xF4les", texte: [
+          "Le gain r\xE8gle combien le signal sature \xE0 l'entr\xE9e de l'ampli : peu de gain, son clair ; beaucoup, son satur\xE9.",
+          "Le volume (ou master) ne r\xE8gle que la puissance. Pour saturer sans r\xE9veiller les voisins : gain haut, volume bas."
+        ] },
+        { type: "idee", titre: "Clair, crunch, satur\xE9", texte: [
+          "Clair : gain bas, chaque note de l'accord se d\xE9tache. Crunch : gain moyen, le son grogne quand tu attaques fort et s'\xE9claircit quand tu joues doux.",
+          "Satur\xE9 : gain \xE9lev\xE9, son \xE9pais qui tient longtemps. Pi\xE8ge classique : trop de gain brouille les accords et ajoute du souffle. Mets-en moins que tu ne crois."
+        ] },
+        { type: "question", quizId: "q-ampli-1-annexe" },
+        { type: "idee", titre: "L'\xE9galiseur : basses, m\xE9diums, aigus", texte: [
+          "Pars de tous les boutons \xE0 midi, puis corrige \xE0 l'oreille. Basses : le corps du son ; trop, et c'est boueux. Aigus : la brillance ; trop, et \xE7a agresse.",
+          "M\xE9diums : la pr\xE9sence. Les creuser donne un son impressionnant seul, qui dispara\xEEt d\xE8s que le groupe joue."
+        ] },
+        {
+          type: "a-toi",
+          titre: "Ton clair, puis ton crunch",
+          consigne: "Volume bas, \xE9galiseur \xE0 midi, gain au minimum : joue Mi mineur, Do, Sol, R\xE9, quatre coups par accord. Monte le gain peu \xE0 peu jusqu'\xE0 ce que les accords grognent quand tu grattes fort. Alterne gratt\xE9 doux et gratt\xE9 fort pour entendre le crunch r\xE9agir.",
+          bpm: 70,
+          minuteur: 300
+        },
+        { type: "question", quizId: "q-ampli-4-annexe" },
+        { type: "idee", titre: "Overdrive ou distorsion ?", texte: [
+          "Deux p\xE9dales de saturation. L'overdrive imite un ampli \xE0 lampes pouss\xE9 : saturation douce, qui s'\xE9claircit quand tu baisses le volume de ta guitare.",
+          "La distorsion sature davantage : son plus \xE9pais et plus compress\xE9, taill\xE9 pour les riffs rock et metal."
+        ] },
+        { type: "idee", titre: "Les effets et leur ordre", texte: [
+          "La reverb place ton son dans une pi\xE8ce ou une salle. Le delay r\xE9p\xE8te ta note, comme un \xE9cho. Le chorus le double avec une l\xE9g\xE8re ondulation, effet large et miroitant.",
+          "Ordre courant, de la guitare vers l'ampli : accordeur, compresseur, saturations, modulations, delay, et la reverb en dernier. Ce n'est pas une loi : ton oreille tranche."
+        ] },
+        { type: "question", quizId: "q-ampli-2-annexe" },
+        { type: "recap", points: [
+          "Le gain r\xE8gle la saturation, le volume la puissance : ce sont deux boutons diff\xE9rents.",
+          "\xC9galiseur \xE0 midi pour commencer ; garde des m\xE9diums pour exister dans un groupe.",
+          "Ordre courant : saturations, puis modulations, puis delay, la reverb en dernier."
+        ] }
+      ],
+      quiz: ["q-ampli-1-annexe", "q-ampli-2-annexe", "q-ampli-3-annexe", "q-ampli-4-annexe"]
+    };
+    quiz138 = [
+      { id: "q-ampli-1-annexe", courseId: "annexes", lessonId: "annexes-ampli", lvl: 1, q: "Tu veux un son plus satur\xE9 sans jouer plus fort. Quel bouton montes-tu ?", o: ["Le gain", "Le master", "Les aigus", "La reverb"], a: 0, exp: "Le gain pousse l'entr\xE9e de l'ampli jusqu'\xE0 la saturation ; le master (volume g\xE9n\xE9ral) ne change que la puissance. Gain plus haut, master inchang\xE9 : plus de grain, m\xEAme volume.", xp: 20 },
+      { id: "q-ampli-2-annexe", courseId: "annexes", lessonId: "annexes-ampli", lvl: 2, q: "Tu as une overdrive, un chorus et une reverb. Dans quel ordre les branches-tu, de la guitare vers l'ampli ?", o: ["Overdrive, chorus, reverb", "Reverb, chorus, overdrive", "Chorus, reverb, overdrive", "Reverb, overdrive, chorus"], a: 0, exp: "Saturation d'abord, puis modulation (le chorus), puis l'espace (la reverb) en dernier. Une reverb plac\xE9e avant l'overdrive serait satur\xE9e \xE0 son tour, et le son deviendrait brouillon.", xp: 25 },
+      { id: "q-ampli-3-annexe", courseId: "annexes", lessonId: "annexes-ampli", lvl: 1, q: "Quel effet r\xE9p\xE8te ta note plusieurs fois, comme un \xE9cho dans la montagne ?", o: ["Le delay", "Le chorus", "Le compresseur", "L'overdrive"], a: 0, exp: "Le delay enregistre ce que tu joues et le rejoue apr\xE8s un court instant, une ou plusieurs fois. La reverb, elle, simule un espace sans r\xE9p\xE9titions distinctes.", xp: 20 },
+      { id: "q-ampli-4-annexe", courseId: "annexes", lessonId: "annexes-ampli", lvl: 2, q: "Ton son est superbe seul, mais dispara\xEEt d\xE8s que le groupe joue. Quel r\xE9glage d'\xE9galiseur essaies-tu d'abord ?", o: ["Remonter les m\xE9diums", "Couper les m\xE9diums", "Monter les basses \xE0 fond", "Baisser les aigus \xE0 z\xE9ro"], a: 0, exp: "Les m\xE9diums portent la pr\xE9sence de la guitare. Les creuser flatte le son seul, mais la guitare se noie alors entre la basse et la batterie.", xp: 25 }
+    ];
+  }
+});
+
+// src/content/cours/annexes/annexes-morceau.js
+var annexes_morceau_exports = {};
+__export(annexes_morceau_exports, {
+  default: () => annexes_morceau_default,
+  quiz: () => quiz139
+});
+var MOTIF3, annexes_morceau_default, quiz139;
+var init_annexes_morceau = __esm({
+  "src/content/cours/annexes/annexes-morceau.js"() {
+    MOTIF3 = {
+      type: "tab",
+      caption: "Un motif en Mi mineur pentatonique, puis sa variation",
+      text: "Tab \u2014 mesure 1 : Mi (corde 6 \xE0 vide), Sol (corde 6 case 3), La (corde 5 \xE0 vide), Si (corde 5 case 2). Mesure 2 : m\xEAme d\xE9but, puis la fin change : La (corde 5 \xE0 vide), R\xE9 (corde 4 \xE0 vide).",
+      data: { lines: [
+        "e|---------------|---------------|",
+        "B|---------------|---------------|",
+        "G|---------------|---------------|",
+        "D|---------------|-----------0---|",
+        "A|-------0---2---|-------0-------|",
+        "E|-0---3---------|-0---3---------|"
+      ] }
+    };
+    annexes_morceau_default = {
+      id: "annexes-morceau",
+      annexe: true,
+      title: "\xC9crire ton premier morceau",
+      duration: 10,
+      gropiTip: "Une id\xE9e qui te para\xEEt banale aujourd'hui sonnera peut-\xEAtre tr\xE8s bien dans une semaine : garde tous tes m\xE9mos, m\xEAme ceux que tu n'aimes pas sur le moment.",
+      cartes: [
+        { type: "idee", titre: "Tu as d\xE9j\xE0 de quoi \xE9crire", texte: [
+          "Quatre accords suffisent. Une suite tr\xE8s courante : I\u2013V\u2013vi\u2013IV. En Do majeur, elle donne Do, Sol, La mineur, Fa.",
+          "Les chiffres romains te permettent de la transposer. En Sol majeur, les degr\xE9s valent : I Sol, ii La mineur, iii Si mineur, IV Do, V R\xE9, vi Mi mineur."
+        ] },
+        { type: "question", quizId: "q-morceau-2-annexe" },
+        {
+          type: "a-toi",
+          titre: "Ta suite, en boucle",
+          consigne: "Joue ta suite en Sol majeur, quatre coups vers le bas par accord, un par clic. Fais tourner la boucle sans t'arr\xEAter : c'est le socle de ton morceau. Si un autre ordre des quatre accords te pla\xEEt davantage, garde-le.",
+          bpm: 80,
+          minuteur: 120
+        },
+        { type: "idee", titre: "Un motif, puis sa variation", texte: [
+          "Sur ta suite, invente un motif de trois ou quatre notes dans la pentatonique de Mi mineur, en position ouverte : Mi, Sol, La, Si, R\xE9.",
+          "Joue-le deux fois \xE0 l'identique, puis change seulement sa fin. La r\xE9p\xE9tition installe l'id\xE9e, la variation la rend vivante."
+        ], bloc: MOTIF3 },
+        { type: "idee", titre: "Couplet et refrain", texte: [
+          "Le couplet raconte : sa musique revient, ses paroles changent. Le refrain r\xE9sume : il revient \xE0 l'identique, souvent plus fort ou plus aigu.",
+          "Pour les distinguer, change un \xE9l\xE9ment : l'ordre des accords (Mi mineur, Do, Sol, R\xE9 au couplet), le rythme ou l'\xE9nergie du gratt\xE9.",
+          "Structure simple : couplet, refrain, couplet, refrain."
+        ] },
+        { type: "question", quizId: "q-morceau-3-annexe" },
+        { type: "idee", titre: "Garde une trace", texte: [
+          "Une id\xE9e s'oublie vite. Enregistre-la sur ton t\xE9l\xE9phone, en m\xE9mo vocal : quelques secondes suffisent, m\xEAme imparfaites.",
+          "Nomme le fichier avec la tonalit\xE9, le tempo et la partie (\xAB Sol 80 couplet \xBB). Ce n'est pas un examen : c'est ton carnet de notes sonore, pour reprendre demain."
+        ] },
+        {
+          type: "a-toi",
+          titre: "Ton premier m\xE9mo",
+          consigne: "Encha\xEEne tes deux parties, avec ton motif sur l'une d'elles. Enregistre une seule prise en m\xE9mo vocal, sans viser la perfection, puis range le t\xE9l\xE9phone. R\xE9\xE9coute-la demain avant de continuer ton morceau.",
+          minuteur: 600
+        },
+        { type: "question", quizId: "q-morceau-1-annexe" },
+        { type: "recap", points: [
+          "Une suite de quatre accords (I\u2013V\u2013vi\u2013IV par exemple) suffit pour poser un morceau.",
+          "Un motif court, r\xE9p\xE9t\xE9 puis vari\xE9, donne une phrase dont on se souvient.",
+          "Couplet qui change, refrain qui revient ; un m\xE9mo vocal pour ne rien perdre."
+        ] }
+      ],
+      quiz: ["q-morceau-1-annexe", "q-morceau-2-annexe", "q-morceau-3-annexe", "q-morceau-4-annexe"]
+    };
+    quiz139 = [
+      { id: "q-morceau-1-annexe", courseId: "annexes", lessonId: "annexes-morceau", lvl: 1, q: "Dans une chanson, quelle partie revient \xE0 l'identique, paroles comprises ?", o: ["Le refrain", "Le couplet", "L'introduction", "Le solo"], a: 0, exp: "Le refrain revient tel quel et r\xE9sume la chanson ; les couplets gardent leur musique, mais leurs paroles changent \xE0 chaque fois.", xp: 20 },
+      { id: "q-morceau-2-annexe", courseId: "annexes", lessonId: "annexes-morceau", lvl: 2, q: "En Sol majeur, quels accords donne la suite I\u2013V\u2013vi\u2013IV ?", o: ["Sol, R\xE9, Mi mineur, Do", "Sol, Do, R\xE9, Mi mineur", "Sol, R\xE9, La mineur, Do", "Do, Sol, La mineur, Fa"], a: 0, exp: "En Sol majeur : I = Sol, V = R\xE9, vi = Mi mineur, IV = Do. \xAB Do, Sol, La mineur, Fa \xBB est la m\xEAme suite, mais en Do majeur.", xp: 25 },
+      { id: "q-morceau-3-annexe", courseId: "annexes", lessonId: "annexes-morceau", lvl: 2, q: "Ton motif de quatre notes te pla\xEEt. Comment en faire une phrase qui accroche ?", o: ["Le rejouer, puis modifier sa fin", "Changer toutes ses notes \xE0 chaque mesure", "Le jouer une fois, puis passer \xE0 autre chose", "L'allonger jusqu'\xE0 douze notes diff\xE9rentes"], a: 0, exp: "La r\xE9p\xE9tition installe l'id\xE9e dans l'oreille ; une fin modifi\xE9e cr\xE9e la surprise. Changer tout, tout le temps, emp\xEAche l'auditeur de s'accrocher \xE0 quoi que ce soit.", xp: 25 },
+      { id: "q-morceau-4-annexe", courseId: "annexes", lessonId: "annexes-morceau", lvl: 1, q: "Pourquoi enregistrer une id\xE9e en m\xE9mo vocal d\xE8s qu'elle te vient ?", o: ["Pour ne pas l'oublier avant de la retravailler", "Pour qu'elle soit d\xE9j\xE0 pr\xEAte \xE0 \xEAtre publi\xE9e", "Pour pouvoir te passer du m\xE9tronome", "Pour v\xE9rifier l'accordage de ta guitare"], a: 0, exp: "Une id\xE9e musicale s'efface vite. Le m\xE9mo est un aide-m\xE9moire, pas une version finale : tu la retravailleras plus tard, \xE0 t\xEAte repos\xE9e.", xp: 20 }
+    ];
   }
 });
 
@@ -4862,8 +16099,8 @@ var init_chordShapes = __esm({
 });
 
 // src/fretboard/FretGrid.jsx
-import { useRef as useRef7, useState as useState10 } from "react";
-import { Fragment as Fragment8, jsx as jsx13, jsxs as jsxs11 } from "react/jsx-runtime";
+import { useRef as useRef7, useState as useState11 } from "react";
+import { Fragment as Fragment9, jsx as jsx13, jsxs as jsxs11 } from "react/jsx-runtime";
 function RepereStandard({ isDouble }) {
   const C = useC();
   const point = /* @__PURE__ */ jsx13("div", { style: { width: 6, height: 6, borderRadius: "50%", background: C.border } });
@@ -4901,7 +16138,7 @@ function FretGrid({
   const C = useC();
   const V = VARIANTES[variant] ?? VARIANTES.standard;
   const colonnes = showOpen ? [0, ...frets] : frets;
-  const [actif, setActif] = useState10(null);
+  const [actif, setActif] = useState11(null);
   const actifValide = actif && CORDES.includes(actif.s) && colonnes.includes(actif.f) ? actif : { s: CORDES[0], f: colonnes[0] };
   const refs = useRef7(/* @__PURE__ */ new Map());
   const focaliser = (s, f) => {
@@ -4984,7 +16221,7 @@ function FretGrid({
     transform: "translateY(-50%)",
     ...extra
   } });
-  const espaceurs = /* @__PURE__ */ jsxs11(Fragment8, { children: [
+  const espaceurs = /* @__PURE__ */ jsxs11(Fragment9, { children: [
     showStringNames && /* @__PURE__ */ jsx13("div", { style: { width: labelW, flexShrink: 0 } }),
     showOpen && /* @__PURE__ */ jsx13("div", { style: { width: openW, flexShrink: 0 } })
   ] });
@@ -5217,13 +16454,13 @@ var init_LecteurDiagramme = __esm({
 });
 
 // src/fretboard/useLecteurDiagramme.js
-import { useCallback as useCallback3, useEffect as useEffect9, useRef as useRef8, useState as useState11 } from "react";
+import { useCallback as useCallback3, useEffect as useEffect10, useRef as useRef8, useState as useState12 } from "react";
 function useLecteurDiagramme() {
   const idRef = useRef8(0);
   if (!idRef.current) idRef.current = prochainId++;
-  const [etat, setEtat] = useState11("repos");
-  const [action, setAction] = useState11(null);
-  const [pas, setPas] = useState11(null);
+  const [etat, setEtat] = useState12("repos");
+  const [action, setAction] = useState12(null);
+  const [pas, setPas] = useState12(null);
   const jeton = useRef8(0);
   const minuteur = useRef8(null);
   const monte = useRef8(true);
@@ -5301,7 +16538,7 @@ function useLecteurDiagramme() {
       minuteur.current = setTimeout(terminer, duree + MARGE_FIN_MS);
     })();
   }, [action, etat, arreter, reinitialiser]);
-  useEffect9(() => {
+  useEffect10(() => {
     monte.current = true;
     const id = idRef.current;
     return () => {
@@ -5947,8 +17184,8 @@ __export(Fretboard_exports, {
   FretboardLesson: () => FretboardLesson,
   FretboardQuizQuestion: () => FretboardQuizQuestion
 });
-import { useState as useState12, useMemo as useMemo5, useCallback as useCallback4, useEffect as useEffect10 } from "react";
-import { Fragment as Fragment9, jsx as jsx15, jsxs as jsxs13 } from "react/jsx-runtime";
+import { useState as useState13, useMemo as useMemo6, useCallback as useCallback4, useEffect as useEffect11 } from "react";
+import { Fragment as Fragment10, jsx as jsx15, jsxs as jsxs13 } from "react/jsx-runtime";
 function carteContexte({ mode, root, scale, chord, highlightedNotes, quizTarget, lang }) {
   const langue = lang === "en" ? "en" : "fr";
   if (mode === "scale" && root && scale) return carteNoms(root, { gamme: scale, langue });
@@ -6086,10 +17323,10 @@ function Fretboard({
   flashNotes = null
 }) {
   const C = useC();
-  const NOTE_COLORS = useMemo5(() => getNoteColors(C), [C]);
-  const [quizSelected, setQuizSelected] = useState12([]);
-  const [quizRevealed, setQuizRevealed] = useState12(false);
-  const activePositions = useMemo5(() => {
+  const NOTE_COLORS = useMemo6(() => getNoteColors(C), [C]);
+  const [quizSelected, setQuizSelected] = useState13([]);
+  const [quizRevealed, setQuizRevealed] = useState13(false);
+  const activePositions = useMemo6(() => {
     if (mode === "scale" && root && scale) {
       return getScalePositions(root, scale, endFret);
     }
@@ -6104,12 +17341,12 @@ function Fretboard({
     }
     return [];
   }, [mode, root, scale, chord, highlightedNotes, quizTarget, endFret]);
-  const nomsContexte = useMemo5(
+  const nomsContexte = useMemo6(
     () => carteContexte({ mode, root, scale, chord, highlightedNotes, quizTarget, lang }),
     [mode, root, scale, chord, highlightedNotes, quizTarget, lang]
   );
   const nomAffiche = (note2) => nomsContexte?.get(normalizeNote(note2)) ?? nomSansContexte(note2, lang);
-  const positionMap = useMemo5(() => {
+  const positionMap = useMemo6(() => {
     const map = {};
     for (const p of activePositions) {
       map[`${p.string}-${p.fret}`] = p;
@@ -6315,10 +17552,10 @@ function QuizControls({ selected, correct, revealed, target, lang, onReveal, onR
 function FretboardLesson({ block }) {
   const C = useC();
   const defaultDisplay = block.mode === "highlight" || block.mode === "quiz" ? "notes" : block.displayMode || "notes";
-  const [displayMode, setDisplayMode] = useState12(defaultDisplay);
-  const [quizDone, setQuizDone] = useState12(false);
+  const [displayMode, setDisplayMode] = useState13(defaultDisplay);
+  const [quizDone, setQuizDone] = useState13(false);
   const lecteur = useLecteurDiagramme();
-  const lecon = useMemo5(() => sequenceLecon(block, {
+  const lecon = useMemo6(() => sequenceLecon(block, {
     racinePc: block.root ? pcDeNom(normalizeNote(block.root)) : null,
     intervallesGamme: SCALES[block.scale]?.intervals,
     intervallesAccord: CHORD_TYPES[block.chord]?.intervals,
@@ -6438,18 +17675,18 @@ function FretboardLesson({ block }) {
 }
 function FretboardQuizQuestion({ question, onComplete, answered, forceReveal }) {
   const C = useC();
-  const [quizSelected, setQuizSelected] = useState12([]);
-  const [revealed, setRevealed] = useState12(false);
-  const [showHint, setShowHint] = useState12(false);
+  const [quizSelected, setQuizSelected] = useState13([]);
+  const [revealed, setRevealed] = useState13(false);
+  const [showHint, setShowHint] = useState13(false);
   const questionKey = question.id;
-  const [lastKey, setLastKey] = useState12(questionKey);
+  const [lastKey, setLastKey] = useState13(questionKey);
   if (lastKey !== questionKey) {
     setQuizSelected([]);
     setRevealed(false);
     setShowHint(false);
     setLastKey(questionKey);
   }
-  const targetPositions = useMemo5(() => {
+  const targetPositions = useMemo6(() => {
     const fretMode = question.fretMode || question.concept?.type;
     const target = question.target || question.concept?.root;
     const root = question.root || question.concept?.root;
@@ -6461,7 +17698,7 @@ function FretboardQuizQuestion({ question, onComplete, answered, forceReveal }) 
     }
     return [];
   }, [question]);
-  const contextPositions = useMemo5(() => {
+  const contextPositions = useMemo6(() => {
     const fretMode = question.fretMode || question.concept?.type;
     const root = question.root || question.concept?.root;
     const { scale, chord } = question;
@@ -6490,7 +17727,7 @@ function FretboardQuizQuestion({ question, onComplete, answered, forceReveal }) 
     const result2 = checkQuizCompletion(stripNeutral(quizSelected), targetPositions);
     onComplete(result2);
   };
-  useEffect10(() => {
+  useEffect11(() => {
     if (forceReveal && !revealed) verify();
   }, [forceReveal]);
   const result = revealed ? checkQuizCompletion(stripNeutral(quizSelected), targetPositions) : null;
@@ -6572,16 +17809,16 @@ function FretboardQuizQuestion({ question, onComplete, answered, forceReveal }) 
 }
 function FretboardQuizCanvas({ targetPositions, contextPositions, selected, revealed, locked, onCellClick, question }) {
   const C = useC();
-  const NOTE_COLORS = useMemo5(() => getNoteColors(C), [C]);
+  const NOTE_COLORS = useMemo6(() => getNoteColors(C), [C]);
   const DOT = 26;
-  const targetMap = useMemo5(() => {
+  const targetMap = useMemo6(() => {
     const m = {};
     targetPositions.forEach((p) => {
       m[`${p.string}-${p.fret}`] = true;
     });
     return m;
   }, [targetPositions]);
-  const contextMap = useMemo5(() => {
+  const contextMap = useMemo6(() => {
     const m = {};
     contextPositions.forEach((p) => {
       m[`${p.string}-${p.fret}`] = p;
@@ -6589,7 +17826,7 @@ function FretboardQuizCanvas({ targetPositions, contextPositions, selected, reve
     return m;
   }, [contextPositions]);
   const isSel = (s, f) => selected.some((p) => p.string === s && p.fret === f);
-  const nomsQuestion = useMemo5(() => {
+  const nomsQuestion = useMemo6(() => {
     const fretMode = question?.fretMode || question?.concept?.type;
     const root = question?.root || question?.concept?.root;
     if (fretMode === "find_chord" && root && question.chord) return carteNoms(root, { accord: question.chord });
@@ -6636,23 +17873,23 @@ function FretboardQuizCanvas({ targetPositions, contextPositions, selected, reve
 }
 function FretboardExercise({ ex, onComplete, dispatch }) {
   const C = useC();
-  const [stageIdx, setStageIdx] = useState12(0);
-  const [stageSelected, setStageSelected] = useState12([]);
-  const [stageRevealed, setStageRevealed] = useState12(false);
-  const [stageResult, setStageResult] = useState12(null);
-  const [totalXp, setTotalXp] = useState12(0);
-  const [completedStages, setCompletedStages] = useState12([]);
-  const [allDone, setAllDone] = useState12(false);
+  const [stageIdx, setStageIdx] = useState13(0);
+  const [stageSelected, setStageSelected] = useState13([]);
+  const [stageRevealed, setStageRevealed] = useState13(false);
+  const [stageResult, setStageResult] = useState13(null);
+  const [totalXp, setTotalXp] = useState13(0);
+  const [completedStages, setCompletedStages] = useState13([]);
+  const [allDone, setAllDone] = useState13(false);
   const stage = ex.stages[stageIdx];
   const isLast = stageIdx === ex.stages.length - 1;
-  const targetPositions = useMemo5(() => {
+  const targetPositions = useMemo6(() => {
     if (!stage) return [];
     return getTargetPositions(stage.concept, {
       fretRange: stage.fretRange || [0, 12],
       stringRange: stage.stringRange || [1, 6]
     });
   }, [stage]);
-  const targetMap = useMemo5(() => {
+  const targetMap = useMemo6(() => {
     const m = {};
     targetPositions.forEach((p) => {
       m[`${p.string}-${p.fret}`] = p;
@@ -6777,7 +18014,7 @@ function FretboardExercise({ ex, onComplete, dispatch }) {
       stageResult.feedback,
       stage.exp && /* @__PURE__ */ jsx15("div", { style: { marginTop: 4, opacity: 0.85 }, children: stage.exp })
     ] }),
-    /* @__PURE__ */ jsx15("div", { style: { display: "flex", gap: 8 }, children: !stageRevealed ? /* @__PURE__ */ jsxs13(Fragment9, { children: [
+    /* @__PURE__ */ jsx15("div", { style: { display: "flex", gap: 8 }, children: !stageRevealed ? /* @__PURE__ */ jsxs13(Fragment10, { children: [
       /* @__PURE__ */ jsxs13(
         "button",
         {
@@ -6860,11 +18097,11 @@ function FretboardExercise({ ex, onComplete, dispatch }) {
 }
 function ExerciseCanvas({ stage, targetMap, selected, revealed, onCellClick }) {
   const C = useC();
-  const NOTE_COLORS = useMemo5(() => getNoteColors(C), [C]);
+  const NOTE_COLORS = useMemo6(() => getNoteColors(C), [C]);
   const DOT = 26;
   const MAX_F = (stage.fretRange || [0, 12])[1];
   const MIN_F = (stage.fretRange || [0, 12])[0];
-  const contextPositions = useMemo5(() => {
+  const contextPositions = useMemo6(() => {
     if (!stage.display?.showContext) return [];
     const ctx = stage.display.showContext;
     return getTargetPositions(ctx, {
@@ -6872,7 +18109,7 @@ function ExerciseCanvas({ stage, targetMap, selected, revealed, onCellClick }) {
       stringRange: stage.stringRange || [1, 6]
     });
   }, [stage]);
-  const contextMap = useMemo5(() => {
+  const contextMap = useMemo6(() => {
     const m = {};
     contextPositions.forEach((p) => {
       m[`${p.string}-${p.fret}`] = p;
@@ -6959,7 +18196,7 @@ var Metronome_exports = {};
 __export(Metronome_exports, {
   Metronome: () => Metronome
 });
-import { useState as useState16, useRef as useRef11, useEffect as useEffect13, useCallback as useCallback6 } from "react";
+import { useState as useState17, useRef as useRef11, useEffect as useEffect14, useCallback as useCallback6 } from "react";
 import { jsx as jsx22, jsxs as jsxs19 } from "react/jsx-runtime";
 function Metronome() {
   const C = useC();
@@ -6975,11 +18212,11 @@ function Metronome() {
     cursor: "pointer",
     fontFamily: FONTS.ui
   };
-  const [bpm, setBpm] = useState16(90);
-  const [playing, setPlaying] = useState16(false);
-  const [beats, setBeats] = useState16(4);
-  const [current, setCurrent] = useState16(-1);
-  const [timbre, setTimbre] = useState16("bois");
+  const [bpm, setBpm] = useState17(90);
+  const [playing, setPlaying] = useState17(false);
+  const [beats, setBeats] = useState17(4);
+  const [current, setCurrent] = useState17(-1);
+  const [timbre, setTimbre] = useState17("bois");
   const TIMBRES = [
     { id: "bois", label: "Bois" },
     { id: "mecanique", label: "M\xE9canique" },
@@ -7097,18 +18334,18 @@ function Metronome() {
     transport.start();
     setPlaying(true);
   }, [bpm, ensureClick]);
-  useEffect13(() => {
+  useEffect14(() => {
     getTransport().bpm.value = bpm;
   }, [bpm]);
-  useEffect13(() => {
+  useEffect14(() => {
     if (!voixRef.current) return;
     libererVoix();
     voixRef.current = construireVoix(timbre);
   }, [timbre, construireVoix, libererVoix]);
-  useEffect13(() => {
+  useEffect14(() => {
     beatsRef.current = beats;
   }, [beats]);
-  useEffect13(() => () => {
+  useEffect14(() => () => {
     stop();
     libererVoix();
   }, [stop, libererVoix]);
@@ -7118,7 +18355,7 @@ function Metronome() {
   const ECART_MAX_MS = 2e3;
   const TAPS_MAX = 8;
   const tapsRef = useRef11([]);
-  const [tapCount, setTapCount] = useState16(0);
+  const [tapCount, setTapCount] = useState17(0);
   const tapTempo = () => {
     const now2 = performance.now();
     const taps = tapsRef.current;
@@ -7415,7 +18652,7 @@ var Tuner_exports = {};
 __export(Tuner_exports, {
   Tuner: () => Tuner
 });
-import { useState as useState17, useRef as useRef12, useEffect as useEffect14, useCallback as useCallback7 } from "react";
+import { useState as useState18, useRef as useRef12, useEffect as useEffect15, useCallback as useCallback7 } from "react";
 import { jsx as jsx23, jsxs as jsxs20 } from "react/jsx-runtime";
 function noteToHz(name, oct) {
   const idx = NOTE_NAMES.indexOf(name);
@@ -7471,11 +18708,11 @@ function TuningPicker({ tuningId, setTuningId, compact = false }) {
 }
 function Tuner() {
   const C = useC();
-  const [active, setActive] = useState17(false);
-  const [freq, setFreq] = useState17(0);
-  const [note2, setNote] = useState17(null);
-  const [error, setError] = useState17(null);
-  const [tuningId, setTuningId] = useState17("standard");
+  const [active, setActive] = useState18(false);
+  const [freq, setFreq] = useState18(0);
+  const [note2, setNote] = useState18(null);
+  const [error, setError] = useState18(null);
+  const [tuningId, setTuningId] = useState18("standard");
   const tuning = TUNINGS.find((t) => t.id === tuningId) || TUNINGS[0];
   const targets = buildTargets(tuning);
   const ctxRef = useRef12(null);
@@ -7493,7 +18730,7 @@ function Tuner() {
   const hasSignalRef = useRef12(false);
   const generationRef = useRef12(0);
   const demarrageRef = useRef12(false);
-  const [demarrage, setDemarrage] = useState17(false);
+  const [demarrage, setDemarrage] = useState18(false);
   const stop = useCallback7(() => {
     generationRef.current += 1;
     demarrageRef.current = false;
@@ -7637,7 +18874,7 @@ function Tuner() {
       }
     }
   }, []);
-  useEffect14(() => () => stop(), [stop]);
+  useEffect15(() => () => stop(), [stop]);
   const cents = note2?.cents ?? 0;
   const inTune = active && note2 && Math.abs(cents) <= 5;
   const needleColor = inTune ? C.green : Math.abs(cents) < 20 ? C.amber : C.pink;
@@ -7839,26 +19076,26 @@ var ChordPlayer_exports = {};
 __export(ChordPlayer_exports, {
   ChordPlayer: () => ChordPlayer
 });
-import { useState as useState18, useRef as useRef13, useEffect as useEffect15, useCallback as useCallback8 } from "react";
-import { Fragment as Fragment13, jsx as jsx24, jsxs as jsxs21 } from "react/jsx-runtime";
+import { useState as useState19, useRef as useRef13, useEffect as useEffect16, useCallback as useCallback8 } from "react";
+import { Fragment as Fragment14, jsx as jsx24, jsxs as jsxs21 } from "react/jsx-runtime";
 function ChordPlayer() {
   const C = useC();
-  const [root, setRoot] = useState18("C");
-  const [family, setFamily] = useState18("base");
-  const [quality, setQuality] = useState18("maj");
-  const [sequence, setSequence] = useState18([]);
-  const [playing, setPlaying] = useState18(false);
-  const [activeIdx, setActiveIdx] = useState18(-1);
-  const [speed, setSpeed] = useState18("normal");
-  const [suiteVidee, setSuiteVidee] = useState18(null);
+  const [root, setRoot] = useState19("C");
+  const [family, setFamily] = useState19("base");
+  const [quality, setQuality] = useState19("maj");
+  const [sequence, setSequence] = useState19([]);
+  const [playing, setPlaying] = useState19(false);
+  const [activeIdx, setActiveIdx] = useState19(-1);
+  const [speed, setSpeed] = useState19("normal");
+  const [suiteVidee, setSuiteVidee] = useState19(null);
   const timerViderRef = useRef13(null);
-  useEffect15(() => () => clearTimeout(timerViderRef.current), []);
+  useEffect16(() => () => clearTimeout(timerViderRef.current), []);
   const stop = useCallback8(() => {
     stopAll();
     setPlaying(false);
     setActiveIdx(-1);
   }, []);
-  useEffect15(() => () => stopAll(), []);
+  useEffect16(() => () => stopAll(), []);
   const addChord = () => {
     if (sequence.length >= MAX_CHORDS) return;
     const label = symboleAccord(root, quality);
@@ -7972,7 +19209,7 @@ function ChordPlayer() {
           minHeight: 36
         }, children: "Vider" })
       ] }),
-      sequence.length === 0 ? /* @__PURE__ */ jsx24("div", { role: "status", style: { textAlign: "center", padding: "18px 0", color: C.text3, fontSize: 13, fontFamily: FONTS.ui }, children: suiteVidee ? /* @__PURE__ */ jsxs21(Fragment13, { children: [
+      sequence.length === 0 ? /* @__PURE__ */ jsx24("div", { role: "status", style: { textAlign: "center", padding: "18px 0", color: C.text3, fontSize: 13, fontFamily: FONTS.ui }, children: suiteVidee ? /* @__PURE__ */ jsxs21(Fragment14, { children: [
         "Suite vid\xE9e.",
         " ",
         /* @__PURE__ */ jsx24("button", { onClick: annulerVider, className: "gr-focus", style: { background: "none", border: "none", padding: "6px 4px", color: C.primaryD, fontWeight: 800, fontSize: 13, fontFamily: FONTS.ui, cursor: "pointer", textDecoration: "underline" }, children: "Annuler" })
@@ -8135,11 +19372,23 @@ function grilleVersEvenements(grille) {
       const suivanteJouable = suivante && !suivante.cell.mute && typeof suivante.cell.fret === "number";
       const vibNote = cell.vibrato ? { vibrato: true } : {};
       if ((cell.lie || cell.slide) && suivanteJouable) {
-        const monte = suivante.cell.fret >= cell.fret;
-        const type = cell.slide ? monte ? "slide_up" : "slide_down" : monte ? "hammer" : "pull";
-        const vibArrivee = suivante.cell.vibrato ? { vibrato: true } : {};
-        evenements.push({ type, fromFret: cell.fret, toFret: suivante.cell.fret, col, toCol: suivante.col, string: corde, ...vibArrivee });
-        consommees.add(suivante.col);
+        const chaine = [];
+        let k = i;
+        while (k + 1 < notes.length) {
+          const de = notes[k], vers = notes[k + 1];
+          if (!(de.cell.lie || de.cell.slide) || vers.cell.mute || typeof vers.cell.fret !== "number") break;
+          const monte = vers.cell.fret >= de.cell.fret;
+          const type = de.cell.slide ? monte ? "slide_up" : "slide_down" : monte ? "hammer" : "pull";
+          chaine.push({ type, fromFret: de.cell.fret, toFret: vers.cell.fret, col: de.col, toCol: vers.col, string: corde });
+          consommees.add(vers.col);
+          k++;
+        }
+        chaine.forEach((ev, idx) => {
+          if (idx > 0) ev.sansAttaque = true;
+          if (idx < chaine.length - 1) ev.enchaine = true;
+        });
+        if (notes[k].cell.vibrato) chaine[chaine.length - 1].vibrato = true;
+        evenements.push(...chaine);
         return;
       }
       if (cell.bend === 1 || cell.bend === 2) {
@@ -8230,7 +19479,7 @@ var TabEditor_exports = {};
 __export(TabEditor_exports, {
   TabEditor: () => TabEditor
 });
-import { useState as useState19, useRef as useRef14, useEffect as useEffect16, useCallback as useCallback9, useMemo as useMemo8, useId } from "react";
+import { useState as useState20, useRef as useRef14, useEffect as useEffect17, useCallback as useCallback9, useMemo as useMemo9, useId } from "react";
 import { jsx as jsx25, jsxs as jsxs22 } from "react/jsx-runtime";
 function styleTouche(C, actif, extra = {}) {
   return {
@@ -8265,13 +19514,13 @@ function GrilleTab({ grille, evenements, res, selection, onSelect, onKeyDown, co
   const vide = derniereColonne(grille) < 0;
   const liaisons = evenements.filter((e) => e.toCol != null);
   const origines = new Set(liaisons.map((e) => `${e.string}-${e.col}`));
-  useEffect16(() => {
+  useEffect17(() => {
     const el = scrollRef.current;
     if (!el || !el.contains(document.activeElement)) return;
     el.querySelector(`[data-case="${selection.corde}-${selection.col}"]`)?.focus({ preventScroll: true });
   }, [selection]);
   const colSuivie = colLecture ?? selection.col;
-  useEffect16(() => {
+  useEffect17(() => {
     const el = scrollRef.current;
     if (!el) return;
     const x = colSuivie / res * cellW;
@@ -8439,19 +19688,19 @@ function initialiserEditeur() {
 }
 function TabEditor() {
   const C = useC();
-  const [edit, setEdit] = useState19(() => ({ grille: initialiserEditeur(), passe: [] }));
+  const [edit, setEdit] = useState20(() => ({ grille: initialiserEditeur(), passe: [] }));
   const grille = edit.grille;
-  const [res, setRes] = useState19(() => compatibleCroches(grille) ? 2 : 1);
-  const [selection, setSelection] = useState19({ corde: 3, col: 0 });
-  const [bpm, setBpm] = useState19(80);
-  const [boucle, setBoucle] = useState19(false);
-  const [jouant, setJouant] = useState19(false);
-  const [colLecture, setColLecture] = useState19(null);
-  const [menuOuvert, setMenuOuvert] = useState19(false);
-  const [importOuvert, setImportOuvert] = useState19(false);
-  const [texteImport, setTexteImport] = useState19("");
-  const [erreurImport, setErreurImport] = useState19(null);
-  const [message, setMessage] = useState19(null);
+  const [res, setRes] = useState20(() => compatibleCroches(grille) ? 2 : 1);
+  const [selection, setSelection] = useState20({ corde: 3, col: 0 });
+  const [bpm, setBpm] = useState20(80);
+  const [boucle, setBoucle] = useState20(false);
+  const [jouant, setJouant] = useState20(false);
+  const [colLecture, setColLecture] = useState20(null);
+  const [menuOuvert, setMenuOuvert] = useState20(false);
+  const [importOuvert, setImportOuvert] = useState20(false);
+  const [texteImport, setTexteImport] = useState20("");
+  const [erreurImport, setErreurImport] = useState20(null);
+  const [message, setMessage] = useState20(null);
   const enLectureRef = useRef14(false);
   const timerBoucleRef = useRef14(null);
   const boucleRef = useRef14(boucle);
@@ -8459,10 +19708,10 @@ function TabEditor() {
   const derniereSaisieRef = useRef14(null);
   const menuRef = useRef14(null);
   const timerMessageRef = useRef14(null);
-  const evenements = useMemo8(() => grilleVersEvenements(grille), [grille]);
-  const origines = useMemo8(() => new Set(evenements.filter((e) => e.toCol != null).map((e) => `${e.string}-${e.col}`)), [evenements]);
+  const evenements = useMemo9(() => grilleVersEvenements(grille), [grille]);
+  const origines = useMemo9(() => new Set(evenements.filter((e) => e.toCol != null).map((e) => `${e.string}-${e.col}`)), [evenements]);
   const cellSel = lireCase(grille, selection.corde, selection.col);
-  useEffect16(() => {
+  useEffect17(() => {
     try {
       localStorage.setItem(STOCKAGE_TAB, JSON.stringify(grille));
     } catch {
@@ -8576,7 +19825,7 @@ function TabEditor() {
       }, dureeMs2);
     }
   }, [grille, arreter]);
-  useEffect16(() => {
+  useEffect17(() => {
     lancerRef.current = lancer;
   }, [lancer]);
   const basculerLecture = useCallback9(() => {
@@ -8598,7 +19847,7 @@ function TabEditor() {
       timerBoucleRef.current = null;
     }
   };
-  useEffect16(() => () => {
+  useEffect17(() => () => {
     enLectureRef.current = false;
     clearTimeout(timerBoucleRef.current);
     clearTimeout(timerMessageRef.current);
@@ -8641,7 +19890,7 @@ function TabEditor() {
       e.preventDefault();
     }
   };
-  useEffect16(() => {
+  useEffect17(() => {
     if (!menuOuvert && !importOuvert) return;
     const onEchap = (e) => {
       if (e.key === "Escape") {
@@ -8652,7 +19901,7 @@ function TabEditor() {
     document.addEventListener("keydown", onEchap);
     return () => document.removeEventListener("keydown", onEchap);
   }, [menuOuvert, importOuvert]);
-  useEffect16(() => {
+  useEffect17(() => {
     if (!menuOuvert) return;
     const fermer = (e) => {
       if (!menuRef.current?.contains(e.target)) setMenuOuvert(false);
@@ -8842,8 +20091,8 @@ __export(diagrams_exports, {
   TabBlock: () => TabBlock,
   renderDiagramBlock: () => renderDiagramBlock
 });
-import { useMemo as useMemo9, useState as useState20 } from "react";
-import { Fragment as Fragment14, jsx as jsx26, jsxs as jsxs23 } from "react/jsx-runtime";
+import { useMemo as useMemo10, useState as useState21 } from "react";
+import { Fragment as Fragment15, jsx as jsx26, jsxs as jsxs23 } from "react/jsx-runtime";
 function getNoteColors2(DC) {
   return {
     primary: { fill: DC.primary, text: "#fff" },
@@ -8890,7 +20139,7 @@ function DiagramCard({ caption, children, accent, actions }) {
 }
 function FretboardDiagram({ data, caption }) {
   const lecteur = useLecteurDiagramme();
-  const notes = useMemo9(() => fretboardBlockToNotes(data), [data]);
+  const notes = useMemo10(() => fretboardBlockToNotes(data), [data]);
   const actions = notes.length > 0 && /* @__PURE__ */ jsx26(
     BoutonEcoute,
     {
@@ -8904,7 +20153,7 @@ function FretboardDiagram({ data, caption }) {
 }
 function FretboardDiagramVue({ data, caption, actions, actifs }) {
   const DC = useC();
-  const NOTE_COLORS = useMemo9(() => getNoteColors2(DC), [DC]);
+  const NOTE_COLORS = useMemo10(() => getNoteColors2(DC), [DC]);
   const {
     frets = 5,
     startFret = 0,
@@ -9085,7 +20334,7 @@ function FretboardDiagramVue({ data, caption, actions, actifs }) {
 }
 function ScalePattern({ data, caption }) {
   const DC = useC();
-  const NOTE_COLORS = useMemo9(() => getNoteColors2(DC), [DC]);
+  const NOTE_COLORS = useMemo10(() => getNoteColors2(DC), [DC]);
   const {
     strings = [],
     // [c6, c5, c4, c3, c2, c1]
@@ -9105,7 +20354,7 @@ function ScalePattern({ data, caption }) {
   } = data;
   const aDesAccents = strings.some((st) => (st.accent || []).length);
   const lecteur = useLecteurDiagramme();
-  const notesGamme = useMemo9(() => scaleBlockToNotes(data), [data]);
+  const notesGamme = useMemo10(() => scaleBlockToNotes(data), [data]);
   const ecouter = () => lecteur.basculer(
     "gamme",
     jouerSequence(sequenceMelodique(monteeDescente(notesGamme), { ecart: 0.32, duree: 0.6 }))
@@ -9265,7 +20514,7 @@ function CircleOfFifths({ data, caption }) {
     return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
   };
   const lecteur = useLecteurDiagramme();
-  const [focusClavier, setFocusClavier] = useState20(null);
+  const [focusClavier, setFocusClavier] = useState21(null);
   const ecouterTon = (nom2) => {
     const notes = accordDuCercle(nom2);
     if (notes) lecteur.basculer(`ton:${nom2}`, jouerSequence([{ t: 0, notes, duree: 2, velocite: 0.85, strum: "down", ecart: 0.03, step: nom2 }]));
@@ -9395,11 +20644,11 @@ function CircleOfFifths({ data, caption }) {
 }
 function DegreeChart({ data, caption }) {
   const DC = useC();
-  const NOTE_COLORS = useMemo9(() => getNoteColors2(DC), [DC]);
+  const NOTE_COLORS = useMemo10(() => getNoteColors2(DC), [DC]);
   const { boxes = [] } = data || {};
   const lecteur = useLecteurDiagramme();
-  const ctx = useMemo9(() => contexteDegres(data, caption), [data, caption]);
-  const sons = useMemo9(() => boxes.map((b) => degreeBoxToNotes(b, ctx)), [boxes, ctx]);
+  const ctx = useMemo10(() => contexteDegres(data, caption), [data, caption]);
+  const sons = useMemo10(() => boxes.map((b) => degreeBoxToNotes(b, ctx)), [boxes, ctx]);
   const ecouterCase = (i) => {
     const r = sons[i];
     if (!r) return;
@@ -9469,7 +20718,7 @@ function DegreeChart({ data, caption }) {
 }
 function IntervalChart({ data, caption }) {
   const DC = useC();
-  const NOTE_COLORS = useMemo9(() => getNoteColors2(DC), [DC]);
+  const NOTE_COLORS = useMemo10(() => getNoteColors2(DC), [DC]);
   const { highlight = [], showOnGuitar = false } = data || {};
   const lecteur = useLecteurDiagramme();
   const enAvant = INTERVALS.filter((iv) => !highlight.length || highlight.includes(iv.symbol));
@@ -9556,11 +20805,11 @@ function ChordDiagram({ data, caption }) {
   const DC = useC();
   const { name = "", frets = [], fingers = [], startFret = 1, barre } = data;
   const lecteur = useLecteurDiagramme();
-  const cordes = useMemo9(() => cordesDeFrets(frets), [frets]);
+  const cordes = useMemo10(() => cordesDeFrets(frets), [frets]);
   const nomFr2 = nomAccordFr(name) || "dessin\xE9";
   const pasLecture = lecteur.etat !== "repos" ? lecteur.pas : null;
   const cordeSonne = (i) => pasLecture === "tout" ? cordes.some((c) => c.index === i) : cordes[pasLecture]?.index === i;
-  const actions = cordes.length > 0 && /* @__PURE__ */ jsxs23(Fragment14, { children: [
+  const actions = cordes.length > 0 && /* @__PURE__ */ jsxs23(Fragment15, { children: [
     /* @__PURE__ */ jsx26(
       BoutonEcoute,
       {
@@ -9748,16 +20997,16 @@ function ChordDiagram({ data, caption }) {
 }
 function CAGEDForm({ data, caption }) {
   const DC = useC();
-  const NOTE_COLORS = useMemo9(() => getNoteColors2(DC), [DC]);
+  const NOTE_COLORS = useMemo10(() => getNoteColors2(DC), [DC]);
   const { form = "E", root = "La", rootFret = 5, notes = [], startFret = 4, frets = 5 } = data;
   const color = CAGED_COLORS[form] || "primary";
   const tint = NOTE_COLORS[color];
   const enhancedCaption = caption || `Forme ${form} \u2014 ${root} (case ${rootFret})`;
   const lecteur = useLecteurDiagramme();
-  const cordes = useMemo9(() => cagedVersCordes(data), [data]);
+  const cordes = useMemo10(() => cagedVersCordes(data), [data]);
   const pasLecture = lecteur.etat !== "repos" ? lecteur.pas : null;
   const actifs = pasLecture === "tout" ? new Set(cordes.map((c) => c.cle)) : cordes[pasLecture] ? /* @__PURE__ */ new Set([cordes[pasLecture].cle]) : null;
-  const actions = cordes.length > 0 && /* @__PURE__ */ jsxs23(Fragment14, { children: [
+  const actions = cordes.length > 0 && /* @__PURE__ */ jsxs23(Fragment15, { children: [
     /* @__PURE__ */ jsx26(
       BoutonEcoute,
       {
@@ -9821,7 +21070,7 @@ function CAGEDForm({ data, caption }) {
 }
 function NoteGrid({ data, caption }) {
   const DC = useC();
-  const NOTE_COLORS = useMemo9(() => getNoteColors2(DC), [DC]);
+  const NOTE_COLORS = useMemo10(() => getNoteColors2(DC), [DC]);
   const { string: strNum = 6, stringName = "Corde", highlights = [], maxFret = 12 } = data;
   const CELL_W = 26;
   const H = 44;
@@ -9836,7 +21085,7 @@ function NoteGrid({ data, caption }) {
     hlMap[h.fret] = h;
   });
   const lecteur = useLecteurDiagramme();
-  const notesCorde = useMemo9(() => noteGridToNotes(data), [data]);
+  const notesCorde = useMemo10(() => noteGridToNotes(data), [data]);
   const caseSonne = lecteur.etat !== "repos" ? lecteur.pas : null;
   const actions = notesCorde.length > 0 && /* @__PURE__ */ jsx26(
     BoutonEcoute,
@@ -9941,9 +21190,9 @@ function NoteGrid({ data, caption }) {
 }
 function TabBlock({ data, caption, text }) {
   const DC = useC();
-  const lines = useMemo9(() => Array.isArray(data?.lines) ? data.lines : [], [data]);
+  const lines = useMemo10(() => Array.isArray(data?.lines) ? data.lines : [], [data]);
   const lecteur = useLecteurDiagramme();
-  const evenements = useMemo9(() => lines.length ? parseTab(lines.join("\n")).evenements : [], [lines]);
+  const evenements = useMemo10(() => lines.length ? parseTab(lines.join("\n")).evenements : [], [lines]);
   const decalage = lines.length === 6 ? decalageLigneTab(lines[0]) : null;
   const curseur = lecteur.etat !== "repos" && lecteur.pas && decalage != null ? lecteur.pas : null;
   const ecouter = () => lecteur.basculer("tab", ({ onStep }) => {
@@ -10037,7 +21286,7 @@ function RhythmGrid({ data, caption }) {
   const svgW = LEFT_PAD * 2 + total * CELL_W;
   const svgH = TOP_PAD + CELL_H2 + 28;
   const lecteur = useLecteurDiagramme();
-  const rythme = useMemo9(() => rhythmBlockToEvents(data), [data]);
+  const rythme = useMemo10(() => rhythmBlockToEvents(data), [data]);
   const caseSonne = lecteur.etat !== "repos" ? lecteur.pas : null;
   const actions = rythme.evenements.length > 0 && /* @__PURE__ */ jsx26(
     BoutonEcoute,
@@ -10192,8 +21441,8 @@ function getStyleColors(DC) {
 }
 function StrumPattern({ data, caption }) {
   const DC = useC();
-  const STRUM_COLORS = useMemo9(() => getStrumColors(DC), [DC]);
-  const STYLE_COLORS = useMemo9(() => getStyleColors(DC), [DC]);
+  const STRUM_COLORS = useMemo10(() => getStrumColors(DC), [DC]);
+  const STYLE_COLORS = useMemo10(() => getStyleColors(DC), [DC]);
   const { pattern = [], beats = 4, style = "folk", bpm } = data;
   const CELL_W = 40;
   const CELL_H2 = 44;
@@ -10203,7 +21452,7 @@ function StrumPattern({ data, caption }) {
   const svgH = TOP_PAD + CELL_H2 + 24;
   const accent = STYLE_COLORS[style] || DC.primary;
   const lecteur = useLecteurDiagramme();
-  const grattage = useMemo9(() => strumBlockToEvents(data), [data]);
+  const grattage = useMemo10(() => strumBlockToEvents(data), [data]);
   const caseSonne = lecteur.etat !== "repos" ? lecteur.pas : null;
   const actions = grattage.evenements.some((e) => e.notes?.length) && /* @__PURE__ */ jsx26(
     BoutonEcoute,
@@ -10375,7 +21624,7 @@ var Morceaux_exports = {};
 __export(Morceaux_exports, {
   Morceaux: () => Morceaux
 });
-import { useState as useState21, useRef as useRef15, useEffect as useEffect17, useCallback as useCallback10, useMemo as useMemo10, useId as useId2 } from "react";
+import { useState as useState22, useRef as useRef15, useEffect as useEffect18, useCallback as useCallback10, useMemo as useMemo11, useId as useId2 } from "react";
 import { jsx as jsx27, jsxs as jsxs24 } from "react/jsx-runtime";
 function lireFiltres() {
   try {
@@ -10416,7 +21665,7 @@ function Etiquette({ children, C, teinte }) {
   }, children });
 }
 function ListeMorceaux({ onOuvrir, dernierOuvert, C }) {
-  const [filtres, setFiltresBruts] = useState21(lireFiltres);
+  const [filtres, setFiltresBruts] = useState22(lireFiltres);
   const setFiltre = (cle2, valeur) => {
     const f = { ...filtres, [cle2]: valeur };
     setFiltresBruts(f);
@@ -10426,7 +21675,7 @@ function ListeMorceaux({ onOuvrir, dernierOuvert, C }) {
     }
   };
   const liste2 = filtrerMorceaux(MORCEAUX, filtres);
-  useEffect17(() => {
+  useEffect18(() => {
     if (dernierOuvert) document.getElementById(`morceau-${dernierOuvert}`)?.focus({ preventScroll: false });
   }, [dernierOuvert]);
   const groupe = (cle2, label, options) => /* @__PURE__ */ jsx27("div", { role: "group", "aria-label": label, style: { display: "flex", gap: 6, overflowX: "auto", paddingBottom: 2, WebkitOverflowScrolling: "touch" }, children: [["tous", "Tous"], ...Object.entries(options)].map(([v, l]) => /* @__PURE__ */ jsx27(Puce, { actif: filtres[cle2] === v, onClick: () => setFiltre(cle2, v), C, children: l }, v)) });
@@ -10492,7 +21741,7 @@ function TabLecture({ morceau, analyse, colCourante, debut, fin, C }) {
   const temps = tempsDeMesure(morceau.mesure, W);
   const pasTemps = temps.length > 1 ? temps[1] - temps[0] : 4;
   const cible = colCourante ?? debut * W;
-  useEffect17(() => {
+  useEffect18(() => {
     const el = scrollRef.current;
     if (!el) return;
     const x = cible * LARGEUR_COL;
@@ -10574,7 +21823,7 @@ function Accords({ morceau, mesureCourante, C }) {
   ] });
 }
 function useTempsDeJeu(jouant, dispatch) {
-  useEffect17(() => {
+  useEffect18(() => {
     if (!jouant) return void 0;
     let debut = performance.now();
     const verser = () => {
@@ -10594,18 +21843,18 @@ function useTempsDeJeu(jouant, dispatch) {
   }, [jouant, dispatch]);
 }
 function LecteurMorceau({ morceau, onRetour, C, dispatch }) {
-  const analyse = useMemo10(() => analyserMorceau(morceau), [morceau]);
+  const analyse = useMemo11(() => analyserMorceau(morceau), [morceau]);
   const derniere = analyse.nbMesures - 1;
   const idVitesse = useId2();
-  const [vitesse, setVitesse] = useState21(100);
-  const [debut, setDebut] = useState21(0);
-  const [fin, setFin] = useState21(derniere);
-  const [boucle, setBoucle] = useState21(false);
-  const [decompte, setDecompte] = useState21(true);
-  const [etat, setEtat] = useState21("arret");
+  const [vitesse, setVitesse] = useState22(100);
+  const [debut, setDebut] = useState22(0);
+  const [fin, setFin] = useState22(derniere);
+  const [boucle, setBoucle] = useState22(false);
+  const [decompte, setDecompte] = useState22(true);
+  const [etat, setEtat] = useState22("arret");
   const jouant = etat === "lecture";
-  const [colCourante, setColCourante] = useState21(null);
-  const [clic, setClic] = useState21(null);
+  const [colCourante, setColCourante] = useState22(null);
+  const [clic, setClic] = useState22(null);
   useTempsDeJeu(jouant, dispatch);
   const reglagesRef = useRef15({ vitesse, debut, fin, boucle, decompte });
   const majReglages = (champs) => {
@@ -10616,16 +21865,13 @@ function LecteurMorceau({ morceau, onRetour, C, dispatch }) {
   const enLecture = (id) => id === lectureRef.current && etatRef.current === "lecture";
   const derniereRef = useRef15(null);
   const repriseRef = useRef15(null);
-  const timerBoucleRef = useRef15(null);
   const timerReglageRef = useRef15(null);
   const titreRef = useRef15(null);
-  useEffect17(() => {
+  useEffect18(() => {
     titreRef.current?.focus();
   }, []);
   const couper = useCallback10(() => {
     lectureRef.current++;
-    clearTimeout(timerBoucleRef.current);
-    timerBoucleRef.current = null;
     stopAll();
     setClic(null);
   }, []);
@@ -10644,18 +21890,12 @@ function LecteurMorceau({ morceau, onRetour, C, dispatch }) {
     const W = analyse.colsParMesure;
     return pos >= d * W && pos < (f + 1) * W ? pos : null;
   }, [analyse]);
-  const lancerRef = useRef15(null);
   const lancer = useCallback10(async ({ depuisCol, avecDecompte }) => {
     const r = reglagesRef.current;
-    const plan = preparerLecture(analyse, {
-      tempo: morceau.tempo,
-      signature: morceau.mesure,
-      pourcent: r.vitesse,
-      debut: r.debut,
-      fin: r.fin,
-      decompte: avecDecompte && r.decompte,
-      depuisCol
-    });
+    const base = { tempo: morceau.tempo, signature: morceau.mesure, pourcent: r.vitesse, debut: r.debut, fin: r.fin };
+    const tour = r.boucle ? preparerLecture(analyse, base) : null;
+    let plan = preparerLecture(analyse, { ...base, decompte: avecDecompte && r.decompte, depuisCol });
+    if (!plan.evenements.length && tour?.evenements.length) plan = tour;
     if (!plan.evenements.length) return;
     couper();
     const id = lectureRef.current;
@@ -10663,6 +21903,8 @@ function LecteurMorceau({ morceau, onRetour, C, dispatch }) {
     setEtat("lecture");
     await playTab(plan.evenements, {
       bpm: plan.bpm,
+      colonnes: plan.colonnes,
+      boucle: tour?.evenements.length ? { evenements: tour.evenements, colonnes: tour.colonnes } : void 0,
       onEvent: (ev) => {
         if (!enLecture(id)) return;
         if (ev.decompte) {
@@ -10673,27 +21915,15 @@ function LecteurMorceau({ morceau, onRetour, C, dispatch }) {
         derniereRef.current = { col: ev.colMorceau, t: performance.now(), bpm: plan.bpm };
         setColCourante(ev.colMorceau);
       },
+      // Jamais appelé en boucle : la lecture ne s'arrête qu'à stopAll().
       onDone: () => {
         if (enLecture(id) && !reglagesRef.current.boucle) arreter();
       }
     });
-    if (!enLecture(id)) return;
-    if (r.boucle) {
-      timerBoucleRef.current = setTimeout(() => {
-        timerBoucleRef.current = null;
-        if (!enLecture(id)) return;
-        if (reglagesRef.current.boucle) lancerRef.current?.({ avecDecompte: false });
-        else arreter();
-      }, plan.duree * 1e3);
-    }
   }, [analyse, morceau, arreter, couper]);
-  useEffect17(() => {
-    lancerRef.current = lancer;
-  }, [lancer]);
-  useEffect17(() => () => {
+  useEffect18(() => () => {
     lectureRef.current++;
     etatRef.current = "arret";
-    clearTimeout(timerBoucleRef.current);
     clearTimeout(timerReglageRef.current);
     stopAll();
   }, []);
@@ -10923,8 +22153,8 @@ function LecteurMorceau({ morceau, onRetour, C, dispatch }) {
 }
 function Morceaux({ morceauInitial = null, dispatch = null } = {}) {
   const C = useC();
-  const [ouvert, setOuvert] = useState21(() => morceauParId(morceauInitial) ? morceauInitial : null);
-  const [dernierOuvert, setDernierOuvert] = useState21(null);
+  const [ouvert, setOuvert] = useState22(() => morceauParId(morceauInitial) ? morceauInitial : null);
+  const [dernierOuvert, setDernierOuvert] = useState22(null);
   const morceau = ouvert ? morceauParId(ouvert) : null;
   const ouvrir = (id) => {
     setOuvert(id);
@@ -10962,20 +22192,20 @@ var FretboardExplorer_exports = {};
 __export(FretboardExplorer_exports, {
   FretboardExplorer: () => FretboardExplorer
 });
-import { useState as useState22, useMemo as useMemo11, useRef as useRef16, useEffect as useEffect18 } from "react";
+import { useState as useState23, useMemo as useMemo12, useRef as useRef16, useEffect as useEffect19 } from "react";
 import { jsx as jsx28, jsxs as jsxs25 } from "react/jsx-runtime";
 function FretboardExplorer({ onBack, embedded = false }) {
   const C = useC();
-  const [tab, setTab] = useState22("scale");
-  const [root, setRoot] = useState22("A");
-  const [scaleKey, setScaleKey] = useState22("pentatonic_minor");
-  const [chordKey, setChordKey] = useState22("min7");
-  const [displayMode, setDisplayMode] = useState22("notes");
-  const [showRootPicker, setShowRootPicker] = useState22(false);
-  const [isPlaying, setIsPlaying] = useState22(false);
-  const [flashNotes, setFlashNotes] = useState22(null);
-  const [arpeggio, setArpeggio] = useState22(true);
-  const shapes = useMemo11(() => {
+  const [tab, setTab] = useState23("scale");
+  const [root, setRoot] = useState23("A");
+  const [scaleKey, setScaleKey] = useState23("pentatonic_minor");
+  const [chordKey, setChordKey] = useState23("min7");
+  const [displayMode, setDisplayMode] = useState23("notes");
+  const [showRootPicker, setShowRootPicker] = useState23(false);
+  const [isPlaying, setIsPlaying] = useState23(false);
+  const [flashNotes, setFlashNotes] = useState23(null);
+  const [arpeggio, setArpeggio] = useState23(true);
+  const shapes = useMemo12(() => {
     if (tab !== "chord") return [];
     return getChordShapes(
       normalizeNote(root),
@@ -11033,14 +22263,14 @@ function FretboardExplorer({ onBack, embedded = false }) {
       setFlashNotes(null);
     }, dureeMs2);
   };
-  useEffect18(() => () => {
+  useEffect19(() => () => {
     annulerFin();
     try {
       stopAll();
     } catch {
     }
   }, []);
-  const activeNotes = useMemo11(() => {
+  const activeNotes = useMemo12(() => {
     if (tab === "scale") return getScaleNotes(root, scaleKey);
     return getChordNotes(root, chordKey);
   }, [tab, root, scaleKey, chordKey]);
@@ -11325,7 +22555,7 @@ init_tokens();
 init_ThemeContext();
 init_Ti();
 init_ui();
-import { useState as useState5, useMemo as useMemo2, useEffect as useEffect5, useRef as useRef4 } from "react";
+import { useState as useState6, useMemo as useMemo3, useEffect as useEffect6, useRef as useRef4 } from "react";
 
 // src/store/moduleTheme.js
 init_tokens();
@@ -11357,8 +22587,20 @@ var MODULES_APPLICATION = ["impro"];
 var UNIT_BONUS_PER_LESSON = 10;
 var unitBonusXp = (lessonCount) => Math.max(20, Math.min(150, Math.round((lessonCount || 0) * UNIT_BONUS_PER_LESSON)));
 var UNIT_BONUS_XP = 40;
-var unitCheckSize = (_lessonCount) => 15;
-var UNIT_CHECK_MAX_QUESTIONS = 15;
+var UNIT_CHECK_PAR_LECON = 2;
+var UNIT_CHECK_MIN_QUESTIONS = 6;
+var UNIT_CHECK_MAX_QUESTIONS = 12;
+var unitCheckSize = (lessonCount) => Math.min(
+  UNIT_CHECK_MAX_QUESTIONS,
+  Math.max(UNIT_CHECK_MIN_QUESTIONS, Math.round((lessonCount || 0) * UNIT_CHECK_PAR_LECON))
+);
+function bonnesReponsesRequises(n) {
+  if (!(n > 0)) return 0;
+  for (let k = 0; k <= n; k++) if (Math.round(k / n * 100) >= UNIT_CHECK_PASS_PCT) return k;
+  return n;
+}
+var ANNEXES_MODULE = "annexes";
+var estModuleAnnexe = (course) => !!course?.facultatif || course?.id === ANNEXES_MODULE;
 var TIER_HEADSTART = { A1: 0, A2: 1, B1: 2, B2: 3 };
 function moduleOrderFor(state) {
   const ob = state?.onboarding || {};
@@ -11427,12 +22669,12 @@ function buildUnits(courses = [], state = null, { regroupementHistorique = false
         courseIds: [c.id],
         lessons: chunk,
         bonusXp: unitBonusXp(chunk.length),
-        checkSize: Math.max(3, unitCheckSize(chunk.length)),
+        checkSize: unitCheckSize(chunk.length),
         quizPoolSize: new Set(chunk.flatMap((l) => l.quiz || [])).size
       });
     });
   }
-  const allLessons = courses.filter((c) => !estModulePrelude(c)).flatMap(
+  const allLessons = courses.filter((c) => !estModulePrelude(c) && !estModuleAnnexe(c)).flatMap(
     (c) => (c.lessons || []).map((l) => ({ ...l, courseId: c.id, courseTitle: c.title }))
   );
   for (const l of allLessons) if (l.level == null) l.level = MAX_LEVEL;
@@ -11447,7 +22689,7 @@ function buildUnits(courses = [], state = null, { regroupementHistorique = false
     const chunks = regroupementHistorique ? chunkEvenly(lessons) : chunkEvenly(entrelacer(lessons, rank)).map((c) => ouvrirParLaPratique(c, faible));
     chunks.forEach((chunk, partIdx) => {
       const stock = new Set(chunk.flatMap((l) => l.quiz || [])).size;
-      const checkSize = Math.max(3, unitCheckSize(chunk.length));
+      const checkSize = unitCheckSize(chunk.length);
       units.push({
         id: chunks.length > 1 ? `palier-${level}-${partIdx + 1}` : `palier-${level}`,
         level,
@@ -11463,6 +22705,24 @@ function buildUnits(courses = [], state = null, { regroupementHistorique = false
       });
     });
   }
+  for (const c of courses.filter(estModuleAnnexe)) {
+    const lessons = (c.lessons || []).map((l) => ({ ...l, courseId: c.id, courseTitle: c.title, annexe: true }));
+    if (lessons.length === 0) continue;
+    units.push({
+      id: c.id,
+      level: void 0,
+      part: null,
+      parts: 1,
+      title: c.title,
+      prelude: false,
+      annexe: true,
+      courseIds: [c.id],
+      lessons,
+      bonusXp: 0,
+      checkSize: 0,
+      quizPoolSize: new Set(lessons.flatMap((l) => l.quiz || [])).size
+    });
+  }
   return units;
 }
 function debutFacultatif(state, units = null) {
@@ -11472,8 +22732,9 @@ function debutFacultatif(state, units = null) {
   const prelude = (units || []).filter((u) => u.prelude);
   const leconsPrelude = new Set(prelude.flatMap((u) => u.lessons.map((l) => l.id)));
   const unitesPrelude = new Set(prelude.map((u) => u.id));
+  const leconsAnnexes = new Set((units || []).filter((u) => u.annexe).flatMap((u) => u.lessons.map((l) => l.id)));
   const hors = (id, connus) => !connus.has(id) && !id.startsWith(`${DEBUT_MODULE}-`);
-  const autreLecon = Object.keys(state?.completedLessons || {}).some((id) => hors(id, leconsPrelude));
+  const autreLecon = Object.keys(state?.completedLessons || {}).some((id) => hors(id, leconsPrelude) && !leconsAnnexes.has(id) && !id.startsWith(`${ANNEXES_MODULE}-`));
   const autreVerif = Object.entries(state?.unitChecks || {}).some(([id, c]) => c?.passed && hors(id, unitesPrelude));
   if (autreLecon || autreVerif) return true;
   if (!ob.done) return false;
@@ -11521,7 +22782,7 @@ function leconsOuvertesHistorique(courses, state, headstartCount, facultatif) {
   };
   const traces = Object.keys(completed).length > 0 || Object.keys(state?.unitChecks || {}).some(passedAvant) || Object.keys(claimed).some(passedAvant);
   if (!traces) return ouvertes;
-  const anciennes = buildUnits(courses, state, { regroupementHistorique: true });
+  const anciennes = buildUnits(courses, state, { regroupementHistorique: true }).filter((u) => !u.annexe);
   let precedenteFranchie = true;
   let palierIdx = 0;
   anciennes.forEach((u, i) => {
@@ -11552,6 +22813,24 @@ function buildPath(content, state) {
     const done = u.lessons.filter((l) => completed[l.id]).length;
     const total = u.lessons.length;
     const lessonsComplete = total > 0 && done === total;
+    if (u.annexe) {
+      return {
+        ...u,
+        index: i,
+        done,
+        total,
+        complete: lessonsComplete,
+        unlocked: true,
+        isCurrent: false,
+        optional: true,
+        lessonsComplete,
+        needsCheck: false,
+        check: null,
+        headstart: false,
+        bonusClaimable: false,
+        bonusClaimed: false
+      };
+    }
     const check = valeurUnite(checks, u.id) || null;
     const checkPassed = !!check?.passed;
     const bonusClaimed = !!valeurUnite(claimed, u.id);
@@ -11621,7 +22900,7 @@ function getUnitQuizPool(unit, allQuiz = null, completedLessons = null, allCours
   return Object.assign([...core, ...extra, ...review], { core, extra, review });
 }
 function getPathStats(content, state) {
-  const path = buildPath(content, state);
+  const path = buildPath(content, state).filter((u) => !u.annexe);
   const totalLessons = path.reduce((a, u) => a + u.total, 0);
   const doneLessons = path.reduce((a, u) => a + u.done, 0);
   const currentUnit = path.find((u) => u.isCurrent) || null;
@@ -11725,6 +23004,7 @@ init_gropiPoses();
 import { useState as useState3, useRef } from "react";
 
 // src/store/unitCheckSampler.js
+var MAX_RAPPEL = 3;
 function shuffle(arr) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -11753,7 +23033,7 @@ function buildSample(unit, content, completedLessons, dejaVues = []) {
   const filesCore = parPriorite(core);
   const filesExtra = parPriorite(extra);
   const filesReview = parPriorite(review);
-  const cibleRevision = Math.min(3, filesReview.length);
+  const cibleRevision = Math.min(MAX_RAPPEL, Math.floor(taille / 4), filesReview.length);
   const restant = taille - cibleRevision;
   const cibleCore = Math.max(1, Math.min(
     Math.round(restant * 0.65),
@@ -11847,7 +23127,7 @@ function UnitCheckScreen({ unit, content, dispatch, onDone, state }) {
     return /* @__PURE__ */ jsxs3("div", { style: { padding: "32px 20px", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }, children: [
       /* @__PURE__ */ jsx5(Gropi, { pose: passed ? "celebrate" : "think", size: 110, anim: passed ? "cheer" : "pop" }),
       /* @__PURE__ */ jsx5("h1", { style: { margin: "14px 0 4px", fontSize: 21, fontWeight: 800, color: C.text, fontFamily: FONTS.title }, children: passed ? "Unit\xE9 valid\xE9e !" : "Pas encore tout \xE0 fait" }),
-      /* @__PURE__ */ jsx5("p", { style: { margin: "0 0 16px", fontSize: 13, color: C.text2, lineHeight: 1.5, maxWidth: 300 }, children: passed ? "Le coffre de cette unit\xE9 est maintenant \xE0 toi." : `Il faut ${UNIT_CHECK_PASS_PCT}% pour valider l'unit\xE9. Tu peux r\xE9essayer, aucune limite de tentatives.` }),
+      /* @__PURE__ */ jsx5("p", { style: { margin: "0 0 16px", fontSize: 13, color: C.text2, lineHeight: 1.5, maxWidth: 300 }, children: passed ? "Le coffre de cette unit\xE9 est maintenant \xE0 toi." : `Il faut ${bonnesReponsesRequises(questions.length)} bonnes r\xE9ponses sur ${questions.length} pour valider l'unit\xE9. Tu peux r\xE9essayer, aucune limite de tentatives.` }),
       /* @__PURE__ */ jsxs3("div", { style: { width: "100%", maxWidth: 280 }, children: [
         /* @__PURE__ */ jsxs3("div", { style: { display: "flex", justifyContent: "space-between", marginBottom: 5 }, children: [
           /* @__PURE__ */ jsx5("span", { style: { fontSize: 11, color: C.text3 }, children: "Score" }),
@@ -13115,6 +24395,23 @@ var GROPI_CATALOGUE = [
     modules: ["neck", "scales"],
     mots: ["intervalle", "entendre"],
     text: "Astuce de musicien : associer chaque intervalle \xE0 un air connu. Le th\xE8me de \xAB Star Wars \xBB s'ouvre sur une quinte juste, celui des \xAB Dents de la mer \xBB sur un demi-ton."
+  },
+  // Annexes (leçons facultatives : cordes, ampli, composition).
+  {
+    id: "t-annexes-cordes-essuyer",
+    type: "tip",
+    lecons: ["annexes-cordes"],
+    modules: ["annexes"],
+    mots: ["cordes"],
+    text: "Essuie tes cordes avec un chiffon sec apr\xE8s chaque s\xE9ance : la sueur qui reste dessus les rend ternes bien plus vite."
+  },
+  {
+    id: "a-annexes-fuzz",
+    type: "anecdote",
+    lecons: ["annexes-ampli"],
+    modules: ["annexes"],
+    mots: ["ampli", "effets"],
+    text: "Le son fuzz est n\xE9 d'un accident : en 1961, une console de studio d\xE9faillante a satur\xE9 une partie de basse sur un enregistrement de country. Une p\xE9dale imitant ce d\xE9faut est sortie d\xE8s l'ann\xE9e suivante."
   }
 ];
 
@@ -13732,11 +25029,11 @@ function dansZoneDefilante(cible, racine) {
   }
   return false;
 }
-function LeconCartes({ lesson, state, dispatch, onBack, quiz, carteInitiale, done, onFinish, onJouerMorceau }) {
+function LeconCartes({ lesson, state, dispatch, onBack, quiz: quiz140, carteInitiale, done, onFinish, onJouerMorceau }) {
   const C = useC();
   const { renderDiagramBlock: rendreDiagramme, FretboardLesson: FretboardLesson2 } = useRenderers();
   const renderDiagramBlock2 = useCallback((bloc, cle2) => bloc?.type === "fretboard_interactive" ? FretboardLesson2 ? /* @__PURE__ */ jsx7(FretboardLesson2, { block: bloc }, cle2) : null : rendreDiagramme?.(bloc, cle2), [rendreDiagramme, FretboardLesson2]);
-  const quizParId = useMemo(() => new Map((quiz || []).map((q) => [q.id, q])), [quiz]);
+  const quizParId = useMemo(() => new Map((quiz140 || []).map((q) => [q.id, q])), [quiz140]);
   const cartes = useMemo(
     () => (lesson.cartes || []).filter((c) => c.type !== "question" || resoudreQuestion(c, quizParId)),
     [lesson.cartes, quizParId]
@@ -14140,6 +25437,197 @@ function Minuteur({ secondes: secondes2 }) {
   ] });
 }
 
+// src/lecon/corpsLecon.js
+import { useEffect as useEffect5, useMemo as useMemo2, useState as useState5 } from "react";
+
+// src/content/corps-lecons.js
+var CORPS = {
+  "debut-c1-01": () => Promise.resolve().then(() => (init_debut_c1_01(), debut_c1_01_exports)),
+  "debut-c1-02": () => Promise.resolve().then(() => (init_debut_c1_02(), debut_c1_02_exports)),
+  "debut-c1-03": () => Promise.resolve().then(() => (init_debut_c1_03(), debut_c1_03_exports)),
+  "debut-c1-04": () => Promise.resolve().then(() => (init_debut_c1_04(), debut_c1_04_exports)),
+  "debut-c1-05": () => Promise.resolve().then(() => (init_debut_c1_05(), debut_c1_05_exports)),
+  "debut-c1-06": () => Promise.resolve().then(() => (init_debut_c1_06(), debut_c1_06_exports)),
+  "debut-c2-01": () => Promise.resolve().then(() => (init_debut_c2_01(), debut_c2_01_exports)),
+  "debut-c2-02": () => Promise.resolve().then(() => (init_debut_c2_02(), debut_c2_02_exports)),
+  "debut-c2-03": () => Promise.resolve().then(() => (init_debut_c2_03(), debut_c2_03_exports)),
+  "debut-c2-04": () => Promise.resolve().then(() => (init_debut_c2_04(), debut_c2_04_exports)),
+  "debut-c2-05": () => Promise.resolve().then(() => (init_debut_c2_05(), debut_c2_05_exports)),
+  "debut-c2-06": () => Promise.resolve().then(() => (init_debut_c2_06(), debut_c2_06_exports)),
+  "debut-c3-01": () => Promise.resolve().then(() => (init_debut_c3_01(), debut_c3_01_exports)),
+  "debut-c3-02": () => Promise.resolve().then(() => (init_debut_c3_02(), debut_c3_02_exports)),
+  "debut-c3-03": () => Promise.resolve().then(() => (init_debut_c3_03(), debut_c3_03_exports)),
+  "neck-03": () => Promise.resolve().then(() => (init_neck_03(), neck_03_exports)),
+  "neck-04": () => Promise.resolve().then(() => (init_neck_04(), neck_04_exports)),
+  "neck-05": () => Promise.resolve().then(() => (init_neck_05(), neck_05_exports)),
+  "neck-06": () => Promise.resolve().then(() => (init_neck_06(), neck_06_exports)),
+  "neck-c1-01": () => Promise.resolve().then(() => (init_neck_c1_01(), neck_c1_01_exports)),
+  "neck-c1-02": () => Promise.resolve().then(() => (init_neck_c1_02(), neck_c1_02_exports)),
+  "neck-c1-03": () => Promise.resolve().then(() => (init_neck_c1_03(), neck_c1_03_exports)),
+  "neck-c2-01": () => Promise.resolve().then(() => (init_neck_c2_01(), neck_c2_01_exports)),
+  "neck-c2-02": () => Promise.resolve().then(() => (init_neck_c2_02(), neck_c2_02_exports)),
+  "neck-pow-01": () => Promise.resolve().then(() => (init_neck_pow_01(), neck_pow_01_exports)),
+  "neck-c2-03": () => Promise.resolve().then(() => (init_neck_c2_03(), neck_c2_03_exports)),
+  "neck-c2-04": () => Promise.resolve().then(() => (init_neck_c2_04(), neck_c2_04_exports)),
+  "neck-c2-05": () => Promise.resolve().then(() => (init_neck_c2_05(), neck_c2_05_exports)),
+  "neck-c3-01": () => Promise.resolve().then(() => (init_neck_c3_01(), neck_c3_01_exports)),
+  "neck-c3-02": () => Promise.resolve().then(() => (init_neck_c3_02(), neck_c3_02_exports)),
+  "neck-c3-03": () => Promise.resolve().then(() => (init_neck_c3_03(), neck_c3_03_exports)),
+  "scales-c1-01": () => Promise.resolve().then(() => (init_scales_c1_01(), scales_c1_01_exports)),
+  "scales-c1-02": () => Promise.resolve().then(() => (init_scales_c1_02(), scales_c1_02_exports)),
+  "scales-c1-03": () => Promise.resolve().then(() => (init_scales_c1_03(), scales_c1_03_exports)),
+  "scales-c1-04": () => Promise.resolve().then(() => (init_scales_c1_04(), scales_c1_04_exports)),
+  "scales-c1-05": () => Promise.resolve().then(() => (init_scales_c1_05(), scales_c1_05_exports)),
+  "scales-c1-06": () => Promise.resolve().then(() => (init_scales_c1_06(), scales_c1_06_exports)),
+  "scales-c2-01": () => Promise.resolve().then(() => (init_scales_c2_01(), scales_c2_01_exports)),
+  "scales-c2-02": () => Promise.resolve().then(() => (init_scales_c2_02(), scales_c2_02_exports)),
+  "scales-c2-03": () => Promise.resolve().then(() => (init_scales_c2_03(), scales_c2_03_exports)),
+  "scales-c2-04": () => Promise.resolve().then(() => (init_scales_c2_04(), scales_c2_04_exports)),
+  "scales-c2-05": () => Promise.resolve().then(() => (init_scales_c2_05(), scales_c2_05_exports)),
+  "scales-c3-01": () => Promise.resolve().then(() => (init_scales_c3_01(), scales_c3_01_exports)),
+  "scales-c3-02": () => Promise.resolve().then(() => (init_scales_c3_02(), scales_c3_02_exports)),
+  "scales-c3-03": () => Promise.resolve().then(() => (init_scales_c3_03(), scales_c3_03_exports)),
+  "scales-c3-04": () => Promise.resolve().then(() => (init_scales_c3_04(), scales_c3_04_exports)),
+  "scales-c3-05": () => Promise.resolve().then(() => (init_scales_c3_05(), scales_c3_05_exports)),
+  "scales-c3-06": () => Promise.resolve().then(() => (init_scales_c3_06(), scales_c3_06_exports)),
+  "scales-c3-07": () => Promise.resolve().then(() => (init_scales_c3_07(), scales_c3_07_exports)),
+  "scales-c4-01": () => Promise.resolve().then(() => (init_scales_c4_01(), scales_c4_01_exports)),
+  "scales-c4-02": () => Promise.resolve().then(() => (init_scales_c4_02(), scales_c4_02_exports)),
+  "scales-c4-03": () => Promise.resolve().then(() => (init_scales_c4_03(), scales_c4_03_exports)),
+  "scales-c5-01": () => Promise.resolve().then(() => (init_scales_c5_01(), scales_c5_01_exports)),
+  "scales-c5-02": () => Promise.resolve().then(() => (init_scales_c5_02(), scales_c5_02_exports)),
+  "scales-c5-03": () => Promise.resolve().then(() => (init_scales_c5_03(), scales_c5_03_exports)),
+  "scales-c5-04": () => Promise.resolve().then(() => (init_scales_c5_04(), scales_c5_04_exports)),
+  "scales-c5-05": () => Promise.resolve().then(() => (init_scales_c5_05(), scales_c5_05_exports)),
+  "scales-c5-06": () => Promise.resolve().then(() => (init_scales_c5_06(), scales_c5_06_exports)),
+  "scales-c5-07": () => Promise.resolve().then(() => (init_scales_c5_07(), scales_c5_07_exports)),
+  "scales-3nps-01": () => Promise.resolve().then(() => (init_scales_3nps_01(), scales_3nps_01_exports)),
+  "scales-c6-01": () => Promise.resolve().then(() => (init_scales_c6_01(), scales_c6_01_exports)),
+  "scales-c6-02": () => Promise.resolve().then(() => (init_scales_c6_02(), scales_c6_02_exports)),
+  "scales-c6-03": () => Promise.resolve().then(() => (init_scales_c6_03(), scales_c6_03_exports)),
+  "harm-c1-01": () => Promise.resolve().then(() => (init_harm_c1_01(), harm_c1_01_exports)),
+  "harm-c1-02": () => Promise.resolve().then(() => (init_harm_c1_02(), harm_c1_02_exports)),
+  "harm-acc-01": () => Promise.resolve().then(() => (init_harm_acc_01(), harm_acc_01_exports)),
+  "harm-acc-02": () => Promise.resolve().then(() => (init_harm_acc_02(), harm_acc_02_exports)),
+  "harm-acc-03": () => Promise.resolve().then(() => (init_harm_acc_03(), harm_acc_03_exports)),
+  "harm-acc-04": () => Promise.resolve().then(() => (init_harm_acc_04(), harm_acc_04_exports)),
+  "harm-acc-05": () => Promise.resolve().then(() => (init_harm_acc_05(), harm_acc_05_exports)),
+  "harm-c2-01": () => Promise.resolve().then(() => (init_harm_c2_01(), harm_c2_01_exports)),
+  "harm-c2-02": () => Promise.resolve().then(() => (init_harm_c2_02(), harm_c2_02_exports)),
+  "harm-c2-03": () => Promise.resolve().then(() => (init_harm_c2_03(), harm_c2_03_exports)),
+  "harm-c2-04": () => Promise.resolve().then(() => (init_harm_c2_04(), harm_c2_04_exports)),
+  "harm-c3-01": () => Promise.resolve().then(() => (init_harm_c3_01(), harm_c3_01_exports)),
+  "harm-c3-02": () => Promise.resolve().then(() => (init_harm_c3_02(), harm_c3_02_exports)),
+  "harmony-03": () => Promise.resolve().then(() => (init_harmony_03(), harmony_03_exports)),
+  "harm-c3-03": () => Promise.resolve().then(() => (init_harm_c3_03(), harm_c3_03_exports)),
+  "harm-c3-04": () => Promise.resolve().then(() => (init_harm_c3_04(), harm_c3_04_exports)),
+  "harm-c4-01": () => Promise.resolve().then(() => (init_harm_c4_01(), harm_c4_01_exports)),
+  "harm-c4-02": () => Promise.resolve().then(() => (init_harm_c4_02(), harm_c4_02_exports)),
+  "harm-c5-01": () => Promise.resolve().then(() => (init_harm_c5_01(), harm_c5_01_exports)),
+  "harm-c5-02": () => Promise.resolve().then(() => (init_harm_c5_02(), harm_c5_02_exports)),
+  "harm-c5-03": () => Promise.resolve().then(() => (init_harm_c5_03(), harm_c5_03_exports)),
+  "harm-c6-01": () => Promise.resolve().then(() => (init_harm_c6_01(), harm_c6_01_exports)),
+  "harm-capo-01": () => Promise.resolve().then(() => (init_harm_capo_01(), harm_capo_01_exports)),
+  "harm-c6-02": () => Promise.resolve().then(() => (init_harm_c6_02(), harm_c6_02_exports)),
+  "harm-c6-03": () => Promise.resolve().then(() => (init_harm_c6_03(), harm_c6_03_exports)),
+  "harm-c6-04": () => Promise.resolve().then(() => (init_harm_c6_04(), harm_c6_04_exports)),
+  "harm-c7-01": () => Promise.resolve().then(() => (init_harm_c7_01(), harm_c7_01_exports)),
+  "harm-c7-02": () => Promise.resolve().then(() => (init_harm_c7_02(), harm_c7_02_exports)),
+  "harm-c7-03": () => Promise.resolve().then(() => (init_harm_c7_03(), harm_c7_03_exports)),
+  "harm-c8-01": () => Promise.resolve().then(() => (init_harm_c8_01(), harm_c8_01_exports)),
+  "harm-c8-02": () => Promise.resolve().then(() => (init_harm_c8_02(), harm_c8_02_exports)),
+  "rhy-c1-01": () => Promise.resolve().then(() => (init_rhy_c1_01(), rhy_c1_01_exports)),
+  "rhy-c1-02": () => Promise.resolve().then(() => (init_rhy_c1_02(), rhy_c1_02_exports)),
+  "rhy-c1-03": () => Promise.resolve().then(() => (init_rhy_c1_03(), rhy_c1_03_exports)),
+  "rhy-routine-01": () => Promise.resolve().then(() => (init_rhy_routine_01(), rhy_routine_01_exports)),
+  "rhy-c2-01": () => Promise.resolve().then(() => (init_rhy_c2_01(), rhy_c2_01_exports)),
+  "rhy-c2-02": () => Promise.resolve().then(() => (init_rhy_c2_02(), rhy_c2_02_exports)),
+  "rhy-c2-03": () => Promise.resolve().then(() => (init_rhy_c2_03(), rhy_c2_03_exports)),
+  "rhy-c2-04": () => Promise.resolve().then(() => (init_rhy_c2_04(), rhy_c2_04_exports)),
+  "rhy-c3-01": () => Promise.resolve().then(() => (init_rhy_c3_01(), rhy_c3_01_exports)),
+  "rhy-doigts-01": () => Promise.resolve().then(() => (init_rhy_doigts_01(), rhy_doigts_01_exports)),
+  "rhy-mes-01": () => Promise.resolve().then(() => (init_rhy_mes_01(), rhy_mes_01_exports)),
+  "rhy-doigts-02": () => Promise.resolve().then(() => (init_rhy_doigts_02(), rhy_doigts_02_exports)),
+  "rhy-c3-02": () => Promise.resolve().then(() => (init_rhy_c3_02(), rhy_c3_02_exports)),
+  "rhy-c3-03": () => Promise.resolve().then(() => (init_rhy_c3_03(), rhy_c3_03_exports)),
+  "rhy-tech-01": () => Promise.resolve().then(() => (init_rhy_tech_01(), rhy_tech_01_exports)),
+  "rhy-tech-02": () => Promise.resolve().then(() => (init_rhy_tech_02(), rhy_tech_02_exports)),
+  "rhy-c4-01": () => Promise.resolve().then(() => (init_rhy_c4_01(), rhy_c4_01_exports)),
+  "rhy-med-01": () => Promise.resolve().then(() => (init_rhy_med_01(), rhy_med_01_exports)),
+  "rhy-c4-02": () => Promise.resolve().then(() => (init_rhy_c4_02(), rhy_c4_02_exports)),
+  "rhy-med-02": () => Promise.resolve().then(() => (init_rhy_med_02(), rhy_med_02_exports)),
+  "rhy-c4-03": () => Promise.resolve().then(() => (init_rhy_c4_03(), rhy_c4_03_exports)),
+  "rhy-tech-03": () => Promise.resolve().then(() => (init_rhy_tech_03(), rhy_tech_03_exports)),
+  "rhy-tech-04": () => Promise.resolve().then(() => (init_rhy_tech_04(), rhy_tech_04_exports)),
+  "rhy-c5-01": () => Promise.resolve().then(() => (init_rhy_c5_01(), rhy_c5_01_exports)),
+  "rhy-c5-02": () => Promise.resolve().then(() => (init_rhy_c5_02(), rhy_c5_02_exports)),
+  "rhy-c5-03": () => Promise.resolve().then(() => (init_rhy_c5_03(), rhy_c5_03_exports)),
+  "rhy-c5-04": () => Promise.resolve().then(() => (init_rhy_c5_04(), rhy_c5_04_exports)),
+  "rhy-c5-05": () => Promise.resolve().then(() => (init_rhy_c5_05(), rhy_c5_05_exports)),
+  "rhy-c6-01": () => Promise.resolve().then(() => (init_rhy_c6_01(), rhy_c6_01_exports)),
+  "rhy-c6-02": () => Promise.resolve().then(() => (init_rhy_c6_02(), rhy_c6_02_exports)),
+  "impro-intro-01": () => Promise.resolve().then(() => (init_impro_intro_01(), impro_intro_01_exports)),
+  "impro-intro-02": () => Promise.resolve().then(() => (init_impro_intro_02(), impro_intro_02_exports)),
+  "impro-01": () => Promise.resolve().then(() => (init_impro_01(), impro_01_exports)),
+  "impro-02": () => Promise.resolve().then(() => (init_impro_02(), impro_02_exports)),
+  "impro-03": () => Promise.resolve().then(() => (init_impro_03(), impro_03_exports)),
+  "impro-03b": () => Promise.resolve().then(() => (init_impro_03b(), impro_03b_exports)),
+  "impro-04": () => Promise.resolve().then(() => (init_impro_04(), impro_04_exports)),
+  "impro-04b": () => Promise.resolve().then(() => (init_impro_04b(), impro_04b_exports)),
+  "impro-05": () => Promise.resolve().then(() => (init_impro_05(), impro_05_exports)),
+  "impro-05b": () => Promise.resolve().then(() => (init_impro_05b(), impro_05b_exports)),
+  "impro-06": () => Promise.resolve().then(() => (init_impro_06(), impro_06_exports)),
+  "impro-06b": () => Promise.resolve().then(() => (init_impro_06b(), impro_06b_exports)),
+  "annexes-cordes": () => Promise.resolve().then(() => (init_annexes_cordes(), annexes_cordes_exports)),
+  "annexes-ampli": () => Promise.resolve().then(() => (init_annexes_ampli(), annexes_ampli_exports)),
+  "annexes-morceau": () => Promise.resolve().then(() => (init_annexes_morceau(), annexes_morceau_exports))
+};
+
+// src/lecon/corpsLecon.js
+var CACHE = /* @__PURE__ */ new Map();
+var EN_COURS = /* @__PURE__ */ new Map();
+var aSonCorps = (l) => l.cartes !== void 0 || l.content !== void 0;
+function chargerCorpsLecon(id) {
+  if (CACHE.has(id)) return Promise.resolve(CACHE.get(id));
+  if (EN_COURS.has(id)) return EN_COURS.get(id);
+  const charger = CORPS[id];
+  if (!charger) return Promise.reject(new Error(`le\xE7on inconnue : ${id}`));
+  const p = charger().then((m) => {
+    CACHE.set(id, m.default);
+    return m.default;
+  }).finally(() => EN_COURS.delete(id));
+  EN_COURS.set(id, p);
+  return p;
+}
+function useCorpsLecon(lecon) {
+  const id = lecon?.id;
+  const aCharger = !!lecon && !aSonCorps(lecon) && !!CORPS[id];
+  const [resultat, setResultat] = useState5(null);
+  const [essai, setEssai] = useState5(0);
+  useEffect5(() => {
+    if (!aCharger || CACHE.has(id)) return;
+    let actif = true;
+    chargerCorpsLecon(id).then(
+      () => {
+        if (actif) setResultat({ id, essai });
+      },
+      (erreur) => {
+        if (actif) setResultat({ id, essai, erreur });
+      }
+    );
+    return () => {
+      actif = false;
+    };
+  }, [id, aCharger, essai]);
+  const corps = aCharger ? CACHE.get(id) : void 0;
+  const complete = useMemo2(() => corps ? { ...corps, ...lecon } : lecon, [corps, lecon]);
+  if (!aCharger || corps) return { statut: "pret", lecon: complete };
+  if (resultat?.id === id && resultat.essai === essai && resultat.erreur) {
+    return { statut: "erreur", lecon, reessayer: () => setEssai((e) => e + 1) };
+  }
+  return { statut: "chargement", lecon };
+}
+
 // src/store/grades.js
 var GRADES = [
   {
@@ -14305,7 +25793,7 @@ function prochainesAAncrer(content, state, limite = 5) {
 }
 
 // src/screens/CoursesScreen.jsx
-import { jsx as jsx8, jsxs as jsxs6 } from "react/jsx-runtime";
+import { Fragment as Fragment4, jsx as jsx8, jsxs as jsxs6 } from "react/jsx-runtime";
 var popupDejaAffiche = false;
 var PULSE_CSS = `
   @keyframes gropi-pulse {
@@ -14702,7 +26190,7 @@ function UnitHeader({ unit, th, teaser = false }) {
       borderRadius: 999,
       padding: "2px 9px",
       fontFamily: FONTS.ui
-    }, children: "Facultatif \xB7 tu peux passer \xE0 la suite" }),
+    }, children: unit.annexe ? "Facultatif \xB7 \xE0 lire quand tu veux" : "Facultatif \xB7 tu peux passer \xE0 la suite" }),
     teaser && /* @__PURE__ */ jsxs6("div", { style: { display: "flex", alignItems: "center", gap: 8, maxWidth: 280 }, children: [
       /* @__PURE__ */ jsx8(Gropi, { pose: POSE_ROLE.verrouille, size: 34 }),
       /* @__PURE__ */ jsxs6("span", { style: { fontSize: 12, lineHeight: 1.4, color: C.text2, fontFamily: FONTS.body }, children: [
@@ -14908,28 +26396,28 @@ function WelcomeModal({ state, tip, navigate, onClose, onAutreConseil }) {
 function CoursesScreen({ state, dispatch, content, navigate, variant = "courses" }) {
   const C = useC();
   const MODULE_THEME2 = buildModuleTheme(C);
-  const [activeLesson, setActiveLesson] = useState5(null);
-  const [checkingUnit, setCheckingUnit] = useState5(null);
-  const [chestPop, setChestPop] = useState5(false);
+  const [activeLesson, setActiveLesson] = useState6(null);
+  const [checkingUnit, setCheckingUnit] = useState6(null);
+  const [chestPop, setChestPop] = useState6(false);
   const currentRef = useRef4(null);
-  const [tipDismissed, setTipDismissed] = useState5(() => popupDejaAffiche);
+  const [tipDismissed, setTipDismissed] = useState6(() => popupDejaAffiche);
   const fermerPopup = () => {
     popupDejaAffiche = true;
     setTipDismissed(true);
     dispatch({ type: "DISMISS_GROPI_TIP" });
   };
   const scrolledTo = useRef4(null);
-  const path = useMemo2(() => buildPath(content, state), [content, state]);
-  const stats = useMemo2(() => getPathStats(content, state), [content, state]);
+  const path = useMemo3(() => buildPath(content, state), [content, state]);
+  const stats = useMemo3(() => getPathStats(content, state), [content, state]);
   const jour = todayStr();
-  const toReview = useMemo2(
+  const toReview = useMemo3(
     () => getReviewStats(content.quiz || [], state.reviewHistory, state.completedLessons).toReview,
     [content.quiz, state.reviewHistory, state.completedLessons]
   );
-  const ctxGropi = useMemo2(() => contexteGropi(path, state, { toReview, jour }), [path, state, toReview, jour]);
-  const tip = useMemo2(() => pickTip(state, ctxGropi), [state, ctxGropi]);
+  const ctxGropi = useMemo3(() => contexteGropi(path, state, { toReview, jour }), [path, state, toReview, jour]);
+  const tip = useMemo3(() => pickTip(state, ctxGropi), [state, ctxGropi]);
   const popupVisible = variant === "home" && !tipDismissed;
-  useEffect5(() => {
+  useEffect6(() => {
     if (!popupVisible || tip.id === "defaut") return;
     if (state.gropiJour?.date === jour && state.gropiJour?.id === tip.id) return;
     dispatch({ type: "GROPI_TIP_VU", id: tip.id, jour });
@@ -14939,14 +26427,14 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
     if (suivant.id !== "defaut") dispatch({ type: "GROPI_TIP_VU", id: suivant.id, jour });
   };
   const premiereVerrouillee = path.find((u) => !u.unlocked)?.id ?? null;
-  const unitLayouts = useMemo2(() => {
+  const unitLayouts = useMemo3(() => {
     const out = {};
     for (const unit of path) {
       out[unit.id] = unit.lessons.map((l, i) => nodeLayout(l.id, unit.id, i));
     }
     return out;
   }, [path]);
-  const focus = useMemo2(() => {
+  const focus = useMemo3(() => {
     const aVerifier = path.find((u2) => u2.unlocked && u2.needsCheck);
     if (aVerifier) return { type: "chest", id: aVerifier.id, key: `chest:${aVerifier.id}` };
     const aOuvrir = path.find((u2) => u2.bonusClaimable);
@@ -14955,7 +26443,7 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
     const lid = u ? u.lessons.find((l) => !state.completedLessons[l.id])?.id ?? null : null;
     return lid ? { type: "lesson", id: lid, key: `lesson:${lid}` } : null;
   }, [path, state.completedLessons]);
-  useEffect5(() => {
+  useEffect6(() => {
     if (activeLesson || checkingUnit) return;
     if (!focus) return;
     if (scrolledTo.current === focus.key) return;
@@ -15046,9 +26534,13 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
     ] }),
     /* @__PURE__ */ jsxs6("div", { style: { padding: "8px 20px 40px" }, children: [
       path.map((unit) => {
-        const th = unit.prelude ? MODULE_THEME2.debut || MODULE_THEME2.palier : MODULE_THEME2.palier;
+        const th = unit.annexe ? { ...MODULE_THEME2.palier, icon: "ti-books" } : unit.prelude ? MODULE_THEME2.debut || MODULE_THEME2.palier : MODULE_THEME2.palier;
         const currentLessonId = unit.isCurrent ? unit.lessons.find((l) => !state.completedLessons[l.id])?.id ?? null : null;
         return /* @__PURE__ */ jsxs6("div", { children: [
+          unit.annexe && /* @__PURE__ */ jsxs6("div", { style: { textAlign: "center", margin: "40px 0 -10px" }, children: [
+            /* @__PURE__ */ jsx8("div", { style: { fontSize: 17, fontWeight: 800, color: C.text, letterSpacing: "-.2px" }, children: "Annexes" }),
+            /* @__PURE__ */ jsx8("div", { style: { fontSize: 12.5, color: C.text2, marginTop: 3, lineHeight: 1.45, fontFamily: FONTS.body }, children: "Des le\xE7ons pratiques hors parcours, ouvertes \xE0 tout moment. Elles ne bloquent rien." })
+          ] }),
           /* @__PURE__ */ jsx8(UnitHeader, { unit, th, teaser: unit.id === premiereVerrouillee }),
           unit.lessons.map((lesson, li) => {
             const isCurrent = lesson.id === currentLessonId;
@@ -15096,22 +26588,24 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
               lesson.id
             );
           }),
-          /* @__PURE__ */ jsx8(
-            PathConnector,
-            {
-              from: unitLayouts[unit.id][unit.lessons.length - 1],
-              to: { side: "center", inset: 0 },
-              done: unit.complete
-            }
-          ),
-          /* @__PURE__ */ jsx8(
-            "div",
-            {
-              ref: focus?.type === "chest" && focus.id === unit.id ? currentRef : null,
-              style: focus?.type === "chest" && focus.id === unit.id ? { scrollMarginTop: 16 } : void 0,
-              children: /* @__PURE__ */ jsx8(UnitChest, { unit, th, onClaim: claimChest, onCheck: setCheckingUnit })
-            }
-          )
+          !unit.annexe && /* @__PURE__ */ jsxs6(Fragment4, { children: [
+            /* @__PURE__ */ jsx8(
+              PathConnector,
+              {
+                from: unitLayouts[unit.id][unit.lessons.length - 1],
+                to: { side: "center", inset: 0 },
+                done: unit.complete
+              }
+            ),
+            /* @__PURE__ */ jsx8(
+              "div",
+              {
+                ref: focus?.type === "chest" && focus.id === unit.id ? currentRef : null,
+                style: focus?.type === "chest" && focus.id === unit.id ? { scrollMarginTop: 16 } : void 0,
+                children: /* @__PURE__ */ jsx8(UnitChest, { unit, th, onClaim: claimChest, onCheck: setCheckingUnit })
+              }
+            )
+          ] })
         ] }, unit.id);
       }),
       stats.pct === 100 && /* @__PURE__ */ jsxs6("div", { style: { textAlign: "center", marginTop: 20 }, children: [
@@ -15122,17 +26616,35 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
     ] })
   ] });
 }
-function LessonView({ lesson, state, dispatch, onBack, quiz, carteInitiale, onJouerMorceau }) {
+function ChargementLecon({ lesson, onBack, reessayer }) {
+  const C = useC();
+  return /* @__PURE__ */ jsxs6("div", { children: [
+    /* @__PURE__ */ jsxs6("div", { style: { padding: "14px 20px 0", display: "flex", alignItems: "center", gap: 10 }, children: [
+      /* @__PURE__ */ jsx8(BackButton, { onClick: onBack, label: "Retour au parcours", style: { borderRadius: R.sm } }),
+      /* @__PURE__ */ jsx8("span", { style: { fontSize: 13, fontWeight: 600, color: C.text2, fontFamily: FONTS.ui }, children: "Retour au parcours" })
+    ] }),
+    /* @__PURE__ */ jsxs6("div", { role: "status", "aria-live": "polite", style: { padding: "28px 20px", textAlign: "center" }, children: [
+      /* @__PURE__ */ jsx8("h1", { style: { margin: "0 0 10px", fontSize: 20, fontWeight: 800, color: C.text }, children: lesson.title }),
+      reessayer ? /* @__PURE__ */ jsxs6(Fragment4, { children: [
+        /* @__PURE__ */ jsx8("p", { style: { fontSize: 14, color: C.text2, margin: "0 0 16px" }, children: "Impossible d'ouvrir cette le\xE7on pour l'instant. V\xE9rifie ta connexion, puis r\xE9essaie." }),
+        /* @__PURE__ */ jsx8("button", { onClick: reessayer, style: { padding: "11px 26px", borderRadius: R.lg, border: "none", background: C.primaryBtn, color: C.onPrimaryBtn, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }, children: "R\xE9essayer" })
+      ] }) : /* @__PURE__ */ jsx8("p", { style: { fontSize: 14, color: C.text3, margin: 0 }, children: "Ouverture de la le\xE7on\u2026" })
+    ] })
+  ] });
+}
+function LessonView({ lesson: leconRecue, state, dispatch, onBack, quiz: quiz140, carteInitiale, onJouerMorceau }) {
+  const corps = useCorpsLecon(leconRecue);
+  const lesson = corps.lecon;
   const { renderDiagramBlock: renderDiagramBlock2, FretboardLesson: FretboardLesson2 } = useRenderers();
   const C = useC();
-  const [done, setDone] = useState5(!!state.completedLessons[lesson.id]);
-  const [pop, setPop] = useState5(false);
+  const [done, setDone] = useState6(!!state.completedLessons[lesson.id]);
+  const [pop, setPop] = useState6(false);
   const popTimerRef = useRef4(null);
   useWakeLock(true);
-  useEffect5(() => {
+  useEffect6(() => {
     window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
   }, [lesson.id]);
-  useEffect5(() => () => {
+  useEffect6(() => () => {
     if (popTimerRef.current) clearTimeout(popTimerRef.current);
   }, []);
   const finish = () => {
@@ -15153,6 +26665,7 @@ function LessonView({ lesson, state, dispatch, onBack, quiz, carteInitiale, onJo
       popTimerRef.current = setTimeout(() => setPop(false), 1e3);
     }
   };
+  if (corps.statut !== "pret") return /* @__PURE__ */ jsx8(ChargementLecon, { lesson, onBack, reessayer: corps.reessayer });
   if (lesson.cartes?.length) return /* @__PURE__ */ jsxs6("div", { children: [
     pop && /* @__PURE__ */ jsx8(XPPop, { amount: 30, onDone: () => {
     } }),
@@ -15163,7 +26676,7 @@ function LessonView({ lesson, state, dispatch, onBack, quiz, carteInitiale, onJo
         state,
         dispatch,
         onBack,
-        quiz,
+        quiz: quiz140,
         carteInitiale,
         done,
         onFinish: finish,
@@ -15284,7 +26797,7 @@ init_ui();
 init_Gropi();
 init_gropiPoses();
 init_audioEngine();
-import { useState as useState6 } from "react";
+import { useState as useState7 } from "react";
 
 // src/music/shapeQuestions.js
 init_chordShapes();
@@ -15359,7 +26872,7 @@ function makeShapeQuestion(level = 1, rng = Math.random) {
 }
 
 // src/screens/QuizScreen.jsx
-import { Fragment as Fragment4, jsx as jsx9, jsxs as jsxs7 } from "react/jsx-runtime";
+import { Fragment as Fragment5, jsx as jsx9, jsxs as jsxs7 } from "react/jsx-runtime";
 var makeModules = (C) => [
   { id: "debut", label: "Premiers pas", icon: "sparkles", color: C.coral, colorL: C.coralL, colorD: C.coralD, border: C.coralBorder },
   { id: "neck", label: "Manche", icon: "map-2", color: C.amber, colorL: C.amberL, colorD: C.amberD, border: C.amberBorder },
@@ -15379,9 +26892,9 @@ function unlockedQuizLvl(state, content, courseId) {
 }
 function QuizScreen({ state, dispatch, content, embedded = false }) {
   const C = useC();
-  const [showModules, setShowModules] = useState6(false);
+  const [showModules, setShowModules] = useState7(false);
   const MODULES = makeModules(C);
-  const [mode, setMode] = useState6(null);
+  const [mode, setMode] = useState7(null);
   const totalAnswered = Object.keys(state.quizResults).length;
   const totalQ = content.quiz.length;
   const pctDone = totalQ ? Math.round(totalAnswered / totalQ * 100) : 0;
@@ -15520,7 +27033,7 @@ function QuizScreen({ state, dispatch, content, embedded = false }) {
 function QuizPlayer({ pool, title, state, dispatch, content, onDone }) {
   const { FretboardQuizQuestion: FretboardQuizQuestion2 } = useRenderers();
   const C = useC();
-  const [questions] = useState6(() => {
+  const [questions] = useState7(() => {
     const base = [...pool];
     if (base.length < 3) return base;
     const harmonyLvl = unlockedQuizLvl(state, content, "harmony");
@@ -15538,12 +27051,12 @@ function QuizPlayer({ pool, title, state, dispatch, content, onDone }) {
     }
     return base;
   });
-  const [idx, setIdx] = useState6(0);
-  const [sel, setSel] = useState6(null);
-  const [fretAnswered, setFretAnswered] = useState6(false);
-  const [fretCorrect, setFretCorrect] = useState6(null);
-  const [score, setScore] = useState6(0);
-  const [finished, setFinished] = useState6(false);
+  const [idx, setIdx] = useState7(0);
+  const [sel, setSel] = useState7(null);
+  const [fretAnswered, setFretAnswered] = useState7(false);
+  const [fretCorrect, setFretCorrect] = useState7(null);
+  const [score, setScore] = useState7(0);
+  const [finished, setFinished] = useState7(false);
   if (questions.length === 0) return /* @__PURE__ */ jsxs7("div", { style: { padding: "32px 20px", textAlign: "center", color: C.text2, fontFamily: FONTS.title }, children: [
     "Aucune question disponible.",
     /* @__PURE__ */ jsx9("br", {}),
@@ -15704,13 +27217,13 @@ function QuizPlayer({ pool, title, state, dispatch, content, onDone }) {
         ]
       }
     ),
-    isFretQ ? /* @__PURE__ */ jsxs7(Fragment4, { children: [
+    isFretQ ? /* @__PURE__ */ jsxs7(Fragment5, { children: [
       FretboardQuizQuestion2 && /* @__PURE__ */ jsx9(FretboardQuizQuestion2, { question: q, onComplete: handleFretComplete, answered: fretAnswered }),
-      fretAnswered && /* @__PURE__ */ jsxs7(Fragment4, { children: [
+      fretAnswered && /* @__PURE__ */ jsxs7(Fragment5, { children: [
         /* @__PURE__ */ jsx9(FeedbackBox, { ok: fretCorrect, xp: q.xp || 40, exp: q.exp, lesson: null }),
         /* @__PURE__ */ jsx9(NextBtn, { onClick: next, last: idx + 1 >= questions.length })
       ] })
-    ] }) : /* @__PURE__ */ jsxs7(Fragment4, { children: [
+    ] }) : /* @__PURE__ */ jsxs7(Fragment5, { children: [
       q.o.map((opt, i) => {
         let bg = C.surface, border = `1.5px solid ${C.border}`, col = C.text, badgeBg = C.surface2, badgeFg = C.text2, ic = ["A", "B", "C", "D"][i];
         if (answered) {
@@ -15735,7 +27248,7 @@ function QuizPlayer({ pool, title, state, dispatch, content, onDone }) {
           /* @__PURE__ */ jsx9("span", { style: { fontSize: 13, color: col, lineHeight: 1.45, fontWeight: answered && i === q.a ? 700 : 500 }, children: opt })
         ] }, i);
       }),
-      answered && /* @__PURE__ */ jsxs7(Fragment4, { children: [
+      answered && /* @__PURE__ */ jsxs7(Fragment5, { children: [
         /* @__PURE__ */ jsx9(FeedbackBox, { ok: sel === q.a, xp: q.xp || 30, exp: q.exp || q.x, lesson: linkedLesson }),
         /* @__PURE__ */ jsx9(NextBtn, { onClick: next, last: idx + 1 >= questions.length })
       ] })
@@ -15775,7 +27288,7 @@ init_ThemeContext();
 init_Ti();
 init_Gropi();
 init_gropiPoses();
-import { useState as useState7, useEffect as useEffect6 } from "react";
+import { useState as useState8, useEffect as useEffect7 } from "react";
 
 // src/store/generateurs.js
 init_notes();
@@ -16629,7 +28142,7 @@ function progressionFamilles(state) {
 
 // src/screens/ReviewSession.jsx
 init_audioEngine();
-import { Fragment as Fragment5, jsx as jsx10, jsxs as jsxs8 } from "react/jsx-runtime";
+import { Fragment as Fragment6, jsx as jsx10, jsxs as jsxs8 } from "react/jsx-runtime";
 function MiniGrille({ grille, C, active }) {
   const sonne = new Set(grille.attaques);
   return /* @__PURE__ */ jsx10("div", { "aria-hidden": "true", style: { display: "flex", gap: 3, flex: 1 }, children: Array.from({ length: 4 }, (_, t) => /* @__PURE__ */ jsx10("div", { style: { display: "flex", gap: 2, flex: 1, paddingLeft: t ? 4 : 0, borderLeft: t ? `1.5px solid ${C.border}` : "none" }, children: Array.from({ length: grille.pas }, (_2, k) => {
@@ -16640,16 +28153,16 @@ function MiniGrille({ grille, C, active }) {
 function ReviewSession({ questions, state, dispatch, onDone }) {
   const { FretboardQuizQuestion: FretboardQuizQuestion2 } = useRenderers();
   const C = useC();
-  const [idx, setIdx] = useState7(0);
-  const [sel, setSel] = useState7(null);
-  const [fretAnswered, setFretAnswered] = useState7(false);
-  const [fretCorrect, setFretCorrect] = useState7(null);
-  const [results, setResults] = useState7([]);
-  const [finished, setFinished] = useState7(false);
-  const [suiviFamille, setSuiviFamille] = useState7(null);
-  const [ecoutee, setEcoutee] = useState7(false);
-  const [sansSon, setSansSon] = useState7(false);
-  useEffect6(() => () => {
+  const [idx, setIdx] = useState8(0);
+  const [sel, setSel] = useState8(null);
+  const [fretAnswered, setFretAnswered] = useState8(false);
+  const [fretCorrect, setFretCorrect] = useState8(null);
+  const [results, setResults] = useState8([]);
+  const [finished, setFinished] = useState8(false);
+  const [suiviFamille, setSuiviFamille] = useState8(null);
+  const [ecoutee, setEcoutee] = useState8(false);
+  const [sansSon, setSansSon] = useState8(false);
+  useEffect7(() => () => {
     try {
       stopAll();
     } catch {
@@ -16899,7 +28412,7 @@ function ReviewSession({ questions, state, dispatch, onDone }) {
         !answered && /* @__PURE__ */ jsx10("button", { onClick: passerSansSon, className: "gr-focus", style: { background: "none", border: "none", padding: "8px 2px", cursor: "pointer", fontSize: 11.5, fontWeight: 700, color: C.text2, fontFamily: FONTS.ui, textDecoration: "underline" }, children: "Pas de son maintenant" })
       ] })
     ] }),
-    isFret ? /* @__PURE__ */ jsxs8(Fragment5, { children: [
+    isFret ? /* @__PURE__ */ jsxs8(Fragment6, { children: [
       FretboardQuizQuestion2 && /* @__PURE__ */ jsx10(
         FretboardQuizQuestion2,
         {
@@ -16908,7 +28421,7 @@ function ReviewSession({ questions, state, dispatch, onDone }) {
           answered: fretAnswered
         }
       ),
-      fretAnswered && /* @__PURE__ */ jsxs8(Fragment5, { children: [
+      fretAnswered && /* @__PURE__ */ jsxs8(Fragment6, { children: [
         /* @__PURE__ */ jsxs8("div", { style: {
           background: isCorrect ? C.greenL : C.coralL,
           borderRadius: R.md,
@@ -16929,7 +28442,7 @@ function ReviewSession({ questions, state, dispatch, onDone }) {
       ] })
     ] }) : (
       /* QCM */
-      /* @__PURE__ */ jsxs8(Fragment5, { children: [
+      /* @__PURE__ */ jsxs8(Fragment6, { children: [
         q.o.map((opt, i) => {
           let bg = C.surface, border = `1px solid ${C.border}`, col = C.text;
           let badgeBg = C.surface2, badgeFg = C.text2, ic = ["A", "B", "C", "D"][i];
@@ -16969,7 +28482,7 @@ function ReviewSession({ questions, state, dispatch, onDone }) {
             q.grilles ? /* @__PURE__ */ jsx10(MiniGrille, { grille: q.grilles[i], C, active: answered && i === q.a ? C.green : answered && i === sel ? C.coral : null }) : /* @__PURE__ */ jsx10("span", { style: { fontSize: 13, color: col, lineHeight: 1.4, fontFamily: FONTS.title, fontWeight: answered && i === q.a ? 500 : 400 }, children: opt })
           ] }, i);
         }),
-        answered && /* @__PURE__ */ jsxs8(Fragment5, { children: [
+        answered && /* @__PURE__ */ jsxs8(Fragment6, { children: [
           /* @__PURE__ */ jsxs8("div", { style: {
             background: isCorrect ? C.greenL : C.coralL,
             borderRadius: R.md,
@@ -16988,7 +28501,7 @@ function ReviewSession({ questions, state, dispatch, onDone }) {
           ] }),
           suiviFamille && /* @__PURE__ */ jsxs8("div", { role: "status", style: { display: "flex", gap: 8, alignItems: "flex-start", fontSize: 12, lineHeight: 1.45, color: C.text2, fontFamily: FONTS.ui, background: C.surface2, borderRadius: R.md, padding: "10px 12px", marginBottom: 12 }, children: [
             /* @__PURE__ */ jsx10(Ti, { name: suiviFamille.apres > suiviFamille.avant ? "sparkles" : "target-arrow", size: 15, color: suiviFamille.apres > suiviFamille.avant ? C.primary : C.text3 }),
-            /* @__PURE__ */ jsx10("span", { children: suiviFamille.apres > suiviFamille.avant ? suiviFamille.retour ? /* @__PURE__ */ jsxs8(Fragment5, { children: [
+            /* @__PURE__ */ jsx10("span", { children: suiviFamille.apres > suiviFamille.avant ? suiviFamille.retour ? /* @__PURE__ */ jsxs8(Fragment6, { children: [
               /* @__PURE__ */ jsxs8("b", { style: { color: C.primaryD }, children: [
                 "De retour au niveau ",
                 suiviFamille.apres
@@ -16996,7 +28509,7 @@ function ReviewSession({ questions, state, dispatch, onDone }) {
               " : ",
               suiviFamille.libelle,
               "."
-            ] }) : /* @__PURE__ */ jsxs8(Fragment5, { children: [
+            ] }) : /* @__PURE__ */ jsxs8(Fragment6, { children: [
               /* @__PURE__ */ jsxs8("b", { style: { color: C.primaryD }, children: [
                 "Niveau ",
                 suiviFamille.apres,
@@ -17005,13 +28518,13 @@ function ReviewSession({ questions, state, dispatch, onDone }) {
               " : ",
               suiviFamille.libelle,
               "."
-            ] }) : suiviFamille.apres < suiviFamille.avant ? /* @__PURE__ */ jsxs8(Fragment5, { children: [
+            ] }) : suiviFamille.apres < suiviFamille.avant ? /* @__PURE__ */ jsxs8(Fragment6, { children: [
               "On consolide au niveau ",
               suiviFamille.apres,
               " (",
               suiviFamille.libelle,
               ") avant de remonter."
-            ] }) : suiviFamille.restant == null ? /* @__PURE__ */ jsx10(Fragment5, { children: "Niveau maximal atteint pour cette comp\xE9tence. Elle reviendra de temps en temps pour rester ancr\xE9e." }) : /* @__PURE__ */ jsxs8(Fragment5, { children: [
+            ] }) : suiviFamille.restant == null ? /* @__PURE__ */ jsx10(Fragment6, { children: "Niveau maximal atteint pour cette comp\xE9tence. Elle reviendra de temps en temps pour rester ancr\xE9e." }) : /* @__PURE__ */ jsxs8(Fragment6, { children: [
               "Encore ",
               suiviFamille.restant,
               " r\xE9ussite",
@@ -17042,18 +28555,18 @@ init_ThemeContext();
 init_Ti();
 init_ui();
 init_Gropi();
-import { useState as useState8, useEffect as useEffect7, useRef as useRef5, useMemo as useMemo3 } from "react";
-import { Fragment as Fragment6, jsx as jsx11, jsxs as jsxs9 } from "react/jsx-runtime";
+import { useState as useState9, useEffect as useEffect8, useRef as useRef5, useMemo as useMemo4 } from "react";
+import { Fragment as Fragment7, jsx as jsx11, jsxs as jsxs9 } from "react/jsx-runtime";
 var LEVEL_LABELS = { 1: "Fondamentaux", 2: "Interm\xE9diaire", 3: "Avanc\xE9" };
 var makeLevelColors = (C) => ({ 1: { bg: C.greenL, border: C.greenBorder, text: C.greenD, dot: C.green }, 2: { bg: C.amberL, border: C.amberBorder, text: C.amberD, dot: C.amber }, 3: { bg: C.pinkL, border: C.pinkBorder, text: C.pinkD, dot: C.pink } });
 var DIFF_STARS = { 1: "\u2605\u2606\u2606", 2: "\u2605\u2605\u2606", 3: "\u2605\u2605\u2605" };
 function ExercisesScreen({ state, dispatch, content, embedded = false }) {
-  const [showFilters, setShowFilters] = useState8(false);
+  const [showFilters, setShowFilters] = useState9(false);
   const C = useC();
   const MODULE_THEME2 = buildModuleTheme(C);
   const LEVEL_COLORS = makeLevelColors(C);
-  const [filter, setFilter] = useState8("all");
-  const [active, setActive] = useState8(null);
+  const [filter, setFilter] = useState9("all");
+  const [active, setActive] = useState9(null);
   const cats = [
     { id: "all", label: "Tous" },
     { id: "debut", label: "Premiers pas" },
@@ -17064,14 +28577,14 @@ function ExercisesScreen({ state, dispatch, content, embedded = false }) {
     { id: "impro", label: "Impro" }
   ];
   const allEx = content.exercises;
-  const totalDone = useMemo3(() => allEx.filter((e) => state.completedExercises[e.id]).length, [state.completedExercises, allEx]);
-  const totalXP = useMemo3(() => allEx.reduce((s, e) => s + (state.completedExercises[e.id] ? e.xp : 0), 0), [state.completedExercises, allEx]);
+  const totalDone = useMemo4(() => allEx.filter((e) => state.completedExercises[e.id]).length, [state.completedExercises, allEx]);
+  const totalXP = useMemo4(() => allEx.reduce((s, e) => s + (state.completedExercises[e.id] ? e.xp : 0), 0), [state.completedExercises, allEx]);
   const pctGlobal = allEx.length ? Math.round(totalDone / allEx.length * 100) : 0;
-  const recommended = useMemo3(() => {
+  const recommended = useMemo4(() => {
     const sorted = [...allEx].sort((a, b) => (a.lvl || 1) - (b.lvl || 1));
     return sorted.find((e) => !state.completedExercises[e.id] && (filter === "all" || e.mod === filter));
   }, [allEx, state.completedExercises, filter]);
-  const byLevel = useMemo3(() => {
+  const byLevel = useMemo4(() => {
     const filtered = allEx.filter((e) => filter === "all" || e.mod === filter);
     const groups = {};
     filtered.forEach((e) => {
@@ -17152,7 +28665,7 @@ function ExercisesScreen({ state, dispatch, content, embedded = false }) {
         flexShrink: 0,
         fontFamily: FONTS.ui
       }, children: c.label }, c.id)) }),
-      recommended && /* @__PURE__ */ jsxs9(Fragment6, { children: [
+      recommended && /* @__PURE__ */ jsxs9(Fragment7, { children: [
         /* @__PURE__ */ jsx11("div", { style: { fontSize: 11, fontWeight: 700, color: C.text3, letterSpacing: ".07em", textTransform: "uppercase", marginBottom: 10 }, children: "Recommand\xE9 pour toi" }),
         /* @__PURE__ */ jsxs9("button", { onClick: () => setActive(recommended), style: {
           width: "100%",
@@ -17300,17 +28813,17 @@ function ExerciseDetail({ ex, state, dispatch, onBack, content }) {
   const MODULE_THEME2 = buildModuleTheme(C);
   const LEVEL_COLORS = makeLevelColors(C);
   const saved = state.exerciseProgress[ex.id] || [];
-  const [checked, setChecked] = useState8(saved);
-  const [done, setDone] = useState8(false);
-  const [pop, setPop] = useState8(false);
+  const [checked, setChecked] = useState9(saved);
+  const [done, setDone] = useState9(false);
+  const [pop, setPop] = useState9(false);
   const popTimerRef = useRef5(null);
-  useEffect7(() => () => {
+  useEffect8(() => () => {
     if (popTimerRef.current) clearTimeout(popTimerRef.current);
   }, []);
   const theme = MODULE_THEME2[ex.mod] || MODULE_THEME2.neck;
   const lc = LEVEL_COLORS[ex.lvl || 1];
   const estFretboard = ex.type === "fretboard_exercise";
-  useEffect7(() => {
+  useEffect8(() => {
     if (!estFretboard && checked.length > 0 && !done) dispatch({ type: "SAVE_EXERCISE_PROGRESS", id: ex.id, checkedSteps: checked });
   }, [checked, done, estFretboard, dispatch, ex.id]);
   if (estFretboard) {
@@ -17369,7 +28882,7 @@ function ExerciseDetail({ ex, state, dispatch, onBack, content }) {
         ] }),
         /* @__PURE__ */ jsx11(ProgressBar, { pct: checked.length / (ex.steps || [1]).length * 100, color: C.green, h: 5 })
       ] }),
-      !done ? /* @__PURE__ */ jsxs9(Fragment6, { children: [
+      !done ? /* @__PURE__ */ jsxs9(Fragment7, { children: [
         (ex.steps || []).map((s, i) => {
           const ck = checked.includes(i);
           return /* @__PURE__ */ jsxs9("button", { onClick: () => toggle(i), style: {
@@ -17405,7 +28918,7 @@ function ExerciseDetail({ ex, state, dispatch, onBack, content }) {
           alignItems: "center",
           justifyContent: "center",
           gap: 6
-        }, children: allDone ? /* @__PURE__ */ jsxs9(Fragment6, { children: [
+        }, children: allDone ? /* @__PURE__ */ jsxs9(Fragment7, { children: [
           /* @__PURE__ */ jsx11(Ti, { name: "check", size: 16, color: "#fff" }),
           " Exercice termin\xE9 \xB7 +",
           ex.xp,
@@ -17477,9 +28990,9 @@ init_Gropi();
 init_gropiPoses();
 init_ui();
 init_audioEngine();
-import { useState as useState9, useEffect as useEffect8, useRef as useRef6, useCallback as useCallback2, useMemo as useMemo4 } from "react";
+import { useState as useState10, useEffect as useEffect9, useRef as useRef6, useCallback as useCallback2, useMemo as useMemo5 } from "react";
 init_oreille();
-import { Fragment as Fragment7, jsx as jsx12, jsxs as jsxs10 } from "react/jsx-runtime";
+import { Fragment as Fragment8, jsx as jsx12, jsxs as jsxs10 } from "react/jsx-runtime";
 var MODES = [
   { key: "interval", label: "Intervalles", icon: "arrows-up-down" },
   { key: "chord_quality", label: "Qualit\xE9 d'accord", icon: "music" },
@@ -17512,24 +29025,24 @@ function shade(hex, amount) {
 }
 function EarTraining({ onBack, dispatch, state }) {
   const C = useC();
-  const [audioReady, setAudioReady] = useState9(isAudioLoaded());
-  const [audioError, setAudioError] = useState9(false);
-  const [mode, setMode] = useState9("interval");
-  const [sens, setSens] = useState9("ascending");
-  const [libre, setLibre] = useState9(false);
-  const [question, setQuestion] = useState9(null);
-  const [selected, setSelected] = useState9(null);
-  const [saisie, setSaisie] = useState9([]);
-  const [isPlaying, setIsPlaying] = useState9(false);
-  const [score, setScore] = useState9({ correct: 0, total: 0 });
-  const [sessionDone, setSessionDone] = useState9(false);
-  const [answers, setAnswers] = useState9([]);
+  const [audioReady, setAudioReady] = useState10(isAudioLoaded());
+  const [audioError, setAudioError] = useState10(false);
+  const [mode, setMode] = useState10("interval");
+  const [sens, setSens] = useState10("ascending");
+  const [libre, setLibre] = useState10(false);
+  const [question, setQuestion] = useState10(null);
+  const [selected, setSelected] = useState10(null);
+  const [saisie, setSaisie] = useState10([]);
+  const [isPlaying, setIsPlaying] = useState10(false);
+  const [score, setScore] = useState10({ correct: 0, total: 0 });
+  const [sessionDone, setSessionDone] = useState10(false);
+  const [answers, setAnswers] = useState10([]);
   const finTimerRef = useRef6(null);
   const precedentRef = useRef6(null);
-  const hist = useMemo4(() => state?.reviewHistory || {}, [state?.reviewHistory]);
+  const hist = useMemo5(() => state?.reviewHistory || {}, [state?.reviewHistory]);
   const idMode = `ear-${mode}`;
   const cfg = VIVIERS[mode] || null;
-  const vivier = useMemo4(() => {
+  const vivier = useMemo5(() => {
     if (!cfg) return null;
     if (libre) return { pool: cfg.ordre, nouveau: null, total: cfg.ordre.length };
     return poolAdaptatif(cfg.ordre, cfg.depart, hist, (x) => cleItem(mode, x));
@@ -17544,7 +29057,7 @@ function EarTraining({ onBack, dispatch, state }) {
       finTimerRef.current = null;
     }
   }, []);
-  useEffect8(() => {
+  useEffect9(() => {
     if (!isAudioLoaded()) {
       loadAudio().then(() => setAudioReady(true)).catch(() => setAudioError(true));
     }
@@ -17567,10 +29080,10 @@ function EarTraining({ onBack, dispatch, state }) {
     const format = mode === "progression" ? formatSuite(Math.random, { leconFaite: leconChiffres, succes: hist[CLE_SUITES_ROMAINS]?.successes || 0 }) : void 0;
     setQuestion(generateEarTrainingQuestion(mode, { pool: vivier.pool, cible, sens, toutesOptions: true, leconChiffres, format }));
   }, [mode, sens, vivier, hist, niveauDictee, annulerFinTimer, leconChiffres]);
-  useEffect8(() => {
+  useEffect9(() => {
     if (audioReady && !question) nextQuestion();
   }, [audioReady, question, nextQuestion]);
-  useEffect8(() => () => {
+  useEffect9(() => () => {
     annulerFinTimer();
     try {
       stopAll();
@@ -17767,7 +29280,7 @@ function EarTraining({ onBack, dispatch, state }) {
       mode === "interval" && /* @__PURE__ */ jsx12("div", { role: "group", "aria-label": "Sens de l'intervalle", style: { display: "flex", flexWrap: "wrap", gap: 6 }, children: SENS2.map((s) => /* @__PURE__ */ jsx12("button", { onClick: () => changeSens(s.key), "aria-pressed": sens === s.key, className: "gr-focus", style: { ...chip(sens === s.key), flex: "1 1 auto" }, children: s.label }, s.key)) }),
       /* @__PURE__ */ jsxs10("div", { style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", background: C.surface2, borderRadius: R.md, padding: "8px 12px" }, children: [
         /* @__PURE__ */ jsxs10("div", { style: { flex: 1, minWidth: 160, fontSize: 12, color: C.text2, fontFamily: FONTS.ui, lineHeight: 1.45 }, children: [
-          cfg && vivier && /* @__PURE__ */ jsxs10(Fragment7, { children: [
+          cfg && vivier && /* @__PURE__ */ jsxs10(Fragment8, { children: [
             "Vivier : ",
             /* @__PURE__ */ jsxs10("b", { style: { color: C.text }, children: [
               vivier.pool.length,
@@ -17777,7 +29290,7 @@ function EarTraining({ onBack, dispatch, state }) {
             " ",
             cfg.unite
           ] }),
-          mode === "dictation" && /* @__PURE__ */ jsxs10(Fragment7, { children: [
+          mode === "dictation" && /* @__PURE__ */ jsxs10(Fragment8, { children: [
             "Niveau ",
             /* @__PURE__ */ jsxs10("b", { style: { color: C.text }, children: [
               niveauDictee,
@@ -17787,12 +29300,12 @@ function EarTraining({ onBack, dispatch, state }) {
             " \xB7 ",
             NIVEAUX_DICTEE[niveauDictee - 1].libelle
           ] }),
-          precisionMode != null && /* @__PURE__ */ jsxs10(Fragment7, { children: [
+          precisionMode != null && /* @__PURE__ */ jsxs10(Fragment8, { children: [
             " \xB7 pr\xE9cision ",
             precisionMode,
             " %"
           ] }),
-          mode === "progression" && leconChiffres && /* @__PURE__ */ jsxs10(Fragment7, { children: [
+          mode === "progression" && leconChiffres && /* @__PURE__ */ jsxs10(Fragment8, { children: [
             " \xB7 chiffres romains : ",
             Math.round(partRomains * 100),
             " % des questions"
@@ -17809,7 +29322,7 @@ function EarTraining({ onBack, dispatch, state }) {
       ] }),
       audioError && /* @__PURE__ */ jsx12("div", { role: "alert", style: { background: C.coralL, border: `1px solid ${C.coralBorder}`, borderRadius: R.md, padding: "12px 14px", fontSize: 12, color: C.coralD, fontFamily: FONTS.ui }, children: "Les \xE9chantillons audio n'ont pas pu \xEAtre charg\xE9s. V\xE9rifie ta connexion, puis reviens sur cet \xE9cran." }),
       !audioReady && !audioError && /* @__PURE__ */ jsx12("div", { role: "status", "aria-live": "polite", style: { background: C.amberL, border: `1px solid ${C.amberBorder}`, borderRadius: R.md, padding: "12px 14px", fontSize: 12, color: C.amberD, fontFamily: FONTS.ui }, children: "Chargement des \xE9chantillons audio\u2026" }),
-      audioReady && question && /* @__PURE__ */ jsxs10(Fragment7, { children: [
+      audioReady && question && /* @__PURE__ */ jsxs10(Fragment8, { children: [
         /* @__PURE__ */ jsxs10("div", { style: { textAlign: "center", padding: "10px 0 4px" }, children: [
           /* @__PURE__ */ jsx12(
             "button",
@@ -17848,7 +29361,7 @@ function EarTraining({ onBack, dispatch, state }) {
           ] }),
           !repondu && /* @__PURE__ */ jsx12("div", { style: { fontSize: 11, color: C.text3, fontFamily: FONTS.ui, marginTop: 8, fontStyle: "italic" }, children: "Tu peux r\xE9\xE9couter autant de fois que tu veux" })
         ] }),
-        mode === "dictation" ? /* @__PURE__ */ jsxs10(Fragment7, { children: [
+        mode === "dictation" ? /* @__PURE__ */ jsxs10(Fragment8, { children: [
           /* @__PURE__ */ jsx12("div", { "aria-label": "Ta m\xE9lodie", style: { display: "flex", gap: 6, justifyContent: "center" }, children: question.degres.map((attendu, i) => {
             const d = saisie[i];
             const ok = repondu && d === attendu;
@@ -17970,7 +29483,7 @@ var JamSession_exports = {};
 __export(JamSession_exports, {
   JamSession: () => JamSession
 });
-import { useState as useState14, useMemo as useMemo6, useEffect as useEffect12, useEffectEvent as useEffectEvent3, useRef as useRef10, useCallback as useCallback5 } from "react";
+import { useState as useState15, useMemo as useMemo7, useEffect as useEffect13, useEffectEvent as useEffectEvent3, useRef as useRef10, useCallback as useCallback5 } from "react";
 init_tokens();
 init_ThemeContext();
 init_Ti();
@@ -18998,12 +30511,12 @@ var fmtDuree = (sec) => `${Math.floor(sec / 60)}:${String(Math.max(0, sec) % 60)
 init_tokens();
 init_ThemeContext();
 init_Ti();
-import { Fragment as Fragment10, jsx as jsx16, jsxs as jsxs14 } from "react/jsx-runtime";
+import { Fragment as Fragment11, jsx as jsx16, jsxs as jsxs14 } from "react/jsx-runtime";
 function SuiviSeance({ chrono, sessionComptee, couleur }) {
   const C = useC();
   const secondesJouees = useSecondesJouees(chrono);
   if (!(secondesJouees > 0 || sessionComptee)) return null;
-  return /* @__PURE__ */ jsx16("div", { role: "status", style: { display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: R.md, background: sessionComptee ? C.greenL : C.surface, border: `1px solid ${sessionComptee ? C.greenBorder : C.border}` }, children: sessionComptee ? /* @__PURE__ */ jsxs14(Fragment10, { children: [
+  return /* @__PURE__ */ jsx16("div", { role: "status", style: { display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: R.md, background: sessionComptee ? C.greenL : C.surface, border: `1px solid ${sessionComptee ? C.greenBorder : C.border}` }, children: sessionComptee ? /* @__PURE__ */ jsxs14(Fragment11, { children: [
     /* @__PURE__ */ jsx16(Ti, { name: "check", size: 16, color: C.greenD }),
     /* @__PURE__ */ jsxs14("div", { style: { fontSize: 12.5, color: C.greenD, fontFamily: FONTS.ui, lineHeight: 1.4 }, children: [
       /* @__PURE__ */ jsx16("b", { children: "S\xE9ance compt\xE9e" }),
@@ -19024,8 +30537,8 @@ function SuiviSeance({ chrono, sessionComptee, couleur }) {
 init_tokens();
 init_ThemeContext();
 init_Ti();
-import { useState as useState13, useEffect as useEffect11, useEffectEvent as useEffectEvent2, useRef as useRef9 } from "react";
-import { Fragment as Fragment11, jsx as jsx17, jsxs as jsxs15 } from "react/jsx-runtime";
+import { useState as useState14, useEffect as useEffect12, useEffectEvent as useEffectEvent2, useRef as useRef9 } from "react";
+import { Fragment as Fragment12, jsx as jsx17, jsxs as jsxs15 } from "react/jsx-runtime";
 var CONSTRAINTS = [
   { text: "Joue UNIQUEMENT des notes longues. Z\xE9ro double-croche.", level: "Facile" },
   { text: "Chaque phrase doit finir sur une note de l'accord.", level: "Facile" },
@@ -19057,10 +30570,10 @@ var makeLevelColor = (C) => ({ "Facile": C.green, "Moyen": C.amber, "Difficile":
 function CarteContrainte({ chrono, enLecture, contextId, niveauApp, dispatch }) {
   const C = useC();
   const LEVEL_COLOR = makeLevelColor(C);
-  const [niveauContrainte, setNiveauContrainte] = useState13(() => niveauParDefaut(niveauApp || 1));
-  const [constraint, setConstraint] = useState13(null);
-  const [resteContrainte, setResteContrainte] = useState13(DUREE_CONTRAINTE);
-  const [contraintesTenues, setContraintesTenues] = useState13(0);
+  const [niveauContrainte, setNiveauContrainte] = useState14(() => niveauParDefaut(niveauApp || 1));
+  const [constraint, setConstraint] = useState14(null);
+  const [resteContrainte, setResteContrainte] = useState14(DUREE_CONTRAINTE);
+  const [contraintesTenues, setContraintesTenues] = useState14(0);
   const tenue = constraint && resteContrainte === 0;
   const contrainteTenueRef = useRef9(null);
   const surSeconde = useEffectEvent2(() => {
@@ -19073,7 +30586,7 @@ function CarteContrainte({ chrono, enLecture, contextId, niveauApp, dispatch }) 
       dispatch?.({ type: "JAM_PROGRES", contrainte: true });
     }
   });
-  useEffect11(() => chrono.abonner(() => surSeconde()), [chrono]);
+  useEffect12(() => chrono.abonner(() => surSeconde()), [chrono]);
   const randomConstraint = (niveau = niveauContrainte) => {
     const candidates = CONSTRAINTS.filter((c) => c.level === niveau && (!c.contextes || c.contextes.includes(contextId)) && c !== constraint);
     const pool = candidates.length ? candidates : CONSTRAINTS.filter((c) => c.level === niveau);
@@ -19105,14 +30618,14 @@ function CarteContrainte({ chrono, enLecture, contextId, niveauApp, dispatch }) 
       color: niveauContrainte === n ? LEVEL_COLOR[n] : C.text3,
       boxShadow: niveauContrainte === n ? `0 0 0 1.5px ${C.border}` : "none"
     }, children: n }, n)) }),
-    constraint ? /* @__PURE__ */ jsxs15(Fragment11, { children: [
+    constraint ? /* @__PURE__ */ jsxs15(Fragment12, { children: [
       /* @__PURE__ */ jsx17("div", { id: "contrainte-texte", "aria-live": "polite", style: { fontSize: 14, color: C.amberD, fontFamily: FONTS.title, lineHeight: 1.5, fontWeight: 600 }, children: constraint.text }),
       /* @__PURE__ */ jsxs15("div", { style: { display: "flex", alignItems: "center", gap: 10, marginTop: 10 }, children: [
         tenue ? /* @__PURE__ */ jsxs15("div", { style: { flex: 1, display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 700, color: C.greenD, fontFamily: FONTS.ui }, children: [
           /* @__PURE__ */ jsx17(Ti, { name: "check", size: 15, color: C.greenD }),
           " Tenue 2 minutes, bravo."
         ] }) : /* @__PURE__ */ jsxs15("div", { style: { flex: 1 }, children: [
-          /* @__PURE__ */ jsx17("div", { style: { fontSize: 12, color: C.amberD, fontFamily: FONTS.ui }, children: !enLecture ? "Lance le backing : le chrono tourne pendant que tu joues." : /* @__PURE__ */ jsxs15(Fragment11, { children: [
+          /* @__PURE__ */ jsx17("div", { style: { fontSize: 12, color: C.amberD, fontFamily: FONTS.ui }, children: !enLecture ? "Lance le backing : le chrono tourne pendant que tu joues." : /* @__PURE__ */ jsxs15(Fragment12, { children: [
             "Tiens-la encore ",
             /* @__PURE__ */ jsx17("b", { children: fmtDuree(resteContrainte) })
           ] }) }),
@@ -19943,7 +31456,7 @@ var AMBIANCE_DEFAUT = { decay: 1.8, wet: 0.12, delay: false, pianoDb: -25 };
 var ambiancePour = (style) => AMBIANCES[style] || AMBIANCE_DEFAUT;
 
 // src/screens/JamSession.jsx
-import { Fragment as Fragment12, jsx as jsx18, jsxs as jsxs16 } from "react/jsx-runtime";
+import { Fragment as Fragment13, jsx as jsx18, jsxs as jsxs16 } from "react/jsx-runtime";
 var PACKS = [blues_shuffle_default, funk_16_default, rock_8_default, jazz_swing_default, bossa_nova_default, ballade_pop_default];
 function shade2(hex, amount) {
   const h = hex.replace("#", "");
@@ -20017,18 +31530,18 @@ function creerKitBatterie(buffers, sortie, sortieCharleston) {
 }
 function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord, onSecondeJouee, onLecture }) {
   const C = useC();
-  const [playing, setPlaying] = useState14(false);
-  const [compte, setCompte] = useState14(null);
-  const [rampe, setRampe] = useState14(false);
-  const [energie, setEnergie] = useState14(3);
-  const [coupes, setCoupes] = useState14({ accords: false, basse: false, batterie: false });
-  const [reglagesOuverts, setReglagesOuverts] = useState14(false);
+  const [playing, setPlaying] = useState15(false);
+  const [compte, setCompte] = useState15(null);
+  const [rampe, setRampe] = useState15(false);
+  const [energie, setEnergie] = useState15(3);
+  const [coupes, setCoupes] = useState15({ accords: false, basse: false, batterie: false });
+  const [reglagesOuverts, setReglagesOuverts] = useState15(false);
   useWakeLock(playing);
-  const [beat, setBeat] = useState14(0);
-  const [currentChord, setCurrentChord] = useState14(0);
-  const [loading, setLoading] = useState14(false);
-  const [playError, setPlayError] = useState14(null);
-  const [interrompu, setInterrompu] = useState14(false);
+  const [beat, setBeat] = useState15(0);
+  const [currentChord, setCurrentChord] = useState15(0);
+  const [loading, setLoading] = useState15(false);
+  const [playError, setPlayError] = useState15(null);
+  const [interrompu, setInterrompu] = useState15(false);
   const samplerRef = useRef10(null);
   const bassRef = useRef10(null);
   const kickRef = useRef10(null);
@@ -20071,15 +31584,15 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
   onSecondeRef.current = onSecondeJouee;
   const onLectureRef = useRef10(onLecture);
   onLectureRef.current = onLecture;
-  useEffect12(() => {
+  useEffect13(() => {
     onLectureRef.current?.(playing);
   }, [playing]);
-  useEffect12(() => {
+  useEffect13(() => {
     if (!playing || compte != null) return;
     const t = setInterval(() => onSecondeRef.current?.(), 1e3);
     return () => clearInterval(t);
   }, [playing, compte]);
-  useEffect12(() => {
+  useEffect13(() => {
     try {
       getTransport().bpm.value = bpm;
     } catch {
@@ -20094,19 +31607,19 @@ function BackingTrackPlayer({ context: context2, root, bpm, onBpmChange, onChord
   const arreterAuDemontage = useEffectEvent3(() => stopBacking());
   const cleContexte = `${context2.id}:${context2.grilleId ?? ""}`;
   const contexteRef = useRef10(cleContexte);
-  useEffect12(() => {
+  useEffect13(() => {
     if (contexteRef.current === cleContexte) return;
     contexteRef.current = cleContexte;
     relancerSiJoue();
   }, [cleContexte]);
-  useEffect12(() => () => arreterAuDemontage(), []);
+  useEffect13(() => () => arreterAuDemontage(), []);
   const surCoupureSysteme = useEffectEvent3(() => {
     if (!playingRef.current) return;
     stopBacking();
     setInterrompu(true);
     setPlayError("Le son a \xE9t\xE9 coup\xE9 par le syst\xE8me (appel, autre application\u2026).");
   });
-  useEffect12(() => {
+  useEffect13(() => {
     if (!playing) return;
     const ctx = getContext();
     const surChangement = () => {
@@ -20812,16 +32325,16 @@ function ChoixPastilles({ C, ctx, titre, options, valeur, onChoix }) {
 }
 function JamSession({ onBack, dispatch, state }) {
   const C = useC();
-  const CONTEXTS = useMemo6(() => makeContexts(C), [C]);
-  const [contextId, setContextId] = useState14("blues_minor");
-  const [root, setRoot] = useState14("A");
-  const [displayMode, setDisplayMode] = useState14("notes");
-  const [showRootPicker, setShowRootPicker] = useState14(false);
-  const [bpm, setBpm] = useState14(CONTEXTS[0].bpm);
-  const [accordIdx, setAccordIdx] = useState14(null);
-  const [enLecture, setEnLecture] = useState14(false);
-  const [chrono] = useState14(creerChrono);
-  const [sessionComptee, setSessionComptee] = useState14(null);
+  const CONTEXTS = useMemo7(() => makeContexts(C), [C]);
+  const [contextId, setContextId] = useState15("blues_minor");
+  const [root, setRoot] = useState15("A");
+  const [displayMode, setDisplayMode] = useState15("notes");
+  const [showRootPicker, setShowRootPicker] = useState15(false);
+  const [bpm, setBpm] = useState15(CONTEXTS[0].bpm);
+  const [accordIdx, setAccordIdx] = useState15(null);
+  const [enLecture, setEnLecture] = useState15(false);
+  const [chrono] = useState15(creerChrono);
+  const [sessionComptee, setSessionComptee] = useState15(null);
   const sessionCompteeRef = useRef10(false);
   const unSecondeDePlus = () => {
     chrono.tic();
@@ -20834,7 +32347,7 @@ function JamSession({ onBack, dispatch, state }) {
     dispatch({ type: "JAM_PROGRES", seance: true });
     dispatch({ type: "PRACTICE_DONE", minutes: Math.round(secondes2 / 60) });
   };
-  const [gainVu, setGainVu] = useState14(state?.lastGain);
+  const [gainVu, setGainVu] = useState15(state?.lastGain);
   if (state?.lastGain !== gainVu) {
     setGainVu(state?.lastGain);
     if (sessionComptee?.xp === null && state?.lastGain?.kind === "practice") {
@@ -20849,7 +32362,7 @@ function JamSession({ onBack, dispatch, state }) {
     dejaEnregistreRef.current = total;
     dispatch({ type: "JAM_PROGRES", secondes: delta });
   }, [chrono, dispatch]);
-  useEffect12(() => {
+  useEffect13(() => {
     const auMasquage = () => {
       if (document.visibilityState === "hidden") enregistrerTemps();
     };
@@ -20863,20 +32376,20 @@ function JamSession({ onBack, dispatch, state }) {
     setEnLecture(joue);
     if (!joue) enregistrerTemps();
   };
-  const [grilleId, setGrilleId] = useState14(null);
-  const [gammeChoisie, setGammeChoisie] = useState14(null);
+  const [grilleId, setGrilleId] = useState15(null);
+  const [gammeChoisie, setGammeChoisie] = useState15(null);
   const ctxBase = CONTEXTS.find((c) => c.id === contextId);
-  const ctx = useMemo6(() => appliquerChoix(ctxBase, grilleId, gammeChoisie), [ctxBase, grilleId, gammeChoisie]);
+  const ctx = useMemo7(() => appliquerChoix(ctxBase, grilleId, gammeChoisie), [ctxBase, grilleId, gammeChoisie]);
   const packDuStyle = packPourStyle(getStyle(ctx.id), PACKS);
   const rootFr = nomTonique2(root, ctx.scale);
-  const activeNotes = useMemo6(() => getScaleNotes(root, ctx.scale), [root, ctx.scale]);
-  const nomsActifs = useMemo6(() => nomsGamme(root, ctx.scale), [root, ctx.scale]);
+  const activeNotes = useMemo7(() => getScaleNotes(root, ctx.scale), [root, ctx.scale]);
+  const nomsActifs = useMemo7(() => nomsGamme(root, ctx.scale), [root, ctx.scale]);
   const accordEnCours = accordIdx != null ? ctx.chords[accordIdx] ?? null : null;
-  const notesAccordAffichees = useMemo6(
+  const notesAccordAffichees = useMemo7(
     () => accordEnCours ? nomsNotesAccord(root, accordEnCours, ctx.scale) : [],
     [accordEnCours, root, ctx.scale]
   );
-  const notesDeLAccord = useMemo6(() => notesAccordAffichees.map((x) => x.note), [notesAccordAffichees]);
+  const notesDeLAccord = useMemo7(() => notesAccordAffichees.map((x) => x.note), [notesAccordAffichees]);
   const dansLaGamme = (n) => activeNotes.some((g) => normalizeNote(g) === normalizeNote(n));
   const choisirContexte = (c) => {
     setContextId(c.id);
@@ -21012,7 +32525,7 @@ function JamSession({ onBack, dispatch, state }) {
             flashNotes: notesDeLAccord.length ? notesDeLAccord : null
           }
         ) }),
-        /* @__PURE__ */ jsx18("div", { style: { padding: "8px 12px 10px", borderTop: `1px solid ${C.border}`, minHeight: 44, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }, "aria-live": "polite", children: accordEnCours ? /* @__PURE__ */ jsxs16(Fragment12, { children: [
+        /* @__PURE__ */ jsx18("div", { style: { padding: "8px 12px 10px", borderTop: `1px solid ${C.border}`, minHeight: 44, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }, "aria-live": "polite", children: accordEnCours ? /* @__PURE__ */ jsxs16(Fragment13, { children: [
           /* @__PURE__ */ jsxs16("span", { style: { fontSize: 11, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, marginRight: 2 }, children: [
             "Notes de ",
             nomAccord(root, accordEnCours, ctx.scale),
@@ -21083,7 +32596,7 @@ init_tokens();
 init_ThemeContext();
 init_Ti();
 init_ui();
-import { useMemo as useMemo7 } from "react";
+import { useMemo as useMemo8 } from "react";
 
 // src/store/badges.js
 init_tokens();
@@ -21117,7 +32630,7 @@ var debutTermine = (state, content) => {
   const c = content.courses.find(estModuleInitiation);
   return !!c && c.lessons.length > 0 && c.lessons.every((l) => state.completedLessons[l.id]);
 };
-var allModulesMastered = (state, content) => content.courses.filter((c) => !estModuleInitiation(c)).every((c) => {
+var allModulesMastered = (state, content) => content.courses.filter((c) => !estModuleInitiation(c) && !c.facultatif).every((c) => {
   const total = c.lessons.length;
   const done = c.lessons.filter((l) => state.completedLessons[l.id]).length;
   return total > 0 && done === total;
@@ -21228,15 +32741,15 @@ function ProgressScreen({ state, content, onOpenSettings }) {
   const BADGE_RARITIES2 = buildBadgeRarities(C);
   const { xpToNext, pct: lvlPct, totalForNext } = levelProgress(state.xp);
   const grade = gradeForLevel(state.level);
-  const maitrise = useMemo7(
+  const maitrise = useMemo8(
     () => masteryStats(content, state),
     [content, state]
   );
-  const aAncrer = useMemo7(
+  const aAncrer = useMemo8(
     () => prochainesAAncrer(content, state, 3),
     [content, state]
   );
-  const skills = useMemo7(
+  const skills = useMemo8(
     () => [
       { label: "Premiers pas", id: "debut", color: C.coral, colorD: C.coralD },
       { label: "Manche", id: "neck", color: C.amber, colorD: C.amberD },
@@ -21247,7 +32760,7 @@ function ProgressScreen({ state, content, onOpenSettings }) {
     ].map((s) => ({ ...s, pct: skillMastery(state, content, s.id) })).filter((s) => s.id !== "debut" || s.pct > 0 || !debutFacultatif(state, buildUnits(content.courses, state))),
     [state, content, C]
   );
-  const badgesByCategory = useMemo7(() => {
+  const badgesByCategory = useMemo8(() => {
     const map = {};
     BADGES.forEach((b) => {
       if (!map[b.cat]) map[b.cat] = [];
@@ -21544,7 +33057,7 @@ __export(SettingsScreen_exports, {
 });
 init_tokens();
 init_Ti();
-import { useState as useState15 } from "react";
+import { useState as useState16 } from "react";
 init_ui();
 init_audioEngine();
 
@@ -21717,11 +33230,11 @@ function SettingsRow({ label, value, last }) {
 }
 function SettingsScreen({ state, dispatch, content, onClose, user, onSignOut, onDeleteAccount }) {
   const C = useC();
-  const [importStatus, setImportStatus] = useState15(null);
-  const [confirmation, setConfirmation] = useState15(null);
-  const [saisie, setSaisie] = useState15("");
-  const [audioOffline, setAudioOffline] = useState15(null);
-  const [stats, setStats] = useState15(statistiquesActivees);
+  const [importStatus, setImportStatus] = useState16(null);
+  const [confirmation, setConfirmation] = useState16(null);
+  const [saisie, setSaisie] = useState16("");
+  const [audioOffline, setAudioOffline] = useState16(null);
+  const [stats, setStats] = useState16(statistiquesActivees);
   const refusNavigateur = signalNavigateurRefus();
   const basculerStats = () => {
     const actif = !stats;
@@ -22026,7 +33539,7 @@ init_tokens();
 init_ThemeContext();
 init_Ti();
 init_ui();
-import { useState as useState23, useRef as useRef17, useEffect as useEffect19, useCallback as useCallback11, lazy, Suspense } from "react";
+import { useState as useState24, useRef as useRef17, useEffect as useEffect20, useCallback as useCallback11, lazy, Suspense } from "react";
 import { jsx as jsx29, jsxs as jsxs26 } from "react/jsx-runtime";
 var Metronome2 = lazy(() => Promise.resolve().then(() => (init_Metronome(), Metronome_exports)).then((m) => ({ default: m.Metronome })));
 var Tuner2 = lazy(() => Promise.resolve().then(() => (init_Tuner(), Tuner_exports)).then((m) => ({ default: m.Tuner })));
@@ -22059,7 +33572,7 @@ var OUTIL_PAR_ID = {
 var comportementDefilement = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
 function ToolboxScreen({ onBack, navigate, dispatch, outilInitial = null, morceauInitial = null }) {
   const C = useC();
-  const [tab, setTabBrut] = useState23(() => {
+  const [tab, setTabBrut] = useState24(() => {
     if (OUTILS_INTERNES.has(outilInitial)) {
       try {
         localStorage.setItem("groply:outil-actif", outilInitial);
@@ -22074,7 +33587,7 @@ function ToolboxScreen({ onBack, navigate, dispatch, outilInitial = null, morcea
     }
     return "metronome";
   });
-  const [morceauDemande, setMorceauDemande] = useState23(outilInitial === "morceaux" ? morceauInitial : null);
+  const [morceauDemande, setMorceauDemande] = useState24(outilInitial === "morceaux" ? morceauInitial : null);
   const setTab = (t) => {
     setTabBrut(t);
     setMorceauDemande(null);
@@ -22084,12 +33597,12 @@ function ToolboxScreen({ onBack, navigate, dispatch, outilInitial = null, morcea
     }
   };
   const ongletsRef = useRef17(null);
-  const [finOnglets, setFinOnglets] = useState23(false);
+  const [finOnglets, setFinOnglets] = useState24(false);
   const majFinOnglets = useCallback11(() => {
     const el = ongletsRef.current;
     if (el) setFinOnglets(el.scrollLeft + el.clientWidth >= el.scrollWidth - 4);
   }, []);
-  useEffect19(() => {
+  useEffect20(() => {
     ongletsRef.current?.querySelector('[aria-selected="true"]')?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
     majFinOnglets();
     window.addEventListener("resize", majFinOnglets);
@@ -22228,7 +33741,7 @@ init_ThemeContext();
 init_Ti();
 init_Gropi();
 init_gropiPoses();
-import { useState as useState24, useMemo as useMemo12 } from "react";
+import { useState as useState25, useMemo as useMemo13 } from "react";
 
 // src/store/seance.js
 init_catalogue();
@@ -22434,7 +33947,7 @@ function indexJour(dateStr) {
 }
 
 // src/screens/TrainingScreen.jsx
-import { Fragment as Fragment15, jsx as jsx30, jsxs as jsxs27 } from "react/jsx-runtime";
+import { Fragment as Fragment16, jsx as jsx30, jsxs as jsxs27 } from "react/jsx-runtime";
 var CLE_DUREE = "groply:duree-seance";
 var lireDuree = (defaut) => {
   try {
@@ -22466,26 +33979,26 @@ var JOURS = ["L", "M", "M", "J", "V", "S", "D"];
 var NOMS_JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"];
 function TrainingScreen({ state, dispatch, content, navigate, vueInitiale = null }) {
   const C = useC();
-  const [domaineOuvert, setDomaineOuvert] = useState24(null);
-  const [exercicesOuverts, setExercicesOuverts] = useState24(vueInitiale === "exercices");
-  const [exerciceOuvert, setExerciceOuvert] = useState24(null);
-  const [quizOuvert, setQuizOuvert] = useState24(false);
-  const [duree, setDuree] = useState24(() => lireDuree(dureeParDefaut(state.onboarding?.timePerWeek)));
+  const [domaineOuvert, setDomaineOuvert] = useState25(null);
+  const [exercicesOuverts, setExercicesOuverts] = useState25(vueInitiale === "exercices");
+  const [exerciceOuvert, setExerciceOuvert] = useState25(null);
+  const [quizOuvert, setQuizOuvert] = useState25(false);
+  const [duree, setDuree] = useState25(() => lireDuree(dureeParDefaut(state.onboarding?.timePerWeek)));
   const objectif = state.onboarding?.goal || "global";
   const today = todayStr();
-  const revisionDisponible = useMemo12(() => {
+  const revisionDisponible = useMemo13(() => {
     const st = getReviewStats([...content.quiz, ...itemsGeneres(state.completedLessons)], state.reviewHistory, state.completedLessons);
     return st.toReview + st.neverSeen;
   }, [content.quiz, state.reviewHistory, state.completedLessons]);
-  const seance = useMemo12(() => planSeance({ duree, objectif, state, content, today, revisionDisponible }), [duree, objectif, state, content, today, revisionDisponible]);
-  const progression = useMemo12(() => progressionFamilles(state), [state]);
-  const gMastery = useMemo12(() => masteryStats(content, state), [content, state]);
-  const afficherPrelude = useMemo12(() => {
+  const seance = useMemo13(() => planSeance({ duree, objectif, state, content, today, revisionDisponible }), [duree, objectif, state, content, today, revisionDisponible]);
+  const progression = useMemo13(() => progressionFamilles(state), [state]);
+  const gMastery = useMemo13(() => masteryStats(content, state), [content, state]);
+  const afficherPrelude = useMemo13(() => {
     const debut = content.courses.find((c) => c.id === DEBUT_MODULE);
     if (!debut) return false;
     return debut.lessons.some((l) => state.completedLessons?.[l.id]) || !debutFacultatif(state, buildUnits(content.courses, state));
   }, [content.courses, state]);
-  const uniteEnAttente = useMemo12(() => buildPath(content, state).find((u) => u.needsCheck) || null, [content, state]);
+  const uniteEnAttente = useMemo13(() => buildPath(content, state).find((u) => u.needsCheck) || null, [content, state]);
   const lancerEtape = (e) => {
     if (e.aJour) return;
     if (e.id === "revision") navigate("review", { cible: e.questions, retour: "training" });
@@ -22790,7 +34303,7 @@ function CarteDomaine({ C, d, state, content, progression, onOuvrir }) {
 }
 function VueDomaine({ C, d, state, dispatch, content, navigate, progression, quizOuvert, setQuizOuvert, onExercice, onRetour }) {
   const k = couleurs(C, d.couleur);
-  const lecons = useMemo12(() => new Map(content.courses.flatMap((c) => c.lessons).map((l) => [l.id, l.title])), [content.courses]);
+  const lecons = useMemo13(() => new Map(content.courses.flatMap((c) => c.lessons).map((l) => [l.id, l.title])), [content.courses]);
   const debloquees = progression.filter((p) => p.domaine === d.id);
   const verrouillees = FAMILLES.filter((f) => familleDomaine(f) === d.id && !state.completedLessons?.[f.lecon]);
   const { dispo: exercices, verrouilles: exosVerrouilles } = exercicesDe(d, content, state);
@@ -22827,7 +34340,7 @@ function VueDomaine({ C, d, state, dispatch, content, navigate, progression, qui
     /* @__PURE__ */ jsx30("div", { style: { padding: 16, display: "flex", flexDirection: "column", gap: 16 }, children: quizOuvert ? /* @__PURE__ */ jsxs27("section", { children: [
       /* @__PURE__ */ jsx30("button", { onClick: () => setQuizOuvert(false), className: "gr-focus", style: { minHeight: 44, border: "none", background: "none", color: C.text2, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", padding: 0 }, children: "\u2190 Fermer les quiz" }),
       /* @__PURE__ */ jsx30(QuizScreen, { state, dispatch, content, embedded: true })
-    ] }) : /* @__PURE__ */ jsxs27(Fragment15, { children: [
+    ] }) : /* @__PURE__ */ jsxs27(Fragment16, { children: [
       d.id === "Impro" ? /* @__PURE__ */ jsx30(Bloc, { C, titre: "Ta Jam Session", children: /* @__PURE__ */ jsx30(
         Ligne,
         {
@@ -22882,7 +34395,7 @@ function Bloc({ C, titre, children }) {
   ] });
 }
 function Ligne({ C, titre, detail, jauge, couleur, verrou, onClick }) {
-  const contenu = /* @__PURE__ */ jsxs27(Fragment15, { children: [
+  const contenu = /* @__PURE__ */ jsxs27(Fragment16, { children: [
     /* @__PURE__ */ jsxs27("div", { style: { flex: 1, minWidth: 0 }, children: [
       /* @__PURE__ */ jsx30("div", { style: { fontSize: 14, fontWeight: 700, color: verrou ? C.text2 : C.text }, children: titre }),
       detail && /* @__PURE__ */ jsx30("div", { style: { fontSize: 12, color: C.text2 }, children: detail })
@@ -22941,7 +34454,7 @@ function ApercuExercices({ C, domaines, state, content, onExercice, onTout }) {
   ] });
 }
 function VueExercices({ C, domaines, state, content, onExercice, onRetour }) {
-  const lecons = useMemo12(() => new Map(content.courses.flatMap((c) => c.lessons).map((l) => [l.id, l.title])), [content.courses]);
+  const lecons = useMemo13(() => new Map(content.courses.flatMap((c) => c.lessons).map((l) => [l.id, l.title])), [content.courses]);
   const groupes = domaines.map((d) => ({ d, ...exercicesDe(d, content, state) })).filter((g) => g.dispo.length || g.verrouilles.length);
   const dispo = groupes.flatMap((g) => g.dispo);
   const faits = dispo.filter((e) => exerciceFait(state, e)).length;
@@ -23033,7 +34546,7 @@ init_tokens();
 init_ThemeContext();
 init_Ti();
 init_ui();
-import { useState as useState25, useEffect as useEffect20, useRef as useRef18 } from "react";
+import { useState as useState26, useEffect as useEffect21, useRef as useRef18 } from "react";
 
 // src/store/challenges.js
 var KEYS = ["A", "B", "C", "D", "E", "F", "G"];
@@ -23070,11 +34583,11 @@ var DAILY_CHALLENGES = [
 import { jsx as jsx31, jsxs as jsxs28 } from "react/jsx-runtime";
 function PracticeScreen({ dispatch }) {
   const C = useC();
-  const [tab, setTab] = useState25("impro");
-  const [current, setCurrent] = useState25(null);
-  const [pop, setPop] = useState25(false);
+  const [tab, setTab] = useState26("impro");
+  const [current, setCurrent] = useState26(null);
+  const [pop, setPop] = useState26(false);
   const timerRef = useRef18(null);
-  useEffect20(() => () => {
+  useEffect21(() => () => {
     if (timerRef.current) clearTimeout(timerRef.current);
   }, []);
   const generateImpro = () => {
@@ -23215,15 +34728,15 @@ init_tokens();
 init_ThemeContext();
 init_Ti();
 init_ui();
-import { useState as useState26, useEffect as useEffect21, useRef as useRef19 } from "react";
+import { useState as useState27, useEffect as useEffect22, useRef as useRef19 } from "react";
 import { jsx as jsx32, jsxs as jsxs29 } from "react/jsx-runtime";
 function ChallengeScreen({ state, dispatch, navigate }) {
   const C = useC();
   const ch = DAILY_CHALLENGES[state.dailyChallengeIdx % DAILY_CHALLENGES.length];
   const done = state.dailyChallengeDone;
-  const [pop, setPop] = useState26(false);
+  const [pop, setPop] = useState27(false);
   const timerRef = useRef19(null);
-  useEffect21(() => () => {
+  useEffect22(() => () => {
     if (timerRef.current) clearTimeout(timerRef.current);
   }, []);
   const finish = () => {
@@ -23293,7 +34806,7 @@ init_Gropi();
 init_gropiPoses();
 init_ui();
 init_Fretboard();
-import { useState as useState27, useEffect as useEffect22, useMemo as useMemo13 } from "react";
+import { useState as useState28, useEffect as useEffect23, useMemo as useMemo14 } from "react";
 
 // src/store/placementEngine.js
 var TESTABLE_MODULES = ["neck", "scales", "harmony", "rhythm", "impro"];
@@ -23378,7 +34891,7 @@ function weakestModule(skillLevels, testedModules = TESTABLE_MODULES) {
 }
 
 // src/onboarding/OnboardingScreen.jsx
-import { Fragment as Fragment16, jsx as jsx33, jsxs as jsxs30 } from "react/jsx-runtime";
+import { Fragment as Fragment17, jsx as jsx33, jsxs as jsxs30 } from "react/jsx-runtime";
 var GOAL_OPTIONS = [
   { id: "impro", module: "impro", label: "Improviser librement", icon: "wand" },
   { id: "theorie", module: "harmony", label: "Comprendre la th\xE9orie en profondeur", icon: "stack-2" },
@@ -23398,23 +34911,23 @@ var TIME_OPTIONS = [
 var ALL_PROFILE_MODULES = [.../* @__PURE__ */ new Set([...TESTABLE_MODULES, "impro"])];
 function OnboardingScreen({ content, onComplete, onEvent }) {
   const C = useC();
-  const [phase, setPhase] = useState27("welcome");
-  const [experience, setExperience] = useState27(null);
-  const [queue2, setQueue] = useState27(null);
-  const [qIdx, setQIdx] = useState27(0);
-  const [currentQ, setCurrentQ] = useState27(null);
-  const [selected, setSelected] = useState27(null);
-  const [answered, setAnswered] = useState27(false);
-  const [forceReveal, setForceReveal] = useState27(false);
-  const [usedIds] = useState27(() => /* @__PURE__ */ new Set());
-  const modulesTestes = useMemo13(() => availableModules(content?.quiz || []), [content]);
-  const nbQuestions = useMemo13(() => placementQuestionCount(content?.quiz || []), [content]);
-  const [results, setResults] = useState27(() => Object.fromEntries(TESTABLE_MODULES.map((m) => [m, 0])));
-  const [skillLevels, setSkillLevels] = useState27({ neck: null, scales: null, harmony: null, rhythm: null, impro: null });
-  const [overallTier, setOverallTier] = useState27(null);
-  const [weakest, setWeakest] = useState27(null);
-  const [goal, setGoal] = useState27(null);
-  const [timePerWeek, setTimePerWeek] = useState27(null);
+  const [phase, setPhase] = useState28("welcome");
+  const [experience, setExperience] = useState28(null);
+  const [queue2, setQueue] = useState28(null);
+  const [qIdx, setQIdx] = useState28(0);
+  const [currentQ, setCurrentQ] = useState28(null);
+  const [selected, setSelected] = useState28(null);
+  const [answered, setAnswered] = useState28(false);
+  const [forceReveal, setForceReveal] = useState28(false);
+  const [usedIds] = useState28(() => /* @__PURE__ */ new Set());
+  const modulesTestes = useMemo14(() => availableModules(content?.quiz || []), [content]);
+  const nbQuestions = useMemo14(() => placementQuestionCount(content?.quiz || []), [content]);
+  const [results, setResults] = useState28(() => Object.fromEntries(TESTABLE_MODULES.map((m) => [m, 0])));
+  const [skillLevels, setSkillLevels] = useState28({ neck: null, scales: null, harmony: null, rhythm: null, impro: null });
+  const [overallTier, setOverallTier] = useState28(null);
+  const [weakest, setWeakest] = useState28(null);
+  const [goal, setGoal] = useState28(null);
+  const [timePerWeek, setTimePerWeek] = useState28(null);
   const emit = (name, props) => {
     try {
       onEvent?.(name, props);
@@ -23491,7 +35004,7 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
     emit("placement_completed", { skillLevels: finalLevels, overallTier: overall, weakestModule: weak });
     setPhase("results");
   }
-  useEffect22(() => {
+  useEffect23(() => {
     if (phase === "testing" && queue2 && !currentQ) {
       const nextIdx = qIdx + 1;
       if (nextIdx < queue2.length) {
@@ -23618,7 +35131,7 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
             nbQuestions
           ] })
         ] }),
-        currentQ.type === "fretboard" ? /* @__PURE__ */ jsxs30(Fragment16, { children: [
+        currentQ.type === "fretboard" ? /* @__PURE__ */ jsxs30(Fragment17, { children: [
           /* @__PURE__ */ jsx33("div", { style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: 16 }, children: /* @__PURE__ */ jsx33("p", { style: { margin: 0, fontSize: 15, fontWeight: 600, lineHeight: 1.5, color: C.text }, children: currentQ.q }) }),
           /* @__PURE__ */ jsx33(
             FretboardQuizQuestion,
@@ -23629,7 +35142,7 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
               forceReveal
             }
           )
-        ] }) : /* @__PURE__ */ jsxs30(Fragment16, { children: [
+        ] }) : /* @__PURE__ */ jsxs30(Fragment17, { children: [
           /* @__PURE__ */ jsx33("div", { style: { background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: 16 }, children: /* @__PURE__ */ jsx33("p", { style: { margin: 0, fontSize: 15, fontWeight: 600, lineHeight: 1.5, color: C.text }, children: currentQ.q }) }),
           /* @__PURE__ */ jsx33("div", { style: { display: "flex", flexDirection: "column", gap: 8 }, children: currentQ.o.map((opt, i) => {
             let bg = C.surface, border = `1.5px solid ${C.border}`, col = C.text;
@@ -23680,7 +35193,7 @@ function OnboardingScreen({ content, onComplete, onEvent }) {
             children: "Je ne sais pas"
           }
         ),
-        answered && /* @__PURE__ */ jsxs30(Fragment16, { children: [
+        answered && /* @__PURE__ */ jsxs30(Fragment17, { children: [
           currentQ.type !== "fretboard" && /* @__PURE__ */ jsxs30("p", { style: {
             margin: 0,
             fontSize: 12.5,

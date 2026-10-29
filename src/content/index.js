@@ -17,6 +17,7 @@ import scales, { LECONS as leconsScales } from "./cours/scales/index.js";
 import harmony, { LECONS as leconsHarmony } from "./cours/harmony/index.js";
 import rhythm, { LECONS as leconsRhythm } from "./cours/rhythm/index.js";
 import impro, { LECONS as leconsImpro } from "./cours/impro/index.js";
+import annexes, { LECONS as leconsAnnexes } from "./cours/annexes/index.js";
 
 import exosDebut from "./exercices/debut.js";
 import exosNeck from "./exercices/neck.js";
@@ -35,6 +36,8 @@ const MODULES = [
   [harmony, leconsHarmony],
   [rhythm, leconsRhythm],
   [impro, leconsImpro],
+  // Annexes (facultatif: true) : une unité après le palier 9, jamais bloquante.
+  [annexes, leconsAnnexes],
 ];
 
 export const COURSES = MODULES.map(([meta, lecons]) => ({

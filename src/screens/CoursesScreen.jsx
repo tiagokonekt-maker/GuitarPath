@@ -31,6 +31,7 @@ import { pickTip, contexteGropi } from "../store/gropiTips.js";
 import { getReviewStats } from "../store/reviewEngine.js";
 import { POSE_ROLE } from "../design/gropiPoses.js";
 import { LeconCartes } from "../lecon/LeconCartes.jsx";
+import { useCorpsLecon } from "../lecon/corpsLecon.js";
 import { MorceauxLies } from "../lecon/MorceauxLies.jsx";
 import { gradeForLevel } from "../store/grades.js";
 import { lessonMastery } from "../store/mastery.js";
@@ -487,7 +488,7 @@ function UnitHeader({ unit, th, teaser = false }) {
           color:C.text2,background:C.surface,border:`1px solid ${C.border}`,
           borderRadius:999,padding:"2px 9px",fontFamily:FONTS.ui,
         }}>
-          Facultatif · tu peux passer à la suite
+          {unit.annexe ? "Facultatif · à lire quand tu veux" : "Facultatif · tu peux passer à la suite"}
         </span>
       )}
       {/* Teaser de la PREMIÈRE unité verrouillée seulement (une seule
@@ -912,7 +913,9 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
         {path.map(unit=>{
           // Une unité d'initiation ne mélange pas les disciplines : elle
           // prend le thème de son module (« Premiers pas »).
-          const th = unit.prelude ? (MODULE_THEME.debut || MODULE_THEME.palier) : MODULE_THEME.palier;
+          // Annexes (pathEngine `annexe`) : thème neutre, intertitre, pas de coffre.
+          const th = unit.annexe ? { ...MODULE_THEME.palier, icon:"ti-books" }
+            : unit.prelude ? (MODULE_THEME.debut || MODULE_THEME.palier) : MODULE_THEME.palier;
           // Leçon courante = première non complétée de l'unité courante
           const currentLessonId = unit.isCurrent
             ? (unit.lessons.find(l=>!state.completedLessons[l.id])?.id ?? null)
@@ -920,6 +923,14 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
 
           return (
             <div key={unit.id}>
+              {unit.annexe&&(
+                <div style={{textAlign:"center",margin:"40px 0 -10px"}}>
+                  <div style={{fontSize:17,fontWeight:800,color:C.text,letterSpacing:"-.2px"}}>Annexes</div>
+                  <div style={{fontSize:12.5,color:C.text2,marginTop:3,lineHeight:1.45,fontFamily:FONTS.body}}>
+                    Des leçons pratiques hors parcours, ouvertes à tout moment. Elles ne bloquent rien.
+                  </div>
+                </div>
+              )}
               <UnitHeader unit={unit} th={th} teaser={unit.id===premiereVerrouillee}/>
 
               {unit.lessons.map((lesson,li)=>{
@@ -966,7 +977,9 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
               })}
 
               {/* Connecteur → coffre. Le coffre est centré, donc l'arrivée
-                  est au milieu quelle que soit la position du dernier nœud. */}
+                  est au milieu quelle que soit la position du dernier nœud.
+                  Les annexes n'ont ni vérification ni coffre. */}
+              {!unit.annexe&&<>
               <PathConnector
                 from={unitLayouts[unit.id][unit.lessons.length-1]}
                 to={{ side:"center", inset:0 }}
@@ -976,6 +989,7 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
                    style={focus?.type==="chest" && focus.id===unit.id ? { scrollMarginTop: 16 } : undefined}>
                 <UnitChest unit={unit} th={th} onClaim={claimChest} onCheck={setCheckingUnit}/>
               </div>
+              </>}
             </div>
           );
         })}
@@ -997,6 +1011,34 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
   );
 }
 
+// ── Corps de leçon en cours de chargement (ou indisponible hors-ligne) ──────
+function ChargementLecon({ lesson, onBack, reessayer }) {
+  const C = useC();
+  return (
+    <div>
+      <div style={{padding:"14px 20px 0",display:"flex",alignItems:"center",gap:10}}>
+        <BackButton onClick={onBack} label="Retour au parcours" style={{borderRadius:R.sm}}/>
+        <span style={{fontSize:13,fontWeight:600,color:C.text2,fontFamily:FONTS.ui}}>Retour au parcours</span>
+      </div>
+      <div role="status" aria-live="polite" style={{padding:"28px 20px",textAlign:"center"}}>
+        <h1 style={{margin:"0 0 10px",fontSize:20,fontWeight:800,color:C.text}}>{lesson.title}</h1>
+        {reessayer ? (
+          <>
+            <p style={{fontSize:14,color:C.text2,margin:"0 0 16px"}}>
+              Impossible d'ouvrir cette leçon pour l'instant. Vérifie ta connexion, puis réessaie.
+            </p>
+            <button onClick={reessayer} style={{padding:"11px 26px",borderRadius:R.lg,border:"none",background:C.primaryBtn,color:C.onPrimaryBtn,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:FONTS.ui}}>
+              Réessayer
+            </button>
+          </>
+        ) : (
+          <p style={{fontSize:14,color:C.text3,margin:0}}>Ouverture de la leçon…</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Contenu d'une leçon ───────────────────────────────────────────────────────
 // Deux rendus : la leçon « en cartes » (champ `cartes`, voir src/lecon/ et
 // src/content/README.md) ou, à défaut, l'article historique (`content`).
@@ -1004,7 +1046,12 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
 // (quizId) ; `carteInitiale` force la carte de départ (rendu de contrôle).
 // `onJouerMorceau(id)` : ouvre un morceau lié à la leçon (Outils › Morceaux,
 // voir content/liens-morceaux.js) ; absent, les liens ne s'affichent pas.
-function LessonView({ lesson, state, dispatch, onBack, quiz, carteInitiale, onJouerMorceau }) {
+// `lesson` peut n'être que les métadonnées (contenu de l'app, voir
+// src/content/index-app.js) : le corps (cartes) est alors chargé ici, à
+// l'ouverture (src/lecon/corpsLecon.js).
+function LessonView({ lesson: leconRecue, state, dispatch, onBack, quiz, carteInitiale, onJouerMorceau }) {
+  const corps = useCorpsLecon(leconRecue);
+  const lesson = corps.lecon;
   const { renderDiagramBlock, FretboardLesson } = useRenderers();
   const C = useC();
   const [done,setDone] = useState(!!state.completedLessons[lesson.id]);
@@ -1052,6 +1099,10 @@ function LessonView({ lesson, state, dispatch, onBack, quiz, carteInitiale, onJo
       popTimerRef.current = setTimeout(()=>setPop(false),1000);
     }
   };
+
+  if (corps.statut !== "pret") return (
+    <ChargementLecon lesson={lesson} onBack={onBack} reessayer={corps.reessayer}/>
+  );
 
   if (lesson.cartes?.length) return (
     <div>

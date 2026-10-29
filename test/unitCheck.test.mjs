@@ -115,15 +115,17 @@ test("aucun rappel sur le tout premier palier (rien à rappeler)", () => {
   }
 });
 
-test("l'échantillon atteint la cible (15) quand le cœur de l'unité est assez fourni", () => {
+test("l'échantillon atteint la cible de l'unité quand le cœur est assez fourni", () => {
   // Reproduit l'ordre de grandeur du contenu réel (plusieurs questions par
-  // leçon), où la cible doit être pleinement atteignable.
+  // leçon), où la cible doit être pleinement atteignable. Unité de 7 leçons :
+  // cible 12 (2 par leçon, plafond 12).
   const content = contenuMultiPaliers({ quizParLecon: 3 });
   const units = buildUnits(content.courses);
   const u3 = units.find(u => u.level === 3);
   const completed = completerJusquAvant(content.courses, 3);
   const echantillon = buildSample(u3, content, completed);
-  assert.equal(echantillon.length, 15);
+  assert.equal(u3.checkSize, 12);
+  assert.equal(echantillon.length, 12);
 });
 
 test("jamais de doublon dans un échantillon", () => {

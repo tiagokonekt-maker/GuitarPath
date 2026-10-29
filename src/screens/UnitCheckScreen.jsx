@@ -13,7 +13,7 @@ import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { Gropi } from "../design/Gropi.jsx";
 import { POSE_ROLE } from "../design/gropiPoses.js";
-import { UNIT_CHECK_PASS_PCT } from "../store/pathEngine.js";
+import { UNIT_CHECK_PASS_PCT, bonnesReponsesRequises } from "../store/pathEngine.js";
 // Logique de composition de l'échantillon : voir store/unitCheckSampler.js.
 // Extraite dans un module pur pour deux raisons — elle n'a rien de
 // spécifique à React, et ça la rend testable par `node --test`, qui ne sait
@@ -88,7 +88,7 @@ export function UnitCheckScreen({ unit, content, dispatch, onDone, state }) {
         <p style={{ margin: "0 0 16px", fontSize: 13, color: C.text2, lineHeight: 1.5, maxWidth: 300 }}>
           {passed
             ? "Le coffre de cette unité est maintenant à toi."
-            : `Il faut ${UNIT_CHECK_PASS_PCT}% pour valider l'unité. Tu peux réessayer, aucune limite de tentatives.`}
+            : `Il faut ${bonnesReponsesRequises(questions.length)} bonnes réponses sur ${questions.length} pour valider l'unité. Tu peux réessayer, aucune limite de tentatives.`}
         </p>
 
         <div style={{ width: "100%", maxWidth: 280 }}>

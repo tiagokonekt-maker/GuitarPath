@@ -124,6 +124,14 @@ arrêté.
    dans l'index, un id en double, une question qui pointe vers une leçon
    inexistante, une réponse hors des choix proposés, etc.
 
+**Après toute modification du contenu** (leçon, question, exercice) :
+l'app ne charge au démarrage que `index-app.js` (métadonnées, quiz,
+exercices) et va chercher le texte d'une leçon à son ouverture
+(`corps-lecons.js`). Ces deux fichiers sont générés depuis `index.js` :
+`npm run contenu:app` les met à jour. C'est automatique avec `npm run dev`,
+`npm run build` et `npm test` ; il faut juste penser à les commiter avec le
+reste (un test échoue s'ils sont périmés et affiche la commande).
+
 ## Questions de quiz
 
 Format compact, une question par ligne :
