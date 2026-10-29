@@ -47,12 +47,12 @@ export default {
       "Une corde sautée, deux cases plus loin : la forme dessine un « L » à l'envers.",
       "Elle se déplace telle quelle sur tout le manche. Tu la reconnais d'un coup d'œil, quelle que soit la note.",
     ] },
-    { type: "question", quizId: "q-neck-33" },
+    { type: "question", quizId: "q-neck-32" },
     { type: "idee", titre: "Déduire la corde 4", texte: [
       "Tu connais la corde 6 ? Alors tu connais la corde 4. Do est case 8 sur la corde 6, donc Do (corde 4 case 10).",
       "Plus besoin d'apprendre la corde 4 à part : tu la déduis, deux cases plus loin.",
     ] },
-    { type: "question", quizId: "q-neck-32" },
+    { type: "question", quizId: "q-neck-33" },
     { type: "idee", titre: "Les octaves doublées", texte: [
       "Joue les deux notes ensemble : la mélodie sonne plus large, plus pleine. C'est une technique courante en jazz et en funk, popularisée à la guitare par Wes Montgomery.",
       "Un riff sur la corde 6 s'enrichit aussitôt de son octave sur la corde 4.",

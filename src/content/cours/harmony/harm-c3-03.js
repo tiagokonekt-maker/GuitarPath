@@ -15,7 +15,7 @@ export default {
       "Cmaj7 : Mi et Si. Cm7 : Mi♭ et Si♭. C7 : Mi et Si♭.",
       "Dans un accord de dominante, les deux sont toujours à un triton l'une de l'autre. Sur G7 : Si et Fa.",
     ] },
-    { type: "question", quizId: "q-harm-07" },
+    { type: "question", quizId: "q-harm-07-app" },
     { type: "idee", titre: "Le shell voicing", texte: [
       "En jazz, on joue souvent la fondamentale, la 3e et la 7e, sans la quinte. Trois notes, l'accord est parfaitement défini et le son reste aéré.",
       "G7 : Sol (corde 6 case 3), Fa (corde 4 case 3), Si (corde 3 case 4). Étouffe la corde 5 avec le doigt de la corde 6.",
@@ -51,11 +51,12 @@ export default {
       "Dans un ii-V-I, une guide tone reste, l'autre descend d'un demi-ton.",
     ] },
   ],
-  quiz: ["q-harm-07","q-fret-harm-08","q-fret-harm-09","q-harm-03","q-harm-06","q-harm-p7-c303-01"],
+  quiz: ["q-harm-07","q-fret-harm-08","q-fret-harm-09","q-harm-03","q-harm-06","q-harm-p7-c303-01", "q-harm-07-app"],
 };
 
 export const quiz = [
   {id:"q-harm-07",courseId:"harmony",lessonId:"harm-c3-03",lvl:3,q:"Sur un accord Cmaj7, les 'guide tones' sont…",o:["Do et Sol","Do et Si","Mi et Si","Mi et Sol"],a:2,exp:"Guide tones = 3e + 7e. Sur Cmaj7 : 3e = Mi, 7e = Si. Ces 2 notes définissent que c'est un Maj7 (et pas un m7 ou un 7 dominante).",xp:50},
+  {id:"q-harm-07-app",courseId:"harmony",lessonId:"harm-c3-03",lvl:3,q:"Sur un accord Fmaj7, les 'guide tones' sont…",o:["Fa et Do","Fa et Mi","La et Mi","La et Do"],a:2,exp:"Guide tones = 3e + 7e. Fmaj7 = Fa La Do Mi : 3e = La, 7e = Mi.",xp:40},
   {id:"q-fret-harm-08",type:"fretboard",courseId:"harmony",lessonId:"harm-c3-03",lvl:3,q:"Sur G7 : trouve toutes les notes Si (3e — guide tone principal)",concept:{type:"find_note",root:"B"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Si est à vide sur la corde 2. C'est ta note cible d'arrivée sur G7.",xp:60,exp:"Si en : corde 6 case 7, corde 5 case 2, corde 4 case 9, corde 3 case 4, corde 2 à vide, corde 1 case 7. Cibles d'arrivée sur G7."},
   {id:"q-fret-harm-09",type:"fretboard",courseId:"harmony",lessonId:"harm-c3-03",lvl:3,q:"Sur G7 : trouve toutes les notes Fa (7e — tension à résoudre)",concept:{type:"find_note",root:"F"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Fa est case 1 corde 1. La 7e de G7 veut se résoudre vers Mi (Cmaj7).",xp:60,exp:"Fa en : corde 6 case 1, corde 5 case 8, corde 4 case 3, corde 3 case 10, corde 2 case 6, corde 1 case 1. La résolution Fa→Mi est le mouvement fondamental du ii-V-I."},
   {id:"q-harm-p7-c303-01",courseId:"harmony",lessonId:"harm-c3-03",lvl:3,q:"Dans Dm7 → G7, où va le Do, 7e de Dm7, par le chemin le plus court ?",o:["Il descend sur Si, la 3e de G7","Il monte sur Ré, la 5e de G7","Il descend sur Sol, la fondamentale","Il monte sur Fa, la 7e de G7"],a:0,exp:"Do → Si : un demi-ton. Pendant ce temps, le Fa (3e de Dm7) reste et devient la 7e de G7. Les guide tones avancent au plus court.",xp:50},

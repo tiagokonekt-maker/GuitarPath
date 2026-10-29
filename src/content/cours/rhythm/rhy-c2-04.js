@@ -22,7 +22,7 @@ export default {
       "Un silence bien placé pèse autant qu'une note : en jazz, on parle d'« espace ».",
       "Soupir : une noire. Demi-soupir : une croche. Quart de soupir : une double-croche. Demi-pause : deux temps. Pause : une mesure entière.",
     ] },
-    { type: "question", quizId: "q-rhy-49" },
+    { type: "question", quizId: "q-rhy-49-app" },
     { type: "idee", titre: "Couper le son", texte: [
       "Deux gestes. La paume droite se pose sur les cordes juste après l'attaque.",
       "Ou le doigt gauche relâche sa pression sans quitter la corde : la note s'éteint aussitôt. Plus rapide, parfait pour les silences courts d'un riff.",
@@ -47,11 +47,12 @@ export default {
       "Pendant le silence, la main droite continue son balancier.",
     ] },
   ],
-  quiz: ["q-rhy-49", "q-rhy-50", "q-rhy-51", "q-rhy-02", "q-rhy-p34-01"],
+  quiz: ["q-rhy-49", "q-rhy-50", "q-rhy-51", "q-rhy-02", "q-rhy-p34-01", "q-rhy-49-app"],
 };
 
 export const quiz = [
   {id:"q-rhy-49",courseId:"rhythm",lessonId:"rhy-c2-04",lvl:1,q:"Quelle durée vaut un soupir ?",o:["Une croche","Une blanche","Une ronde","Une noire"],a:3,exp:"Soupir = silence d'une noire. Demi-soupir = une croche, demi-pause = 2 temps, pause = une mesure entière.",xp:30},
+  {id:"q-rhy-49-app",courseId:"rhythm",lessonId:"rhy-c2-04",lvl:1,q:"Combien de soupirs faut-il pour remplir une mesure de 4/4 ?",o:["Quatre","Deux","Huit","Un seul"],a:0,exp:"Un soupir vaut une noire, et une mesure de 4/4 contient quatre noires : quatre soupirs, autant qu'une pause.",xp:25},
   {id:"q-rhy-50",courseId:"rhythm",lessonId:"rhy-c2-04",lvl:1,q:"Comment couper une note proprement, sans bouger la main gauche ?",o:["Relâcher la pression du doigt","Gratter plus fort la corde suivante","Appuyer plus fort sur la case","Changer de position sur le manche"],a:0,exp:"Sans déplacer le doigt, relâche légèrement la pression : la note s'éteint aussitôt. L'autre technique : poser la paume droite sur les cordes.",xp:30},
   {id:"q-rhy-51",courseId:"rhythm",lessonId:"rhy-c2-04",lvl:2,q:"À quoi sert le ghost strum pendant un silence ?",o:["À faire sonner les cordes à vide","À garder le mouvement et le groove","À accorder la guitare entre deux phrases","À marquer la fin du morceau"],a:1,exp:"La main droite continue son mouvement sans toucher les cordes : le groove reste vivant, même quand rien ne sonne.",xp:40},
   {id:"q-rhy-p34-01",courseId:"rhythm",lessonId:"rhy-c2-04",lvl:2,q:"En 4/4, une mesure contient une demi-pause et une blanche. Combien de temps de silence ?",o:["2 temps","1 temps","4 temps","3 temps"],a:0,exp:"La demi-pause vaut une blanche de silence : 2 temps. La blanche jouée occupe les 2 autres. Une pause, elle, ferait taire toute la mesure.",xp:30},

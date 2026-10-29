@@ -50,7 +50,7 @@ export default {
 };
 
 export const quiz = [
-  {id:"q-harm-sept-new-01",courseId:"harmony",lessonId:"harm-acc-02",lvl:1,q:"Tu tiens l'accord de Mi (022100). Comment obtiens-tu E7 ?",o:["Tu soulèves le doigt de la corde 4","Tu ajoutes un doigt sur la corde 1","Tu soulèves le doigt de la corde 3","Tu étouffes la corde 6"],a:0,exp:"En libérant la corde 4, on fait sonner Ré à vide : la septième de Mi. E7 = 020100.",xp:25},
+  {id:"q-harm-sept-new-01",courseId:"harmony",lessonId:"harm-acc-02",lvl:1,q:"Tu tiens l'accord de Mi. Comment obtiens-tu E7 ?",o:["Tu soulèves le doigt de la corde 4","Tu ajoutes un doigt sur la corde 1","Tu soulèves le doigt de la corde 3","Tu étouffes la corde 6"],a:0,exp:"En libérant la corde 4, on fait sonner Ré à vide : la septième de Mi. E7 = 020100.",xp:25},
   {id:"q-harm-sept-new-02",courseId:"harmony",lessonId:"harm-acc-02",lvl:2,q:"Quel accord de septième appelle le plus naturellement Mi ?",o:["B7","A7","D7","E7"],a:0,exp:"Si est la quinte de Mi : B7 est l'accord de dominante de Mi, sa tension se résout sur Mi.",xp:30},
   {id:"q-harm-sept-new-03",courseId:"harmony",lessonId:"harm-acc-02",lvl:2,q:"Quels accords forment la grille d'un blues en La ?",o:["A7, D7 et E7","A7, B7 et E7","B7, D7 et E7","A7, D7 et B7"],a:0,exp:"Le blues en La tourne sur La, Ré et Mi (les degrés I, IV et V), souvent tous joués en septième.",xp:30},
 ];

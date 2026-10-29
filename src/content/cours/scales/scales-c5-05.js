@@ -38,7 +38,7 @@ export default {
         }
       },
     } },
-    { type: "question", quizId: "q-scales-16" },
+    { type: "question", quizId: "q-scales-16-app" },
     { type: "idee", titre: "Collé à l'accord 7", texte: [
       "G7 contient Sol, Si, Ré et Fa. Sol majeur, avec son Fa#, frotterait contre ce Fa ; le mixolydien épouse l'accord.",
       "Autre terrain : les vamps I – ♭VII du rock, comme Sol – Fa ou Ré – Do.",
@@ -70,11 +70,12 @@ export default {
       "Terrain : accords 7 qui ne résolvent pas, vamps I – ♭VII, blues.",
     ] },
   ],
-  quiz: ["q-scales-16","q-scales-17","q-impro-14","q-fret-scales-05","q-logic-03","q-logic-08"],
+  quiz: ["q-scales-16","q-scales-17","q-impro-14","q-fret-scales-05","q-logic-03","q-logic-08", "q-scales-16-app"],
 };
 
 export const quiz = [
   {id:"q-scales-16",courseId:"scales",lessonId:"scales-c5-05",lvl:2,q:"Sur un accord G7 (dominante non-résolue), quel mode utiliser ?",o:["Sol mixolydien", "Sol ionien (majeur)", "Sol dorien", "Sol lydien"],a:0,exp:"Sur tout accord 7 (dominante), le mixolydien correspond. Sol mixolydien = Sol-La-Si-Do-Ré-Mi-Fa. Le Fa naturel (♭7) = la 7e de l'accord G7.",xp:40},
+  {id:"q-scales-16-app",courseId:"scales",lessonId:"scales-c5-05",lvl:2,q:"Quelle note distingue Ré mixolydien de Ré majeur ?",o:["Do au lieu de Do#","Fa au lieu de Fa#","Sol# au lieu de Sol","Si♭ au lieu de Si"],a:0,exp:"Le mixolydien, c'est le majeur avec une 7e mineure. En Ré, la 7e majeure Do# devient Do : Ré mixolydien colle à l'accord D7 (Ré, Fa#, La, Do).",xp:30},
   {id:"q-scales-17",courseId:"scales",lessonId:"scales-c5-05",lvl:3,q:"Que se passe-t-il si tu joues Sol majeur (au lieu de Sol mixolydien) sur un accord G7 ?",o:["Rien, les deux gammes sont identiques", "Le Fa# frotte contre le Fa de l'accord", "Ça sonne plus joyeux, sans aucun frottement", "Ça sonne plus mineur et plus sombre qu'avant"],a:1,exp:"Sol majeur contient Fa#. G7 contient Fa naturel (la ♭7). Le Fa# entre en conflit avec le Fa de l'accord. Mixolydien (Fa naturel) = match parfait avec G7.",xp:55},
   {id:"q-impro-14",courseId:"impro",lessonId:"scales-c5-05",lvl:3,q:"Sur un blues en La (A7-D7-E7), tu joues La mixolydien sur les trois accords. Où ça frotte ?",o:["Sur aucun des trois accords","Sur A7 seulement","Sur D7 et E7","Sur E7 seulement"],a:2,exp:"La mixolydien = La-Si-Do#-Ré-Mi-Fa#-Sol : parfait sur A7 (La-Do#-Mi-Sol). Mais D7 contient Do, qui frotte contre le Do#, et E7 contient Sol#, qui frotte contre le Sol. On adapte : Ré mixolydien sur D7, Mi mixolydien sur E7 — ou la penta mineure de La, qui sonne blues sur les trois.",xp:70},
   {id:"q-fret-scales-05",type:"fretboard",courseId:"scales",lessonId: "scales-c5-05",lvl:2,q:"Trouve les notes du mixolydien de Sol (cases 0-5)",concept:{type:"find_scale",root:"G",quality:"mixolydian"},selectionRules:{mode:"all"},fretRange:[0,5],display:{showNotes:false},hint:"Mixolydien = majeure avec 7e mineure. Sol-La-Si-Do-Ré-Mi-Fa.",xp:55,exp:"Sol mixolydien : le Fa naturel (pas Fa#) est la note caractéristique."},

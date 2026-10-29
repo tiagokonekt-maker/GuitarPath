@@ -15,12 +15,12 @@ export default {
       "La corde 1 est la plus fine (aiguë) ; la corde 6, la plus grosse (grave), est la plus proche de ton visage.",
       "De la 6 à la 1 : Mi, La, Ré, Sol, Si, Mi. Deux Mi, à deux octaves d'écart. Pour t'en souvenir : « Mon Lapin Ronge Sept Salades Mûres ».",
     ] },
-    { type: "question", quizId: "q-debut-14" },
+    { type: "question", quizId: "q-debut-14-app" },
     { type: "idee", titre: "Les lettres de l'accordeur", texte: [
       "Beaucoup d'accordeurs écrivent les notes en anglais : Mi = E, La = A, Ré = D, Sol = G, Si = B.",
       "Tes cordes à vide donnent donc, de la 6 à la 1 : E A D G B E.",
     ] },
-    { type: "question", quizId: "q-debut-17" },
+    { type: "question", quizId: "q-debut-17-app" },
     { type: "idee", titre: "Trop basse ? On tend", texte: [
       "Joue une corde à vide. Trop basse : tourne la mécanique (la clé sur la tête du manche) pour la tendre. Trop haute : détends-la. Un quart de tour change déjà beaucoup.",
       "Vérifie que l'accordeur affiche la BONNE note : une corde trop tendue peut casser.",
@@ -37,12 +37,14 @@ export default {
       "On arrive à la note par en dessous, et on accorde à chaque séance.",
     ] },
   ],
-  quiz: ["q-debut-14", "q-debut-15", "q-debut-16", "q-debut-17"],
+  quiz: ["q-debut-14", "q-debut-15", "q-debut-16", "q-debut-17", "q-debut-14-app", "q-debut-17-app"],
 };
 
 export const quiz = [
   {id:"q-debut-14",courseId:"debut",lessonId:"debut-c1-05",lvl:1,q:"De la plus grosse corde à la plus fine, quels sont les noms des cordes à vide ?",o:["Mi La Ré Sol Si Mi","Mi Si Sol Ré La Mi","Do Ré Mi Fa Sol La","Mi La Ré Sol Do Mi"],a:0,exp:"Mi (6), La (5), Ré (4), Sol (3), Si (2), Mi (1). Moyen mnémotechnique : « Mon Lapin Ronge Sept Salades Mûres ».",xp:25},
+  {id:"q-debut-14-app",courseId:"debut",lessonId:"debut-c1-05",lvl:1,q:"Quelle corde à vide sonne Sol ?",o:["La corde 3","La corde 4","La corde 2","La corde 5"],a:0,exp:"De la 6 à la 1 : Mi, La, Ré, Sol, Si, Mi. Sol est la quatrième en partant de la grave : la corde 3.",xp:25},
   {id:"q-debut-15",courseId:"debut",lessonId:"debut-c1-05",lvl:1,q:"Laquelle est la corde 1 ?",o:["La plus grosse, la plus grave","La plus fine, la plus aiguë","Celle du milieu, accordée en Sol","Celle accordée en La"],a:1,exp:"La numérotation part de la corde la plus fine : la corde 1 est le Mi aigu, la corde 6 le Mi grave.",xp:25},
   {id:"q-debut-16",courseId:"debut",lessonId:"debut-c1-05",lvl:1,q:"L'accordeur indique que ta corde est trop basse. Que fais-tu ?",o:["Tu tends la corde avec la mécanique","Tu détends la corde avec la mécanique","Tu appuies plus fort avec la main gauche","Tu changes de corde"],a:0,exp:"Plus une corde est tendue, plus elle sonne aigu. Trop basse : on la tend, doucement, en surveillant l'accordeur.",xp:25},
   {id:"q-debut-17",courseId:"debut",lessonId:"debut-c1-05",lvl:2,q:"En notation anglaise, que donnent les six cordes à vide, de la corde 6 à la corde 1 ?",o:["A B C D E F","E A D G B E","E B G D A E","C D E F G A"],a:1,exp:"Mi = E, La = A, Ré = D, Sol = G, Si = B : E A D G B E. Beaucoup d'accordeurs affichent ces lettres.",xp:30},
+  {id:"q-debut-17-app",courseId:"debut",lessonId:"debut-c1-05",lvl:2,q:"Ton accordeur affiche D : quelle corde à vide es-tu en train d'accorder ?",o:["La corde 4","La corde 5","La corde 3","La corde 2"],a:0,exp:"D = Ré en notation anglaise, et la corde à vide accordée en Ré est la corde 4 (E A D G B E, de la 6 à la 1).",xp:30},
 ];

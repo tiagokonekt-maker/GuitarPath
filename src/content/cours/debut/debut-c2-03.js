@@ -17,11 +17,11 @@ export default {
       "Annulaire (3) sur la corde 5 en case 3, majeur (2) sur la corde 4 en case 2, index (1) sur la corde 2 en case 1. On ne joue pas la corde 6.",
       "Surveille la corde 3, à vide : un doigt trop à plat l'étouffe. Notes : Do, Mi, Sol.",
     ], bloc: { type: "chord_diagram", caption: "Do majeur (C) — x32010, cordes 5 à 1", data: { name: "C", frets: [-1, 3, 2, 0, 1, 0], fingers: [0, 3, 2, 0, 1, 0], startFret: 1 } } },
-    { type: "question", quizId: "q-debut-30" },
     { type: "idee", titre: "Sol (G) : 320003", texte: [
       "Majeur (2) sur la corde 6 en case 3, index (1) sur la corde 5 en case 2, annulaire (3) sur la corde 1 en case 3. On gratte les six cordes. Notes : Sol, Si, Ré.",
       "Variante plus pleine, pour plus tard : 320033.",
     ], bloc: { type: "chord_diagram", caption: "Sol majeur (G) — 320003, les 6 cordes", data: { name: "G", frets: [3, 2, 0, 0, 0, 3], fingers: [2, 1, 0, 0, 0, 3], startFret: 1 } } },
+    { type: "question", quizId: "q-debut-30" },
     { type: "idee", titre: "Ré (D) : xx0232", texte: [
       "Index (1) sur la corde 3 en case 2, majeur (2) sur la corde 1 en case 2, annulaire (3) sur la corde 2 en case 3 : un petit triangle. On gratte depuis la corde 4 à vide.",
       "Notes : Ré, Fa#, La. Le plus délicat : arrondis bien les doigts.",
@@ -44,7 +44,7 @@ export default {
 
 export const quiz = [
   {id:"q-debut-29",courseId:"debut",lessonId:"debut-c2-03",lvl:1,q:"Pour l'accord de Ré majeur, depuis quelle corde commences-tu à gratter ?",o:["La corde 6 (Mi grave)","La corde 5 (La)","La corde 4 (Ré)","La corde 3 (Sol)"],a:2,exp:"On part de la corde 4 à vide : c'est le Ré, la fondamentale de l'accord. Les cordes 6 et 5 ne sont pas jouées (xx0232), sinon l'accord sonne lourd et flou.",xp:25},
-  {id:"q-debut-30",courseId:"debut",lessonId:"debut-c2-03",lvl:1,q:"Dans l'accord de Do (x32010), quelle corde reste à vide entre deux doigts posés ?",o:["La corde 3","La corde 5","La corde 6","La corde 4"],a:0,exp:"Corde 4 case 2, corde 3 à vide, corde 2 case 1 : la corde 3 doit sonner entre deux doigts, d'où l'importance de bien les arrondir.",xp:25},
+  {id:"q-debut-30",courseId:"debut",lessonId:"debut-c2-03",lvl:1,q:"Dans l'accord de Do, quelle corde reste à vide entre deux doigts posés ?",o:["La corde 3","La corde 5","La corde 6","La corde 4"],a:0,exp:"Corde 4 case 2, corde 3 à vide, corde 2 case 1 : la corde 3 doit sonner entre deux doigts, d'où l'importance de bien les arrondir.",xp:25},
   {id:"q-debut-31",courseId:"debut",lessonId:"debut-c2-03",lvl:2,q:"Quelles sont les notes de l'accord de Sol majeur ?",o:["Sol, Si, Ré","Sol, Si♭, Ré","Sol, Do, Mi","Sol, La, Si"],a:0,exp:"Sol majeur = Sol, Si, Ré. Sur la guitare (320003) : Sol, Si, Ré, Sol, Si, Sol, de la corde 6 à la corde 1.",xp:30},
   {id:"q-debut-32",courseId:"debut",lessonId:"debut-c2-03",lvl:2,q:"L'accord de Ré majeur contient Ré, La et…",o:["Fa","Fa#","Sol","Si"],a:1,exp:"Ré majeur = Ré, Fa#, La. C'est la corde 1 case 2 qui donne le Fa#. Avec un Fa naturel, ce serait Ré mineur.",xp:30},
 ];

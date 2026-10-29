@@ -32,7 +32,7 @@ export default {
       "Tiens le médiator entre le pouce et le côté de l'index, avec 2 à 3 mm de pointe qui dépassent.",
       "Le mouvement vient du poignet, petit et souple, pas du coude. Après l'attaque, le médiator ne s'éloigne que de quelques millimètres de la corde.",
     ] },
-    { type: "question", quizId: "q-rhy-med-new-01" },
+    { type: "question", quizId: "q-rhy-med-new-01-app" },
     { type: "idee", titre: "Le rythme décide du sens", texte: [
       "Au clic, deux notes par temps : aller sur « 1, 2, 3, 4 », retour sur chaque « et ».",
       "Même quand la note se répète ou change de case, le sens du médiator suit le rythme, jamais la mélodie.",
@@ -55,11 +55,12 @@ export default {
       "On monte de 5 BPM après quatre passages propres, et on redescend si ça accroche.",
     ] },
   ],
-  quiz: ["q-rhy-med-new-01", "q-rhy-med-new-02", "q-rhy-med-new-03"],
+  quiz: ["q-rhy-med-new-01", "q-rhy-med-new-02", "q-rhy-med-new-03", "q-rhy-med-new-01-app"],
 };
 
 export const quiz = [
   {id:"q-rhy-med-new-01",courseId:"rhythm",lessonId:"rhy-med-01",lvl:1,q:"En médiator alterné, d'où vient surtout le mouvement ?",o:["Du poignet","Du coude","De l'épaule","Des doigts"],a:0,exp:"Un petit mouvement souple du poignet : le coude et l'épaule donnent un geste trop ample et trop lent.",xp:25},
+  {id:"q-rhy-med-new-01-app",courseId:"rhythm",lessonId:"rhy-med-01",lvl:1,q:"Ton bras entier bouge à chaque note et tu fatigues vite. Que corriges-tu ?",o:["Tu laisses le poignet faire le geste","Tu serres davantage le médiator","Tu grattes plus fort pour compenser","Tu joues tout vers le bas"],a:0,exp:"Le mouvement doit venir du poignet, petit et souple. Le bras entier donne un geste trop ample : plus lent, moins précis, plus fatigant.",xp:25},
   {id:"q-rhy-med-new-02",courseId:"rhythm",lessonId:"rhy-med-01",lvl:1,q:"Tu joues huit croches par mesure au clic. Sur quels comptes vas-tu vers le haut ?",o:["Sur les « et »","Sur les chiffres","Sur les temps 2 et 4","Sur les temps 1 et 3"],a:0,exp:"L'aller tombe sur chaque temps (1, 2, 3, 4), le retour sur chaque « et » entre les temps.",xp:25},
   {id:"q-rhy-med-new-03",courseId:"rhythm",lessonId:"rhy-med-01",lvl:2,q:"À 80 BPM, tes croches deviennent brouillonnes. Que fais-tu ?",o:["Tu redescends à 75","Tu montes à 90","Tu joues tout vers le bas","Tu serres le médiator"],a:0,exp:"On redescend d'un cran jusqu'au tempo où tout est propre. Serrer ou forcer ne fait que crisper la main.",xp:30},
 ];

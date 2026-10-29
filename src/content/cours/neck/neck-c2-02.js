@@ -51,7 +51,7 @@ export default {
       "Dans cette forme, la fondamentale est sur la corde 5. Barré en case 3 : Do majeur. En case 5 : Ré majeur. En case 7 : Mi majeur.",
       "Avec la corde 6, tu sais nommer n'importe quel barré majeur ou mineur.",
     ] },
-    { type: "question", quizId: "q-neck-43" },
+    { type: "question", quizId: "q-neck-43-app" },
     { type: "idee", titre: "Une note, deux places", texte: [
       "Mi (corde 6, case 0) et Mi (corde 5, case 7). Do (corde 6, case 8) et Do (corde 5, case 3).",
       "Quand tu cherches une note, pense à ces paires : prends celle qui est la plus proche de ta main.",
@@ -66,12 +66,13 @@ export default {
       "Un barré en forme de La porte le nom de sa note sur la corde 5.",
     ] },
   ],
-  quiz: ["q-base-17","q-neck-43","q-neck-44","q-neck-p34-03"],
+  quiz: ["q-base-17","q-neck-43","q-neck-44","q-neck-p34-03", "q-neck-43-app"],
 };
 
 export const quiz = [
   {id:"q-base-17",courseId:"neck",lessonId:"neck-c2-02",lvl:2,q:"Sur la corde de La (corde 5), quelle note trouve-t-on case 3 ?",o:["Do","Si","Ré","Do#"],a:0,exp:"Depuis La à vide : case 1 La#, case 2 Si, case 3 Do. Cette corde porte la fondamentale des accords barrés en forme de La.",xp:35},
   {id:"q-neck-43",courseId:"neck",lessonId:"neck-c2-02",lvl:2,q:"Un barré en forme de La, fondamentale sur la corde 5 case 5, donne quel accord majeur ?",o:["Ré majeur","Do majeur","Mi majeur","Sol majeur"],a:0,exp:"La forme de La place la fondamentale sur la corde 5. Corde 5 case 5 = Ré : Ré majeur. Case 3 donnerait Do, case 7 Mi, case 10 Sol.",xp:40},
+  {id:"q-neck-43-app",courseId:"neck",lessonId:"neck-c2-02",lvl:2,q:"Un barré en forme de La, fondamentale sur la corde 5 case 10, donne quel accord majeur ?",o:["Sol majeur","Fa majeur","La majeur","Mi majeur"],a:0,exp:"La forme de La place la fondamentale sur la corde 5. Corde 5 case 10 = Sol : Sol majeur.",xp:30},
   {id:"q-neck-44",courseId:"neck",lessonId:"neck-c2-02",lvl:2,q:"Do est à la case 8 de la corde 6. Où joues-tu ce même Do, à la même hauteur, sur la corde 5 ?",o:["Case 3","Case 13","Case 5","Case 10"],a:0,exp:"La corde 5 est accordée 5 demi-tons plus haut que la corde 6 : pour la même note, on recule de 5 cases. 8 − 5 = 3 : Do (corde 5, case 3).",xp:40},
   {id:"q-neck-p34-03",courseId:"neck",lessonId:"neck-c2-02",lvl:2,q:"Sur la corde 5, quelle note joues-tu à la case 10 ?",o:["Sol","Fa","La","Fa#"],a:0,exp:"Corde 5 : Mi (7), Fa (8), Fa# (9), Sol (10). Autre chemin : la case 12 est l'octave, La ; deux cases plus bas, un ton en dessous, c'est Sol.",xp:35},
 ];

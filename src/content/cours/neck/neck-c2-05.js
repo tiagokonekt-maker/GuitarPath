@@ -48,7 +48,7 @@ export default {
         ],
       },
     } },
-    { type: "question", quizId: "q-neck-25" },
+    { type: "question", quizId: "q-neck-25-app" },
     { type: "idee", titre: "Une triade sur les cordes aiguës", texte: [
       "Sol (corde 3, case 0), Do (corde 2, case 1), Mi (corde 1, case 0) : les trois notes de Do majeur, sur les trois cordes aiguës.",
       "Ces petites formes à trois cordes sont partout en pop, en funk et en R&B.",
@@ -84,13 +84,14 @@ export default {
       "Chaque note apparaît une fois par corde entre les cases 0 et 11.",
     ] },
   ],
-  quiz: ["q-neck-06","q-neck-24","q-neck-25","q-neck-26","q-fret-neck-01","q-fret-neck-02","q-fret-neck-03","q-fret-neck-04"],
+  quiz: ["q-neck-06","q-neck-24","q-neck-25","q-neck-26","q-fret-neck-01","q-fret-neck-02","q-fret-neck-03","q-fret-neck-04", "q-neck-25-app"],
 };
 
 export const quiz = [
   {id:"q-neck-06",courseId:"neck",lessonId:"neck-c2-05",lvl:3,q:"Combien y a-t-il de Do sur les 12 premières cases d'une guitare 6 cordes en accordage standard ?",o:["5","3","4","6"],a:3,exp:"Un Do par corde entre les cases 0 et 12 : corde 6 case 8, corde 5 case 3, corde 4 case 10, corde 3 case 5, corde 2 case 1, corde 1 case 8. Soit 6 en tout.",xp:50},
   {id:"q-neck-24",courseId:"neck",lessonId:"neck-c2-05",lvl:2,q:"Sur la corde 2 (Si), entre quelles cases trouve-t-on le demi-ton Si-Do ?",o:["Case 4 et 5","Case 9 et 10","Case 0 et 1","Case 7 et 8"],a:2,exp:"Sur la corde 2, Si (à vide) et Do (case 1) sont immédiatement adjacents — le demi-ton naturel tombe dès le début du manche.",xp:35},
   {id:"q-neck-25",courseId:"neck",lessonId:"neck-c2-05",lvl:2,q:"La corde 1 (Mi aigu) porte exactement les mêmes notes qu'une autre corde, mais 2 octaves plus haut. Laquelle ?",o:["La corde 5","La corde 4","La corde 2","La corde 6"],a:3,exp:"Cordes 1 et 6 sont toutes deux accordées en Mi, à 2 octaves d'écart. Ce que tu apprends sur la corde 6 est donc gratuit sur la corde 1.",xp:40},
+  {id:"q-neck-25-app",courseId:"neck",lessonId:"neck-c2-05",lvl:2,q:"Sur la corde 1 (Mi aigu), à quelle case trouve-t-on Fa# ?",o:["Case 1","Case 2","Case 3","Case 4"],a:1,exp:"Comme sur la corde 6 : Fa en case 1, Sol en case 3, donc Fa# entre les deux, case 2.",xp:30},
   {id:"q-neck-26",courseId:"neck",lessonId:"neck-c2-05",lvl:3,q:"Sur la corde 1 (Mi aigu), quelle note trouve-t-on à la case 8 ?",o:["Do","Si","Ré","La"],a:0,exp:"0 Mi, 1 Fa, 3 Sol, 5 La, 7 Si, 8 Do — identique à la corde 6, simplement 2 octaves plus haut.",xp:45},
   {id:"q-fret-neck-01",type:"fretboard",courseId:"neck",lessonId:"neck-c2-05",lvl:1,q:"Trouve toutes les notes Do (C) sur le manche",concept:{type:"find_note",root:"C"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Case 8 corde 6, case 3 corde 5.",xp:40,exp:"Do se trouve en corde 6 case 8, corde 5 case 3, corde 4 case 10, corde 3 case 5, corde 2 case 1, corde 1 case 8."},
   {id:"q-fret-neck-02",type:"fretboard",courseId:"neck",lessonId:"neck-c2-05",lvl:1,q:"Trouve toutes les notes Sol (G) sur le manche",concept:{type:"find_note",root:"G"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Sol est la corde 3 à vide.",xp:40,exp:"Sol en : corde 6 case 3, corde 5 case 10, corde 4 case 5, corde 3 à vide, corde 2 case 3, corde 1 case 3."},

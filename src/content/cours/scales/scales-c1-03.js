@@ -36,7 +36,7 @@ export default {
         ],
       },
     } },
-    { type: "question", quizId: "q-base-12" },
+    { type: "question", quizId: "q-base-12-app" },
     { type: "idee", titre: "Le dessin des écarts fait la gamme", texte: [
       "De Do à Do, les écarts sont : ton, ton, demi-ton, ton, ton, ton, demi-ton. Ce dessin, c'est la gamme majeure.",
       "Change le dessin et tu changes de gamme : mineure, modes… Toute la théorie repose sur ces suites d'écarts.",
@@ -61,11 +61,12 @@ export default {
       "Gamme majeure : ton, ton, demi-ton, ton, ton, ton, demi-ton.",
     ] },
   ],
-  quiz: ["q-base-11","q-base-12","q-scales-51"],
+  quiz: ["q-base-11","q-base-12","q-scales-51", "q-base-12-app"],
 };
 
 export const quiz = [
   {id:"q-base-11",courseId:"scales",lessonId:"scales-c1-03",lvl:1,q:"Un ton entier représente combien de demi-tons ?",o:["1","3","2","4"],a:2,exp:"Un ton = 2 demi-tons = 2 cases sur la guitare. Le demi-ton reste la plus petite unité du système occidental.",xp:30},
   {id:"q-base-12",courseId:"scales",lessonId:"scales-c1-03",lvl:1,q:"Entre lesquelles de ces paires de notes naturelles n'y a-t-il qu'un demi-ton ?",o:["Do et Ré","Sol et La","La et Si","Mi et Fa"],a:3,exp:"Mi-Fa et Si-Do sont les deux seules paires naturelles séparées d'un simple demi-ton. Toutes les autres sont à un ton entier.",xp:30},
+  {id:"q-base-12-app",courseId:"scales",lessonId:"scales-c1-03",lvl:1,q:"Sur une même corde, combien de cases séparent Mi de Sol ?",o:["3 cases","4 cases","2 cases","5 cases"],a:0,exp:"Mi-Fa n'est qu'un demi-ton (1 case), Fa-Sol un ton (2 cases) : 3 cases en tout. Sur la corde 6 : Mi à vide, Sol en case 3.",xp:25},
   {id:"q-scales-51",courseId:"scales",lessonId:"scales-c1-03",lvl:2,q:"De Mi à Sol en montant, quelle est la distance ?",o:["Un ton et demi","Deux tons","Un ton","Deux tons et demi"],a:0,exp:"Mi → Fa = un demi-ton (demi-ton naturel), Fa → Sol = un ton. Total : un ton et demi, soit 3 demi-tons — 3 cases sur une même corde.",xp:40},
 ];

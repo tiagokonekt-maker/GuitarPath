@@ -22,16 +22,16 @@ export default {
       "Index, majeur et annulaire en case 2, sur les cordes 4, 3 et 2. La corde 6 ne joue pas : gratte à partir de la corde 5, à vide.",
       "Les trois doigts sont serrés : arrondis-les pour que la corde 1, à vide, sonne aussi.",
     ], bloc: LA },
-    { type: "question", quizId: "q-harm-acc-new-01" },
     { type: "idee", titre: "Mi (E)", texte: [
       "Mi mineur plus un doigt : majeur et annulaire en case 2 sur les cordes 5 et 4, et l'index sur la corde 3, case 1.",
       "Ce Sol# (corde 3, case 1) change tout : la couleur passe de sombre à lumineuse. Les six cordes sonnent.",
     ], bloc: MI },
+    { type: "question", quizId: "q-harm-acc-new-01" },
     { type: "idee", titre: "Ré mineur (Dm)", texte: [
       "Quatre cordes, de la corde 4 à vide à la corde 1. Majeur sur la corde 3 case 2, annulaire sur la corde 2 case 3, index sur la corde 1 case 1.",
       "Compare avec Ré : seule la note de la corde 1 change. Fa# devient Fa (corde 1, case 1), et l'accord devient mineur.",
     ], bloc: REM },
-    { type: "question", quizId: "q-harm-acc-new-02" },
+    { type: "question", quizId: "q-harm-acc-new-02-app" },
     { type: "idee", titre: "Trois changements à travailler", texte: [
       "La ↔ Ré : la main reste autour de la case 2, les doigts bougent d'un bloc.",
       "Mi ↔ La mineur : c'est la même forme ! Les trois doigts se décalent ensemble d'une corde vers l'aigu.",
@@ -47,11 +47,12 @@ export default {
       "Ré mineur (xx0231) : seule la corde 1 diffère de Ré ; Mi et La mineur ont la même forme.",
     ] },
   ],
-  quiz: ["q-harm-acc-new-01", "q-harm-acc-new-02", "q-harm-acc-new-03"],
+  quiz: ["q-harm-acc-new-01", "q-harm-acc-new-02", "q-harm-acc-new-03", "q-harm-acc-new-02-app"],
 };
 
 export const quiz = [
-  {id:"q-harm-acc-new-01",courseId:"harmony",lessonId:"harm-acc-01",lvl:1,q:"Sur l'accord de La (x02220), à partir de quelle corde grattes-tu ?",o:["Corde 5","Corde 6","Corde 4","Corde 3"],a:0,exp:"Le « x » de la corde 6 indique qu'elle ne joue pas : on gratte de la corde 5 (La à vide) à la corde 1.",xp:25},
-  {id:"q-harm-acc-new-02",courseId:"harmony",lessonId:"harm-acc-01",lvl:1,q:"Entre Ré (xx0232) et Ré mineur (xx0231), quelle note change ?",o:["Fa# devient Fa","La devient Sol","Ré devient Do","Mi devient Ré"],a:0,exp:"Sur la corde 1, la case 2 (Fa#) passe à la case 1 (Fa) : la tierce majeure devient mineure, le reste ne bouge pas.",xp:25},
+  {id:"q-harm-acc-new-01",courseId:"harmony",lessonId:"harm-acc-01",lvl:1,q:"Pour l'accord de La majeur, depuis quelle corde grattes-tu ?",o:["Corde 5","Corde 6","Corde 4","Corde 3"],a:0,exp:"La corde 6 ne joue pas dans l'accord de La : on gratte de la corde 5 (La à vide, la fondamentale) à la corde 1.",xp:25},
+  {id:"q-harm-acc-new-02",courseId:"harmony",lessonId:"harm-acc-01",lvl:1,q:"Entre Ré et Ré mineur, quelle note change ?",o:["Fa# devient Fa","La devient Sol","Ré devient Do","Mi devient Ré"],a:0,exp:"Sur la corde 1, la case 2 (Fa#) passe à la case 1 (Fa) : la tierce majeure devient mineure, le reste ne bouge pas.",xp:25},
+  {id:"q-harm-acc-new-02-app",courseId:"harmony",lessonId:"harm-acc-01",lvl:1,q:"Entre La et La mineur, quelle note change ?",o:["Do# devient Do","Mi devient Ré","La devient Sol","Si devient La"],a:0,exp:"Sur la corde 2, la case 2 (Do#) passe à la case 1 (Do) : la tierce majeure devient mineure, comme Fa# → Fa entre Ré et Ré mineur.",xp:25},
   {id:"q-harm-acc-new-03",courseId:"harmony",lessonId:"harm-acc-01",lvl:2,q:"De Mi à La mineur, comment bouge la main gauche ?",o:["Toute la forme se décale d'une corde","Seul l'index change de case","Les trois doigts montent d'une case","Seul le majeur change de corde"],a:0,exp:"Mi (022100) et La mineur (x02210) ont la même forme : les trois doigts se décalent ensemble d'une corde vers l'aigu.",xp:30},
 ];

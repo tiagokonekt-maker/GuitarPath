@@ -23,7 +23,7 @@ export default {
       caption: "Do/Mi — 1ère inversion (Mi en basse, corde 6 à vide)",
       data: { name: "C/E", frets: [0,3,2,0,1,0], fingers: [0,3,2,0,1,0], startFret: 1 },
     } },
-    { type: "question", quizId: "q-harm-28" },
+    { type: "question", quizId: "q-harm-28-app" },
     { type: "idee", titre: "2e inversion : 5 à la basse", texte: [
       "La quinte passe au grave : Sol, Do, Mi, noté Do/Sol.",
       "C'est la moins stable des trois : la quinte à la basse crée une légère tension. On l'emploie surtout comme accord de passage.",
@@ -52,11 +52,12 @@ export default {
       "Les inversions servent le voice-leading : Do → Sol/Si → Lam fait descendre la basse.",
     ] },
   ],
-  quiz: ["q-harm-28", "q-harm-29", "q-harm-58", "q-harm-p6-c204-01"],
+  quiz: ["q-harm-28", "q-harm-29", "q-harm-58", "q-harm-p6-c204-01", "q-harm-28-app"],
 };
 
 export const quiz = [
   {id:"q-harm-28",courseId:"harmony",lessonId:"harm-c2-04",lvl:1,q:"Dans une 1ère inversion, quelle note de l'accord est à la basse ?",o:["La fondamentale", "La quinte", "La septième", "La tierce"],a:3,exp:"1ère inversion = tierce à la basse. Do majeur : Mi - Sol - Do, noté Do/Mi.",xp:30},
+  {id:"q-harm-28-app",courseId:"harmony",lessonId:"harm-c2-04",lvl:1,q:"Tu joues Sol majeur en 1re inversion. Quelle note est à la basse ?",o:["Si","Sol","Ré","La"],a:0,exp:"1re inversion = la tierce à la basse. Sol majeur = Sol, Si, Ré : la tierce est Si, d'où Sol/Si.",xp:25},
   {id:"q-harm-29",courseId:"harmony",lessonId:"harm-c2-04",lvl:2,q:"À quoi servent surtout les inversions dans un enchaînement d'accords ?",o:["À réduire les sauts entre les accords", "À changer la tonalité du morceau", "À rendre chaque accord plus fort et plus riche", "À remplacer les accords mineurs"],a:0,exp:"C'est le voice-leading : on garde les notes communes et on déplace les autres au plus court.",xp:40},
   {id:"q-harm-58",courseId:"harmony",lessonId:"harm-c2-04",lvl:2,q:"Dans Do - Sol - Lam - Fa, quel Sol fait descendre la basse Do → Si → La ?",o:["Sol/Si, 1re inversion","Sol/Ré, 2e inversion","Sol à l'état fondamental","Sol/La, avec la 9e en basse"],a:0,exp:"En 1re inversion, la tierce de Sol (Si) passe à la basse : Do (Do) → Si (Sol/Si) → La (Lam). La basse descend par degrés au lieu de sauter Do → Sol → La.",xp:40},
   {id:"q-harm-p6-c204-01",courseId:"harmony",lessonId:"harm-c2-04",lvl:2,q:"Tu lis l'accord Do/Sol. Que joues-tu ?",o:["Do, en 2e inversion","Do, en 1re inversion","Sol, en 2e inversion","Sol, en 1re inversion"],a:0,exp:"Do/Sol = l'accord de Do avec Sol à la basse. Sol est la quinte de Do : quinte à la basse, c'est la 2e inversion.",xp:35},

@@ -62,7 +62,7 @@ export default {
 };
 
 export const quiz = [
-  {id:"q-neck-pow-new-01",courseId:"neck",lessonId:"neck-pow-01",lvl:1,q:"Quelles notes joues-tu dans le power chord E5 (022xxx) ?",o:["Mi, Si et Mi","Mi, Sol# et Si","Mi, Sol et Si","Mi, La et Mi"],a:0,exp:"Corde 6 à vide : Mi ; corde 5 case 2 : Si (la quinte) ; corde 4 case 2 : Mi (l'octave). Aucune tierce.",xp:25},
+  {id:"q-neck-pow-new-01",courseId:"neck",lessonId:"neck-pow-01",lvl:1,q:"Quelles notes joues-tu dans le power chord E5 ?",o:["Mi, Si et Mi","Mi, Sol# et Si","Mi, Sol et Si","Mi, La et Mi"],a:0,exp:"Corde 6 à vide : Mi ; corde 5 case 2 : Si (la quinte) ; corde 4 case 2 : Mi (l'octave). Aucune tierce.",xp:25},
   {id:"q-neck-pow-new-02",courseId:"neck",lessonId:"neck-pow-01",lvl:1,q:"Power chord mobile, index sur la corde 6 en case 5 : quel accord joues-tu ?",o:["A5","G5","D5","C5"],a:0,exp:"La corde 6 en case 5 donne La : c'est la fondamentale, donc A5.",xp:25},
   {id:"q-neck-pow-new-03",courseId:"neck",lessonId:"neck-pow-01",lvl:2,q:"Pourquoi un power chord convient-il aussi bien à un morceau majeur qu'à un morceau mineur ?",o:["Il n'a pas de tierce","Il n'a pas de quinte","Il n'a que des cordes graves","Il se joue toujours étouffé"],a:0,exp:"C'est la tierce qui rend un accord majeur ou mineur. Le power chord n'a que la fondamentale et la quinte : il s'adapte aux deux.",xp:30},
 ];

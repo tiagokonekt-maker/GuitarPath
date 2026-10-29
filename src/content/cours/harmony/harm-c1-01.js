@@ -24,7 +24,7 @@ export default {
       "Pop, rock, folk, blues, jazz : presque tout repose sur le système tonal. Une note centrale, la tonique, attire toutes les autres.",
       "Les accords s'en éloignent puis y reviennent, comme on rentre à la maison. Comprendre ça, c'est pouvoir analyser, improviser et transposer au lieu d'apprendre des recettes.",
     ] },
-    { type: "question", quizId: "q-harm-54" },
+    { type: "question", quizId: "q-harm-54-app" },
     { type: "a-toi", titre: "Entends la maison", consigne: "Joue Sol, Do, Ré, Sol, quatre coups par accord au clic. Le dernier Sol sonne comme une arrivée. Rejoue la suite en t'arrêtant sur Ré : la phrase reste en suspens.", bloc: SOL, bpm: 60 },
     { type: "recap", points: [
       "Mélodie = horizontal, harmonie = vertical, rythme = le temps.",
@@ -32,11 +32,12 @@ export default {
       "La musique tonale tourne autour d'une note maison, la tonique.",
     ] },
   ],
-  quiz: ["q-base-05","q-harm-53","q-harm-54"],
+  quiz: ["q-base-05","q-harm-53","q-harm-54", "q-harm-54-app"],
 };
 
 export const quiz = [
   {id:"q-base-05",courseId:"harmony",lessonId:"harm-c1-01",lvl:1,q:"L'harmonie, en musique, désigne avant tout…",o:["Plusieurs sons joués simultanément","Une suite de notes jouées seule","La vitesse d'un morceau","Le placement des accents"],a:0,exp:"L'harmonie naît de la superposition des sons. La mélodie est horizontale (une note après l'autre), l'harmonie verticale (plusieurs notes ensemble).",xp:25},
   {id:"q-harm-53",courseId:"harmony",lessonId:"harm-c1-01",lvl:1,q:"Tu joues Do, Mi et Sol l'une après l'autre, puis les trois ensemble. Quand fais-tu de l'harmonie ?",o:["Quand les trois sonnent ensemble","Quand tu les joues l'une après l'autre","Dans les deux cas, de la même façon","Dans aucun des deux cas"],a:0,exp:"Une note après l'autre, c'est une ligne mélodique (l'horizontal). Plusieurs notes ensemble, c'est de l'harmonie (le vertical) : ici, l'accord de Do.",xp:30},
   {id:"q-harm-54",courseId:"harmony",lessonId:"harm-c1-01",lvl:2,q:"Dans le système tonal de la pop, du rock ou du blues, autour de quoi la musique s'organise-t-elle ?",o:["Une note centrale, la tonique","Un tempo fixe, toujours le même","Une seule corde de la guitare","Un accord unique, joué en boucle"],a:0,exp:"Le système tonal gravite autour d'une note de repos, la tonique. Notes et accords s'en éloignent puis y reviennent : c'est ce qui donne à une chanson son sentiment de « maison ».",xp:40},
+  {id:"q-harm-54-app",courseId:"harmony",lessonId:"harm-c1-01",lvl:1,q:"Tu joues Sol, Do, Ré, Sol, mais tu t'arrêtes sur Ré. Pourquoi la phrase semble-t-elle inachevée ?",o:["Elle n'est pas revenue sur Sol, la tonique","Ré est un accord trop aigu pour finir","Le tempo ralentit sur le dernier accord","Ré se joue avec moins de cordes que Sol"],a:0,exp:"Dans cette suite, Sol est la tonique, la maison. S'arrêter sur Ré, c'est rester dehors : la musique réclame le retour sur Sol.",xp:25},
 ];

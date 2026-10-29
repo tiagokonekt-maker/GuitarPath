@@ -21,7 +21,7 @@ export default {
       "L'index se couche sur les cordes 1 et 2, case 1. Majeur sur la corde 3 case 2, annulaire sur la corde 4 case 3.",
       "Gratte seulement les quatre cordes aiguës : Fa, La, Do et Fa.",
     ], bloc: FA_PETIT },
-    { type: "question", quizId: "q-harm-fa-new-01" },
+    { type: "question", quizId: "q-harm-fa-new-01-app" },
     { type: "idee", titre: "Faire sonner les cordes 1 et 2", texte: [
       "Place l'index juste derrière la frette, un peu roulé sur son côté, côté pouce : la partie osseuse appuie mieux que la pulpe.",
       "Joue les cordes une par une. Une corde frise ? Rapproche l'index de la frette avant d'appuyer plus fort.",
@@ -30,7 +30,7 @@ export default {
       "Bonne nouvelle : la forme de Do se décale d'une corde vers l'aigu. L'annulaire passe de la corde 5 à la corde 4, le majeur de la corde 4 à la corde 3, en gardant leurs cases.",
       "L'index reste en case 1 et se couche sur la corde 1.",
     ], bloc: DO },
-    { type: "question", quizId: "q-harm-fa-new-02" },
+    { type: "question", quizId: "q-harm-fa-new-02-app" },
     { type: "a-toi", titre: "Do ↔ petit Fa",
       consigne: "Do, quatre coups, puis petit Fa, quatre coups. Déplace annulaire et majeur ensemble, d'un bloc. Deux minutes au clic : à la fin, le Fa doit sonner dès le premier coup.",
       bloc: FA_PETIT, bpm: 60, minuteur: 120 },
@@ -38,18 +38,21 @@ export default {
       "C'est la forme de Mi décalée d'une case, l'index jouant le rôle du sillet sur les six cordes. Majeur sur la corde 3 case 2, annulaire sur la corde 5 case 3, auriculaire sur la corde 4 case 3.",
       "Étape intermédiaire : x33211, sans la corde 6. Le petit Fa suffit déjà pour la plupart des chansons.",
     ], bloc: FA },
-    { type: "question", quizId: "q-harm-fa-new-03" },
+    { type: "question", quizId: "q-harm-fa-new-03-app" },
     { type: "recap", points: [
       "Petit Fa (xx3211) : l'index couché sur les cordes 1 et 2, quatre cordes grattées.",
       "De Do à Fa, la forme se décale d'une corde vers l'aigu ; l'index reste en case 1.",
       "Fa complet (133211) = la forme de Mi, une case plus haut, l'index en barré.",
     ] },
   ],
-  quiz: ["q-harm-fa-new-01", "q-harm-fa-new-02", "q-harm-fa-new-03"],
+  quiz: ["q-harm-fa-new-01", "q-harm-fa-new-02", "q-harm-fa-new-03", "q-harm-fa-new-01-app", "q-harm-fa-new-02-app", "q-harm-fa-new-03-app"],
 };
 
 export const quiz = [
-  {id:"q-harm-fa-new-01",courseId:"harmony",lessonId:"harm-acc-03",lvl:1,q:"Dans le petit Fa (xx3211), quel doigt appuie deux cordes à la fois ?",o:["L'index","Le majeur","L'annulaire","L'auriculaire"],a:0,exp:"L'index se couche sur les cordes 1 et 2 en case 1 ; majeur et annulaire n'appuient qu'une corde chacun.",xp:25},
-  {id:"q-harm-fa-new-02",courseId:"harmony",lessonId:"harm-acc-03",lvl:2,q:"Pour passer de Do (x32010) au petit Fa (xx3211), que font l'annulaire et le majeur ?",o:["Ils se décalent d'une corde vers l'aigu","Ils montent de deux cases","Ils restent exactement en place","Ils se décalent vers les graves"],a:0,exp:"Annulaire de la corde 5 à la corde 4 (case 3), majeur de la corde 4 à la corde 3 (case 2) : même forme, une corde plus loin.",xp:30},
-  {id:"q-harm-fa-new-03",courseId:"harmony",lessonId:"harm-acc-03",lvl:2,q:"Le Fa complet (133211) reprend la forme de quel accord ouvert, une case plus haut ?",o:["Mi","La","Ré","Do"],a:0,exp:"Mi = 022100. Décale-le d'une case et barre la case 1 avec l'index : 133211, c'est Fa.",xp:30},
+  {id:"q-harm-fa-new-01",courseId:"harmony",lessonId:"harm-acc-03",lvl:1,q:"Dans le petit Fa, quel doigt appuie deux cordes à la fois ?",o:["L'index","Le majeur","L'annulaire","L'auriculaire"],a:0,exp:"L'index se couche sur les cordes 1 et 2 en case 1 ; majeur et annulaire n'appuient qu'une corde chacun.",xp:25},
+  {id:"q-harm-fa-new-01-app",courseId:"harmony",lessonId:"harm-acc-03",lvl:1,q:"Dans le petit Fa, l'index couché en case 1 appuie les cordes 1 et 2. Quelles notes fait-il sonner ?",o:["Fa et Do","Fa et La","Mi et Si","Fa# et Do#"],a:0,exp:"Corde 1 case 1 : Fa. Corde 2 case 1 : Do. Avec La (corde 3 case 2) et Fa (corde 4 case 3), on obtient Fa, La, Do : l'accord de Fa.",xp:25},
+  {id:"q-harm-fa-new-02",courseId:"harmony",lessonId:"harm-acc-03",lvl:2,q:"Pour passer de Do au petit Fa, que font l'annulaire et le majeur ?",o:["Ils se décalent d'une corde vers l'aigu","Ils montent de deux cases","Ils restent exactement en place","Ils se décalent vers les graves"],a:0,exp:"Annulaire de la corde 5 à la corde 4 (case 3), majeur de la corde 4 à la corde 3 (case 2) : même forme, une corde plus loin.",xp:30},
+  {id:"q-harm-fa-new-03",courseId:"harmony",lessonId:"harm-acc-03",lvl:2,q:"Le Fa complet reprend la forme de quel accord ouvert, une case plus haut ?",o:["Mi","La","Ré","Do"],a:0,exp:"Mi = 022100. Décale-le d'une case et barre la case 1 avec l'index : 133211, c'est Fa.",xp:30},
+  {id:"q-harm-fa-new-02-app",courseId:"harmony",lessonId:"harm-acc-03",lvl:2,q:"Tu joues la forme du petit Fa deux cases plus haut : index couché en case 3 sur les cordes 1 et 2. Quel accord obtiens-tu ?",o:["Sol majeur","La majeur","Mi majeur","Fa# majeur"],a:0,exp:"Deux cases = un ton : Fa monte à Sol. Les notes deviennent Sol (corde 4 case 5), Si (corde 3 case 4), Ré (corde 2 case 3) et Sol (corde 1 case 3).",xp:30},
+  {id:"q-harm-fa-new-03-app",courseId:"harmony",lessonId:"harm-acc-03",lvl:2,q:"Tu gardes la forme du Fa complet mais tu barres la case 5. Quel accord obtiens-tu ?",o:["La majeur","Sol majeur","Si majeur","Do majeur"],a:0,exp:"Le Fa complet a sa fondamentale sur la corde 6 case 1. Quatre cases plus haut, la corde 6 case 5 donne La : c'est un La majeur.",xp:30},
 ];

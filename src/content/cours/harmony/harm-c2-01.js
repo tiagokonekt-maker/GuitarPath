@@ -33,7 +33,7 @@ export default {
       caption: "La majeur — triade majeure ouverte (1-3-5)",
       data: { name: "A", frets: [-1,0,2,2,2,0], fingers: [0,0,1,2,3,0], startFret: 1 },
     } },
-    { type: "question", quizId: "q-harm-01" },
+    { type: "question", quizId: "q-harm-03" },
     { type: "idee", titre: "Mineure : 1-♭3-5", texte: [
       "La tierce descend d'un demi-ton : 3 puis 4 demi-tons. La quinte ne bouge pas.",
       "Un seul demi-ton d'écart, et le son devient doux, mélancolique. La mineur : La, Do, Mi.",
@@ -50,7 +50,7 @@ export default {
       caption: "Si diminué — triade diminuée (1-♭3-♭5)",
       data: { name: "Bdim", frets: [-1,2,3,4,3,-1], fingers: [0,1,2,4,3,0], startFret: 1 },
     } },
-    { type: "question", quizId: "q-harm-02" },
+    { type: "question", quizId: "q-harm-02-app" },
     { type: "idee", titre: "Augmentée : 1-3-#5", texte: [
       "Deux tierces majeures, 4 + 4 : la quinte monte à 8 demi-tons. Son flottant, ambigu.",
       "Elle est symétrique : Do augmenté, Mi augmenté et Sol# augmenté sonnent avec les mêmes trois notes.",
@@ -65,12 +65,13 @@ export default {
       "Brillant, mélancolique, tendu, flottant : quatre couleurs.",
     ] },
   ],
-  quiz: ["q-harm-01","q-harm-02","q-harm-03","q-harm-04"],
+  quiz: ["q-harm-01","q-harm-02","q-harm-03","q-harm-04", "q-harm-02-app"],
 };
 
 export const quiz = [
   {id:"q-harm-01",courseId:"harmony",lessonId:"harm-c2-01",lvl:1,q:"Une triade majeure se compose de…",o:["1-3-5","1-♭3-5","1-3-♭5","1-2-5"],a:0,exp:"Triade majeure : fondamentale + tierce majeure (4dt) + quinte juste (7dt). Formule 1-3-5. C'est la triade de référence.",xp:25},
   {id:"q-harm-02",courseId:"harmony",lessonId:"harm-c2-01",lvl:2,q:"Une triade diminuée se compose de…",o:["1-3-5","1-♭3-♭5","1-♭3-5","1-3-#5"],a:1,exp:"Diminuée = 1-♭3-♭5. Tierce mineure (3dt) + quinte diminuée (6dt). Très instable. Trouvée sur le 7e degré de la gamme majeure.",xp:35},
+  {id:"q-harm-02-app",courseId:"harmony",lessonId:"harm-c2-01",lvl:2,q:"Quelles notes forment la triade diminuée construite sur Mi ?",o:["Mi-Sol-Si♭","Mi-Sol-Si","Mi-Sol#-Si","Mi-Sol-Do"],a:0,exp:"Diminuée = 1-♭3-♭5, deux tierces mineures : Mi + 3 demi-tons = Sol, Sol + 3 demi-tons = Si♭. Mi-Sol-Si serait Mi mineur.",xp:30},
   {id:"q-harm-03",courseId:"harmony",lessonId:"harm-c2-01",lvl:2,q:"Quelles notes forment l'accord de Si majeur ?",o:["Si-Ré-Fa#","Si-Ré-Fa","Si-Ré#-Fa#","Si-Ré#-Fa"],a:2,exp:"Si majeur = Si + (Si+4dt = Ré#) + (Si+7dt = Fa#). Notes : Si-Ré#-Fa#. Triade majeure classique.",xp:40},
   {id:"q-harm-04",courseId:"harmony",lessonId:"harm-c2-01",lvl:3,q:"Une triade augmentée a quelle particularité ?",o:["Sa fondamentale est doublée à l'octave", "Elle contient 4 notes au lieu de 3", "Sa tierce est mineure au lieu de majeure", "Sa quinte est augmentée d'un demi-ton"],a:3,exp:"Augmentée = 1-3-#5. Quinte augmentée (8dt au lieu de 7dt). Symétrique : on peut empiler des tierces majeures à l'infini. Aug = Caug = Eaug = Lab aug (mêmes notes, fondamentales différentes).",xp:50},
 ];

@@ -40,7 +40,7 @@ export default {
       "Pentatonique mineure : 1 - ♭3 - 4 - 5 - ♭7. La fondamentale, la tierce mineure, la quarte, la quinte et la septième mineure.",
       "En La : La, Do, Ré, Mi, Sol.",
     ] },
-    { type: "question", quizId: "q-scales-05" },
+    { type: "question", quizId: "q-scales-05-app" },
     { type: "idee", titre: "Pourquoi elle sonne juste", texte: [
       "Elle part de la gamme mineure naturelle et en retire le 2e et le 6e degré, les deux notes qui forment des demi-tons tendus.",
       "Restent 5 notes qui vont sur presque tout accord mineur et sur le blues.",
@@ -64,11 +64,12 @@ export default {
       "Position 1 en La : cases 5 à 8, deux notes par corde.",
     ] },
   ],
-  quiz: ["q-scales-05","q-logic-10","q-fret-scales-02","q-impro-16","q-impro-17","q-impro-20"],
+  quiz: ["q-scales-05","q-logic-10","q-fret-scales-02","q-impro-16","q-impro-17","q-impro-20", "q-scales-05-app"],
 };
 
 export const quiz = [
   {id:"q-scales-05",courseId:"scales",lessonId:"scales-c3-01",lvl:1,q:"La pentatonique mineure suit la formule…",o:["1-2-3-5-6","1-♭3-4-5-♭7","1-2-♭3-4-5-♭6-♭7","1-3-5-7"],a:1,exp:"Penta mineure = 1-♭3-4-5-♭7. 5 notes seulement. Elle retire le 2 et le ♭6 de la mineure naturelle (les notes qui créent les demi-tons les plus tendus).",xp:30},
+  {id:"q-scales-05-app",courseId:"scales",lessonId:"scales-c3-01",lvl:1,q:"Applique la formule de la pentatonique mineure depuis Mi : quelles notes obtiens-tu ?",o:["Mi, Sol, La, Si, Ré","Mi, Sol#, La, Si, Ré","Mi, Sol, La, Si♭, Ré","Mi, Fa#, La, Si, Ré"],a:0,exp:"1 Mi, ♭3 Sol (3 demi-tons), 4 La, 5 Si, ♭7 Ré. Sol# ferait une tierce majeure, Si♭ une quinte diminuée.",xp:25},
   {id:"q-logic-10",courseId:"scales",lessonId:"scales-c3-01",lvl:3,q:"Pourquoi la pentatonique 'sonne juste' sur tant de progressions différentes ?",o:["Elle retire les notes à risque, 2 et ♭6","Elle contient les notes de tous les accords","Elle ne garde que les notes de l'accord","Elle évite la tierce, ni majeure ni mineure"],a:0,exp:"Penta mineure = 1-♭3-4-5-♭7. Elle évite le 2 (forme demi-ton avec ♭3) et ♭6 (forme demi-ton avec 5). Sans ces 2 demi-tons tendus, elle 'pose' sur quasi tous les accords mineurs et blues.",xp:65},
   {id:"q-fret-scales-02",type:"fretboard",courseId:"scales",lessonId:"scales-c3-01",lvl:1,q:"Sélectionne les notes de la pentatonique mineure de La (cases 5-8)",concept:{type:"find_scale",root:"A",quality:"pentatonic_minor"},selectionRules:{mode:"all"},fretRange:[4,9],display:{showNotes:false},hint:"Position 1 classique autour de la case 5.",xp:50,exp:"Pentatonique mineure de La position 1 : La-Do-Ré-Mi-Sol."},
   {id:"q-impro-16",courseId:"impro",lessonId:"scales-c3-01",lvl:1,q:"Improviser, c'est d'abord…",o:["Jouer le plus de notes possible","Jouer sans réfléchir du tout","Reproduire un solo appris par cœur","Faire des choix dans un cadre connu"],a:3,exp:"On n'improvise jamais à partir de rien : on choisit, en temps réel, parmi des possibilités qu'on connaît. Plus le cadre est maîtrisé, plus les choix sont libres — c'est exactement l'inverse de l'intuition courante.",xp:25},

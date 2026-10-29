@@ -55,7 +55,7 @@ export default {
       "Corde voisine plus aiguë, même case : quarte juste. Deux cases plus loin : quinte juste.",
       "Exception, des cordes 3 à 2 : même case = tierce majeure, et la quinte est trois cases plus loin.",
     ] },
-    { type: "question", quizId: "q-neck-10" },
+    { type: "question", quizId: "q-neck-10-app" },
     { type: "idee", titre: "Le renversement", texte: [
       "Un intervalle et son renversement font 12 demi-tons : quarte + quinte, tierce mineure + sixte majeure.",
       "Le majeur devient mineur, le juste reste juste.",
@@ -70,7 +70,7 @@ export default {
       "Un intervalle et son renversement font 12 demi-tons.",
     ] },
   ],
-  quiz: ["q-neck-07", "q-neck-08", "q-neck-09", "q-neck-10"],
+  quiz: ["q-neck-07", "q-neck-08", "q-neck-09", "q-neck-10", "q-neck-10-app"],
 };
 
 export const quiz = [
@@ -78,4 +78,5 @@ export const quiz = [
   {id:"q-neck-08",courseId:"neck",lessonId:"neck-03",lvl:2,q:"L'intervalle Mi → Si♭ s'écrit…",o:["Quinte juste","Quinte diminuée","Quarte juste","Sixte mineure"],a:1,exp:"Mi → Si = quinte juste (7 demi-tons). Si♭ est un demi-ton plus bas : quinte diminuée (6 demi-tons), le triton. On parle de quinte parce que Mi → Si s'étend sur cinq lettres (Mi Fa Sol La Si). La quarte augmentée sonne pareil mais s'écrit sur quatre lettres : Mi → La#.",xp:45},
   {id:"q-neck-09",courseId:"neck",lessonId:"neck-03",lvl:3,q:"Quel est l'intervalle inverse d'une tierce majeure ?",o:["Tierce mineure","Sixte majeure","Quarte juste","Sixte mineure"],a:3,exp:"Inversion d'intervalle : la somme avec son inverse = octave (12dt). Tierce maj = 4dt. Inverse = 12-4 = 8dt = sixte mineure. Règle : maj→min, juste→juste.",xp:50},
   {id:"q-neck-10",courseId:"neck",lessonId:"neck-03",lvl:3,q:"Tu joues Do (corde 5 case 3) et Mi (corde 4 case 2). Quel intervalle sépare ces 2 notes ?",o:["Tierce majeure","Tierce mineure","Quarte juste","Sixte majeure"],a:0,exp:"Do→Mi = 4 demi-tons = tierce majeure. C'est la tierce de l'accord de Do majeur. Vérification facile sur le manche : 4 demi-tons = 4 cases d'écart sur la même corde.",xp:45},
+  {id:"q-neck-10-app",courseId:"neck",lessonId:"neck-03",lvl:3,q:"Tu joues Sol (corde 6 case 3) puis Si♭ (corde 5 case 1). Quel intervalle sépare ces 2 notes ?",o:["Tierce mineure","Tierce majeure","Quarte juste","Seconde majeure"],a:0,exp:"Corde voisine, même case : quarte juste, 5 demi-tons. Deux cases en arrière, il en reste 3 : une tierce mineure. Sol → Si♭, c'est la tierce de Sol mineur.",xp:35},
 ];

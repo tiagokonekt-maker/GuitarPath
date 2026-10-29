@@ -11,7 +11,7 @@ export default {
       "Une syncope, c'est un accent sur un temps faible ou un contretemps, là où l'oreille ne l'attend pas.",
       "Cette petite surprise crée le groove du funk, du reggae, du jazz. Sans elle, le rythme sonne carré.",
     ] },
-    { type: "question", quizId: "q-rhy-05" },
+    { type: "question", quizId: "q-rhy-05-app" },
     { type: "idee", titre: "Jouer sur les « et »", texte: [
       "Compte « 1 et 2 et 3 et 4 et », puis joue seulement sur les « et » : l'accent glisse d'une croche.",
       "La basse marque les temps, toi tu joues entre. C'est le principe du skank reggae.",
@@ -49,11 +49,12 @@ export default {
       "Le backbeat accentue les temps faibles : la base du rock.",
     ] },
   ],
-  quiz: ["q-rhy-05","q-rhy-52","q-rhy-53"],
+  quiz: ["q-rhy-05","q-rhy-52","q-rhy-53", "q-rhy-05-app"],
 };
 
 export const quiz = [
   {id:"q-rhy-05",courseId:"rhythm",lessonId:"rhy-c3-01",lvl:2,q:"Une 'syncope' place l'accent sur…",o:["Le temps fort de chaque mesure","Un temps faible ou un contretemps","La toute fin de la mesure","Le silence entre deux notes"],a:1,exp:"Syncope = accent sur les temps faibles (les 'et' ou les 'e/a'). Source du groove en funk, jazz, reggae, R&B.",xp:30},
+  {id:"q-rhy-05-app",courseId:"rhythm",lessonId:"rhy-c3-01",lvl:2,q:"Tu comptes « 1 et 2 et 3 et 4 et ». Quel accent crée une syncope ?",o:["Sur le « et » du 2","Sur le 1","Sur le 1 et le 3","Sur chaque temps, à égalité"],a:0,exp:"Le « et » est un contretemps : l'oreille n'y attend pas d'accent. Le 1 et le 3 sont les appuis naturels de la mesure.",xp:30},
   {id:"q-rhy-52",courseId:"rhythm",lessonId:"rhy-c3-01",lvl:1,q:"En rock, sur quels temps la caisse claire frappe-t-elle le plus souvent ?",o:["2 et 4","1 et 3","Seulement le 1","Tous les « et »"],a:0,exp:"C'est le backbeat : l'accent passe sur les temps faibles 2 et 4. Cette inversion des accents est la syncope de base du rock et de la pop.",xp:30},
   {id:"q-rhy-53",courseId:"rhythm",lessonId:"rhy-c3-01",lvl:2,q:"Tu joues un accord sur le « et » du 2 et tu le tiens par-dessus le temps 3. Qu'as-tu créé ?",o:["Une syncope par tenue","Un triolet de croches","Un backbeat sur le 3","Un temps fort doublé"],a:0,exp:"La note attaquée sur le temps faible et tenue sur le temps fort lui « vole » son accent : c'est une syncope par tenue, typique de la bossa et du jazz.",xp:40},
 ];

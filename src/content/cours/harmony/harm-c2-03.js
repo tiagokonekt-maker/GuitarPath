@@ -41,7 +41,7 @@ export default {
       "Ré : Ré-Fa#-La. La : La-Do#-Mi. Mi : Mi-Sol#-Si. Seule la tierce est diésée.",
       "Si♭ : Si♭-Ré-Fa. Mi♭ : Mi♭-Sol-Si♭. Ce groupe couvre l'essentiel de la pop et du rock.",
     ] },
-    { type: "question", quizId: "q-harm-26" },
+    { type: "question", quizId: "q-harm-26-app" },
     { type: "idee", titre: "Groupe 3 : les plus altérées", texte: [
       "Si : Si-Ré#-Fa#. Fa# : Fa#-La#-Do#. Do# : Do#-Mi#-Sol#. Sol# : Sol#-Si#-Ré#.",
       "Mi# sonne comme Fa, Si# comme Do. Mais une tierce porte toujours le nom situé deux lettres plus loin : Do → Mi, Sol → Si.",
@@ -58,11 +58,12 @@ export default {
       "La tierce est toujours deux lettres plus loin : Do# → Mi#, pas Fa.",
     ] },
   ],
-  quiz: ["q-harm-26", "q-harm-27", "q-harm-57", "q-harm-p6-c203-01"],
+  quiz: ["q-harm-26", "q-harm-27", "q-harm-57", "q-harm-p6-c203-01", "q-harm-26-app"],
 };
 
 export const quiz = [
   {id:"q-harm-26",courseId:"harmony",lessonId:"harm-c2-03",lvl:1,q:"Quelles sont les notes de la triade de Ré majeur ?",o:["Ré-Fa-La", "Ré-Fa#-La", "Ré-Fa#-La#", "Ré-Sol-La"],a:1,exp:"Triade majeure = fondamentale, tierce majeure, quinte juste : Ré, Fa#, La.",xp:30},
+  {id:"q-harm-26-app",courseId:"harmony",lessonId:"harm-c2-03",lvl:1,q:"Tu connais Ré majeur. Quelles sont les notes de la triade de Ré mineur ?",o:["Ré-Fa-La","Ré-Fa#-La","Ré-Fa-La♭","Ré-Mi-La"],a:0,exp:"Mineur = 1-♭3-5 : on baisse la tierce d'un demi-ton. Ré-Fa#-La devient Ré-Fa-La.",xp:25},
   {id:"q-harm-27",courseId:"harmony",lessonId:"harm-c2-03",lvl:2,q:"Pourquoi la tierce de Do# majeur s'écrit-elle Mi# et non Fa ?",o:["Parce que Fa n'existe pas en Do#", "Pour éviter d'écrire un bémol dans l'accord", "Parce qu'une tierce est deux lettres plus loin", "Parce que Mi# sonne plus aigu que Fa"],a:2,exp:"Une tierce est deux lettres plus loin : Do → Mi. Élevé d'un demi-ton, c'est Mi#, qui sonne comme Fa.",xp:40},
   {id:"q-harm-57",courseId:"harmony",lessonId:"harm-c2-03",lvl:2,q:"Quelles sont les notes de la triade de Mi♭ majeur ?",o:["Mi♭ - Sol - Si♭","Mi♭ - Sol♭ - Si♭","Mi♭ - Sol - Si","Mi♭ - La♭ - Si♭"],a:0,exp:"Tierce majeure au-dessus de Mi♭ : Sol (4 demi-tons). Quinte juste : Si♭ (7 demi-tons). Mi♭ - Sol♭ - Si♭ serait Mi♭ mineur.",xp:40},
   {id:"q-harm-p6-c203-01",courseId:"harmony",lessonId:"harm-c2-03",lvl:1,q:"Laquelle de ces triades majeures ne contient aucune altération ?",o:["Fa majeur","Ré majeur","Mi majeur","La majeur"],a:0,exp:"Fa majeur = Fa, La, Do : trois notes naturelles. Ré, Mi et La majeurs ont chacun une tierce diésée (Fa#, Sol#, Do#).",xp:30},

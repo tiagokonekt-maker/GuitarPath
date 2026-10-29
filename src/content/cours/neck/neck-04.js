@@ -39,7 +39,7 @@ export default {
       "Tu la connais déjà : c'est le barré forme La, index en case 3.",
       "La fondamentale est sur la corde 5, sous l'index : Do (corde 5 case 3). La forme de La est simplement remontée de trois cases.",
     ], bloc: FORME_A },
-    { type: "question", quizId: "q-neck-14" },
+    { type: "question", quizId: "q-neck-14-app" },
     { type: "idee", titre: "Forme G : la plus étirée", texte: [
       "Le Sol ouvert (320003) remonté de cinq cases : 8-7-5-5-5-8. Do est à la basse, Do (corde 6 case 8), et au milieu, Do (corde 3 case 5).",
       "Trop étirée ? Joue seulement les quatre cordes aiguës : index en barré case 5 sur les cordes 4, 3 et 2, auriculaire en case 8 sur la corde 1.",
@@ -64,7 +64,7 @@ export default {
       "La fondamentale guide chaque forme : corde 5 pour C et A, corde 6 pour G et E, corde 4 pour D.",
     ] },
   ],
-  quiz: ["q-neck-11","q-neck-12","q-neck-13","q-neck-14","q-fret-neck-05"],
+  quiz: ["q-neck-11","q-neck-12","q-neck-13","q-neck-14","q-fret-neck-05", "q-neck-14-app"],
 };
 
 export const quiz = [
@@ -72,5 +72,6 @@ export const quiz = [
   {id:"q-neck-12",courseId:"neck",lessonId:"neck-04",lvl:3,q:"La forme E barrée case 7 donne quel accord majeur ?",o:["La majeur","Sol majeur","Si majeur","Mi majeur"],a:2,exp:"Forme E = E majeur. Décalée case 7, on monte de 7 demi-tons : Mi + 7dt = Si. Donc Si majeur. Vérification : la fondamentale est sur corde 6 case 7 = Si.",xp:45},
   {id:"q-neck-13",courseId:"neck",lessonId:"neck-04",lvl:2,q:"Quelle forme du CAGED a sa fondamentale la plus grave sur la corde 4 ?",o:["La forme D","La forme A","La forme E","La forme G"],a:0,exp:"Comme le Ré ouvert (xx0232), la forme D part de la corde 4. Les formes C et A ont leur fondamentale grave sur la corde 5, les formes G et E sur la corde 6.",xp:40},
   {id:"q-neck-14",courseId:"neck",lessonId:"neck-04",lvl:3,q:"Tu joues un Do majeur en forme de La barrée. À quelle case se trouve le barré ?",o:["Case 3","Case 5","Case 8","Case 10"],a:0,exp:"En forme de La, la fondamentale est sur la corde 5, sous le barré. Do est à la case 3 de la corde 5 : barré case 3. La case 8 donnerait Do en forme de Mi, fondamentale sur la corde 6.",xp:55},
+  {id:"q-neck-14-app",courseId:"neck",lessonId:"neck-04",lvl:3,q:"Tu joues un Mi majeur en forme de La barrée. À quelle case se trouve le barré ?",o:["Case 7","Case 5","Case 9","Case 12"],a:0,exp:"En forme de La, la fondamentale est sur la corde 5, sous le barré. Mi est à la case 7 de la corde 5 : barré case 7. La case 12 donnerait Mi en forme de Mi, fondamentale sur la corde 6.",xp:35},
   {id:"q-fret-neck-05",type:"fretboard",courseId:"neck",lessonId:"neck-04",lvl:3,q:"CAGED : trouve tous les Do du manche, les fondamentales des cinq formes de Do",concept:{type:"find_note",root:"C"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Do est en case 3 sur la corde 5 et en case 8 sur la corde 6 : cherche ensuite leurs octaves.",xp:50,exp:"Do en : corde 6 case 8, corde 5 case 3, corde 4 case 10, corde 3 case 5, corde 2 case 1, corde 1 case 8. Chaque forme du CAGED s'accroche à l'un d'eux."},
 ];

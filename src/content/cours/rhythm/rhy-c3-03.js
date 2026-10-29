@@ -31,7 +31,7 @@ export default {
       "En groupe, le groove naît du verrouillage entre la basse et la grosse caisse. Quand elles tombent ensemble, tout tient.",
       "Ton travail de guitariste : écouter ce grave et t'y accrocher.",
     ] },
-    { type: "question", quizId: "q-rhy-56" },
+    { type: "question", quizId: "q-rhy-56-app" },
     { type: "a-toi", titre: "Ton premier groove funk",
       consigne: "Sur Am, la main gauche relâchée pour étouffer : les × en ghost notes, puis serre l'accord juste pour les coups francs. Lentement au clic, la main droite en doubles-croches sans jamais s'arrêter. Enregistre-toi et écoute si le temps « coule ».",
       bloc: FUNK, bpm: 60, minuteur: 120 },
@@ -41,11 +41,12 @@ export default {
       "En groupe, cale-toi sur la basse et la grosse caisse.",
     ] },
   ],
-  quiz: ["q-rhy-33","q-rhy-34","q-rhy-56"],
+  quiz: ["q-rhy-33","q-rhy-34","q-rhy-56", "q-rhy-56-app"],
 };
 
 export const quiz = [
   {id:"q-rhy-33",courseId:"rhythm",lessonId:"rhy-c3-03",lvl:2,q:"Deux guitaristes jouent les mêmes notes au même tempo, et un seul « groove ». Qu'est-ce qui change ?",o:["Le choix des positions d'accords sur le manche", "Le volume général de l'instrument", "Le placement et le dosage des accents", "Le type de cordes installées"],a:2,exp:"Le groove tient à des écarts de quelques millisecondes et à la hiérarchie des accents. C'est mesurable, et c'est travaillable — contrairement à ce que laisse croire le mot « feeling ».",xp:30},
   {id:"q-rhy-34",courseId:"rhythm",lessonId:"rhy-c3-03",lvl:3,q:"Les ghost notes servent à…",o:["Remplir les silences avec des notes bien audibles", "Marquer plus nettement les temps forts", "Atteindre des tempos plus rapides", "Garder le mouvement avec des attaques étouffées"],a:3,exp:"Ce sont des attaques étouffées par la main gauche : on entend la percussion, pas la hauteur. Elles remplissent la grille rythmique sans encombrer l'harmonie, et c'est le cœur du jeu funk.",xp:40},
   {id:"q-rhy-56",courseId:"rhythm",lessonId:"rhy-c3-03",lvl:1,q:"En groupe, avec quels instruments le guitariste rythmique doit-il d'abord se caler ?",o:["La basse et la grosse caisse","Le chant et les chœurs","Le clavier et les nappes","Les cymbales et la cloche"],a:0,exp:"Le groove d'un groupe repose sur le verrouillage entre la basse et la grosse caisse. Le guitariste s'accroche à ce grave pour que tout le monde tombe au même endroit.",xp:30},
+  {id:"q-rhy-56-app",courseId:"rhythm",lessonId:"rhy-c3-03",lvl:2,q:"Le batteur frappe la grosse caisse sur le 1 et sur le « et » du 2. Où places-tu tes accents ?",o:["Sur le 1 et le « et » du 2","Sur le 2 et le 4, avec la caisse claire","Sur chaque croche, à égalité","Sur le 4 seulement"],a:0,exp:"Le guitariste rythmique se cale sur le grave : accentuer avec la grosse caisse verrouille le groove du groupe.",xp:30},
 ];

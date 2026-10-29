@@ -18,7 +18,7 @@ export default {
       "On ajoute un coup vers le haut entre les temps. Compte « 1 et 2 et 3 et 4 et » : vers le bas sur les chiffres, vers le haut sur les « et ».",
       "Le coup vers le haut peut ne toucher que les cordes aiguës : c'est normal.",
     ], bloc: { type: "strum_pattern", caption: "8 croches — bas sur les temps, haut sur les « et »", data: { pattern: ["B", "H", "B", "H", "B", "H", "B", "H"], beats: 4, style: "folk", bpm: 60 } } },
-    { type: "question", quizId: "q-debut-36" },
+    { type: "question", quizId: "q-debut-36-app" },
     { type: "idee", titre: "La rythmique passe-partout", texte: [
       "Bas, bas-haut, haut-bas-haut : une des rythmiques les plus utilisées en pop et en folk.",
       "Le secret : ta main garde le balancier de la rythmique 2, mais passe dans le vide sur le « et » du 1 et sur le temps 3.",
@@ -36,11 +36,12 @@ export default {
       "Le balancier ne s'arrête jamais : on rate les cordes, on ne s'arrête pas.",
     ] },
   ],
-  quiz: ["q-debut-36", "q-debut-37", "q-debut-38"],
+  quiz: ["q-debut-36", "q-debut-37", "q-debut-38", "q-debut-36-app"],
 };
 
 export const quiz = [
   {id:"q-debut-36",courseId:"debut",lessonId:"debut-c2-05",lvl:1,q:"En comptant « 1 et 2 et 3 et 4 et », quand grattes-tu vers le haut ?",o:["Sur les chiffres","Sur les « et »","Seulement sur le 1","Jamais, on gratte toujours vers le bas"],a:1,exp:"Bas sur les temps (les chiffres), haut sur les « et ». C'est le mouvement de balancier de base de la main droite.",xp:25},
+  {id:"q-debut-36-app",courseId:"debut",lessonId:"debut-c2-05",lvl:1,q:"En bas-haut, tu comptes « 1 et 2 et 3 et 4 et ». Combien de coups vers le haut joues-tu par mesure ?",o:["Quatre","Huit","Deux","Un seul"],a:0,exp:"Un coup vers le haut sur chaque « et », et la mesure compte quatre « et » : quatre coups vers le haut, glissés entre les quatre coups vers le bas.",xp:25},
   {id:"q-debut-37",courseId:"debut",lessonId:"debut-c2-05",lvl:2,q:"Dans la rythmique bas, bas-haut, haut-bas-haut, que fait la main sur le temps 3 ?",o:["Elle s'arrête et attend","Elle descend sans toucher les cordes","Elle gratte deux fois","Elle étouffe les cordes avec la paume"],a:1,exp:"Le balancier continue : la main descend sur le 3 comme d'habitude, mais passe dans le vide. C'est ce qui garde le rythme régulier.",xp:30},
   {id:"q-debut-38",courseId:"debut",lessonId:"debut-c2-05",lvl:1,q:"À quel tempo travailler une nouvelle rythmique ?",o:["Le plus vite possible","Lentement, vers 60 à 70 BPM, puis accélérer","Au tempo de la chanson originale, tout de suite","Sans métronome, au feeling"],a:1,exp:"Lentement et régulièrement d'abord. La vitesse vient toute seule quand le geste est fluide ; l'inverse ne marche pas.",xp:25},
 ];

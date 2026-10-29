@@ -11,7 +11,7 @@ export default {
       "La mesure range la pulsation en groupes réguliers. Elle s'écrit comme une fraction.",
       "Le chiffre du haut donne le nombre de temps par mesure ; celui du bas, la valeur d'un temps (4 = la noire). En 4/4 : quatre temps, une noire chacun. C'est le cadre de presque tout le rock, la pop et le blues.",
     ] },
-    { type: "question", quizId: "q-base-14" },
+    { type: "question", quizId: "q-base-14-app" },
     { type: "idee", titre: "Temps forts, temps faibles", texte: [
       "Les quatre temps n'ont pas le même poids : 1 et 3 sont forts, 2 et 4 faibles.",
       "En rock et en pop, la caisse claire frappe souvent sur 2 et 4 : ce contre-accent, le backbeat, fait le groove moderne.",
@@ -41,11 +41,12 @@ export default {
       "Les chansons s'organisent en grilles de 4, 8, 12 ou 16 mesures.",
     ] },
   ],
-  quiz: ["q-base-14","q-rhy-29","q-rhy-30"],
+  quiz: ["q-base-14","q-rhy-29","q-rhy-30", "q-base-14-app"],
 };
 
 export const quiz = [
   {id:"q-base-14",courseId:"rhythm",lessonId:"rhy-c1-02",lvl:1,q:"Dans une signature en 4/4, que représente le chiffre du haut ?",o:["La durée de chaque note dans la mesure", "Le nombre de temps par mesure", "Le tempo, en battements par minute", "Le nombre de mesures du morceau"],a:1,exp:"Le chiffre du haut donne le nombre de temps par mesure, celui du bas l'unité de temps (4 = la noire).",xp:30},
+  {id:"q-base-14-app",courseId:"rhythm",lessonId:"rhy-c1-02",lvl:1,q:"Une chanson est écrite en 3/4. Combien de temps compte chaque mesure ?",o:["Trois","Quatre","Deux","Six"],a:0,exp:"Le chiffre du haut donne le nombre de temps : 3/4 = trois temps par mesure, une noire chacun. C'est la mesure de la valse.",xp:25},
   {id:"q-rhy-29",courseId:"rhythm",lessonId:"rhy-c1-02",lvl:2,q:"Dans une signature 4/4, que signifie le chiffre du bas ?",o:["Le nombre de mesures du morceau","Le tempo auquel jouer","L'unité de temps : la noire","Le nombre de cordes à gratter"],a:2,exp:"Le haut dit combien de temps par mesure, le bas dit quelle valeur vaut un temps — 4 désigne la noire. En 6/8, le 8 désigne la croche, et tout le comptage change.",xp:30},
   {id:"q-rhy-30",courseId:"rhythm",lessonId:"rhy-c1-02",lvl:2,q:"Comment remplit-on exactement une mesure de 3/4 ?",o:["Trois noires","Quatre noires","Six noires","Trois blanches"],a:0,exp:"3/4 : 3 temps par mesure, la noire valant un temps. Trois noires, ou une blanche et une noire, ou une blanche pointée. C'est la mesure de la valse.",xp:40},
 ];

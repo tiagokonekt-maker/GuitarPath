@@ -36,7 +36,7 @@ export default {
       "Une vamp Em7 - A7 ne va jamais sur Dmaj7 : c'est un ii-V modal, qui tourne sur lui-même.",
       "On reste en Mi dorien, et on fait entendre A7 par sa tierce, Do#.",
     ] },
-    { type: "question", quizId: "q-impro-02" },
+    { type: "question", quizId: "q-impro-02-app" },
     { type: "idee", titre: "Même idée sur Dm7 - G7", texte: [
       "En Ré dorien sur Dm7 - G7, le Si colore Dm7 et définit G7.",
       "Mets-le en avant au moment où G7 arrive : une seule gamme, et pourtant le changement s'entend.",
@@ -51,9 +51,10 @@ export default {
       "Sur un ii-V modal, une seule gamme, mais la tierce du V mise en avant.",
     ] },
   ],
-  quiz: ["q-impro-ciblage-lot4","q-impro-02","q-impro-07"],
+  quiz: ["q-impro-ciblage-lot4","q-impro-02","q-impro-07", "q-impro-02-app"],
 };
 
 export const quiz = [
   {id:"q-impro-ciblage-lot4",courseId:"impro",lessonId:"impro-04b",lvl:3,q:"Fin de mesure sur Dm7 : ta phrase doit tomber sur Si au temps 1 de G7. Quelle note de Dm7 est à un demi-ton de cette cible ?",o:["Do","Ré","La","Fa"],a:0,exp:"Do, la 7e de Dm7, est un demi-ton au-dessus de Si : joué en fin de mesure, il glisse sur la cible au changement. Ré et La sont à un ton entier de Si, Fa à trois tons.",xp:40},
+  {id:"q-impro-02-app",courseId:"impro",lessonId:"impro-04b",lvl:2,q:"Sur une vamp Am7-D7 qui ne résout jamais sur Gmaj7, quel mode joues-tu ?",o:["La phrygien","La locrien","La dorien","La ionien"],a:2,exp:"Am7-D7 = ii-V de Sol majeur, sans résolution. Sur un ii-V modal, on joue le dorien du ii : La dorien, soit les notes de Sol majeur en partant de La.",xp:30},
 ];

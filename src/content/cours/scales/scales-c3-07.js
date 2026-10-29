@@ -46,7 +46,7 @@ export default {
       "Sur la corde 6, chaque position part d'une note de la gamme : La case 5, Do case 8, Ré case 10, Mi case 12, Sol case 15.",
       "Case 17, on retrouve La : c'est la position 1, une octave plus haut. Les cinq formes tournent en boucle.",
     ], bloc: CARTE_MANCHE },
-    { type: "question", quizId: "q-scales-relier-01" },
+    { type: "question", quizId: "q-scales-relier-01-app" },
     { type: "idee", titre: "Elles s'emboîtent", texte: [
       "Le haut d'une position est toujours le bas de la suivante : 1 et 2 partagent les cases 7 et 8, 2 et 3 les cases 9 et 10, 3 et 4 les cases 12 et 13.",
       "Tu ne changes jamais de gamme, seulement de zone.",
@@ -69,11 +69,12 @@ export default {
       "Pour passer d'une forme à l'autre : changer de doigt, glisser, ou la diagonale.",
     ] },
   ],
-  quiz: ["q-scales-relier-01", "q-scales-relier-02", "q-scales-relier-03"],
+  quiz: ["q-scales-relier-01", "q-scales-relier-02", "q-scales-relier-03", "q-scales-relier-01-app"],
 };
 
 export const quiz = [
   {id:"q-scales-relier-01",courseId:"scales",lessonId:"scales-c3-07",lvl:2,q:"En La pentatonique mineure, après la position 5 (case 15), quelle forme trouves-tu à partir de la case 17 ?",o:["La position 1, une octave plus haut","La position 2, une octave plus haut","Une sixième position, propre à l'aigu","La position 4, rejouée plus haut"],a:0,exp:"Case 17 sur la corde 6, c'est La, comme en case 5 : douze cases plus haut, la position 1 recommence. Les cinq formes tournent en boucle.",xp:35},
+  {id:"q-scales-relier-01-app",courseId:"scales",lessonId:"scales-c3-07",lvl:2,q:"En Fa pentatonique mineure, la position 1 part de la case 1 de la corde 6. À quelle case la retrouves-tu, une octave plus haut ?",o:["Case 13","Case 12","Case 6","Case 11"],a:0,exp:"Une octave, c'est douze cases : la position 1 recommence en case 13, sur le Fa de la corde 6.",xp:30},
   {id:"q-scales-relier-02",courseId:"scales",lessonId:"scales-c3-07",lvl:2,q:"Tu passes de la position 3 à la position 4 en La mineur. Quelle case ont-elles en commun ?",o:["Case 12","Case 10","Case 15","Case 8"],a:0,exp:"La position 3 va de la case 9 à la case 13, la position 4 de la case 12 à la case 15 : leurs notes des cases 12 et 13 sont communes.",xp:35},
   {id:"q-scales-relier-03",courseId:"scales",lessonId:"scales-c3-07",lvl:3,q:"Tu improvises en La mineur en position 4, autour de la case 12. Tu veux redescendre vers le grave sans quitter la gamme. Quelle position rejoins-tu ?",o:["La position 3, autour de la case 10","La position 5, autour de la case 15","La position 1, autour de la case 17","Aucune : il faut changer de gamme"],a:0,exp:"Vers le grave, la position voisine de la 4 est la 3 (cases 9 à 13). La 5 et la position 1 à l'octave sont plus haut, vers l'aigu.",xp:40},
 ];

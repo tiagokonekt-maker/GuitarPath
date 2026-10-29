@@ -76,7 +76,7 @@ export default {
       "La grave : corde 6, case 5. La médium : corde 4, case 7. La aigu : corde 1, case 5.",
       "Ce sont tes points d'arrivée : une phrase qui finit sur un La sonne conclue.",
     ], bloc: TROIS_LA },
-    { type: "question", quizId: "q-scales-pos1-01" },
+    { type: "question", quizId: "q-scales-pos1-01-app" },
     { type: "a-toi", titre: "Par groupes de trois",
       consigne: "Monte la position 1 par groupes de trois notes, comme la tab, au clic à 60. Puis redescends de la même façon. Ça rompt l'automatisme de la gamme récitée : tu dois voir la forme.",
       bloc: TAB_PAR_TROIS, bpm: 60, minuteur: 120 },
@@ -84,7 +84,7 @@ export default {
       "Sur la corde 3, la case 7 donne Ré. Tirée d'un ton, elle monte jusqu'à Mi, une autre note de la gamme : c'est le bend le plus joué de la position.",
       "Tu le travailleras dans la leçon sur le bend juste.",
     ] },
-    { type: "question", quizId: "q-neck-23" },
+    { type: "question", quizId: "q-neck-23-app" },
     { type: "question", quizId: "q-scales-pos1-02" },
     { type: "recap", points: [
       "Position 1 en La : cases 5 à 8, index en 5, annulaire en 7, auriculaire en 8.",
@@ -92,12 +92,14 @@ export default {
       "Corde 3 case 7 : le Ré qu'on tire d'un ton jusqu'au Mi.",
     ] },
   ],
-  quiz: ["q-impro-18", "q-neck-23", "q-scales-pos1-01", "q-scales-pos1-02"],
+  quiz: ["q-impro-18", "q-neck-23", "q-scales-pos1-01", "q-scales-pos1-02", "q-scales-pos1-01-app", "q-neck-23-app"],
 };
 
 export const quiz = [
   {id:"q-impro-18",courseId:"impro",lessonId:"scales-c3-02",lvl:1,q:"Pourquoi la pentatonique est-elle plus facile à improviser que la gamme majeure ?",o:["Elle se joue à une vitesse plus élevée","Elle retire les deux notes les plus instables","Elle ne possède qu'une seule position","Elle n'a pas de tonique définie"],a:1,exp:"Cinq notes au lieu de sept : on a retiré la quarte et la septième, celles qui demandent une résolution. Moins de notes à surveiller, donc plus d'attention disponible pour le placement rythmique.",xp:25},
   {id:"q-neck-23",courseId:"scales",lessonId:"scales-c3-02",lvl:3,q:"Dans la position 1 de La pentatonique mineure, le bend le plus naturel se joue sur la corde 3, à quelle case ?",o:["Case 5","Case 7","Case 9","Case 3"],a:1,exp:"Ré (corde 3 case 7), tiré d'un ton jusqu'au Mi : les deux notes sont dans la gamme, le bend sonne juste.",xp:45},
+  {id:"q-neck-23-app",courseId:"scales",lessonId:"scales-c3-02",lvl:2,q:"Position 1 de La pentatonique mineure : tu tires d'un ton le Sol de la corde 2, case 8. Quelle note atteins-tu ?",o:["La","Sol#","Si","La#"],a:0,exp:"Un ton = deux cases : Sol (corde 2 case 8) monte à la hauteur de La (corde 2 case 10), une note de la gamme. Le bend sonne juste.",xp:30},
   {id:"q-scales-pos1-01",courseId:"scales",lessonId:"scales-c3-02",lvl:1,q:"Position 1 de La pentatonique mineure : où se trouve le La médium, entre le grave et l'aigu ?",o:["Corde 4, case 7","Corde 5, case 7","Corde 3, case 5","Corde 2, case 8"],a:0,exp:"La (corde 4 case 7). Corde 5 case 7 donne Mi, corde 3 case 5 donne Do, corde 2 case 8 donne Sol.",xp:25},
+  {id:"q-scales-pos1-01-app",courseId:"scales",lessonId:"scales-c3-02",lvl:1,q:"La position 1 de Sol pentatonique mineure, c'est celle de La, deux cases plus bas. Où se trouve son Sol médium ?",o:["Corde 4, case 5","Corde 4, case 7","Corde 5, case 5","Corde 3, case 5"],a:0,exp:"Toute la forme descend de deux cases : le La médium, corde 4 case 7, devient Sol (corde 4 case 5).",xp:25},
   {id:"q-scales-pos1-02",courseId:"scales",lessonId:"scales-c3-02",lvl:2,q:"Dans la position 1, quel doigt joue les notes de la case 8 ?",o:["L'auriculaire","L'annulaire","Le majeur","L'index"],a:0,exp:"Un doigt par case : index en 5, (majeur en 6, inutilisé ici), annulaire en 7, auriculaire en 8. La main ne bouge pas.",xp:30},
 ];

@@ -19,7 +19,7 @@ export default {
       caption: "Fmaj7 — accord Maj7 (× × 3 2 1 0)",
       data: { name: "Fmaj7", frets: [-1,-1,3,2,1,0], fingers: [0,0,3,2,1,0], startFret: 1 },
     } },
-    { type: "question", quizId: "q-harm-05" },
+    { type: "question", quizId: "q-harm-05-app" },
     { type: "idee", titre: "7 : le moteur", texte: [
       "Dominante = 1-3-5-♭7, G7 = Sol Si Ré Fa. Tendu, bluesy, il veut avancer. Sa place : le V, en majeur comme en mineur.",
       "Tu en joues déjà plusieurs : E7, A7, D7, B7.",
@@ -59,11 +59,12 @@ export default {
       "La dominante contient un triton entre 3e et 7e : il se résout par deux demi-tons.",
     ] },
   ],
-  quiz: ["q-harm-05","q-harm-06","q-harm-08","q-logic-09","q-fret-harm-03","q-fret-harm-04","q-fret-harm-05","q-harm-02"],
+  quiz: ["q-harm-05","q-harm-06","q-harm-08","q-logic-09","q-fret-harm-03","q-fret-harm-04","q-fret-harm-05","q-harm-02", "q-harm-05-app"],
 };
 
 export const quiz = [
   {id:"q-harm-05",courseId:"harmony",lessonId:"harm-c3-02",lvl:1,q:"Un accord m7 (mineur 7) contient les degrés…",o:["1-♭3-5-♭7","1-3-5-7","1-3-5-♭7","1-♭3-5-7"],a:0,exp:"m7 = mineur + septième mineure = 1-♭3-5-♭7. Son funk, modal, jazz. Ex : Am7 = La-Do-Mi-Sol.",xp:30},
+  {id:"q-harm-05-app",courseId:"harmony",lessonId:"harm-c3-02",lvl:1,q:"Quelles notes forment l'accord Dm7 ?",o:["Ré-Fa-La-Do","Ré-Fa#-La-Do","Ré-Fa-La-Do#","Ré-Fa#-La-Do#"],a:0,exp:"m7 = 1-♭3-5-♭7 : Ré, Fa (tierce mineure), La, Do (septième mineure).",xp:25},
   {id:"q-harm-06",courseId:"harmony",lessonId:"harm-c3-02",lvl:2,q:"Quel accord contient Sol-Si-Ré-Fa ?",o:["Gmaj7","G7","Gm7","Gm7b5"],a:1,exp:"Sol-Si-Ré-Fa = 1-3-5-♭7 (Fa = 7e mineure de Sol). Donc G7 (dominante). Si c'était Fa#, ce serait Gmaj7.",xp:40},
   {id:"q-harm-08",courseId:"harmony",lessonId:"harm-c3-02",lvl:3,q:"Quelle est la différence entre m7b5 et dim7 ?",o:["Aucune, ce sont deux noms du même accord", "La quinte : juste pour l'un, diminuée pour l'autre", "La fondamentale, un demi-ton plus haut", "La 7e : mineure pour m7♭5, diminuée pour dim7"],a:3,exp:"m7b5 = 1-♭3-♭5-♭7. dim7 = 1-♭3-♭5-bb7 (= 6 enharmonique). Sur Si : Bm7b5 = Si-Ré-Fa-La. Bdim7 = Si-Ré-Fa-Lab.",xp:55},
   {id:"q-logic-09",courseId:"harmony",lessonId:"harm-c3-02",lvl:3,q:"Lequel de ces accords ne contient aucun triton ?",o:["Cmaj7","G7","Bm7♭5","Bdim7"],a:0,exp:"G7 et Bm7♭5 contiennent Si-Fa, Bdim7 en contient deux (Si-Fa et Ré-La♭). Cmaj7 (Do Mi Sol Si) n'en a aucun : c'est un accord de repos, alors que le triton d'une dominante demande à se résoudre.",xp:65},

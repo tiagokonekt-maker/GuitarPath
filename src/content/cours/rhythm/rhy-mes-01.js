@@ -49,7 +49,7 @@ export default {
       "À la guitare, le temps 1 se joue avec la basse seule : la fondamentale de l'accord, au pouce ou au médiator.",
       "Sur 2 et 3, deux petits grattés vers le bas, sur les trois cordes aiguës seulement. Pour Do : basse Do (corde 5 case 3), puis cordes 3, 2 et 1.",
     ], bloc: TAB_VALSE },
-    { type: "question", quizId: "q-rhy-valse-01-lot3" },
+    { type: "question", quizId: "q-rhy-valse-01-app" },
     { type: "a-toi", titre: "Ta première valse",
       consigne: "Do, Do, Sol, Sol : basse puis deux grattés, au clic à 90, un clic par temps. Compte « UN-deux-trois » à voix haute pendant les deux premiers tours.",
       bloc: TAB_VALSE, bpm: 90, minuteur: 120 },
@@ -57,7 +57,7 @@ export default {
       "En 6/8, six croches se groupent par trois : UN-deux-trois-QUATRE-cinq-six. Deux pulsations par mesure, sur 1 et sur 4.",
       "Le 3/4 contient aussi six croches, mais groupées par deux : UN-et-deux-et-trois-et, trois pulsations. Même nombre de notes, un tout autre balancement.",
     ], bloc: SIX_HUIT },
-    { type: "question", quizId: "q-rhy-valse-02-lot3" },
+    { type: "question", quizId: "q-rhy-valse-02-app" },
     { type: "idee", titre: "L'arpège en 6/8", texte: [
       "House of the Rising Sun se joue ainsi : sur La mineur, la basse au pouce, puis les cordes 3, 2, 1, 2, 3, une note par croche.",
       "La basse tombe sur la première pulsation, la corde 1 sur la seconde : ce sont elles qu'on appuie un peu.",
@@ -72,11 +72,13 @@ export default {
       "Même nombre de croches en 3/4 et en 6/8 : c'est leur groupement qui change le balancement.",
     ] },
   ],
-  quiz: ["q-rhy-valse-01-lot3", "q-rhy-valse-02-lot3", "q-rhy-valse-03-lot3"],
+  quiz: ["q-rhy-valse-01-lot3", "q-rhy-valse-02-lot3", "q-rhy-valse-03-lot3", "q-rhy-valse-01-app", "q-rhy-valse-02-app"],
 };
 
 export const quiz = [
   {id:"q-rhy-valse-01-lot3",courseId:"rhythm",lessonId:"rhy-mes-01",lvl:1,q:"En valse « basse, gratté, gratté », sur quel temps joues-tu la basse ?",o:["Sur le temps 1","Sur le temps 2","Sur le temps 3","Sur les temps 1 et 3"],a:0,exp:"La basse marque le premier temps, l'appui de la mesure ; les temps 2 et 3 sont les deux grattés plus légers.",xp:25},
+  {id:"q-rhy-valse-01-app",courseId:"rhythm",lessonId:"rhy-mes-01",lvl:1,q:"Valse sur l'accord de Sol : quelle note joues-tu à la basse, sur le temps 1 ?",o:["Sol","Ré","Si","Do"],a:0,exp:"Le temps 1 porte la basse seule, la fondamentale de l'accord : Sol (corde 6 case 3). Les temps 2 et 3 sont les deux grattés légers.",xp:25},
   {id:"q-rhy-valse-02-lot3",courseId:"rhythm",lessonId:"rhy-mes-01",lvl:1,q:"En 6/8, combien de pulsations le pied bat-il par mesure ?",o:["Deux","Trois","Six","Quatre"],a:0,exp:"Six croches groupées par trois donnent deux pulsations, sur 1 et sur 4. Le 3/4, lui, en a trois.",xp:25},
+  {id:"q-rhy-valse-02-app",courseId:"rhythm",lessonId:"rhy-mes-01",lvl:2,q:"En 12/8, les douze croches se groupent par trois. Combien de pulsations le pied bat-il par mesure ?",o:["4","3","6","12"],a:0,exp:"Comme en 6/8, chaque pulsation regroupe trois croches : douze croches font quatre pulsations, sur 1, 4, 7 et 10. C'est le balancement du blues lent.",xp:30},
   {id:"q-rhy-valse-03-lot3",courseId:"rhythm",lessonId:"rhy-mes-01",lvl:2,q:"Une mesure contient six croches, groupées 1-2-3 puis 4-5-6. Quelle mesure est-ce ?",o:["Du 6/8","Du 3/4","Du 4/4","Du 12/8"],a:0,exp:"Groupées par trois, les six croches font deux pulsations : c'est le 6/8. Groupées par deux, elles feraient les trois temps d'un 3/4.",xp:30},
 ];

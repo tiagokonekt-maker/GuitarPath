@@ -22,7 +22,7 @@ export default {
     { type: "idee", titre: "Pourquoi ça sonne si bien ?", texte: [
       "Les quatre accords appartiennent à la même tonalité, Sol majeur. Sol est la « maison », où la musique se repose ; Ré crée une tension qui donne envie de revenir ; Mi mineur apporte de la mélancolie ; Do ouvre l'espace.",
     ] },
-    { type: "question", quizId: "q-debut-40" },
+    { type: "question", quizId: "q-debut-40-app" },
     { type: "a-toi", titre: "Change de point de départ", consigne: "Pars de Mi mineur : Mi mineur, Do, Sol, Ré. Mêmes accords, et pourtant l'ambiance devient plus sombre.", bloc: { type: "chord_diagram", caption: "3. Mi mineur (Em) — 022000, le nouveau départ", data: { name: "Em", frets: [0, 2, 2, 0, 0, 0], fingers: [0, 2, 3, 0, 0, 0], startFret: 1 } }, bpm: 60 },
     { type: "recap", points: [
       "Sol, Ré, Mi mineur, Do : une mesure chacun, sans jamais casser le rythme.",
@@ -30,11 +30,12 @@ export default {
       "Les quatre accords sont en Sol majeur ; partir de Mi mineur assombrit l'ambiance.",
     ] },
   ],
-  quiz: ["q-debut-39", "q-debut-40", "q-debut-41"],
+  quiz: ["q-debut-39", "q-debut-40", "q-debut-41", "q-debut-40-app"],
 };
 
 export const quiz = [
   {id:"q-debut-39",courseId:"debut",lessonId:"debut-c2-06",lvl:1,q:"Un accord ne sonne pas parfaitement pendant que tu fais tourner la progression. Que fais-tu ?",o:["Tu t'arrêtes et tu recommences du début","Tu gardes le rythme et tu continues","Tu ralentis jusqu'à ce qu'il sonne","Tu sautes l'accord suivant"],a:1,exp:"Le rythme d'abord : la boucle doit continuer. Un accord imparfait passe, un arrêt casse tout. Les passages difficiles se travaillent à part.",xp:25},
   {id:"q-debut-40",courseId:"debut",lessonId:"debut-c2-06",lvl:2,q:"Dans quelle tonalité se trouve la progression Sol, Ré, Mi mineur, Do ?",o:["Do majeur","Ré majeur","Sol majeur","La mineur"],a:2,exp:"Les quatre accords appartiennent à Sol majeur, et Sol est l'accord sur lequel la boucle se repose. Démarrée sur Mi mineur, la même boucle prend une couleur plus sombre.",xp:30},
+  {id:"q-debut-40-app",courseId:"debut",lessonId:"debut-c2-06",lvl:2,q:"La boucle Do, Sol, La mineur, Fa suit le même schéma que Sol, Ré, Mi mineur, Do. Dans quelle tonalité est-elle ?",o:["Do majeur","Sol majeur","Fa majeur","Ré mineur"],a:0,exp:"Même schéma : le premier accord est la « maison ». Sol, Ré, Mi mineur, Do est en Sol majeur ; Do, Sol, La mineur, Fa est en Do majeur.",xp:30},
   {id:"q-debut-41",courseId:"debut",lessonId:"debut-c2-06",lvl:1,q:"Le passage de Ré à Mi mineur te bloque. Quelle est la méthode la plus efficace ?",o:["Le travailler seul, puis le réintégrer","Éviter cette progression","Jouer plus vite pour ne pas y penser","Remplacer Mi mineur par un autre accord"],a:0,exp:"On isole le changement difficile (exercice « une minute de changements ») puis on le réintègre. C'est comme ça que tous les guitaristes progressent.",xp:25},
 ];

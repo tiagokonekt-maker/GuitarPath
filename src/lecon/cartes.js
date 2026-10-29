@@ -232,5 +232,108 @@ export function actionRevision(question, correct, reviewHistory, today) {
   return { type: "REVIEW_ANSWER", questionId: question.quizId, id: question.quizId, correct: !!correct, history, xp: 0 };
 }
 
+// ── Questions « cadeaux » ──────────────────────────────────────────────────
+// Une question ne doit pas donner sa réponse (src/content/README.md,
+// « Questions de quiz »). Deux pièges contrôlés (bloquants, voir
+// scripts/verifier-contenu.mjs et test/questions-cadeaux.test.mjs) :
+//  1. un doigté noté en 6 caractères (« x02220 ») dans l'énoncé : la question
+//     porte alors presque toujours sur cette forme, qu'on lit au lieu de s'en
+//     souvenir ;
+//  2. dans une leçon en cartes, la bonne réponse écrite sur la carte affichée
+//     JUSTE AVANT la question : l'élève la relit au lieu de l'appliquer.
+
+/** Doigté en 6 caractères (corde 6 → corde 1), ex. x32010, 022xxx. */
+export const NOTATION_DOIGTE = /\b[x0-9]{6}\b/i;
+
+/**
+ * Questions dont l'énoncé PEUT contenir un doigté : décoder la notation est
+ * précisément la compétence évaluée.
+ */
+export const DOIGTE_AUTORISE = new Set([
+  "q-debut-24", // « Que signifie la notation x32010 ? » : apprendre à lire la notation
+]);
+
+/**
+ * Couples « leçon › question » où la bonne réponse figure sur la carte
+ * précédente sans la donner pour autant (faux positifs du contrôle 2).
+ * Clé « leçon>question » (voir cleCadeau). Chaque entrée doit être justifiée
+ * en commentaire ; une entrée qui n'est plus détectée est signalée. Vide à ce
+ * jour : tous les cas détectés ont été corrigés plutôt qu'excusés.
+ */
+export const REPONSE_PRECEDENTE_AUTORISEE = new Set([
+]);
+
+/** Minuscules, sans accents ni ponctuation (le # des altérations est gardé). */
+export const normaliserTexte = (t) => String(t ?? "").toLowerCase().normalize("NFD")
+  .replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9#♭]+/g, " ").trim();
+
+/** Vrai si l'énoncé d'une question contient un doigté noté en 6 caractères. */
+export const enonceAvecDoigte = (q) => NOTATION_DOIGTE.test(String(q?.q ?? ""));
+
+/** Texte visible d'une carte qui précède une question (texte, titre, consigne, légende). */
+function texteVisible(carte) {
+  if (!carte) return "";
+  return [texteDeCarte(carte), carte.bloc?.caption, carte.bloc?.text].filter(Boolean).join(" ");
+}
+
+/**
+ * Questions d'une leçon en cartes dont la bonne réponse (normalisée, au moins
+ * 4 caractères, pas seulement des chiffres) est écrite sur la carte juste
+ * avant. Renvoie [{ index, quizId, reponse }] (index = rang de la carte question).
+ */
+export function reponsesDonneesAvant(lecon, quizParId = new Map()) {
+  const out = [];
+  const cartes = Array.isArray(lecon?.cartes) ? lecon.cartes : [];
+  cartes.forEach((c, i) => {
+    if (i === 0 || c?.type !== "question") return;
+    const qst = resoudreQuestion(c, quizParId);
+    if (!qst || !Number.isInteger(qst.a)) return;
+    const reponse = normaliserTexte(qst.o[qst.a]);
+    if (reponse.replace(/ /g, "").length < 4 || /^[0-9 ]+$/.test(reponse)) return;
+    const avant = ` ${normaliserTexte(texteVisible(cartes[i - 1]))} `;
+    if (avant.includes(` ${reponse} `)) out.push({ index: i, quizId: qst.quizId, reponse: qst.o[qst.a] });
+  });
+  return out;
+}
+
+/** Clé d'une entrée de REPONSE_PRECEDENTE_AUTORISEE : « leçon>question ». */
+export const cleCadeau = (leconId, r) => `${leconId}>${r.quizId || `carte ${r.index + 1}`}`;
+
+/**
+ * Les deux contrôles « questions cadeaux » sur tout le contenu. Renvoie la
+ * liste des erreurs (bloquantes pour scripts/verifier-contenu.mjs).
+ * @param lecons  leçons (celles sans `cartes` ne passent que le contrôle 1)
+ * @param quiz    toutes les questions de quiz
+ */
+export function controlerQuestionsCadeaux(lecons, quiz, {
+  doigteAutorise = DOIGTE_AUTORISE, precedenteAutorisee = REPONSE_PRECEDENTE_AUTORISEE,
+} = {}) {
+  const erreurs = [];
+  const quizParId = new Map((quiz || []).map(q => [q.id, q]));
+  for (const q of quiz || []) {
+    if (Array.isArray(q.o) && enonceAvecDoigte(q) && !doigteAutorise.has(q.id)) {
+      erreurs.push(`${q.id} : doigté « ${String(q.q).match(NOTATION_DOIGTE)[0]} » dans l'énoncé — il donne la réponse ; pose la question sans la notation`);
+    }
+  }
+  const vues = new Set();
+  for (const l of lecons || []) {
+    (l.cartes || []).forEach((c, i) => {
+      if (c?.type === "question" && !c.quizId && enonceAvecDoigte(c)) {
+        erreurs.push(`${l.id}/carte ${i + 1} : doigté « ${String(c.q).match(NOTATION_DOIGTE)[0]} » dans l'énoncé`);
+      }
+    });
+    for (const r of reponsesDonneesAvant(l, quizParId)) {
+      const cle = cleCadeau(l.id, r);
+      vues.add(cle);
+      if (precedenteAutorisee.has(cle)) continue;
+      erreurs.push(`${l.id}/carte ${r.index + 1} (${r.quizId || "question de carte"}) : la bonne réponse « ${r.reponse} » est écrite sur la carte juste avant — fais appliquer l'idée (autre tonalité, autre corde…) ou éloigne la question`);
+    }
+  }
+  for (const cle of precedenteAutorisee) {
+    if (!vues.has(cle)) erreurs.push(`exception « ${cle} » inutile (plus détectée) : retire-la de REPONSE_PRECEDENTE_AUTORISEE`);
+  }
+  return erreurs;
+}
+
 /** Blocs de diagramme portés par les cartes (pour les contrôles musicaux). */
 export const blocsDesCartes = (cartes) => (cartes || []).filter(c => c?.bloc).map(c => c.bloc);

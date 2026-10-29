@@ -38,7 +38,7 @@ export default {
         },
       },
     } },
-    { type: "question", quizId: "q-scales-34" },
+    { type: "question", quizId: "q-scales-34-app" },
     { type: "idee", titre: "Les tonalités relatives", texte: [
       "Do majeur et La mineur ont exactement les mêmes sept notes : La mineur est la relative de Do. Elle se trouve sur le 6e degré, un ton et demi sous la tonique.",
       "Autres paires : Sol / Mim, Ré / Sim, La / Fa#m, Fa / Rém.",
@@ -70,11 +70,12 @@ export default {
       "C'est la note de repos qui fait entendre majeur ou mineur.",
     ] },
   ],
-  quiz: ["q-logic-04","q-scales-34","q-scales-35"],
+  quiz: ["q-logic-04","q-scales-34","q-scales-35", "q-scales-34-app"],
 };
 
 export const quiz = [
   {id:"q-logic-04",courseId:"harmony",lessonId:"scales-c4-01",lvl:2,q:"Le 'relatif mineur' d'une tonalité majeure est sur quel degré ?",o:["3e","4e","7e","6e"],a:3,exp:"Relatif mineur = 6e degré. Do majeur → La mineur (6e degré = La). Mêmes notes, fondamentale différente, couleur opposée.",xp:45},
   {id:"q-scales-34",courseId:"scales",lessonId:"scales-c4-01",lvl:1,q:"Quelle est la formule de la gamme mineure naturelle ?",o:["T-T-DT-T-T-T-DT", "T-DT-T-T-T-T-DT", "DT-T-T-T-DT-T-T", "T-DT-T-T-DT-T-T"],a:3,exp:"Mineure naturelle : T-DT-T-T-DT-T-T. Depuis La : La-Si-Do-Ré-Mi-Fa-Sol, sans altération.",xp:30},
+  {id:"q-scales-34-app",courseId:"scales",lessonId:"scales-c4-01",lvl:2,q:"Applique la formule mineure naturelle depuis Mi : quelles notes sont altérées ?",o:["Fa# seulement","Fa# et Do#","Aucune","Fa#, Do# et Sol#"],a:0,exp:"Mi, Fa#, Sol, La, Si, Do, Ré : un ton de Mi à Fa#, puis que des notes naturelles. Un seul dièse, comme Sol majeur, sa relative.",xp:30},
   {id:"q-scales-35",courseId:"scales",lessonId:"scales-c4-01",lvl:2,q:"Do majeur et La mineur naturel ont les mêmes notes. Qu'est-ce qui change l'ambiance ?",o:["La note sur laquelle on se pose", "Le nombre de notes jouées dans la gamme", "Le tempo du morceau", "L'accordage de la guitare"],a:0,exp:"Mêmes 7 notes, fondamentale différente : on entend du majeur en se posant sur Do, du mineur en se posant sur La.",xp:40},
 ];

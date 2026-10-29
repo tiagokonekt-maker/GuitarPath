@@ -148,6 +148,26 @@ du vérificateur, et `test/quiz-qualite.test.mjs`) :
   (erreurs réelles d'élève), jamais « un pouvoir magique » ;
 - une seule réponse juste : vérifier qu'aucun distracteur n'est aussi
   défendable (enharmonie, accord commun à deux tonalités…).
+- **jamais de question « cadeau »**, qui donne sa réponse (bloquant,
+  section « Questions cadeaux » du vérificateur, logique dans
+  `src/lecon/cartes.js`, tests dans `test/questions-cadeaux.test.mjs`) :
+  - pas de **doigté noté en 6 caractères** (`x02220`, `xx3211`, `022xxx`…)
+    dans un énoncé : « Pour l'accord de La majeur, depuis quelle corde
+    grattes-tu ? », pas « Sur La (x02220)… ». Seule exception, listée dans
+    `DOIGTE_AUTORISE` : les questions dont la compétence est justement de
+    décoder la notation (`q-debut-24`). Les symboles de tab (« 5h7 »,
+    « 7b9 ») ne sont pas concernés ;
+  - dans une leçon en cartes, la **bonne réponse ne figure pas sur la carte
+    affichée juste avant** la question (titre, texte, consigne, légende ;
+    comparaison sans accents ni ponctuation, réponses d'au moins 4
+    caractères et pas seulement des chiffres). Plutôt que de faire relire,
+    faire **appliquer** : la carte explique Do majeur, la question demande
+    Ré majeur ; la carte place Si sur la corde 3, la question demande Do.
+    On peut aussi éloigner la question (au moins une carte entre les deux,
+    pour un vrai rappel) ou ajouter une question d'application (id suffixé
+    `-app`), la question d'origine restant au `quiz` de la leçon pour la
+    révision. Un faux positif réel va dans `REPONSE_PRECEDENTE_AUTORISEE`
+    (clé `leçon>question`), avec un commentaire qui le justifie.
 
 Supprimer une question : retirer son id de tous les `quiz` de leçon et des
 cartes (`quizId`). Les entrées de révision déjà enregistrées chez les élèves

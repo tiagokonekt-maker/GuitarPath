@@ -37,7 +37,7 @@ export default {
       "Sur Am7, joue Mi pentatonique mineure : Mi, Sol, La, Si, Ré, soit 5, ♭7, 1, 9 et 11 de l'accord.",
       "Le Do (♭3) disparaît, la 9e et la 11e arrivent : le son reste mineur, en plus ouvert.",
     ], bloc: { type: "fretboard_interactive", mode: "scale", root: "E", scale: "pentatonic_minor", caption: "Pentatonique mineure de Mi sur Am7 — la 9 et la 11 en couleur", displayMode: "notes", lang: "fr", compact: true } },
-    { type: "question", quizId: "q-impro-subpenta-lot4" },
+    { type: "question", quizId: "q-impro-subpenta-lot4-app" },
     { type: "idee", titre: "Le piège", texte: [
       "Do pentatonique majeure sur Am7 n'est pas une substitution : Do, Ré, Mi, Sol, La, ce sont exactement les notes de La pentatonique mineure.",
       "Même gamme, autre point de départ : rien de neuf pour l'oreille.",
@@ -52,10 +52,11 @@ export default {
       "La pentatonique majeure de la relative n'est pas une substitution : mêmes notes.",
     ] },
   ],
-  quiz: ["q-impro-subpenta-lot4","q-impro-piege-lot4","q-impro-15","q-impro-11"],
+  quiz: ["q-impro-subpenta-lot4","q-impro-piege-lot4","q-impro-15","q-impro-11", "q-impro-subpenta-lot4-app"],
 };
 
 export const quiz = [
   {id:"q-impro-subpenta-lot4",courseId:"impro",lessonId:"impro-06b",lvl:3,q:"Sur Am7, tu remplaces La pentatonique mineure par Mi pentatonique mineure. Quelles couleurs gagnes-tu ?",o:["La 9e et la 11e","La 3e majeure et la 7e majeure","La ♭5 et la ♭9","Aucune, les notes sont identiques"],a:0,exp:"Mi penta mineure = Mi Sol La Si Ré : sur Am7, Si est la 9e et Ré la 11e. Le Do (♭3) disparaît, la couleur reste mineure mais s'ouvre. Ni tierce majeure, ni ♭5, ni ♭9 n'y figurent.",xp:45},
+  {id:"q-impro-subpenta-lot4-app",courseId:"impro",lessonId:"impro-06b",lvl:3,q:"Sur Dm7, tu joues La pentatonique mineure, celle de la quinte. Quelles notes deviennent la 9e et la 11e ?",o:["Mi et Sol","Fa et La","Do et Mi","Si et Ré"],a:0,exp:"La penta mineure = La Do Ré Mi Sol. Sur Dm7 : La est la quinte, Do la ♭7, Ré la fondamentale, Mi la 9e et Sol la 11e. Fa (♭3) disparaît.",xp:40},
   {id:"q-impro-piege-lot4",courseId:"impro",lessonId:"impro-06b",lvl:3,q:"Pourquoi Do pentatonique majeure n'apporte-t-elle rien de neuf sur Am7 ?",o:["Elle a les notes de La penta mineure","Elle contient la tierce majeure de La","Elle n'a pas la 7e mineure de La","Elle sort de la tonalité de La mineur"],a:0,exp:"Do penta majeure = Do Ré Mi Sol La, les cinq notes de La penta mineure. C'est la même gamme vue depuis un autre point de départ : aucune couleur nouvelle. Elle contient bien Sol, la 7e de Am7, et pas de Do#.",xp:40},
 ];

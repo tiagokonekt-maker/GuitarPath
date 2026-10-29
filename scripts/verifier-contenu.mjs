@@ -16,7 +16,7 @@ import { TESTABLE_MODULES, PLACEMENT_LEVELS, availableModules } from "../src/sto
 import { buildUnits, getUnitQuizPool } from "../src/store/pathEngine.js";
 import { LESSON_XP } from "../src/store/xp.js";
 import { GROPI_CATALOGUE } from "../src/store/gropiCatalogue.js";
-import { validerCartes, texteDeCarte } from "../src/lecon/cartes.js";
+import { validerCartes, texteDeCarte, controlerQuestionsCadeaux } from "../src/lecon/cartes.js";
 import { readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
@@ -421,6 +421,20 @@ titre("Leçons en cartes");
     }
   }
   console.log(`  ${enCartes.length} leçon(s) en cartes · ${nbCartes} cartes${nbAvert ? ` · ${nbAvert} avertissement(s)` : ""}`);
+}
+
+// ── Questions cadeaux ────────────────────────────────────────────────────
+// Bloquant (src/content/README.md, « Questions de quiz ») : une question ne
+// donne pas sa réponse. 1) Pas de doigté en 6 caractères (« x02220 ») dans un
+// énoncé, sauf DOIGTE_AUTORISE (décoder la notation est la compétence).
+// 2) Dans une leçon en cartes, la bonne réponse n'est pas écrite sur la carte
+// juste avant la question, sauf REPONSE_PRECEDENTE_AUTORISEE (faux positifs
+// justifiés). Les deux listes sont dans src/lecon/cartes.js.
+titre("Questions cadeaux");
+{
+  const erreurs = controlerQuestionsCadeaux(lecons, QUIZ);
+  erreurs.forEach(ko);
+  if (!erreurs.length) console.log("  aucun doigté dans les énoncés, aucune réponse lue sur la carte précédente");
 }
 
 // ── Conseils de Gropi ───────────────────────────────────────────────────

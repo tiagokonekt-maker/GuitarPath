@@ -15,7 +15,7 @@ export default {
       "Triades : majeure 1-3-5, mineure 1-♭3-5, diminuée 1-♭3-♭5, augmentée 1-3-#5.",
       "Accords de 7e : Maj7, m7, 7, m7♭5, dim7. Leur arpège en donne les quatre notes, qui définissent tout l'accord. Cmaj7 : Do, Mi, Sol, Si.",
     ], bloc: { type: "fretboard_interactive", mode: "chord", root: "C", chord: "maj7", caption: "Arpège Cmaj7 — Do Mi Sol Si sur tout le manche", displayMode: "notes", lang: "fr", compact: true } },
-    { type: "question", quizId: "q-harm-09" },
+    { type: "question", quizId: "q-harm-09-app" },
     { type: "idee", titre: "Un arpège dans une position", texte: [
       "Cmaj7 entre les cases 7 et 10, sur deux octaves : Do (corde 6 case 8), Mi (corde 5 case 7), Sol (corde 5 case 10), Si (corde 4 case 9), Do (corde 4 case 10), Mi (corde 3 case 9), Sol (corde 2 case 8), Si (corde 1 case 7), Do (corde 1 case 8).",
       "Un doigt par case, la main ne bouge pas.",
@@ -51,11 +51,12 @@ export default {
       "Change d'arpège avec l'accord, et comble avec la gamme entre les notes cibles.",
     ] },
   ],
-  quiz: ["q-harm-09","q-harm-10","q-harm-11","q-fret-harm-06"],
+  quiz: ["q-harm-09","q-harm-10","q-harm-11","q-fret-harm-06", "q-harm-09-app"],
 };
 
 export const quiz = [
   {id:"q-harm-09",courseId:"harmony",lessonId:"harmony-03",lvl:2,q:"L'arpège d'un accord Cmaj7 contient quelles notes ?",o:["Do-Mi-Sol-Si","Do-Mi-Sol","Do-Mi-Sol-Sib","Do-Mib-Sol-Si"],a:0,exp:"Cmaj7 = Do(1)-Mi(3)-Sol(5)-Si(7). L'arpège = ces 4 notes jouées en mélodie. Tu peux les jouer dans n'importe quel ordre, sur plusieurs octaves.",xp:35},
+  {id:"q-harm-09-app",courseId:"harmony",lessonId:"harmony-03",lvl:2,q:"L'arpège d'un accord Fmaj7 contient quelles notes ?",o:["Fa-La-Do-Mi","Fa-La-Do-Mi♭","Fa-La♭-Do-Mi","Fa-La-Do"],a:0,exp:"Maj7 = 1-3-5-7 : Fa (1), La (3), Do (5), Mi (7). Avec Mi♭, ce serait F7 ; avec La♭, la tierce deviendrait mineure ; sans Mi, il manque la 7e.",xp:30},
   {id:"q-harm-10",courseId:"harmony",lessonId:"harmony-03",lvl:3,q:"Pourquoi les arpèges sont-ils essentiels en improvisation jazz ?",o:["Pour montrer sa technique au public", "Pour sonner « sur l'accord » à coup sûr", "Pour pouvoir jouer plus vite qu'avec une gamme", "Pour transposer plus facilement"],a:1,exp:"Les notes d'un arpège = les notes de l'accord = celles qui sonnent immédiatement 'juste' sur cet accord. Construire ses phrases autour des arpèges = solo qui suit l'harmonie.",xp:45},
   {id:"q-harm-11",courseId:"harmony",lessonId:"harmony-03",lvl:3,q:"Sur la progression Dm7-G7-Cmaj7, quelle stratégie d'arpèges fonctionne ?",o:["Arpège Dm7 sur les trois accords", "Pentatonique de Do sur toute la grille", "Arpège Dm7, puis G7, puis Cmaj7", "Arpège Cmaj7 sur les trois accords"],a:2,exp:"Changer d'arpège à chaque accord = solo qui suit l'harmonie. C'est la base du jazz. Sur Dm7 : Ré-Fa-La-Do. Sur G7 : Sol-Si-Ré-Fa. Sur Cmaj7 : Do-Mi-Sol-Si.",xp:55},
   {id:"q-fret-harm-06",type:"fretboard",courseId:"harmony",lessonId:"harmony-03",lvl:3,q:"Trouve toutes les notes de l'arpège Dm7 (Ré Fa La Do)",concept:{type:"find_chord",root:"D",quality:"min7"},selectionRules:{mode:"all"},display:{showNotes:false},hint:"Dm7 = ii de Do majeur. Guide tones : Fa (3e) + Do (7e).",xp:55,exp:"Dm7 : Ré-Fa-La-Do. C'est le ii du ii-V-I en Do."},

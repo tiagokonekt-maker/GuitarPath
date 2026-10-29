@@ -90,7 +90,7 @@ export default {
 };
 
 export const quiz = [
-  {id:"q-rhy-travis-01-lot3",courseId:"rhythm",lessonId:"rhy-doigts-02",lvl:2,q:"En picking Travis sur Do (x32010), entre quelles cordes le pouce alterne-t-il ?",o:["Cordes 5 et 4","Cordes 6 et 5","Cordes 4 et 3","Cordes 3 et 2"],a:0,exp:"La fondamentale Do est sur la corde 5, case 3 ; la basse suivante, Mi, sur la corde 4, case 2. Le pouce va de l'une à l'autre.",xp:30},
+  {id:"q-rhy-travis-01-lot3",courseId:"rhythm",lessonId:"rhy-doigts-02",lvl:2,q:"En picking Travis sur Do, entre quelles cordes le pouce alterne-t-il ?",o:["Cordes 5 et 4","Cordes 6 et 5","Cordes 4 et 3","Cordes 3 et 2"],a:0,exp:"La fondamentale Do est sur la corde 5, case 3 ; la basse suivante, Mi, sur la corde 4, case 2. Le pouce va de l'une à l'autre.",xp:30},
   {id:"q-rhy-travis-02-lot3",courseId:"rhythm",lessonId:"rhy-doigts-02",lvl:2,q:"Dans le picking Travis de base, où tombent les notes aiguës jouées aux doigts ?",o:["Sur les « et », entre les basses","Sur les temps, avec les basses","Seulement sur le temps 1","Seulement en fin de mesure"],a:0,exp:"Le pouce tient les temps 1, 2, 3, 4 ; les doigts se glissent sur les contretemps. Une note de mélodie peut ensuite être pincée avec une basse.",xp:30},
   {id:"q-rhy-travis-03-lot3",courseId:"rhythm",lessonId:"rhy-doigts-02",lvl:2,q:"Ton pouce s'arrête dès que tu ajoutes la mélodie. Que fais-tu ?",o:["Tu retires la mélodie et ralentis","Tu joues la mélodie plus fort","Tu supprimes une basse sur deux","Tu accélères pour garder l'élan"],a:0,exp:"Le pouce est la base du picking Travis : on le stabilise d'abord, seul puis avec les notes des « et », et on réintroduit la mélodie à un tempo plus lent.",xp:30},
 ];

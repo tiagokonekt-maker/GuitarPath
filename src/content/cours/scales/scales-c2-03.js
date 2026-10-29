@@ -31,7 +31,7 @@ export default {
       "I tonique, II sus-tonique, III médiante, IV sous-dominante, V dominante, VI sus-dominante, VII sensible.",
       "La tonique, c'est la maison. La sensible, un demi-ton sous elle, y ramène.",
     ], bloc: DEGRES_DO },
-    { type: "question", quizId: "q-scales-04" },
+    { type: "question", quizId: "q-scales-04-app" },
     { type: "idee", titre: "Trois piliers : I, IV, V", texte: [
       "Tonique, sous-dominante et dominante organisent l'essentiel de la musique tonale.",
       "Le blues 12 mesures n'utilise qu'eux, et bien des chansons aussi.",
@@ -56,11 +56,12 @@ export default {
       "VII, la sensible, est à un demi-ton sous la tonique et y ramène.",
     ] },
   ],
-  quiz: ["q-scales-04","q-scales-57","q-scales-58"],
+  quiz: ["q-scales-04","q-scales-57","q-scales-58", "q-scales-04-app"],
 };
 
 export const quiz = [
   {id:"q-scales-04",courseId:"scales",lessonId:"scales-c2-03",lvl:3,q:"Quelle est la fonction du 7e degré dans une gamme majeure ?",o:["Sensible","Tonique","Dominante","Sus-dominante"],a:0,exp:"VII = sensible. Note distante d'1 demi-ton de la tonique, qui crée une attraction forte vers I. En Do : Si attire vers Do. Source de la cadence dominante.",xp:40},
+  {id:"q-scales-04-app",courseId:"scales",lessonId:"scales-c2-03",lvl:2,q:"En Ré majeur, quelle fonction a la note La ?",o:["V, la dominante","IV, la sous-dominante","VI, la sus-dominante","III, la médiante"],a:0,exp:"Ré majeur : Ré (I), Mi (II), Fa# (III), Sol (IV), La (V), Si (VI), Do# (VII). La est le 5e degré : la dominante.",xp:30},
   {id:"q-scales-57",courseId:"scales",lessonId:"scales-c2-03",lvl:2,q:"En Sol majeur, quels sont les trois degrés piliers I, IV et V ?",o:["Sol, Do, Ré","Sol, Si, Ré","Sol, Do, Mi","Sol, La, Ré"],a:0,exp:"Sol majeur : Sol (I), La (II), Si (III), Do (IV), Ré (V), Mi (VI), Fa# (VII). Tonique Sol, sous-dominante Do, dominante Ré.",xp:40},
   {id:"q-scales-58",courseId:"scales",lessonId:"scales-c2-03",lvl:2,q:"En Fa majeur, quelle note est la sensible ?",o:["Mi","Mi♭","Si♭","Do"],a:0,exp:"Fa majeur : Fa Sol La Si♭ Do Ré Mi. Le VIIe degré, Mi, est à un demi-ton sous la tonique : c'est la sensible, qui « tire » vers Fa. Mi♭ serait un ton entier en dessous.",xp:40},
 ];

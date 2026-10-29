@@ -36,7 +36,7 @@ export default {
         ],
       },
     } },
-    { type: "question", quizId: "q-neck-39" },
+    { type: "question", quizId: "q-neck-39-app" },
     { type: "idee", titre: "Tu en joues déjà trois", texte: [
       "Ton Mi mineur contient trois Mi : corde 6 à vide, corde 4 case 2, corde 1 à vide. Trois octaves dans un seul accord.",
       "Choisir l'octave, c'est choisir un timbre : en solo, rejouer une phrase une octave plus haut fait monter l'intensité.",
@@ -48,11 +48,12 @@ export default {
       "Même note, autre corde ou autre octave = un autre timbre.",
     ] },
   ],
-  quiz: ["q-base-08","q-neck-38","q-neck-39"],
+  quiz: ["q-base-08","q-neck-38","q-neck-39", "q-neck-39-app"],
 };
 
 export const quiz = [
   {id:"q-base-08",courseId:"neck",lessonId:"neck-c1-02",lvl:1,q:"Sur une même corde, combien de cases faut-il monter pour retrouver la même note à l'octave ?",o:["7","8","10","12"],a:3,exp:"12 cases = 12 demi-tons = une octave complète. La note porte le même nom, une octave plus haut.",xp:30},
   {id:"q-neck-38",courseId:"neck",lessonId:"neck-c1-02",lvl:1,q:"Tu joues Sol sur la corde 6, case 3. Où rejoues-tu ce Sol une octave plus haut, sur la même corde ?",o:["Case 15","Case 12","Case 10","Case 13"],a:0,exp:"Même corde, +12 cases = une octave : 3 + 12 = 15. Le nom de la note ne change pas, seule sa hauteur double.",xp:30},
   {id:"q-neck-39",courseId:"neck",lessonId:"neck-c1-02",lvl:2,q:"Le Mi de la corde 6 à vide se retrouve une octave plus haut sur la corde 5. À quelle case ?",o:["Case 7","Case 5","Case 2","Case 12"],a:0,exp:"Mi (corde 5, case 7) sonne une octave au-dessus de la corde 6 à vide. Le même Mi existe aussi sur la corde 4, case 2 : deux positions pour une même hauteur.",xp:40},
+  {id:"q-neck-39-app",courseId:"neck",lessonId:"neck-c1-02",lvl:2,q:"Le La de la corde 5 à vide : où le retrouves-tu une octave plus haut, deux cordes plus loin ?",o:["Corde 3, case 2","Corde 3, case 7","Corde 4, case 2","Corde 3, case 5"],a:0,exp:"Même motif que pour Mi, de la corde 6 à vide à la corde 4 case 2 : deux cordes plus loin, deux cases plus haut. La (corde 3 case 2).",xp:30},
 ];

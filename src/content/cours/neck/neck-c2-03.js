@@ -32,7 +32,7 @@ export default {
       "Chaque corde sonne une quarte, 5 demi-tons, au-dessus de sa voisine grave. Deux cordes plus haut, c'est donc 10 cases d'avance.",
       "La corde 4 à vide est le même Ré que celui de la corde 6, case 10.",
     ] },
-    { type: "question", quizId: "q-neck-31" },
+    { type: "question", quizId: "q-neck-31-app" },
     { type: "idee", titre: "L'octave, deux cases plus loin", texte: [
       "Une note de la corde 6 se retrouve une octave plus haut sur la corde 4, deux cases plus loin.",
       "Sol (corde 6, case 3) devient Sol (corde 4, case 5). La (corde 6, case 5) devient La (corde 4, case 7).",
@@ -65,12 +65,13 @@ export default {
       "Octave : de la corde 6 à la corde 4, deux cases plus loin.",
     ] },
   ],
-  quiz: ["q-neck-29", "q-neck-30", "q-neck-31", "q-neck-09", "q-neck-p34-04"],
+  quiz: ["q-neck-29", "q-neck-30", "q-neck-31", "q-neck-09", "q-neck-p34-04", "q-neck-31-app"],
 };
 
 export const quiz = [
   {id:"q-neck-29",courseId:"neck",lessonId:"neck-c2-03",lvl:1,q:"Sur la corde 4 (Ré), quelle note est à la case 5 ?",o:["Sol","Fa#","La","Mi"],a:0,exp:"Corde 4 à vide = Ré, puis Mi (2), Fa (3), Sol (5).",xp:30},
   {id:"q-neck-30",courseId:"neck",lessonId:"neck-c2-03",lvl:1,q:"Sur la corde 4, où sont les deux demi-tons naturels (Mi-Fa et Si-Do) ?",o:["Cases 3-4 et 10-11","Cases 2-3 et 9-10","Cases 4-5 et 11-12","Cases 1-2 et 8-9"],a:1,exp:"Mi est case 2 et Fa case 3 ; Si est case 9 et Do case 10.",xp:30},
   {id:"q-neck-31",courseId:"neck",lessonId:"neck-c2-03",lvl:2,q:"La corde 4 à vide sonne exactement comme…",o:["La corde 6, case 5","La corde 5, case 7","La corde 6, case 10","La corde 6, case 12"],a:2,exp:"Corde 4 case X = corde 6 case X+10 : la corde 4 à vide (Ré) est la même note, à la même hauteur, que la corde 6 case 10.",xp:40},
+  {id:"q-neck-31-app",courseId:"neck",lessonId:"neck-c2-03",lvl:2,q:"La corde 3 à vide sonne exactement comme…",o:["La corde 5, case 5","La corde 5, case 10","La corde 6, case 10","La corde 4, case 7"],a:1,exp:"Deux cordes plus grave, c'est 10 cases d'avance : la corde 3 à vide (Sol) est la même note, à la même hauteur, que la corde 5 case 10.",xp:30},
   {id:"q-neck-p34-04",courseId:"neck",lessonId:"neck-c2-03",lvl:2,q:"Sur la corde 4, quelle note joues-tu à la case 10 ?",o:["Do","Si","Do#","La#"],a:0,exp:"Corde 4 : La (7), Si (9), puis Do (10), juste à côté, car Si-Do n'est qu'un demi-ton. L'octave Ré est en case 12, un ton plus haut.",xp:35},
 ];

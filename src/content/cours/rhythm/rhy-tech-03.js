@@ -47,7 +47,7 @@ export default {
       "5h7 sur la corde 3 : attaque la case 5 à l'index, puis frappe la case 7 avec l'annulaire, du bout du doigt, juste derrière la frette.",
       "C'est la vitesse du doigt qui fait sonner la note, pas la force : un petit coup sec, d'un ou deux centimètres de haut.",
     ] },
-    { type: "question", quizId: "q-rhy-legato-01-tech" },
+    { type: "question", quizId: "q-rhy-legato-01-tech-app" },
     { type: "idee", titre: "Le pull-off", texte: [
       "7p5 : les deux doigts sont posés, cases 5 et 7. Attaque, puis retire l'annulaire en accrochant légèrement la corde vers le sol.",
       "Ce petit pincement de la main gauche fait sonner la case 5. Lever le doigt tout droit ne laisserait qu'un son mou.",
@@ -70,11 +70,12 @@ export default {
       "Trille : hammer-on et pull-off enchaînés, sans regratter.",
     ] },
   ],
-  quiz: ["q-rhy-legato-01-tech", "q-rhy-legato-02-tech", "q-rhy-legato-03-tech", "q-debut-46"],
+  quiz: ["q-rhy-legato-01-tech", "q-rhy-legato-02-tech", "q-rhy-legato-03-tech", "q-debut-46", "q-rhy-legato-01-tech-app"],
 };
 
 export const quiz = [
   {id:"q-rhy-legato-01-tech",courseId:"rhythm",lessonId:"rhy-tech-03",lvl:1,q:"Pour qu'un hammer-on sonne bien, où le doigt frappe-t-il la corde ?",o:["Juste derrière la frette","Au milieu de la case","Sur la frette elle-même","Loin derrière, vers la tête"],a:0,exp:"Juste derrière la frette, la corde se plaque net et la note sonne fort. Plus loin, il faut beaucoup plus de force pour un son plus faible.",xp:25},
+  {id:"q-rhy-legato-01-tech-app",courseId:"rhythm",lessonId:"rhy-tech-03",lvl:2,q:"Ton hammer-on sonne faible : l'annulaire frappe lentement, au milieu de la case. Que changes-tu ?",o:["Frapper plus vite, près de la frette","Appuyer plus fort, au même endroit","Regratter la seconde note au médiator","Frapper avec l'index, plus solide"],a:0,exp:"C'est la vitesse du doigt qui fait sonner la note, et la corde se plaque net juste derrière la frette. Appuyer plus fort au milieu de la case ne fait que fatiguer la main.",xp:30},
   {id:"q-rhy-legato-02-tech",courseId:"rhythm",lessonId:"rhy-tech-03",lvl:2,q:"Pull-off de la case 7 vers la case 5 : comment retires-tu le doigt de la case 7 ?",o:["En accrochant la corde vers le sol","En le levant tout droit, vers le haut","En glissant jusqu'à la case 5","En étouffant la corde avec la paume"],a:0,exp:"Le doigt pince légèrement la corde en partant, vers le sol : c'est cette petite attaque de la main gauche qui fait sonner la case 5.",xp:30},
   {id:"q-rhy-legato-03-tech",courseId:"rhythm",lessonId:"rhy-tech-03",lvl:2,q:"Que joues-tu dans un trille entre les cases 5 et 7 ?",o:["Les deux notes en alternance rapide, liées","La case 5 tirée jusqu'à la hauteur de la 7","Un glissé aller-retour entre les deux cases","Les deux notes ensemble, comme un accord"],a:0,exp:"Un trille enchaîne hammer-on et pull-off entre deux cases, très vite, avec une seule attaque de la main droite.",xp:30},
 ];

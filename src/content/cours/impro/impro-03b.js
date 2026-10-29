@@ -38,7 +38,7 @@ export default {
       "Sur la dominante, tu peux pousser encore : Lab, la ♭9, frotte un demi-ton au-dessus de Sol.",
       "Il descend se poser sur Sol, la quinte de Cmaj7. Sur G7 seulement : sur Cmaj7, il sonnerait faux.",
     ] },
-    { type: "question", quizId: "q-impro-06" },
+    { type: "question", quizId: "q-impro-06-app" },
     { type: "a-toi", titre: "G7, Cmaj7 : résoudre",
       consigne: "Alterne G7 et Cmaj7, une mesure chacun (enregistre la boucle, ou lance la Jam en Jazz ii-V-I, tonalité Do). Joue la tab : Lab sur Sol, puis Si et Fa qui se resserrent sur Do et Mi. Ensuite, improvise en Do majeur : sur chaque Cmaj7, arrive sur Mi ou Do.",
       bloc: CADENCE, bpm: 70, minuteur: 180 },
@@ -48,10 +48,11 @@ export default {
       "La ♭9 (Lab) tend la dominante et se pose sur Sol.",
     ] },
   ],
-  quiz: ["q-impro-avoid-lot4","q-impro-28","q-impro-06"],
+  quiz: ["q-impro-avoid-lot4","q-impro-28","q-impro-06", "q-impro-06-app"],
 };
 
 export const quiz = [
   {id:"q-impro-28",courseId:"impro",lessonId:"impro-03b",lvl:3,q:"Sur Sol7 qui résout vers Do, vers quelle note le Si (tierce de Sol7) a-t-il tendance à monter ?",o:["Do","Ré","Si♭","La"],a:0,exp:"Le Si est la sensible de Do : un demi-ton sous la tonique, il monte naturellement sur Do. Avec le Fa (7e de Sol7) qui descend sur Mi, c'est ce double mouvement par demi-tons qui donne à la dominante sa force d'appel.",xp:40},
   {id:"q-impro-avoid-lot4",courseId:"impro",lessonId:"impro-03b",lvl:2,q:"Tu improvises en Do majeur sur un Cmaj7. Quelle note éviter de tenir sur un temps fort ?",o:["Fa","Mi","Sol","Si"],a:0,exp:"Fa, la quarte, est un demi-ton au-dessus de Mi, la tierce de l'accord : tenu, il brouille Cmaj7. Mi, Sol et Si font partie de l'accord. Le Fa reste utilisable en passage, vers Mi ou Sol.",xp:30},
+  {id:"q-impro-06-app",courseId:"impro",lessonId:"impro-03b",lvl:3,q:"Sur D7 qui va vers Gmaj7, laquelle de ces notes apporte le plus de tension ?",o:["Mi♭, la ♭9","Mi, la 9e","Si, la 13e","La, la quinte"],a:0,exp:"Mi♭ (♭9) frotte un demi-ton au-dessus de la fondamentale Ré : c'est l'extension la plus tendue de la dominante. Il descend se poser sur Ré, la quinte de Gmaj7. La 9e et la 13e colorent sans cette friction, et La est une note stable de l'accord.",xp:40},
 ];

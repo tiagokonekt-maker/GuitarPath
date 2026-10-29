@@ -36,7 +36,7 @@ export default {
       "Ton, ton, demi-ton, ton, ton, ton, demi-ton : T-T-DT-T-T-T-DT. Depuis n'importe quelle note, cette formule donne une gamme majeure.",
       "C'est la gamme de référence : on en déduit les modes et l'harmonie des accords.",
     ] },
-    { type: "question", quizId: "q-scales-01" },
+    { type: "question", quizId: "q-scales-01-app" },
     { type: "idee", titre: "Do majeur, sans altération", texte: [
       "Depuis Do : un ton, Ré ; un ton, Mi ; un demi-ton, Fa. Puis Sol, La, Si, et un demi-ton pour retomber sur Do.",
       "Les sept notes naturelles, pas un dièse ni un bémol : c'est pour ça que Do majeur sert de modèle.",
@@ -64,11 +64,12 @@ export default {
       "Do majeur n'a aucune altération ; Sol majeur a un dièse, Fa#.",
     ] },
   ],
-  quiz: ["q-scales-01","q-scales-55","q-scales-56"],
+  quiz: ["q-scales-01","q-scales-55","q-scales-56", "q-scales-01-app"],
 };
 
 export const quiz = [
   {id:"q-scales-01",courseId:"scales",lessonId:"scales-c2-02",lvl:1,q:"La formule en tons et demi-tons de la gamme majeure est…",o:["T-DT-T-T-DT-T-T","T-T-DT-T-T-T-DT","T-T-T-DT-T-T-DT","DT-T-T-T-DT-T-T"],a:1,exp:"T-T-DT-T-T-T-DT. Demi-tons entre 3-4 et 7-8. Cette structure asymétrique crée le 'son majeur' (sensation de luminosité, attraction du Si vers le Do).",xp:30},
+  {id:"q-scales-01-app",courseId:"scales",lessonId:"scales-c2-02",lvl:1,q:"Applique la formule de la gamme majeure depuis Ré : quelle est la 7e note ?",o:["Do#","Do","Si","La#"],a:0,exp:"Ré, Mi, Fa#, Sol, La, Si, Do#, Ré : après Si, un ton entier mène à Do#, puis le demi-ton final ramène à Ré.",xp:25},
   {id:"q-scales-55",courseId:"scales",lessonId:"scales-c2-02",lvl:1,q:"En construisant Sol majeur avec la formule, quelle note altérée apparaît ?",o:["Fa#","Do#","Si♭","Sol#"],a:0,exp:"Sol La Si Do Ré Mi, puis un ton après Mi : Fa#, et le demi-ton final ramène à Sol. Sol majeur a un seul dièse, Fa#.",xp:30},
   {id:"q-scales-56",courseId:"scales",lessonId:"scales-c2-02",lvl:2,q:"Dans la gamme majeure, entre quels degrés tombent les deux demi-tons ?",o:["3-4 et 7-8","2-3 et 6-7","1-2 et 5-6","4-5 et 7-8"],a:0,exp:"T-T-DT-T-T-T-DT : le premier demi-ton arrive après deux tons (degrés 3-4), le second à la fin (7-8). En Do : Mi-Fa et Si-Do.",xp:40},
 ];

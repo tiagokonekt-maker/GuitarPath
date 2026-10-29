@@ -32,7 +32,7 @@ export default {
       "De Sol à Si, il y a 4 demi-tons : Si arrive dès la case 4, pas en 7 comme sur les cordes de Mi.",
       "C'est le même Si que la corde 2 à vide : entre ces deux cordes, l'écart est une tierce majeure, pas une quarte.",
     ] },
-    { type: "question", quizId: "q-neck-21" },
+    { type: "question", quizId: "q-neck-21-app" },
     { type: "idee", titre: "La corde des bends", texte: [
       "Médium-aiguë et souple, la corde 3 se prête aux tirés. Le Ré de la case 7, tiré d'un ton jusqu'à Mi, est un geste de base du blues.",
       "En La pentatonique, les deux notes sont dans la gamme : ce bend sonne juste.",
@@ -63,11 +63,12 @@ export default {
       "Ré (case 7) tiré d'un ton jusqu'à Mi : le bend de base du blues.",
     ] },
   ],
-  quiz: ["q-neck-21","q-neck-22","q-neck-45"],
+  quiz: ["q-neck-21","q-neck-22","q-neck-45", "q-neck-21-app"],
 };
 
 export const quiz = [
   {id:"q-neck-21",courseId:"neck",lessonId:"neck-c2-04",lvl:2,q:"Sur la corde 3 (Sol), à quelle case trouve-t-on la note Si ?",o:["Case 7","Case 5","Case 2","Case 4"],a:3,exp:"De Sol à Si, il y a 4 demi-tons : Si arrive dès la case 4, alors qu'il est en case 7 sur les cordes de Mi. C'est le même Si que la corde 2 à vide.",xp:35},
+  {id:"q-neck-21-app",courseId:"neck",lessonId:"neck-c2-04",lvl:2,q:"Sur la corde 3 (Sol), à quelle case trouve-t-on la note Do ?",o:["Case 8","Case 5","Case 3","Case 6"],a:1,exp:"Si est en case 4 sur la corde 3, et Si-Do n'est qu'un demi-ton : Do arrive juste après, case 5. La case 8, c'est Do sur les cordes de Mi.",xp:30},
   {id:"q-neck-22",courseId:"neck",lessonId:"neck-c2-04",lvl:2,q:"Sur la corde 3 (Sol), quelle note trouve-t-on à la case 5 ?",o:["Do","Ré","La","Si"],a:0,exp:"Case 0 Sol, 2 La, 4 Si, 5 Do : le demi-ton Si-Do tombe entre les cases 4 et 5, exactement comme sur les autres cordes.",xp:35},
   {id:"q-neck-45",courseId:"neck",lessonId:"neck-c2-04",lvl:1,q:"Sur la corde 3, quelle note joues-tu à la case 9 ?",o:["Mi","Ré","Fa","Do#"],a:0,exp:"Corde 3 : Sol (0), La (2), Si (4), Do (5), Ré (7), Mi (9). Le demi-ton Mi-Fa tombe entre les cases 9 et 10.",xp:30},
 ];

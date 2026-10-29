@@ -38,7 +38,7 @@ export default {
         label: "1 e et a · 2 e et a · 3 e et a · 4 e et a",
       },
     } },
-    { type: "question", quizId: "q-rhy-17" },
+    { type: "question", quizId: "q-rhy-17-app" },
     { type: "idee", titre: "Le balancier en croches", texte: [
       "Bas sur chaque chiffre, haut sur chaque « et ». Les coups hauts comptent autant que les bas.",
       "Travaille-le à 60 BPM sur La mineur jusqu'à une régularité parfaite : c'est la base du rock et de la pop.",
@@ -58,7 +58,7 @@ export default {
       "Le balancier ne s'arrête jamais : on choisit seulement quand toucher.",
     ] },
   ],
-  quiz: ["q-rhy-01","q-rhy-02","q-rhy-16","q-rhy-17","q-rhy-18"],
+  quiz: ["q-rhy-01","q-rhy-02","q-rhy-16","q-rhy-17","q-rhy-18", "q-rhy-17-app"],
 };
 
 export const quiz = [
@@ -66,5 +66,6 @@ export const quiz = [
   {id:"q-rhy-02",courseId:"rhythm",lessonId:"rhy-c2-02",lvl:2,q:"Combien de doubles-croches dans une mesure de 4/4 ?",o:["8","12","16","24"],a:2,exp:"4/4 = 4 noires. 1 noire = 4 doubles-croches. Donc 16 doubles-croches par mesure.",xp:30},
   {id:"q-rhy-16",courseId:"rhythm",lessonId:"rhy-c2-02",lvl:1,q:"Une croche dure combien par rapport à une noire ?",o:["Le double","La moitié","Le quart","La même chose"],a:1,exp:"Chaque valeur vaut la moitié de la précédente : ronde, blanche, noire, croche, double-croche. Deux croches remplissent exactement un temps en 4/4.",xp:25},
   {id:"q-rhy-17",courseId:"rhythm",lessonId:"rhy-c2-02",lvl:2,q:"Comment compte-t-on à voix haute une mesure de doubles-croches ?",o:["1-et, 2-et, 3-et, 4-et", "1-2-3-4, en accélérant", "1-e-et-a, 2-e-et-a…", "1-2-3, 1-2-3, 1-2-3"],a:2,exp:"Quatre syllabes par temps, une par double-croche. Ce comptage n'est pas décoratif : il donne un nom à chaque emplacement, et c'est ce qui permet de placer une note exactement où tu veux.",xp:30},
+  {id:"q-rhy-17-app",courseId:"rhythm",lessonId:"rhy-c2-02",lvl:2,q:"En comptant « 1 e et a », sur quelle syllabe tombe la 3e double-croche du temps ?",o:["Sur « et »","Sur « e »","Sur « a »","Sur le chiffre"],a:0,exp:"1 (1re), e (2e), et (3e), a (4e) : la 3e double-croche tombe sur « et », exactement là où tomberait la 2e croche.",xp:30},
   {id:"q-rhy-18",courseId:"rhythm",lessonId:"rhy-c2-02",lvl:3,q:"Une croche pointée suivie d'une double-croche occupe…",o:["Deux temps, soit la moitié d'une mesure","Un temps et demi, comme la blanche pointée","Un demi-temps, comme deux doubles-croches","Un temps, découpé en trois quarts puis un quart"],a:3,exp:"Le point ajoute la moitié de la valeur : la croche pointée vaut trois doubles-croches, la double qui suit en vaut une. Total : un temps. C'est le rythme de base du rock des années 50 et de quantité de riffs.",xp:40},
 ];

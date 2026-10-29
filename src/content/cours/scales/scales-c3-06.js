@@ -111,7 +111,7 @@ export default {
       "De la case 12 à la case 15. Index sur la case 12, presque partout ; la corde 2 commence en case 13.",
       "Ses La : corde 5 case 12 et corde 3 case 14. La case 12, c'est aussi l'octave des cordes à vide.",
     ], bloc: POSITION_4 },
-    { type: "question", quizId: "q-scales-pos345-02" },
+    { type: "question", quizId: "q-scales-pos345-02-app" },
     { type: "idee", titre: "Position 5, case 15… ou case 3", texte: [
       "De la case 14 à la case 17, elle part du Sol de la corde 6. Ses La : cordes 6 et 1 case 17, corde 3 case 14.",
       "Douze cases plus bas, la même forme se joue entre les cases 2 et 5 : c'est le « sous-sol » du manche, juste sous la position 1.",
@@ -126,11 +126,12 @@ export default {
       "La position 5 existe aussi douze cases plus bas, entre les cases 2 et 5.",
     ] },
   ],
-  quiz: ["q-scales-pos345-01", "q-scales-pos345-02", "q-scales-pos345-03"],
+  quiz: ["q-scales-pos345-01", "q-scales-pos345-02", "q-scales-pos345-03", "q-scales-pos345-02-app"],
 };
 
 export const quiz = [
   {id:"q-scales-pos345-01",courseId:"scales",lessonId:"scales-c3-06",lvl:2,q:"En La pentatonique mineure, quelle note de la corde 6 sert de départ à la position 3 ?",o:["Ré, case 10","Do, case 8","Mi, case 12","Sol, case 15"],a:0,exp:"Les positions suivent les notes de la gamme sur la corde 6 : La (5), Do (8), Ré (10), Mi (12), Sol (15). La position 3 part donc du Ré, case 10.",xp:30},
   {id:"q-scales-pos345-02",courseId:"scales",lessonId:"scales-c3-06",lvl:2,q:"Tu joues la position 4 de La pentatonique mineure. Où poses-tu l'index, sur presque toutes les cordes ?",o:["Case 12","Case 10","Case 14","Case 15"],a:0,exp:"La position 4 s'étend de la case 12 à la case 15 : index en 12, sauf sur la corde 2 qui commence en 13.",xp:30},
+  {id:"q-scales-pos345-02-app",courseId:"scales",lessonId:"scales-c3-06",lvl:2,q:"En Sol pentatonique mineure, tout est deux cases plus bas qu'en La. Où poses-tu l'index pour la position 4 ?",o:["Case 10","Case 12","Case 8","Case 14"],a:0,exp:"En La, la position 4 commence en case 12. En Sol, deux cases plus bas : case 10, sur le Ré de la corde 6, 4e note de Sol pentatonique mineure.",xp:30},
   {id:"q-scales-pos345-03",courseId:"scales",lessonId:"scales-c3-06",lvl:3,q:"Pourquoi la position 5 se joue-t-elle aussi bien entre les cases 2 et 5 qu'entre les cases 14 et 17 ?",o:["Douze cases font une octave","Les cordes graves sont plus tendues","Les deux formes n'ont pas les mêmes notes","La case 12 inverse les cordes"],a:0,exp:"Douze cases plus haut, chaque note revient à l'octave : la même forme donne les mêmes notes, une octave plus aiguë.",xp:40},
 ];

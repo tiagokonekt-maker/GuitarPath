@@ -71,7 +71,7 @@ export default {
 };
 
 export const quiz = [
-  {id:"q-neck-05",courseId:"neck",lessonId:"neck-c3-02",lvl:2,q:"Tu joues Ré sur la corde 3, case 7. Où trouves-tu le Ré une octave plus bas, sur la corde 5 ?",o:["Case 5","Case 7","Case 9","Case 3"],a:0,exp:"Le motif corde 5 → corde 3 (+2 cases) se lit aussi à l'envers : de la corde 3 vers la corde 5, on recule de 2 cases. Ré (corde 3 case 7) → Ré (corde 5 case 5).",xp:40},
+  {id:"q-neck-05",courseId:"neck",lessonId:"neck-c3-02",lvl:2,q:"Tu joues Mi sur la corde 3, case 9. Où trouves-tu le Mi une octave plus bas, sur la corde 5 ?",o:["Case 7","Case 9","Case 11","Case 5"],a:0,exp:"Le motif corde 5 → corde 3 (+2 cases) se lit aussi à l'envers : de la corde 3 vers la corde 5, on recule de 2 cases. Mi (corde 3 case 9) → Mi (corde 5 case 7).",xp:40},
   {id:"q-neck-27",courseId:"neck",lessonId:"neck-c3-02",lvl:1,q:"Tu joues Do sur la corde 5, case 3. Où est son octave la plus proche, sur la corde 3 ?",o:["Case 5", "Case 3", "Case 1", "Case 7"],a:0,exp:"Pattern c5 → c3 : deux cases plus haut. Do case 3 corde 5 → Do case 5 corde 3.",xp:30},
   {id:"q-neck-28",courseId:"neck",lessonId:"neck-c3-02",lvl:2,q:"Pourquoi faut-il +2 cases pour trouver l'octave de la corde 5 sur la corde 3 ?",o:["Les cordes sont écartées de 12 demi-tons", "L'écart entre c5 et c3 vaut 10 demi-tons", "La corde 3 est accordée plus bas", "C'est une simple convention d'écriture"],a:1,exp:"Deux quartes consécutives = 10 demi-tons. L'octave en faisant 12, il manque 2 demi-tons, donc 2 cases.",xp:40},
 ];
