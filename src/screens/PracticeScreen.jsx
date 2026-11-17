@@ -1,10 +1,12 @@
-// GuitarPath — screens/PracticeScreen.jsx
+// Groply — screens/PracticeScreen.jsx
 import { useState, useEffect, useRef } from "react";
-import { FONTS, R } from "../design/tokens.js";
+import { T } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
-import { Ti } from "../design/Ti.jsx";
-import { ProgressBar, XPPop, Toast } from "../design/ui.jsx";
+import { Button, Card, Eyebrow, IconTile, Segmented, SubHeader, XPPop } from "../design/ui.jsx";
+import { vibrer } from "../design/hooks.js";
 import { KEYS, MODES, TEMPOS, CONSTRAINTS } from "../store/challenges.js";
+
+const ONGLETS = [{ value: "impro", label: "Impro" }, { value: "neck", label: "Manche" }, { value: "rhythm", label: "Rythme" }];
 
 function PracticeScreen({ dispatch }) {
   const C = useC();
@@ -39,6 +41,7 @@ function PracticeScreen({ dispatch }) {
 
   const finish = () => {
     setPop(true);
+    vibrer();
     dispatch({ type: "PRACTICE_DONE", minutes: current?.time || 5 });
     dispatch({ type: "MARK_STREAK" });
     dispatch({ type: "UPDATE_WEEKLY", field: "sessions" });
@@ -49,63 +52,42 @@ function PracticeScreen({ dispatch }) {
   };
 
   return (
-    <div style={{ padding: "18px 16px 0" }}>
+    <div>
       {pop && <XPPop amount={50} onDone={() => {}} />}
-      <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, fontFamily: FONTS.title, letterSpacing: "-0.01em", color: C.text }}>Practice libre</h1>
-      <p style={{ fontSize: 13, color: C.text2, margin: "3px 0 14px", fontFamily: FONTS.ui }}>Défis générés à l'infini. Jamais 2 fois pareil.</p>
+      <SubHeader title="Practice libre" subtitle="Défis générés à l'infini. Jamais 2 fois pareil." />
 
-      <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
-        {[{ id: "impro", label: "Impro" }, { id: "neck", label: "Manche" }, { id: "rhythm", label: "Rythme" }].map(t => (
-          <button key={t.id} onClick={() => { setTab(t.id); setCurrent(null); }} style={{
-            flex: 1, padding: "10px", borderRadius: R.sm,
-            border: `1px solid ${tab === t.id ? C.primary : C.border}`,
-            background: tab === t.id ? C.primary : C.surface,
-            color: tab === t.id ? "#fff" : C.text2,
-            fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: FONTS.ui,
-          }}>{t.label}</button>
-        ))}
-      </div>
+      <div style={{ padding: "16px 16px 24px", display: "flex", flexDirection: "column", gap: 14 }}>
+        <Segmented label="Type de défi" options={ONGLETS} value={tab}
+          onChange={(id) => { setTab(id); setCurrent(null); }} />
 
-      {!current ? (
-        <div style={{ background: C.coralL, border: `1px solid ${C.coralBorder}`, borderRadius: R.lg, padding: 20, textAlign: "center" }}>
-          <Ti name="dice-5" size={36} color={C.coral} />
-          <div style={{ fontSize: 17, fontWeight: 700, color: C.coralD, marginTop: 10, marginBottom: 6, fontFamily: FONTS.title }}>Génère ton défi</div>
-          <div style={{ fontSize: 13, color: C.coralD, marginBottom: 14, lineHeight: 1.55, fontFamily: FONTS.ui }}>
-            {tab === "impro" && "Tonalité, mode, tempo et contrainte tirés au sort."}
-            {tab === "neck" && "Un défi de visualisation du manche."}
-            {tab === "rhythm" && "Un défi de métronome à un tempo donné."}
-          </div>
-          <button onClick={tab === "impro" ? generateImpro : tab === "neck" ? generateNeck : generateRhythm} style={{
-            width: "100%", padding: "14px", borderRadius: R.md, border: "none",
-            background: C.coral, color: "#fff", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: FONTS.ui,
-            display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-          }}>Générer un défi <Ti name="dice-5" size={16} /></button>
-        </div>
-      ) : (
-        <div>
-          <div style={{ background: C.primaryL, border: `1px solid ${C.primaryBorder}`, borderRadius: R.lg, padding: 20, marginBottom: 12 }}>
-            <div style={{ fontSize: 11, fontWeight: 500, color: C.primaryD, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8, fontFamily: FONTS.ui }}>
-              Défi en cours
+        {!current ? (
+          <Card tone="coral" soft pad={20} className="gr-in"
+            style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
+            <IconTile icon="dice-5" tone="coral" size={56} style={{ background: C.surface }} />
+            <div style={{ fontSize: T.lead, fontWeight: 800, color: C.coralD, marginTop: 10, marginBottom: 6 }}>Génère ton défi</div>
+            <div style={{ fontSize: T.small, color: C.coralD, marginBottom: 14, lineHeight: 1.55 }}>
+              {tab === "impro" && "Tonalité, mode, tempo et contrainte tirés au sort."}
+              {tab === "neck" && "Un défi de visualisation du manche."}
+              {tab === "rhythm" && "Un défi de métronome à un tempo donné."}
             </div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: C.primaryD, marginBottom: 8, fontFamily: FONTS.title }}>{current.title}</div>
-            <div style={{ fontSize: 14, color: C.primaryD, lineHeight: 1.55, fontFamily: FONTS.title }}>{current.sub}</div>
-            <div style={{ fontSize: 11, color: C.primaryD, marginTop: 12, opacity: 0.7, fontFamily: FONTS.ui }}>Durée : {current.time} min</div>
+            <Button size="lg" full tone="coral" iconRight="dice-5"
+              onClick={tab === "impro" ? generateImpro : tab === "neck" ? generateNeck : generateRhythm}>
+              Générer un défi
+            </Button>
+          </Card>
+        ) : (
+          <div className="gr-in-pop" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <Card tone="primary" soft pad={20}>
+              <Eyebrow style={{ marginBottom: 8 }}>Défi en cours</Eyebrow>
+              <div style={{ fontSize: T.h2, fontWeight: 800, color: C.primaryD, marginBottom: 8, letterSpacing: "-.3px", lineHeight: 1.2 }}>{current.title}</div>
+              <div style={{ fontSize: 14, color: C.primaryD, lineHeight: 1.55 }}>{current.sub}</div>
+              <div style={{ fontSize: T.micro, fontWeight: 600, color: C.primaryD, marginTop: 12, opacity: 0.8 }}>Durée : {current.time} min</div>
+            </Card>
+            <Button tone="green" size="lg" full icon="check" onClick={finish}>Terminé · +50 XP</Button>
+            <Button variant="secondary" size="lg" full iconRight="dice-5" onClick={() => setCurrent(null)}>Autre défi</Button>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-            <button onClick={() => setCurrent(null)} style={{
-              padding: "12px", borderRadius: R.md, border: `1px solid ${C.border}`,
-              background: C.surface, color: C.text, fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: FONTS.ui,
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
-            }}>Autre défi <Ti name="dice-5" size={14} /></button>
-            <button onClick={finish} style={{
-              padding: "12px", borderRadius: R.md, border: "none",
-              background: C.green, color: "#fff", fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: FONTS.ui,
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
-            }}>Terminé · +50 XP</button>
-          </div>
-        </div>
-      )}
-      <div style={{ height: 16 }} />
+        )}
+      </div>
     </div>
   );
 }

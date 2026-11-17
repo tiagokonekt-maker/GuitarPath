@@ -2,19 +2,21 @@
 // Métronome de la boîte à outils (chargé à la demande par ToolboxScreen).
 import { useState, useRef, useEffect, useCallback } from "react";
 import * as Tone from "tone";
-import { FONTS, R } from "../../design/tokens.js";
+import { R, T } from "../../design/tokens.js";
 import { useC } from "../../design/ThemeContext.jsx";
 import { Ti } from "../../design/Ti.jsx";
+import { relief } from "../../design/hooks.js";
+import { Button, Card, Chip, Eyebrow } from "../../design/ui.jsx";
+
+// Boutons « −5 / −1 / +1 / +5 » : carrés, ils se partagent la largeur autour
+// du bouton de lecture et rétrécissent sur un petit écran.
+const STYLE_PAS = { flex: "1 1 44px", minWidth: 0, maxWidth: 54, padding: 0 };
 
 // ═══════════════════════════════════════════════════════════════════════════
 // MÉTRONOME
 // ═══════════════════════════════════════════════════════════════════════════
 export function Metronome() {
   const C = useC();
-  const pillBtn = {
-    minWidth:42, height:42, borderRadius:12, border:`1.5px solid ${C.border}`,
-    background:C.surface, color:C.text2, fontWeight:700, fontSize:13, cursor:"pointer", fontFamily:FONTS.ui,
-  };
   const [bpm, setBpm]         = useState(90);
   const [playing, setPlaying] = useState(false);
   const [beats, setBeats]     = useState(4);     // signature (temps par mesure)
@@ -259,8 +261,8 @@ export function Metronome() {
     bpm < 120 ? "Moderato" : bpm < 156 ? "Allegro" : bpm < 176 ? "Vivace" : "Presto";
 
   return (
-    <div>
-      {/* ── Pastilles de temps ──────────────────────────────────────────────
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      {/* ── Pastilles de temps──────────────────────────────────────────────
           Le tremblement de la page venait d'ici. Les pastilles passaient de
           16 à 22 px de LARGEUR et de HAUTEUR à chaque temps : la boîte
           changeait donc de taille, et tout ce qui suit — le BPM géant, le
@@ -272,128 +274,120 @@ export function Metronome() {
           page, donc rien ne bouge autour. C'est aussi moins coûteux, le
           navigateur n'a ni à recalculer la mise en page ni à repeindre — il
           se contente de composer. */}
-      <div style={{
-        display:"flex", justifyContent:"center", alignItems:"center",
-        gap:10, margin:"8px 0 22px",
-        height:24,          // hauteur figée : plus de décalage vertical
-      }}>
-        {Array.from({ length: beats }).map((_, i) => {
-          const on = current === i;
-          const strong = i === 0;
-          const teinte = strong ? C.primary : C.amber;
-          return (
-            <div key={i} style={{
-              width:24, height:24,           // taille de boîte constante
-              display:"flex", alignItems:"center", justifyContent:"center",
-              flexShrink:0,
-            }}>
-              <div style={{
-                width:16, height:16, borderRadius:"50%",
-                background: on ? teinte : C.border,
-                transform: on ? "scale(1.35)" : "scale(1)",
-                boxShadow: on ? `0 0 0 4px ${teinte}22` : "none",
-                // On ne transitionne QUE transform et les couleurs — jamais
-                // `all`, qui embarquerait aussi les propriétés de mise en page.
-                transition:"transform .08s ease, background-color .08s ease, box-shadow .08s ease",
-                willChange:"transform",
-              }}/>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* BPM géant */}
-      <div style={{ textAlign:"center", marginBottom:6 }}>
-        <div style={{ fontSize:64, fontWeight:800, color:C.text, letterSpacing:"-2px", lineHeight:1, fontFamily:FONTS.title }}>
-          {bpm}
-        </div>
-        <div style={{ fontSize:12, fontWeight:700, color:C.primary, textTransform:"uppercase", letterSpacing:".1em", marginTop:2 }}>
-          BPM · {tempoLabel}
-        </div>
-      </div>
-
-      {/* Slider */}
-      <input type="range" min="40" max="240" value={bpm}
-        aria-label="Tempo" aria-valuetext={`${bpm} battements par minute, ${tempoLabel}`}
-        onChange={e => setBpm(+e.target.value)}
-        style={{ width:"100%", margin:"16px 0 6px", accentColor:C.primary }}/>
-
-      {/* -/+ */}
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:14, marginBottom:20 }}>
-        {[-5,-1].map(d=>(
-          <button key={d} onClick={()=>nudge(d)} aria-label={`Ralentir de ${-d}`} className="gr-focus" style={pillBtn}>{d}</button>
-        ))}
-        <button onClick={toggle} aria-label={playing ? "Arrêter le métronome" : "Démarrer le métronome"} className="gr-focus" style={{
-          width:72, height:72, borderRadius:"50%", border:"none", cursor:"pointer",
-          background:`linear-gradient(135deg,#FF9155,${C.primary})`,
-          color:C.onPrimaryBtn, display:"flex", alignItems:"center", justifyContent:"center",
-          boxShadow:`0 6px 20px ${C.primary}55`,
+      <Card style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <div style={{
+          display: "flex", justifyContent: "center", alignItems: "center",
+          gap: 10, margin: "2px 0 18px",
+          height: 24,          // hauteur figée : plus de décalage vertical
         }}>
-          <Ti name={playing ? "player-pause" : "player-play"} size={30} color={C.onPrimaryBtn}/>
-        </button>
-        {[1,5].map(d=>(
-          <button key={d} onClick={()=>nudge(d)} aria-label={`Accélérer de ${d}`} className="gr-focus" style={pillBtn}>+{d}</button>
-        ))}
-      </div>
-
-      {/* Timbre du son */}
-      <div style={{
-        background:C.surface, border:`1.5px solid ${C.border}`, borderRadius:R.lg,
-        padding:"10px 12px", marginBottom:10,
-      }}>
-        <div style={{ fontSize:11, fontWeight:700, letterSpacing:".07em", textTransform:"uppercase", color:C.text2, marginBottom:8 }}>
-          Son
-        </div>
-        <div role="radiogroup" aria-label="Timbre du métronome" style={{ display:"flex", gap:6 }}>
-          {TIMBRES.map(t => {
-            const actif = timbre === t.id;
+          {Array.from({ length: beats }).map((_, i) => {
+            const on = current === i;
+            const strong = i === 0;
+            const teinte = strong ? C.primary : C.amber;
             return (
-              <button
-                key={t.id}
-                role="radio"
-                aria-checked={actif}
-                onClick={() => setTimbre(t.id)}
-                className="gr-focus"
-                style={{
-                  flex:1, padding:"11px 6px", borderRadius:R.md, minHeight:44,
-                  border:`1.5px solid ${actif ? C.primary : C.border}`,
-                  background: actif ? C.primaryL : C.surface,
-                  color: actif ? C.primaryD : C.text2,
-                  fontWeight:700, fontSize:12.5, cursor:"pointer", fontFamily:FONTS.ui,
-                }}>
-                {t.label}
-              </button>
+              <div key={i} style={{
+                width: 24, height: 24,           // taille de boîte constante
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0,
+              }}>
+                <div style={{
+                  width: 16, height: 16, borderRadius: R.pill,
+                  background: on ? teinte : C.border,
+                  transform: on ? "scale(1.35)" : "scale(1)",
+                  boxShadow: on ? `0 0 0 4px color-mix(in srgb, ${teinte} 22%, transparent)` : "none",
+                  // On ne transitionne QUE transform et les couleurs — jamais
+                  // `all`, qui embarquerait aussi les propriétés de mise en page.
+                  transition: "transform var(--gr-dur-press) var(--gr-ease-out), background-color var(--gr-dur-press) ease, box-shadow var(--gr-dur-press) ease",
+                  willChange: "transform",
+                }} />
+              </div>
             );
           })}
         </div>
-      </div>
+
+        {/* BPM géant : chiffres à chasse fixe, pour que le nombre ne danse
+            pas quand on fait glisser le curseur. */}
+        <div style={{ fontSize: 64, fontWeight: 800, color: C.text, letterSpacing: "-2px", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
+          {bpm}
+        </div>
+        <Eyebrow style={{ marginTop: 4 }}>BPM · {tempoLabel}</Eyebrow>
+
+        <input type="range" min="40" max="240" value={bpm}
+          aria-label="Tempo" aria-valuetext={`${bpm} battements par minute, ${tempoLabel}`}
+          onChange={e => setBpm(+e.target.value)}
+          className="gr-focus"
+          style={{ width: "100%", margin: "16px 0 14px", accentColor: C.primary }} />
+
+        {/* Ralentir · lecture · accélérer. Le bouton rond est LE bouton de
+            l'écran : aplat primaire, tranche épaisse. */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%" }}>
+          {[-5, -1].map(d => (
+            <Button key={d} variant="secondary" onClick={() => nudge(d)} aria-label={`Ralentir de ${-d}`} style={STYLE_PAS}>{d}</Button>
+          ))}
+          <button type="button" onClick={toggle} aria-label={playing ? "Arrêter le métronome" : "Démarrer le métronome"}
+            className="gr-press gr-focus" style={{
+              ...relief(C.primaryEdge, 5),
+              width: 72, height: 72, flexShrink: 0, padding: 0, marginLeft: 4, marginRight: 4,
+              borderRadius: R.pill, border: "none",
+              background: C.primaryBtn, color: C.onPrimaryBtn,
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+            <Ti name={playing ? "player-pause" : "player-play"} size={30} color="currentColor" />
+          </button>
+          {[1, 5].map(d => (
+            <Button key={d} variant="secondary" onClick={() => nudge(d)} aria-label={`Accélérer de ${d}`} style={STYLE_PAS}>+{d}</Button>
+          ))}
+        </div>
+      </Card>
+
+      {/* Timbre du son */}
+      <Card pad="12px 14px">
+        <Eyebrow style={{ marginBottom: 8 }}>Son</Eyebrow>
+        <div role="radiogroup" aria-label="Timbre du métronome" style={{ display: "flex", gap: 6 }}>
+          {TIMBRES.map(t => {
+            const actif = timbre === t.id;
+            return (
+              // Bouton radio : `aria-checked` porte l'état, pas `aria-pressed`.
+              <Chip
+                key={t.id}
+                role="radio"
+                aria-checked={actif}
+                aria-pressed={undefined}
+                selected={actif}
+                onClick={() => setTimbre(t.id)}
+                style={{ flex: 1, minWidth: 0, minHeight: 44, padding: "0 4px" }}>
+                {t.label}
+              </Chip>
+            );
+          })}
+        </div>
+      </Card>
 
       {/* Signature + tap */}
-      <div style={{ display:"flex", gap:10 }}>
-        <div style={{ flex:1, background:C.surface, border:`1.5px solid ${C.border}`, borderRadius:R.lg, padding:"10px 12px" }}>
-          <div style={{ fontSize:9.5, fontWeight:700, color:C.text3, textTransform:"uppercase", letterSpacing:".06em", marginBottom:7 }}>Mesure</div>
-          <div style={{ display:"flex", gap:6 }}>
-            {[2,3,4,6].map(n=>(
-              <button key={n} onClick={()=>setBeats(n)} aria-pressed={beats===n} aria-label={`${n} temps par mesure`} className="gr-focus" style={{
-                flex:1, minHeight:40, padding:"7px 0", borderRadius:8, cursor:"pointer",
-                border:`1.5px solid ${beats===n?C.primary:C.border}`,
-                background:beats===n?C.primaryL:C.surface,
-                color:beats===n?C.primaryD:C.text2, fontWeight:700, fontSize:13, fontFamily:FONTS.ui,
-              }}>{n}</button>
+      <div style={{ display: "flex", gap: 10, alignItems: "stretch" }}>
+        <Card pad="12px 14px" style={{ flex: 1, minWidth: 0 }}>
+          <Eyebrow style={{ marginBottom: 8 }}>Mesure</Eyebrow>
+          <div style={{ display: "flex", gap: 6 }}>
+            {[2, 3, 4, 6].map(n => (
+              <Chip key={n} selected={beats === n} onClick={() => setBeats(n)} aria-label={`${n} temps par mesure`}
+                style={{ flex: 1, minWidth: 0, minHeight: 44, padding: 0 }}>{n}</Chip>
             ))}
           </div>
-        </div>
+        </Card>
         <button
+          type="button"
           onClick={tapTempo}
-          className="gr-focus"
+          className="gr-press gr-focus"
           aria-label={tapCount > 0 ? `Tap tempo, ${tapCount} appuis comptés` : "Tap tempo"}
           style={{
-          width:96, background:C.amberL, border:`1.5px solid ${C.amberBorder}`, borderRadius:R.lg,
-          color:C.amberD, fontWeight:700, fontSize:13, fontFamily:FONTS.ui, cursor:"pointer",
-          display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:3,
-        }}>
-          <Ti name="hand-finger-down" size={18} color={C.amber}/>
-          <span style={{ whiteSpace:"nowrap" }}>Tap tempo</span>
+            ...relief(C.amberBorder, 3),
+            width: 96, flexShrink: 0, padding: "8px 4px",
+            background: C.amberL, border: `2px solid ${C.amberBorder}`, borderRadius: R.lg,
+            color: C.amberD, fontFamily: "inherit", fontWeight: 700, fontSize: T.small,
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3,
+          }}>
+          <Ti name="hand-finger-down" size={18} color={C.amber} />
+          <span style={{ whiteSpace: "nowrap" }}>Tap tempo</span>
 
           {/* Retour visuel des appuis, sous forme de points et non de chiffre.
               Mon premier essai affichait « Tap tempo · 2 » : le texte passait à
@@ -404,14 +398,14 @@ export function Metronome() {
               tiennent sur une ligne, et la zone garde une HAUTEUR FIXE pour ne
               pas décaler la mise en page quand ils apparaissent. */}
           <div aria-hidden="true" style={{
-            height:6, display:"flex", gap:3, alignItems:"center", justifyContent:"center",
+            height: 6, display: "flex", gap: 3, alignItems: "center", justifyContent: "center",
           }}>
             {Array.from({ length: TAPS_MAX }).map((_, i) => (
               <div key={i} style={{
-                width:4, height:4, borderRadius:"50%",
+                width: 4, height: 4, borderRadius: R.pill,
                 background: i < tapCount ? C.amber : "transparent",
-                transition:"background-color .1s ease",
-              }}/>
+                transition: "background-color var(--gr-dur-fast) ease",
+              }} />
             ))}
           </div>
         </button>
@@ -421,8 +415,8 @@ export function Metronome() {
           progression de la mesure ; `minHeight` pour que l'apparition du
           message ne décale pas la mise en page. */}
       <div role="status" aria-live="polite" style={{
-        minHeight:18, marginTop:8, textAlign:"center",
-        fontSize:11, color:C.text2, fontFamily:FONTS.ui, lineHeight:1.5,
+        minHeight: 18, textAlign: "center",
+        fontSize: 12, color: C.text2, lineHeight: 1.5,
       }}>
         {aideTap}
       </div>

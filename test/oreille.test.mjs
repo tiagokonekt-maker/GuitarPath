@@ -18,11 +18,11 @@ const TONE = { C: 0, "C#": 1, D: 2, "D#": 3, E: 4, F: 5, "F#": 6, G: 7, "G#": 8,
 const midi = (t) => { const m = /^([A-G]#?)(-?\d)$/.exec(t); return TONE[m[1]] + 12 * (+m[2] + 1); };
 const MIDI_MIN = 36, MIDI_MAX = 83;   // plage échantillonnée (C2 → B5)
 const dansLaPlage = (ns) => ns.every(n => n >= MIDI_MIN && n <= MIDI_MAX);
-// Oracle indépendant de lecture des noms français.
-const LET = ["Do", "Ré", "Mi", "Fa", "Sol", "La", "Si"], NAT = [0, 2, 4, 5, 7, 9, 11];
+// Oracle indépendant de lecture des noms, français (notes, tonalités) ou anglais (accords).
+const LET = ["Do", "Ré", "Mi", "Fa", "Sol", "La", "Si"], LET_EN = ["C", "D", "E", "F", "G", "A", "B"], NAT = [0, 2, 4, 5, 7, 9, 11];
 function lire(n) {
-  const m = /^(Do|Ré|Mi|Fa|Sol|La|Si)(#{1,2}|b{1,2})?/.exec(n); if (!m) return null;
-  const l = LET.indexOf(m[1]), alt = m[2] || "", acc = alt.startsWith("#") ? alt.length : -alt.length;
+  const m = /^(Do|Ré|Mi|Fa|Sol|La|Si|[A-G])(#{1,2}|b{1,2})?/.exec(n); if (!m) return null;
+  const l = m[1].length === 1 ? LET_EN.indexOf(m[1]) : LET.indexOf(m[1]), alt = m[2] || "", acc = alt.startsWith("#") ? alt.length : -alt.length;
   return { l, acc, pc: ((NAT[l] + acc) % 12 + 12) % 12, reste: n.slice(m[0].length) };
 }
 
@@ -129,16 +129,16 @@ test("suites : chaque accord joué correspond à son chiffre romain (majeur et m
   for (const k of ["i-iv-v-i", "i-VI-III-VII", "i-iv-V-i"]) assert.ok(PROGRESSIONS[k]?.mineur, `suite mineure ${k}`);
 });
 
-test("orthographe des suites dans la tonalité : Dom – Lab – Mib – Sib, pas de dièse en Do mineur", () => {
-  assert.deepEqual(tirerProgression(rng(1), "i-VI-III-VII", 0).noms, ["Dom", "Lab", "Mib", "Sib"]);
-  assert.deepEqual(tirerProgression(rng(1), "i-iv-V-i", 9).noms, ["Lam", "Rém", "Mi", "Lam"], "mineur harmonique : V majeur");
-  assert.deepEqual(tirerProgression(rng(1), "I-V-vi-IV", 5).noms, ["Fa", "Do", "Rém", "Sib"]);
-  assert.deepEqual(tirerProgression(rng(1), "I-vi-ii-V", 3).noms, ["Mib", "Dom", "Fam", "Sib"]);
+test("orthographe des suites dans la tonalité : Cm – Ab – Eb – Bb, pas de dièse en Do mineur", () => {
+  assert.deepEqual(tirerProgression(rng(1), "i-VI-III-VII", 0).noms, ["Cm", "Ab", "Eb", "Bb"]);
+  assert.deepEqual(tirerProgression(rng(1), "i-iv-V-i", 9).noms, ["Am", "Dm", "E", "Am"], "mineur harmonique : V majeur");
+  assert.deepEqual(tirerProgression(rng(1), "I-V-vi-IV", 5).noms, ["F", "C", "Dm", "Bb"]);
+  assert.deepEqual(tirerProgression(rng(1), "I-vi-ii-V", 3).noms, ["Eb", "Cm", "Fm", "Bb"]);
   assert.equal(tirerProgression(rng(1), "i-VI-VII-i", 5).tonalite, "Fa mineur");
   // Aucune tonalité de la liste ne produit de dièse en tonalité bémolisée (ni l'inverse).
   for (const cle of ORDRE_PROGRESSIONS) for (const t of PROGRESSIONS[cle].mineur ? TONALITES_MIN : TONALITES_MAJ) {
     const noms = tirerProgression(rng(1), cle, t).noms.join(" ");
-    assert.ok(!(noms.includes("#") && /[a-zé]b/.test(noms.replace(/m7♭5/g, ""))), `${cle} en ${t} : ${noms}`);
+    assert.ok(!(noms.includes("#") && /[A-G]b/.test(noms.replace(/m7♭5/g, ""))), `${cle} en ${t} : ${noms}`);
   }
 });
 

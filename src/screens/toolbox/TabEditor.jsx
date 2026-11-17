@@ -1,9 +1,10 @@
 // Groply — src/screens/toolbox/TabEditor.jsx
 // Éditeur de tablature de la boîte à outils (chargé à la demande par ToolboxScreen).
 import { useState, useRef, useEffect, useCallback, useMemo, useId } from "react";
-import { FONTS, R } from "../../design/tokens.js";
+import { R, T } from "../../design/tokens.js";
 import { useC } from "../../design/ThemeContext.jsx";
 import { Ti } from "../../design/Ti.jsx";
+import { Button, Card, Chip, IconButton, Segmented } from "../../design/ui.jsx";
 import { playTab, stopAll, unlockAudio } from "../../audioEngine.js";
 import { parseTab } from "../../tab/tabParser.js";
 import {
@@ -37,15 +38,9 @@ const DELAI_DEUX_CHIFFRES = 900;                 // clavier physique uniquement
 const REPERES_SIMPLES = new Set([3, 5, 7, 9, 15, 17, 19, 21]);
 const REPERES_DOUBLES = new Set([12, 24]);
 
-function styleTouche(C, actif, extra = {}) {
-  return {
-    height: 40, borderRadius: R.sm, cursor: "pointer", fontFamily: FONTS.ui,
-    border: `1.5px solid ${actif ? C.primary : C.border}`,
-    background: actif ? C.primaryL : C.surface, color: actif ? C.primaryD : C.text,
-    fontWeight: 800, fontSize: 14, display: "flex", flexDirection: "column",
-    alignItems: "center", justifyContent: "center", gap: 2, padding: 0, ...extra,
-  };
-}
+// Touches du clavier de cases : des <Chip> (bascule en relief), empilées
+// chiffre + repères, sans marge latérale pour tenir à 7 par ligne.
+const TOUCHE = { flexDirection: "column", gap: 2, padding: 0, minHeight: 40 };
 
 function GrilleTab({ grille, evenements, res, selection, onSelect, onKeyDown, colLecture, C }) {
   const grilleRef = useRef(null);
@@ -94,9 +89,9 @@ function GrilleTab({ grille, evenements, res, selection, onSelect, onKeyDown, co
     <div ref={grilleRef} role="grid" tabIndex={0} className="gr-focus" onKeyDown={onKeyDown}
       aria-label="Tablature. Flèches pour se déplacer, chiffres pour la case, x étouffée, h liaison, s slide, b bend, Retour arrière pour effacer, Espace pour écouter."
       aria-activedescendant={idCase(selection.corde, selection.col)}
-      style={{ position: "relative", display: "flex", border: `1.5px solid ${C.border}`, borderRadius: R.md, background: C.surface, overflow: "hidden" }}>
+      style={{ position: "relative", display: "flex", border: `2px solid ${C.border}`, borderRadius: R.md, background: C.surface, overflow: "hidden" }}>
       {/* Noms de corde, fixes ; la corde sélectionnée est mise en avant */}
-      <div aria-hidden="true" style={{ flexShrink: 0, width: 24, background: C.surface2, borderRight: `1.5px solid ${C.border}`, paddingTop: HAUT_ENTETE }}>
+      <div aria-hidden="true" style={{ flexShrink: 0, width: 24, background: C.surface2, borderRight: `1px solid ${C.border}`, paddingTop: HAUT_ENTETE }}>
         {CORDES_LABELS.map((l, i) => (
           <div key={l + i} style={{ height: CELL_H, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11.5, fontWeight: 800, color: selection.corde === i + 1 ? C.primary : C.text3 }}>{l}</div>
         ))}
@@ -187,7 +182,7 @@ function GrilleTab({ grille, evenements, res, selection, onSelect, onKeyDown, co
 
       {vide && (
         <div aria-hidden="true" style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
-          <div style={{ fontSize: 12.5, fontWeight: 600, color: C.text2, background: C.surface, padding: "6px 10px", borderRadius: R.sm, border: `1px solid ${C.border}` }}>
+          <div className="gr-in-fade" style={{ fontSize: T.small, fontWeight: 600, color: C.text2, background: C.surface, padding: "6px 10px", borderRadius: R.sm, border: `2px solid ${C.border}` }}>
             Touche une case pour placer ta première note
           </div>
         </div>
@@ -203,29 +198,28 @@ function ClavierManche({ cell, onFret, onMute, onEffacer, C }) {
   return (
     <div role="group" aria-label="Case du manche" style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 5 }}>
       {Array.from({ length: 25 }, (_, f) => (
-        <button key={f} onClick={() => onFret(f)} aria-pressed={fretActif === f} className="gr-focus" style={styleTouche(C, fretActif === f)}>
+        <Chip key={f} selected={fretActif === f} onClick={() => onFret(f)} style={TOUCHE}>
           <span style={{ lineHeight: "16px" }}>{f}</span>
           <span aria-hidden="true" style={{ display: "flex", gap: 3, height: 4 }}>
             {REPERES_DOUBLES.has(f) ? [point(1), point(2)] : REPERES_SIMPLES.has(f) ? [point(1)] : null}
           </span>
-        </button>
+        </Chip>
       ))}
-      <button onClick={onMute} aria-pressed={!!cell?.mute} aria-label="Note étouffée" className="gr-focus" style={styleTouche(C, !!cell?.mute)}>x</button>
-      <button onClick={onEffacer} disabled={!cell} className="gr-focus"
-        style={styleTouche(C, false, { gridColumn: "span 2", fontSize: 12.5, opacity: cell ? 1 : .4, cursor: cell ? "pointer" : "default" })}>
+      <Chip selected={!!cell?.mute} onClick={onMute} aria-label="Note étouffée" style={TOUCHE}>x</Chip>
+      <Button variant="secondary" tone="danger" size="sm" onClick={onEffacer} disabled={!cell}
+        style={{ gridColumn: "span 2", padding: 0 }}>
         Effacer
-      </button>
+      </Button>
     </div>
   );
 }
 
-function TechniquesNote({ cell, onLie, onSlide, onBend, C }) {
+function TechniquesNote({ cell, onLie, onSlide, onBend }) {
   const aNote = !!cell && !cell.mute && typeof cell.fret === "number";
   const bouton = (label, actif, onClick) => (
-    <button onClick={onClick} disabled={!aNote} aria-pressed={actif} className="gr-focus"
-      style={styleTouche(C, actif, { flex: 1, fontSize: 12.5, opacity: aNote ? 1 : .4, cursor: aNote ? "pointer" : "default" })}>
+    <Chip selected={actif} onClick={onClick} disabled={!aNote} style={{ ...TOUCHE, flex: 1, flexShrink: 1, minWidth: 0 }}>
       {label}
-    </button>
+    </Chip>
   );
   return (
     <div role="group" aria-label="Technique de la note" style={{ display: "flex", gap: 5, marginTop: 5 }}>
@@ -238,12 +232,12 @@ function TechniquesNote({ cell, onLie, onSlide, onBend, C }) {
 
 function ItemMenu({ icon, label, onClick, onFermer, danger, C }) {
   return (
-    <button role="menuitem" onClick={() => { onFermer(); onClick(); }} className="gr-focus" style={{
-      display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "11px 12px", border: "none",
-      background: "transparent", cursor: "pointer", fontSize: 13, fontWeight: 700, textAlign: "left",
-      color: danger ? C.primaryD : C.text, fontFamily: FONTS.ui,
+    <button role="menuitem" onClick={() => { onFermer(); onClick(); }} className="gr-row gr-focus" style={{
+      display: "flex", alignItems: "center", gap: 10, width: "100%", minHeight: 44, padding: "0 14px", border: "none",
+      background: "transparent", fontSize: T.small, fontWeight: 700, textAlign: "left",
+      color: danger ? C.dangerInk : C.text, fontFamily: "inherit",
     }}>
-      <Ti name={icon} size={16} color={danger ? C.primary : C.text2} />{label}
+      <Ti name={icon} size={16} color={danger ? C.danger : C.text2} />{label}
     </button>
   );
 }
@@ -511,30 +505,27 @@ export function TabEditor() {
   const repartirExemple = () => { modifier(() => grilleExemple()); annoncer("Exemple rechargé. « Annuler » pour revenir."); };
   const toutEffacer = () => { modifier(() => grilleVide()); annoncer("Tab effacée. « Annuler » la fait revenir."); };
   const fermerMenu = () => setMenuOuvert(false);
-  const boutonCarre = { width: 40, height: 40, borderRadius: R.sm, border: `1.5px solid ${C.border}`, background: C.surface, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: C.text2, fontWeight: 800, fontFamily: FONTS.ui, padding: 0 };
 
+  // Pas de cascade d'entrée : cette colonne se re-rend à chaque frappe et à
+  // chaque note jouée, et l'encart d'import s'y insère en cours de route.
   return (
     <div>
       {/* ── Barre d'édition : densité, annuler, menu ── */}
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-        <div role="group" aria-label="Densité de la grille" style={{ display: "flex", background: C.surface2, borderRadius: R.sm, padding: 3 }}>
-          {[[2, "Croches"], [1, "Doubles"]].map(([r, label]) => (
-            <button key={r} onClick={() => choisirResolution(r)} aria-pressed={res === r} className="gr-focus" style={{
-              padding: "7px 11px", borderRadius: R.sm - 2, border: "none", cursor: "pointer", fontFamily: FONTS.ui,
-              fontSize: 12, fontWeight: 800, background: res === r ? C.surface : "transparent",
-              color: res === r ? C.text : C.text3, boxShadow: res === r ? `0 0 0 1.5px ${C.border}` : "none",
-            }}>{label}</button>
-          ))}
-        </div>
+        <Segmented size="sm" label="Densité de la grille" value={res} onChange={choisirResolution}
+          options={[{ value: 2, label: "Croches" }, { value: 1, label: "Doubles" }]} />
         <div style={{ flex: 1 }} />
-        <button onClick={annuler} disabled={edit.passe.length === 0} className="gr-focus" style={{
-          ...boutonCarre, width: "auto", padding: "0 12px", fontSize: 12.5,
-          opacity: edit.passe.length ? 1 : .4, cursor: edit.passe.length ? "pointer" : "default",
-        }}>Annuler</button>
+        <Button variant="secondary" size="sm" onClick={annuler} disabled={edit.passe.length === 0}>Annuler</Button>
         <div ref={menuRef} style={{ position: "relative" }}>
-          <button onClick={() => setMenuOuvert(o => !o)} aria-haspopup="menu" aria-expanded={menuOuvert} aria-label="Plus d'actions" className="gr-focus" style={{ ...boutonCarre, fontSize: 18 }}>⋯</button>
+          {/* Pas d'icône « ⋯ » dans le jeu embarqué : le glyphe reste du texte. */}
+          <Button variant="secondary" size="sm" onClick={() => setMenuOuvert(o => !o)} aria-haspopup="menu" aria-expanded={menuOuvert} aria-label="Plus d'actions"
+            style={{ width: 44, padding: 0, fontSize: T.lead }}>⋯</Button>
           {menuOuvert && (
-            <div role="menu" style={{ position: "absolute", right: 0, top: 44, zIndex: 20, minWidth: 220, background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.md, boxShadow: "0 8px 24px rgba(0,0,0,.18)", overflow: "hidden" }}>
+            <div role="menu" className="gr-in-pop" style={{
+              position: "absolute", right: 0, top: 48, zIndex: 20, minWidth: 220, transformOrigin: "top right",
+              background: C.surface, border: `2px solid ${C.border}`, borderRadius: R.md,
+              boxShadow: `0 4px 0 ${C.border}`, overflow: "hidden",
+            }}>
               <ItemMenu icon="clipboard-check" label="Importer une tab texte" onClick={importerTexte} onFermer={fermerMenu} C={C} />
               <ItemMenu icon="sparkles" label="Repartir de l'exemple" onClick={repartirExemple} onFermer={fermerMenu} C={C} />
               <ItemMenu icon="trash" label="Tout effacer" onClick={toutEffacer} onFermer={fermerMenu} danger C={C} />
@@ -544,56 +535,57 @@ export function TabEditor() {
       </div>
 
       {importOuvert && (
-        <div style={{ marginBottom: 10, padding: 10, borderRadius: R.md, background: C.surface2 }}>
+        <Card tone="neutral" soft pad={12} className="gr-in-pop" style={{ marginBottom: 10 }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: C.text2, marginBottom: 6 }}>Colle une tab au format texte (6 lignes, une par corde)</div>
           <textarea value={texteImport} onChange={e => setTexteImport(e.target.value)} spellCheck={false} rows={6}
-            placeholder={"e|--0---2---3h5---|\nB|----------------|\n…"}
-            style={{ width: "100%", fontFamily: "monospace", fontSize: 12.5, lineHeight: 1.5, padding: "10px 12px", borderRadius: R.md, border: `1.5px solid ${erreurImport ? C.primary : C.border}`, background: C.surface, color: C.text, resize: "vertical" }} />
-          {erreurImport && <div style={{ fontSize: 12, color: C.primaryD, marginTop: 4 }}>{erreurImport}</div>}
+            placeholder={"e|--0---2---3h5---|\nB|----------------|\n…"} className="gr-focus"
+            style={{
+              width: "100%", fontFamily: "monospace", fontSize: 12, lineHeight: 1.5, padding: "10px 12px", borderRadius: R.md,
+              border: `2px solid ${erreurImport ? C.danger : C.borderStrong}`, background: C.surface, color: C.text, resize: "vertical",
+              transition: "border-color var(--gr-dur-fast) ease",
+            }} />
+          {erreurImport && <div className="gr-in" style={{ fontSize: 12, fontWeight: 600, color: C.dangerInk, marginTop: 4 }}>{erreurImport}</div>}
           <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
-            <button onClick={importer} className="gr-focus" style={{ flex: 1, height: 40, borderRadius: R.sm, border: "none", background: C.primaryBtn, color: C.onPrimaryBtn, fontWeight: 800, cursor: "pointer", fontFamily: FONTS.ui }}>Importer</button>
-            <button onClick={() => { setImportOuvert(false); setErreurImport(null); }} className="gr-focus" style={{ ...boutonCarre, width: "auto", padding: "0 14px", fontSize: 12.5 }}>Fermer</button>
+            <Button size="sm" onClick={importer} style={{ flex: 1 }}>Importer</Button>
+            <Button variant="secondary" size="sm" onClick={() => { setImportOuvert(false); setErreurImport(null); }}>Fermer</Button>
           </div>
-        </div>
+        </Card>
       )}
 
       <GrilleTab grille={grille} evenements={evenements} res={res} selection={selection}
         onSelect={(s) => { setSelection(s); derniereSaisieRef.current = null; effacerMessage(); }}
         onKeyDown={onKeyDownGrille} colLecture={colLecture} C={C} />
 
-      <div role="status" aria-live="polite" style={{ minHeight: 34, display: "flex", alignItems: "center", fontSize: 12, lineHeight: 1.35, color: message ? C.primaryD : C.text2, fontWeight: message ? 700 : 500, padding: "4px 2px" }}>
+      <div role="status" aria-live="polite" style={{
+        minHeight: 34, display: "flex", alignItems: "center", fontSize: 12, lineHeight: 1.35, padding: "4px 2px",
+        color: message ? C.primaryInk : C.text2, fontWeight: message ? 700 : 500,
+        transition: "color var(--gr-dur-fast) ease",
+      }}>
         {aide}
       </div>
 
       <ClavierManche cell={cellSel} onFret={onFret} onMute={onMute} onEffacer={onEffacer} C={C} />
-      <TechniquesNote cell={cellSel} onLie={onLie} onSlide={onSlide} onBend={onBend} C={C} />
+      <TechniquesNote cell={cellSel} onLie={onLie} onSlide={onSlide} onBend={onBend} />
 
       {/* ── Lecture, dans la zone du pouce ── */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 14 }}>
-        <button onClick={basculerLecture} disabled={!jouant && evenements.length === 0} className="gr-focus" style={{
-          flex: 1, height: 44, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-          borderRadius: R.lg, border: "none", background: jouant ? C.surface2 : C.primaryBtn,
-          color: jouant ? C.text : C.onPrimaryBtn, fontWeight: 800, fontSize: 14, cursor: "pointer", fontFamily: FONTS.ui,
-          opacity: (!jouant && evenements.length === 0) ? .5 : 1,
-        }}>
-          <Ti name={jouant ? "player-pause" : "player-play"} size={17} color={jouant ? C.text : C.onPrimaryBtn} />
+        <Button variant={jouant ? "secondary" : "primary"} icon={jouant ? "player-pause" : "player-play"}
+          onClick={basculerLecture} disabled={!jouant && evenements.length === 0} style={{ flex: 1 }}>
           {jouant ? "Arrêter" : "Écouter"}
-        </button>
+        </Button>
         <div role="group" aria-label="Tempo" style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          <button onClick={() => changerTempo(-5)} aria-label="Ralentir" className="gr-focus" style={{ ...boutonCarre, width: 36 }}>−</button>
-          <div style={{ minWidth: 44, textAlign: "center" }}>
-            <div style={{ fontSize: 15, fontWeight: 800, color: C.text, lineHeight: 1 }}>{bpm}</div>
-            <div style={{ fontSize: 9, color: C.text3, marginTop: 2 }}>BPM</div>
+          <IconButton icon="minus" label="Ralentir" onClick={() => changerTempo(-5)} />
+          <div style={{ minWidth: 40, textAlign: "center" }}>
+            <div style={{ fontSize: T.body, fontWeight: 800, color: C.text, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{bpm}</div>
+            <div style={{ fontSize: T.micro, fontWeight: 600, color: C.text3, marginTop: 2 }}>BPM</div>
           </div>
-          <button onClick={() => changerTempo(5)} aria-label="Accélérer" className="gr-focus" style={{ ...boutonCarre, width: 36 }}>+</button>
+          <IconButton icon="plus" label="Accélérer" onClick={() => changerTempo(5)} />
         </div>
-        <button onClick={basculerBoucle} aria-pressed={boucle} aria-label="Lecture en boucle" className="gr-focus" style={{
-          ...boutonCarre, width: 52, height: 44, flexDirection: "column", gap: 1,
-          border: `1.5px solid ${boucle ? C.primary : C.border}`, background: boucle ? C.primaryL : C.surface,
-        }}>
-          <Ti name="refresh" size={15} color={boucle ? C.primary : C.text2} />
-          <span style={{ fontSize: 9.5, fontWeight: 800, color: boucle ? C.primaryD : C.text3 }}>Boucle</span>
-        </button>
+        <Chip selected={boucle} onClick={basculerBoucle} aria-label="Lecture en boucle"
+          style={{ flexDirection: "column", gap: 1, width: 56, minHeight: 44, padding: 0 }}>
+          <Ti name="refresh" size={15} color="currentColor" />
+          <span style={{ fontSize: T.micro }}>Boucle</span>
+        </Chip>
       </div>
     </div>
   );

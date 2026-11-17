@@ -1525,7 +1525,7 @@ function optionsDe(rng, pool, bonne, toutes) {
  *                           est-elle faite ? false = noms d'accords seuls,
  *                           aucun chiffre romain affiché. Absent = ancien
  *                           comportement (chiffres affichés).
- * @param opts.format        suites : "noms" (« Sol – Ré – Mim – Do ») ou
+ * @param opts.format        suites : "noms" (« G – D – Em – C ») ou
  *                           "romains" (« I – V – vi – IV », seulement si la
  *                           leçon est faite). Absent : "noms" si leconChiffres
  *                           est fourni, sinon "romains" (ancien comportement).
@@ -1597,7 +1597,7 @@ export function generateEarTrainingQuestion(type = "interval", opts = {}) {
     const t = tirerAccordEnTonalite(rng, degre);
     const ref = t.reference.map(midiVersTone), cible = t.midi.map(midiVersTone);
     const SEC = 1.6;
-    // Nom de l'accord dans la tonalité (« Rém ») ; le degré (« Rém (ii) »)
+    // Nom de l'accord dans la tonalité (« Dm ») ; le degré (« Dm (ii) »)
     // seulement une fois le chiffrage romain appris.
     const options = optionsDe(rng, pool, degre, toutes).map(d => {
       const nom = accordDansLaTonalite(t.toniquePc, DEGRES_TONALITE[d].semi, DEGRES_TONALITE[d].type);
@@ -1651,7 +1651,7 @@ export function generateEarTrainingQuestion(type = "interval", opts = {}) {
       options,
       // La tonique est annoncée (sans « majeur » / « mineur » : ça s'entend).
       // La correction donne toujours les noms, et les chiffres romains en
-      // regard une fois la leçon faite : « Sol – Ré – Mim – Do = I – V – vi – IV ».
+      // regard une fois la leçon faite : « G – D – Em – C = I – V – vi – IV ».
       repere: correctionSuite(p, chiffres),
       consigne: format === "romains"
         ? `Tonique : ${tonique}. Écoute la suite (le premier accord est la tonique). Quels degrés ?`

@@ -23,8 +23,8 @@
 
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useC } from "./design/ThemeContext.jsx";
-import { Ti } from "./design/Ti.jsx";
-import { TAP } from "./design/tokens.js";
+import { R, T, TAP } from "./design/tokens.js";
+import { AnimatedNumber, Button, Card, Eyebrow, IconTile, Segmented, Tag } from "./design/ui.jsx";
 // Grille cordes × cases partagée (rendu, clavier, survol, libellés aria) :
 // voir fretboard/FretGrid.jsx.
 import { FretGrid } from "./fretboard/FretGrid.jsx";
@@ -92,29 +92,41 @@ function nomRacine(root, { scale, chord, lang = "fr" } = {}) {
   return nomSansContexte(root, lang);
 }
 
-const FONTS = {
-  title:    '"Clarendon LT", "Clarendon", "Playfair Display", Georgia, serif',
-  ui:       '"Inter", "Helvetica Neue", -apple-system, sans-serif',
-  body:     'Georgia, "Times New Roman", serif',
-};
+// Police des pastilles : conservée telle quelle, leurs libellés sont calés au
+// pixel dans des cercles de 26 à 30 px. Tout le reste (consignes, boutons,
+// encarts) hérite de la police de l'app.
+const FONT_PASTILLE = '"Inter", "Helvetica Neue", -apple-system, sans-serif';
 
 // ───────────────────────────────────────────────────────────────────────────
 // PALETTE DES NOTES ACTIVES — fonction du thème courant (plus de couleurs figées)
 // Les couleurs s'appliquent selon le rôle de la note (root, 3rd, 5th, etc.)
+// Le libellé est posé sur un aplat : C.onPrimaryBtn (blanc en clair, brun
+// foncé en sombre), jamais un blanc fixe.
 // ───────────────────────────────────────────────────────────────────────────
 function getNoteColors(C) {
+  const text = C.onPrimaryBtn;
   return {
-    root:     { bg: C.amber,   text: "#fff",    border: C.amberD  },
-    third:    { bg: C.primary, text: "#fff",    border: C.primaryD },
-    fifth:    { bg: C.green,   text: "#fff",    border: C.greenD  },
-    seventh:  { bg: C.coral,   text: "#fff",    border: C.coralD  },
-    other:    { bg: C.blue,    text: "#fff",    border: C.blueD   },
-    selected: { bg: C.primary, text: "#fff",    border: C.primaryD },
-    correct:  { bg: C.green,   text: "#fff",    border: C.greenD  },
-    wrong:    { bg: C.coral,   text: "#fff",    border: C.coralD  },
-    missed:   { bg: C.amber,   text: "#fff",    border: C.amberD  },
+    root:     { bg: C.amber,   text, border: C.amberD  },
+    third:    { bg: C.primary, text, border: C.primaryD },
+    fifth:    { bg: C.green,   text, border: C.greenD  },
+    seventh:  { bg: C.coral,   text, border: C.coralD  },
+    other:    { bg: C.blue,    text, border: C.blueD   },
+    selected: { bg: C.primary, text, border: C.primaryD },
+    correct:  { bg: C.green,   text, border: C.greenD  },
+    wrong:    { bg: C.coral,   text, border: C.coralD  },
+    missed:   { bg: C.amber,   text, border: C.amberD  },
   };
 }
+
+// ───────────────────────────────────────────────────────────────────────────
+// RETOUR DE JEU — animation d'une pastille selon son état (classes d'index.css)
+// Une case touchée apparaît en ressort, une note juste saute, une erreur
+// tremble, une position manquée apparaît à la correction. Ces classes
+// n'animent que `transform` : rien ne bouge autour. Une animation CSS ne
+// rejoue que lorsque la classe change, donc sur un geste (toucher une case,
+// Vérifier), jamais à chaque rendu.
+// ───────────────────────────────────────────────────────────────────────────
+const ANIM = { selected: "gr-in-pop", correct: "gr-bump", wrong: "gr-shake", missed: "gr-in-pop" };
 
 // Mapping degré → couleur (pour gammes 7 notes)
 function colorForDegree(degree, isRoot, NOTE_COLORS) {
@@ -155,9 +167,9 @@ function getNoteLabel(note, interval, degree, displayMode, lang = "fr", noms = n
 // ═══════════════════════════════════════════════════════════════════════════
 
 // ── Pastille de note sur le manche ──────────────────────────────────────────
-function NoteMarker({ label, color, size = 28, style = {} }) {
+function NoteMarker({ label, color, size = 28, anim, style = {} }) {
   return (
-    <div style={{
+    <div className={anim} style={{
       width: size,
       height: size,
       borderRadius: "50%",
@@ -169,12 +181,10 @@ function NoteMarker({ label, color, size = 28, style = {} }) {
       fontSize: size <= 24 ? 8 : size <= 30 ? 9 : 11,
       fontWeight: 700,
       color: color.text,
-      fontFamily: FONTS.ui,
+      fontFamily: FONT_PASTILLE,
       letterSpacing: "-0.02em",
       flexShrink: 0,
       userSelect: "none",
-      boxShadow: `0 2px 4px ${color.border}40`,
-      transition: "transform 0.1s ease",
       ...style,
     }}>
       {label}
@@ -183,14 +193,14 @@ function NoteMarker({ label, color, size = 28, style = {} }) {
 }
 
 // ── Pastille compacte (canvas du quiz et de l'exercice) ─────────────────────
-function PastilleDense({ label, color, size = 26, opacity = 1 }) {
+function PastilleDense({ label, color, size = 26, opacity = 1, anim }) {
   return (
-    <div style={{
+    <div className={anim} style={{
       width: size, height: size, borderRadius: "50%",
-      background: color.bg, border: `1.5px solid ${color.border}`,
+      background: color.bg, border: `2px solid ${color.border}`,
       display: "flex", alignItems: "center", justifyContent: "center",
       fontSize: 7, fontWeight: 700, color: color.text,
-      fontFamily: FONTS.ui, position: "relative", zIndex: 2,
+      fontFamily: FONT_PASTILLE, position: "relative", zIndex: 2,
       userSelect: "none", opacity,
     }}>{label}</div>
   );
@@ -403,22 +413,22 @@ export function Fretboard({
       if (quizRevealed) {
         if (isCorrect && isSelected) {
           const note = getNoteAtPosition(s, f);
-          return <NoteMarker label={nomAffiche(note)} color={NOTE_COLORS.correct} size={dotSz} />;
+          return <NoteMarker label={nomAffiche(note)} color={NOTE_COLORS.correct} size={dotSz} anim={ANIM.correct} />;
         }
         if (isCorrect && !isSelected) {
           const note = getNoteAtPosition(s, f);
-          return <NoteMarker label={nomAffiche(note)} color={NOTE_COLORS.missed} size={dotSz} />;
+          return <NoteMarker label={nomAffiche(note)} color={NOTE_COLORS.missed} size={dotSz} anim={ANIM.missed} />;
         }
         if (!isCorrect && isSelected) {
           const note = getNoteAtPosition(s, f);
-          return <NoteMarker label={nomAffiche(note)} color={NOTE_COLORS.wrong} size={dotSz} />;
+          return <NoteMarker label={nomAffiche(note)} color={NOTE_COLORS.wrong} size={dotSz} anim={ANIM.wrong} />;
         }
         return null;
       }
 
       if (isSelected) {
         const note = getNoteAtPosition(s, f);
-        return <NoteMarker label={nomAffiche(note)} color={NOTE_COLORS.selected} size={dotSz} />;
+        return <NoteMarker label={nomAffiche(note)} color={NOTE_COLORS.selected} size={dotSz} anim={ANIM.selected} />;
       }
       return null;
     }
@@ -458,7 +468,7 @@ export function Fretboard({
             boxShadow: `0 0 0 3px ${C.bg}, 0 0 14px 4px ${baseColor.bg}`,
             zIndex: 5,
           } : {}),
-          transition: "width .12s, height .12s, box-shadow .12s",
+          transition: "width var(--gr-dur-fast) ease, height var(--gr-dur-fast) ease, box-shadow var(--gr-dur-fast) ease",
         }}
       />
     );
@@ -474,92 +484,56 @@ function QuizControls({ selected, correct, revealed, target, lang, onReveal, onR
   const label = nomEcrit(target, lang);
 
   return (
-    <div style={{
-      marginTop: 12,
-      padding: "12px 14px",
-      background: C.surface2,
-      borderRadius: 12,
-      border: `1px solid ${C.border}`,
-    }}>
-      <div style={{
-        fontSize: 13,
-        fontWeight: 600,
-        color: C.text,
-        fontFamily: FONTS.ui,
-        marginBottom: 8,
-      }}>
-        🎯 Trouve tous les <strong>{label}</strong>
-      </div>
-
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <div style={{
-          fontSize: 12,
-          color: C.text3,
-          fontFamily: FONTS.ui,
-          flex: 1,
-        }}>
+    <Card pad="12px 14px" style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
+      <div>
+        <div style={{ fontSize: T.small, fontWeight: 600, color: C.text }}>
+          🎯 Trouve tous les <strong>{label}</strong>
+        </div>
+        <div style={{ fontSize: 12, color: C.text2, marginTop: 2, fontVariantNumeric: "tabular-nums" }}>
           {revealed
             ? `${result.found}/${result.total} trouvé${result.found > 1 ? "s" : ""} · ${result.extras} fausse${result.extras > 1 ? "s" : ""} note${result.extras > 1 ? "s" : ""}`
             : `${selected.length} sélectionné${selected.length > 1 ? "s" : ""}`
           }
         </div>
+      </div>
 
-        {!revealed && (
-          <button
-            onClick={onReveal}
-            style={{
-              padding: "7px 14px",
-              borderRadius: 8,
-              border: "none",
-              background: C.primary,
-              color: "#fff",
-              fontSize: 12,
-              fontWeight: 700,
-              cursor: "pointer",
-              fontFamily: FONTS.ui,
-            }}
-          >
-            Vérifier
-          </button>
-        )}
-
-        <button
-          onClick={onReset}
-          style={{
-            padding: "7px 14px",
-            borderRadius: 8,
-            border: `1px solid ${C.border}`,
-            background: C.bg,
-            color: C.text3,
-            fontSize: 12,
-            fontWeight: 600,
-            cursor: "pointer",
-            fontFamily: FONTS.ui,
-          }}
-        >
-          Reset
-        </button>
+      <div style={{ display: "flex", gap: 8 }}>
+        {!revealed && <Button onClick={onReveal} style={{ flex: 1 }}>Vérifier</Button>}
+        <Button variant="secondary" onClick={onReset} style={revealed ? { flex: 1 } : undefined}>Reset</Button>
       </div>
 
       {revealed && (
-        <div style={{
-          marginTop: 10,
-          padding: "8px 10px",
-          borderRadius: 8,
-          background: result.complete ? C.greenL : C.amberL,
-          fontSize: 12,
-          color: result.complete ? C.greenD : C.amberD,
-          fontFamily: FONTS.body,
-          lineHeight: 1.5,
-        }}>
+        <EncartResultat reussi={result.complete}>
           {result.complete
             ? "✅ Parfait ! Tu as trouvé toutes les positions."
             : `🟡 ${result.misses} position${result.misses > 1 ? "s" : ""} manquante${result.misses > 1 ? "s" : ""} (en orange). ${result.extras > 0 ? `${result.extras} erreur${result.extras > 1 ? "s" : ""} (en rouge).` : ""}`
           }
-        </div>
+        </EncartResultat>
       )}
-    </div>
+    </Card>
   );
+}
+
+// ── Encart de résultat (après « Vérifier ») ─────────────────────────────────
+// Vert quand tout est juste, ambre quand il reste des positions : sur le
+// manche, « presque » n'est pas « faux », d'où l'ambre plutôt que le rouge de
+// <Feedback>. Apparaît en ressort, une fois, à son montage.
+function EncartResultat({ reussi, children }) {
+  const C = useC();
+  return (
+    <Card tone={reussi ? "green" : "amber"} soft pad="10px 14px" className="gr-in-pop"
+      style={{ fontSize: T.small, lineHeight: 1.5, color: reussi ? C.greenD : C.amberD }}>
+      {children}
+    </Card>
+  );
+}
+
+// ── Cadre du manche ─────────────────────────────────────────────────────────
+// Carte du système (bordure, rayon) ; en-tête et contrôles sur la surface.
+// Seule la zone du manche garde son fond surface2 : c'est la touche sur
+// laquelle cordes et filets sont dessinés.
+function CadreManche({ children }) {
+  return <Card pad={0} style={{ overflow: "hidden" }}>{children}</Card>;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -630,91 +604,49 @@ export function FretboardLesson({ block }) {
     : "";
 
   return (
-    <div style={{
-      background: C.surface2,
-      borderRadius: 14,
-      border: `1px solid ${C.border}`,
-      overflow: "hidden",
-      marginBottom: 0,
-    }}>
-      {/* Header */}
+    <CadreManche>
+      {/* En-tête : titre et écoute, puis le choix d'affichage sur sa ligne */}
       <div style={{
-        padding: "10px 14px 8px",
+        padding: "10px 14px",
         borderBottom: `1px solid ${C.border}`,
         display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 8,
-        flexWrap: "wrap",
+        flexDirection: "column",
+        gap: 10,
       }}>
-        <div>
-          <div style={{
-            fontSize: 11,
-            fontWeight: 700,
-            color: C.text3,
-            fontFamily: FONTS.ui,
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-          }}>
-            🎸 {rootLabel} {modeLabel}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <Eyebrow tone="amber">🎸 {rootLabel} {modeLabel}</Eyebrow>
+            {block.caption && (
+              <div style={{ fontSize: T.small, fontWeight: 700, color: C.text, marginTop: 2, lineHeight: 1.4 }}>
+                {block.caption}
+              </div>
+            )}
           </div>
-          {block.caption && (
-            <div style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: C.text,
-              fontFamily: FONTS.ui,
-              marginTop: 2,
-            }}>
-              {block.caption}
-            </div>
+          {lecon && (
+            <BoutonEcoute
+              joue={lecteur.action === "lecon" && lecteur.etat !== "repos"}
+              charge={lecteur.action === "lecon" && lecteur.etat === "chargement"}
+              label={block.mode === "scale" ? `Écouter la gamme ${modeLabel} de ${rootLabel}, en montant puis en descendant`
+                : block.mode === "chord" ? `Écouter l'accord ${rootLabel} ${modeLabel}, arpégé puis gratté`
+                : "Écouter ces notes"}
+              onClick={() => lecteur.basculer("lecon", ({ onStep, onDone }) => playSequence(lecon, { onStep, onDone }))}
+            />
           )}
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }}>
         {/* Sélecteur de mode d'affichage (sauf quiz et highlight) */}
         {block.mode !== "quiz" && block.mode !== "highlight" && (
-          <div style={{ display: "flex", gap: 4 }}>
-            {[
-              { key: "notes",     label: "Notes" },
-              { key: "intervals", label: "Intervalles" },
-              { key: "degrees",   label: "Degrés" },
-            ].map(m => (
-              <button
-                key={m.key}
-                onClick={() => setDisplayMode(m.key)}
-                style={{
-                  padding: "4px 8px",
-                  borderRadius: 6,
-                  border: `1px solid ${displayMode === m.key ? C.primary : C.border}`,
-                  background: displayMode === m.key ? C.primaryL : C.bg,
-                  color: displayMode === m.key ? C.primaryD : C.text3,
-                  fontSize: 10,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  fontFamily: FONTS.ui,
-                }}
-              >
-                {m.label}
-              </button>
-            ))}
-          </div>
+          <Segmented size="sm" label="Affichage des pastilles" value={displayMode} onChange={setDisplayMode}
+            options={[
+              { value: "notes",     label: "Notes" },
+              { value: "intervals", label: "Intervalles" },
+              { value: "degrees",   label: "Degrés" },
+            ]} />
         )}
-        {lecon && (
-          <BoutonEcoute
-            joue={lecteur.action === "lecon" && lecteur.etat !== "repos"}
-            charge={lecteur.action === "lecon" && lecteur.etat === "chargement"}
-            label={block.mode === "scale" ? `Écouter la gamme ${modeLabel} de ${rootLabel}, en montant puis en descendant`
-              : block.mode === "chord" ? `Écouter l'accord ${rootLabel} ${modeLabel}, arpégé puis gratté`
-              : "Écouter ces notes"}
-            onClick={() => lecteur.basculer("lecon", ({ onStep, onDone }) => playSequence(lecon, { onStep, onDone }))}
-          />
-        )}
-        </div>
       </div>
 
       {/* Fretboard */}
-      <div style={{ padding: "10px 8px" }}>
+      <div style={{ padding: "10px 8px", background: C.surface2 }}>
         <Fretboard
           {...props}
           displayMode={displayMode}
@@ -727,17 +659,18 @@ export function FretboardLesson({ block }) {
 
       {/* Succès quiz */}
       {quizDone && (
-        <div style={{
-          padding: "8px 14px 12px",
+        <div className="gr-in-pop" style={{
+          padding: "10px 14px",
+          borderTop: `1px solid ${C.border}`,
           textAlign: "center",
-          fontSize: 13,
+          fontSize: T.small,
+          fontWeight: 700,
           color: C.greenD,
-          fontFamily: FONTS.body,
         }}>
           🏆 Toutes les positions trouvées ! +XP
         </div>
       )}
-    </div>
+    </CadreManche>
   );
 }
 
@@ -858,31 +791,24 @@ export function FretboardQuizQuestion({ question, onComplete, answered, forceRev
   const result = revealed ? checkQuizCompletion(stripNeutral(quizSelected), targetPositions) : null;
 
   return (
-    <div style={{ background: C.surface2, borderRadius: 14, border: `1px solid ${C.border}`, overflow: "hidden" }}>
+    <CadreManche>
       {/* Header */}
-      <div style={{ padding: "8px 14px 6px", borderBottom: `1px solid ${C.border}` }}>
-        <div style={{ fontSize: 10, fontWeight: 700, color: C.amber, fontFamily: FONTS.ui, letterSpacing: "0.1em", textTransform: "uppercase" }}>
-          Manche interactif
+      <div style={{ padding: "8px 14px", borderBottom: `1px solid ${C.border}` }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap", minHeight: 28 }}>
+          <Eyebrow tone="amber">Manche interactif</Eyebrow>
+          {question.hint && !revealed && !showHint && (
+            <Button variant="ghost" size="sm" icon="bulb" onClick={() => setShowHint(true)} style={{ padding: 0 }}>
+              Afficher un indice
+            </Button>
+          )}
         </div>
         {question.hint && (revealed || showHint) && (
-          <div style={{ fontSize: 11, color: C.text3, marginTop: 2, fontFamily: FONTS.ui }}>{question.hint}</div>
-        )}
-        {question.hint && !revealed && !showHint && (
-          <button
-            onClick={() => setShowHint(true)}
-            style={{
-              marginTop: 3, padding: 0, border: "none", background: "none",
-              fontSize: 11, color: C.primary, fontWeight: 600, fontFamily: FONTS.ui,
-              cursor: "pointer", textDecoration: "underline",
-            }}
-          >
-            Afficher un indice
-          </button>
+          <div className="gr-in" style={{ fontSize: 12, color: C.text2, marginTop: 2, lineHeight: 1.45 }}>{question.hint}</div>
         )}
       </div>
 
       {/* Fretboard */}
-      <div style={{ padding: "8px 8px 4px", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+      <div style={{ padding: "8px 8px 4px", overflowX: "auto", WebkitOverflowScrolling: "touch", background: C.surface2 }}>
         <FretboardQuizCanvas
           targetPositions={targetPositions}
           contextPositions={contextPositions}
@@ -896,42 +822,26 @@ export function FretboardQuizQuestion({ question, onComplete, answered, forceRev
 
       {/* Contrôles */}
       {!answered && (
-        <div style={{ padding: "6px 12px 10px", display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ flex: 1, fontSize: 11, color: C.text3, fontFamily: FONTS.ui }}>
+        <div style={{ padding: "10px 12px", borderTop: `1px solid ${C.border}`, display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: C.text2, fontVariantNumeric: "tabular-nums" }}>
             {revealed
               ? `${result.found}/${result.total} correct${result.extras > 0 ? ` · ${result.extras} erreur${result.extras > 1 ? "s" : ""}` : ""}`
               : `${quizSelected.length} sélectionné${quizSelected.length > 1 ? "s" : ""}`
             }
           </div>
           {!revealed && (
-            <button
-              onClick={verify}
-              style={{
-                padding: "7px 14px", borderRadius: 8, border: "none",
-                background: quizSelected.length > 0 ? C.primary : C.surface2,
-                color: quizSelected.length > 0 ? "#fff" : C.text3,
-                fontSize: 11, fontWeight: 700, cursor: quizSelected.length > 0 ? "pointer" : "default",
-                fontFamily: FONTS.ui,
-              }}
-            >
-              Vérifier
-            </button>
-          )}
-          {!revealed && (
-            <button
-              onClick={() => setQuizSelected([])}
-              style={{
-                padding: "7px 10px", borderRadius: 8,
-                border: `1px solid ${C.border}`, background: C.bg,
-                color: C.text3, fontSize: 11, cursor: "pointer", fontFamily: FONTS.ui,
-              }}
-            >
-              Reset
-            </button>
+            <div style={{ display: "flex", gap: 8 }}>
+              {/* Sans sélection, « Vérifier » reste actif (il révèle la
+                  réponse) : il passe simplement en retrait, sans être désactivé. */}
+              <Button variant={quizSelected.length > 0 ? "primary" : "secondary"} onClick={verify} style={{ flex: 1 }}>
+                Vérifier
+              </Button>
+              <Button variant="secondary" onClick={() => setQuizSelected([])}>Reset</Button>
+            </div>
           )}
         </div>
       )}
-    </div>
+    </CadreManche>
   );
 }
 
@@ -975,18 +885,18 @@ function FretboardQuizCanvas({ targetPositions, contextPositions, selected, reve
     const isTarget = targetMap[key];
     const ctx = contextMap[key];
     const note = getNoteAtPosition(s, f);
-    const dot = (col) => <PastilleDense label={nomsQuestion?.get(note) ?? noteToFr(note)} color={col} size={DOT} />;
+    const dot = (col, anim) => <PastilleDense label={nomsQuestion?.get(note) ?? noteToFr(note)} color={col} size={DOT} anim={anim} />;
 
     if (revealed) {
-      if (isTarget && isSelected) return dot(NOTE_COLORS.correct);
-      if (isTarget && !isSelected) return dot(NOTE_COLORS.missed);
-      if (!isTarget && isSelected) return dot(NOTE_COLORS.wrong);
+      if (isTarget && isSelected) return dot(NOTE_COLORS.correct, ANIM.correct);
+      if (isTarget && !isSelected) return dot(NOTE_COLORS.missed, ANIM.missed);
+      if (!isTarget && isSelected) return dot(NOTE_COLORS.wrong, ANIM.wrong);
       // Note de contexte (accord/gamme) visible mais pas la cible
       if (ctx && !isTarget) return dot(NOTE_COLORS.other);
       return null;
     }
 
-    if (isSelected) return dot(NOTE_COLORS.selected);
+    if (isSelected) return dot(NOTE_COLORS.selected, ANIM.selected);
 
     // Contexte toujours visible (pour find_chord, find_scale_root)
     if (ctx && !isTarget) return dot(NOTE_COLORS.other);
@@ -1103,14 +1013,19 @@ export function FretboardExercise({ ex, onComplete, dispatch }) {
 
   if (allDone) {
     return (
-      <div style={{ textAlign: "center", padding: "24px 16px", background: C.greenL, borderRadius: 14, border: `1px solid ${C.border}` }}>
-        <Ti name="trophy" size={32} color={C.green} style={{ marginBottom: 8 }} />
-        <div style={{ fontSize: 18, fontWeight: 700, color: C.greenD, fontFamily: FONTS.ui }}>Exercice terminé !</div>
-        <div style={{ fontSize: 13, color: C.green, marginTop: 4, fontFamily: FONTS.ui }}>+{totalXp} XP gagnés</div>
-        <div style={{ fontSize: 12, color: C.text3, marginTop: 8, fontFamily: FONTS.ui }}>
+      <Card tone="green" soft pad="24px 16px" className="gr-in-pop"
+        style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
+        <div className="gr-tada" style={{ marginBottom: 8 }}>
+          <IconTile icon="trophy" tone="green" solid size={52} />
+        </div>
+        <div style={{ fontSize: T.h3, fontWeight: 800, color: C.greenD }}>Exercice terminé !</div>
+        <div style={{ fontSize: T.small, fontWeight: 700, color: C.greenD, marginTop: 4, fontVariantNumeric: "tabular-nums" }}>
+          +<AnimatedNumber value={totalXp} /> XP gagnés
+        </div>
+        <div style={{ fontSize: 12, color: C.text2, marginTop: 8 }}>
           {completedStages.filter(s => s.result?.complete).length}/{ex.stages.length} stages réussis
         </div>
-      </div>
+      </Card>
     );
   }
 
@@ -1121,36 +1036,34 @@ export function FretboardExercise({ ex, onComplete, dispatch }) {
       <div style={{ display: "flex", gap: 4 }}>
         {ex.stages.map((_, i) => (
           <div key={i} style={{
-            flex: 1, height: 4, borderRadius: 2,
+            flex: 1, height: 4, borderRadius: R.pill,
             background: i < stageIdx ? C.green
                       : i === stageIdx ? C.primary
                       : C.border,
-            transition: "background 0.3s",
+            transition: "background-color var(--gr-dur-slow) ease",
           }} />
         ))}
       </div>
 
       {/* Header stage */}
-      <div style={{ background: C.surface2, borderRadius: 12, border: `1px solid ${C.border}`, padding: "10px 14px" }}>
-        <div style={{ fontSize: 10, fontWeight: 700, color: C.amber, fontFamily: FONTS.ui, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-          🎸 Étape {stageIdx + 1} / {ex.stages.length}
-        </div>
-        <div style={{ fontSize: 14, fontWeight: 600, color: C.text, fontFamily: FONTS.ui, marginTop: 4, lineHeight: 1.4 }}>
+      <Card pad="10px 14px">
+        <Eyebrow tone="amber">🎸 Étape {stageIdx + 1} / {ex.stages.length}</Eyebrow>
+        <div style={{ fontSize: 14, fontWeight: 600, color: C.text, marginTop: 4, lineHeight: 1.4 }}>
           {stage.instruction}
         </div>
         {stage.hint && !stageRevealed && (
-          <div style={{ fontSize: 11, color: C.text3, fontFamily: FONTS.ui, marginTop: 4, fontStyle: "italic" }}>
+          <div style={{ fontSize: T.micro, color: C.text3, marginTop: 4, fontStyle: "italic" }}>
             💡 {stage.hint}
           </div>
         )}
-        <div style={{ fontSize: 11, color: C.primary, fontFamily: FONTS.ui, marginTop: 4, fontWeight: 600 }}>
-          +{stage.xp || 15} XP
+        <div style={{ marginTop: 6 }}>
+          <Tag tone="primary">+{stage.xp || 15} XP</Tag>
         </div>
-      </div>
+      </Card>
 
       {/* Manche */}
-      <div style={{ background: C.surface2, borderRadius: 12, border: `1px solid ${C.border}`, overflow: "hidden" }}>
-        <div style={{ padding: "8px 8px 4px", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+      <CadreManche>
+        <div style={{ padding: "8px 8px 4px", overflowX: "auto", WebkitOverflowScrolling: "touch", background: C.surface2 }}>
           <ExerciseCanvas
             stage={stage}
             targetPositions={targetPositions}
@@ -1160,74 +1073,30 @@ export function FretboardExercise({ ex, onComplete, dispatch }) {
             onCellClick={handleCellClick}
           />
         </div>
-      </div>
+      </CadreManche>
 
       {/* Feedback post-vérification */}
       {stageRevealed && stageResult && (
-        <div style={{
-          padding: "10px 14px",
-          borderRadius: 10,
-          background: stageResult.complete ? C.greenL : C.amberL,
-          border: `1px solid ${stageResult.complete ? C.border : C.border}`,
-          fontSize: 12,
-          color: stageResult.complete ? C.greenD : C.amberD,
-          fontFamily: FONTS.ui,
-          lineHeight: 1.5,
-        }}>
+        <EncartResultat reussi={stageResult.complete}>
           {stageResult.feedback}
           {stage.exp && <div style={{ marginTop: 4, opacity: 0.85 }}>{stage.exp}</div>}
-        </div>
+        </EncartResultat>
       )}
 
       {/* Contrôles */}
       <div style={{ display: "flex", gap: 8 }}>
         {!stageRevealed ? (
           <>
-            <button
-              onClick={handleVerify}
-              disabled={stageSelected.length === 0}
-              style={{
-                flex: 1, padding: "12px", borderRadius: 10, border: "none",
-                background: stageSelected.length > 0 ? C.primary : C.surface2,
-                color: stageSelected.length > 0 ? "#fff" : C.text3,
-                fontSize: 13, fontWeight: 700, cursor: stageSelected.length > 0 ? "pointer" : "default",
-                fontFamily: FONTS.ui,
-              }}
-            >
+            <Button onClick={handleVerify} disabled={stageSelected.length === 0} style={{ flex: 1 }}>
               Vérifier · {stageSelected.length} sélectionné{stageSelected.length > 1 ? "s" : ""}
-            </button>
-            <button
-              onClick={() => setStageSelected([])}
-              style={{
-                padding: "12px 14px", borderRadius: 10,
-                border: `1px solid ${C.border}`, background: C.bg,
-                color: C.text3, fontSize: 12, cursor: "pointer", fontFamily: FONTS.ui,
-              }}
-            >
-              Reset
-            </button>
-            <button
-              onClick={handleSkip}
-              style={{
-                padding: "12px 14px", borderRadius: 10,
-                border: `1px solid ${C.border}`, background: C.bg,
-                color: C.text3, fontSize: 11, cursor: "pointer", fontFamily: FONTS.ui,
-              }}
-            >
-              Passer
-            </button>
+            </Button>
+            <Button variant="secondary" onClick={() => setStageSelected([])}>Reset</Button>
+            <Button variant="ghost" onClick={handleSkip}>Passer</Button>
           </>
         ) : (
-          <button
-            onClick={handleNext}
-            style={{
-              flex: 1, padding: "12px", borderRadius: 10, border: "none",
-              background: C.primary, color: "#fff",
-              fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui,
-            }}
-          >
+          <Button onClick={handleNext} style={{ flex: 1 }}>
             {isLast ? "Terminer l'exercice" : "Étape suivante →"}
-          </button>
+          </Button>
         )}
       </div>
     </div>
@@ -1271,7 +1140,7 @@ function ExerciseCanvas({ stage, targetMap, selected, revealed, onCellClick }) {
     const isTarget = !!targetMap[key];
     const isContext = !!contextMap[key];
     const { showNotes, showIntervals, showDegrees } = stage.display || {};
-    const dot = (lbl, col, opacity) => <PastilleDense label={lbl} color={col} size={DOT} opacity={opacity} />;
+    const dot = (lbl, col, opacity, anim) => <PastilleDense label={lbl} color={col} size={DOT} opacity={opacity} anim={anim} />;
 
     // Label de la note
     const getLabel = (pos) => {
@@ -1283,14 +1152,14 @@ function ExerciseCanvas({ stage, targetMap, selected, revealed, onCellClick }) {
 
     if (revealed) {
       const tPos = targetMap[key];
-      if (isTarget && isSelected) return dot(getLabel(tPos), NOTE_COLORS.correct);
-      if (isTarget && !isSelected) return dot(getLabel(tPos), NOTE_COLORS.missed);
-      if (!isTarget && isSelected) return dot(noteToFr(note), NOTE_COLORS.wrong);
+      if (isTarget && isSelected) return dot(getLabel(tPos), NOTE_COLORS.correct, 1, ANIM.correct);
+      if (isTarget && !isSelected) return dot(getLabel(tPos), NOTE_COLORS.missed, 1, ANIM.missed);
+      if (!isTarget && isSelected) return dot(noteToFr(note), NOTE_COLORS.wrong, 1, ANIM.wrong);
       if (isContext) return dot(getLabel(contextMap[key]), NOTE_COLORS.other, 0.4);
       return null;
     }
 
-    if (isSelected) return dot(noteToFr(note), NOTE_COLORS.selected);
+    if (isSelected) return dot(noteToFr(note), NOTE_COLORS.selected, 1, ANIM.selected);
     // Affichage contexte (gamme/accord de fond)
     if (isContext && !isTarget) return dot(getLabel(contextMap[key]), NOTE_COLORS.other, 0.5);
     // Affichage notes visibles si showNotes

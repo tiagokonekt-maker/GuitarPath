@@ -3,9 +3,9 @@
 // jeu réel. Le compte à rebours vit ici (abonné au chrono) : avant, il
 // était dans JamSession et re-rendait tout l'écran chaque seconde.
 import { useState, useEffect, useEffectEvent, useRef } from "react";
-import { FONTS, R } from "../../design/tokens.js";
+import { R, T } from "../../design/tokens.js";
 import { useC } from "../../design/ThemeContext.jsx";
-import { Ti } from "../../design/Ti.jsx";
+import { Button, Card, Eyebrow, IconTile, ProgressBar, Segmented, Tag } from "../../design/ui.jsx";
 import { fmtDuree } from "./reglages.js";
 
 // Contraintes : une limite claire, tenue 2 minutes. `contextes` restreint
@@ -39,11 +39,10 @@ const DUREE_CONTRAINTE = 120;          // secondes de jeu réel
 
 /** Niveau de départ des contraintes, d'après le niveau de l'app — modifiable ensuite. */
 const niveauParDefaut = (niveauApp) => (niveauApp >= 16 ? "Difficile" : niveauApp >= 6 ? "Moyen" : "Facile");
-const makeLevelColor = (C) => ({ "Facile": C.green, "Moyen": C.amber, "Difficile": C.coral });
+const TON_NIVEAU = { "Facile": "green", "Moyen": "amber", "Difficile": "coral" };
 
 export function CarteContrainte({ chrono, enLecture, contextId, niveauApp, dispatch }) {
   const C = useC();
-  const LEVEL_COLOR = makeLevelColor(C);
   const [niveauContrainte, setNiveauContrainte] = useState(() => niveauParDefaut(niveauApp || 1));
   const [constraint, setConstraint] = useState(null);
   const [resteContrainte, setResteContrainte] = useState(DUREE_CONTRAINTE);
@@ -74,57 +73,57 @@ export function CarteContrainte({ chrono, enLecture, contextId, niveauApp, dispa
   };
 
   return (
-    <div style={{ background: constraint ? C.amberL : C.surface, border: `1px solid ${constraint ? C.amberBorder : C.border}`, borderRadius: R.lg, padding: "12px 14px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-        <div style={{ flex: 1, fontSize: 11, fontWeight: 700, color: constraint ? C.amberD : C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em" }}>
-          Contrainte du moment
-        </div>
+    <Card tone={constraint ? "amber" : undefined} soft={!!constraint} pad="12px 14px" className="gr-in-pop"
+      style={{ display: "flex", flexDirection: "column", gap: 10, transition: "background-color var(--gr-dur-fast) ease, border-color var(--gr-dur-fast) ease" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 24 }}>
+        <Eyebrow tone={constraint ? "amber" : "neutral"} style={{ flex: 1 }}>Contrainte du moment</Eyebrow>
         {contraintesTenues > 0 && (
-          <span style={{ fontSize: 11, fontWeight: 700, color: C.amberD, fontFamily: FONTS.ui }}>{contraintesTenues} tenue{contraintesTenues > 1 ? "s" : ""}</span>
+          <span key={contraintesTenues} className="gr-tada" style={{ display: "inline-flex" }}>
+            <Tag tone="green" icon="check">{contraintesTenues} tenue{contraintesTenues > 1 ? "s" : ""}</Tag>
+          </span>
         )}
       </div>
-      <div role="group" aria-label="Difficulté des contraintes" style={{ display: "flex", gap: 4, marginBottom: 10, background: C.surface2, borderRadius: R.sm, padding: 3 }}>
-        {NIVEAUX_CONTRAINTE.map(n => (
-          <button key={n} onClick={() => { setNiveauContrainte(n); if (constraint) randomConstraint(n); }} aria-pressed={niveauContrainte === n} className="gr-focus" style={{
-            flex: 1, minHeight: 34, borderRadius: R.sm - 2, border: "none", cursor: "pointer", fontFamily: FONTS.ui, fontSize: 12, fontWeight: 700,
-            background: niveauContrainte === n ? C.surface : "transparent", color: niveauContrainte === n ? LEVEL_COLOR[n] : C.text3,
-            boxShadow: niveauContrainte === n ? `0 0 0 1.5px ${C.border}` : "none",
-          }}>{n}</button>
-        ))}
-      </div>
+      <Segmented label="Difficulté des contraintes" size="sm" value={niveauContrainte}
+        onChange={(n) => { setNiveauContrainte(n); if (constraint) randomConstraint(n); }}
+        options={NIVEAUX_CONTRAINTE.map(n => ({ value: n, label: n }))} />
       {constraint ? (
         <>
-          <div id="contrainte-texte" aria-live="polite" style={{ fontSize: 14, color: C.amberD, fontFamily: FONTS.title, lineHeight: 1.5, fontWeight: 600 }}>{constraint.text}</div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
+          <div id="contrainte-texte" aria-live="polite" style={{ fontSize: T.body, color: C.amberD, lineHeight: 1.5, fontWeight: 700 }}>
+            {/* La clé rejoue l'entrée à chaque nouvelle contrainte, sans remonter la zone annoncée. */}
+            <span key={constraint.text} className="gr-in-pop" style={{ display: "block" }}>{constraint.text}</span>
+          </div>
+          <div style={{ display: "flex" }}>
+            <Tag tone={TON_NIVEAU[constraint.level]}>{constraint.level}</Tag>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {tenue ? (
-              <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 700, color: C.greenD, fontFamily: FONTS.ui }}>
-                <Ti name="check" size={15} color={C.greenD} /> Tenue 2 minutes, bravo.
+              <div className="gr-in-pop" style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 8, fontSize: T.small, fontWeight: 700, color: C.greenD }}>
+                <IconTile icon="check" tone="green" solid size={30} style={{ borderRadius: R.pill }} />
+                Tenue 2 minutes, bravo.
               </div>
             ) : (
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 12, color: C.amberD, fontFamily: FONTS.ui }}>
-                  {!enLecture ? "Lance le backing : le chrono tourne pendant que tu joues." : <>Tiens-la encore <b>{fmtDuree(resteContrainte)}</b></>}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 12, color: C.amberD, lineHeight: 1.45 }}>
+                  {!enLecture ? "Lance le backing : le chrono tourne pendant que tu joues." : <>Tiens-la encore <b style={{ fontVariantNumeric: "tabular-nums" }}>{fmtDuree(resteContrainte)}</b></>}
                 </div>
-                <div aria-hidden="true" style={{ height: 4, borderRadius: 2, background: C.amberBorder, marginTop: 6, overflow: "hidden" }}>
-                  <div style={{ width: `${((DUREE_CONTRAINTE - resteContrainte) / DUREE_CONTRAINTE) * 100}%`, height: "100%", background: C.amber, transition: "width 1s linear" }} />
+                <div aria-hidden="true" style={{ marginTop: 6 }}>
+                  <ProgressBar pct={((DUREE_CONTRAINTE - resteContrainte) / DUREE_CONTRAINTE) * 100} color={C.amber} track={C.amberBorder} h={8} />
                 </div>
               </div>
             )}
-            <button onClick={() => randomConstraint()} className="gr-focus" style={{ minHeight: 36, padding: "0 14px", borderRadius: R.pill, border: `1px solid ${C.amber}`, background: tenue ? C.amber : C.surface, color: tenue ? C.onPrimaryBtn : C.amberD, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }}>
-              {tenue ? "Suivante" : "Changer"}
-            </button>
+            {tenue
+              ? <Button tone="amber" iconRight="arrow-right" onClick={() => randomConstraint()}>Suivante</Button>
+              : <Button variant="secondary" tone="amber" onClick={() => randomConstraint()}>Changer</Button>}
           </div>
         </>
       ) : (
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ flex: 1, fontSize: 12.5, color: C.text2, fontFamily: FONTS.ui, lineHeight: 1.45 }}>
+          <div style={{ flex: 1, minWidth: 0, fontSize: T.small, color: C.text2, lineHeight: 1.45 }}>
             Une limite claire, tenue 2 minutes : c'est ce qui fait progresser en impro.
           </div>
-          <button onClick={() => randomConstraint()} className="gr-focus" style={{ minHeight: 36, padding: "0 14px", borderRadius: R.pill, border: "none", background: C.amber, color: C.onPrimaryBtn, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }}>
-            Tirer
-          </button>
+          <Button tone="amber" onClick={() => randomConstraint()}>Tirer</Button>
         </div>
       )}
-    </div>
+    </Card>
   );
 }

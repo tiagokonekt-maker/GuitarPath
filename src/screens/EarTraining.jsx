@@ -12,9 +12,9 @@
 // mineur), déduits des réussites comme les compétences de la révision.
 //
 // ── Chiffres romains ──────────────────────────────────────────────────────
-// Accord en tonalité et suites répondent par des NOMS d'accords (« Rém »,
-// « Sol – Ré – Mim – Do »). Les chiffres romains n'arrivent qu'après la leçon
-// du chiffrage (harm-c5-02) : « Rém (ii) », correction « noms = chiffres »,
+// Accord en tonalité et suites répondent par des NOMS d'accords, en notation anglaise (« Dm »,
+// « G – D – Em – C »). Les chiffres romains n'arrivent qu'après la leçon
+// du chiffrage (harm-c5-02) : « Dm (ii) », correction « noms = chiffres »,
 // et une part de questions de suites en chiffres (20 % → 55 %, jamais tous),
 // qui grandit avec les réussites en chiffres (oreille.partChiffresRomains).
 //
@@ -28,12 +28,15 @@
 // l'oreille passe par les compétences générées (store/generateurs.js), que
 // la séance de révision sait faire écouter.
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { FONTS, R } from "../design/tokens.js";
+import { R, T } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { Gropi } from "../design/Gropi.jsx";
 import { POSE_ROLE } from "../design/gropiPoses.js";
-import { BackButton } from "../design/ui.jsx";
+import {
+  AnimatedNumber, AnswerOption, Button, Card, Chip, Feedback, IconTile, ResultScreen, SubHeader, Tag,
+} from "../design/ui.jsx";
+import { relief, toneOf } from "../design/hooks.js";
 import { loadAudio, isAudioLoaded, generateEarTrainingQuestion, stopAll, unlockAudio } from "../audioEngine.js";
 import { updateReviewHistory } from "../store/reviewEngine.js";
 import {
@@ -70,19 +73,6 @@ const VIVIERS = {
 
 const SESSION_LENGTH = 8;
 const XP_PAR_REPONSE = 25;
-
-// Assombrit une couleur hex d'une quantité fixe, quel que soit le thème.
-// (`C.primaryD` est une couleur de TEXTE, claire en thème sombre : elle ne
-// convient pas comme fond de bouton.)
-function shade(hex, amount) {
-  const h = hex.replace("#", "");
-  const num = parseInt(h, 16);
-  let r = (num >> 16) + amount, g = ((num >> 8) & 0xff) + amount, b = (num & 0xff) + amount;
-  r = Math.max(0, Math.min(255, r));
-  g = Math.max(0, Math.min(255, g));
-  b = Math.max(0, Math.min(255, b));
-  return "#" + ((r << 16) | (g << 8) | b).toString(16).padStart(6, "0");
-}
 
 export function EarTraining({ onBack, dispatch, state }) {
   const C = useC();
@@ -242,50 +232,28 @@ export function EarTraining({ onBack, dispatch, state }) {
   if (sessionDone) {
     const pct = Math.round((score.correct / score.total) * 100);
     return (
-      <div style={{ padding: "24px 16px 32px", display: "flex", flexDirection: "column", gap: 14 }}>
-        <div style={{ textAlign: "center", padding: "20px 0" }}>
-          <div style={{ marginBottom: 10, display: "flex", justifyContent: "center" }}>
-            <Gropi pose={pct >= 75 ? POSE_ROLE.reussite : pct >= 50 ? POSE_ROLE.ecoute : POSE_ROLE.calme} size={88} anim={pct >= 75 ? "cheer" : "pop"} />
-          </div>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: C.text, fontFamily: FONTS.title }}>
-            {pct >= 75 ? "Belle oreille !" : pct >= 50 ? "Bon travail !" : "Continue l'entraînement !"}
-          </h1>
-          {cfg && vivier && (
-            <p style={{ margin: "8px 0 0", fontSize: 12.5, color: C.text2, fontFamily: FONTS.ui }}>
-              Ton vivier : {vivier.pool.length} {cfg.unite} sur {vivier.total}.
-            </p>
-          )}
-          {mode === "dictation" && (
-            <p style={{ margin: "8px 0 0", fontSize: 12.5, color: C.text2, fontFamily: FONTS.ui }}>
-              Niveau {niveauDictee}/{NIVEAUX_DICTEE.length} : {NIVEAUX_DICTEE[niveauDictee - 1].libelle}.
-            </p>
-          )}
-        </div>
-        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: "16px" }}>
-          <div style={{ display: "flex", justifyContent: "space-around" }}>
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 28, fontWeight: 700, color: C.greenInk }}>{score.correct}</div>
-              <div style={{ fontSize: 11, color: C.text3, fontFamily: FONTS.ui }}>Correctes</div>
-            </div>
-            <div style={{ width: 1, background: C.border }} />
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 28, fontWeight: 700, color: C.coralInk }}>{score.total - score.correct}</div>
-              <div style={{ fontSize: 11, color: C.text3, fontFamily: FONTS.ui }}>Ratées</div>
-            </div>
-          </div>
-          <div style={{ marginTop: 14, height: 6, background: C.border, borderRadius: 3, overflow: "hidden" }}>
-            <div style={{ height: "100%", width: `${pct}%`, background: pct >= 75 ? C.green : pct >= 50 ? C.primary : C.coral, borderRadius: 3 }} />
-          </div>
-        </div>
-        <div style={{ display: "flex", gap: 10 }}>
-          <button onClick={() => { setScore({ correct: 0, total: 0 }); setAnswers([]); setSessionDone(false); nextQuestion(); }} className="gr-focus" style={{ flex: 1, minHeight: 48, padding: "13px", borderRadius: R.md, border: `1px solid ${C.borderStrong}`, background: C.surface, color: C.text, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: FONTS.ui }}>
+      <ResultScreen
+        pose={pct >= 75 ? POSE_ROLE.reussite : pct >= 50 ? POSE_ROLE.ecoute : POSE_ROLE.calme}
+        anim={pct >= 75 ? "cheer" : "pop"}
+        confetti={pct >= 75}
+        title={pct >= 75 ? "Belle oreille !" : pct >= 50 ? "Bon travail !" : "Continue l'entraînement !"}
+        subtitle={mode === "dictation"
+          ? `Niveau ${niveauDictee}/${NIVEAUX_DICTEE.length} : ${NIVEAUX_DICTEE[niveauDictee - 1].libelle}.`
+          : cfg && vivier ? `Ton vivier : ${vivier.pool.length} ${cfg.unite} sur ${vivier.total}.` : undefined}
+        stats={[
+          { value: score.correct, label: "Correctes", tone: "green" },
+          { value: score.total - score.correct, label: "Ratées", tone: "danger" },
+        ]}
+        pct={pct}
+        pctTone={pct >= 75 ? "green" : pct >= 50 ? "primary" : "danger"}
+        actions={<>
+          <Button size="lg" full tone="teal" onClick={onBack}>Retour</Button>
+          <Button size="lg" full variant="secondary" icon="refresh"
+            onClick={() => { setScore({ correct: 0, total: 0 }); setAnswers([]); setSessionDone(false); nextQuestion(); }}>
             Recommencer
-          </button>
-          <button onClick={onBack} className="gr-focus" style={{ flex: 1, minHeight: 48, padding: "13px", borderRadius: R.md, border: "none", background: C.primaryBtn, color: C.onPrimaryBtn, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }}>
-            Retour
-          </button>
-        </div>
-      </div>
+          </Button>
+        </>}
+      />
     );
   }
 
@@ -299,130 +267,155 @@ export function EarTraining({ onBack, dispatch, state }) {
   const options = !question?.options ? [] : mode === "interval" ? [...question.options].sort((a, b) => a.key - b.key) : question.options;
   const nbJustes = mode === "dictation" && repondu ? saisie.filter((d, i) => d === question.degres[i]).length : 0;
 
-  const chip = (actif) => ({
-    minHeight: 44, padding: "8px 12px", borderRadius: R.md, cursor: "pointer", fontFamily: FONTS.ui, fontSize: 12.5,
-    border: `1.5px solid ${actif ? C.primary : C.borderStrong}`,
-    background: actif ? C.primaryL : C.surface,
-    color: actif ? C.primaryD : C.text2, fontWeight: actif ? 700 : 500,
-  });
+  const teinte = toneOf(C, "teal");
+
+  // Gropi écoute pendant la question ; après la réponse, il sourit si c'est
+  // juste, ou passe en mode zen si c'est raté : on respire, on réécoute, sans
+  // pression.
+  const derniere = repondu ? answers[answers.length - 1] : null;
+  const poseGropi = !derniere ? POSE_ROLE.ecoute : derniere.correct ? POSE_ROLE.bonne : POSE_ROLE.calme;
+
+  // Explication sous le verdict (rien si le mode n'en donne pas).
+  const explication = !repondu || !question ? null
+    : mode === "dictation" ? <>Mélodie : {question.noms.join(" – ")} (degrés {question.degres.map(d => d + 1).join(" - ")}).</>
+    : mode === "interval" ? <>{question.detail}. Repère : {question.repere}</>
+    : question.repere || null;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: C.bg }}>
+    <div className="gr-in-push" style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: C.bg }}>
 
-      {/* En-tête */}
-      <div style={{ padding: "12px 16px", display: "flex", alignItems: "center", gap: 10, borderBottom: `1px solid ${C.border}`, background: C.surface, position: "sticky", top: 0, zIndex: 10 }}>
-        <BackButton onClick={onBack} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <h1 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: C.text, fontFamily: FONTS.title }}>Oreille</h1>
-          <div role="status" aria-live="polite" style={{ fontSize: 11, color: C.text3, fontFamily: FONTS.ui }}>{score.total}/{SESSION_LENGTH} · {score.correct} correcte{score.correct > 1 ? "s" : ""}</div>
-        </div>
-        {/* Gropi écoute pendant la question ; après la réponse, il sourit si
-            c'est juste, ou passe en mode zen si c'est raté : on respire, on
-            réécoute, sans pression. */}
-        {(() => {
-          const derniere = selected !== null ? answers[answers.length - 1] : null;
-          const pose = !derniere ? POSE_ROLE.ecoute : derniere.correct ? POSE_ROLE.bonne : POSE_ROLE.calme;
-          return <Gropi key={pose} pose={pose} size={46} anim={derniere ? "pop" : "bob"} />;
-        })()}
-      </div>
-
-      <div style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: 12 }}>
-
-        {/* Barre de progression — décorative : le score, annoncé, dit la même chose. */}
-        <div aria-hidden="true" style={{ display: "flex", gap: 3 }}>
-          {Array.from({ length: SESSION_LENGTH }).map((_, i) => {
-            const ans = answers[i];
-            return <div key={i} style={{ flex: 1, height: 5, borderRadius: 3, background: ans ? (ans.correct ? C.green : C.coral) : i === score.total ? C.primary : C.border, transition: "background 0.3s" }} />;
-          })}
-        </div>
-
-        {/* Choix du mode */}
-        <div role="group" aria-label="Mode d'entraînement" style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-          {MODES.map(m => (
-            <button key={m.key} onClick={() => changeMode(m.key)} aria-pressed={mode === m.key} className="gr-focus"
-              style={{ ...chip(mode === m.key), display: "inline-flex", alignItems: "center", gap: 6, flex: "1 1 auto" }}>
-              <Ti name={m.icon} size={15} color={mode === m.key ? C.primaryD : C.text3} />
-              {m.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Sens des intervalles */}
-        {mode === "interval" && (
-          <div role="group" aria-label="Sens de l'intervalle" style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-            {SENS.map(s => (
-              <button key={s.key} onClick={() => changeSens(s.key)} aria-pressed={sens === s.key} className="gr-focus" style={{ ...chip(sens === s.key), flex: "1 1 auto" }}>
-                {s.label}
-              </button>
-            ))}
-          </div>
+      <SubHeader compact tone="teal" onBack={onBack} title="Oreille"
+        style={{ position: "sticky", top: 0, zIndex: 10 }}
+        subtitle={(
+          <span role="status" aria-live="polite" style={{ fontVariantNumeric: "tabular-nums" }}>
+            {score.total}/{SESSION_LENGTH} · <AnimatedNumber value={score.correct} /> correcte{score.correct > 1 ? "s" : ""}
+          </span>
         )}
+        right={<Gropi key={poseGropi} pose={poseGropi} size={46} anim={derniere ? "pop" : "bob"} />}
+      />
 
-        {/* Vivier / niveau */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", background: C.surface2, borderRadius: R.md, padding: "8px 12px" }}>
-          <div style={{ flex: 1, minWidth: 160, fontSize: 12, color: C.text2, fontFamily: FONTS.ui, lineHeight: 1.45 }}>
-            {cfg && vivier && <>Vivier : <b style={{ color: C.text }}>{vivier.pool.length}/{vivier.total}</b> {cfg.unite}</>}
-            {mode === "dictation" && <>Niveau <b style={{ color: C.text }}>{niveauDictee}/{NIVEAUX_DICTEE.length}</b> · {NIVEAUX_DICTEE[niveauDictee - 1].libelle}</>}
-            {precisionMode != null && <> · précision {precisionMode} %</>}
-            {mode === "progression" && leconChiffres && <> · chiffres romains : {Math.round(partRomains * 100)} % des questions</>}
+      <div style={{ padding: "14px 16px 24px", display: "flex", flexDirection: "column", gap: 12 }}>
+
+        <div className="gr-stagger" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {/* Barre de progression — décorative : le score, annoncé, dit la même chose. */}
+          <div aria-hidden="true" style={{ display: "flex", gap: 4 }}>
+            {Array.from({ length: SESSION_LENGTH }).map((_, i) => {
+              const ans = answers[i];
+              return (
+                <div key={i} style={{
+                  flex: 1, height: 8, borderRadius: R.pill,
+                  background: ans ? (ans.correct ? C.green : C.danger) : i === score.total ? C.teal : C.border,
+                  transition: "background-color var(--gr-dur) ease",
+                }} />
+              );
+            })}
           </div>
-          {cfg && (
-            <button onClick={basculerLibre} aria-pressed={libre} className="gr-focus" style={{ ...chip(libre), minHeight: 40, padding: "6px 10px", fontSize: 11.5 }}>
-              {libre ? "Vivier complet" : "Tout débloquer"}
-            </button>
+
+          {/* Choix du mode */}
+          <div role="group" aria-label="Mode d'entraînement" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8 }}>
+            {MODES.map((m, i) => {
+              const actif = mode === m.key;
+              const seule = i === MODES.length - 1 && MODES.length % 2 === 1;
+              return (
+                <Card key={m.key} onClick={() => changeMode(m.key)} aria-pressed={actif}
+                  tone="teal" soft={actif} selected={actif} pad="8px 10px"
+                  style={{ display: "flex", alignItems: "center", gap: 10, minHeight: 52, gridColumn: seule ? "1 / -1" : undefined }}>
+                  <IconTile icon={m.icon} tone={actif ? "teal" : "neutral"} solid={actif} size={32} />
+                  <span style={{ flex: 1, minWidth: 0, fontSize: T.small, fontWeight: 700, lineHeight: 1.25, color: actif ? C.tealD : C.text }}>{m.label}</span>
+                </Card>
+              );
+            })}
+          </div>
+
+          {/* Sens des intervalles */}
+          {mode === "interval" && (
+            <div role="group" aria-label="Sens de l'intervalle" style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {SENS.map(s => (
+                <Chip key={s.key} tone="teal" selected={sens === s.key} onClick={() => changeSens(s.key)}
+                  style={{ flex: "1 1 auto", minHeight: 44 }}>
+                  {s.label}
+                </Chip>
+              ))}
+            </div>
           )}
+
+          {/* Vivier / niveau */}
+          <Card pad="8px 12px" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <div style={{ flex: 1, minWidth: 160, fontSize: 12, color: C.text2, lineHeight: 1.45 }}>
+              {cfg && vivier && <>Vivier : <b style={{ color: C.text }}>{vivier.pool.length}/{vivier.total}</b> {cfg.unite}</>}
+              {mode === "dictation" && <>Niveau <b style={{ color: C.text }}>{niveauDictee}/{NIVEAUX_DICTEE.length}</b> · {NIVEAUX_DICTEE[niveauDictee - 1].libelle}</>}
+              {precisionMode != null && <> · précision {precisionMode} %</>}
+              {mode === "progression" && leconChiffres && <> · chiffres romains : {Math.round(partRomains * 100)} % des questions</>}
+            </div>
+            {cfg && (
+              <Chip tone="teal" selected={libre} onClick={basculerLibre}>
+                {libre ? "Vivier complet" : "Tout débloquer"}
+              </Chip>
+            )}
+          </Card>
         </div>
+
         {cfg && vivier?.nouveau != null && (
-          <div role="status" style={{ display: "flex", gap: 8, alignItems: "center", background: C.primaryL, border: `1px solid ${C.primaryBorder}`, borderRadius: R.md, padding: "8px 12px", fontSize: 12, color: C.primaryD, fontFamily: FONTS.ui }}>
-            <Ti name="sparkles" size={15} color={C.primaryD} />
+          <Card role="status" tone="amber" soft pad="8px 12px" className="gr-in-pop"
+            style={{ display: "flex", gap: 10, alignItems: "center", fontSize: 12, color: C.amberD, lineHeight: 1.45 }}>
+            <IconTile icon="sparkles" tone="amber" solid size={30} />
             <span>Nouveau dans ton vivier : <b>{cfg.nom(vivier.nouveau, leconChiffres)}</b></span>
-          </div>
+          </Card>
         )}
 
         {/* Chargement audio */}
         {audioError && (
-          <div role="alert" style={{ background: C.coralL, border: `1px solid ${C.coralBorder}`, borderRadius: R.md, padding: "12px 14px", fontSize: 12, color: C.coralD, fontFamily: FONTS.ui }}>
+          <Card role="alert" tone="danger" soft pad="12px 14px" className="gr-in" style={{ fontSize: 12, color: C.dangerD, lineHeight: 1.5 }}>
             Les échantillons audio n'ont pas pu être chargés. Vérifie ta connexion, puis reviens sur cet écran.
-          </div>
+          </Card>
         )}
         {!audioReady && !audioError && (
-          <div role="status" aria-live="polite" style={{ background: C.amberL, border: `1px solid ${C.amberBorder}`, borderRadius: R.md, padding: "12px 14px", fontSize: 12, color: C.amberD, fontFamily: FONTS.ui }}>
+          <Card role="status" aria-live="polite" tone="amber" soft pad="12px 14px" className="gr-in-fade" style={{ fontSize: 12, color: C.amberD, lineHeight: 1.5 }}>
             Chargement des échantillons audio…
-          </div>
+          </Card>
         )}
 
         {audioReady && question && (
           <>
             {/* Écoute */}
-            <div style={{ textAlign: "center", padding: "10px 0 4px" }}>
-              <button onClick={isPlaying ? stopPlayback : playQuestion}
-                aria-label={isPlaying ? "Arrêter l'écoute" : "Écouter"} className="gr-focus" style={{
-                  width: 80, height: 80, borderRadius: "50%", border: "none",
-                  background: `linear-gradient(135deg, ${C.primary}, ${shade(C.primary, -45)})`,
-                  cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-                  margin: "0 auto", boxShadow: "0 4px 20px rgba(232,93,26,0.4)", transition: "all 0.2s",
-                }}>
-                <Ti name={isPlaying ? "player-pause" : "player-play"} size={28} color={C.onPrimaryBtn} />
-              </button>
-              <div style={{ fontSize: 13, color: C.text2, fontFamily: FONTS.ui, marginTop: 10, lineHeight: 1.45 }}>
+            <div className="gr-in" style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "10px 0 4px" }}>
+              <div style={{ position: "relative", display: "flex" }}>
+                {/* Halo : le bouton attend qu'on le touche, tant qu'on n'a ni écouté ni répondu. */}
+                {!repondu && !isPlaying && (
+                  <span aria-hidden="true" className="gr-pulse" style={{
+                    position: "absolute", top: 0, left: 0, width: 84, height: 84, boxSizing: "border-box",
+                    borderRadius: R.pill, border: `3px solid ${C.teal}`, pointerEvents: "none",
+                  }} />
+                )}
+                <button type="button" onClick={isPlaying ? stopPlayback : playQuestion}
+                  aria-label={isPlaying ? "Arrêter l'écoute" : "Écouter"} className="gr-press gr-focus" style={{
+                    ...relief(teinte.edge, 5),
+                    position: "relative", width: 84, height: 84, padding: 0, borderRadius: R.pill, border: "none",
+                    background: teinte.solid, color: C.onPrimaryBtn,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                  <Ti name={isPlaying ? "player-pause" : "player-play"} size={32} color="currentColor" />
+                </button>
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: C.text, marginTop: 10, lineHeight: 1.45 }}>
                 {question.consigne}
               </div>
               <div style={{ display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
                 {question.playReference && (
-                  <button onClick={() => lancer(question.playReference, 2600)} className="gr-focus" style={{ ...chip(false), borderRadius: 999, display: "inline-flex", alignItems: "center", gap: 6 }}>
-                    <Ti name="volume" size={14} color={C.text3} />
+                  <Button variant="soft" tone="teal" size="sm" icon="volume" style={{ minHeight: 44 }}
+                    onClick={() => lancer(question.playReference, 2600)}>
                     Entendre {question.referenceLabel}
-                  </button>
+                  </Button>
                 )}
                 {question.playArpege && (
-                  <button onClick={() => lancer(question.playArpege, question.arpegeDurationMs)} className="gr-focus" style={{ ...chip(false), borderRadius: 999, display: "inline-flex", alignItems: "center", gap: 6 }}>
-                    <Ti name="stairs" size={14} color={C.text3} />
+                  <Button variant="soft" tone="teal" size="sm" icon="stairs" style={{ minHeight: 44 }}
+                    onClick={() => lancer(question.playArpege, question.arpegeDurationMs)}>
                     Écouter note à note
-                  </button>
+                  </Button>
                 )}
               </div>
               {!repondu && (
-                <div style={{ fontSize: 11, color: C.text3, fontFamily: FONTS.ui, marginTop: 8, fontStyle: "italic" }}>
+                <div style={{ fontSize: T.micro, color: C.text3, marginTop: 8, fontStyle: "italic" }}>
                   Tu peux réécouter autant de fois que tu veux
                 </div>
               )}
@@ -437,55 +430,56 @@ export function EarTraining({ onBack, dispatch, state }) {
                     const ok = repondu && d === attendu;
                     const ko = repondu && d !== attendu;
                     return (
-                      <div key={i} style={{ flex: "1 1 0", maxWidth: 76, minHeight: 56, borderRadius: R.md, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "4px 2px",
-                        border: `1.5px ${d == null ? "dashed" : "solid"} ${ok ? C.green : ko ? C.coral : d == null ? C.borderStrong : C.primary}`,
-                        background: ok ? C.greenL : ko ? C.coralL : C.surface }}>
-                        <span style={{ fontSize: 13.5, fontWeight: 700, color: ok ? C.greenD : ko ? C.coralD : C.text, fontFamily: FONTS.title }}>
+                      <div key={i} className={ok ? "gr-bump" : ko ? "gr-shake" : undefined} style={{
+                        flex: "1 1 0", maxWidth: 76, minHeight: 56, boxSizing: "border-box", borderRadius: R.md,
+                        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "4px 2px",
+                        border: `2px ${d == null ? "dashed" : "solid"} ${ok ? C.green : ko ? C.danger : d == null ? C.borderStrong : C.teal}`,
+                        background: ok ? C.greenL : ko ? C.dangerL : d == null ? C.surface : C.tealL,
+                        transition: "background-color var(--gr-dur-fast) ease, border-color var(--gr-dur-fast) ease",
+                      }}>
+                        <span style={{ fontSize: 14, fontWeight: 800, color: ok ? C.greenD : ko ? C.dangerD : d == null ? C.text3 : C.tealD }}>
                           {d != null ? question.touches[d].nom : "·"}
                         </span>
-                        {ko && <span style={{ fontSize: 11, color: C.coralD, fontFamily: FONTS.ui }}>{question.touches[attendu].nom}</span>}
+                        {ko && <span style={{ fontSize: T.micro, color: C.dangerD }}>{question.touches[attendu].nom}</span>}
                       </div>
                     );
                   })}
                 </div>
-                <div role="group" aria-label="Notes de la gamme" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
+                <div role="group" aria-label="Notes de la gamme" style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 8 }}>
                   {question.touches.map(t => (
-                    <button key={t.degre} onClick={() => taperNote(t.degre)} disabled={repondu} className="gr-focus"
+                    <button key={t.degre} type="button" onClick={() => taperNote(t.degre)} disabled={repondu} className="gr-press gr-focus"
                       aria-label={`${t.nom}, degré ${t.numero}`}
-                      style={{ minHeight: 52, borderRadius: R.md, border: `1.5px solid ${C.borderStrong}`, background: C.surface, cursor: repondu ? "default" : "pointer", opacity: repondu ? 0.6 : 1,
-                        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1, padding: "4px 2px" }}>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: C.text, fontFamily: FONTS.title }}>{t.nom}</span>
-                      <span style={{ fontSize: 11, color: C.text3, fontFamily: FONTS.ui }}>{t.numero}</span>
+                      style={{
+                        ...relief(C.border, 3),
+                        minHeight: 52, borderRadius: R.md, border: `2px solid ${C.border}`, background: C.surface,
+                        opacity: repondu ? 0.6 : 1, fontFamily: "inherit",
+                        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1, padding: "4px 2px",
+                      }}>
+                      <span style={{ fontSize: 14, fontWeight: 800, color: C.text }}>{t.nom}</span>
+                      <span style={{ fontSize: T.micro, color: C.text3 }}>{t.numero}</span>
                     </button>
                   ))}
                 </div>
                 {!repondu && (
-                  <button onClick={effacerNote} disabled={!saisie.length} className="gr-focus" style={{ ...chip(false), alignSelf: "center", opacity: saisie.length ? 1 : 0.5, display: "inline-flex", alignItems: "center", gap: 6 }}>
-                    <Ti name="arrow-left" size={15} color={C.text3} />
+                  <Button variant="ghost" size="sm" tone="teal" icon="arrow-left" onClick={effacerNote} disabled={!saisie.length}
+                    style={{ alignSelf: "center", minHeight: 44 }}>
                     Effacer la dernière note
-                  </button>
+                  </Button>
                 )}
               </>
             ) : (
               /* Réponse : choix */
-              <div style={{ display: "grid", gridTemplateColumns: options.length > 4 ? "repeat(2, 1fr)" : "1fr", gap: 8 }}>
+              <div style={{ display: "grid", gridTemplateColumns: options.length > 4 ? "repeat(2, minmax(0, 1fr))" : "1fr", gap: 8 }}>
                 {options.map((opt) => {
                   const isAnswer = opt.key === question.answer;
                   const isSelected = opt.key === selected;
-                  let bg = C.surface, border = `1px solid ${C.borderStrong}`, col = C.text;
-                  if (repondu) {
-                    if (isAnswer)        { bg = C.greenL; border = `1px solid ${C.green}`; col = C.greenD; }
-                    else if (isSelected) { bg = C.coralL; border = `1px solid ${C.coral}`; col = C.coralD; }
-                  }
+                  const etat = !repondu ? "idle" : isAnswer ? "correct" : isSelected ? "wrong" : "muted";
                   const suffixe = !repondu ? "" : isAnswer ? ", bonne réponse" : isSelected ? ", ta réponse, incorrecte" : "";
                   return (
-                    <button key={String(opt.key)} onClick={() => handleAnswer(opt)} disabled={repondu}
-                      aria-label={suffixe ? `${opt.label}${suffixe}` : undefined} className="gr-focus"
-                      style={{ padding: "12px 14px", minHeight: 52, borderRadius: 12, border, background: bg, cursor: repondu ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, fontFamily: FONTS.title, textAlign: "left" }}>
-                      <span style={{ fontSize: 14, fontWeight: 500, color: col }}>{opt.label}</span>
-                      {repondu && isAnswer && <Ti name="check" size={18} color={C.green} />}
-                      {repondu && isSelected && !isAnswer && <Ti name="x" size={18} color={C.coral} />}
-                    </button>
+                    <AnswerOption key={String(opt.key)} etat={etat} locked={repondu} onClick={() => handleAnswer(opt)}
+                      aria-label={suffixe ? `${opt.label}${suffixe}` : undefined}>
+                      {opt.label}
+                    </AnswerOption>
                   );
                 })}
               </div>
@@ -493,26 +487,22 @@ export function EarTraining({ onBack, dispatch, state }) {
 
             {/* Correction + suite */}
             {repondu && (
-              <div style={{ marginTop: 4 }}>
-                <div role="status" aria-live="assertive" style={{ background: juste ? C.greenL : C.coralL, border: `1px solid ${juste ? C.greenBorder : C.coralBorder}`, borderRadius: R.md, padding: "10px 14px", marginBottom: 10, fontSize: 12.5, color: juste ? C.greenD : C.coralD, fontFamily: FONTS.ui, lineHeight: 1.5 }}>
-                  <div style={{ fontWeight: 700 }}>
+              <Feedback correct={!!juste} style={{ marginTop: 4 }}
+                title={(
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                     {mode === "dictation"
                       ? (juste ? "Mélodie juste !" : `${nbJustes} note${nbJustes > 1 ? "s" : ""} juste${nbJustes > 1 ? "s" : ""} sur ${question.degres.length}.`)
                       : (juste ? "Correct !" : `La bonne réponse était : ${bonneOption?.label}`)}
-                    {juste && xpReelle > 0 ? ` +${xpReelle} XP` : ""}
-                  </div>
-                  {mode === "dictation" && (
-                    <div>Mélodie : {question.noms.join(" – ")} (degrés {question.degres.map(d => d + 1).join(" - ")}).</div>
-                  )}
-                  {mode === "interval" && <div>{question.detail}. Repère : {question.repere}</div>}
-                  {mode !== "dictation" && mode !== "interval" && question.repere && <div>{question.repere}</div>}
-                </div>
-                {score.total < SESSION_LENGTH && (
-                  <button onClick={nextQuestion} className="gr-focus" style={{ width: "100%", minHeight: 48, padding: "13px", borderRadius: R.md, border: "none", background: C.primaryBtn, color: C.onPrimaryBtn, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }}>
-                    Question suivante
-                  </button>
+                    {juste && xpReelle > 0 && <Tag tone="green" icon="bolt">+{xpReelle} XP</Tag>}
+                  </span>
                 )}
-              </div>
+                action={score.total < SESSION_LENGTH && (
+                  <Button size="lg" full iconRight="arrow-right" onClick={nextQuestion}>
+                    Question suivante
+                  </Button>
+                )}>
+                {explication}
+              </Feedback>
             )}
           </>
         )}

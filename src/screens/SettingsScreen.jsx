@@ -22,36 +22,45 @@
 // (mergeCourses/mergeById) restent en place, inertes, au cas où ce choix
 // serait reconsidéré ; rien à y toucher pour ce retrait.
 import { useState } from "react";
-import { FONTS, R, T } from "../design/tokens.js";
+import { R, T } from "../design/tokens.js";
 import { Ti } from "../design/Ti.jsx";
 import { todayStr } from "../store/state.js";
 import { BADGES } from "../store/badges.js";
 import { gradeForLevel } from "../store/grades.js";
-import { BackButton, ConfirmDialog } from "../design/ui.jsx";
+import {
+  Button, Card, ConfirmDialog, Eyebrow, IconButton, ListGroup, ListRow,
+  ScreenHero, SectionTitle, Segmented,
+} from "../design/ui.jsx";
 import { listSampleUrls, SAMPLE_COUNT } from "../audioEngine.js";
 import { statistiquesActivees, definirStatistiquesActivees, signalNavigateurRefus } from "../analytics.js";
 
 import { useC } from "../design/ThemeContext.jsx";
 
+const THEMES = [
+  { value:"auto",  label:"Auto",   icon:"device-desktop", desc:"Suit le système" },
+  { value:"light", label:"Clair",  icon:"sun",            desc:"Toujours clair" },
+  { value:"dark",  label:"Sombre", icon:"moon",           desc:"Toujours sombre" },
+];
+
 function SettingsSection({ title, children }) {
-  const C = useC();
   return (
-    <div style={{ background:C.surface, border:`1.5px solid ${C.border}`, borderRadius:R.lg, marginBottom:10, overflow:"hidden" }}>
-      <div style={{ padding:"12px 16px 0", fontSize:11, fontWeight:700, letterSpacing:".07em", textTransform:"uppercase", color:C.text2 }}>
-        {title}
-      </div>
-      <div style={{ marginTop:8 }}>{children}</div>
-    </div>
+    <section style={{ display:"flex", flexDirection:"column", gap:8 }}>
+      <SectionTitle>{title}</SectionTitle>
+      {children}
+    </section>
   );
 }
 
-function SettingsRow({ label, value, last }) {
+function SettingsRow({ label, value }) {
   const C = useC();
   return (
-    <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"11px 16px", borderBottom: last ? "none" : `1px solid ${C.borderSoft}` }}>
-      <span style={{ fontSize:T.small, fontWeight:600, color:C.text }}>{label}</span>
-      <span style={{ fontSize:T.small, fontWeight:600, color:C.text2 }}>{value}</span>
-    </div>
+    <ListRow title={label} style={{ minHeight:48 }}
+      right={(
+        <span style={{
+          fontSize:T.small, fontWeight:600, color:C.text2, maxWidth:"64%",
+          overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
+        }}>{value}</span>
+      )} />
   );
 }
 
@@ -129,192 +138,162 @@ function SettingsScreen({ state, dispatch, content, onClose, user, onSignOut, on
     setImportStatus({ ok:true, msg:"Progression exportée." });
   };
 
-  const btn = (color, border) => ({
-    width:"100%", padding:"14px 16px", borderRadius:R.md, fontSize:T.small, fontWeight:700, minHeight:48,
-    cursor:"pointer", fontFamily:FONTS.ui, display:"flex", alignItems:"center",
-    justifyContent:"center", gap:6, marginBottom:8,
-    background:C.surface, color:color, border:`1.5px solid ${border||color}`,
-  });
+  const theme = state.theme || "auto";
+  const statsActives = stats && !refusNavigateur;
 
   return (
-    <div>
-      {/* En-tête */}
-      <div style={{
-        backgroundColor:"#4a4a4a", backgroundImage:"url('/atelier.jpg')",
-        backgroundSize:"cover", backgroundPosition:"center 60%",
-        padding:"22px 20px 18px", position:"relative", overflow:"hidden",
-      }}>
-        <div style={{ position:"absolute", inset:0, background:"rgba(20,18,16,.6)", pointerEvents:"none" }}/>
-        <BackButton onClick={onClose} label="Fermer les réglages" style={{ position:"relative", zIndex:1, borderRadius:R.sm, marginBottom:14 }} />
-        <div style={{ position:"relative", zIndex:1, fontSize:26, fontWeight:800, color:"#fff", letterSpacing:"-.4px" }}>Réglages</div>
-      </div>
+    <div className="gr-in-push">
+      <ScreenHero
+        image="/atelier.jpg" color="#4a4a4a" overlay="rgba(20,18,16,.6)" position="center 60%"
+        title="Réglages"
+        right={<IconButton icon="x" label="Fermer les réglages" onClick={onClose} />}
+      />
 
-      <div style={{ padding:"14px 20px 0" }}>
+      <div className="gr-stagger" style={{ padding:"16px 16px 0", display:"flex", flexDirection:"column", gap:16 }}>
 
         {/* Apparence */}
         <SettingsSection title="Apparence">
-          <div style={{ padding:"12px 16px 14px" }}>
-            <div style={{ fontSize:12, color:C.text2, marginBottom:10 }}>Thème de l'application</div>
-            <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-              {[
-                { val:"auto",  label:"Auto",   icon:"device-desktop",   desc:"Suit le système" },
-                { val:"light", label:"Clair",  icon:"sun",              desc:"Toujours clair" },
-                { val:"dark",  label:"Sombre", icon:"moon",             desc:"Toujours sombre" },
-              ].map(opt => {
-                const active = (state.theme || "auto") === opt.val;
-                return (
-                  <button key={opt.val} onClick={() => dispatch({ type:"SET_THEME", theme:opt.val })} className="gr-focus" aria-pressed={active}
-                    style={{
-                      width:"100%", padding:"13px 14px", borderRadius:R.md, cursor:"pointer",
-                      fontFamily:FONTS.ui, textAlign:"left", minHeight:48,
-                      border:`1.5px solid ${active ? C.primary : C.borderStrong}`,
-                      background: active ? C.primaryL : C.surface,
-                      display:"flex", alignItems:"center", gap:12,
-                    }}>
-                    <Ti name={opt.icon} size={20} color={active ? C.primaryInk : C.text2}/>
-                    <span style={{ flex:1 }}>
-                      <span style={{ display:"block", fontSize:T.small, fontWeight:700, color:active ? C.primaryD : C.text }}>{opt.label}</span>
-                      <span style={{ display:"block", fontSize:T.micro, color:C.text2, lineHeight:1.4 }}>{opt.desc}</span>
-                    </span>
-                    {active && <Ti name="check" size={18} color={C.primaryInk}/>}
-                  </button>
-                );
-              })}
+          <Card style={{ display:"flex", flexDirection:"column", gap:10 }}>
+            <div style={{ fontSize:12, color:C.text2 }}>Thème de l'application</div>
+            <Segmented label="Thème de l'application" options={THEMES} value={theme}
+              onChange={(val) => dispatch({ type:"SET_THEME", theme:val })} />
+            <div style={{ fontSize:T.micro, color:C.text2, lineHeight:1.4 }}>
+              {THEMES.find(o => o.value === theme)?.desc}
             </div>
-          </div>
+          </Card>
         </SettingsSection>
 
         {/* Compte */}
         <SettingsSection title="Compte">
-          <SettingsRow label="Email" value={user?.email || "—"} last />
+          <ListGroup>
+            <SettingsRow label="Email" value={user?.email || "—"} />
+          </ListGroup>
+          <Button variant="secondary" full icon="logout" onClick={onSignOut}>Se déconnecter</Button>
         </SettingsSection>
-        <button onClick={onSignOut} className="gr-focus" style={btn(C.text2, C.borderStrong)}>
-          <Ti name="logout" size={16} color={C.text2} /> Se déconnecter
-        </button>
 
         {/* Confidentialité — interrupteur accessible (role="switch") : le
             libellé et l'explication sont reliés au contrôle, cible ≥ 44 px. */}
         <SettingsSection title="Confidentialité">
-          <div style={{ padding:"4px 16px 14px" }}>
+          <Card pad={0} style={{ overflow:"hidden" }}>
             <button
-              type="button" role="switch" aria-checked={stats && !refusNavigateur}
+              type="button" role="switch" aria-checked={statsActives}
               aria-labelledby="reglage-stats-libelle" aria-describedby="reglage-stats-aide"
               disabled={refusNavigateur}
-              onClick={basculerStats} className="gr-focus"
+              onClick={basculerStats} className="gr-row gr-focus"
               style={{
-                width:"100%", minHeight:48, padding:"8px 0", background:"none", border:"none",
+                width:"100%", minHeight:52, padding:"8px 16px", background:"none", border:"none",
                 display:"flex", alignItems:"center", gap:12, textAlign:"left",
-                cursor: refusNavigateur ? "default" : "pointer", fontFamily:FONTS.ui,
+                cursor: refusNavigateur ? "default" : undefined, fontFamily:"inherit",
               }}>
-              <span id="reglage-stats-libelle" style={{ flex:1, fontSize:T.small, fontWeight:700, color:C.text }}>
+              <span id="reglage-stats-libelle" style={{ flex:1, fontSize:14, fontWeight:700, color:C.text }}>
                 Statistiques d'utilisation
               </span>
               {/* Piste + curseur, purement décoratifs : l'état est porté par aria-checked. */}
               <span aria-hidden="true" style={{
-                position:"relative", width:44, height:26, flexShrink:0, borderRadius:13,
-                background: stats && !refusNavigateur ? C.primaryBtn : C.surface,
-                border:`1.5px solid ${stats && !refusNavigateur ? C.primaryBtn : C.borderStrong}`,
-                opacity: refusNavigateur ? .5 : 1, transition:"background .15s",
+                position:"relative", boxSizing:"border-box", width:48, height:28, flexShrink:0, borderRadius:R.pill,
+                background: statsActives ? C.primaryBtn : C.surface,
+                border:`2px solid ${statsActives ? C.primaryBtn : C.borderStrong}`,
+                opacity: refusNavigateur ? .5 : 1,
+                transition:"background-color var(--gr-dur-fast) ease, border-color var(--gr-dur-fast) ease",
               }}>
                 <span style={{
-                  position:"absolute", top:2, left: stats && !refusNavigateur ? 20 : 2,
-                  width:19, height:19, borderRadius:"50%",
-                  background: stats && !refusNavigateur ? C.onPrimaryBtn : C.borderStrong,
-                  transition:"left .15s",
+                  position:"absolute", top:3, left: statsActives ? 23 : 3,
+                  width:18, height:18, borderRadius:"50%",
+                  background: statsActives ? C.onPrimaryBtn : C.borderStrong,
+                  transition:"left var(--gr-dur-fast) var(--gr-ease-out), background-color var(--gr-dur-fast) ease",
                 }}/>
               </span>
             </button>
-            <p id="reglage-stats-aide" style={{ margin:"2px 0 0", fontSize:T.micro, color:C.text2, lineHeight:1.5 }}>
+            <p id="reglage-stats-aide" style={{ margin:0, padding:"0 16px 14px", fontSize:T.micro, color:C.text2, lineHeight:1.5 }}>
               {refusNavigateur
                 ? "Ton navigateur envoie un signal « Do Not Track » ou GPC : aucune statistique n'est envoyée. "
                 : "Mesure d'audience interne (écrans vus, sessions terminées), sans tes réponses ni publicité. "}
               <a href="/confidentialite.html" style={{ color:C.text2 }}>En savoir plus</a>
             </p>
-          </div>
+          </Card>
         </SettingsSection>
 
         {/* Contenu */}
         <SettingsSection title="Contenu pédagogique">
-          <SettingsRow label="Modules"   value={content.courses.length} />
-          <SettingsRow label="Quiz"      value={`${content.quiz.length} questions`} />
-          <SettingsRow label="Exercices" value={content.exercises.length} last />
+          <ListGroup>
+            <SettingsRow label="Modules"   value={content.courses.length} />
+            <SettingsRow label="Quiz"      value={`${content.quiz.length} questions`} />
+            <SettingsRow label="Exercices" value={content.exercises.length} />
+          </ListGroup>
         </SettingsSection>
 
         {/* Progression */}
         <SettingsSection title="Ma progression">
-          <SettingsRow label="XP total"          value={`${state.xp ?? 0} XP`} />
-          <SettingsRow label="Grade"              value={gradeForLevel(state.level).label} />
-          <SettingsRow label="Niveau actuel"      value={state.level} />
-          <SettingsRow label="Badges débloqués"   value={`${state.unlockedBadges.length} / ${BADGES.length}`} last />
+          <ListGroup>
+            <SettingsRow label="XP total"          value={`${state.xp ?? 0} XP`} />
+            <SettingsRow label="Grade"              value={gradeForLevel(state.level).label} />
+            <SettingsRow label="Niveau actuel"      value={state.level} />
+            <SettingsRow label="Badges débloqués"   value={`${state.unlockedBadges.length} / ${BADGES.length}`} />
+          </ListGroup>
+          <Button variant="secondary" full icon="download" onClick={exportProgress}>
+            Exporter ma progression (JSON)
+          </Button>
+          <Button variant="secondary" tone="danger" full icon="refresh" onClick={() => setConfirmation("resetProgress")}>
+            Réinitialiser ma progression
+          </Button>
         </SettingsSection>
-        <button onClick={exportProgress} className="gr-focus" style={btn(C.text2, C.borderStrong)}>
-          <Ti name="download" size={14} color={C.text2} /> Exporter ma progression (JSON)
-        </button>
-        <button onClick={() => setConfirmation("resetProgress")} className="gr-focus" style={btn(C.danger)}>
-          <Ti name="refresh" size={14} color={C.danger} /> Réinitialiser ma progression
-        </button>
 
         {/* Audio hors-ligne */}
         <SettingsSection title="Audio">
-          <div style={{ padding:"4px 16px 14px" }}>
-            <p style={{ margin:"0 0 12px", fontSize:T.small, color:C.text2, lineHeight:1.6 }}>
+          <Card style={{ display:"flex", flexDirection:"column", gap:12 }}>
+            <p style={{ margin:0, fontSize:T.small, color:C.text2, lineHeight:1.6 }}>
               Les sons de guitare sont téléchargés à la première écoute. Tu peux
               les enregistrer maintenant pour qu'ils fonctionnent sans connexion
               — compte quelques mégaoctets, à faire de préférence en Wi-Fi.
             </p>
-            <button onClick={activerAudioOffline} className="gr-focus" style={{ ...btn(C.text2, C.borderStrong), marginBottom:0 }}>
-              <Ti name="download" size={16} color={C.text2} /> Rendre l'audio disponible hors-ligne
-            </button>
+            <Button variant="secondary" full icon="download" onClick={activerAudioOffline}>
+              Rendre l'audio disponible hors-ligne
+            </Button>
             {audioOffline && (
-              <p role="status" style={{
-                margin:"10px 0 0", fontSize:T.micro, lineHeight:1.5,
+              <p role="status" className="gr-in" style={{
+                margin:0, fontSize:T.micro, lineHeight:1.5,
                 color: audioOffline.ok ? C.greenD : C.dangerInk,
               }}>{audioOffline.msg}</p>
             )}
-          </div>
+          </Card>
         </SettingsSection>
 
         {/* Zone de danger — séparée visuellement du reste : ces actions ne
             doivent pas se trouver à côté d'un réglage anodin. */}
-        <div style={{
-          border:`1.5px solid ${C.danger}`, borderRadius:R.lg,
-          padding:"14px 16px", marginTop:18, marginBottom:10, background:C.surface,
-        }}>
-          <div style={{ fontSize:T.micro, fontWeight:700, letterSpacing:".07em", textTransform:"uppercase", color:C.dangerInk, marginBottom:10 }}>
-            Zone irréversible
-          </div>
-          <p style={{ margin:"0 0 12px", fontSize:T.small, color:C.text2, lineHeight:1.6 }}>
+        <Card style={{ border:`2px solid ${C.danger}`, display:"flex", flexDirection:"column", gap:10, marginTop:4 }}>
+          <Eyebrow tone="danger" style={{ color:C.dangerInk }}>Zone irréversible</Eyebrow>
+          <p style={{ margin:0, fontSize:T.small, color:C.text2, lineHeight:1.6 }}>
             La suppression de compte efface définitivement ton email, ta
             progression et ton historique de nos serveurs. Aucune sauvegarde
             n'est conservée. Pense à exporter ta progression avant, si tu veux
             en garder une copie.
           </p>
-          <button onClick={() => setConfirmation("deleteAccount")} className="gr-focus"
-            style={{ ...btn(C.dangerInk, C.danger), marginBottom:0 }}>
-            <Ti name="trash" size={16} color={C.dangerInk} /> Supprimer mon compte et mes données
-          </button>
-        </div>
+          <Button tone="danger" full icon="trash" onClick={() => setConfirmation("deleteAccount")}>
+            Supprimer mon compte et mes données
+          </Button>
+        </Card>
 
         {/* Mentions légales */}
-        <div style={{ display:"flex", gap:14, justifyContent:"center", marginTop:6, flexWrap:"wrap" }}>
+        <div style={{ display:"flex", gap:14, justifyContent:"center", flexWrap:"wrap" }}>
           <a href="/cgu.html" style={{ fontSize:T.micro, color:C.text2 }}>Conditions d'utilisation</a>
           <a href="/confidentialite.html" style={{ fontSize:T.micro, color:C.text2 }}>Confidentialité</a>
         </div>
+      </div>
 
-        {/* Feedback import */}
+      {/* Retour d'une action (export, réinitialisation, suppression). Hors de
+          la cascade : il apparaît après coup, en ressort. */}
+      <div style={{ padding:"12px 16px 28px" }}>
         {importStatus && (
-          <div style={{
+          <div className="gr-in-pop" style={{
             background: importStatus.ok ? C.greenL : C.dangerL,
-            border:`1.5px solid ${importStatus.ok ? C.greenBorder : C.dangerBorder}`,
-            borderRadius:R.md, padding:"11px 14px", marginTop:12,
+            border:`2px solid ${importStatus.ok ? C.greenBorder : C.dangerBorder}`,
+            borderRadius:R.md, padding:"11px 14px",
             display:"flex", gap:8, alignItems:"flex-start",
           }} role="status">
-            <Ti name={importStatus.ok?"check":"alert-circle"} size={16} color={importStatus.ok?C.greenD:C.dangerInk} />
+            <Ti name={importStatus.ok?"check":"alert-circle"} size={16} color={importStatus.ok?C.greenD:C.dangerInk} style={{ marginTop:2 }} />
             <p style={{ margin:0, fontSize:T.small, color:importStatus.ok?C.greenD:C.text, lineHeight:1.5 }}>{importStatus.msg}</p>
           </div>
         )}
-
-        <div style={{ height:28 }} />
       </div>
 
       {confirmation === "resetProgress" && (

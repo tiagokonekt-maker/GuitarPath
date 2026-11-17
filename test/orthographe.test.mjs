@@ -225,9 +225,9 @@ test("Jam : accords et notes orthographiés dans la tonalité", () => {
   assert.deepEqual(n.map(x => x.note), ["A#", "D", "F", "G#"]);   // valeurs internes inchangées
 });
 
-const NOM_ACCORD_FR = /^(Do|Ré|Mi|Fa|Sol|La|Si)(#|b)?(m|7|m7|maj7|dim)?$/;
-test("oreille : libellés d'accords en français orthographié, clés internes inchangées", () => {
-  // Accord en tonalité : « Rém (ii) » — nom orthographié dans la tonalité
+const NOM_ACCORD_EN = /^[A-G](#|b)?(m|7|m7|maj7|dim)?$/;
+test("oreille : libellés d'accords en notation anglaise orthographiée, clés internes inchangées", () => {
+  // Accord en tonalité : « Dm (ii) » — nom orthographié dans la tonalité
   // annoncée, puis le degré (la clé interne).
   const DEMI_TONS = { "I": 0, "IV": 5, "V": 7, "vi": 9, "ii": 2, "iii": 4, "V7": 7, "vii°": 11 };
   for (let i = 0; i < 300; i++) {
@@ -236,12 +236,12 @@ test("oreille : libellés d'accords en français orthographié, clés internes i
     for (const o of q.options) {
       const m = /^(\S+) \((.+)\)$/.exec(o.label);
       assert.ok(m && m[2] === o.key, o.label);
-      assert.match(m[1], NOM_ACCORD_FR, o.label);
-      const racine = normalizeNote(m[1].match(/^(Do|Ré|Mi|Fa|Sol|La|Si)(#|b)?/)[0]);
+      assert.match(m[1], NOM_ACCORD_EN, o.label);
+      const racine = normalizeNote(m[1].match(/^[A-G](#|b)?/)[0]);
       assert.equal((CHROMATIC_NOTES.indexOf(racine) - CHROMATIC_NOTES.indexOf(tonique) + 12) % 12, DEMI_TONS[o.key], `${o.label} en ${tonique}`);
     }
-    // Une lettre par degré : Ré#dim en Mi majeur (sensible), jamais Mib ; Sib en Fa, jamais La#.
-    const lettre = (o) => /^(Do|Ré|Mi|Fa|Sol|La|Si)/.exec(o.label)[1];
+    // Une lettre par degré : D#dim en Mi majeur (sensible), jamais Eb ; Bb en Fa, jamais A#.
+    const lettre = (o) => /^[A-G]/.exec(o.label)[0];
     const parDegre = new Map(q.options.map(o => [DEMI_TONS[o.key], lettre(o)]));
     assert.equal(new Set(parDegre.values()).size, parDegre.size, q.options.map(o => o.label).join(", "));
   }
@@ -249,8 +249,8 @@ test("oreille : libellés d'accords en français orthographié, clés internes i
     const q = generateEarTrainingQuestion("progression");
     assert.equal(q.noms.length, q.chords.length);
     q.noms.forEach((nom, k) => {
-      assert.match(nom, NOM_ACCORD_FR, nom);
-      assert.equal(normalizeNote(nom.match(/^(Do|Ré|Mi|Fa|Sol|La|Si)(#|b)?/)[0]), q.chords[k].root, q.noms.join(" – "));
+      assert.match(nom, NOM_ACCORD_EN, nom);
+      assert.equal(normalizeNote(nom.match(/^[A-G](#|b)?/)[0]), q.chords[k].root, q.noms.join(" – "));
     });
   }
 });

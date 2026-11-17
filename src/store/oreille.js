@@ -18,7 +18,7 @@
 // (attempts / successes / streak, cf. reviewEngine) : rien de neuf à stocker.
 
 import { NOTES_DIESES_EN } from "../music/notes.js";
-import { epelerDansTonalite, nomFr, simplifier, nomRacineGamme } from "../music/orthographe.js";
+import { epelerDansTonalite, nomFr, nomEn, simplifier, nomRacineGamme } from "../music/orthographe.js";
 
 // ─────────────────────────────────────────────────────────────────────────
 // OUTILS
@@ -109,14 +109,21 @@ const gammeDe = (mineur) => (mineur ? "natural_minor" : "major");
 export const nomTonalite = (toniquePc, mineur = false) =>
   `${nomRacineGamme(NOTES_DIESES_EN[pcDe(toniquePc)], gammeDe(mineur))} ${mineur ? "mineur" : "majeur"}`;
 
-/** Nom d'une note DANS une tonalité ("Sib" en Fa majeur, jamais "La#"). */
-export function nomDansLaTonalite(pc, toniquePc, mineur = false) {
+/**
+ * Nom d'une note DANS une tonalité ("Sib" en Fa majeur, jamais "La#").
+ * langue "en" : notation anglaise ("Bb").
+ */
+export function nomDansLaTonalite(pc, toniquePc, mineur = false, langue = "fr") {
   const n = epelerDansTonalite(pcDe(pc), NOTES_DIESES_EN[pcDe(toniquePc)], gammeDe(mineur));
-  return n ? nomFr(simplifier(n)) : NOTES_DIESES_EN[pcDe(pc)];
+  if (!n) return NOTES_DIESES_EN[pcDe(pc)];
+  return langue === "en" ? nomEn(simplifier(n)) : nomFr(simplifier(n));
 }
-/** Symbole d'accord dans une tonalité : "Rém", "Sib", "Mi7". */
+// Les ACCORDS de l'entraînement de l'oreille s'écrivent en notation anglaise
+// (A, Dm, Bb, F#m), comme sur les grilles et les tablatures ; les notes
+// seules (dictée) et les noms de tonalités restent en français.
+/** Symbole d'accord dans une tonalité : "Dm", "Bb", "E7". */
 export const accordDansLaTonalite = (toniquePc, semi, type, mineur = false) =>
-  nomDansLaTonalite(toniquePc + semi, toniquePc, mineur) + (QUALITES[type]?.sym ?? "");
+  nomDansLaTonalite(toniquePc + semi, toniquePc, mineur, "en") + (QUALITES[type]?.sym ?? "");
 
 // ─────────────────────────────────────────────────────────────────────────
 // ACCORD EN TONALITÉ (remplace « accord complet »)
@@ -197,7 +204,7 @@ export function tirerProgression(rng, cle, toniquePc) {
   const toniqueMidi = 45 + pcDe(t - 9);
   const accords = p.degres.map(([semi, type]) => voicingAccord(basseDegre(toniqueMidi, semi), QUALITES[type].iv));
   // Orthographe dans la tonalité : en Do mineur, i – VI – III – VII s'écrit
-  // Dom – Lab – Mib – Sib (et non Sol# – Ré# – La#).
+  // Cm – Ab – Eb – Bb (et non G# – D# – A#).
   const noms = p.degres.map(([semi, type]) => accordDansLaTonalite(t, semi, type, p.mineur));
   return { cle, toniquePc: t, mineur: p.mineur, accords, noms, romain: romainDe(cle), tonalite: nomTonalite(t, p.mineur) };
 }
@@ -207,7 +214,7 @@ export function tirerProgression(rng, cle, toniquePc) {
 // ─────────────────────────────────────────────────────────────────────────
 // « I – V – vi – IV » ne dit rien à qui n'a pas appris le chiffrage. Les
 // réponses sont donc d'abord des noms d'accords depuis la tonique annoncée
-// (« Sol – Ré – Mim – Do »). Les chiffres romains n'apparaissent qu'après la
+// (« G – D – Em – C »). Les chiffres romains n'apparaissent qu'après la
 // leçon qui les enseigne (harm-c5-02, « Le chiffrage romain et le système
 // Nashville ») : dans la correction (noms = chiffres), et comme format de
 // réponse, à petite dose (1 question sur 5) qui grandit avec la pratique,
@@ -248,18 +255,18 @@ export function toniquesPour(cles) {
   if (modes.size === 1) return modes.has(true) ? TONALITES_MIN : TONALITES_MAJ;
   return TONALITES_MAJ.filter(t => TONALITES_MIN.includes(t));
 }
-/** Les accords d'une suite depuis une tonique : ["Sol", "Ré", "Mim", "Do"]. */
+/** Les accords d'une suite depuis une tonique : ["G", "D", "Em", "C"]. */
 export const nomsSuite = (cle, toniquePc) =>
   PROGRESSIONS[cle].degres.map(([semi, type]) => accordDansLaTonalite(toniquePc, semi, type, PROGRESSIONS[cle].mineur));
-/** "Sol – Ré – Mim – Do" */
+/** "G – D – Em – C" */
 export const libelleNomsSuite = (cle, toniquePc) => nomsSuite(cle, toniquePc).join(" – ");
-/** La tonique seule (« Sib ») : l'annoncer ne trahit pas majeur ou mineur. */
-export const nomTonique = (toniquePc) => nomDansLaTonalite(toniquePc, toniquePc);
+/** La tonique seule (« Bb ») : l'annoncer ne trahit pas majeur ou mineur. */
+export const nomTonique = (toniquePc) => nomDansLaTonalite(toniquePc, toniquePc, false, "en");
 
 /**
  * Correction d'une suite tirée (tirerProgression) : avant la leçon, les noms
  * seulement ; après, les noms ET les chiffres, pour apprendre le lien.
- * « Sol – Ré – Mim – Do = I – V – vi – IV en Sol majeur. »
+ * « G – D – Em – C = I – V – vi – IV en Sol majeur. »
  */
 export const correctionSuite = (p, leconFaite) => (leconFaite
   ? `${p.noms.join(" – ")} = ${p.romain} en ${p.tonalite}.`

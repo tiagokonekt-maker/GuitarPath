@@ -52,22 +52,7 @@ const POSE_DIMS = {
   plead: [320, 374],
 };
 
-// ── Injection unique des keyframes (idempotent, respecte reduce-motion) ───────
-if (typeof document !== "undefined" && !document.getElementById("gropi-anim-styles")) {
-  const s = document.createElement("style");
-  s.id = "gropi-anim-styles";
-  s.textContent = `
-    @keyframes gropi-bob    { 0%,100%{transform:translateY(0)}      50%{transform:translateY(-6px)} }
-    @keyframes gropi-pop    { 0%{transform:scale(.6);opacity:0} 60%{transform:scale(1.08)} 100%{transform:scale(1);opacity:1} }
-    @keyframes gropi-wiggle { 0%,100%{transform:rotate(0)} 20%{transform:rotate(-8deg)} 60%{transform:rotate(8deg)} }
-    @keyframes gropi-cheer  { 0%{transform:scale(.5) translateY(22px);opacity:0} 50%{transform:scale(1.12) translateY(-8px)} 72%{transform:scale(.97)} 100%{transform:scale(1) translateY(0);opacity:1} }
-    @keyframes gropi-bubble-in { 0%{transform:scale(.92) translateY(4px);opacity:0} 100%{transform:scale(1) translateY(0);opacity:1} }
-    .gropi-anim { will-change: transform; }
-    @media (prefers-reduced-motion: reduce) { .gropi-anim { animation: none !important; } }
-  `;
-  document.head.appendChild(s);
-}
-
+// Les keyframes gropi-* vivent dans index.css (section « Mouvement »).
 const ANIM = {
   none:   {},
   bob:    { animation: "gropi-bob 2.8s ease-in-out infinite" },
@@ -129,7 +114,7 @@ export function GropiTip({ pose = "wave", tint = "primary", eyebrow = "Conseil d
   return (
     <div style={{
       display: "flex", gap: 11, alignItems: "flex-start", position: "relative",
-      background: C.surface, border: `1.5px solid ${border}`, borderRadius: R.xl, padding: 12,
+      background: C.surface, border: `2px solid ${border}`, borderRadius: R.xl, padding: 12,
     }}>
       <Gropi pose={pose} size={56} anim="bob" />
       <div style={{ position: "relative", flex: 1, background: light, borderRadius: R.lg, padding: "9px 11px" }}>
@@ -172,7 +157,7 @@ export function GropiCoach({ variant = "tip", eyebrow, mascotte = true, children
       {mascotte && <Gropi pose={cfg.pose} size={54} anim="bob" style={{ marginBottom: 2 }} />}
       <div style={{
         position: "relative", flex: 1,
-        background: light, border: `1.5px solid ${border}`,
+        background: light, border: `2px solid ${border}`,
         borderRadius: R.lg, borderBottomLeftRadius: mascotte ? 4 : R.lg, padding: "10px 13px",
       }}>
         {mascotte && <span style={{
@@ -212,10 +197,10 @@ export function GropiBubble({
       {open && (
         <div style={{
           marginTop: 8, maxWidth: 270,
-          background: C.surface, border: `1.5px solid ${border}`,
+          background: C.surface, border: `2px solid ${border}`,
           borderRadius: R.lg, padding: "11px 13px",
-          boxShadow: `0 6px 20px ${deep}22`,
-          animation: "gropi-bubble-in .22s ease both",
+          boxShadow: `0 3px 0 ${border}`,
+          animation: "gropi-bubble-in var(--gr-dur) var(--gr-ease-spring) backwards",
         }}>
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: deep, fontFamily: FONTS.ui, marginBottom: 3 }}>
             {eyebrow}

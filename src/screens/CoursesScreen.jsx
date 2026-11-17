@@ -5,10 +5,14 @@
 // accessibles ; l'unité suivante s'ouvre quand la précédente est complète.
 // Fin d'unité : un coffre de +40 XP à réclamer.
 import { useState, useMemo, useEffect, useRef } from "react";
-import { FONTS, R } from "../design/tokens.js";
+import { R, T } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
-import { BackButton, ProgressBar, XPPop } from "../design/ui.jsx";
+import {
+  AnimatedNumber, Button, Card, Confetti, Eyebrow, IconTile, Modal, ProgressBar,
+  ScreenHero, SessionBar, Tag, XPPop,
+} from "../design/ui.jsx";
+import { relief, toneOf } from "../design/hooks.js";
 import { buildModuleTheme } from "../store/moduleTheme.js";
 import { buildPath, getPathStats, UNIT_BONUS_XP } from "../store/pathEngine.js";
 // todayStr en heure LOCALE (voir store/dates.js) — surtout ne pas
@@ -52,24 +56,18 @@ import { lessonMastery } from "../store/mastery.js";
 //     l'app, qui réutilise le même module déjà chargé en mémoire.
 let popupDejaAffiche = false;
 
-// ── Animation CSS partagée ────────────────────────────────────────────────────
-const PULSE_CSS = `
-  @keyframes gropi-pulse {
-    0%   { transform:scale(.88); opacity:.9; }
-    100% { transform:scale(1.28); opacity:0; }
-  }
-  @keyframes gropi-unlock {
-    0%   { transform:scale(.7); opacity:0; }
-    60%  { transform:scale(1.12); }
-    100% { transform:scale(1); opacity:1; }
-  }
-  @keyframes chest-bounce {
-    0%, 100% { transform:translateY(0); }
-    50%      { transform:translateY(-5px); }
-  }
-`;
+// ── Thème d'une unité ─────────────────────────────────────────────────────
+// Une unité d'initiation ne mélange pas les disciplines : elle prend le thème
+// de son module (« Premiers pas »). Une unité-palier, elle, les mélange :
+// thème neutre. Annexes (pathEngine `annexe`) : thème neutre, icône « livres ».
+// `tone` est la teinte du design system : c'est elle qui colore les nœuds,
+// leur tranche et les bandeaux de l'unité.
+function themeUnite(unit, MODULE_THEME) {
+  if (unit.annexe) return { ...MODULE_THEME.palier, icon: "ti-books", tone: "primary" };
+  if (unit.prelude && MODULE_THEME.debut) return { ...MODULE_THEME.debut, tone: "coral" };
+  return { ...MODULE_THEME.palier, tone: "primary" };
+}
 
-// ── Nœud individuel ───────────────────────────────────────────────────────────
 // ── Tracé du chemin ───────────────────────────────────────────────────────────
 // Historique de ce fichier, parce que je me suis trompé une fois :
 //
@@ -145,14 +143,13 @@ function sideToX(side, inset) {
 // stroke-dasharray) et pivoté de 120° l'un par rapport à l'autre — plutôt
 // qu'un unique cercle avec un dasharray répété, pour pouvoir colorer
 // chaque segment indépendamment selon le palier atteint.
-function AnneauMaitrise({ niveau, size, couleur, C }) {
-  // Erreur corrigée : `rayon` valait size/2, exactement le rayon du BOUTON
-  // lui-même — l'anneau se dessinait donc pile sur la bordure existante,
-  // invisible par construction. Il doit être visiblement PLUS GRAND, avec
-  // un vrai espace entre le bouton et l'anneau, pour se lire comme un halo
-  // distinct plutôt qu'un renforcement de la bordure déjà là.
+function AnneauMaitrise({ niveau, size, couleur, decalY = 0, C }) {
+  // L'anneau est visiblement PLUS GRAND que le disque, avec un vrai espace
+  // entre les deux : il se lit comme un halo distinct, pas comme un
+  // renforcement de la bordure. `decalY` le recentre sur l'ensemble disque +
+  // tranche (la moitié de l'épaisseur du relief).
   const traitLargeur = 3;
-  const ecartExterieur = 4;   // espace visible entre le bouton et l'anneau
+  const ecartExterieur = 6;   // dégage aussi la tranche, sous le disque
   const rayon = size / 2 + ecartExterieur + traitLargeur / 2;
   const diametreSvg = (rayon + traitLargeur / 2) * 2;
   const centre = diametreSvg / 2;
@@ -166,7 +163,7 @@ function AnneauMaitrise({ niveau, size, couleur, C }) {
     <svg
       aria-hidden="true"
       width={diametreSvg} height={diametreSvg}
-      style={{ position:"absolute", inset:decalage, pointerEvents:"none" }}
+      style={{ position:"absolute", left:decalage, top:decalage + decalY, pointerEvents:"none" }}
     >
       {[0, 1, 2].map(i => (
         <circle
@@ -184,28 +181,38 @@ function AnneauMaitrise({ niveau, size, couleur, C }) {
   );
 }
 
+// ── Nœud de leçon ─────────────────────────────────────────────────────────────
+// Un vrai bouton en relief : un disque posé sur sa tranche, qui s'enfonce au
+// toucher. Quatre états, lisibles sans légende :
+//   fait        aplat de la teinte de l'unité, coche
+//   en cours    aplat, plus grand, halo qui pulse, flottement
+//   disponible  surface claire bordée de la teinte (unité ouverte, pas encore faite)
+//   verrouillé  à plat, atténué, cadenas : rien à presser
 function PathNode({ lesson, state, th, onSelect, isCurrent, isLocked, gropiTip, layout }) {
   const C = useC();
+  const k = toneOf(C, th.tone);
   const done = !!state.completedLessons[lesson.id];
   const { side, inset } = layout;
   // Le côté est toujours franc (gauche ou droite) : la carte de titre et
   // Gropi s'alignent donc naturellement, sans rabattement arbitraire.
   const textSide = side;
 
-  let bg, border, iconEl;
-  if(done)         { bg=th.colorL;    border=th.color;   iconEl=<Ti name="check" size={isCurrent?22:18} color={th.color}/>; }
-  else if(isCurrent){ bg=C.primaryL;  border=C.primary;  iconEl=<Ti name="player-play" size={22} color={C.primary}/>; }
-  else if(isLocked) { bg=C.surface2;  border=C.border;   iconEl=<Ti name="lock" size={16} color={C.text3}/>; }
-  else              { bg=C.surface;   border=th.color;   iconEl=<Ti name="book-2" size={17} color={th.color}/>; } // disponible dans l'unité ouverte
+  let fond, bord, tranche = null, icone;
+  if (done)          { fond = k.solid;    bord = "transparent"; tranche = k.edge; icone = <Ti name="check" size={24} color={C.onPrimaryBtn} stroke={3}/>; }
+  else if (isCurrent){ fond = k.solid;    bord = "transparent"; tranche = k.edge; icone = <Ti name="player-play" size={28} color={C.onPrimaryBtn}/>; }
+  else if (isLocked) { fond = C.surface2; bord = C.border;                        icone = <Ti name="lock" size={18} color={C.text3}/>; }
+  else               { fond = C.surface;  bord = k.b;           tranche = k.b;    icone = <Ti name="book-2" size={22} color={k.c}/>; } // disponible dans l'unité ouverte
 
-  const sz = isCurrent ? 64 : 54;
+  const sz = isCurrent ? 68 : 56;
+  const prof = isCurrent ? 6 : 5;
   // Uniquement sur une leçon déjà faite : lessonMastery renvoie de toute
   // façon LOCKED (0) tant que ce n'est pas le cas, et le nœud "en cours"
-  // porte déjà son propre anneau pulsant — superposer les deux aurait fait
-  // double emploi visuel sur le seul nœud qui ne peut de toute façon jamais
-  // être à la fois "en cours" et "fait" (isCurrent implique justement que
-  // la leçon ne l'est pas encore).
+  // porte déjà son propre halo — superposer les deux aurait fait double
+  // emploi sur le seul nœud qui ne peut jamais être à la fois "en cours" et
+  // "fait" (isCurrent implique justement que la leçon ne l'est pas encore).
   const mastery = done ? lessonMastery(lesson, state) : null;
+  // Leçon de l'unité ouverte, ni faite ni en cours : elle « apparaît ».
+  const nouvelle = !done && !isCurrent && !isLocked;
 
   return (
     <div style={{
@@ -219,89 +226,67 @@ function PathNode({ lesson, state, th, onSelect, isCurrent, isLocked, gropiTip, 
       paddingRight: side==="right" ? inset : 0,
       marginBottom: 4,
     }}>
-      <button
-        onClick={()=>!isLocked&&onSelect(lesson)}
-        disabled={isLocked}
-        style={{
-          width:sz, height:sz, borderRadius:"50%",
-          background:bg, border:`${isCurrent?"3px":"2px"} solid ${border}`,
-          display:"flex", alignItems:"center", justifyContent:"center",
-          cursor:isLocked?"default":"pointer",
-          position:"relative",
-          boxShadow:isCurrent?`0 6px 22px ${C.primary}44`:"none",
-          animation: !done&&!isCurrent&&!isLocked ? "gropi-unlock .35s ease" : "none",
-        }}
-      >
-        {iconEl}
-        {mastery && (
-          <AnneauMaitrise niveau={mastery.level} size={sz} couleur={th.color} C={C} />
-        )}
-        {done&&(
-          <div style={{
-            position:"absolute",top:-4,right:-4,
-            width:18,height:18,borderRadius:"50%",
-            background:th.color,border:`2px solid ${C.bg}`,
-            display:"flex",alignItems:"center",justifyContent:"center",
-          }}>
-            <Ti name="check" size={9} color={C.onPrimaryBtn}/>
-          </div>
-        )}
-        {isCurrent&&(
-          <div style={{
-            position:"absolute",inset:-9,borderRadius:"50%",
-            border:`2px solid ${C.primaryBorder}`,
-            animation:"gropi-pulse 2s ease-out infinite",
+      <div className={isCurrent ? "gr-bob" : undefined} style={{ position:"relative", width:sz }}>
+        {isCurrent && (
+          <span aria-hidden="true" className="gr-pulse" style={{
+            position:"absolute", left:-9, top:-9, width:sz+18, height:sz+18,
+            boxSizing:"border-box", borderRadius:"50%",
+            border:`3px solid ${k.c}`, pointerEvents:"none",
           }}/>
         )}
-      </button>
-
-      {/* Bulle d'info (leçon débloquée) — toute la carte est cliquable sur
-          le nœud courant, pas seulement le petit cercle : "Commencer" était
-          un simple texte décoratif sans la moindre action au clic. */}
-      {!isLocked&&(
-        <div
-          onClick={isCurrent ? () => onSelect(lesson) : undefined}
+        <button
+          onClick={()=>!isLocked&&onSelect(lesson)}
+          disabled={isLocked}
+          className={isLocked ? undefined : `gr-press gr-focus${nouvelle ? " gr-in-pop" : ""}`}
           style={{
-            marginTop:6,
-            background:isCurrent?C.primaryL:C.surface,
-            border:`1.5px solid ${isCurrent?C.primaryBorder:C.border}`,
-            borderRadius:R.md, padding:"9px 12px",
-            maxWidth:186,
+            ...(isLocked ? null : relief(tranche, prof)),
+            width:sz, height:sz, borderRadius:"50%", padding:0,
+            background:fond, border:`2px solid ${bord}`,
+            display:"flex", alignItems:"center", justifyContent:"center",
+            position:"relative",
+            opacity:isLocked ? .6 : 1,
+          }}
+        >
+          {icone}
+        </button>
+        {mastery && (
+          <AnneauMaitrise niveau={mastery.level} size={sz} couleur={k.c} decalY={prof / 2} C={C} />
+        )}
+      </div>
+
+      {/* Carte de titre (leçon débloquée). Sur le nœud courant, toute la carte
+          se presse comme le disque : elle porte donc le même relief. */}
+      {!isLocked&&(
+        <Card
+          onClick={isCurrent ? () => onSelect(lesson) : undefined}
+          tone={isCurrent ? th.tone : undefined} soft={isCurrent} pad="9px 12px"
+          style={{
+            marginTop:8, width:"auto", maxWidth:186,
             alignSelf:textSide==="left"?"flex-start":"flex-end",
-            boxShadow:isCurrent?`0 4px 14px ${C.primary}22`:"none",
-            cursor:isCurrent?"pointer":"default",
           }}>
-          {isCurrent&&(
-            <div style={{fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:C.primary,marginBottom:3}}>
-              En cours
-            </div>
-          )}
-          <div style={{fontSize:12.5,fontWeight:700,color:done?th.colorD:isCurrent?C.primaryD:C.text,lineHeight:1.3}}>
+          {isCurrent&&<Eyebrow tone={th.tone} style={{marginBottom:3}}>En cours</Eyebrow>}
+          <div style={{fontSize:T.small,fontWeight:700,color:done||isCurrent?k.d:C.text,lineHeight:1.3}}>
             {lesson.title}
           </div>
-          <div style={{fontSize:11,color:C.text3,marginTop:3}}>{lesson.duration} min</div>
+          <div style={{fontSize:T.micro,color:C.text2,marginTop:3}}>{lesson.duration} min</div>
           {isCurrent&&(
-            <div style={{
-              display:"inline-block",marginTop:8,
-              background:C.primary,color:C.onPrimaryBtn,
-              borderRadius:999,padding:"5px 14px",
-              fontSize:11,fontWeight:700,letterSpacing:".06em",textTransform:"uppercase",
-              boxShadow:`0 3px 10px ${C.primary}44`,
-            }}>Commencer</div>
+            <Tag tone={th.tone} solid icon="player-play"
+              style={{marginTop:8,padding:"5px 12px",letterSpacing:".06em",textTransform:"uppercase"}}>
+              Commencer
+            </Tag>
           )}
-        </div>
+        </Card>
       )}
 
       {/* Gropi compagnon — uniquement sur le nœud en cours. Le toucher
           ouvre sa bulle (le conseil de la leçon) ; la carte et le nœud
-          juste au-dessus donnent déjà accès à la leçon. Avant, un clic sur
-          Gropi ouvrait AUSSI la leçon : la bulle n'était jamais lisible. */}
+          juste au-dessus donnent déjà accès à la leçon. */}
       {isCurrent && gropiTip && (
         <div style={{ marginTop: 10, alignSelf: textSide === "left" ? "flex-start" : "flex-end" }}>
           <GropiBubble
             pose={lesson.gropiTip ? POSE_ROLE.conseil : POSE_ROLE.accueil}
             size={56}
-            tint="primary"
+            tint={th.tone}
             eyebrow={lesson.gropiTip ? "Le conseil de Gropi" : `Gropi · ${lesson.title}`}
             side={textSide}
           >
@@ -316,50 +301,57 @@ function PathNode({ lesson, state, th, onSelect, isCurrent, isLocked, gropiTip, 
 // ── Coffre de fin d'unité ─────────────────────────────────────────────────────
 // Remplace l'ancien checkpoint décoratif : celui-ci fait vraiment quelque chose.
 // États : verrouillé (gris) → en cours (x/y) → réclamable (rebond ambré) → ouvert.
-function UnitChest({ unit, onClaim, onCheck }) {
+function UnitChest({ unit, onClaim, onCheck, justOpened = false }) {
   const C = useC();
   const { bonusClaimable, bonusClaimed, needsCheck, check, done, total, unlocked } = unit;
 
-  let bg, border, icon, iconColor, label, anim = "none", clickable = false, action = null;
+  // `action` : seuls le coffre à ouvrir et la vérification à passer se
+  // pressent — eux seuls portent le relief (et flottent pour qu'on les voie).
+  let fond, bord, tranche = null, icon, iconColor, label, action = null;
   if (bonusClaimed) {
-    bg = C.greenL; border = C.greenBorder; icon = "check"; iconColor = C.green;
+    fond = C.greenL; bord = C.green; icon = "check"; iconColor = C.green;
     label = `Coffre ouvert · +${UNIT_BONUS_XP} XP`;
   } else if (bonusClaimable) {
-    bg = C.amberL; border = C.amber; icon = "gift"; iconColor = C.amber;
+    fond = C.amber; bord = "transparent"; tranche = `color-mix(in srgb, ${C.amber} 72%, #000)`;
+    icon = "trophy"; iconColor = C.onPrimaryBtn;
     label = `Ouvre ton coffre · +${UNIT_BONUS_XP} XP`;
-    anim = "chest-bounce 1.2s ease-in-out infinite"; clickable = true; action = () => onClaim(unit);
+    action = () => onClaim(unit);
   } else if (needsCheck) {
-    bg = C.primaryL; border = C.primary; icon = "clipboard-check"; iconColor = C.primary;
+    fond = C.primaryBtn; bord = "transparent"; tranche = C.primaryEdge;
+    icon = "clipboard-check"; iconColor = C.onPrimaryBtn;
     label = check?.attempts ? `Retenter la vérification (${check.score}%)` : "Vérifier l'unité";
-    anim = "chest-bounce 1.2s ease-in-out infinite"; clickable = true; action = () => onCheck(unit);
+    action = () => onCheck(unit);
   } else if (unlocked) {
-    bg = C.surface; border = C.border; icon = "gift"; iconColor = C.text3;
+    fond = C.surface; bord = C.border; icon = "trophy"; iconColor = C.text3;
     label = `Coffre · ${done}/${total} leçons`;
   } else {
-    bg = C.surface2; border = C.border; icon = "lock"; iconColor = C.text3;
+    fond = C.surface2; bord = C.border; icon = "lock"; iconColor = C.text3;
     label = "Coffre verrouillé";
   }
 
   return (
     <div style={{display:"flex",flexDirection:"column",alignItems:"center",margin:"14px 0 8px"}}>
-      <button
-        onClick={()=>clickable&&action?.()}
-        disabled={!clickable}
-        aria-label={label}
-        style={{
-          width:72,height:72,borderRadius:"50%",
-          background:bg, border:`2px solid ${border}`,
-          display:"flex",alignItems:"center",justifyContent:"center",
-          cursor:clickable?"pointer":"default",
-          opacity:(!unlocked)?.55:1,
-          boxShadow:(bonusClaimable||needsCheck)?`0 6px 20px ${border}44`:"none",
-          animation:anim,
-        }}>
-        <Ti name={icon} size={26} color={iconColor}/>
-      </button>
+      <div className={action ? "gr-bob" : undefined}>
+        <button
+          onClick={()=>action?.()}
+          disabled={!action}
+          aria-label={label}
+          className={action ? "gr-press gr-focus" : justOpened ? "gr-tada" : undefined}
+          style={{
+            // Sans relief, la même marge réserve la place de la tranche : le
+            // coffre ne saute pas d'un cran au moment où on l'ouvre.
+            ...(action ? relief(tranche, 6) : { marginBottom:6 }),
+            width:72,height:72,borderRadius:R.xl,padding:0,
+            background:fond, border:`2px solid ${bord}`,
+            display:"flex",alignItems:"center",justifyContent:"center",
+            opacity:unlocked?1:.55,
+          }}>
+          <Ti name={icon} size={30} color={iconColor}/>
+        </button>
+      </div>
       <div style={{
-        fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",
-        color:(bonusClaimable||needsCheck)?C.primaryD||C.primary:C.text3,fontFamily:FONTS.ui,marginTop:7,textAlign:"center",
+        fontSize:T.micro,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",
+        color:action?C.primaryD:C.text2,marginTop:8,textAlign:"center",
       }}>
         {label}
       </div>
@@ -416,37 +408,25 @@ function PathConnector({ from, to, done }) {
 function CurrentUnitBanner({ stats, MODULE_THEME }) {
   const C = useC();
   const u = stats.currentUnit;
-  const th = u ? (u.prelude && MODULE_THEME.debut ? MODULE_THEME.debut : MODULE_THEME.palier) : null;
+  const th = u ? themeUnite({ prelude: u.prelude }, MODULE_THEME) : null;
+  const tone = th ? th.tone : "green";
 
   return (
-    <div style={{
-      background:`${C.surface}CC`,borderRadius:R.lg,
-      padding:"13px 15px",display:"flex",alignItems:"center",gap:12,
-      border:`1px solid ${th?`${th.color}22`:C.border}`,
-      boxShadow:th?`0 4px 16px ${th.color}18`:"none",
-    }}>
-      <div style={{
-        width:42,height:42,borderRadius:R.md,
-        background:th?th.colorL:C.greenL,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,
-        border:`1.5px solid ${th?`${th.color}44`:C.greenBorder}`,
-      }}>
-        <Ti name={th?th.icon.replace("ti-",""):"trophy"} size={20} color={th?th.color:C.green}/>
-      </div>
-      <div style={{flex:1}}>
-        <div style={{fontSize:11,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:th?th.colorD:C.greenD,fontFamily:FONTS.ui}}>
-          {u ? `Unité ${u.index+1} sur ${stats.units}` : "Parcours"}
-        </div>
-        <div style={{fontSize:15,fontWeight:800,color:th?th.colorD:C.greenD,letterSpacing:"-.2px",marginTop:2}}>
+    <Card tone={tone} pad="12px 14px" style={{display:"flex",alignItems:"center",gap:12,marginTop:14}}>
+      <IconTile icon={th ? th.icon : "trophy"} tone={tone} size={44}/>
+      <div style={{flex:1,minWidth:0}}>
+        <Eyebrow tone={tone}>{u ? `Unité ${u.index+1} sur ${stats.units}` : "Parcours"}</Eyebrow>
+        <div style={{fontSize:T.body,fontWeight:800,color:C.text,letterSpacing:"-.2px",marginTop:2}}>
           {u ? `${u.title} · ${u.done}/${u.total} leçons` : "Parcours terminé ! 🎉"}
         </div>
-        <div style={{display:"flex",alignItems:"center",gap:9,marginTop:7}}>
-          <div style={{flex:1,height:5,background:"rgba(0,0,0,.08)",borderRadius:99,overflow:"hidden"}}>
-            <div style={{width:`${stats.pct}%`,height:"100%",background:th?th.color:C.green,borderRadius:99,transition:"width .4s ease"}}/>
-          </div>
-          <span style={{fontSize:11,fontWeight:700,color:th?th.colorD:C.greenD}}>{stats.doneLessons} / {stats.totalLessons}</span>
+        <div style={{display:"flex",alignItems:"center",gap:10,marginTop:8}}>
+          <ProgressBar pct={stats.pct} color={toneOf(C, tone).c} h={8} label="Progression du parcours" style={{flex:1}}/>
+          <span style={{fontSize:T.micro,fontWeight:700,color:C.text2,fontVariantNumeric:"tabular-nums",flexShrink:0}}>
+            <AnimatedNumber value={stats.doneLessons}/> / {stats.totalLessons}
+          </span>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -457,8 +437,10 @@ function CurrentUnitBanner({ stats, MODULE_THEME }) {
 // les titres longs tiennent sur une ligne à 375 px.
 function UnitHeader({ unit, th, teaser = false }) {
   const C = useC();
+  const k = toneOf(C, th.tone);
   const opt = !!unit.optional;
-  const filet = {flex:1,height:0,borderTop:`1.5px ${opt?"dashed":"solid"} ${unit.unlocked?`${th.color}44`:C.border}`};
+  const trait = `2px ${opt?"dashed":"solid"} ${unit.unlocked?k.b:C.border}`;
+  const filet = {flex:1,height:0,borderTop:trait};
   return (
     <div style={{
       display:"flex",flexDirection:"column",alignItems:"center",gap:6,
@@ -466,38 +448,30 @@ function UnitHeader({ unit, th, teaser = false }) {
     }}>
       <div style={{display:"flex",alignItems:"center",gap:10,width:"100%"}}>
         <div style={filet}/>
-        <div style={{
-          display:"flex",alignItems:"center",gap:7,minWidth:0,
-          background:opt?C.surface:unit.unlocked?th.colorL:C.surface2,
-          border:`1.5px ${opt?"dashed":"solid"} ${unit.unlocked?`${th.color}${opt?"66":"44"}`:C.border}`,
-          borderRadius:999,padding:"6px 14px",
-        }}>
-          <Ti name={unit.unlocked?th.icon.replace("ti-",""):"lock"} size={13} color={unit.unlocked?th.color:C.text3}/>
-          <span style={{
-            fontSize:11,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",
-            color:unit.unlocked?th.colorD:C.text3,fontFamily:FONTS.ui,
+        <Tag
+          tone={unit.unlocked?th.tone:"neutral"} icon={unit.unlocked?th.icon:"lock"}
+          style={{
+            minWidth:0,padding:"6px 14px",gap:7,border:trait,
+            whiteSpace:"normal",textAlign:"center",letterSpacing:".08em",textTransform:"uppercase",
+            ...(opt ? { background:C.surface } : null),
+            ...(unit.unlocked ? null : { color:C.text2 }),
           }}>
-            {unit.title}
-          </span>
-        </div>
+          {unit.title}
+        </Tag>
         <div style={filet}/>
       </div>
       {opt&&(
-        <span style={{
-          fontSize:10.5,fontWeight:700,letterSpacing:".04em",
-          color:C.text2,background:C.surface,border:`1px solid ${C.border}`,
-          borderRadius:999,padding:"2px 9px",fontFamily:FONTS.ui,
-        }}>
+        <Tag tone="neutral" style={{background:C.surface,color:C.text2}}>
           {unit.annexe ? "Facultatif · à lire quand tu veux" : "Facultatif · tu peux passer à la suite"}
-        </span>
+        </Tag>
       )}
       {/* Teaser de la PREMIÈRE unité verrouillée seulement (une seule
           mascotte « mystère » sur tout le chemin) : donne envie d'aller
           voir la suite sans encombrer les unités lointaines. */}
       {teaser&&(
         <div style={{display:"flex",alignItems:"center",gap:8,maxWidth:280}}>
-          <Gropi pose={POSE_ROLE.verrouille} size={34}/>
-          <span style={{fontSize:12,lineHeight:1.4,color:C.text2,fontFamily:FONTS.body}}>
+          <Gropi pose={POSE_ROLE.verrouille} size={34} anim="bob"/>
+          <span style={{fontSize:12,lineHeight:1.4,color:C.text2}}>
             {unit.total} leçon{unit.total>1?"s":""} t'attendent ici. Termine l'unité en cours pour lever le mystère.
           </span>
         </div>
@@ -506,16 +480,6 @@ function UnitHeader({ unit, th, teaser = false }) {
   );
 }
 
-// ── En-tête « accueil » ────────────────────────────────────────────────────
-// Volontairement SANS grande bannière photo : c'est précisément ce qui
-// rendait l'ancien Accueil + l'ancien Parcours lourds une fois empilés.
-// Ici : une ligne de salutation compacte, le conseil du jour de Gropi, le
-// défi du jour, un accès rapide aux outils, puis la bannière d'unité déjà
-// existante — qui répond déjà à « où en suis-je ? » sans rien ajouter.
-//
-// Jam Session et Ear Training ne sont volontairement PAS ici : ce sont des
-// outils, pas des étapes du parcours. Leur place est la refonte de Pratique,
-// juste après celle-ci — pas de halte intermédiaire.
 // ── Popup de bienvenue ──────────────────────────────────────────────────
 // Troisième tentative sur ce même besoin, et la plus simple des trois.
 //
@@ -540,146 +504,84 @@ function WelcomeModal({ state, tip, navigate, onClose, onAutreConseil }) {
   const allerAuDefi = () => { onClose(); navigate("challenge"); };
 
   return (
-    <div
-      role="dialog" aria-modal="true" aria-label="Bienvenue"
-      onClick={onClose}
-      style={{
-        position:"fixed", inset:0, zIndex:300,
-        background:"rgba(20,10,5,.55)",
-        display:"flex", alignItems:"center", justifyContent:"center", padding:20,
-        animation:"gr-fade .18s ease",
-      }}
-    >
-      <style>{`@keyframes gr-fade{from{opacity:0}to{opacity:1}}
-        @keyframes gr-pop{from{opacity:0;transform:scale(.94) translateY(6px)}to{opacity:1;transform:scale(1) translateY(0)}}`}</style>
-
-      <div
-        onClick={e=>e.stopPropagation()}
-        style={{
-          width:"100%", maxWidth:360, background:C.surface,
-          borderRadius:R.xl, overflow:"hidden",
-          boxShadow:"0 16px 48px rgba(0,0,0,.35)",
-          animation:"gr-pop .22s cubic-bezier(.2,.9,.3,1.2)",
-        }}
-      >
-        {/* Même traitement photo que Progrès/Pratique : voile sombre fixe,
-            texte blanc, indépendant du thème de l'app. */}
-        <div style={{
-          position:"relative", padding:"20px 20px 18px",
-          backgroundImage:"url('/alhambra.jpg')",
-          backgroundSize:"cover", backgroundPosition:"center 35%",
-        }}>
-          <div style={{ position:"absolute", inset:0, background:"rgba(20,10,5,.65)" }}/>
-          <div style={{ position:"relative" }}>
-            {/* Petit logo, comme sur l'ancien accueil. Référencé par son
-                chemin (/logo.svg) — le vrai fichier vit dans public/, je ne
-                l'ai pas sous les yeux ici, exactement comme alhambra.jpg
-                plus haut. S'il intègre déjà le mot "Groply" dessiné dans le
-                SVG, le libellé texte juste à côté ferait doublon : à
-                retirer d'une ligne le cas échéant. */}
-            <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:8 }}>
-              <img src="/logo.svg" alt="" style={{ height:20, width:20 }}/>
-              <span style={{ fontSize:13, fontWeight:800, color:"#fff", letterSpacing:"-.1px" }}>Groply</span>
-            </div>
-            <div style={{ fontSize:12, fontWeight:500, color:"rgba(255,255,255,.75)", textTransform:"capitalize" }}>{dateStr}</div>
-            <div style={{ fontSize:24, fontWeight:800, color:"#fff", letterSpacing:"-.3px", marginTop:1 }}>Bonjour !</div>
+    // overflowX masqué : le bandeau photo épouse les coins arrondis du panneau
+    // (qui garde son défilement vertical sur les petits écrans).
+    <Modal label="Bienvenue" onClose={onClose} pad={0} panelStyle={{ overflowX:"hidden" }}>
+      {/* Même traitement photo que Progrès/Pratique : voile sombre fixe,
+          texte blanc, indépendant du thème de l'app. Le logo vit dans
+          public/ (/logo.svg), comme la photo. */}
+      <ScreenHero
+        image="/alhambra.jpg" color="#4A2E14" overlay="rgba(20,10,5,.65)" position="center 35%"
+        title="Bonjour !"
+        subtitle={<span style={{ textTransform:"capitalize" }}>{dateStr}</span>}
+        right={(
+          <div style={{ display:"flex", alignItems:"center", gap:6, flexShrink:0 }}>
+            <img src="/logo.svg" alt="" style={{ height:20, width:20 }}/>
+            <span style={{ fontSize:T.small, fontWeight:800, color:"#fff", letterSpacing:"-.1px" }}>Groply</span>
           </div>
-        </div>
+        )}
+        style={{ padding:"20px 20px 18px", borderRadius:0 }}
+      />
 
-        <div style={{ padding:"16px 18px 18px" }}>
-          {/* Série, grade — les deux chiffres qui font plaisir à voir en
-              ouvrant l'app, sans pour autant dupliquer tout Progrès. */}
-          <div style={{ display:"flex", gap:8, marginBottom:10 }}>
-            <div style={{
-              flex:1, display:"flex", alignItems:"center", gap:7,
-              background:C.surface2, border:`1.5px solid ${C.border}`,
-              borderRadius:R.md, padding:"9px 11px",
-            }}>
-              <Ti name="flame" size={16} color={state.streak>0?C.primary:C.text3}/>
-              <div>
-                <div style={{ fontSize:15, fontWeight:800, color:C.text, lineHeight:1.1 }}>{state.streak}</div>
-                <div style={{ fontSize:11, fontWeight:700, color:C.text3, textTransform:"uppercase", letterSpacing:".05em" }}>
-                  {state.streak > 1 ? "jours de série" : "jour de série"}
-                </div>
-              </div>
-            </div>
-            <div style={{
-              flex:1, display:"flex", alignItems:"center", gap:7,
-              background:C.surface2, border:`1.5px solid ${C.border}`,
-              borderRadius:R.md, padding:"9px 11px",
-            }}>
-              <Ti name="medal" size={16} color={C.primary}/>
-              <div style={{ minWidth:0 }}>
-                <div style={{ fontSize:12.5, fontWeight:800, color:C.text, lineHeight:1.25, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{grade.label}</div>
-                <div style={{ fontSize:11, fontWeight:700, color:C.text3, textTransform:"uppercase", letterSpacing:".05em" }}>Niveau {state.level}</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Défi du jour : une action, pas juste une info — sa propre
-              ligne pleine largeur plutôt que compressée dans les puces
-              ci-dessus. Cliquer dessus ferme le popup ET navigue direct. */}
-          <button
-            onClick={allerAuDefi}
-            className="gr-focus"
-            style={{
-              width:"100%", display:"flex", alignItems:"center", gap:9,
-              background: defiFait ? C.greenL : C.amberL,
-              border:`1.5px solid ${defiFait ? C.greenBorder : C.amberBorder}`,
-              borderRadius:R.md, padding:"9px 11px", marginBottom:14,
-              cursor:"pointer", textAlign:"left",
-            }}
-          >
-            <Ti name={defiFait?"check":"bolt"} size={15} color={defiFait?C.greenD:C.amberInk ?? C.amber}/>
-            <span style={{ fontSize:12, fontWeight:700, color:defiFait?C.greenD:C.text }}>
-              {defiFait ? "Défi du jour relevé" : "Défi du jour"}
+      <div className="gr-stagger" style={{ padding:"16px 18px 18px", display:"flex", flexDirection:"column", gap:12 }}>
+        {/* Série, grade — les deux chiffres qui font plaisir à voir en
+            ouvrant l'app, sans pour autant dupliquer tout Progrès. */}
+        <div style={{ display:"flex", gap:8 }}>
+          <Card tone="primary" soft pad="9px 11px" style={{ flex:1, minWidth:0, display:"flex", alignItems:"center", gap:8 }}>
+            <span aria-hidden="true" className={state.streak>0 ? "gr-flame" : undefined} style={{ display:"flex" }}>
+              <Ti name="flame" size={20} color={state.streak>0?C.primary:C.text3}/>
             </span>
-          </button>
-
-          {/* Conseil du jour */}
-          <div style={{ display:"flex", gap:10, alignItems:"flex-start", marginBottom:14 }}>
-            {/* La pose suit le type : ampoule pour un conseil, livre pour
-                une anecdote, fierté (ou rocker pour la série) pour un
-                rappel de progression. `key` relance l'apparition quand on
-                demande un autre conseil. */}
-            <Gropi key={tip.id} pose={tip.pose} size={44} anim="pop"/>
-            <div style={{ flex:1, minWidth:0 }}>
-              <div style={{
-                fontSize:11, fontWeight:700, letterSpacing:".1em", textTransform:"uppercase",
-                color:C.primaryD, fontFamily:FONTS.ui, marginBottom:3,
-              }}>{tip.label}</div>
-              <p style={{ margin:0, fontSize:12.5, lineHeight:1.45, fontWeight:500, color:C.text }}>{tip.text}</p>
-              {onAutreConseil && (
-                <button
-                  onClick={onAutreConseil}
-                  className="gr-focus"
-                  style={{
-                    marginTop:6, background:"none", border:0, padding:"6px 0", minHeight:32,
-                    display:"inline-flex", alignItems:"center", gap:5,
-                    fontSize:12, fontWeight:700, color:C.primaryD, cursor:"pointer", fontFamily:FONTS.ui,
-                  }}
-                >
-                  <Ti name="refresh" size={13} color={C.primaryD}/>
-                  Un autre conseil
-                </button>
-              )}
+            <div style={{ minWidth:0 }}>
+              <div style={{ fontSize:T.lead, fontWeight:800, color:C.text, lineHeight:1.1, fontVariantNumeric:"tabular-nums" }}>
+                <AnimatedNumber value={state.streak}/>
+              </div>
+              <div style={{ fontSize:T.micro, fontWeight:700, color:C.text2, textTransform:"uppercase", letterSpacing:".05em" }}>
+                {state.streak > 1 ? "jours de série" : "jour de série"}
+              </div>
             </div>
-          </div>
-
-          <button
-            onClick={onClose}
-            className="gr-focus"
-            style={{
-              width:"100%", background:C.primaryBtn, color:C.onPrimaryBtn,
-              border:"none", borderRadius:R.lg, padding:"12px",
-              fontSize:14, fontWeight:800, cursor:"pointer",
-            }}
-          >
-            Commencer
-          </button>
+          </Card>
+          <Card tone="amber" soft pad="9px 11px" style={{ flex:1, minWidth:0, display:"flex", alignItems:"center", gap:8 }}>
+            <Ti name="medal" size={20} color={C.amber}/>
+            <div style={{ minWidth:0 }}>
+              <div style={{ fontSize:T.small, fontWeight:800, color:C.text, lineHeight:1.25, overflowWrap:"anywhere" }}>{grade.label}</div>
+              <div style={{ fontSize:T.micro, fontWeight:700, color:C.text2, textTransform:"uppercase", letterSpacing:".05em" }}>
+                Niveau <AnimatedNumber value={state.level}/>
+              </div>
+            </div>
+          </Card>
         </div>
+
+        {/* Défi du jour : une action, pas juste une info — sa propre ligne
+            pleine largeur. La presser ferme le popup ET navigue direct. */}
+        <Button
+          variant="soft" tone={defiFait ? "green" : "amber"} full
+          icon={defiFait ? "check" : "bolt"} iconRight={defiFait ? undefined : "arrow-right"}
+          onClick={allerAuDefi}
+        >
+          <span style={{ flex:1, textAlign:"left" }}>{defiFait ? "Défi du jour relevé" : "Défi du jour"}</span>
+        </Button>
+
+        {/* Conseil du jour */}
+        <div style={{ display:"flex", gap:10, alignItems:"flex-start" }}>
+          {/* La pose suit le type : ampoule pour un conseil, livre pour
+              une anecdote, fierté (ou rocker pour la série) pour un
+              rappel de progression. `key` relance l'apparition quand on
+              demande un autre conseil. */}
+          <Gropi key={tip.id} pose={tip.pose} size={48} anim="pop"/>
+          <div style={{ flex:1, minWidth:0 }}>
+            <Eyebrow style={{ marginBottom:3 }}>{tip.label}</Eyebrow>
+            <p style={{ margin:0, fontSize:T.small, lineHeight:1.5, fontWeight:500, color:C.text }}>{tip.text}</p>
+            {onAutreConseil && (
+              <Button variant="ghost" size="sm" icon="refresh" onClick={onAutreConseil} style={{ padding:0, marginTop:2 }}>
+                Un autre conseil
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <Button size="lg" full onClick={onClose}>Commencer</Button>
       </div>
-    </div>
+    </Modal>
   );
 }
 
@@ -701,7 +603,9 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
   const MODULE_THEME = buildModuleTheme(C);
   const [activeLesson, setActiveLesson] = useState(null);
   const [checkingUnit, setCheckingUnit] = useState(null);
-  const [chestPop, setChestPop] = useState(false);
+  // Identifiant de l'unité dont on vient d'ouvrir le coffre (le temps de la
+  // pastille d'XP et du « tada » du coffre), sinon null.
+  const [chestPop, setChestPop] = useState(null);
   const currentRef = useRef(null);
 
   // ── En-tête « accueil » uniquement : popup de bienvenue ─────────────────
@@ -841,8 +745,8 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
     // pas la même récompense.
     dispatch({ type:"CLAIM_UNIT_BONUS", unitId:unit.id, xp:unit.bonusXp ?? UNIT_BONUS_XP,
                title:`Coffre — ${unit.title}` });
-    setChestPop(true);
-    setTimeout(()=>setChestPop(false), 1400);
+    setChestPop(unit.id);
+    setTimeout(()=>setChestPop(null), 1400);
   };
 
   if(activeLesson) return (
@@ -858,16 +762,11 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
 
   return (
     <div>
-      <style>{PULSE_CSS}</style>
-      {chestPop && <XPPop amount={UNIT_BONUS_XP} onDone={()=>{}}/>}
-      {/* Popup de bienvenue, une fois par jour — voir WelcomeModal plus
-          bas. Contrairement aux deux tentatives précédentes (bandeau fixe
-          en haut, puis panneau inséré dans la boucle au niveau de l'unité
-          en cours), ceci n'a AUCUNE position dans le document : c'est une
-          fenêtre par-dessus tout, qui se ferme sur le chemin déjà cadré à
-          l'endroit où on en est — le mécanisme de cadrage automatique
-          (plus bas, `focus` + scrollIntoView) fait ce travail-là tout
-          seul, indépendamment de ce popup. */}
+      {chestPop!=null && <XPPop amount={UNIT_BONUS_XP} onDone={()=>{}}/>}
+      {/* Popup de bienvenue — voir WelcomeModal. Il n'a AUCUNE position dans
+          le document : c'est une fenêtre par-dessus tout, qui se ferme sur
+          le chemin déjà cadré à l'endroit où on en est (le cadrage
+          automatique, `focus` + scrollIntoView, s'en charge tout seul). */}
       {popupVisible && (
         <WelcomeModal
           state={state} tip={tip} navigate={navigate}
@@ -876,46 +775,23 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
       )}
 
       {/* ── En-tête ──────────────────────────────────────────────────────
-          Variante "courses" : bannière photo fixe en haut, inchangée.
-          Variante "home" : PLUS de bandeau fixe en haut de la page — le
-          panneau (salutation, série, conseil de Gropi) est inséré plus bas,
-          À L'INTÉRIEUR de la boucle du chemin, juste avant l'unité en
-          cours. Voir le `path.map` ci-dessous.
-
-          Le raisonnement : "arriver au niveau de ta progression actuelle"
-          ne devait pas dépendre d'un bandeau fixe qui reste collé en haut
-          (ça mange de la place en continu sur le chemin, à l'encontre de
-          l'idée même de cette refonte) ni d'un bouton flottant permanent.
-          En plaçant le panneau EXACTEMENT là où se trouve l'unité en
-          cours dans le document, il apparaît naturellement quand on y
-          défile, et disparaît naturellement quand on s'en éloigne — sans
-          une ligne de JavaScript pour gérer l'affichage : c'est le
-          positionnement dans le document qui fait tout le travail. */}
+          Variante "courses" : bandeau photo de l'onglet, avec l'unité en
+          cours. Variante "home" : PAS de bandeau — l'accueil s'ouvre
+          directement sur le chemin, cadré sur la prochaine chose à faire. */}
       {variant !== "home" && (
-        <div style={{
-          backgroundColor:"#613878", backgroundImage:"url('/lavender.jpg')",
-          backgroundSize:"cover",backgroundPosition:"center 60%",
-          padding:"26px 20px 18px",position:"relative",overflow:"hidden",
-        }}>
-          <div style={{position:"absolute",inset:0,background:"rgba(60,20,100,.52)",pointerEvents:"none"}}/>
-          <div style={{position:"relative",zIndex:1}}>
-            <div style={{fontSize:28,fontWeight:800,color:"#fff",letterSpacing:"-.4px"}}>Parcours</div>
-            <div style={{fontSize:13,fontWeight:500,color:"rgba(255,255,255,.78)",marginTop:2,marginBottom:14}}>
-              {stats.units} unités · {stats.totalLessons} leçons · {stats.pct}%
-            </div>
-            <CurrentUnitBanner stats={stats} MODULE_THEME={MODULE_THEME}/>
-          </div>
-        </div>
+        <ScreenHero
+          image="/lavender.jpg" color="#613878" overlay="rgba(60,20,100,.52)" position="center 60%"
+          title="Parcours"
+          subtitle={`${stats.units} unités · ${stats.totalLessons} leçons · ${stats.pct}%`}
+        >
+          <CurrentUnitBanner stats={stats} MODULE_THEME={MODULE_THEME}/>
+        </ScreenHero>
       )}
 
       {/* ── Le parcours ── */}
       <div style={{padding:"8px 20px 40px"}}>
         {path.map(unit=>{
-          // Une unité d'initiation ne mélange pas les disciplines : elle
-          // prend le thème de son module (« Premiers pas »).
-          // Annexes (pathEngine `annexe`) : thème neutre, intertitre, pas de coffre.
-          const th = unit.annexe ? { ...MODULE_THEME.palier, icon:"ti-books" }
-            : unit.prelude ? (MODULE_THEME.debut || MODULE_THEME.palier) : MODULE_THEME.palier;
+          const th = themeUnite(unit, MODULE_THEME);
           // Leçon courante = première non complétée de l'unité courante
           const currentLessonId = unit.isCurrent
             ? (unit.lessons.find(l=>!state.completedLessons[l.id])?.id ?? null)
@@ -925,8 +801,8 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
             <div key={unit.id}>
               {unit.annexe&&(
                 <div style={{textAlign:"center",margin:"40px 0 -10px"}}>
-                  <div style={{fontSize:17,fontWeight:800,color:C.text,letterSpacing:"-.2px"}}>Annexes</div>
-                  <div style={{fontSize:12.5,color:C.text2,marginTop:3,lineHeight:1.45,fontFamily:FONTS.body}}>
+                  <div style={{fontSize:T.lead,fontWeight:800,color:C.text,letterSpacing:"-.2px"}}>Annexes</div>
+                  <div style={{fontSize:T.small,color:C.text2,marginTop:3,lineHeight:1.45}}>
                     Des leçons pratiques hors parcours, ouvertes à tout moment. Elles ne bloquent rien.
                   </div>
                 </div>
@@ -987,7 +863,8 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
               />
               <div ref={focus?.type==="chest" && focus.id===unit.id ? currentRef : null}
                    style={focus?.type==="chest" && focus.id===unit.id ? { scrollMarginTop: 16 } : undefined}>
-                <UnitChest unit={unit} th={th} onClaim={claimChest} onCheck={setCheckingUnit}/>
+                <UnitChest unit={unit} th={th} onClaim={claimChest} onCheck={setCheckingUnit}
+                  justOpened={chestPop===unit.id}/>
               </div>
               </>}
             </div>
@@ -996,9 +873,9 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
 
         {/* Fin du parcours */}
         {stats.pct===100&&(
-          <div style={{textAlign:"center",marginTop:20}}>
+          <div className="gr-in" style={{textAlign:"center",marginTop:20}}>
             <Gropi pose="celebrate" size={130} anim="cheer" style={{margin:"0 auto"}}/>
-            <div style={{fontSize:17,fontWeight:800,color:C.greenD,marginTop:8,letterSpacing:"-.2px"}}>
+            <div style={{fontSize:T.lead,fontWeight:800,color:C.greenD,marginTop:8,letterSpacing:"-.2px"}}>
               Parcours complété ! 🎉
             </div>
             <div style={{fontSize:12,color:C.text2,marginTop:4}}>
@@ -1015,24 +892,20 @@ function CoursesScreen({ state, dispatch, content, navigate, variant = "courses"
 function ChargementLecon({ lesson, onBack, reessayer }) {
   const C = useC();
   return (
-    <div>
-      <div style={{padding:"14px 20px 0",display:"flex",alignItems:"center",gap:10}}>
-        <BackButton onClick={onBack} label="Retour au parcours" style={{borderRadius:R.sm}}/>
-        <span style={{fontSize:13,fontWeight:600,color:C.text2,fontFamily:FONTS.ui}}>Retour au parcours</span>
-      </div>
-      <div role="status" aria-live="polite" style={{padding:"28px 20px",textAlign:"center"}}>
-        <h1 style={{margin:"0 0 10px",fontSize:20,fontWeight:800,color:C.text}}>{lesson.title}</h1>
+    <div style={{padding:"14px 20px 24px"}}>
+      <SessionBar onClose={onBack} closeLabel="Retour au parcours" pct={0}/>
+      <div role="status" aria-live="polite" style={{padding:"28px 0",display:"flex",flexDirection:"column",alignItems:"center",gap:10,textAlign:"center"}}>
+        <Gropi pose={reessayer ? POSE_ROLE.erreur : POSE_ROLE.calme} size={84} anim="bob"/>
+        <h1 style={{margin:0,fontSize:T.h3,fontWeight:800,color:C.text}}>{lesson.title}</h1>
         {reessayer ? (
           <>
-            <p style={{fontSize:14,color:C.text2,margin:"0 0 16px"}}>
+            <p style={{fontSize:14,color:C.text2,margin:"0 0 6px",lineHeight:1.5}}>
               Impossible d'ouvrir cette leçon pour l'instant. Vérifie ta connexion, puis réessaie.
             </p>
-            <button onClick={reessayer} style={{padding:"11px 26px",borderRadius:R.lg,border:"none",background:C.primaryBtn,color:C.onPrimaryBtn,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:FONTS.ui}}>
-              Réessayer
-            </button>
+            <Button icon="refresh" onClick={reessayer}>Réessayer</Button>
           </>
         ) : (
-          <p style={{fontSize:14,color:C.text3,margin:0}}>Ouverture de la leçon…</p>
+          <p style={{fontSize:14,color:C.text2,margin:0}}>Ouverture de la leçon…</p>
         )}
       </div>
     </div>
@@ -1056,6 +929,9 @@ function LessonView({ lesson: leconRecue, state, dispatch, onBack, quiz, carteIn
   const C = useC();
   const [done,setDone] = useState(!!state.completedLessons[lesson.id]);
   const [pop, setPop]  = useState(false);
+  // Confettis : seulement à l'instant où la leçon est terminée, jamais à la
+  // réouverture d'une leçon déjà faite.
+  const [fete, setFete] = useState(false);
   const popTimerRef = useRef(null);
 
   // Empêche l'écran de s'éteindre pendant toute la durée où une leçon est
@@ -1081,6 +957,7 @@ function LessonView({ lesson: leconRecue, state, dispatch, onBack, quiz, carteIn
   const finish = () => {
     if(!done) {
       setPop(true);
+      setFete(true);
       // Petite fioriture de guitare en même temps que Gropi apparaît.
       // playLessonComplete() ne déclenche PAS le chargement des samples : si
       // l'audio n'est pas déjà en mémoire, elle ne fait rien et renvoie false.
@@ -1100,12 +977,16 @@ function LessonView({ lesson: leconRecue, state, dispatch, onBack, quiz, carteIn
     }
   };
 
+  // La racine (même balise, même place dans les trois rendus) n'est montée
+  // qu'une fois : l'entrée de l'écran ne rejoue pas quand le corps arrive.
   if (corps.statut !== "pret") return (
-    <ChargementLecon lesson={lesson} onBack={onBack} reessayer={corps.reessayer}/>
+    <div className="gr-in-push">
+      <ChargementLecon lesson={lesson} onBack={onBack} reessayer={corps.reessayer}/>
+    </div>
   );
 
   if (lesson.cartes?.length) return (
-    <div>
+    <div className="gr-in-push">
       {pop&&<XPPop amount={30} onDone={()=>{}}/>}
       <LeconCartes key={lesson.id} lesson={lesson} state={state} dispatch={dispatch} onBack={onBack}
         quiz={quiz} carteInitiale={carteInitiale} done={done} onFinish={finish} onJouerMorceau={onJouerMorceau}/>
@@ -1114,20 +995,18 @@ function LessonView({ lesson: leconRecue, state, dispatch, onBack, quiz, carteIn
 
   const blocs = lesson.content || [];
   return (
-    <div>
+    <div className="gr-in-push">
       {pop&&<XPPop amount={30} onDone={()=>{}}/>}
-      <div style={{padding:"14px 20px 0",display:"flex",alignItems:"center",gap:10}}>
-        <BackButton onClick={onBack} label="Retour au parcours" style={{borderRadius:R.sm}}/>
-        <span style={{fontSize:13,fontWeight:600,color:C.text2,fontFamily:FONTS.ui}}>Retour au parcours</span>
-      </div>
-      <div style={{padding:"16px 20px 0"}}>
-        <h1 style={{margin:"0 0 6px",fontSize:22,fontWeight:800,lineHeight:1.25,letterSpacing:"-.3px",color:C.text}}>{lesson.title}</h1>
-        <p style={{fontSize:11,color:C.text3,margin:"0 0 20px",letterSpacing:".05em",textTransform:"uppercase",fontWeight:600}}>
+      {fete&&<Confetti/>}
+      <div style={{padding:"14px 20px 24px"}}>
+        <SessionBar onClose={onBack} closeLabel="Retour au parcours" pct={done ? 100 : 0}/>
+        <h1 style={{margin:"18px 0 6px",fontSize:T.h2,fontWeight:800,lineHeight:1.25,letterSpacing:"-.3px",color:C.text}}>{lesson.title}</h1>
+        <p style={{fontSize:T.micro,color:C.text3,margin:"0 0 20px",letterSpacing:".05em",textTransform:"uppercase",fontWeight:700}}>
           {lesson.duration} MIN · {(lesson.quiz||[]).length} QUESTIONS
         </p>
         <div style={{display:"flex",flexDirection:"column",gap:14,marginBottom:20}}>
           {blocs.map((b,i)=>{
-            if(b.type==="h") return <h3 key={i} style={{margin:"8px 0 0",fontSize:17,fontWeight:800,color:C.primary,letterSpacing:"-.2px"}}>{b.text}</h3>;
+            if(b.type==="h") return <h3 key={i} style={{margin:"8px 0 0",fontSize:T.lead,fontWeight:800,color:C.primaryInk,letterSpacing:"-.2px"}}>{b.text}</h3>;
             if(b.type==="tip") return <GropiCoach key={i} variant="tip">{b.text}</GropiCoach>;
             if(b.type==="img") return (
               <div key={i} style={{textAlign:"center"}}>
@@ -1150,10 +1029,10 @@ function LessonView({ lesson: leconRecue, state, dispatch, onBack, quiz, carteIn
                   width:"34%", maxWidth:124, height:"auto",
                   margin:b.imgSide==="left"?"0 14px 4px 0":"0 0 4px 14px",
                 }}/>
-                <p style={{margin:0,fontSize:15,lineHeight:1.7,color:C.text}}>{b.text}</p>
+                <p style={{margin:0,fontSize:T.body,lineHeight:1.7,color:C.text}}>{b.text}</p>
               </div>
             );
-            return <p key={i} style={{margin:0,fontSize:15,lineHeight:1.7,color:C.text}}>{b.text}</p>;
+            return <p key={i} style={{margin:0,fontSize:T.body,lineHeight:1.7,color:C.text}}>{b.text}</p>;
           })}
           {/* Le conseil de Gropi propre à la leçon, en fin de lecture : un
               geste concret pour mettre en pratique ce qu'on vient de lire.
@@ -1167,38 +1046,28 @@ function LessonView({ lesson: leconRecue, state, dispatch, onBack, quiz, carteIn
           )}
         </div>
         {(lesson.quiz||[]).length>0&&(
-          <div style={{background:C.primaryL,border:`1.5px solid ${C.primaryBorder}`,borderRadius:R.md,padding:"11px 14px",marginBottom:14,display:"flex",gap:10,alignItems:"center"}}>
-            <Ti name="notebook" size={16} color={C.primary}/>
-            <p style={{margin:0,fontSize:12,color:C.primaryD}}>
+          <Card tone="primary" soft pad="11px 14px" style={{marginBottom:14,display:"flex",gap:10,alignItems:"center"}}>
+            <Ti name="notebook" size={18} color={C.primary}/>
+            <p style={{margin:0,fontSize:T.small,color:C.primaryD,lineHeight:1.45}}>
               Cette leçon est associée à {(lesson.quiz||[]).length} question{(lesson.quiz||[]).length>1?"s":""} de quiz.
             </p>
-          </div>
+          </Card>
         )}
         {/* Fin de l'article : les morceaux qui mettent la leçon en pratique.
             Y aller termine la leçon (on a lu jusqu'au bout). */}
         <MorceauxLies lessonId={lesson.id} style={{ marginBottom:14 }}
           onJouer={onJouerMorceau ? (id) => { finish(); onJouerMorceau(id); } : null}/>
         {done ? (
-          <div style={{ background:C.greenL, borderRadius:R.xl, padding:"22px 20px", textAlign:"center", border:`1.5px solid ${C.greenBorder}`, marginBottom:8 }}>
-            <Gropi pose="celebrate" size={120} anim="cheer" style={{ margin:"0 auto" }}/>
-            <div style={{ fontSize:20, fontWeight:800, color:C.greenD, letterSpacing:"-.3px", marginTop:8 }}>Leçon complétée !</div>
-            <div style={{ fontSize:13, color:C.green, marginTop:4 }}>+30 XP · Continue sur ta lancée</div>
-            <button onClick={onBack} style={{ marginTop:16, padding:"12px 32px", borderRadius:R.lg, border:"none", background:C.green, color:C.onPrimaryBtn, fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:FONTS.ui, boxShadow:`0 4px 14px ${C.green}44` }}>
-              Retour au parcours
-            </button>
-          </div>
+          <Card tone="green" soft pad="22px 20px" className={fete ? "gr-in-pop" : undefined}
+            style={{ display:"flex", flexDirection:"column", alignItems:"center", textAlign:"center" }}>
+            <Gropi pose="celebrate" size={120} anim="cheer"/>
+            <div style={{ fontSize:T.h3, fontWeight:800, color:C.greenD, letterSpacing:"-.3px", marginTop:8 }}>Leçon complétée !</div>
+            <div style={{ fontSize:T.small, color:C.greenD, marginTop:4 }}>+<AnimatedNumber value={30}/> XP · Continue sur ta lancée</div>
+            <Button tone="green" size="lg" onClick={onBack} style={{ marginTop:16 }}>Retour au parcours</Button>
+          </Card>
         ) : (
-          <button onClick={finish} style={{
-            width:"100%", padding:14, borderRadius:R.lg, border:"none",
-            background:C.primary, color:C.onPrimaryBtn,
-            fontSize:14, fontWeight:700, cursor:"pointer", fontFamily:FONTS.ui,
-            letterSpacing:".01em", display:"flex", alignItems:"center", justifyContent:"center", gap:6,
-            boxShadow:`0 4px 16px ${C.primary}44`,
-          }}>
-            Terminer la leçon · +30 XP
-          </button>
+          <Button size="lg" full onClick={finish}>Terminer la leçon · +30 XP</Button>
         )}
-        <div style={{height:24}}/>
       </div>
     </div>
   );

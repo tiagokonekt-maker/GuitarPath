@@ -23,10 +23,14 @@
 //      (L'ancien écran Exercices n'était plus atteignable depuis l'interface.)
 
 import { useState, useMemo } from "react";
-import { R } from "../design/tokens.js";
+import { R, T } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { Gropi } from "../design/Gropi.jsx";
+import {
+  Button, Card, Eyebrow, Gauge, IconTile, ListGroup, ListRow,
+  ScreenHero, SectionTitle, Segmented, SubHeader,
+} from "../design/ui.jsx";
 import { POSE_ROLE } from "../design/gropiPoses.js";
 import { ExerciseDetail } from "./ExercisesScreen.jsx";
 import { QuizScreen } from "./QuizScreen.jsx";
@@ -128,31 +132,20 @@ export function TrainingScreen({ state, dispatch, content, navigate, vueInitiale
 
   return (
     <div>
-      {/* ── En-tête ── */}
-      <div style={{
-        backgroundColor: "#36b3d7", backgroundImage: "url('/ocean.jpg')",
-        backgroundSize: "cover", backgroundPosition: "center 30%",
-        padding: "24px 20px 18px", position: "relative", overflow: "hidden",
-      }}>
-        <div style={{ position: "absolute", inset: 0, background: "rgba(0,60,80,.52)", pointerEvents: "none" }} />
-        <div style={{ position: "relative", zIndex: 1 }}>
-          <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: "-.4px" }}>Pratique</h1>
-          <div style={{ fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,.85)", marginTop: 2 }}>
-            {gMastery.comprises} compris · {gMastery.ancrees} ancré{gMastery.ancrees > 1 ? "s" : ""} sur {gMastery.total} leçons
-          </div>
-        </div>
-      </div>
+      <ScreenHero
+        image="/ocean.jpg" color="#36b3d7" overlay="rgba(0,60,80,.52)" position="center 30%"
+        title="Pratique"
+        subtitle={`${gMastery.comprises} compris · ${gMastery.ancrees} ancré${gMastery.ancrees > 1 ? "s" : ""} sur ${gMastery.total} leçons`}
+      />
 
-      <div style={{ padding: "16px 16px 24px", display: "flex", flexDirection: "column", gap: 14 }}>
+      <div className="gr-stagger" style={{ padding: "16px 16px 24px", display: "flex", flexDirection: "column", gap: 16 }}>
         {seance.vide ? (
-          <section style={{ background: C.surface, border: `1.5px solid ${C.primaryBorder}`, borderRadius: 22, padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: C.primaryD, textTransform: "uppercase", letterSpacing: ".06em" }}>Ta séance du jour</div>
-            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: C.text }}>Commence par une leçon</h2>
-            <div style={{ fontSize: 13, color: C.text2, lineHeight: 1.5 }}>Ta séance se composera d'elle-même dès ta première leçon : révision de ce que tu as appris, puis du jeu.</div>
-            <button onClick={() => navigate("home")} className="gr-focus" style={{ minHeight: 52, border: "none", borderRadius: 16, background: C.primaryBtn || C.primary, color: C.onPrimaryBtn, fontFamily: "inherit", fontSize: 16, fontWeight: 800, cursor: "pointer" }}>
-              Aller au Parcours
-            </button>
-          </section>
+          <Card as="section" tone="primary" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <Eyebrow>Ta séance du jour</Eyebrow>
+            <h2 style={{ margin: 0, fontSize: T.h3, fontWeight: 800, color: C.text, letterSpacing: "-.3px" }}>Commence par une leçon</h2>
+            <div style={{ fontSize: T.small, color: C.text2, lineHeight: 1.5 }}>Ta séance se composera d'elle-même dès ta première leçon : révision de ce que tu as appris, puis du jeu.</div>
+            <Button size="lg" full iconRight="arrow-right" onClick={() => navigate("home")}>Aller au Parcours</Button>
+          </Card>
         ) : (
           <SeanceDuJour C={C} seance={seance} duree={duree}
             onDuree={(v) => { setDuree(v); ecrireDuree(v); }} onLancer={lancerEtape} />
@@ -161,16 +154,14 @@ export function TrainingScreen({ state, dispatch, content, navigate, vueInitiale
         <Semaine C={C} state={state} objectifJours={objectifJoursSemaine(state.onboarding?.timePerWeek)} />
 
         {uniteEnAttente && (
-          <section style={{ background: C.amberL, border: `1.5px solid ${C.amberBorder}`, borderRadius: R.lg, padding: "12px 14px", display: "flex", alignItems: "center", gap: 12 }}>
-            <Ti name="lock" size={22} color={C.amberD} />
+          <Card as="section" tone="amber" soft pad="12px 14px" style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <IconTile icon="clipboard-check" tone="amber" solid />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: C.amberD }}>Vérification prête</div>
-              <div style={{ fontSize: 12, color: C.amberD }}>{uniteEnAttente.title} : leçons finies, à valider</div>
+              <div style={{ fontSize: 12, color: C.amberD, lineHeight: 1.4 }}>{uniteEnAttente.title} : leçons finies, à valider</div>
             </div>
-            <button onClick={() => navigate("home")} className="gr-focus" style={{ minHeight: 44, padding: "0 14px", borderRadius: R.md, border: `1.5px solid ${C.amber}`, background: C.surface, color: C.amberD, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
-              Valider
-            </button>
-          </section>
+            <Button size="sm" variant="secondary" tone="amber" onClick={() => navigate("home")}>Valider</Button>
+          </Card>
         )}
 
         <ApercuExercices C={C} domaines={domainesVisibles} state={state} content={content}
@@ -178,11 +169,11 @@ export function TrainingScreen({ state, dispatch, content, navigate, vueInitiale
 
         <section aria-labelledby="titre-domaines" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {/* Gropi « choix » : c'est ici qu'on choisit son chemin du jour. */}
-          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 10, margin: "4px 4px 0" }}>
-            <h2 id="titre-domaines" style={{ margin: 0, fontSize: 17, fontWeight: 800, color: C.text }}>S'entraîner sur…</h2>
-            <Gropi pose={POSE_ROLE.choix} size={40} />
+          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 10 }}>
+            <SectionTitle id="titre-domaines">S'entraîner sur…</SectionTitle>
+            <Gropi pose={POSE_ROLE.choix} size={44} anim="bob" style={{ marginRight: 4 }} />
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
+          <div className="gr-stagger" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
             {domainesOrdonnes.map(d => (
               <CarteDomaine key={d.id} C={C} d={d} state={state} content={content} progression={progression} onOuvrir={() => setDomaineOuvert(d.id)} />
             ))}
@@ -198,47 +189,36 @@ function SeanceDuJour({ C, seance, duree, onDuree, onLancer }) {
   const { etapes, prochaine, terminee, totalMinutes } = seance;
   const commencee = etapes.some(e => e.fait);
   return (
-    <section aria-labelledby="titre-seance" style={{ background: C.surface, border: `1.5px solid ${C.primaryBorder}`, borderRadius: 22, padding: 16, display: "flex", flexDirection: "column", gap: 14, boxShadow: "0 6px 20px rgba(184,64,16,.10)" }}>
+    <Card as="section" tone="primary" aria-labelledby="titre-seance" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <div>
-        <div style={{ fontSize: 12, fontWeight: 700, color: C.primaryD, textTransform: "uppercase", letterSpacing: ".06em" }}>Ta séance du jour</div>
-        <h2 id="titre-seance" style={{ margin: "4px 0 0", fontSize: 20, fontWeight: 800, color: C.text, letterSpacing: "-.3px" }}>
+        <Eyebrow>Ta séance du jour</Eyebrow>
+        <h2 id="titre-seance" style={{ margin: "4px 0 0", fontSize: T.h3, fontWeight: 800, color: C.text, letterSpacing: "-.3px" }}>
           {terminee ? "Séance terminée" : commencee ? "On continue ?" : "Composée pour toi"}
         </h2>
       </div>
 
       {!terminee && (
-        <div role="group" aria-label="Durée de la séance" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 6, background: C.surface2, padding: 4, borderRadius: 14 }}>
-          {DUREES.map(v => (
-            <button key={v} onClick={() => onDuree(v)} aria-pressed={v === duree} className="gr-focus" style={{
-              minHeight: 44, border: "none", borderRadius: 11, fontFamily: "inherit", fontSize: 14, fontWeight: 700, cursor: "pointer",
-              background: v === duree ? C.surface : "transparent", color: v === duree ? C.text : C.text2,
-              boxShadow: v === duree ? "0 1px 4px rgba(24,19,15,.12)" : "none",
-            }}>{v} min</button>
-          ))}
-        </div>
+        <Segmented label="Durée de la séance" value={duree} onChange={onDuree}
+          options={DUREES.map(v => ({ value: v, label: `${v} min` }))} />
       )}
 
-      <ol style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+      <ol style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 6 }}>
         {etapes.map((e, i) => {
           const estProchaine = prochaine?.id === e.id;
           const reste = e.id === "jouer" && !e.fait && e.secondesFaites > 0
             ? ` · ${Math.floor(e.secondesFaites / 60)} min jouée${e.secondesFaites >= 120 ? "s" : ""} sur ${e.minutes}` : "";
           return (
             <li key={e.id}>
-              <button onClick={() => onLancer(e)} className="gr-focus"
+              <button onClick={() => onLancer(e)} className="gr-row gr-focus"
                 aria-label={`Étape ${i + 1} : ${e.titre}, ${e.minutes} minutes, ${e.fait ? "faite" : estProchaine ? "à faire maintenant" : "à faire"}`}
                 style={{
                   width: "100%", minHeight: 56, display: "flex", alignItems: "center", gap: 12, padding: "8px 10px", textAlign: "left",
-                  borderRadius: 14, cursor: "pointer", fontFamily: "inherit",
+                  borderRadius: R.md, fontFamily: "inherit",
                   background: estProchaine ? C.primaryL : "transparent",
-                  border: `1.5px solid ${estProchaine ? C.primaryBorder : "transparent"}`,
+                  border: `2px solid ${estProchaine ? C.primaryBorder : "transparent"}`,
                 }}>
-                <div style={{
-                  width: 34, height: 34, flexShrink: 0, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center",
-                  background: e.fait ? C.green : C.primaryL, border: e.fait ? "none" : `1.5px solid ${C.primaryBorder}`,
-                }}>
-                  <Ti name={e.fait ? "check" : ICONE_ETAPE[e.id]} size={17} color={e.fait ? C.onPrimaryBtn : C.primaryD} />
-                </div>
+                <IconTile icon={e.fait ? "check" : ICONE_ETAPE[e.id]} tone={e.fait ? "green" : "primary"} solid={e.fait} size={36}
+                  style={e.fait ? undefined : { color: C.primaryD }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 14, fontWeight: 700, color: C.text, textDecorationLine: e.fait ? "line-through" : "none", textDecorationColor: C.text3 }}>{e.titre}</div>
                   <div style={{ fontSize: 12, color: C.text2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.detail}{reste}</div>
@@ -251,21 +231,16 @@ function SeanceDuJour({ C, seance, duree, onDuree, onLancer }) {
       </ol>
 
       {terminee ? (
-        <div role="status" style={{ display: "flex", alignItems: "center", gap: 10, background: C.greenL, border: `1.5px solid ${C.greenBorder}`, borderRadius: 14, padding: "12px 14px", color: C.greenD, fontSize: 13, lineHeight: 1.5 }}>
-          <Gropi pose={POSE_ROLE.reussite} size={40} anim="pop" />
+        <div role="status" className="gr-in-pop" style={{ display: "flex", alignItems: "center", gap: 10, background: C.greenL, border: `2px solid ${C.greenBorder}`, borderRadius: R.md, padding: "12px 14px", color: C.greenD, fontSize: T.small, lineHeight: 1.5 }}>
+          <Gropi pose={POSE_ROLE.reussite} size={44} anim="cheer" />
           <div><b>Bravo, c'est fait pour aujourd'hui.</b> Envie de continuer ? Choisis un domaine ci-dessous.</div>
         </div>
       ) : (
-        <button onClick={() => onLancer(prochaine)} className="gr-focus" style={{
-          minHeight: 52, border: "none", borderRadius: 16, background: C.primaryBtn || C.primary, color: C.onPrimaryBtn,
-          fontFamily: "inherit", fontSize: 16, fontWeight: 800, cursor: "pointer",
-          display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-        }}>
-          <Ti name="player-play" size={18} color={C.onPrimaryBtn} />
+        <Button size="lg" full icon="player-play" onClick={() => onLancer(prochaine)}>
           {commencee ? `Continuer : ${prochaine.titre}` : `Commencer · ${totalMinutes} min`}
-        </button>
+        </Button>
       )}
-    </section>
+    </Card>
   );
 }
 
@@ -276,10 +251,10 @@ function Semaine({ C, state, objectifJours }) {
   const auj = indexJour(todayStr());
   const n = jours.length;
   return (
-    <section aria-labelledby="titre-semaine" style={{ background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
+    <Card as="section" aria-labelledby="titre-semaine" pad="12px 14px" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
-        <h2 id="titre-semaine" style={{ margin: 0, fontSize: 15, fontWeight: 800, color: C.text }}>Cette semaine</h2>
-        <div style={{ fontSize: 13, color: C.text2 }}>
+        <h2 id="titre-semaine" style={{ margin: 0, fontSize: T.body, fontWeight: 800, color: C.text }}>Cette semaine</h2>
+        <div style={{ fontSize: T.small, color: C.text2 }}>
           <b style={{ color: C.text }}>{n} jour{n > 1 ? "s" : ""}</b> de pratique sur {objectifJours}
         </div>
       </div>
@@ -287,18 +262,20 @@ function Semaine({ C, state, objectifJours }) {
         {JOURS.map((l, i) => (
           <li key={i} aria-label={`${NOMS_JOURS[i]} : ${faits.has(i) ? "pratiqué" : i === auj ? "aujourd'hui" : "pas de pratique"}`}
             style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-            <div style={{
-              width: 30, height: 30, borderRadius: 999, display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box",
+            <div className={faits.has(i) ? "gr-in-pop gr-delay" : undefined} style={{
+              "--d": i + 2,
+              width: 32, height: 32, borderRadius: R.pill, display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box",
               background: faits.has(i) ? C.green : i === auj ? C.surface : C.surface2,
-              border: !faits.has(i) && i === auj ? `2px solid ${C.primary}` : "none",
+              border: !faits.has(i) && i === auj ? `2.5px solid ${C.primary}` : "none",
+              boxShadow: faits.has(i) ? `0 2px 0 color-mix(in srgb, ${C.green} 70%, #000)` : "none",
             }}>
-              {faits.has(i) && <Ti name="check" size={14} color={C.onPrimaryBtn} />}
+              {faits.has(i) && <Ti name="check" size={15} color={C.onPrimaryBtn} stroke={3} />}
             </div>
-            <div aria-hidden="true" style={{ fontSize: 11, fontWeight: i === auj ? 800 : 600, color: i === auj ? C.primaryD : C.text2 }}>{l}</div>
+            <div aria-hidden="true" style={{ fontSize: T.micro, fontWeight: i === auj ? 800 : 600, color: i === auj ? C.primaryD : C.text2 }}>{l}</div>
           </li>
         ))}
       </ul>
-    </section>
+    </Card>
   );
 }
 
@@ -324,24 +301,19 @@ function CarteDomaine({ C, d, state, content, progression, onOuvrir }) {
     ? `Jam Session · ${state.jam?.seances || 0} séance${(state.jam?.seances || 0) > 1 ? "s" : ""}`
     : miennes.length ? `${miennes.length} compétence${miennes.length > 1 ? "s" : ""}` : "À débloquer dans le parcours";
   return (
-    <button onClick={onOuvrir} className="gr-focus" aria-label={`${d.id} : ${detail}${commencees.length ? `, niveau moyen ${niveau} sur 3` : ""}${detailExos ? `, ${detailExos}` : ""}`}
-      style={{ minHeight: 148, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10, padding: 14, borderRadius: 18, background: C.surface, border: `1.5px solid ${k.b}`, cursor: "pointer", textAlign: "left", fontFamily: "inherit" }}>
-      <div style={{ width: 38, height: 38, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", background: k.l }}>
-        <Ti name={d.icone} size={20} color={k.c} />
-      </div>
-      <div style={{ fontSize: 15, fontWeight: 800, color: C.text }}>{d.id}</div>
-      {d.id !== "Impro" && !d.prelude && (
-        <div aria-hidden="true" style={{ display: "flex", gap: 4, width: "100%" }}>
-          {[1, 2, 3].map(n => <div key={n} style={{ flex: 1, height: 6, borderRadius: 3, background: n <= niveau ? k.c : C.border }} />)}
-        </div>
-      )}
+    <Card onClick={onOuvrir} tone={d.couleur} pad={14}
+      aria-label={`${d.id} : ${detail}${commencees.length ? `, niveau moyen ${niveau} sur 3` : ""}${detailExos ? `, ${detailExos}` : ""}`}
+      style={{ minHeight: 148, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10 }}>
+      <IconTile icon={d.icone} tone={d.couleur} size={40} />
+      <div style={{ fontSize: T.body, fontWeight: 800, color: C.text }}>{d.id}</div>
+      {d.id !== "Impro" && !d.prelude && <Gauge value={niveau} color={k.c} style={{ width: "100%" }} />}
       <div style={{ fontSize: 12, color: C.text2 }}>{detail}</div>
       {detailExos && (
         <div aria-hidden="true" style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 600, color: C.text2, marginTop: -4 }}>
           <Ti name="guitar-pick" size={13} color={k.c} /> {detailExos}
         </div>
       )}
-    </button>
+    </Card>
   );
 }
 
@@ -362,62 +334,58 @@ function VueDomaine({ C, d, state, dispatch, content, navigate, progression, qui
   };
 
   return (
-    <div>
-      <div style={{ background: k.l, borderBottom: `1.5px solid ${k.b}`, padding: "18px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
-        <button onClick={onRetour} aria-label="Retour à Pratique" className="gr-focus" style={{ width: 44, height: 44, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", background: C.surface, border: `1.5px solid ${k.b}`, cursor: "pointer" }}>
-          <Ti name="arrow-left" size={18} color={k.d} />
-        </button>
-        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, letterSpacing: "-.5px", color: k.d }}>{d.id}</h1>
+    <div className="gr-in-push">
+      <SubHeader tone={d.couleur} onBack={onRetour} backLabel="Retour à Pratique" title={d.id}
+        right={<IconTile icon={d.icone} tone={d.couleur} size={44} style={{ background: C.surface }} />}>
         {peutReviser ? (
-          <button onClick={() => navigate("review", { domaine: d.id, cible: 10, retour: "training" })} className="gr-focus" style={{
-            minHeight: 52, border: "none", borderRadius: 16, background: k.ink, color: C.onPrimaryBtn, fontFamily: "inherit", fontSize: 15, fontWeight: 800, cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-          }}>
-            <Ti name="player-play" size={18} color={C.onPrimaryBtn} /> {d.prelude ? "Réviser les premiers pas" : `S'entraîner sur ${d.id === "Impro" ? "l'impro" : d.id === "Oreille" ? "l'oreille" : `le ${d.id.toLowerCase()}`}`}
-          </button>
+          <Button size="lg" full tone={d.couleur} icon="player-play"
+            onClick={() => navigate("review", { domaine: d.id, cible: 10, retour: "training" })}>
+            {d.prelude ? "Réviser les premiers pas" : `S'entraîner sur ${d.id === "Impro" ? "l'impro" : d.id === "Oreille" ? "l'oreille" : `le ${d.id.toLowerCase()}`}`}
+          </Button>
         ) : d.id !== "Impro" && (
-          <div style={{ fontSize: 13, color: k.d }}>{d.prelude
+          <div style={{ fontSize: T.small, color: k.d, lineHeight: 1.5 }}>{d.prelude
             ? "Rien à réviser pour l'instant : les questions se débloquent avec les leçons « Premiers pas » du parcours."
             : "Rien à réviser pour l'instant : les compétences de ce domaine se débloquent avec les leçons du parcours."}</div>
         )}
-      </div>
+      </SubHeader>
 
-      <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 16 }}>
+      <div className="gr-stagger" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 16 }}>
         {quizOuvert ? (
           <section>
-            <button onClick={() => setQuizOuvert(false)} className="gr-focus" style={{ minHeight: 44, border: "none", background: "none", color: C.text2, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", padding: 0 }}>
-              ← Fermer les quiz
-            </button>
+            <Button variant="ghost" size="sm" icon="arrow-left" onClick={() => setQuizOuvert(false)} style={{ padding: 0, marginBottom: 4 }}>
+              Fermer les quiz
+            </Button>
             <QuizScreen state={state} dispatch={dispatch} content={content} embedded />
           </section>
         ) : (<>
           {d.id === "Impro" ? (
-            <Bloc C={C} titre="Ta Jam Session">
-              <Ligne C={C} titre={`${state.jam?.seances || 0} séance${(state.jam?.seances || 0) > 1 ? "s" : ""} comptée${(state.jam?.seances || 0) > 1 ? "s" : ""}`}
+            <Bloc titre="Ta Jam Session">
+              <ListRow title={`${state.jam?.seances || 0} séance${(state.jam?.seances || 0) > 1 ? "s" : ""} comptée${(state.jam?.seances || 0) > 1 ? "s" : ""}`}
                 detail={`${Math.floor((state.jam?.secondes || 0) / 60)} min de jeu · ${state.jam?.contraintes || 0} contrainte${(state.jam?.contraintes || 0) > 1 ? "s" : ""} tenue${(state.jam?.contraintes || 0) > 1 ? "s" : ""}`} />
             </Bloc>
           ) : d.prelude ? null : (
-            <Bloc C={C} titre="Tes compétences">
+            <Bloc titre="Tes compétences">
               {debloquees.map(p => (
-                <Ligne key={p.id} C={C} titre={p.titre.replace(/^[^:]+ : /, "")}
+                <ListRow key={p.id} title={p.titre.replace(/^[^:]+ : /, "")}
                   detail={p.commencee ? `Niveau ${p.niveau} · ${p.libelle}` : "Nouvelle"}
-                  jauge={p.commencee ? p.niveau : 0} couleur={k.c} />
+                  right={<Gauge size="sm" value={p.commencee ? p.niveau : 0} color={k.c} />} />
               ))}
               {verrouillees.map(f => (
-                <Ligne key={f.id} C={C} titre={f.titre.replace(/^[^:]+ : /, "")} verrou
+                <ListRow key={f.id} title={f.titre.replace(/^[^:]+ : /, "")} locked
                   detail={`Se débloque avec « ${lecons.get(f.lecon) || "une leçon du parcours"} »`} />
               ))}
-              {!debloquees.length && !verrouillees.length && <Ligne C={C} titre="Aucune compétence dans ce domaine" detail="" />}
+              {!debloquees.length && !verrouillees.length && <ListRow title="Aucune compétence dans ce domaine" />}
             </Bloc>
           )}
 
           {(exercices.length > 0 || exosVerrouilles.length > 0) && (
-            <BlocExercices C={C} titre="Exercices" exercices={exercices} verrouilles={exosVerrouilles}
+            <BlocExercices titre="Exercices" exercices={exercices} verrouilles={exosVerrouilles}
               state={state} lecons={lecons} onExercice={onExercice} />
           )}
 
-          <Bloc C={C} titre="En libre">
-            <Ligne C={C} titre={d.libre.titre} detail={d.libre.detail} onClick={ouvrirLibre} />
+          <Bloc titre="En libre">
+            <ListRow title={d.libre.titre} detail={d.libre.detail} onClick={ouvrirLibre}
+              lead={<IconTile icon="player-play" tone={d.couleur} size={36} />} />
           </Bloc>
         </>)}
       </div>
@@ -425,40 +393,12 @@ function VueDomaine({ C, d, state, dispatch, content, navigate, progression, qui
   );
 }
 
-function Bloc({ C, titre, children }) {
+function Bloc({ titre, children }) {
   return (
     <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      <h2 style={{ margin: "0 4px", fontSize: 16, fontWeight: 800, color: C.text }}>{titre}</h2>
-      <ul style={{ listStyle: "none", margin: 0, padding: 0, background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: 18, overflow: "hidden" }}>
-        {children}
-      </ul>
+      <SectionTitle>{titre}</SectionTitle>
+      <ListGroup>{children}</ListGroup>
     </section>
-  );
-}
-
-function Ligne({ C, titre, detail, jauge, couleur, verrou, onClick }) {
-  const contenu = (
-    <>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: verrou ? C.text2 : C.text }}>{titre}</div>
-        {detail && <div style={{ fontSize: 12, color: C.text2 }}>{detail}</div>}
-      </div>
-      {verrou && <Ti name="lock" size={17} color={C.text2} label="Verrouillée" />}
-      {jauge != null && !verrou && (
-        <div role="img" aria-label={`niveau ${jauge} sur 3`} style={{ display: "flex", gap: 3, flexShrink: 0 }}>
-          {[1, 2, 3].map(n => <div key={n} style={{ width: 14, height: 6, borderRadius: 3, background: n <= jauge ? couleur : C.border }} />)}
-        </div>
-      )}
-      {onClick && <Ti name="chevron-right" size={18} color={C.text2} />}
-    </>
-  );
-  const style = { display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", minHeight: 56, boxSizing: "border-box", borderTop: `1px solid ${C.surface2}` };
-  return (
-    <li style={{ borderTop: "none" }}>
-      {onClick
-        ? <button onClick={onClick} className="gr-focus" style={{ ...style, width: "100%", background: "none", border: "none", borderTop: `1px solid ${C.surface2}`, textAlign: "left", cursor: "pointer", fontFamily: "inherit" }}>{contenu}</button>
-        : <div style={style}>{contenu}</div>}
-    </li>
   );
 }
 
@@ -476,54 +416,48 @@ function ApercuExercices({ C, domaines, state, content, onExercice, onTout }) {
     .slice(0, 2);
   return (
     <section aria-labelledby="titre-exercices" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8, margin: "4px 4px 0" }}>
-        <h2 id="titre-exercices" style={{ margin: 0, fontSize: 17, fontWeight: 800, color: C.text }}>Exercices</h2>
-        {dispo.length > 0 && <div style={{ fontSize: 13, color: C.text2 }}><b style={{ color: C.text }}>{faits}/{dispo.length}</b> fait{faits > 1 ? "s" : ""}</div>}
-      </div>
-      <ul style={{ listStyle: "none", margin: 0, padding: 0, background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: 18, overflow: "hidden" }}>
+      <SectionTitle id="titre-exercices"
+        right={dispo.length > 0 && <><b style={{ color: C.text }}>{faits}/{dispo.length}</b> fait{faits > 1 ? "s" : ""}</>}>
+        Exercices
+      </SectionTitle>
+      <ListGroup>
         {dispo.length === 0 ? (
-          <Ligne C={C} titre="Pas encore d'exercice" detail={nbVerrouilles ? `${pluriel(nbVerrouilles, "exercice")} se débloquent avec les leçons du parcours` : "Les exercices arrivent avec les leçons du parcours"} />
+          <ListRow title="Pas encore d'exercice" detail={nbVerrouilles ? `${pluriel(nbVerrouilles, "exercice")} se débloquent avec les leçons du parcours` : "Les exercices arrivent avec les leçons du parcours"} />
         ) : suivants.length === 0 ? (
-          <Ligne C={C} titre="Tout est fait !" detail="Refais-les quand tu veux : la répétition ancre le geste." />
+          <ListRow title="Tout est fait !" detail="Refais-les quand tu veux : la répétition ancre le geste."
+            lead={<IconTile icon="check" tone="green" solid size={36} />} />
         ) : suivants.map(e => <LigneExercice key={e.id} C={C} e={e} state={state} onClick={() => onExercice(e)} />)}
         {dispo.length > 0 && (
-          <li>
-            <button onClick={onTout} className="gr-focus" style={{
+          <li style={{ borderTop: `1px solid ${C.surface2}` }}>
+            <button onClick={onTout} className="gr-row gr-focus" style={{
               width: "100%", minHeight: 48, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-              background: "none", border: "none", borderTop: `1px solid ${C.surface2}`, cursor: "pointer",
-              fontFamily: "inherit", fontSize: 14, fontWeight: 700, color: C.primaryInk || C.primaryD,
+              background: "none", border: "none",
+              fontFamily: "inherit", fontSize: 14, fontWeight: 700, color: C.primaryInk,
             }}>
-              Voir tous les exercices ({dispo.length}) <Ti name="arrow-right" size={16} color={C.primaryInk || C.primaryD} />
+              Voir tous les exercices ({dispo.length}) <Ti name="arrow-right" size={16} color={C.primaryInk} />
             </button>
           </li>
         )}
-      </ul>
+      </ListGroup>
     </section>
   );
 }
 
 /** Liste complète, par domaine. */
-function VueExercices({ C, domaines, state, content, onExercice, onRetour }) {
+function VueExercices({ domaines, state, content, onExercice, onRetour }) {
   const lecons = useMemo(() => new Map(content.courses.flatMap(c => c.lessons).map(l => [l.id, l.title])), [content.courses]);
   const groupes = domaines.map(d => ({ d, ...exercicesDe(d, content, state) })).filter(g => g.dispo.length || g.verrouilles.length);
   const dispo = groupes.flatMap(g => g.dispo);
   const faits = dispo.filter(e => exerciceFait(state, e)).length;
   return (
-    <div>
-      <div style={{ background: C.primaryL, borderBottom: `1.5px solid ${C.primaryBorder}`, padding: "18px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
-        <button onClick={onRetour} aria-label="Retour à Pratique" className="gr-focus" style={{ width: 44, height: 44, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", background: C.surface, border: `1.5px solid ${C.primaryBorder}`, cursor: "pointer" }}>
-          <Ti name="arrow-left" size={18} color={C.primaryD} />
-        </button>
-        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, letterSpacing: "-.5px", color: C.primaryD }}>Exercices</h1>
-        <div style={{ fontSize: 13, color: C.primaryD, lineHeight: 1.5 }}>
-          {dispo.length
-            ? `${faits} fait${faits > 1 ? "s" : ""} sur ${pluriel(dispo.length, "exercice")} disponible${dispo.length > 1 ? "s" : ""}. Guitare en main, étape par étape.`
-            : "Aucun exercice disponible pour l'instant : ils se débloquent avec les leçons du parcours."}
-        </div>
-      </div>
-      <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 16 }}>
+    <div className="gr-in-push">
+      <SubHeader onBack={onRetour} backLabel="Retour à Pratique" title="Exercices"
+        subtitle={dispo.length
+          ? `${faits} fait${faits > 1 ? "s" : ""} sur ${pluriel(dispo.length, "exercice")} disponible${dispo.length > 1 ? "s" : ""}. Guitare en main, étape par étape.`
+          : "Aucun exercice disponible pour l'instant : ils se débloquent avec les leçons du parcours."} />
+      <div className="gr-stagger" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 16 }}>
         {groupes.map(({ d, dispo: liste, verrouilles }) => (
-          <BlocExercices key={d.id} C={C} titre={d.id} exercices={liste} verrouilles={verrouilles}
+          <BlocExercices key={d.id} titre={d.id} exercices={liste} verrouilles={verrouilles}
             state={state} lecons={lecons} onExercice={onExercice} />
         ))}
       </div>
@@ -532,16 +466,17 @@ function VueExercices({ C, domaines, state, content, onExercice, onRetour }) {
 }
 
 /** Bloc d'exercices d'un domaine : les débloqués, puis le prochain verrouillé et le compte des autres. */
-function BlocExercices({ C, titre, exercices, verrouilles, state, lecons, onExercice }) {
+function BlocExercices({ titre, exercices, verrouilles, state, lecons, onExercice }) {
+  const C = useC();
   const faites = state.completedLessons || {};
   const faits = exercices.filter(e => exerciceFait(state, e)).length;
   const prochain = verrouilles[0];
   const leconRequise = prochain && [...(prochain.unlockedBy || []), prochain.courseLink].find(id => id && !faites[id]);
   return (
-    <Bloc C={C} titre={exercices.length ? `${titre} · ${faits}/${exercices.length}` : titre}>
+    <Bloc titre={exercices.length ? `${titre} · ${faits}/${exercices.length}` : titre}>
       {exercices.map(e => <LigneExercice key={e.id} C={C} e={e} state={state} onClick={() => onExercice(e)} />)}
       {prochain && (
-        <Ligne C={C} verrou titre={verrouilles.length > 1 ? `${pluriel(verrouilles.length, "exercice")} à débloquer` : prochain.title}
+        <ListRow locked title={verrouilles.length > 1 ? `${pluriel(verrouilles.length, "exercice")} à débloquer` : prochain.title}
           detail={`${verrouilles.length > 1 ? `Prochain : « ${prochain.title} », avec` : "Se débloque avec"} la leçon « ${lecons.get(leconRequise) || "du parcours"} »`} />
       )}
     </Bloc>
@@ -554,24 +489,10 @@ function LigneExercice({ C, e, state, onClick }) {
   const statut = fait ? "fait" : enCours ? "en cours" : "à faire";
   const detail = [`${e.dur ?? "?"} min`, e.bpm ? `${e.bpm} BPM` : null, fait ? "Fait · à refaire quand tu veux" : enCours ? "En cours" : `+${e.xp} XP`].filter(Boolean).join(" · ");
   return (
-    <li>
-      <button onClick={onClick} className="gr-focus" aria-label={`Exercice « ${e.title} », ${e.dur ?? "?"} minutes, ${statut}`} style={{
-        width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", minHeight: 56, boxSizing: "border-box",
-        background: "none", border: "none", borderTop: `1px solid ${C.surface2}`, textAlign: "left", cursor: "pointer", fontFamily: "inherit",
-      }}>
-        <div aria-hidden="true" style={{
-          width: 34, height: 34, flexShrink: 0, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box",
-          background: fait ? C.green : enCours ? C.amberL : C.surface2,
-          border: enCours ? `1.5px solid ${C.amberBorder}` : "none",
-        }}>
-          <Ti name={fait ? "check" : enCours ? "player-pause" : "guitar-pick"} size={17} color={fait ? C.onPrimaryBtn : enCours ? C.amberD : C.text2} />
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: C.text }}>{e.title}</div>
-          <div style={{ fontSize: 12, color: fait ? C.greenD : C.text2 }}>{detail}</div>
-        </div>
-        <Ti name="chevron-right" size={18} color={C.text2} />
-      </button>
-    </li>
+    <ListRow onClick={onClick} ariaLabel={`Exercice « ${e.title} », ${e.dur ?? "?"} minutes, ${statut}`}
+      title={e.title} detail={detail} detailColor={fait ? C.greenD : undefined}
+      lead={<IconTile size={36} solid={fait}
+        icon={fait ? "check" : enCours ? "player-pause" : "guitar-pick"}
+        tone={fait ? "green" : enCours ? "amber" : "neutral"} />} />
   );
 }

@@ -30,9 +30,10 @@ import "./index.css";
 import { useAuth } from "./supabase/useAuth.js";
 import { useProgress } from "./supabase/useProgress.js";
 import { AuthScreen } from "./supabase/AuthScreen.jsx";
-import { FONTS, T, TAP } from "./design/tokens.js";
-import { Ti } from "./design/Ti.jsx";
-import { Toast } from "./design/ui.jsx";
+import { FONTS, T } from "./design/tokens.js";
+import { Toast, Button, LoadingScreen } from "./design/ui.jsx";
+import { NavBar } from "./design/NavBar.jsx";
+import { TABS, NAV_HEIGHT } from "./design/nav.js";
 import { Gropi } from "./design/Gropi.jsx";
 import { ThemeProvider, useC } from "./design/ThemeContext.jsx";
 import { loadState, saveState, loadContent, mergeStates, defaultState, STATE_KEY } from "./store/state.js";
@@ -102,33 +103,13 @@ function prechargerCorpsAuRepos() {
 }
 
 // ── Navigation ────────────────────────────────────────────────────────────
-// « Parcours » disparaît en tant qu'onglet séparé : l'Accueil EST le
-// parcours désormais (voir HomeScreen.jsx). La Boîte à outils prend sa
-// place — elle n'était accessible que par un bouton flottant, qui
-// recouvrait le contenu sur certains écrans (voir plus bas, ce même
-// problème disparaît avec le bouton).
-const TABS = [
-  // Le label change ("Accueil" → "Parcours"), l'id reste "home" : c'est
-  // l'identifiant interne de route, référencé partout (navigate("home"),
-  // case "home"...) — le renommer serait un chantier bien plus large pour
-  // aucun bénéfice, seul ce que la personne VOIT doit changer.
-  // Icône passée de "home" à "route", plus cohérente avec le nouveau nom
-  // — c'était déjà l'icône de l'ancien onglet "Parcours" avant la fusion.
-  { id: "home",      label: "Parcours", icon: "route" },
-  { id: "toolbox",   label: "Outils",   icon: "guitar-pick" },
-  { id: "training",  label: "Pratique", icon: "target-arrow" },
-  { id: "progress",  label: "Progrès",  icon: "chart-bar" },
-];
-
+// Les onglets (TABS) et la hauteur de la barre vivent dans design/nav.js ;
+// la barre elle-même dans design/NavBar.jsx.
 const ECRANS_VALIDES = new Set([
   ...TABS.map(t => t.id),
   "challenge", "practice", "explorer", "jam", "review", "ear",
   "courses", "exercises", "quiz",   // anciennes routes, redirigées
 ]);
-
-// Écrans où le bouton flottant est masqué : au milieu d'un exercice, on ne
-// propose pas une porte de sortie, et il recouvrait le bouton « Valider ».
-const NAV_HEIGHT = 64;
 
 // ═══════════════════════════════════════════════════════════════════════════
 export default function App() {
@@ -598,7 +579,7 @@ function AppInner({ onThemeChange }) {
   // ── Écrans de service ──────────────────────────────────────────────────
   if (loadError) return <EcranErreur C={C} message={loadError?.message || String(loadError)} />;
 
-  if (authLoading) return <EcranChargement C={C} texte="Groply" />;
+  if (authLoading) return <LoadingScreen texte="Groply" />;
 
   if (!user || recovery) return (
     <AuthScreen
@@ -614,14 +595,14 @@ function AppInner({ onThemeChange }) {
   // soit : c'est ce qui empêche de réimposer l'onboarding sur un nouvel
   // appareil (audit §2.5).
   if (!content || !progressionUtilisable) return (
-    <EcranChargement C={C} texte={chargementEchoue
+    <LoadingScreen pose={chargementEchoue ? "think" : "zen"} texte={chargementEchoue
       ? "Connexion au serveur impossible, nouvel essai…"
       : "Chargement…"} />
   );
 
   if (!state.onboarding?.done) {
     return (
-      <Suspense fallback={<EcranChargement C={C} texte="Préparation du test…" />}>
+      <Suspense fallback={<LoadingScreen texte="Préparation du test…" />}>
         <OnboardingScreen
           content={content}
           onEvent={(nom, props) => analytics.track(nom, props)}
@@ -688,54 +669,15 @@ function AppInner({ onThemeChange }) {
           paddingTop: "env(safe-area-inset-top, 0px)",
         }}
       >
-        <Suspense fallback={<EcranChargement C={C} texte="" hauteur="60dvh" />}>
-          {rendreEcran()}
+        <Suspense fallback={<LoadingScreen hauteur="60dvh" />}>
+          {/* La clé rejoue le fondu d'entrée à chaque changement d'écran. */}
+          <div key={showSettings ? "reglages" : screen} className="gr-in-fade">
+            {rendreEcran()}
+          </div>
         </Suspense>
       </main>
 
-      {/* ── Barre de navigation ──────────────────────────────────────── */}
-      {!showSettings && (
-        <nav aria-label="Navigation principale" style={{
-          position: "fixed", bottom: 0, left: 0, right: 0,
-          background: C.surface,
-          borderTop: `1px solid ${C.border}`,
-          zIndex: 100,
-          paddingBottom: "env(safe-area-inset-bottom, 0px)",
-        }}>
-          <div style={{ maxWidth: 440, margin: "0 auto", display: "flex", height: NAV_HEIGHT }}>
-            {TABS.map(t => {
-              const actif = screen === t.id;
-              return (
-                <button
-                  key={t.id}
-                  onClick={() => navigate(t.id)}
-                  onPointerEnter={() => PRELOAD[t.id]?.()}
-                  aria-current={actif ? "page" : undefined}
-                  aria-label={t.label}
-                  className="gr-focus"
-                  style={{
-                    flex: 1, background: "none", border: "none", cursor: "pointer",
-                    display: "flex", flexDirection: "column",
-                    alignItems: "center", justifyContent: "center", gap: 3,
-                    padding: "6px 0", fontFamily: FONTS.ui,
-                    minHeight: TAP.min,
-                    // Repère d'onglet actif en haut : plus lisible qu'un point
-                    // de 4 px, et il ne décale plus le contenu du bouton.
-                    boxShadow: actif ? `inset 0 2px 0 0 ${C.primary}` : "none",
-                  }}
-                >
-                  <Ti name={t.icon} size={22} color={actif ? C.primaryInk : C.text2} />
-                  <span style={{
-                    fontSize: T.micro,
-                    fontWeight: actif ? 700 : 500,
-                    color: actif ? C.primaryInk : C.text2,
-                  }}>{t.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </nav>
-      )}
+      {!showSettings && <NavBar screen={screen} navigate={navigate} preload={PRELOAD} />}
 
       {/* Le bouton flottant a disparu : la Boîte à outils a désormais son
           propre onglet (voir TABS). Ça règle au passage un problème
@@ -747,27 +689,6 @@ function AppInner({ onThemeChange }) {
 }
 
 // ── Écrans de service ──────────────────────────────────────────────────────
-// Le texte remplace l'icône : les deux anciens écrans de chargement
-// affichaient `<Ti name="music">`, c'est-à-dire une icône issue d'une webfont
-// qui n'est justement pas encore chargée à ce moment-là — donc un spinner
-// invisible.
-function EcranChargement({ C, texte, hauteur = "100dvh" }) {
-  return (
-    <div role="status" aria-live="polite" style={{
-      minHeight: hauteur, display: "flex", flexDirection: "column",
-      alignItems: "center", justifyContent: "center", gap: 14,
-      background: C.bg, fontFamily: FONTS.ui,
-    }}>
-      <div style={{
-        width: 34, height: 34, borderRadius: "50%",
-        border: `3px solid ${C.border}`, borderTopColor: C.primary,
-        animation: "gr-spin .8s linear infinite",
-      }} />
-      {texte && <div style={{ fontSize: 13, color: C.text2 }}>{texte}</div>}
-    </div>
-  );
-}
-
 function EcranErreur({ C, message }) {
   return (
     <div style={{
@@ -776,17 +697,13 @@ function EcranErreur({ C, message }) {
       background: C.bg, color: C.text, padding: 24, textAlign: "center",
       fontFamily: FONTS.title,
     }}>
-      <Gropi pose="think" size={90} />
-      <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: "-.2px" }}>Oups, une fausse note.</div>
+      <Gropi pose="think" size={90} anim="pop" />
+      <div style={{ fontSize: T.h3, fontWeight: 800, letterSpacing: "-.2px" }}>Oups, une fausse note.</div>
       <div style={{ fontSize: 13, color: C.text2, maxWidth: 300, lineHeight: 1.5 }}>
         Le contenu n'a pas pu se charger. Vérifie ta connexion et recharge l'app.
         Ta progression est en sécurité.
       </div>
-      <button onClick={() => window.location.reload()} className="gr-focus" style={{
-        marginTop: 6, background: C.primaryBtn, color: C.onPrimaryBtn, border: "none",
-        borderRadius: 12, padding: "14px 24px", fontSize: 14, fontWeight: 700,
-        cursor: "pointer", fontFamily: FONTS.ui, minHeight: 48,
-      }}>Recharger Groply</button>
+      <Button size="lg" icon="refresh" onClick={() => window.location.reload()} style={{ marginTop: 6 }}>Recharger Groply</Button>
       <details style={{ marginTop: 8, fontSize: 11, color: C.text3, maxWidth: 320 }}>
         <summary style={{ cursor: "pointer", padding: 8 }}>Détails techniques</summary>
         <pre style={{

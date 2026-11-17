@@ -60,6 +60,8 @@ export const LIGHT = {
   primaryBorder: "#F5C4A8",
   primaryL:      "#FFF0E8",
   primaryD:      "#9C360A",   //  texte sur primaryL
+  primaryEdge:   "#96390A",   //  tranche (relief) sous un aplat primaryBtn
+  edge:          "#E8C9A0",   //  tranche sous une surface pressable (= border)
 
   // ── Amber ─────────────────────────────────────────────
   amber:         "#C97B1A",
@@ -148,6 +150,8 @@ export const DARK = {
   primaryBorder: "#7A3A12",
   primaryL:      "#3D1E08",
   primaryD:      "#FFAA78",
+  primaryEdge:   "#A9400E",
+  edge:          "#4A2E14",
 
   // ── Accents propres au thème sombre ───────────────────
   // Tous ≥ 6,9:1 sur surface — c'est ce qui manquait totalement avant.
@@ -213,12 +217,49 @@ export const FONTS = {
   ui:    '"Poppins", system-ui, -apple-system, "Segoe UI", sans-serif',
 };
 
+// ── Rayons ───────────────────────────────────────────────────────────────────
+// Une seule échelle pour toute l'app. Repères : xs = petites pastilles et
+// jauges · sm = tuiles d'icône, chips · md = boutons, champs, lignes ·
+// lg = cartes · xl = grandes cartes, feuilles, dialogues.
 export const R = {
+  xs:   8,
   sm:   10,
   md:   14,
   lg:   18,
-  xl:   20,
+  xl:   22,
   pill: 999,
+};
+
+// ── Espacements ──────────────────────────────────────────────────────────────
+// Pas de 4. `page` = marge latérale des écrans, `bloc` = écart entre sections.
+export const S = {
+  1: 4, 2: 8, 3: 12, 4: 16, 5: 20, 6: 24, 8: 32,
+  page: 16,
+  bloc: 16,
+};
+
+// ── Relief ───────────────────────────────────────────────────────────────────
+// Épaisseur de la tranche sous un élément pressable (il s'enfonce d'autant au
+// toucher). Règle du design system : le relief signale « ça s'appuie » ; un
+// conteneur statique reste plat.
+export const RELIEF = { sm: 2, md: 3, lg: 4 };
+
+// ── Mouvement ────────────────────────────────────────────────────────────────
+// Mêmes valeurs que les variables --gr-dur-* / --gr-ease-* d'index.css.
+//   press   enfoncement d'un bouton
+//   fast    survol, bascule de couleur
+//   base    apparition d'un élément, changement d'écran
+//   slow    barres de progression, entrées en cascade
+//   fete    célébrations (confettis, niveau gagné)
+export const MOTION = {
+  dur:  { press: 90, fast: 160, base: 260, slow: 420, fete: 700 },
+  ease: {
+    out:     "cubic-bezier(.22,.8,.24,1)",
+    inOut:   "cubic-bezier(.65,0,.35,1)",
+    ressort: "cubic-bezier(.34,1.56,.64,1)",
+  },
+  // Décalage entre deux éléments d'une entrée en cascade (ms).
+  cascade: 45,
 };
 
 // ── Échelle typographique ────────────────────────────────────────────────────
@@ -231,11 +272,15 @@ export const T = {
   micro: 11,   // labels de navigation, numéros de case, intitulés
   small: 13,   // méta-texte, légendes
   body:  15,   // texte courant, réponses de quiz
-  lead:  17,   // chapô
+  lead:  17,   // chapô, titres de section
   h3:    19,
   h2:    23,
   h1:    27,
 };
+
+// Graisses : 500 texte courant · 600 méta appuyé · 700 libellés, lignes ·
+// 800 titres, boutons, chiffres.
+export const W = { normal: 500, medium: 600, bold: 700, black: 800 };
 
 // ── Cibles tactiles ─────────────────────────────────────────────────────────
 // WCAG 2.2 SC 2.5.8 (AA) impose 24 px ; Apple recommande 44 pt et Material

@@ -13,12 +13,16 @@
 //   onEvent(name, props) — instrumentation analytics (funnel, drop-off)
 
 import { useState, useEffect, useMemo } from "react";
-import { FONTS, R, MODULE } from "../design/tokens.js";
+import { FONTS, T, MODULE } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
+import { vibrer } from "../design/hooks.js";
 import { Ti } from "../design/Ti.jsx";
 import { Gropi } from "../design/Gropi.jsx";
 import { POSE_ROLE } from "../design/gropiPoses.js";
-import { ProgressBar } from "../design/ui.jsx";
+import {
+  AnswerOption, Button, Card, Eyebrow, Feedback, Gauge, IconTile, ListGroup, ListRow,
+  QuestionCard, ResultScreen, SessionBar, Tag,
+} from "../design/ui.jsx";
 import { FretboardQuizQuestion } from "../Fretboard.jsx";
 import {
   TESTABLE_MODULES, startFromScore, TIER_VALUE,
@@ -183,6 +187,7 @@ export function OnboardingScreen({ content, onComplete, onEvent }) {
     setOverallTier(overall);
     setWeakest(weak);
     emit("placement_completed", { skillLevels: finalLevels, overallTier: overall, weakestModule: weak });
+    vibrer([12, 40, 18]);
     setPhase("results");
   }
 
@@ -255,173 +260,152 @@ export function OnboardingScreen({ content, onComplete, onEvent }) {
     phase === "goal"      ? 85 :
     phase === "time"      ? 95 : 100;
 
+  // Étape plein écran centrée (bienvenue, intro du test).
+  const centre = { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 16, minHeight: 0 };
+  const titreEtape = { margin: 0, fontSize: T.h2, fontWeight: 800, color: C.text, letterSpacing: "-.3px", lineHeight: 1.25 };
+  // Titre passé à ResultScreen : garde sa balise de titre, prend le style du composant.
+  const titreHerite = { margin: 0, font: "inherit", letterSpacing: "inherit" };
+
   return (
     <div style={{
       minHeight: "100dvh", display: "flex", flexDirection: "column",
-      background: C.bg, fontFamily: FONTS.title,
+      background: C.bg, fontFamily: FONTS.ui,
       padding: "calc(env(safe-area-inset-top, 0px) + 12px) 0 24px",
     }}>
       {phase !== "welcome" && (
-        <div style={{ padding: "0 20px 4px" }}>
-          <ProgressBar pct={progressPct} />
-        </div>
+        <SessionBar pct={progressPct} style={{ padding: "0 20px 4px", maxWidth: 440, width: "100%", margin: "0 auto", boxSizing: "border-box" }} />
       )}
 
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "0 20px", maxWidth: 440, width: "100%", margin: "0 auto" }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "0 20px", maxWidth: 440, width: "100%", margin: "0 auto", boxSizing: "border-box" }}>
 
         {/* ── Bienvenue ─────────────────────────────────────────────── */}
         {phase === "welcome" && (
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 18, minHeight: 0 }}>
-            <Gropi pose="wave" size={110} anim="bob" />
-            <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: C.text, letterSpacing: "-.3px" }}>
+          <div className="gr-in-push" style={{ ...centre, gap: 18 }}>
+            <Gropi pose="wave" size={132} anim="wiggle" />
+            <h1 style={{ ...titreEtape, fontSize: T.h1 }}>
               Bienvenue sur Groply
             </h1>
-            <p style={{ margin: 0, fontSize: 14.5, lineHeight: 1.6, color: C.text2, maxWidth: 300 }}>
+            <p style={{ margin: 0, fontSize: T.body, lineHeight: 1.6, color: C.text2, maxWidth: 310 }}>
               Avant de commencer, dis-moi où tu en es : ton Parcours s'adapte à ton vrai niveau, que tu n'aies jamais touché une guitare ou que tu joues depuis des années. 2 minutes, promis.
             </p>
-            <PrimaryButton C={C} onClick={() => { emit("onboarding_started"); setPhase("experience"); emit("onboarding_step_view", { step: "experience" }); }}>
+            <Button size="lg" full style={{ marginTop: 8 }}
+              onClick={() => { emit("onboarding_started"); setPhase("experience"); emit("onboarding_step_view", { step: "experience" }); }}>
               Commencer
-            </PrimaryButton>
+            </Button>
           </div>
         )}
 
         {/* ── Tu joues déjà ? ───────────────────────────────────────── */}
         {phase === "experience" && (
-          <StepLayout C={C} pose={POSE_ROLE.choix} eyebrow="Pour commencer" title="Tu as déjà joué de la guitare ?"
+          <StepLayout pose={POSE_ROLE.choix} eyebrow="Pour commencer" title="Tu as déjà joué de la guitare ?"
             subtitle="Si tu débutes, pas de test : on commence ensemble par les tout premiers pas.">
             {EXPERIENCE_OPTIONS.map(opt => (
-              <OptionCard key={opt.id} C={C} selected={experience === opt.id} onClick={() => setExperience(opt.id)}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <Ti name={opt.icon} size={19} color={experience === opt.id ? C.primary : C.text2} />
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 14.5 }}>{opt.label}</div>
-                    <div style={{ fontSize: 12.5, color: C.text2, marginTop: 2 }}>{opt.sub}</div>
-                  </div>
-                </div>
-              </OptionCard>
+              <OptionCard key={opt.id} selected={experience === opt.id} onClick={() => setExperience(opt.id)}
+                icon={opt.icon} label={opt.label} sub={opt.sub} />
             ))}
-            <PrimaryButton C={C} disabled={!experience} onClick={chooseExperience}>
+            <Button size="lg" full style={{ marginTop: 8 }} disabled={!experience} onClick={chooseExperience}>
               Continuer
-            </PrimaryButton>
+            </Button>
           </StepLayout>
         )}
 
         {/* ── Débutant complet : pas de test ───────────────────────── */}
         {phase === "debutant" && (
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 16 }}>
-            <Gropi pose="celebrate" size={100} anim="cheer" />
-            <h2 style={{ margin: 0, fontSize: 21, fontWeight: 800, color: C.text }}>
-              Bienvenue dans l'aventure !
-            </h2>
-            <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.6, color: C.text2, maxWidth: 310 }}>
-              Pas de test pour toi : ton Parcours commence par les <b style={{ color: C.text }}>Premiers pas</b>. Tenir ta guitare, l'accorder, tes premiers accords, tes premières rythmiques et la lecture des tablatures, à ton rythme.
-            </p>
-            <PrimaryButton C={C} onClick={() => { setPhase("goal"); emit("onboarding_step_view", { step: "goal" }); }}>
-              Continuer
-            </PrimaryButton>
+          <div className="gr-in-push" style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+            <ResultScreen
+              pose="celebrate" anim="cheer" style={{ padding: "12px 0 0" }}
+              title={<h2 style={titreHerite}>Bienvenue dans l'aventure !</h2>}
+              subtitle={<>Pas de test pour toi : ton Parcours commence par les <b style={{ color: C.text }}>Premiers pas</b>. Tenir ta guitare, l'accorder, tes premiers accords, tes premières rythmiques et la lecture des tablatures, à ton rythme.</>}
+              actions={(
+                <Button size="lg" full onClick={() => { setPhase("goal"); emit("onboarding_step_view", { step: "goal" }); }}>
+                  Continuer
+                </Button>
+              )}
+            />
           </div>
         )}
 
         {/* ── Intro test ────────────────────────────────────────────── */}
         {phase === "testIntro" && (
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 16 }}>
-            <Gropi pose="think" size={90} anim="bob" />
-            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: C.text }}>
+          <div className="gr-in-push" style={centre}>
+            <Gropi pose="think" size={112} anim="bob" />
+            <h2 style={titreEtape}>
               Le test de placement
             </h2>
-            <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.6, color: C.text2, maxWidth: 300 }}>
+            <p style={{ margin: 0, fontSize: T.body, lineHeight: 1.6, color: C.text2, maxWidth: 310 }}>
               {nbQuestions} questions, {modulesTestes.length} domaines ({modulesTestes.map(m => MODULE[m]?.label?.toLowerCase() || m).join(", ")}). Ça commence simple, puis ça monte en difficulté. C'est normal de sécher sur les dernières.
             </p>
-            <p style={{ margin: 0, fontSize: 12, color: C.text3, maxWidth: 280 }}>
+            <p style={{ margin: 0, fontSize: T.small, lineHeight: 1.55, color: C.text3, maxWidth: 300 }}>
               Pas de retour en arrière possible une fois lancé. Réponds au mieux : c'est fait pour révéler où tu es, pas pour te juger. Si tu ne sais pas, dis-le, ça compte aussi.
             </p>
-            <PrimaryButton C={C} onClick={startTest}>Lancer le test</PrimaryButton>
+            <Button size="lg" full icon="player-play" style={{ marginTop: 8 }} onClick={startTest}>Lancer le test</Button>
           </div>
         )}
 
         {/* ── Test en cours ─────────────────────────────────────────── */}
         {phase === "testing" && currentQ && (
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", paddingTop: 24, gap: 14 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <Ti name={MODULE[currentQ.moduleId]?.icon || "music"} size={16} color={C.primary} />
-              <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: C.primary, fontFamily: FONTS.ui }}>
-                {MODULE[currentQ.moduleId]?.label || currentQ.moduleId} · Question {questionNumber}/{nbQuestions}
-              </span>
-            </div>
+          <div className="gr-in-push" style={{ flex: 1, display: "flex", flexDirection: "column", paddingTop: 20 }}>
+            {/* Clé par question : énoncé et réponses rejouent leur entrée. */}
+            <div key={qIdx} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <QuestionCard eyebrow={(
+                <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <Ti name={MODULE[currentQ.moduleId]?.icon || "music"} size={15} color={C[MODULE[currentQ.moduleId]?.color] || C.primary} />
+                  {MODULE[currentQ.moduleId]?.label || currentQ.moduleId} · Question {questionNumber}/{nbQuestions}
+                </span>
+              )}>
+                {currentQ.q}
+              </QuestionCard>
 
-            {currentQ.type === "fretboard" ? (
-              <>
-                <div style={{ background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: 16 }}>
-                  <p style={{ margin: 0, fontSize: 15, fontWeight: 600, lineHeight: 1.5, color: C.text }}>{currentQ.q}</p>
-                </div>
+              {currentQ.type === "fretboard" ? (
                 <FretboardQuizQuestion
                   question={currentQ}
                   onComplete={chooseFretboard}
                   answered={answered}
                   forceReveal={forceReveal}
                 />
-              </>
-            ) : (
-              <>
-                <div style={{ background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg, padding: 16 }}>
-                  <p style={{ margin: 0, fontSize: 15, fontWeight: 600, lineHeight: 1.5, color: C.text }}>{currentQ.q}</p>
+              ) : (
+                <div className="gr-stagger" style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {currentQ.o.map((opt, i) => (
+                    <AnswerOption key={i} marker={String.fromCharCode(65 + i)} locked={answered} onClick={() => choose(i)}
+                      etat={!answered ? "idle" : i === currentQ.a ? "correct" : i === selected ? "wrong" : "muted"}>
+                      {opt}
+                    </AnswerOption>
+                  ))}
                 </div>
+              )}
 
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {currentQ.o.map((opt, i) => {
-                    let bg = C.surface, border = `1.5px solid ${C.border}`, col = C.text;
-                    if (answered) {
-                      if (i === currentQ.a)      { bg = C.greenL; border = `1.5px solid ${C.green}`; col = C.greenD; }
-                      else if (i === selected)   { bg = C.coralL; border = `1.5px solid ${C.coral}`; col = C.coralD; }
-                    }
-                    return (
-                      <button key={i} onClick={() => choose(i)} disabled={answered} style={{
-                        textAlign: "left", minHeight: 48, padding: "12px 14px", borderRadius: R.md,
-                        background: bg, border, color: col, cursor: answered ? "default" : "pointer",
-                        fontSize: 14, fontWeight: 600, fontFamily: FONTS.title, transition: "all 0.15s",
-                      }}>
-                        {opt}
-                      </button>
-                    );
-                  })}
-                </div>
-              </>
-            )}
+              {!answered && (
+                <Button variant="secondary" full
+                  onClick={currentQ.type === "fretboard" ? () => setForceReveal(true) : chooseDontKnow}>
+                  Je ne sais pas
+                </Button>
+              )}
 
-            {!answered && (
-              <button
-                onClick={currentQ.type === "fretboard" ? () => setForceReveal(true) : chooseDontKnow}
-                style={{
-                  textAlign: "center", minHeight: 44, padding: "10px 14px", borderRadius: R.md,
-                  background: "transparent", border: `1.5px dashed ${C.border}`, color: C.text3,
-                  fontSize: 13, fontWeight: 600, fontFamily: FONTS.title, cursor: "pointer",
-                }}>
-                Je ne sais pas
-              </button>
-            )}
-
-            {answered && (
-              <>
-                {/* Pour le manche interactif, les bonnes positions sont déjà
-                    montrées visuellement sur le manche (points colorés) —
-                    pas besoin de la notation "corde 6 case 8, corde 5 case 3..." en plus, elle
-                    ne veut rien dire pour quelqu'un qui découvre l'app. */}
-                {currentQ.type !== "fretboard" && (
-                  <p style={{
-                    margin: 0, fontSize: 12.5, color: C.text2, lineHeight: 1.5,
-                    display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden",
-                  }}>
-                    {selected === null ? "Pas de souci, tu la reverras. " : ""}{currentQ.exp}
-                  </p>
-                )}
-                {currentQ.type === "fretboard" && forceReveal && (
-                  <p style={{ margin: 0, fontSize: 12.5, color: C.text2, lineHeight: 1.5 }}>
-                    Pas de souci, tu la reverras. Les bonnes positions sont affichées sur le manche.
-                  </p>
-                )}
-                <PrimaryButton C={C} onClick={continueTest}>Continuer</PrimaryButton>
-              </>
-            )}
+              {answered && (
+                <>
+                  {/* Pour le manche interactif, les bonnes positions sont déjà
+                      montrées visuellement sur le manche (points colorés) —
+                      pas besoin de la notation "corde 6 case 8, corde 5 case 3..." en plus, elle
+                      ne veut rien dire pour quelqu'un qui découvre l'app. */}
+                  {currentQ.type !== "fretboard" && (selected === null ? (
+                    // « Je ne sais pas » : encart neutre, ce n'est pas une faute.
+                    <NoteNeutre>
+                      <span style={DEUX_LIGNES}>Pas de souci, tu la reverras. {currentQ.exp}</span>
+                    </NoteNeutre>
+                  ) : (
+                    <Feedback correct={selected === currentQ.a}>
+                      <span style={DEUX_LIGNES}>{currentQ.exp}</span>
+                    </Feedback>
+                  ))}
+                  {currentQ.type === "fretboard" && forceReveal && (
+                    <NoteNeutre>
+                      Pas de souci, tu la reverras. Les bonnes positions sont affichées sur le manche.
+                    </NoteNeutre>
+                  )}
+                  <Button size="lg" full iconRight="arrow-right" onClick={continueTest}>Continuer</Button>
+                </>
+              )}
+            </div>
           </div>
         )}
 
@@ -430,95 +414,78 @@ export function OnboardingScreen({ content, onComplete, onEvent }) {
           const totalCorrect = TESTABLE_MODULES.reduce((sum, m) => sum + (results[m] || 0), 0);
           const { grade, level } = startFromScore(totalCorrect, nbQuestions);
           return (
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 14, paddingTop: 12 }}>
-            <Gropi pose="celebrate" size={100} anim="cheer" />
-            <div style={{ fontSize: 12, fontWeight: 700, color: C.text2, textTransform: "uppercase", letterSpacing: ".08em" }}>
-              Ton profil Groply
-            </div>
-            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: C.text, letterSpacing: "-.2px" }}>
-              {grade.label}
-            </h1>
-            <div style={{
-              fontSize: 11, fontWeight: 700, color: C.primary,
-              background: C.primaryL, border: `1px solid ${C.primaryBorder}`,
-              borderRadius: 999, padding: "3px 11px", letterSpacing: ".03em",
-            }}>
-              Niveau {level}
-            </div>
-            <p style={{ margin: 0, fontSize: 13, color: C.text2, lineHeight: 1.55, maxWidth: 300 }}>
-              {grade.blurb}
-            </p>
+          <div className="gr-in-push" style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+            <ResultScreen
+              confetti pose="celebrate" anim="cheer" style={{ padding: "12px 0 0" }}
+              title={(
+                <>
+                  <Eyebrow tone="neutral" style={{ color: C.text2, marginBottom: 6 }}>Ton profil Groply</Eyebrow>
+                  <h1 style={titreHerite}>{grade.label}</h1>
+                </>
+              )}
+              subtitle={(
+                <>
+                  <span style={{ display: "block", marginBottom: 8 }}><Tag>Niveau {level}</Tag></span>
+                  {grade.blurb}
+                </>
+              )}
+              actions={(
+                <Button size="lg" full onClick={() => { setPhase("goal"); emit("onboarding_step_view", { step: "goal" }); }}>
+                  Continuer
+                </Button>
+              )}
+            >
+              <ListGroup>
+                {ALL_PROFILE_MODULES.map(m => {
+                  const tier = skillLevels[m];
+                  const value = TIER_VALUE[tier] || 0;
+                  const th = MODULE[m] || {};
+                  const isWeak = m === weakest;
+                  return (
+                    <ListRow key={m} title={th.label || m}
+                      style={{ minHeight: 52, textAlign: "left", background: isWeak ? C.primaryL : undefined }}
+                      lead={<IconTile icon={th.icon || "music"} tone={th.color || "neutral"} size={34} />}
+                      right={<Gauge size="sm" value={value} max={4} tone={th.color || "primary"} />} />
+                  );
+                })}
+              </ListGroup>
 
-            <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 7, marginTop: 6 }}>
-              {ALL_PROFILE_MODULES.map(m => {
-                const tier = skillLevels[m];
-                const value = TIER_VALUE[tier] || 0;
-                const th = MODULE[m] || {};
-                const isWeak = m === weakest;
-                return (
-                  <div key={m} style={{
-                    display: "flex", alignItems: "center", gap: 10,
-                    background: C.surface, border: `1.5px solid ${isWeak ? C.primary : C.border}`,
-                    borderRadius: R.md, padding: "10px 13px",
-                  }}>
-                    <Ti name={th.icon || "music"} size={16} color={C[th.color] || C.text2} />
-                    <span style={{ flex: 1, textAlign: "left", fontSize: 13, fontWeight: 700, color: C.text }}>{th.label || m}</span>
-                    <div style={{ display: "flex", gap: 3 }}>
-                      {[1, 2, 3, 4].map(seg => (
-                        <span key={seg} style={{
-                          width: 14, height: 6, borderRadius: 3,
-                          background: seg <= value ? (C[th.color] || C.primary) : C.border,
-                        }} />
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {weakest && (
-              <p style={{ margin: "2px 0 0", fontSize: 12.5, color: C.text2, lineHeight: 1.5, maxWidth: 300 }}>
-                Gropi a repéré que <b style={{ color: C.text }}>{MODULE[weakest]?.label}</b> mérite un coup de boost, on le met en priorité dans ton Parcours.
-              </p>
-            )}
-
-            <PrimaryButton C={C} onClick={() => { setPhase("goal"); emit("onboarding_step_view", { step: "goal" }); }}>
-              Continuer
-            </PrimaryButton>
+              {weakest && (
+                <p style={{ margin: "12px auto 0", fontSize: T.small, color: C.text2, lineHeight: 1.5, maxWidth: 300, textAlign: "center" }}>
+                  Gropi a repéré que <b style={{ color: C.text }}>{MODULE[weakest]?.label}</b> mérite un coup de boost, on le met en priorité dans ton Parcours.
+                </p>
+              )}
+            </ResultScreen>
           </div>
           );
         })()}
 
         {/* ── Objectif ──────────────────────────────────────────────── */}
         {phase === "goal" && (
-          <StepLayout C={C} pose={POSE_ROLE.choix} eyebrow="Presque fini" title="Quel est ton objectif principal ?"
+          <StepLayout pose={POSE_ROLE.choix} eyebrow="Presque fini" title="Quel est ton objectif principal ?"
             subtitle="Le Parcours en tiendra compte, en plus de ton profil, sans jamais sauter les autres domaines.">
             {GOAL_OPTIONS.map(opt => (
-              <OptionCard key={opt.id} C={C} selected={goal === opt.id} onClick={() => setGoal(opt.id)}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <Ti name={opt.icon} size={19} color={goal === opt.id ? C.primary : C.text2} />
-                  <div style={{ fontWeight: 700, fontSize: 14.5 }}>{opt.label}</div>
-                </div>
-              </OptionCard>
+              <OptionCard key={opt.id} selected={goal === opt.id} onClick={() => setGoal(opt.id)}
+                icon={opt.icon} label={opt.label} />
             ))}
-            <PrimaryButton C={C} disabled={!goal} onClick={() => { setPhase("time"); emit("onboarding_step_view", { step: "time" }); }}>
+            <Button size="lg" full style={{ marginTop: 8 }} disabled={!goal}
+              onClick={() => { setPhase("time"); emit("onboarding_step_view", { step: "time" }); }}>
               Continuer
-            </PrimaryButton>
+            </Button>
           </StepLayout>
         )}
 
         {/* ── Temps disponible ──────────────────────────────────────── */}
         {phase === "time" && (
-          <StepLayout C={C} eyebrow="Dernière question" title="Combien de temps veux-tu y consacrer ?"
+          <StepLayout pose={POSE_ROLE.bonne} eyebrow="Dernière question" title="Combien de temps veux-tu y consacrer ?"
             subtitle="Ça règle tes objectifs hebdo, modifiable à tout moment dans les réglages.">
             {TIME_OPTIONS.map(opt => (
-              <OptionCard key={opt.id} C={C} selected={timePerWeek === opt.id} onClick={() => setTimePerWeek(opt.id)}>
-                <div style={{ fontWeight: 700, fontSize: 14.5 }}>{opt.label}</div>
-              </OptionCard>
+              <OptionCard key={opt.id} selected={timePerWeek === opt.id} onClick={() => setTimePerWeek(opt.id)}
+                icon="clock" label={opt.label} />
             ))}
-            <PrimaryButton C={C} disabled={!timePerWeek} onClick={finish}>
+            <Button size="lg" full style={{ marginTop: 8 }} disabled={!timePerWeek} onClick={finish}>
               C'est parti
-            </PrimaryButton>
+            </Button>
           </StepLayout>
         )}
       </div>
@@ -528,66 +495,61 @@ export function OnboardingScreen({ content, onComplete, onEvent }) {
 
 // ── Sous-composants ─────────────────────────────────────────────────────
 
-// `pose` (facultatif) : un petit Gropi à droite du titre — « choix » sur
-// les questions où l'on choisit son chemin.
-function StepLayout({ C, eyebrow, title, subtitle, pose, children }) {
+// Explication limitée à deux lignes : le test doit rester rapide.
+const DEUX_LIGNES = { display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" };
+
+/** Encart neutre après « Je ne sais pas » (ni vert ni rouge). */
+function NoteNeutre({ children }) {
+  const C = useC();
   return (
-    <div style={{ flex: 1, display: "flex", flexDirection: "column", paddingTop: 28, gap: 14 }}>
+    <Card tone="neutral" soft pad="12px 14px" className="gr-in" role="status">
+      <p style={{ margin: 0, fontSize: T.small, color: C.text2, lineHeight: 1.5 }}>{children}</p>
+    </Card>
+  );
+}
+
+// `pose` : un Gropi à droite du titre — « choix » sur les questions où l'on
+// choisit son chemin.
+function StepLayout({ eyebrow, title, subtitle, pose, children }) {
+  const C = useC();
+  return (
+    <div className="gr-in-push" style={{ flex: 1, display: "flex", flexDirection: "column", paddingTop: 24, gap: 14 }}>
       <div style={{ display: "flex", alignItems: "flex-end", gap: 12 }}>
-        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 14 }}>
-          <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: C.primary, fontFamily: FONTS.ui }}>
-            {eyebrow}
-          </div>
-          <h2 style={{ margin: 0, fontSize: 21, fontWeight: 800, color: C.text, letterSpacing: "-.2px", lineHeight: 1.3 }}>
+        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 10 }}>
+          <Eyebrow>{eyebrow}</Eyebrow>
+          <h2 style={{ margin: 0, fontSize: T.h2, fontWeight: 800, color: C.text, letterSpacing: "-.3px", lineHeight: 1.25 }}>
             {title}
           </h2>
         </div>
-        {pose && <Gropi pose={pose} size={48} anim="pop" />}
+        {pose && <Gropi pose={pose} size={68} anim="bob" />}
       </div>
       {subtitle && (
-        <p style={{ margin: 0, fontSize: 13, color: C.text2, lineHeight: 1.5 }}>{subtitle}</p>
+        <p style={{ margin: 0, fontSize: T.small, color: C.text2, lineHeight: 1.5 }}>{subtitle}</p>
       )}
-      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 6 }}>
+      <div className="gr-stagger" style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 6 }}>
         {children}
       </div>
     </div>
   );
 }
 
-function OptionCard({ C, selected, onClick, children }) {
+/** Choix d'une étape : carte en relief, teintée et cochée une fois choisie. */
+function OptionCard({ selected, onClick, icon, label, sub }) {
+  const C = useC();
   return (
-    <button
-      onClick={onClick}
-      style={{
-        textAlign: "left", width: "100%", minHeight: 48,
-        padding: "13px 15px", borderRadius: R.lg, cursor: "pointer",
-        background: selected ? C.primaryL : C.surface,
-        border: `1.5px solid ${selected ? C.primary : C.border}`,
-        color: C.text, fontFamily: FONTS.title,
-        transition: "all 0.15s",
-      }}
-    >
-      {children}
-    </button>
-  );
-}
-
-function PrimaryButton({ C, onClick, disabled, children }) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      style={{
-        width: "100%", minHeight: 52, marginTop: 8,
-        borderRadius: R.lg, border: "none", cursor: disabled ? "default" : "pointer",
-        background: disabled ? C.border : `linear-gradient(135deg, #FF9155, ${C.primary})`,
-        color: disabled ? C.text3 : "#fff",
-        fontSize: 15.5, fontWeight: 700, fontFamily: FONTS.ui,
-        boxShadow: disabled ? "none" : "0 4px 16px rgba(232,93,26,0.30)",
-        transition: "all 0.18s",
-      }}
-    >
-      {children}
-    </button>
+    <Card onClick={onClick} selected={selected} soft={selected} tone={selected ? "primary" : undefined}
+      aria-pressed={selected} pad="12px 14px"
+      style={{ minHeight: 64, display: "flex", alignItems: "center", gap: 12 }}>
+      {icon && <IconTile icon={icon} tone={selected ? "primary" : "neutral"} solid={selected} size={38} />}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: T.body, fontWeight: 700, color: selected ? C.primaryD : C.text, lineHeight: 1.35 }}>{label}</div>
+        {sub && <div style={{ fontSize: 12, color: C.text2, marginTop: 2, lineHeight: 1.4 }}>{sub}</div>}
+      </div>
+      {selected && (
+        <span aria-hidden="true" className="gr-in-pop" style={{ display: "inline-flex" }}>
+          <Ti name="circle-check" size={22} color={C.primary} />
+        </span>
+      )}
+    </Card>
   );
 }

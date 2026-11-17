@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { useC } from '../design/ThemeContext.jsx';
+import { FONTS, R, T } from '../design/tokens.js';
 import { Ti } from '../design/Ti.jsx';
+import { Gropi } from '../design/Gropi.jsx';
+import { Button, Card, Gauge, IconButton, Segmented } from '../design/ui.jsx';
 
 // ── Ce qui change (audit §1.2, §1.3, §1.5, §6.2, §8.2) ────────────────────
 // • Parcours « mot de passe oublié » + définition du nouveau mot de passe,
@@ -15,10 +18,14 @@ import { Ti } from '../design/Ti.jsx';
 // • Liens vers les CGU et la politique de confidentialité — un produit
 //   européen qui collecte un email doit informer avant de collecter.
 
-const FONTS = '"Poppins", -apple-system, sans-serif';
 const BRAND_FONT = '"Nunito", "Poppins", sans-serif';
 
 const MIN_PWD = 8;
+
+const MODES = [
+  { value: 'login',  label: 'Connexion' },
+  { value: 'signup', label: 'Inscription' },
+];
 
 const srOnly = {
   position: 'absolute', width: 1, height: 1, padding: 0, margin: -1,
@@ -100,12 +107,20 @@ export function AuthScreen({
   };
 
   const champ = {
-    padding: '13px 14px', borderRadius: 12,
-    border: `1.5px solid ${C.border}`,
+    padding: '13px 14px', borderRadius: R.md,
+    border: `2px solid ${C.borderStrong}`,
     fontSize: 16,                       // 16px : évite le zoom automatique iOS
     background: C.surface, color: C.text,
-    fontFamily: FONTS, fontWeight: 500, width: '100%', boxSizing: 'border-box',
+    fontFamily: FONTS.ui, fontWeight: 500, width: '100%', boxSizing: 'border-box',
   };
+
+  // Encart de retour (erreur ou succès) : même forme, teinte différente.
+  const encart = (fond, bord, texte) => ({
+    background: fond, border: `2px solid ${bord}`,
+    borderRadius: R.md, padding: '10px 13px', marginBottom: 16,
+    fontSize: T.small, color: texte, fontWeight: 600, lineHeight: 1.45,
+    display: 'flex', gap: 8, alignItems: 'flex-start',
+  });
 
   const titre =
     mode === 'forgot'      ? 'Mot de passe oublié' :
@@ -116,52 +131,33 @@ export function AuthScreen({
       minHeight: '100dvh',
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
-      background: C.bg, padding: '1.5rem',
-      fontFamily: FONTS,
+      background: C.bg, padding: '24px 16px',
+      fontFamily: FONTS.ui,
     }}>
-      <div style={{
-        width: '100%', maxWidth: 380,
-        background: C.surface, borderRadius: 22,
-        border: `1.5px solid ${C.border}`,
-        padding: '26px 22px',
-        boxShadow: '0 10px 40px rgba(0,0,0,.06)',
-      }}>
+      {/* Gropi salue, posé sur le bord de la carte. */}
+      <Gropi pose="wave" anim="wiggle" size={104} style={{ marginBottom: -6, position: 'relative', zIndex: 1 }} />
+
+      <Card className="gr-in-pop" pad="24px 20px" style={{ width: '100%', maxWidth: 380, boxSizing: 'border-box', borderRadius: R.xl }}>
         <div style={{
           fontFamily: BRAND_FONT, fontSize: 30, fontWeight: 800,
           color: C.primary, letterSpacing: '-.5px', textAlign: 'center', marginBottom: 4,
         }}>Groply</div>
-        <p style={{ textAlign: 'center', fontSize: 13, color: C.text2, margin: '0 0 20px' }}>
+        <p style={{ textAlign: 'center', fontSize: T.small, color: C.text2, margin: '0 0 20px' }}>
           {titre || 'Progresser à la guitare, vraiment.'}
         </p>
 
         {/* Bascule connexion / inscription — masquée dans les parcours de
             récupération, où il n'y a qu'une seule action possible. */}
         {!isRecovery && mode !== 'forgot' && (
-          <div role="tablist" aria-label="Connexion ou inscription" style={{
-            display: 'flex', gap: 6, padding: 4, marginBottom: 16,
-            background: C.surface2, borderRadius: 14,
-          }}>
-            {[{ id: 'login', label: 'Connexion' }, { id: 'signup', label: 'Inscription' }].map(({ id, label }) => (
-              <button
-                key={id} type="button" role="tab"
-                aria-selected={mode === id}
-                onClick={() => { setMode(id); clear(); }}
-                className="gr-focus"
-                style={{
-                  flex: 1, padding: '11px 9px', borderRadius: 10, border: 'none',
-                  background: mode === id ? C.primary : 'transparent',
-                  color: mode === id ? '#fff' : C.text2,
-                  fontWeight: 700, fontSize: 13, minHeight: 44,
-                  cursor: 'pointer', fontFamily: FONTS,
-                }}>
-                {label}
-              </button>
-            ))}
-          </div>
+          <Segmented
+            label="Connexion ou inscription" options={MODES} value={mode}
+            onChange={(id) => { setMode(id); clear(); }}
+            style={{ marginBottom: 16 }}
+          />
         )}
 
         <form onSubmit={submit} noValidate>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
             {!isRecovery && (
               <>
                 <label htmlFor="auth-email" style={srOnly}>Adresse email</label>
@@ -188,41 +184,25 @@ export function AuthScreen({
                   autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                   onChange={e => setPassword(e.target.value)}
                   className="gr-focus"
-                  style={{ ...champ, padding: '13px 48px 13px 14px' }}
+                  style={{ ...champ, padding: '13px 52px 13px 14px' }}
                 />
-                <button
-                  type="button"
+                <IconButton
+                  variant="ghost" icon={showPwd ? 'eye-off' : 'eye'} iconSize={19}
+                  label={showPwd ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
                   onClick={() => setShowPwd(v => !v)}
-                  aria-label={showPwd ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                  className="gr-focus"
-                  style={{
-                    position: 'absolute', right: 4, top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none', border: 'none', cursor: 'pointer',
-                    width: 44, height: 44, display: 'flex',
-                    alignItems: 'center', justifyContent: 'center',
-                    color: C.text2, borderRadius: 10,
-                  }}
-                >
-                  <Ti name={showPwd ? 'eye-off' : 'eye'} size={18} />
-                </button>
+                  style={{ position: 'absolute', right: 5, top: 0, bottom: 0, margin: 'auto 0' }}
+                />
               </div>
             )}
 
             {/* Robustesse : informe sans bloquer */}
             {needsPwd && mode !== 'login' && password.length > 0 && (
               <div aria-live="polite">
-                <div style={{ display: 'flex', gap: 4, marginBottom: 4 }}>
-                  {[0, 1, 2, 3].map(i => (
-                    <div key={i} style={{
-                      flex: 1, height: 4, borderRadius: 99,
-                      background: i < force
-                        ? (force <= 1 ? C.danger : force === 2 ? C.amber : C.green)
-                        : C.border,
-                    }} />
-                  ))}
+                <div aria-hidden="true" style={{ marginBottom: 5 }}>
+                  <Gauge value={force} max={4}
+                    color={force <= 1 ? C.danger : force === 2 ? C.amber : C.green} />
                 </div>
-                <div style={{ fontSize: 11, color: C.text2 }}>
+                <div style={{ fontSize: T.micro, fontWeight: 600, color: C.text2 }}>
                   {force <= 1 ? 'Mot de passe faible' : force === 2 ? 'Correct' : force === 3 ? 'Bon' : 'Excellent'}
                 </div>
               </div>
@@ -230,80 +210,56 @@ export function AuthScreen({
           </div>
 
           {error && (
-            <div role="alert" style={{
-              background: C.dangerL, border: `1.5px solid ${C.danger}`,
-              borderRadius: 12, padding: '10px 13px', marginBottom: '1rem',
-              fontSize: 13, color: C.text, fontWeight: 500,
-              display: 'flex', gap: 7, alignItems: 'flex-start',
-            }}>
-              <Ti name="alert-circle" size={15} color={C.danger} style={{ flexShrink: 0, marginTop: 1 }} />
+            <div role="alert" className="gr-shake" style={encart(C.dangerL, C.dangerBorder, C.dangerD)}>
+              <Ti name="alert-circle" size={17} color={C.danger} style={{ marginTop: 1 }} />
               <span>{error}</span>
             </div>
           )}
           {success && (
-            <div role="status" style={{
-              background: C.greenL, border: `1.5px solid ${C.greenBorder}`,
-              borderRadius: 12, padding: '10px 13px', marginBottom: '1rem',
-              fontSize: 13, color: C.greenD, fontWeight: 500,
-              display: 'flex', gap: 7, alignItems: 'flex-start',
-            }}>
-              <Ti name="check" size={15} color={C.greenD} style={{ flexShrink: 0, marginTop: 1 }} />
+            <div role="status" className="gr-in-pop" style={encart(C.greenL, C.greenBorder, C.greenD)}>
+              <Ti name="check" size={17} color={C.green} style={{ marginTop: 1 }} />
               <span>{success}</span>
             </div>
           )}
 
-          <button type="submit" disabled={loading} className="gr-focus" style={{
-            width: '100%', padding: '15px', borderRadius: 14, border: 'none',
-            background: loading ? C.surface2 : C.primary,
-            color: loading ? C.text2 : '#fff',
-            fontSize: 15, fontWeight: 700, minHeight: 48,
-            cursor: loading ? 'default' : 'pointer',
-            fontFamily: FONTS, letterSpacing: '-.1px',
-          }}>
+          <Button type="submit" size="lg" full loading={loading}>
             {loading ? 'Un instant…'
               : mode === 'login'  ? 'Se connecter'
               : mode === 'signup' ? 'Créer mon compte'
               : mode === 'forgot' ? 'Envoyer le lien'
               : 'Enregistrer le mot de passe'}
-          </button>
+          </Button>
         </form>
 
         {/* Liens secondaires */}
-        <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 2 }}>
           {mode === 'login' && (
             <>
-              <button type="button" onClick={() => { setMode('forgot'); clear(); }}
-                className="gr-focus" style={lien(C)}>
+              <Button variant="ghost" size="sm" full style={{ minHeight: 44 }}
+                onClick={() => { setMode('forgot'); clear(); }}>
                 Mot de passe oublié ?
-              </button>
-              <button type="button" onClick={resend} className="gr-focus" style={lien(C)}>
+              </Button>
+              <Button variant="ghost" size="sm" full style={{ minHeight: 44 }} onClick={resend}>
                 Renvoyer l'email de confirmation
-              </button>
+              </Button>
             </>
           )}
           {(mode === 'forgot' || mode === 'newPassword') && (
-            <button type="button" onClick={() => { setMode('login'); clear(); }}
-              className="gr-focus" style={lien(C)}>
+            <Button variant="ghost" size="sm" full style={{ minHeight: 44 }}
+              onClick={() => { setMode('login'); clear(); }}>
               Retour à la connexion
-            </button>
+            </Button>
           )}
         </div>
-      </div>
+      </Card>
 
       {/* Mentions légales — obligatoires avant toute collecte d'email (RGPD) */}
-      <p style={{ marginTop: 18, fontSize: 11, color: C.text2, fontFamily: FONTS, textAlign: 'center', maxWidth: 340, lineHeight: 1.6 }}>
+      <p className="gr-in-fade" style={{ marginTop: 18, marginBottom: 0, fontSize: T.micro, color: C.text2, textAlign: 'center', maxWidth: 340, lineHeight: 1.6 }}>
         En créant un compte, tu acceptes les{' '}
-        <a href="/cgu.html" style={{ color: C.primary }}>conditions d'utilisation</a> et la{' '}
-        <a href="/confidentialite.html" style={{ color: C.primary }}>politique de confidentialité</a>.
+        <a href="/cgu.html" style={{ color: C.primaryInk }}>conditions d'utilisation</a> et la{' '}
+        <a href="/confidentialite.html" style={{ color: C.primaryInk }}>politique de confidentialité</a>.
         <br />Groply conserve ton email et ta progression, rien d'autre.
       </p>
     </div>
   );
 }
-
-const lien = (C) => ({
-  background: 'none', border: 'none', cursor: 'pointer',
-  color: C.text2, fontSize: 12.5, fontFamily: FONTS,
-  textDecoration: 'underline', padding: '11px 4px', minHeight: 44,
-  textAlign: 'center', width: '100%',
-});

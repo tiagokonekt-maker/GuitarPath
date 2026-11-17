@@ -23,31 +23,12 @@
 import { useRef, useState } from "react";
 import { useC } from "../design/ThemeContext.jsx";
 import { T } from "../design/tokens.js";
+import { vibrer } from "../design/hooks.js";
 import { getNoteAtPosition, noteToFr, MARKER_FRETS, DOUBLE_MARKER_FRETS } from "../fretboardUtils.js";
 
 const FONT_UI = '"Inter", "Helvetica Neue", -apple-system, sans-serif';
 
-// ── Injection unique des styles (idempotent) ──────────────────────────────
-// Outline rentrée : le manche est dans un conteneur à défilement horizontal
-// qui rognerait l'anneau de focus global (outline-offset: 2px) sur les bords.
-if (typeof document !== "undefined" && !document.getElementById("gr-fretgrid-styles")) {
-  const s = document.createElement("style");
-  s.id = "gr-fretgrid-styles";
-  s.textContent = `
-    @media (hover: hover) {
-      .gr-fret-cell[data-interactive]:hover { background: var(--gr-fret-survol); }
-    }
-    .gr-fret-cell:focus-visible { outline-offset: -3px; }
-  `;
-  document.head.appendChild(s);
-}
-
-// ── Retour haptique ───────────────────────────────────────────────────────
-// Sur un manche, la confirmation tactile compte autant que la confirmation
-// visuelle : l'utilisateur a les yeux sur sa guitare, pas sur l'écran.
-const vibrer = (ms = 8) => {
-  try { navigator.vibrate?.(ms); } catch { /* non supporté */ }
-};
+// Survol des cases et anneau de focus rentré : voir .gr-fret-cell dans index.css.
 
 // ── Libellé lu par un lecteur d'écran pour une case ───────────────────────
 // Ex. « Corde de Mi grave, case 3, Sol ». Le numéro de corde seul (« Corde
@@ -158,6 +139,8 @@ export function FretGrid({
     refs.current.get(`${s}-${f}`)?.focus();
   };
 
+  // Retour haptique : sur un manche, la confirmation tactile compte autant que
+  // la confirmation visuelle (les yeux sont sur la guitare, pas sur l'écran).
   const activer = (s, f) => { vibrer(); onCellClick?.(s, f); };
 
   const onKeyDown = (e, s, f) => {

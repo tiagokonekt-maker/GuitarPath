@@ -1,10 +1,15 @@
 // Groply — screens/ReviewSession.jsx
 // Session de révision espacée — mélange QCM et manche interactif
 import { useState, useEffect } from "react";
-import { FONTS, R } from "../design/tokens.js";
+import { R, T } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { Gropi } from "../design/Gropi.jsx";
+import {
+  AnswerOption, Button, Card, Eyebrow, Feedback, Gauge,
+  QuestionCard, ResultScreen, SessionBar, Tag,
+} from "../design/ui.jsx";
+import { vibrer } from "../design/hooks.js";
 import { POSE_ROLE } from "../design/gropiPoses.js";
 import { updateReviewHistory } from "../store/reviewEngine.js";
 import { todayStr } from "../store/dates.js";
@@ -17,6 +22,8 @@ import { jouerEcoute, stopAll, unlockAudio } from "../audioEngine.js";
 // fragilité — si un écran se rendait avant l'injection, le composant valait
 // null. Un contexte React rend l'ordre de rendu sans importance.
 import { useRenderers } from "../renderers.jsx";
+
+const LETTRES = ["A", "B", "C", "D"];
 
 /**
  * Grille rythmique compacte pour les réponses de la dictée : 4 options
@@ -119,6 +126,7 @@ export function ReviewSession({ questions, state, dispatch, onDone }) {
       dispatch({ type: "REVIEW_SESSION_DONE", xp: currentCorrect * 20, score: `${currentCorrect}/${results.length}` });
       dispatch({ type: "MARK_STREAK" });
       dispatch({ type: "UPDATE_WEEKLY", field: "quizzes" });
+      if (currentCorrect / results.length >= 0.8) vibrer([12, 40, 18]);
       setFinished(true);
     } else {
       setSel(null);
@@ -145,118 +153,77 @@ export function ReviewSession({ questions, state, dispatch, onDone }) {
       .map(r => questions.find(q => q.id === r.id))
       .filter(Boolean);
 
+    // Compétences générées travaillées pendant la séance, avec leur niveau
+    const vues = [...new Set(results.map(r => r.id))].map(id => ({ id, fam: familleDe(id) })).filter(x => x.fam && questions.find(q => q.id === x.id)?.genere);
+    const h = state.reviewHistory || {};
+    const details = vues.length > 0 || wrongItems.length > 0 || pct >= 80;
+
     return (
-      <div style={{ padding: "24px 16px 32px", display: "flex", flexDirection: "column", gap: 14 }}>
+      <ResultScreen
+        pose={pct >= 80 ? "celebrate" : pct >= 50 ? "pride" : "think"}
+        gropiSize={pct >= 80 ? 150 : 110}
+        anim={pct >= 50 ? "cheer" : "pop"}
+        confetti={pct >= 80}
+        title={title}
+        subtitle={pct >= 80
+          ? "Excellente révision, ta mémoire se renforce."
+          : pct >= 50
+          ? "Bon travail ! Les questions ratées reviennent bientôt."
+          : "Les erreurs sont normales, c'est comme ça qu'on progresse."}
+        stats={[
+          { value: correct, label: "Correctes", tone: "green" },
+          { value: incorrect, label: "A revoir", tone: incorrect > 0 ? "coral" : "neutral" },
+          { value: xpEarned, label: "XP", tone: "primary", prefix: "+" },
+        ]}
+        pct={pct} pctTone={pct >= 80 ? "green" : pct >= 50 ? "primary" : "coral"}
+        actions={<Button size="lg" full onClick={onDone}>Retour à l'accueil</Button>}
+      >
+        {details && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {vues.length > 0 && (
+              <Card pad={14}>
+                <Eyebrow tone="neutral" style={{ color: C.text3, marginBottom: 8 }}>Tes compétences</Eyebrow>
+                {vues.map(({ id, fam }) => {
+                  const n = niveauFamille(h[id]);
+                  return (
+                    <div key={id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0" }}>
+                      <div style={{ flex: 1, fontSize: T.small, color: C.text }}>{fam.titre}</div>
+                      <Gauge size="sm" value={n} max={3} label={`niveau ${n} sur 3`} />
+                    </div>
+                  );
+                })}
+              </Card>
+            )}
 
-        {/* Hero Gropi */}
-        <div style={{ textAlign: "center", padding: "16px 0 8px" }}>
-          <Gropi
-            pose={pct >= 80 ? "celebrate" : pct >= 50 ? "pride" : "think"}
-            size={pct >= 80 ? 150 : 110}
-            anim={pct >= 50 ? "cheer" : "pop"}
-            style={{ margin: "0 auto" }}
-          />
-          <div style={{ fontSize: 22, fontWeight: 700, color: C.text, fontFamily: FONTS.title, marginTop: 8 }}>{title}</div>
-          <div style={{ fontSize: 13, color: C.text2, fontFamily: FONTS.ui, marginTop: 4 }}>
-            {pct >= 80
-              ? "Excellente révision, ta mémoire se renforce."
-              : pct >= 50
-              ? "Bon travail ! Les questions ratées reviennent bientôt."
-              : "Les erreurs sont normales, c'est comme ça qu'on progresse."}
-          </div>
-        </div>
-
-        {/* Compétences générées travaillées pendant la séance, avec leur niveau */}
-        {(() => {
-          const vues = [...new Set(results.map(r => r.id))].map(id => ({ id, fam: familleDe(id) })).filter(x => x.fam && questions.find(q => q.id === x.id)?.genere);
-          if (!vues.length) return null;
-          const h = state.reviewHistory || {};
-          return (
-            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: "14px" }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 8 }}>Tes compétences</div>
-              {vues.map(({ id, fam }) => {
-                const n = niveauFamille(h[id]);
-                return (
-                  <div key={id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0" }}>
-                    <div style={{ flex: 1, fontSize: 12.5, color: C.text, fontFamily: FONTS.ui }}>{fam.titre}</div>
-                    <div aria-label={`niveau ${n} sur 3`} style={{ display: "flex", gap: 3 }}>
-                      {[1, 2, 3].map(k => <span key={k} style={{ width: 14, height: 6, borderRadius: 3, background: k <= n ? C.primary : C.border }} />)}
+            {/* Questions ratees */}
+            {wrongItems.length > 0 && (
+              <Card tone="coral" soft pad="12px 14px">
+                <Eyebrow tone="coral" style={{ marginBottom: 8 }}>A retravailler ({wrongItems.length})</Eyebrow>
+                {wrongItems.map((q, i) => (
+                  <div key={q.id} style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: i < wrongItems.length - 1 ? 8 : 0 }}>
+                    <div style={{ width: 18, height: 18, borderRadius: R.pill, background: C.coral, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
+                      <Ti name="x" size={10} color={C.onPrimaryBtn} />
+                    </div>
+                    <div style={{ fontSize: 12, color: C.coralD, lineHeight: 1.45 }}>
+                      {q.q?.substring(0, 80)}{q.q?.length > 80 ? "..." : ""}
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          );
-        })()}
-
-        {/* Stats principales */}
-        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: "16px 14px" }}>
-          <div style={{ display: "flex", justifyContent: "space-around" }}>
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 28, fontWeight: 700, color: C.green, fontFamily: FONTS.title }}>{correct}</div>
-              <div style={{ fontSize: 11, color: C.text3, fontFamily: FONTS.ui, marginTop: 2 }}>Correctes</div>
-            </div>
-            <div style={{ width: 1, background: C.border }} />
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 28, fontWeight: 700, color: incorrect > 0 ? C.coral : C.text3, fontFamily: FONTS.title }}>{incorrect}</div>
-              <div style={{ fontSize: 11, color: C.text3, fontFamily: FONTS.ui, marginTop: 2 }}>A revoir</div>
-            </div>
-            <div style={{ width: 1, background: C.border }} />
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 28, fontWeight: 700, color: C.primary, fontFamily: FONTS.title }}>+{xpEarned}</div>
-              <div style={{ fontSize: 11, color: C.text3, fontFamily: FONTS.ui, marginTop: 2 }}>XP</div>
-            </div>
-          </div>
-
-          {/* Barre de score */}
-          <div style={{ marginTop: 14 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-              <span style={{ fontSize: 11, color: C.text3, fontFamily: FONTS.ui }}>Score</span>
-              <span style={{ fontSize: 11, fontWeight: 600, color: C.text2, fontFamily: FONTS.ui }}>{pct}%</span>
-            </div>
-            <div style={{ height: 6, background: C.border, borderRadius: 3, overflow: "hidden" }}>
-              <div style={{ height: "100%", width: `${pct}%`, background: pct >= 80 ? C.green : pct >= 50 ? C.primary : C.coral, borderRadius: 3, transition: "width 0.5s ease" }} />
-            </div>
-          </div>
-        </div>
-
-        {/* Questions ratees */}
-        {wrongItems.length > 0 && (
-          <div style={{ background: C.coralL, border: `1px solid ${C.coralBorder}`, borderRadius: R.lg, padding: "12px 14px" }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: C.coralD, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
-              A retravailler ({wrongItems.length})
-            </div>
-            {wrongItems.map((q, i) => (
-              <div key={q.id} style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: i < wrongItems.length - 1 ? 8 : 0 }}>
-                <div style={{ width: 18, height: 18, borderRadius: "50%", background: C.coral, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
-                  <Ti name="x" size={10} color={C.onPrimaryBtn} />
+                ))}
+                <div style={{ fontSize: T.micro, color: C.coralD, marginTop: 8, fontStyle: "italic" }}>
+                  Ces questions auront une priorite elevee lors de ta prochaine session.
                 </div>
-                <div style={{ fontSize: 12, color: C.coralD, fontFamily: FONTS.ui, lineHeight: 1.45 }}>
-                  {q.q?.substring(0, 80)}{q.q?.length > 80 ? "..." : ""}
-                </div>
-              </div>
-            ))}
-            <div style={{ fontSize: 11, color: C.coral, fontFamily: FONTS.ui, marginTop: 8, fontStyle: "italic" }}>
-              Ces questions auront une priorite elevee lors de ta prochaine session.
-            </div>
+              </Card>
+            )}
+
+            {/* Message si tout reussi */}
+            {pct >= 80 && (
+              <Card tone="green" soft pad="12px 14px" style={{ fontSize: 12, color: C.greenD, lineHeight: 1.5 }}>
+                Bien joue ! Les questions reussies ont ete reportees. Tu les reverras moins souvent.
+              </Card>
+            )}
           </div>
         )}
-
-        {/* Message si tout reussi */}
-        {pct >= 80 && (
-          <div style={{ background: C.greenL, border: `1px solid ${C.greenBorder}`, borderRadius: R.lg, padding: "12px 14px", fontSize: 12, color: C.greenD, fontFamily: FONTS.ui, lineHeight: 1.5 }}>
-            Bien joue ! Les questions reussies ont ete reportees. Tu les reverras moins souvent.
-          </div>
-        )}
-
-        <button onClick={onDone} style={{
-          width: "100%", padding: "14px", borderRadius: R.md, border: "none",
-          background: C.primary, color: C.onPrimaryBtn, fontSize: 14, fontWeight: 700,
-          cursor: "pointer", fontFamily: FONTS.ui, marginTop: 4,
-        }}>
-          Retour à l'accueil
-        </button>
-      </div>
+      </ResultScreen>
     );
   }
 
@@ -267,82 +234,67 @@ export function ReviewSession({ questions, state, dispatch, onDone }) {
   const attendEcoute = !!q.audio && !ecoutee && !answered;
   const ecouter = async () => { try { await unlockAudio(); await jouerEcoute(q.audio); } catch { /* noop */ } setEcoutee(true); };
   const passerSansSon = () => { setSansSon(true); next(true); };
+  const derniere = prochaine(idx, sansSon) >= questions.length;
+  const etatDe = (i) => !answered ? "idle" : i === q.a ? "correct" : i === sel ? "wrong" : "muted";
+  const monte = suiviFamille && suiviFamille.apres > suiviFamille.avant;
+
+  // Retour après la réponse : explication, Gropi qui réagit en un clin d'œil
+  // (rien n'attend), puis le bouton pour avancer. `avant` : encart inséré
+  // au-dessus du bouton (progression de la compétence).
+  const retour = (explication, avant = null) => (
+    <Feedback
+      correct={isCorrect}
+      title={isCorrect ? `Correct${xpReelle > 0 ? ` · +${xpReelle} XP` : ""}` : "Pas tout à fait…"}
+      action={<>
+        {avant}
+        <Button size="lg" full tone={isCorrect ? "green" : "primary"} iconRight={derniere ? undefined : "arrow-right"} onClick={() => next()}>
+          {derniere ? "Voir les résultats" : "Suivant"}
+        </Button>
+      </>}
+    >
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>{explication}</div>
+        <Gropi key={isCorrect ? "ok" : "ko"} pose={isCorrect ? POSE_ROLE.bonne : POSE_ROLE.erreur} size={40} anim="pop" />
+      </div>
+    </Feedback>
+  );
 
   return (
-    <div style={{ padding: "14px 16px 0" }}>
+    <div style={{ padding: "14px 16px 24px", display: "flex", flexDirection: "column", gap: 12 }}>
+      <SessionBar onClose={onDone} current={idx + 1} total={questions.length}
+        pct={(idx + (answered ? 1 : 0)) / questions.length * 100} />
 
-      {/* Header + progression */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-        <button onClick={onDone} style={{ background: "none", border: "none", cursor: "pointer", color: C.text2, padding: 0 }}>
-          <Ti name="x" size={18} />
-        </button>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: "flex", gap: 3 }}>
-            {questions.map((_, i) => (
-              <div key={i} style={{
-                flex: 1, height: 4, borderRadius: 2,
-                background: i < idx ? C.green
-                          : i === idx ? C.primary
-                          : C.border,
-                transition: "background 0.3s",
-              }} />
-            ))}
-          </div>
-        </div>
-        <div style={{ fontSize: 11, color: C.text3, fontFamily: FONTS.ui, flexShrink: 0 }}>
-          {idx + 1}/{questions.length}
-        </div>
-      </div>
-
-      {/* Badge type */}
-      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-        <div style={{
-          padding: "3px 8px", borderRadius: R.pill, fontSize: 11, fontWeight: 700,
-          fontFamily: FONTS.ui, letterSpacing: "0.06em", textTransform: "uppercase",
-          background: isFret ? C.amberL : C.primaryL,
-          color: isFret ? C.amberD : C.primaryD,
-        }}>
-          {q.genere ? `${q.famille} · niveau ${q.niveauFamille}/3` : `${isFret ? "Manche" : "QCM"} · Niv. ${q.lvl}`}
-        </div>
-        {q.genere && <div style={{ fontSize: 11, color: C.text3, fontFamily: FONTS.ui }}>{q.libelleNiveau}</div>}
-      </div>
-
-      {/* Question */}
-      <div style={{
-        background: C.surface, border: `1px solid ${C.border}`,
-        borderRadius: R.lg, padding: 16, marginBottom: 12,
-      }}>
-        <p style={{ margin: 0, fontSize: 15, fontWeight: 500, lineHeight: 1.5, color: C.text, fontFamily: FONTS.title }}>
-          {q.q}
-        </p>
-      </div>
+      <QuestionCard key={idx} eyebrow={
+        <span style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+          <Tag tone={isFret ? "amber" : "primary"}>
+            {q.genere ? `${q.famille} · niveau ${q.niveauFamille}/3` : `${isFret ? "Manche" : "QCM"} · Niv. ${q.lvl}`}
+          </Tag>
+          {q.genere && <span style={{ textTransform: "none", letterSpacing: 0, fontWeight: 600 }}>{q.libelleNiveau}</span>}
+        </span>
+      }>
+        {q.q}
+      </QuestionCard>
 
       {/* Grille affichée dans l'énoncé (lecture de mesure) — avant l'écoute et
           les options : c'est elle qui pose la question. */}
       {q.grilleQuestion && (
-        <div style={{ margin: "4px 0 14px", padding: "10px 12px", background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.md }}>
+        <Card pad="10px 12px">
           <MiniGrille grille={q.grilleQuestion} C={C} />
-        </div>
+        </Card>
       )}
 
       {/* Écoute */}
       {q.audio && (
-        <div style={{ marginBottom: 12 }}>
-          <button onClick={ecouter} className="gr-focus" style={{
-            width: "100%", height: 52, borderRadius: R.lg, border: "none", cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-            background: ecoutee ? C.surface2 : C.primary, color: ecoutee ? C.text : C.onPrimaryBtn,
-            fontSize: 15, fontWeight: 800, fontFamily: FONTS.ui,
-          }}>
-            <Ti name="volume" size={18} color={ecoutee ? C.text : C.onPrimaryBtn} />
+        <div>
+          <Button size="lg" full icon="volume" variant={ecoutee ? "secondary" : "primary"} onClick={ecouter}>
             {ecoutee ? "Réécouter" : "Écouter"}
-          </button>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6 }}>
-            <span style={{ fontSize: 11.5, color: C.text3, fontFamily: FONTS.ui }}>{attendEcoute ? "Écoute d'abord, puis choisis." : "Tu peux réécouter autant que tu veux."}</span>
+          </Button>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginTop: 4 }}>
+            <span style={{ fontSize: 12, color: C.text3 }}>{attendEcoute ? "Écoute d'abord, puis choisis." : "Tu peux réécouter autant que tu veux."}</span>
             {!answered && (
-              <button onClick={passerSansSon} className="gr-focus" style={{ background: "none", border: "none", padding: "8px 2px", cursor: "pointer", fontSize: 11.5, fontWeight: 700, color: C.text2, fontFamily: FONTS.ui, textDecoration: "underline" }}>
+              <Button variant="ghost" tone="neutral" size="sm" onClick={passerSansSon} style={{ padding: "0 4px", minHeight: 44, color: C.text2 }}>
                 Pas de son maintenant
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -358,98 +310,42 @@ export function ReviewSession({ questions, state, dispatch, onDone }) {
               answered={fretAnswered}
             />
           )}
-          {fretAnswered && (
-            <>
-              <div style={{
-                background: isCorrect ? C.greenL : C.coralL,
-                borderRadius: R.md, padding: "12px 14px", marginTop: 10, marginBottom: 12,
-                border: `1px solid ${isCorrect ? C.greenBorder : C.coralBorder}`, overflow: "hidden",
-              }}>
-                {/* Gropi réagit en un clin d'œil (0,4 s, 32 px) : rien n'attend. */}
-                <Gropi key={isCorrect ? "ok" : "ko"} pose={isCorrect ? POSE_ROLE.bonne : POSE_ROLE.erreur} size={32} anim="pop" style={{ float: "right", marginLeft: 8 }} />
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-                  <Ti name={isCorrect ? "check" : "alert-circle"} size={14} color={isCorrect ? C.green : C.coral} />
-                  <div style={{ fontSize: 12, fontWeight: 500, color: isCorrect ? C.greenD : C.coralD, fontFamily: FONTS.ui }}>
-                    {isCorrect ? `Correct${xpReelle > 0 ? ` · +${xpReelle} XP` : ""}` : "Pas tout à fait…"}
-                  </div>
-                </div>
-                {q.exp && <div style={{ fontSize: 12, color: isCorrect ? C.greenD : C.coralD, lineHeight: 1.55, fontFamily: FONTS.ui }}>{q.exp}</div>}
-              </div>
-              <button onClick={() => next()} style={{ width: "100%", padding: "14px", borderRadius: R.md, border: "none", background: C.primary, color: C.onPrimaryBtn, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }}>
-                {prochaine(idx, sansSon) >= questions.length ? "Voir les résultats" : "Suivant"}
-              </button>
-            </>
-          )}
+          {fretAnswered && retour(q.exp)}
         </>
       ) : (
         /* QCM */
         <>
-          {q.o.map((opt, i) => {
-            let bg = C.surface, border = `1px solid ${C.border}`, col = C.text;
-            let badgeBg = C.surface2, badgeFg = C.text2, ic = ["A", "B", "C", "D"][i];
-            if (answered) {
-              if (i === q.a) { bg = C.greenL; border = `1px solid ${C.green}`; col = C.greenD; badgeBg = C.greenBorder; badgeFg = C.greenD; ic = "✓"; }
-              else if (i === sel) { bg = C.coralL; border = `1px solid ${C.coral}`; col = C.coralD; badgeBg = C.coralBorder; badgeFg = C.coralD; ic = "✗"; }
-            }
-            return (
-              <button key={i} onClick={() => choose(i)} disabled={answered || attendEcoute} aria-label={q.grilles ? opt : undefined} className="gr-focus" style={{
-                opacity: attendEcoute ? .45 : 1,
-                display: "flex", alignItems: "center", gap: 10,
-                background: bg, border, borderRadius: 11, padding: "11px 13px",
-                cursor: answered ? "default" : "pointer", textAlign: "left",
-                width: "100%", marginBottom: 7, fontFamily: FONTS.title,
-              }}>
-                <div style={{ width: 24, height: 24, borderRadius: 7, background: badgeBg, color: badgeFg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 500, flexShrink: 0, fontFamily: FONTS.ui }}>
-                  {ic}
-                </div>
+          <div key={idx} className="gr-stagger" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {q.o.map((opt, i) => (
+              <AnswerOption key={i} etat={etatDe(i)} marker={LETTRES[i]} locked={answered}
+                disabled={attendEcoute} aria-label={q.grilles ? opt : undefined}
+                style={attendEcoute ? { opacity: .45 } : undefined}
+                onClick={() => choose(i)}>
                 {q.grilles
-                  ? <MiniGrille grille={q.grilles[i]} C={C} active={answered && i === q.a ? C.green : answered && i === sel ? C.coral : null} />
-                  : <span style={{ fontSize: 13, color: col, lineHeight: 1.4, fontFamily: FONTS.title, fontWeight: answered && i === q.a ? 500 : 400 }}>{opt}</span>}
-              </button>
-            );
-          })}
+                  ? <MiniGrille grille={q.grilles[i]} C={C} active={answered && i === q.a ? C.green : answered && i === sel ? C.danger : null} />
+                  : opt}
+              </AnswerOption>
+            ))}
+          </div>
 
-          {answered && (
-            <>
-              <div style={{
-                background: isCorrect ? C.greenL : C.coralL,
-                borderRadius: R.md, padding: "12px 14px", marginTop: 4, marginBottom: 12,
-                border: `1px solid ${isCorrect ? C.greenBorder : C.coralBorder}`, overflow: "hidden",
-              }}>
-                {/* Gropi réagit en un clin d'œil (0,4 s, 32 px) : rien n'attend. */}
-                <Gropi key={isCorrect ? "ok" : "ko"} pose={isCorrect ? POSE_ROLE.bonne : POSE_ROLE.erreur} size={32} anim="pop" style={{ float: "right", marginLeft: 8 }} />
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-                  <Ti name={isCorrect ? "check" : "alert-circle"} size={14} color={isCorrect ? C.green : C.coral} />
-                  <div style={{ fontSize: 12, fontWeight: 500, color: isCorrect ? C.greenD : C.coralD, fontFamily: FONTS.ui }}>
-                    {isCorrect ? `Correct${xpReelle > 0 ? ` · +${xpReelle} XP` : ""}` : "Pas tout à fait…"}
-                  </div>
-                </div>
-                {(q.exp || q.x) && <div style={{ fontSize: 12, color: isCorrect ? C.greenD : C.coralD, lineHeight: 1.55, fontFamily: FONTS.ui }}>{q.exp || q.x}</div>}
-              </div>
-              {suiviFamille && (
-                <div role="status" style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 12, lineHeight: 1.45, color: C.text2, fontFamily: FONTS.ui, background: C.surface2, borderRadius: R.md, padding: "10px 12px", marginBottom: 12 }}>
-                  <Ti name={suiviFamille.apres > suiviFamille.avant ? "sparkles" : "target-arrow"} size={15} color={suiviFamille.apres > suiviFamille.avant ? C.primary : C.text3} />
-                  <span>
-                    {suiviFamille.apres > suiviFamille.avant
-                      ? (suiviFamille.retour
-                          ? <><b style={{ color: C.primaryD }}>De retour au niveau {suiviFamille.apres}</b> : {suiviFamille.libelle}.</>
-                          : <><b style={{ color: C.primaryD }}>Niveau {suiviFamille.apres} débloqué</b> : {suiviFamille.libelle}.</>)
-                      : suiviFamille.apres < suiviFamille.avant
-                      ? <>On consolide au niveau {suiviFamille.apres} ({suiviFamille.libelle}) avant de remonter.</>
-                      : suiviFamille.restant == null
-                      ? <>Niveau maximal atteint pour cette compétence. Elle reviendra de temps en temps pour rester ancrée.</>
-                      : <>Encore {suiviFamille.restant} réussite{suiviFamille.restant > 1 ? "s" : ""} avant le niveau {suiviFamille.apres + 1} : {suiviFamille.suivant}.</>}
-                  </span>
-                </div>
-              )}
-              <button onClick={() => next()} style={{ width: "100%", padding: "14px", borderRadius: R.md, border: "none", background: C.primary, color: C.onPrimaryBtn, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.ui }}>
-                {prochaine(idx, sansSon) >= questions.length ? "Voir les résultats" : "Suivant"}
-              </button>
-            </>
-          )}
+          {answered && retour(q.exp || q.x, suiviFamille && (
+            <div role="status" style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 12, lineHeight: 1.45, color: C.text2, background: C.surface, border: `2px solid ${C.border}`, borderRadius: R.md, padding: "10px 12px" }}>
+              <Ti name={monte ? "sparkles" : "target-arrow"} size={15} color={monte ? C.primary : C.text3} />
+              <span>
+                {monte
+                  ? (suiviFamille.retour
+                      ? <><b style={{ color: C.primaryD }}>De retour au niveau {suiviFamille.apres}</b> : {suiviFamille.libelle}.</>
+                      : <><b style={{ color: C.primaryD }}>Niveau {suiviFamille.apres} débloqué</b> : {suiviFamille.libelle}.</>)
+                  : suiviFamille.apres < suiviFamille.avant
+                  ? <>On consolide au niveau {suiviFamille.apres} ({suiviFamille.libelle}) avant de remonter.</>
+                  : suiviFamille.restant == null
+                  ? <>Niveau maximal atteint pour cette compétence. Elle reviendra de temps en temps pour rester ancrée.</>
+                  : <>Encore {suiviFamille.restant} réussite{suiviFamille.restant > 1 ? "s" : ""} avant le niveau {suiviFamille.apres + 1} : {suiviFamille.suivant}.</>}
+              </span>
+            </div>
+          ))}
         </>
       )}
-      <div style={{ height: 16 }} />
     </div>
   );
 }

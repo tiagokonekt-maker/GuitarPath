@@ -10,10 +10,13 @@
 // lui-même la boucle A–B (option `boucle`, tours enchaînés dans le temps
 // audio) et le clic du décompte (évènements `clic`).
 import { useState, useRef, useEffect, useCallback, useMemo, useId } from "react";
-import { FONTS, R, T, TAP } from "../../design/tokens.js";
+import { R, T, TAP } from "../../design/tokens.js";
 import { useC } from "../../design/ThemeContext.jsx";
 import { Ti } from "../../design/Ti.jsx";
-import { BackButton } from "../../design/ui.jsx";
+import {
+  Button, Card, Chip, EmptyState, IconButton, IconTile, ProgressBar,
+  SectionTitle, SubHeader, Tag,
+} from "../../design/ui.jsx";
 import { ChordDiagram } from "../../diagrams.jsx";
 import { playTab, stopAll, unlockAudio } from "../../audioEngine.js";
 import { MORCEAUX, morceauParId } from "../../morceaux/catalogue.js";
@@ -41,21 +44,21 @@ function lireFiltres() {
 
 // ══ Petits éléments ══════════════════════════════════════════════════════
 
-function Puce({ actif, onClick, children, C }) {
-  return (
-    <button type="button" onClick={onClick} aria-pressed={actif} className="gr-focus" style={{
-      minHeight: TAP.min, padding: "0 14px", borderRadius: R.pill, cursor: "pointer", fontFamily: FONTS.ui,
-      border: `1.5px solid ${actif ? C.primary : C.border}`, background: actif ? C.primaryL : C.surface,
-      color: actif ? C.primaryD : C.text2, fontWeight: 700, fontSize: T.small, flexShrink: 0,
-    }}>{children}</button>
-  );
-}
+// Les commandes qu'on touche guitare en main gardent une cible de 44 px.
+const TACTILE = { minHeight: TAP.min };
 
-function Etiquette({ children, C, teinte }) {
-  const t = teinte === "vert" ? { bg: C.greenL, fg: C.greenD } : teinte === "violet" ? { bg: C.purpleL, fg: C.purpleD } : { bg: C.surface2, fg: C.text2 };
+const iconeType = (type) => (type === "accords" ? "stack-2" : type === "riff" ? "bolt" : "music");
+
+/** Étiquettes d'un morceau : niveau, type, tempo — et, dans le lecteur (`complet`), tonalité et mesure. */
+function Etiquettes({ morceau, complet = false, style }) {
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 8px", borderRadius: R.pill,
-      background: t.bg, color: t.fg, fontSize: T.micro, fontWeight: 700, lineHeight: 1.3 }}>{children}</span>
+    <span style={{ display: "flex", flexWrap: "wrap", gap: 4, ...style }}>
+      <Tag tone={morceau.niveau === "debutant" ? "green" : "purple"}>{NIVEAUX[morceau.niveau]}</Tag>
+      <Tag tone="neutral">{TYPES[morceau.type]}</Tag>
+      <Tag tone="neutral">{morceau.tempo} BPM</Tag>
+      {complet && <Tag tone="neutral">{morceau.tonalite}</Tag>}
+      {complet && <Tag tone="neutral">{morceau.mesure}</Tag>}
+    </span>
   );
 }
 
@@ -76,9 +79,9 @@ function ListeMorceaux({ onOuvrir, dernierOuvert, C }) {
   }, [dernierOuvert]);
 
   const groupe = (cle, label, options) => (
-    <div role="group" aria-label={label} style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 2, WebkitOverflowScrolling: "touch" }}>
+    <div role="group" aria-label={label} className="gr-hscroll" style={{ display: "flex", gap: 6 }}>
       {[["tous", "Tous"], ...Object.entries(options)].map(([v, l]) => (
-        <Puce key={v} actif={filtres[cle] === v} onClick={() => setFiltre(cle, v)} C={C}>{l}</Puce>
+        <Chip key={v} selected={filtres[cle] === v} onClick={() => setFiltre(cle, v)}>{l}</Chip>
       ))}
     </div>
   );
@@ -88,7 +91,7 @@ function ListeMorceaux({ onOuvrir, dernierOuvert, C }) {
       <p style={{ margin: "0 0 12px", fontSize: T.small, color: C.text2, lineHeight: 1.45 }}>
         Des airs du domaine public et des riffs originaux, à écouter puis jouer à ton rythme.
       </p>
-      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 10 }}>
         {groupe("niveau", "Filtrer par niveau", NIVEAUX)}
         {groupe("type", "Filtrer par type", TYPES)}
       </div>
@@ -98,33 +101,21 @@ function ListeMorceaux({ onOuvrir, dernierOuvert, C }) {
       </div>
 
       {liste.length === 0 ? (
-        <div style={{ padding: 16, borderRadius: R.md, background: C.surface2, color: C.text2, fontSize: T.small }}>
-          Aucun morceau ne correspond à ces filtres.
-        </div>
+        <EmptyState>Aucun morceau ne correspond à ces filtres.</EmptyState>
       ) : (
-        <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+        <ul className="gr-stagger" style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 8 }}>
           {liste.map(m => (
             <li key={m.id}>
-              <button type="button" id={`morceau-${m.id}`} onClick={() => onOuvrir(m.id)} className="gr-focus" style={{
-                width: "100%", textAlign: "left", cursor: "pointer", fontFamily: FONTS.ui,
-                padding: "12px 14px", minHeight: 64, borderRadius: R.lg, border: `1.5px solid ${C.border}`,
-                background: C.surface, color: C.text, display: "flex", alignItems: "center", gap: 12,
-              }}>
-                <span aria-hidden="true" style={{ width: 40, height: 40, borderRadius: 12, flexShrink: 0, background: C.primaryL,
-                  display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <Ti name={m.type === "accords" ? "stack-2" : m.type === "riff" ? "bolt" : "music"} size={20} color={C.primary} />
-                </span>
+              <Card onClick={() => onOuvrir(m.id)} id={`morceau-${m.id}`} pad="12px 14px"
+                style={{ minHeight: 64, display: "flex", alignItems: "center", gap: 12 }}>
+                <IconTile icon={iconeType(m.type)} size={40} />
                 <span style={{ flex: 1, minWidth: 0 }}>
                   <span style={{ display: "block", fontSize: T.body, fontWeight: 800, lineHeight: 1.25 }}>{m.titre}</span>
                   <span style={{ display: "block", fontSize: T.micro, color: C.text3, marginTop: 2 }}>{m.auteur}</span>
-                  <span style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 6 }}>
-                    <Etiquette C={C} teinte={m.niveau === "debutant" ? "vert" : "violet"}>{NIVEAUX[m.niveau]}</Etiquette>
-                    <Etiquette C={C}>{TYPES[m.type]}</Etiquette>
-                    <Etiquette C={C}>{m.tempo} BPM</Etiquette>
-                  </span>
+                  <Etiquettes morceau={m} style={{ marginTop: 6 }} />
                 </span>
                 <Ti name="chevron-right" size={18} color={C.text3} />
-              </button>
+              </Card>
             </li>
           ))}
         </ul>
@@ -159,8 +150,8 @@ function TabLecture({ morceau, analyse, colCourante, debut, fin, C }) {
   }, [cible, colCourante]);
 
   return (
-    <div style={{ display: "flex", border: `1.5px solid ${C.border}`, borderRadius: R.md, background: C.surface, overflow: "hidden" }}>
-      <div aria-hidden="true" style={{ flexShrink: 0, width: 22, background: C.surface2, borderRight: `1.5px solid ${C.border}`, paddingTop: HAUT_ENTETE }}>
+    <div style={{ display: "flex", border: `2px solid ${C.border}`, borderRadius: R.md, background: C.surface, overflow: "hidden" }}>
+      <div aria-hidden="true" style={{ flexShrink: 0, width: 22, background: C.surface2, borderRight: `1px solid ${C.border}`, paddingTop: HAUT_ENTETE }}>
         {CORDES_LABELS.map((l, i) => (
           <div key={l + i} style={{ height: HAUT_CORDE, display: "flex", alignItems: "center", justifyContent: "center", fontSize: T.micro, fontWeight: 800, color: C.text3 }}>{l}</div>
         ))}
@@ -219,9 +210,9 @@ function TabLecture({ morceau, analyse, colCourante, debut, fin, C }) {
 
 function Accords({ morceau, mesureCourante, C }) {
   return (
-    <section aria-labelledby="morceau-accords" style={{ marginTop: 16 }}>
-      <h3 id="morceau-accords" style={{ margin: "0 0 8px", fontSize: T.small, fontWeight: 800, color: C.text, fontFamily: FONTS.title }}>Accords</h3>
-      <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch" }}>
+    <section aria-labelledby="morceau-accords">
+      <SectionTitle as="h3" id="morceau-accords" style={{ margin: "0 0 8px" }}>Accords</SectionTitle>
+      <div className="gr-hscroll" style={{ display: "flex", gap: 8 }}>
         {morceau.accords.map(s => {
           const f = FORMES_ACCORDS[s];
           return f ? (
@@ -238,8 +229,9 @@ function Accords({ morceau, mesureCourante, C }) {
             return (
               <li key={i} aria-current={actif ? "true" : undefined} style={{
                 padding: "8px 4px", borderRadius: R.sm, textAlign: "center", fontWeight: 800, fontSize: T.small,
-                border: `1.5px solid ${actif ? C.primary : C.border}`, background: actif ? C.primaryL : C.surface,
+                border: `2px solid ${actif ? C.primary : C.border}`, background: actif ? C.primaryL : C.surface,
                 color: actif ? C.primaryD : C.text,
+                transition: "background-color var(--gr-dur-fast) ease, border-color var(--gr-dur-fast) ease",
               }}>
                 <span style={{ fontSize: T.micro, fontWeight: 600, color: C.text3, marginRight: 4 }}>{i + 1}</span>{nomAccord(s)}
               </li>
@@ -426,128 +418,117 @@ function LecteurMorceau({ morceau, onRetour, C, dispatch }) {
   const passageEntier = debut === 0 && fin === derniere;
   const optionsMesures = Array.from({ length: analyse.nbMesures }, (_, i) => <option key={i} value={i}>{i + 1}</option>);
 
+  // Avancement dans le passage A–B (0 à l'arrêt ; figé pendant une pause).
+  const colsPassage = (fin - debut + 1) * analyse.colsParMesure;
+  const avancement = colCourante == null ? 0 : ((colCourante - debut * analyse.colsParMesure + 1) / colsPassage) * 100;
+
   const styleSelect = {
-    minHeight: TAP.min, minWidth: 64, padding: "0 10px", borderRadius: R.sm, border: `1.5px solid ${C.borderStrong}`,
-    background: C.surface, color: C.text, fontFamily: FONTS.ui, fontSize: T.body, fontWeight: 700,
+    minHeight: TAP.min, minWidth: 64, padding: "0 10px", borderRadius: R.sm, border: `2px solid ${C.borderStrong}`,
+    background: C.surface, color: C.text, fontSize: T.body, fontWeight: 700,
   };
-  const styleBascule = (actif) => ({
-    minHeight: TAP.min, padding: "0 12px", borderRadius: R.md, cursor: "pointer", fontFamily: FONTS.ui,
-    border: `1.5px solid ${actif ? C.primary : C.border}`, background: actif ? C.primaryL : C.surface,
-    color: actif ? C.primaryD : C.text2, fontWeight: 800, fontSize: T.small,
-    display: "inline-flex", alignItems: "center", gap: 6,
-  });
+  const titreCarte = { fontSize: T.small, fontWeight: 800, color: C.text };
+  // L'en-tête vit dans le panneau de la boîte à outils : il est encadré comme
+  // une carte au lieu de coller au bord haut de l'écran.
+  const bordEntete = `2px solid ${C.primaryBorder}`;
 
   const statut = jouant
     ? (clic ? `Décompte : ${clic}` : `Lecture ${passageEntier ? "du morceau" : `des mesures ${debut + 1} à ${fin + 1}`} à ${vitesse} %${boucle ? ", en boucle" : ""}.`)
     : etat === "pause" ? `En pause, mesure ${mesureCourante != null ? mesureCourante + 1 : debut + 1}.` : "";
 
   return (
-    <div>
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 10 }}>
-        <BackButton onClick={onRetour} label="Retour à la liste des morceaux" />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <h2 ref={titreRef} tabIndex={-1} style={{ margin: 0, fontSize: T.h3, fontWeight: 800, color: C.text, fontFamily: FONTS.title, lineHeight: 1.2, outline: "none" }}>
-            {morceau.titre}
-          </h2>
-          <div style={{ fontSize: T.micro, color: C.text3, marginTop: 2 }}>{morceau.auteur}</div>
+    <div className="gr-in-push">
+      <SubHeader compact onBack={onRetour} backLabel="Retour à la liste des morceaux"
+        title={<span ref={titreRef} tabIndex={-1} style={{ outline: "none" }}>{morceau.titre}</span>}
+        subtitle={morceau.auteur}
+        style={{ borderRadius: R.lg, borderTop: bordEntete, borderLeft: bordEntete, borderRight: bordEntete }} />
+
+      {/* Pas de cascade ici : ce conteneur se re-rend à chaque note jouée. */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12 }}>
+        <div>
+          <p style={{ margin: "0 0 8px", fontSize: T.small, color: C.text2, lineHeight: 1.45 }}>{morceau.description}</p>
+          <Etiquettes morceau={morceau} complet />
         </div>
-      </div>
-      <p style={{ margin: "0 0 8px", fontSize: T.small, color: C.text2, lineHeight: 1.45 }}>{morceau.description}</p>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 14 }}>
-        <Etiquette C={C} teinte={morceau.niveau === "debutant" ? "vert" : "violet"}>{NIVEAUX[morceau.niveau]}</Etiquette>
-        <Etiquette C={C}>{TYPES[morceau.type]}</Etiquette>
-        <Etiquette C={C}>{morceau.tempo} BPM</Etiquette>
-        <Etiquette C={C}>{morceau.tonalite}</Etiquette>
-        <Etiquette C={C}>{morceau.mesure}</Etiquette>
-      </div>
 
-      <TabLecture morceau={morceau} analyse={analyse} colCourante={colCourante} debut={debut} fin={fin} C={C} />
+        <div>
+          <TabLecture morceau={morceau} analyse={analyse} colCourante={colCourante} debut={debut} fin={fin} C={C} />
+          <ProgressBar pct={avancement} h={8} label="Avancement de la lecture" style={{ marginTop: 8 }} />
 
-      {/* Décompte visible, grand : on le lit guitare en main. */}
-      <div aria-hidden="true" style={{ height: 28, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginTop: 6 }}>
-        {clic && Array.from({ length: clic }, (_, i) => (
-          <span key={i} style={{ fontSize: 20, fontWeight: 800, color: i === clic - 1 ? C.primary : C.text3 }}>{i + 1}</span>
-        ))}
-      </div>
+          {/* Décompte visible, grand : on le lit guitare en main. */}
+          <div aria-hidden="true" style={{ height: 28, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginTop: 6 }}>
+            {clic && Array.from({ length: clic }, (_, i) => (
+              <span key={i} className="gr-in-pop" style={{ fontSize: T.h3, fontWeight: 800, color: i === clic - 1 ? C.primary : C.text3 }}>{i + 1}</span>
+            ))}
+          </div>
 
-      {/* ── Lecture ── */}
-      <div style={{ display: "flex", gap: 8 }}>
-        <button type="button" onClick={lireOuPause} className="gr-focus" style={{
-          flex: 1, minHeight: TAP.comfy, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-          borderRadius: R.lg, border: "none", background: jouant ? C.surface2 : C.primaryBtn,
-          color: jouant ? C.text : C.onPrimaryBtn, fontWeight: 800, fontSize: T.body, cursor: "pointer", fontFamily: FONTS.ui,
-        }}>
-          <Ti name={jouant ? "player-pause" : "player-play"} size={18} color={jouant ? C.text : C.onPrimaryBtn} />
-          {jouant ? "Pause" : etat === "pause" ? "Reprendre" : "Écouter"}
-        </button>
-        {etat !== "arret" && (
-          <button type="button" onClick={arreter} aria-label="Arrêter et revenir au début du passage" className="gr-focus" style={{
-            minWidth: TAP.comfy, minHeight: TAP.comfy, display: "flex", alignItems: "center", justifyContent: "center",
-            borderRadius: R.lg, border: `1.5px solid ${C.borderStrong}`, background: C.surface, cursor: "pointer",
-          }}>
-            <Ti name="player-stop" size={18} color={C.text} />
-          </button>
-        )}
-      </div>
-      <div role="status" aria-live="polite" style={{ minHeight: 20, fontSize: T.micro, color: C.text2, marginTop: 4, textAlign: "center" }}>{statut}</div>
-
-      {/* ── Vitesse ── */}
-      <div style={{ marginTop: 10, padding: "12px 14px", borderRadius: R.md, background: C.surface, border: `1.5px solid ${C.border}` }}>
-        <label htmlFor={idVitesse} style={{ display: "flex", justifyContent: "space-between", fontSize: T.small, fontWeight: 800, color: C.text }}>
-          <span>Vitesse</span>
-          <span style={{ color: C.primaryInk }}>{vitesse} % · {bpm} BPM</span>
-        </label>
-        <input id={idVitesse} type="range" min={VITESSE_MIN} max={VITESSE_MAX} step={5} value={vitesse}
-          onChange={e => changerVitesse(Number(e.target.value), 350)}
-          aria-valuetext={`${vitesse} % du tempo, ${bpm} battements par minute`}
-          className="gr-focus"
-          style={{ width: "100%", height: TAP.min, accentColor: C.primary, margin: 0 }} />
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-          {[50, 75, 100].map(v => (
-            <Puce key={v} actif={vitesse === v} onClick={() => changerVitesse(v)} C={C}>{v} %</Puce>
-          ))}
+          {/* ── Lecture ── La rangée garde sa hauteur quand le bouton change
+              de variante (la tranche d'un bouton plein est plus épaisse). */}
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 8, minHeight: 56 }}>
+            <Button size="lg" variant={jouant ? "secondary" : "primary"} icon={jouant ? "player-pause" : "player-play"}
+              onClick={lireOuPause} style={{ flex: 1 }}>
+              {jouant ? "Pause" : etat === "pause" ? "Reprendre" : "Écouter"}
+            </Button>
+            {etat !== "arret" && (
+              <IconButton icon="player-stop" label="Arrêter et revenir au début du passage" size={52}
+                onClick={arreter} className="gr-in-pop" />
+            )}
+          </div>
+          <div role="status" aria-live="polite" style={{ minHeight: 20, fontSize: T.micro, color: C.text2, marginTop: 4, textAlign: "center" }}>{statut}</div>
         </div>
+
+        {/* ── Vitesse ── */}
+        <Card pad="12px 14px">
+          <label htmlFor={idVitesse} style={{ display: "flex", justifyContent: "space-between", ...titreCarte }}>
+            <span>Vitesse</span>
+            <span style={{ color: C.primaryInk }}>{vitesse} % · {bpm} BPM</span>
+          </label>
+          <input id={idVitesse} type="range" min={VITESSE_MIN} max={VITESSE_MAX} step={5} value={vitesse}
+            onChange={e => changerVitesse(Number(e.target.value), 350)}
+            aria-valuetext={`${vitesse} % du tempo, ${bpm} battements par minute`}
+            className="gr-focus"
+            style={{ width: "100%", height: TAP.min, accentColor: C.primary, margin: 0 }} />
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {[50, 75, 100].map(v => (
+              <Chip key={v} selected={vitesse === v} onClick={() => changerVitesse(v)} style={TACTILE}>{v} %</Chip>
+            ))}
+          </div>
+        </Card>
+
+        {/* ── Passage A–B, boucle, décompte ── */}
+        <Card pad="12px 14px">
+          <div style={{ ...titreCarte, marginBottom: 8 }}>Passage à travailler</div>
+          <div role="group" aria-label="Passage, de la mesure A à la mesure B" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <span aria-hidden="true" style={{ fontSize: T.small, color: C.text2 }}>Mesure</span>
+            <select value={debut} onChange={e => changerDebut(Number(e.target.value))} className="gr-focus" style={styleSelect}
+              aria-label="Mesure de début du passage (A)">{optionsMesures}</select>
+            <span aria-hidden="true" style={{ fontSize: T.small, color: C.text2 }}>à</span>
+            <select value={fin} onChange={e => changerFin(Number(e.target.value))} className="gr-focus" style={styleSelect}
+              aria-label="Mesure de fin du passage (B)">{optionsMesures}</select>
+            {!passageEntier && (
+              <Button variant="secondary" size="sm" onClick={toutLeMorceau} className="gr-in-pop" style={TACTILE}>Tout</Button>
+            )}
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
+            <Chip selected={boucle} icon="refresh" onClick={basculerBoucle} style={TACTILE}>En boucle</Chip>
+            <Chip selected={decompte} icon="metronome" onClick={basculerDecompte} style={TACTILE}>Décompte</Chip>
+          </div>
+        </Card>
+
+        {morceau.accords && <Accords morceau={morceau} mesureCourante={mesureCourante} C={C} />}
+
+        <details>
+          <summary className="gr-focus" style={{ cursor: "pointer", minHeight: TAP.min, display: "flex", alignItems: "center", fontSize: T.small, fontWeight: 800, color: C.text }}>
+            Tab au format texte
+          </summary>
+          <pre style={{ margin: "6px 0 0", padding: 10, borderRadius: R.sm, background: C.surface2, color: C.text, fontSize: 12, lineHeight: 1.4, overflowX: "auto" }}>
+            {morceau.tab.trim()}
+          </pre>
+        </details>
+
+        <p style={{ margin: 0, fontSize: T.micro, color: C.text3, lineHeight: 1.45 }}>
+          <Ti name="info-circle" size={13} color={C.text3} style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 4 }} />
+          {morceau.licence}
+        </p>
       </div>
-
-      {/* ── Passage A–B, boucle, décompte ── */}
-      <div style={{ marginTop: 10, padding: "12px 14px", borderRadius: R.md, background: C.surface, border: `1.5px solid ${C.border}` }}>
-        <div style={{ fontSize: T.small, fontWeight: 800, color: C.text, marginBottom: 8 }}>Passage à travailler</div>
-        <div role="group" aria-label="Passage, de la mesure A à la mesure B" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-          <span aria-hidden="true" style={{ fontSize: T.small, color: C.text2 }}>Mesure</span>
-          <select value={debut} onChange={e => changerDebut(Number(e.target.value))} className="gr-focus" style={styleSelect}
-            aria-label="Mesure de début du passage (A)">{optionsMesures}</select>
-          <span aria-hidden="true" style={{ fontSize: T.small, color: C.text2 }}>à</span>
-          <select value={fin} onChange={e => changerFin(Number(e.target.value))} className="gr-focus" style={styleSelect}
-            aria-label="Mesure de fin du passage (B)">{optionsMesures}</select>
-          {!passageEntier && (
-            <button type="button" onClick={toutLeMorceau} className="gr-focus" style={{ ...styleBascule(false), fontWeight: 700 }}>Tout</button>
-          )}
-        </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
-          <button type="button" onClick={basculerBoucle} aria-pressed={boucle} className="gr-focus" style={styleBascule(boucle)}>
-            <Ti name="refresh" size={16} color={boucle ? C.primary : C.text2} /> En boucle
-          </button>
-          <button type="button" onClick={basculerDecompte} aria-pressed={decompte} className="gr-focus" style={styleBascule(decompte)}>
-            <Ti name="metronome" size={16} color={decompte ? C.primary : C.text2} /> Décompte
-          </button>
-        </div>
-      </div>
-
-      {morceau.accords && <Accords morceau={morceau} mesureCourante={mesureCourante} C={C} />}
-
-      <details style={{ marginTop: 16 }}>
-        <summary className="gr-focus" style={{ cursor: "pointer", minHeight: TAP.min, display: "flex", alignItems: "center", fontSize: T.small, fontWeight: 800, color: C.text }}>
-          Tab au format texte
-        </summary>
-        <pre style={{ margin: "6px 0 0", padding: 10, borderRadius: R.sm, background: C.surface2, color: C.text, fontSize: 12, lineHeight: 1.4, overflowX: "auto" }}>
-          {morceau.tab.trim()}
-        </pre>
-      </details>
-
-      <p style={{ margin: "14px 0 0", fontSize: T.micro, color: C.text3, lineHeight: 1.45 }}>
-        <Ti name="info-circle" size={13} color={C.text3} style={{ verticalAlign: "-2px", marginRight: 4 }} />
-        {morceau.licence}
-      </p>
     </div>
   );
 }

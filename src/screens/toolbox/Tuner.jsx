@@ -1,10 +1,11 @@
 // Groply — src/screens/toolbox/Tuner.jsx
 // Accordeur de la boîte à outils (chargé à la demande par ToolboxScreen).
 import { useState, useRef, useEffect, useCallback } from "react";
-import { FONTS, R } from "../../design/tokens.js";
+import { R, T } from "../../design/tokens.js";
 import { useC } from "../../design/ThemeContext.jsx";
 import { Ti } from "../../design/Ti.jsx";
 import { Gropi } from "../../design/Gropi.jsx";
+import { Button, Card, Eyebrow } from "../../design/ui.jsx";
 import { detectPitch } from "../../music/pitch.js";
 import { NOTES_DIESES_FR } from "../../music/notes.js";
 
@@ -76,13 +77,14 @@ function TuningPicker({ tuningId, setTuningId, compact = false }) {
     <select
       value={tuningId}
       onChange={e => setTuningId(e.target.value)}
+      className="gr-focus"
       style={{
         width: compact ? "100%" : "auto",
-        maxWidth: "100%",
+        maxWidth: "100%", minHeight: 46, boxSizing: "border-box",
         appearance: "none", WebkitAppearance: "none",
-        background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: R.lg,
-        padding: compact ? "10px 14px" : "11px 38px 11px 16px",
-        fontSize: 13.5, fontWeight: 700, color: C.text, fontFamily: FONTS.ui, cursor: "pointer",
+        background: C.surface, border: `2px solid ${C.borderStrong}`, borderRadius: R.md,
+        padding: compact ? "10px 14px" : "10px 38px 10px 16px",
+        fontSize: 14, fontWeight: 700, color: C.text, fontFamily: "inherit", cursor: "pointer",
         textAlign: "center", textAlignLast: "center",
         backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23${C.text3.replace('#','')}' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
         backgroundRepeat: "no-repeat",
@@ -299,112 +301,121 @@ export function Tuner() {
   return (
     <div>
       {!active ? (
-        <div style={{ textAlign:"center", padding:"10px 0 4px" }}>
-          <Gropi pose="listen" size={120} anim="bob" style={{ margin:"0 auto 6px" }}/>
-          <p style={{ fontSize:13, color:C.text2, lineHeight:1.55, maxWidth:260, margin:"0 auto 16px" }}>
+        // `key` : les deux vues sont des <div> au même endroit ; sans elle,
+        // React réutiliserait le nœud et l'entrée ne rejouerait pas.
+        <div key="repos" className="gr-in" style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 12, padding: "8px 0 4px" }}>
+          <Gropi pose="listen" size={120} anim="bob" />
+          <p style={{ fontSize: T.small, color: C.text2, lineHeight: 1.55, maxWidth: 260, margin: 0 }}>
             Joue une corde à vide, Gropi écoute et te dit si tu es juste.
           </p>
 
           {/* Sélecteur d'accordage */}
           <TuningPicker tuningId={tuningId} setTuningId={setTuningId} />
 
-          <button onClick={start} disabled={demarrage} aria-busy={demarrage} className="gr-focus" style={{
-            background:`linear-gradient(135deg,#FF9155,${C.primary})`, color:C.onPrimaryBtn, border:"none",
-            borderRadius:R.lg, padding:"13px 28px", fontSize:14, fontWeight:700, fontFamily:FONTS.ui,
-            cursor: demarrage ? "progress" : "pointer", opacity: demarrage ? .7 : 1,
-            boxShadow:`0 4px 16px ${C.primary}44`, marginTop:18,
-            display:"inline-flex", alignItems:"center", gap:8,
-          }}>
-            <Ti name="microphone" size={16} color={C.onPrimaryBtn}/> {demarrage ? "Activation…" : "Activer l'accordeur"}
-          </button>
-          {error && <p style={{ fontSize:12, color:C.pink, marginTop:14, lineHeight:1.5 }}>{error}</p>}
+          {/* `loading` désactive le bouton pendant la demande d'accès au micro. */}
+          <Button size="lg" icon="microphone" onClick={start} loading={demarrage} aria-busy={demarrage} style={{ marginTop: 4 }}>
+            {demarrage ? "Activation…" : "Activer l'accordeur"}
+          </Button>
+          {error && (
+            <Card as="p" tone="danger" soft pad="10px 14px" className="gr-in-pop"
+              style={{ margin: 0, fontSize: T.small, color: C.dangerD, lineHeight: 1.5 }}>
+              {error}
+            </Card>
+          )}
         </div>
       ) : (
-        <div>
-          {/* Note détectée */}
-          <div style={{ textAlign:"center", marginBottom:6 }}>
-            <div style={{
-              fontSize:72, fontWeight:800, lineHeight:1, letterSpacing:"-2px", fontFamily:FONTS.title,
-              color: inTune ? C.green : C.text,
-              transition:"color .15s",
-            }}>
-              {note ? note.name : "—"}
-              {note && <span style={{ fontSize:28, fontWeight:700, color:C.text3 }}>{note.octave}</span>}
-            </div>
-            <div style={{ fontSize:13, fontWeight:600, color:C.text3, marginTop:2 }}>
-              {freq > 0 ? `${freq.toFixed(1)} Hz` : "Joue une corde…"}
-            </div>
-          </div>
-
-          {/* Aiguille de justesse (-50 … +50 cents) */}
-          <div style={{ position:"relative", height:64, margin:"14px 0 8px", overflow:"hidden" }}>
-            <div style={{ position:"absolute", left:0, right:0, top:30, height:3, background:C.border, borderRadius:2 }}/>
-            {/* zone juste */}
-            <div style={{ position:"absolute", left:"45%", width:"10%", top:26, height:11, background:`${C.green}33`, borderRadius:6 }}/>
-            {/* repère central */}
-            <div style={{ position:"absolute", left:"50%", top:18, width:2, height:27, background:C.green, transform:"translateX(-50%)" }}/>
-            {/* aiguille — piste large de 100 %, déplacée par transformation
-                pure : le pourcentage de translateX se rapporte alors à la
-                largeur de la piste, et rien ne recalcule la mise en page. */}
-            <div style={{ position:"absolute", left:0, right:0, top:8, pointerEvents:"none" }}>
-              <div ref={needleRef} style={{ width:"100%", transform:"translateX(0%)", willChange:"transform" }}>
-                <div style={{
-                  width:0, height:0, margin:"0 auto",
-                  borderLeft:"7px solid transparent", borderRight:"7px solid transparent",
-                  borderTop:`14px solid ${needleColor}`,
-                  transition:"border-top-color .18s",
-                }}/>
-                <div ref={needleLabelRef} style={{
-                  fontSize:11, fontWeight:700, textAlign:"center", marginTop:2,
-                  color: needleColor, transition:"color .18s",
-                }}/>
+        <div key="ecoute" className="gr-in" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <Card tone={inTune ? "green" : undefined}>
+            {/* Note détectée */}
+            <div style={{ textAlign:"center", marginBottom:6 }}>
+              <div style={{
+                fontSize:72, fontWeight:800, lineHeight:1, letterSpacing:"-2px",
+                color: inTune ? C.green : C.text,
+                transition:"color var(--gr-dur-fast) ease",
+              }}>
+                {note ? note.name : "—"}
+                {note && <span style={{ fontSize:T.h1, fontWeight:700, color:C.text3 }}>{note.octave}</span>}
+              </div>
+              <div style={{ fontSize:T.small, fontWeight:600, color:C.text3, marginTop:2, fontVariantNumeric:"tabular-nums" }}>
+                {freq > 0 ? `${freq.toFixed(1)} Hz` : "Joue une corde…"}
               </div>
             </div>
-            {/* libellés trop bas/trop haut */}
-            <div style={{ position:"absolute", left:0, top:46, fontSize:9.5, color:C.text3, fontWeight:600 }}>♭ trop bas</div>
-            <div style={{ position:"absolute", right:0, top:46, fontSize:9.5, color:C.text3, fontWeight:600 }}>trop haut ♯</div>
-          </div>
 
-          <div aria-hidden={!inTune} style={{ height:22, display:"flex", alignItems:"center", justifyContent:"center", gap:6, fontSize:13, fontWeight:700, color:C.green, marginBottom:8, visibility: inTune ? "visible" : "hidden" }}>
-            <Ti name="check" size={15} color={C.green} /> Juste !
-          </div>
-
-          {/* Accordage actif + chœurs de référence */}
-          <div style={{ fontSize:10, fontWeight:700, color:C.text3, textTransform:"uppercase", letterSpacing:".07em", textAlign:"center", marginTop:8 }}>
-            {tuning.label}
-          </div>
-          <div style={{ display:"flex", justifyContent:"center", gap:6, margin:"8px 0 18px", flexWrap:"wrap" }}>
-            {tuning.courses.map((course, ci) => {
-              const on = nearestCourse === ci;
-              return (
-                <div key={ci} style={{
-                  minWidth:42, textAlign:"center", padding:"7px 8px", borderRadius:10,
-                  border:`1.5px solid ${on ? C.primary : C.border}`,
-                  background: on ? C.primaryL : C.surface,
-                  transition:"all .12s",
-                }}>
-                  {course.map(([name, oct], k) => (
-                    <div key={k} style={{ lineHeight:1.15 }}>
-                      <span style={{ fontSize:13, fontWeight:800, color: on ? C.primaryD : C.text }}>{name}</span>
-                      <span style={{ fontSize:9, color:C.text3, fontWeight:600 }}>{oct}</span>
-                    </div>
-                  ))}
+            {/* Aiguille de justesse (-50 … +50 cents) */}
+            <div style={{ position:"relative", height:64, margin:"14px 0 8px", overflow:"hidden" }}>
+              <div style={{ position:"absolute", left:0, right:0, top:30, height:4, background:C.border, borderRadius:R.pill }}/>
+              {/* zone juste */}
+              <div style={{ position:"absolute", left:"45%", width:"10%", top:26, height:12, background:`color-mix(in srgb, ${C.green} 20%, transparent)`, borderRadius:R.xs }}/>
+              {/* repère central */}
+              <div style={{ position:"absolute", left:"50%", top:18, width:2, height:28, background:C.green, transform:"translateX(-50%)" }}/>
+              {/* aiguille — piste large de 100 %, déplacée par transformation
+                  pure : le pourcentage de translateX se rapporte alors à la
+                  largeur de la piste, et rien ne recalcule la mise en page. */}
+              <div style={{ position:"absolute", left:0, right:0, top:8, pointerEvents:"none" }}>
+                <div ref={needleRef} style={{ width:"100%", transform:"translateX(0%)", willChange:"transform" }}>
+                  <div style={{
+                    width:0, height:0, margin:"0 auto",
+                    borderLeft:"7px solid transparent", borderRight:"7px solid transparent",
+                    borderTop:`14px solid ${needleColor}`,
+                    transition:"border-top-color var(--gr-dur-fast) ease",
+                  }}/>
+                  <div ref={needleLabelRef} style={{
+                    fontSize:T.micro, fontWeight:700, textAlign:"center", marginTop:2,
+                    color: needleColor, transition:"color var(--gr-dur-fast) ease",
+                    fontVariantNumeric:"tabular-nums",
+                  }}/>
                 </div>
-              );
-            })}
+              </div>
+              {/* libellés trop bas/trop haut */}
+              <div style={{ position:"absolute", left:0, top:46, fontSize:T.micro, color:C.text3, fontWeight:600 }}>♭ trop bas</div>
+              <div style={{ position:"absolute", right:0, top:46, fontSize:T.micro, color:C.text3, fontWeight:600 }}>trop haut ♯</div>
+            </div>
+
+            {/* « Juste ! » : la pastille garde sa place (hauteur fixe) et saute
+                une fois, en vert, à chaque fois que la corde devient juste. */}
+            <div aria-hidden={!inTune} style={{ height:30, display:"flex", alignItems:"center", justifyContent:"center", visibility: inTune ? "visible" : "hidden" }}>
+              <div className={inTune ? "gr-bump" : undefined} style={{
+                display:"inline-flex", alignItems:"center", gap:6, padding:"3px 12px", borderRadius:R.pill,
+                background:C.greenL, border:`2px solid ${C.greenBorder}`,
+                fontSize:T.small, fontWeight:700, color:C.greenD,
+              }}>
+                <Ti name="check" size={15} color={C.green} stroke={3} /> Juste !
+              </div>
+            </div>
+          </Card>
+
+          {/* Accordage actif + chœurs de référence. Ce sont des repères, pas
+              des boutons : ils restent plats, celui de la corde jouée s'allume. */}
+          <div>
+            <Eyebrow style={{ textAlign:"center" }}>{tuning.label}</Eyebrow>
+            <div style={{ display:"flex", justifyContent:"center", gap:6, marginTop:8, flexWrap:"wrap" }}>
+              {tuning.courses.map((course, ci) => {
+                const on = nearestCourse === ci;
+                return (
+                  <div key={ci} style={{
+                    minWidth:44, boxSizing:"border-box", textAlign:"center", padding:"7px 8px", borderRadius:R.sm,
+                    border:`2px solid ${on ? C.primary : C.border}`,
+                    background: on ? C.primaryL : C.surface,
+                    transition:"background-color var(--gr-dur-fast) ease, border-color var(--gr-dur-fast) ease",
+                  }}>
+                    {course.map(([name, oct], k) => (
+                      <div key={k} style={{ lineHeight:1.15 }}>
+                        <span style={{ fontSize:T.small, fontWeight:800, color: on ? C.primaryD : C.text }}>{name}</span>
+                        <span style={{ fontSize:T.micro, color:C.text3, fontWeight:600 }}>{oct}</span>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           {/* Changer d'accordage en cours */}
-          <div style={{ marginBottom:14 }}>
-            <TuningPicker tuningId={tuningId} setTuningId={setTuningId} compact />
-          </div>
+          <TuningPicker tuningId={tuningId} setTuningId={setTuningId} compact />
 
-          <button onClick={stop} className="gr-focus" style={{
-            width:"100%", padding:12, borderRadius:R.lg, border:`1.5px solid ${C.border}`,
-            background:C.surface, color:C.text2, fontWeight:700, fontSize:13, fontFamily:FONTS.ui, cursor:"pointer",
-          }}>
+          <Button variant="secondary" full icon="player-stop" onClick={stop}>
             Arrêter l'accordeur
-          </button>
+          </Button>
         </div>
       )}
     </div>

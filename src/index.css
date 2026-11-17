@@ -34,6 +34,12 @@
   --gr-primary-btn:   #C64E12;
   --gr-on-primary-btn: #FFFFFF;
   --gr-primary-ink:   #B8430E;
+  --gr-primary-l:     #FFF0E8;
+  --gr-primary-border: #F5C4A8;
+  --gr-primary-edge:  #96390A;
+  --gr-edge:          #E8C9A0;
+  --gr-green:         #1A8C52;
+  --gr-danger:        #B83030;
   --gr-focus:         #0A4FB0;
   --gr-shadow:        0 6px 24px rgba(60, 30, 10, .10);
   color-scheme: light;
@@ -53,6 +59,12 @@
   --gr-primary-btn:   #E85D1A;
   --gr-on-primary-btn: #26180A;
   --gr-primary-ink:   #FFAA78;
+  --gr-primary-l:     #3D1E08;
+  --gr-primary-border: #7A3A12;
+  --gr-primary-edge:  #A9400E;
+  --gr-edge:          #4A2E14;
+  --gr-green:         #5FD494;
+  --gr-danger:        #FF8A8A;
   --gr-focus:         #8CBCF5;
   --gr-shadow:        0 6px 24px rgba(0, 0, 0, .45);
   color-scheme: dark;
@@ -169,23 +181,327 @@ img, svg { max-width: 100%; }
 .gr-vscroll { scrollbar-width: none; }
 .gr-vscroll::-webkit-scrollbar { display: none; }
 
-/* ── Animations ───────────────────────────────────────────────────────── */
-@keyframes gr-fade-up {
-  from { opacity: 0; transform: translate(-50%, 8px); }
-  20%  { opacity: 1; }
-  80%  { opacity: 1; }
-  to   { opacity: 0; transform: translate(-50%, -22px); }
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOUVEMENT ET RELIEF
+   Tout ce qui bouge dans Groply est défini ici, nulle part ailleurs : une
+   seule échelle de durées, trois courbes, une liste de keyframes. Les écrans
+   n'écrivent jamais de durée ni de courbe en dur ; ils posent une classe.
+
+   Les mêmes valeurs sont exportées en JS (design/tokens.js › MOTION).
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root {
+  --gr-dur-press: 90ms;    /* enfoncement d'un bouton */
+  --gr-dur-fast:  160ms;   /* survol, bascule de couleur */
+  --gr-dur:       260ms;   /* apparition, changement d'écran */
+  --gr-dur-slow:  420ms;   /* barres de progression, cascades */
+  --gr-dur-fete:  700ms;   /* célébrations */
+  --gr-ease-out:    cubic-bezier(.22, .8, .24, 1);
+  --gr-ease-in-out: cubic-bezier(.65, 0, .35, 1);
+  --gr-ease-spring: cubic-bezier(.34, 1.56, .64, 1);
+  --gr-cascade:   45ms;    /* décalage entre deux éléments d'une cascade */
 }
-/* Nom historique conservé : ui.jsx référence `fadeUp`. */
-@keyframes fadeUp {
-  from { opacity: 0; transform: translate(-50%, 8px); }
-  20%  { opacity: 1; }
-  80%  { opacity: 1; }
-  to   { opacity: 0; transform: translate(-50%, -22px); }
+
+/* ── Relief pressable ─────────────────────────────────────────────────────
+   Une tranche colorée sous l'élément ; au toucher, il s'enfonce d'autant.
+   Règle : le relief signale « ça s'appuie ». Un conteneur statique est plat.
+
+   --depth  épaisseur de la tranche (2, 3 ou 4 px)
+   --edge   couleur de la tranche
+
+   L'enfoncement passe par la propriété `translate` (et non `transform`) :
+   elle se compose avec un `transform` éventuel de l'élément et n'entre pas
+   en conflit avec les animations d'entrée, qui animent `transform`. */
+.gr-press {
+  --depth: 4px;
+  --edge: var(--gr-edge);
+  box-shadow: 0 var(--depth) 0 var(--edge);
+  margin-bottom: var(--depth);
+  translate: 0 0;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+  transition:
+    translate var(--gr-dur-press) var(--gr-ease-out),
+    box-shadow var(--gr-dur-press) var(--gr-ease-out),
+    filter var(--gr-dur-fast) ease,
+    background-color var(--gr-dur-fast) ease,
+    border-color var(--gr-dur-fast) ease,
+    color var(--gr-dur-fast) ease,
+    opacity var(--gr-dur-fast) ease;
 }
-@keyframes gr-slide-in {
-  from { opacity: 0; transform: translateY(-8px); }
-  to   { opacity: 1; transform: translateY(0); }
+.gr-press:active:not(:disabled):not([aria-disabled="true"]),
+.gr-press.is-down {
+  translate: 0 var(--depth);
+  box-shadow: 0 0 0 var(--edge);
+}
+/* Désactivé : à plat, enfoncé. Il « remonte » quand il redevient actif. */
+.gr-press:disabled,
+.gr-press[aria-disabled="true"] {
+  translate: 0 var(--depth);
+  box-shadow: 0 0 0 var(--edge);
+  cursor: not-allowed;
+}
+/* Verrouillé : garde son relief mais ne réagit plus (réponse déjà donnée). */
+.gr-press.is-locked { pointer-events: none; }
+@media (hover: hover) {
+  .gr-press:hover:not(:disabled):not([aria-disabled="true"]) { filter: brightness(1.05); }
+}
+
+/* Appui doux, sans relief : onglets, boutons fantômes, icônes seules. */
+.gr-squish {
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: scale var(--gr-dur-press) var(--gr-ease-out), opacity var(--gr-dur-fast) ease,
+              background-color var(--gr-dur-fast) ease, color var(--gr-dur-fast) ease;
+}
+.gr-squish:active:not(:disabled) { scale: .94; }
+.gr-squish:disabled { cursor: not-allowed; opacity: .5; }
+
+/* Ligne de liste pressable : léger voile au toucher. */
+.gr-row {
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background-color var(--gr-dur-fast) ease;
+}
+.gr-row:active { background-color: var(--gr-surface-2) !important; }
+@media (hover: hover) {
+  .gr-row:hover { background-color: color-mix(in srgb, var(--gr-surface-2) 55%, transparent); }
+}
+
+/* ── Bouton ───────────────────────────────────────────────────────────────
+   Structure et états ; les couleurs viennent du composant <Button>
+   (design/ui.jsx) via --btn-bg / --btn-fg / --edge. */
+.gr-btn {
+  --btn-bg: var(--gr-primary-btn);
+  --btn-fg: var(--gr-on-primary-btn);
+  --edge: var(--gr-primary-edge);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 2px solid transparent;
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  font-family: inherit;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: .01em;
+  text-align: center;
+  text-decoration: none;
+}
+.gr-btn:disabled,
+.gr-btn[aria-disabled="true"] {
+  --btn-bg: var(--gr-surface-2);
+  --btn-fg: var(--gr-text-3);
+  --edge: var(--gr-surface-2);
+  border-color: transparent !important;
+}
+.gr-btn.is-loading { pointer-events: none; }
+.gr-btn-spin {
+  width: 1.1em; height: 1.1em; border-radius: 50%;
+  border: 2.5px solid currentColor; border-top-color: transparent;
+  animation: gr-spin .7s linear infinite;
+}
+
+/* ── Entrées ──────────────────────────────────────────────────────────────
+   `backwards` (et non `both`) : une fois l'animation finie, l'élément
+   retrouve son style normal. Avec `both`, le `transform` final resterait
+   appliqué et bloquerait tout `transform` ultérieur de l'élément. */
+.gr-in       { animation: gr-rise  var(--gr-dur)      var(--gr-ease-out)    backwards; }
+.gr-in-pop   { animation: gr-pop   var(--gr-dur-slow) var(--gr-ease-spring) backwards; }
+.gr-in-fade  { animation: gr-fade  var(--gr-dur)      ease                  backwards; }
+.gr-in-push  { animation: gr-push  var(--gr-dur)      var(--gr-ease-out)    backwards; }
+.gr-in-back  { animation: gr-back  var(--gr-dur)      var(--gr-ease-out)    backwards; }
+.gr-in-drop  { animation: gr-drop  var(--gr-dur-slow) var(--gr-ease-spring) backwards; }
+.gr-in-sheet { animation: gr-sheet var(--gr-dur-slow) var(--gr-ease-out)    backwards; }
+
+/* Cascade : chaque enfant direct entre l'un après l'autre. */
+.gr-stagger > * {
+  animation: gr-rise var(--gr-dur-slow) var(--gr-ease-out) backwards;
+  animation-delay: calc(var(--gr-cascade) * 9);
+}
+.gr-stagger > :nth-child(1) { animation-delay: 0ms; }
+.gr-stagger > :nth-child(2) { animation-delay: calc(var(--gr-cascade) * 1); }
+.gr-stagger > :nth-child(3) { animation-delay: calc(var(--gr-cascade) * 2); }
+.gr-stagger > :nth-child(4) { animation-delay: calc(var(--gr-cascade) * 3); }
+.gr-stagger > :nth-child(5) { animation-delay: calc(var(--gr-cascade) * 4); }
+.gr-stagger > :nth-child(6) { animation-delay: calc(var(--gr-cascade) * 5); }
+.gr-stagger > :nth-child(7) { animation-delay: calc(var(--gr-cascade) * 6); }
+.gr-stagger > :nth-child(8) { animation-delay: calc(var(--gr-cascade) * 7); }
+.gr-stagger > :nth-child(9) { animation-delay: calc(var(--gr-cascade) * 8); }
+
+/* Délai ponctuel : style={{ "--d": 3 }} → 3 crans de cascade. */
+.gr-delay { animation-delay: calc(var(--gr-cascade) * var(--d, 1)) !important; }
+
+/* ── Retours et boucles ───────────────────────────────────────────────── */
+/* Sans délai, même pour un enfant de .gr-stagger : un retour est immédiat. */
+.gr-shake, .gr-bump { animation-delay: 0s !important; }
+.gr-shake  { animation: gr-shake .4s var(--gr-ease-in-out); }
+.gr-bump   { animation: gr-bump  var(--gr-dur-slow) var(--gr-ease-spring); }
+.gr-tada   { animation: gr-tada  var(--gr-dur-fete) var(--gr-ease-spring) backwards; }
+.gr-bob    { animation: gr-bob   2.8s ease-in-out infinite; }
+.gr-wiggle { animation: gr-wiggle 2.4s ease-in-out infinite; transform-origin: bottom center; }
+.gr-flame  { animation: gr-flame 1.6s ease-in-out infinite; transform-origin: 50% 90%; }
+.gr-pulse  { animation: gr-pulse 1.8s ease-out infinite; }
+.gr-glow   { animation: gr-glow  2s ease-in-out infinite; }
+
+/* ── Barre de progression ─────────────────────────────────────────────── */
+.gr-bar-fill {
+  position: relative;
+  overflow: hidden;
+  transform-origin: left center;
+  animation: gr-fill var(--gr-dur-fete) var(--gr-ease-out) backwards;
+  transition: width var(--gr-dur-slow) var(--gr-ease-out), background-color var(--gr-dur-fast) ease;
+}
+.gr-bar-fill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, .45) 50%, transparent 70%);
+  translate: -120% 0;
+  animation: gr-shine 2.6s var(--gr-ease-in-out) .5s infinite;
+}
+.gr-bar-fill::before {   /* reflet haut : donne du volume à la jauge */
+  content: "";
+  position: absolute;
+  left: 6px; right: 6px; top: 22%;
+  height: 22%;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, .28);
+}
+
+/* ── Contrôle segmenté : pastille glissante ───────────────────────────── */
+.gr-seg { position: relative; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
+.gr-seg-thumb {
+  position: absolute;
+  top: 4px; bottom: 4px; left: 4px;
+  width: calc((100% - 8px) / var(--n, 2));
+  translate: calc(var(--i, 0) * 100%) 0;
+  transition: translate var(--gr-dur) var(--gr-ease-spring);
+  pointer-events: none;
+}
+.gr-seg > button { position: relative; z-index: 1; }
+
+/* ── Navigation principale ────────────────────────────────────────────── */
+.gr-nav-tab { position: relative; z-index: 1; }
+.gr-nav-pill {
+  position: absolute;
+  top: 7px;
+  left: calc((var(--i, 0) + .5) * (100% / var(--n, 4)) - 30px);
+  width: 60px; height: 32px;
+  border-radius: 99px;
+  transition: left var(--gr-dur-slow) var(--gr-ease-spring);
+  pointer-events: none;
+}
+.gr-nav-tab[aria-current="page"] .gr-nav-ico { animation: gr-nav-hop var(--gr-dur-slow) var(--gr-ease-spring); }
+.gr-nav-tab:active .gr-nav-ico { scale: .86; }
+.gr-nav-ico { transition: scale var(--gr-dur-press) var(--gr-ease-out); }
+
+/* ── Manche (fretboard/FretGrid.jsx) ─────────────────────────────────────
+   Anneau de focus rentré : le manche est dans un conteneur à défilement
+   horizontal qui rognerait l'anneau global sur les bords. */
+@media (hover: hover) {
+  .gr-fret-cell[data-interactive]:hover { background: var(--gr-fret-survol); }
+}
+.gr-fret-cell:focus-visible { outline-offset: -3px; }
+
+/* ── Confettis ────────────────────────────────────────────────────────── */
+.gr-confetti {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 600;
+}
+.gr-confetti i {
+  position: absolute;
+  left: var(--x0, 50%);
+  top: var(--y0, 42%);
+  width: var(--w, 9px);
+  height: var(--h, 14px);
+  border-radius: 2px;
+  background: var(--c);
+  opacity: 0;
+  animation: gr-confetti var(--t, 1.4s) cubic-bezier(.15, .7, .3, 1) var(--dl, 0s) forwards;
+}
+
+/* ── Coche qui se dessine ─────────────────────────────────────────────── */
+.gr-check-draw path {
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  animation: gr-draw var(--gr-dur-slow) var(--gr-ease-out) .1s forwards;
+}
+
+/* ── Keyframes ────────────────────────────────────────────────────────── */
+@keyframes gr-rise  { from { opacity: 0; transform: translateY(14px); } }
+@keyframes gr-drop  { from { opacity: 0; transform: translateY(-14px) scale(.96); } }
+@keyframes gr-fade  { from { opacity: 0; } }
+@keyframes gr-pop   { from { opacity: 0; transform: scale(.86); } }
+@keyframes gr-push  { from { opacity: 0; transform: translateX(28px); } }
+@keyframes gr-back  { from { opacity: 0; transform: translateX(-28px); } }
+@keyframes gr-sheet { from { opacity: 0; transform: translateY(40px); } }
+@keyframes gr-slide-in { from { opacity: 0; transform: translateY(-14px) scale(.96); } }
+@keyframes gr-spin  { to { transform: rotate(360deg); } }
+@keyframes gr-fill  { from { transform: scaleX(0); } }
+@keyframes gr-shine { 0%, 55% { translate: -120% 0; } 100% { translate: 120% 0; } }
+@keyframes gr-draw  { to { stroke-dashoffset: 0; } }
+@keyframes gr-shake {
+  0%, 100% { transform: translateX(0); }
+  18% { transform: translateX(-7px); }
+  36% { transform: translateX(6px); }
+  54% { transform: translateX(-4px); }
+  72% { transform: translateX(3px); }
+}
+@keyframes gr-bump {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+@keyframes gr-tada {
+  0%   { opacity: 0; transform: scale(.5) rotate(-8deg); }
+  55%  { opacity: 1; transform: scale(1.12) rotate(4deg); }
+  78%  { transform: scale(.97) rotate(-2deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+@keyframes gr-bob    { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes gr-wiggle { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(-8deg); } 60% { transform: rotate(8deg); } }
+@keyframes gr-flame  {
+  0%, 100% { transform: scale(1) rotate(-2deg); }
+  35% { transform: scale(1.1, 1.16) rotate(2deg); }
+  70% { transform: scale(.96, 1.04) rotate(-1deg); }
+}
+@keyframes gr-pulse  { 0% { transform: scale(.88); opacity: .9; } 100% { transform: scale(1.3); opacity: 0; } }
+@keyframes gr-glow   { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+@keyframes gr-nav-hop {
+  0%   { transform: translateY(0) scale(1); }
+  35%  { transform: translateY(-5px) scale(1.12); }
+  100% { transform: translateY(0) scale(1); }
+}
+@keyframes gr-confetti {
+  0%   { opacity: 1; transform: translate(0, 0) rotate(0) scale(.5); }
+  30%  { opacity: 1; transform: translate(calc(var(--dx) * .8), var(--up)) rotate(calc(var(--rot) * .4)) scale(1); }
+  100% { opacity: 0; transform: translate(var(--dx), var(--down)) rotate(var(--rot)) scale(.9); }
+}
+/* Gain d'XP : la pastille jaillit, tient, puis s'envole. */
+@keyframes gr-xp {
+  0%   { opacity: 0; transform: translate(-50%, 16px) scale(.6); }
+  16%  { opacity: 1; transform: translate(-50%, -6px) scale(1.12); }
+  26%  { transform: translate(-50%, 0) scale(1); }
+  78%  { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -30px) scale(.94); }
+}
+
+/* Mascotte (design/Gropi.jsx) */
+@keyframes gropi-bob    { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes gropi-pop    { 0% { transform: scale(.6); opacity: 0; } 60% { transform: scale(1.08); } 100% { transform: scale(1); opacity: 1; } }
+@keyframes gropi-wiggle { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(-8deg); } 60% { transform: rotate(8deg); } }
+@keyframes gropi-cheer  { 0% { transform: scale(.5) translateY(22px); opacity: 0; } 50% { transform: scale(1.12) translateY(-8px); } 72% { transform: scale(.97); } 100% { transform: scale(1) translateY(0); opacity: 1; } }
+@keyframes gropi-bubble-in { 0% { transform: scale(.92) translateY(4px); opacity: 0; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
+.gropi-anim { will-change: transform; }
+
+@supports not (color: color-mix(in srgb, red, blue)) {
+  .gr-row:hover { background-color: var(--gr-surface-2); }
 }
 
 /* ── Mouvement réduit ─────────────────────────────────────────────────── */
@@ -193,6 +509,7 @@ img, svg { max-width: 100%; }
   *, *::before, *::after {
     animation-duration: .01ms !important;
     animation-iteration-count: 1 !important;
+    animation-delay: 0s !important;
     transition-duration: .01ms !important;
     scroll-behavior: auto !important;
   }
@@ -210,5 +527,3 @@ img, svg { max-width: 100%; }
   .gr-no-print { display: none !important; }
 }
 
-/* Spinner des écrans de chargement (App.jsx › EcranChargement) */
-@keyframes gr-spin { to { transform: rotate(360deg) } }

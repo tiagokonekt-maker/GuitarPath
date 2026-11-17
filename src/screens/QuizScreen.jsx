@@ -1,9 +1,13 @@
 // Groply — screens/QuizScreen.jsx
 import { useState } from "react";
-import { FONTS, R } from "../design/tokens.js";
+import { MODULE, T } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
-import { ProgressBar, XPPop } from "../design/ui.jsx";
+import {
+  AnswerOption, Button, Card, EmptyState, Eyebrow, Feedback, IconTile,
+  ProgressBar, QuestionCard, ResultScreen, ScreenHero, SessionBar,
+} from "../design/ui.jsx";
+import { vibrer } from "../design/hooks.js";
 import { Gropi } from "../design/Gropi.jsx";
 import { POSE_ROLE } from "../design/gropiPoses.js";
 import { makeEarQuizQuestion, loadAudio } from "../audioEngine.js";
@@ -18,14 +22,11 @@ import { buildReviewSession } from "../store/reviewEngine.js";
 import { useRenderers } from "../renderers.jsx";
 
 // ── Données modules quiz ──────────────────────────────────────────────────────
-const makeModules = (C) => [
-  { id:"debut",   label:"Premiers pas", icon:"sparkles", color:C.coral, colorL:C.coralL, colorD:C.coralD, border:C.coralBorder },
-  { id:"neck",    label:"Manche",   icon:"map-2",    color:C.amber,  colorL:C.amberL,  colorD:C.amberD,  border:C.amberBorder },
-  { id:"scales",  label:"Gammes",   icon:"music",    color:C.green,  colorL:C.greenL,  colorD:C.greenD,  border:C.greenBorder },
-  { id:"harmony", label:"Harmonie", icon:"stack-2",  color:C.purple, colorL:C.purpleL, colorD:C.purpleD, border:C.purpleBorder },
-  { id:"rhythm",  label:"Rythme",   icon:"metronome",color:C.blue,   colorL:C.blueL,   colorD:C.blueD,   border:C.blueBorder },
-  { id:"impro",   label:"Impro",    icon:"wand",     color:C.pink,   colorL:C.pinkL,   colorD:C.pinkD,   border:C.pinkBorder },
-];
+// Icône, teinte et libellé viennent de la palette des modules (tokens.js).
+const MODULES = ["debut", "neck", "scales", "harmony", "rhythm", "impro"]
+  .map(id => ({ id, label: MODULE[id].label, icon: MODULE[id].icon, tone: MODULE[id].color }));
+
+const LETTRES = ["A", "B", "C", "D"];
 
 // ── QuizScreen ────────────────────────────────────────────────────────────────
 /**
@@ -62,7 +63,6 @@ function unlockedQuizLvl(state, content, courseId) {
 function QuizScreen({ state, dispatch, content, embedded = false }) {
   const C = useC();
   const [showModules, setShowModules] = useState(false);
-  const MODULES = makeModules(C);
   const [mode, setMode] = useState(null);
 
   const totalAnswered = Object.keys(state.quizResults).length;
@@ -113,59 +113,47 @@ function QuizScreen({ state, dispatch, content, embedded = false }) {
 
   const launch = (id, label) => setMode({ id, label, pool: pools[id]() });
 
-  if (mode) return (
-    <QuizPlayer pool={mode.pool} title={mode.label} state={state} dispatch={dispatch} content={content} onDone={() => setMode(null)} />
-  );
+  if (mode) {
+    const player = (
+      <QuizPlayer pool={mode.pool} title={mode.label} state={state} dispatch={dispatch} content={content} onDone={() => setMode(null)} />
+    );
+    // Intégré : l'hôte (onglet Pratique) a déjà sa marge latérale de 16 px ;
+    // on la rend au lecteur pour ne pas l'empiler avec la sienne.
+    return embedded ? <div style={{ margin: "0 -16px" }}>{player}</div> : player;
+  }
 
   return (
     <div>
-      {/* ── EN-TÊTE ── (masqué en mode intégré : l'hôte le fournit) ────── */}
-      {!embedded && <div style={{
-        backgroundColor:"#36b3d7", backgroundImage:"url('/ocean.jpg')",
-        backgroundSize:"cover", backgroundPosition:"center 30%",
-        padding:"24px 20px 20px", position:"relative", overflow:"hidden",
-      }}>
-        <div style={{ position:"absolute", inset:0, background:"rgba(0,60,80,.50)", pointerEvents:"none" }} />
-        <div style={{ position:"relative", zIndex:1 }}>
-        <div style={{ fontSize:26, fontWeight:800, color:"#fff", letterSpacing:"-.4px" }}>Quiz</div>
-        <div style={{ fontSize:13, fontWeight:500, color:"rgba(255,255,255,.8)", marginTop:2, marginBottom:14 }}>
-          {totalAnswered} / {totalQ} questions répondues
-        </div>
-        <div style={{ display:"flex", justifyContent:"space-between", marginBottom:5 }}>
-          <span style={{ fontSize:12, fontWeight:700, color:"#fff" }}>{pctDone}% maîtrisé</span>
-          {wrongCount > 0 && <span style={{ fontSize:12, fontWeight:700, color:"rgba(255,255,255,.85)" }}>{wrongCount} à réviser</span>}
-        </div>
-        <ProgressBar pct={pctDone} color={C.teal} h={7} />
-        </div>
-      </div>}
-
-      <div style={{ padding: embedded ? "4px 20px 0" : "16px 20px 0" }}>
-
-        {/* ── BLOC PRIORITAIRE : quiz du jour + révision ───────────────────── */}
-        <div style={{ fontSize:11, fontWeight:700, color:C.text3, letterSpacing:".07em", textTransform:"uppercase", marginBottom:10 }}>
-          Aujourd'hui
-        </div>
-
-        {/* Quiz du jour — carte hero */}
-        <button onClick={() => launch("daily","Quiz du jour")} style={{
-          width:"100%", background:`linear-gradient(135deg, ${C.primaryL}, ${C.surface})`,
-          border:`2px solid ${C.primaryBorder}`, borderRadius:R.xl,
-          padding:16, cursor:"pointer", textAlign:"left",
-          fontFamily:FONTS.title, marginBottom:10,
-          display:"flex", gap:14, alignItems:"center",
-        }}>
-          <div style={{ width:52, height:52, borderRadius:R.lg, background:C.primary, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, boxShadow:`0 4px 12px ${C.primaryBorder}` }}>
-            <Ti name="star" size={24} color="#fff" />
-          </div>
-          <div style={{ flex:1 }}>
-            <div style={{ fontSize:11, fontWeight:700, color:C.primary, letterSpacing:".08em", textTransform:"uppercase", marginBottom:3 }}>
-              Recommandé · 7 questions
+      {/* En-tête masqué en mode intégré : l'hôte le fournit. */}
+      {!embedded && (
+        <ScreenHero
+          image="/ocean.jpg" color="#36b3d7" overlay="rgba(0,60,80,.50)" position="center 30%"
+          title="Quiz" subtitle={`${totalAnswered} / ${totalQ} questions répondues`}
+        >
+          <div style={{ marginTop: 14 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "white" }}>{pctDone}% maîtrisé</span>
+              {wrongCount > 0 && <span style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,.88)" }}>{wrongCount} à réviser</span>}
             </div>
-            <div style={{ fontSize:15, fontWeight:800, color:C.text, letterSpacing:"-.2px" }}>Quiz du jour</div>
-            <div style={{ fontSize:12, color:C.text3, marginTop:2 }}>Adapté à ta progression · ~5 min</div>
+            <ProgressBar pct={pctDone} color={C.teal} track="rgba(255,255,255,.3)" />
           </div>
-          <Ti name="arrow-right" size={18} color={C.primary} />
-        </button>
+        </ScreenHero>
+      )}
+
+      <div className="gr-stagger" style={{ padding: embedded ? "4px 0 24px" : "16px 16px 24px", display: "flex", flexDirection: "column", gap: 10 }}>
+        <Eyebrow tone="neutral" style={{ color: C.text3, margin: "0 4px" }}>Aujourd'hui</Eyebrow>
+
+        {/* Quiz du jour : le fil directeur de l'écran. */}
+        <Card onClick={() => launch("daily","Quiz du jour")} tone="primary" soft
+          style={{ display: "flex", gap: 14, alignItems: "center" }}>
+          <IconTile icon="star" tone="primary" solid size={52} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <Eyebrow style={{ marginBottom: 3 }}>Recommandé · 7 questions</Eyebrow>
+            <div style={{ fontSize: T.lead, fontWeight: 800, color: C.text, letterSpacing: "-.2px" }}>Quiz du jour</div>
+            <div style={{ fontSize: 12, color: C.text2, marginTop: 2 }}>Adapté à ta progression · ~5 min</div>
+          </div>
+          <Ti name="arrow-right" size={20} color={C.primaryInk} />
+        </Card>
 
         {/* ── EXPLORER PAR MODULE — replié ─────────────────────────────────
             La grille de 5 cartes avec barres de progression a été retirée :
@@ -177,44 +165,39 @@ function QuizScreen({ state, dispatch, content, embedded = false }) {
             c'est "Quiz du jour" — le reste est une exploration volontaire. */}
         <button
           onClick={() => setShowModules(v => !v)}
+          className="gr-squish gr-focus"
           style={{
-            width:"100%", background:"none", border:"none", cursor:"pointer",
-            padding:"6px 0 10px", display:"flex", alignItems:"center", gap:7,
-            fontFamily:FONTS.ui, textAlign:"left",
+            alignSelf: "flex-start", minHeight: 44, background: "none", border: "none",
+            padding: "0 4px", display: "flex", alignItems: "center", gap: 7,
+            fontFamily: "inherit", textAlign: "left",
           }}>
-          <Ti name={showModules ? "chevron-down" : "chevron-right"} size={15} color={C.text3} />
-          <span style={{ fontSize:11, fontWeight:700, color:C.text3, letterSpacing:".07em", textTransform:"uppercase" }}>
+          <Ti name={showModules ? "chevron-down" : "chevron-right"} size={16} color={C.text3} />
+          <span style={{ fontSize: T.micro, fontWeight: 700, color: C.text3, letterSpacing: ".07em", textTransform: "uppercase" }}>
             Cibler un module
           </span>
         </button>
 
         {showModules && (
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:8 }}>
+          <div className="gr-stagger" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
             {MODULES.map(m => {
               const total = content.quiz.filter(q => q.courseId===m.id && isUnlocked(q)).length;
               if (total === 0) return null;
               return (
-                <button key={m.id} onClick={() => launch(m.id, m.label)} style={{
-                  background:C.surface, border:`1.5px solid ${C.border}`,
-                  borderRadius:R.md, padding:"11px 12px",
-                  display:"flex", alignItems:"center", gap:9,
-                  cursor:"pointer", textAlign:"left", fontFamily:FONTS.ui,
-                }}>
-                  <Ti name={m.icon} size={17} color={m.color} />
-                  <span style={{ fontSize:13, fontWeight:700, color:C.text }}>{m.label}</span>
-                </button>
+                <Card key={m.id} onClick={() => launch(m.id, m.label)} tone={m.tone} pad="10px 12px"
+                  style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <IconTile icon={m.icon} tone={m.tone} size={36} />
+                  <span style={{ fontSize: 14, fontWeight: 700, color: C.text }}>{m.label}</span>
+                </Card>
               );
             })}
           </div>
         )}
-
-        <div style={{ height:24 }} />
       </div>
     </div>
   );
 }
 
-// ── QuizPlayer (logique 100% inchangée, layout retouché) ──────────────────────
+// ── QuizPlayer ────────────────────────────────────────────────────────────────
 function QuizPlayer({ pool, title, state, dispatch, content, onDone }) {
   const { FretboardQuizQuestion } = useRenderers();
   const C = useC();
@@ -262,16 +245,16 @@ function QuizPlayer({ pool, title, state, dispatch, content, onDone }) {
   const [finished, setFinished] = useState(false);
 
   if (questions.length === 0) return (
-    <div style={{ padding:"32px 20px", textAlign:"center", color:C.text2, fontFamily:FONTS.title }}>
+    <EmptyState action={<Button onClick={onDone}>Retour</Button>}>
       Aucune question disponible.
-      <br />
-      <button onClick={onDone} style={{ marginTop:16, padding:"10px 20px", border:"none", borderRadius:R.sm, background:C.primary, color:"#fff", cursor:"pointer", fontFamily:FONTS.ui, fontSize:13, fontWeight:600 }}>Retour</button>
-    </div>
+    </EmptyState>
   );
 
   const q = questions[idx];
   const isFretQ  = q.type === "fretboard";
   const answered = isFretQ ? fretAnswered : sel !== null;
+  // Une session de révision réussie (≥ 60 %) se fête comme un sans-faute.
+  const isReview = /révision/i.test(title);
 
   const choose = (i) => {
     if (answered) return;
@@ -295,6 +278,7 @@ function QuizPlayer({ pool, title, state, dispatch, content, onDone }) {
   const next = () => {
     if (idx+1 >= questions.length) {
       setFinished(true);
+      if (score === questions.length || (isReview && score / questions.length >= 0.6)) vibrer([12, 40, 18]);
       dispatch({ type:"QUIZ_SESSION_DONE", id:title, title, xp:score*30, score:`${score}/${questions.length}` });
     } else {
       setSel(null); setFretAnswered(false); setFretCorrect(null);
@@ -306,7 +290,6 @@ function QuizPlayer({ pool, title, state, dispatch, content, onDone }) {
     const pct      = Math.round(score/questions.length*100);
     const isPerfect = score === questions.length;
     const isGood    = pct >= 60;
-    const isReview  = /révision/i.test(title);       // session de rattrapage
     const redeemed  = isReview && isGood;            // questions ratées enfin réussies
     const pose      = redeemed ? "pride" : isPerfect ? "celebrate" : isGood ? "happy" : "think";
     const anim      = (redeemed || isPerfect) ? "cheer" : "pop";
@@ -321,107 +304,43 @@ function QuizPlayer({ pool, title, state, dispatch, content, onDone }) {
     const xpEarned  = score * 30;
 
     return (
-      <div style={{ padding:"28px 20px 32px", display:"flex", flexDirection:"column", alignItems:"center", gap:0 }}>
-        {/* Gropi */}
-        <Gropi pose={pose} size={(isPerfect||redeemed) ? 160 : 120} anim={anim}/>
-
-        {/* Titre */}
-        <div style={{ fontSize:26, fontWeight:800, color:C.text, letterSpacing:"-.4px", marginTop:(isPerfect||redeemed)?6:10, textAlign:"center" }}>
-          {heading}
-        </div>
-        <div style={{ fontSize:13, fontWeight:500, color:C.text2, marginTop:6, textAlign:"center", lineHeight:1.5, maxWidth:260 }}>
-          {subtitle}
-        </div>
-
-        {/* Score */}
-        <div style={{
-          display:"flex", gap:16, margin:"18px 0 0",
-          background:C.surface, border:`1.5px solid ${C.border}`,
-          borderRadius:R.xl, padding:"14px 24px",
-        }}>
-          <div style={{textAlign:"center"}}>
-            <div style={{fontSize:26,fontWeight:800,color:C.green}}>{score}</div>
-            <div style={{fontSize:11,fontWeight:700,color:C.text3,textTransform:"uppercase",letterSpacing:".06em"}}>Correctes</div>
-          </div>
-          <div style={{width:1,background:C.border}}/>
-          <div style={{textAlign:"center"}}>
-            <div style={{fontSize:26,fontWeight:800,color:C.text2}}>{questions.length-score}</div>
-            <div style={{fontSize:11,fontWeight:700,color:C.text3,textTransform:"uppercase",letterSpacing:".06em"}}>À revoir</div>
-          </div>
-          <div style={{width:1,background:C.border}}/>
-          <div style={{textAlign:"center"}}>
-            <div style={{fontSize:26,fontWeight:800,color:C.primary}}>+{xpEarned}</div>
-            <div style={{fontSize:11,fontWeight:700,color:C.text3,textTransform:"uppercase",letterSpacing:".06em"}}>XP</div>
-          </div>
-        </div>
-
-        {/* Barre de score */}
-        <div style={{width:"100%",marginTop:14}}>
-          <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
-            <span style={{fontSize:11,color:C.text3}}>Score</span>
-            <span style={{fontSize:11,fontWeight:700,color:C.text2}}>{pct}%</span>
-          </div>
-          <div style={{height:7,background:C.border,borderRadius:99,overflow:"hidden"}}>
-            <div style={{width:`${pct}%`,height:"100%",borderRadius:99,transition:"width .5s ease",
-              background:isPerfect?C.green:isGood?C.primary:C.pink}}/>
-          </div>
-        </div>
-
-        <button onClick={onDone} style={{
-          width:"100%", marginTop:20, padding:14, borderRadius:R.lg, border:"none",
-          background:`linear-gradient(135deg,#FF9155,${C.primary})`,
-          color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer", fontFamily:FONTS.ui,
-          boxShadow:`0 4px 16px ${C.primary}44`,
-        }}>
-          Retour
-        </button>
-      </div>
+      <ResultScreen
+        pose={pose} anim={anim} gropiSize={(isPerfect||redeemed) ? 160 : 120}
+        confetti={isPerfect || redeemed}
+        title={heading} subtitle={subtitle}
+        stats={[
+          { value: score, label: "Correctes", tone: "green" },
+          { value: questions.length-score, label: "À revoir", tone: "neutral" },
+          { value: xpEarned, label: "XP", tone: "primary", prefix: "+" },
+        ]}
+        pct={pct} pctTone={isPerfect ? "green" : isGood ? "primary" : "pink"}
+        actions={<Button size="lg" full onClick={onDone}>Retour</Button>}
+      />
     );
   }
 
   const linkedLesson = q.lessonId ? content.courses.flatMap(c=>c.lessons).find(l=>l.id===q.lessonId) : null;
   const linkedCourse = q.courseId ? content.courses.find(c=>c.id===q.courseId) : null;
+  const last = idx+1 >= questions.length;
+  const etatDe = (i) => !answered ? "idle" : i === q.a ? "correct" : i === sel ? "wrong" : "muted";
 
   return (
-    <div style={{ padding:"14px 20px 0" }}>
-      {/* Header barre progression + quitter */}
-      <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}>
-        <button onClick={onDone} style={{ background:C.surface, border:`1.5px solid ${C.border}`, borderRadius:R.sm, width:36, height:36, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", flexShrink:0 }}>
-          <Ti name="x" size={16} color={C.text2} />
-        </button>
-        <div style={{ flex:1, display:"flex", gap:4 }}>
-          {questions.map((_,i) => (
-            <div key={i} style={{ height:4, flex:1, borderRadius:2, background: i<idx ? C.green : i===idx ? C.primary : C.border, transition:"background .2s" }} />
-          ))}
-        </div>
-        <span style={{ fontSize:12, fontWeight:700, color:C.text3, flexShrink:0 }}>{idx+1}/{questions.length}</span>
-      </div>
+    <div className="gr-in-push" style={{ padding: "14px 16px 24px", display: "flex", flexDirection: "column", gap: 12 }}>
+      <SessionBar onClose={onDone} current={idx+1} total={questions.length}
+        pct={(idx + (answered ? 1 : 0)) / questions.length * 100} />
 
-      {/* Meta */}
-      <div style={{ fontSize:11, color:C.text3, marginBottom:8, textTransform:"uppercase", letterSpacing:".1em", fontWeight:600 }}>
+      <QuestionCard key={idx} eyebrow={<>
         {linkedCourse?.title} · Niv. {q.lvl}
-        {isFretQ && <span style={{ marginLeft:6, color:C.amber, fontWeight:700 }}>· Manche</span>}
-      </div>
-
-      {/* Question */}
-      <div style={{ background:C.surface, border:`1.5px solid ${C.border}`, borderRadius:R.lg, padding:16, marginBottom:10 }}>
-        <p style={{ margin:0, fontSize:15, fontWeight:600, lineHeight:1.55, color:C.text, fontFamily:FONTS.title }}>{q.q}</p>
-      </div>
+        {isFretQ && <span style={{ marginLeft: 6, color: C.amberInk }}>· Manche</span>}
+      </>}>
+        {q.q}
+      </QuestionCard>
 
       {/* Bouton d'écoute — questions d'oreille uniquement */}
       {q.type === "ear" && (
-        <button
-          onClick={async () => { await loadAudio(); q.play?.(); }}
-          style={{
-            width:"100%", padding:"14px 0", marginBottom:10, borderRadius:R.lg,
-            border:`1.5px solid ${C.primary}`, background:C.primaryL, color:C.primaryD,
-            fontWeight:800, fontSize:14, fontFamily:FONTS.ui, cursor:"pointer",
-            display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-          }}
-        >
-          <Ti name="volume" size={18} color={C.primary} />
+        <Button variant="soft" size="lg" full icon="volume" onClick={async () => { await loadAudio(); q.play?.(); }}>
           Écouter
-        </button>
+        </Button>
       )}
 
       {/* Fretboard ou QCM */}
@@ -429,69 +348,49 @@ function QuizPlayer({ pool, title, state, dispatch, content, onDone }) {
         <>
           {FretboardQuizQuestion && <FretboardQuizQuestion question={q} onComplete={handleFretComplete} answered={fretAnswered} />}
           {fretAnswered && (
-            <>
-              <FeedbackBox ok={fretCorrect} xp={q.xp||40} exp={q.exp} lesson={null} />
-              <NextBtn onClick={next} last={idx+1>=questions.length} />
-            </>
+            <FeedbackBox ok={fretCorrect} xp={q.xp||40} exp={q.exp} lesson={null} onNext={next} last={last} />
           )}
         </>
       ) : (
         <>
-          {q.o.map((opt, i) => {
-            let bg=C.surface, border=`1.5px solid ${C.border}`, col=C.text, badgeBg=C.surface2, badgeFg=C.text2, ic=["A","B","C","D"][i];
-            if (answered) {
-              if (i===q.a)   { bg=C.greenL; border=`1.5px solid ${C.green}`;  col=C.greenD;  badgeBg=C.greenBorder; badgeFg=C.greenD;  ic=<Ti name="check" size={12} color={C.greenD} />; }
-              else if(i===sel){ bg=C.coralL;border=`1.5px solid ${C.coral}`;col=C.coralD;badgeBg=C.coralBorder;badgeFg=C.coralD;ic=<Ti name="x" size={12} color={C.coralD} />; }
-            }
-            return (
-              <button key={i} onClick={()=>choose(i)} disabled={answered} style={{ display:"flex", alignItems:"center", gap:10, background:bg, border, borderRadius:R.md, padding:"12px 14px", cursor:answered?"default":"pointer", textAlign:"left", width:"100%", marginBottom:7, fontFamily:FONTS.title }}>
-                <div style={{ width:26, height:26, borderRadius:8, background:badgeBg, color:badgeFg, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700, flexShrink:0 }}>{ic}</div>
-                <span style={{ fontSize:13, color:col, lineHeight:1.45, fontWeight:answered&&i===q.a?700:500 }}>{opt}</span>
-              </button>
-            );
-          })}
+          <div key={idx} className="gr-stagger" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {q.o.map((opt, i) => (
+              <AnswerOption key={i} etat={etatDe(i)} marker={LETTRES[i]} locked={answered} onClick={() => choose(i)}>
+                {opt}
+              </AnswerOption>
+            ))}
+          </div>
           {answered && (
-            <>
-              <FeedbackBox ok={sel===q.a} xp={q.xp||30} exp={q.exp||q.x} lesson={linkedLesson} />
-              <NextBtn onClick={next} last={idx+1>=questions.length} />
-            </>
+            <FeedbackBox ok={sel===q.a} xp={q.xp||30} exp={q.exp||q.x} lesson={linkedLesson} onNext={next} last={last} />
           )}
         </>
       )}
-      <div style={{ height:24 }} />
     </div>
   );
 }
 
-// ── Micro-composants ──────────────────────────────────────────────────────────
-function FeedbackBox({ ok, xp, exp, lesson }) {
-  const C = useC();
+// ── Retour après une réponse ──────────────────────────────────────────────────
+function FeedbackBox({ ok, xp, exp, lesson, onNext, last }) {
   return (
-    <div style={{ background:ok?C.greenL:C.coralL, borderRadius:R.md, padding:"12px 14px", marginBottom:12, border:`1.5px solid ${ok?C.greenBorder:C.coralBorder}`, display:"flex", gap:10, alignItems:"flex-start" }}>
-      {/* Gropi réagit sans ralentir : petite taille, apparition de 0,4 s,
-          aucune attente avant « Suivant ». Content si c'est juste, pensif
-          sinon — jamais moqueur. */}
-      <Gropi key={ok ? "ok" : "ko"} pose={ok ? POSE_ROLE.bonne : POSE_ROLE.erreur} size={36} anim="pop" />
-      <div style={{ flex:1, minWidth:0 }}>
-      <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:4 }}>
-        <Ti name={ok?"check":"alert-circle"} size={14} color={ok?C.green:C.coral} />
-        <div style={{ fontSize:12, fontWeight:700, color:ok?C.greenD:C.coralD }}>
-          {ok ? `CORRECT · +${xp} XP` : "PAS TOUT À FAIT…"}
+    <Feedback
+      correct={ok}
+      title={ok ? `Correct · +${xp} XP` : "Pas tout à fait…"}
+      action={
+        <Button size="lg" full tone={ok ? "green" : "primary"} iconRight={last ? undefined : "arrow-right"} onClick={onNext}>
+          {last ? "Voir les résultats" : "Suivant"}
+        </Button>
+      }
+    >
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {exp}
+          {lesson && <div style={{ fontSize: 12, fontWeight: 600, marginTop: 6 }}>Pour approfondir : <em>{lesson.title}</em></div>}
         </div>
+        {/* Gropi réagit sans ralentir : petite taille, aucune attente avant
+            « Suivant ». Content si c'est juste, pensif sinon — jamais moqueur. */}
+        <Gropi key={ok ? "ok" : "ko"} pose={ok ? POSE_ROLE.bonne : POSE_ROLE.erreur} size={40} anim="pop" />
       </div>
-      <div style={{ fontSize:12, color:ok?C.greenD:C.coralD, lineHeight:1.55 }}>{exp}</div>
-      {lesson && <div style={{ fontSize:11, color:C.primary, marginTop:6 }}>Pour approfondir : <em>{lesson.title}</em></div>}
-      </div>
-    </div>
-  );
-}
-
-function NextBtn({ onClick, last }) {
-  const C = useC();
-  return (
-    <button onClick={onClick} style={{ width:"100%", padding:14, borderRadius:R.lg, border:"none", background:C.primary, color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer", fontFamily:FONTS.ui }}>
-      {last ? "Voir les résultats" : "Suivant →"}
-    </button>
+    </Feedback>
   );
 }
 

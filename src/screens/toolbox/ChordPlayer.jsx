@@ -1,9 +1,9 @@
 // Groply — src/screens/toolbox/ChordPlayer.jsx
 // Lecteur d'accords de la boîte à outils (chargé à la demande par ToolboxScreen).
 import { useState, useRef, useEffect, useCallback } from "react";
-import { FONTS, R } from "../../design/tokens.js";
+import { R, T } from "../../design/tokens.js";
 import { useC } from "../../design/ThemeContext.jsx";
-import { Ti } from "../../design/Ti.jsx";
+import { Button, Card, Chip, Eyebrow, IconButton } from "../../design/ui.jsx";
 import { playProgression, stopAll } from "../../audioEngine.js";
 import { CHORD_TYPES } from "../../fretboardUtils.js";
 import { NOTES_DIESES_EN } from "../../music/notes.js";
@@ -32,6 +32,9 @@ const SPEED_PRESETS = [
   { id:"rapide", label:"Rapide", secs:0.8 },
 ];
 const MAX_CHORDS = 12;
+
+// Chip d'un sélecteur : zone tactile de 44 px.
+const STYLE_CHOIX = { minHeight: 44 };
 
 export function ChordPlayer() {
   const C = useC();
@@ -97,153 +100,116 @@ export function ChordPlayer() {
 
   const toggle = () => (playing ? stop() : play());
 
-  const chip = {
-    padding:"8px 10px", borderRadius:10, border:`1.5px solid ${C.border}`,
-    background:C.surface, color:C.text2, fontWeight:700, fontSize:12.5, cursor:"pointer", fontFamily:FONTS.ui,
-  };
-
   return (
-    <div>
+    <div className="gr-stagger" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       {/* Choix de l'accord à ajouter */}
-      <div style={{ background:C.surface, border:`1.5px solid ${C.border}`, borderRadius:R.lg, padding:16 }}>
-        <div style={{ fontSize:12, fontWeight:700, color:C.text3, marginBottom:9, fontFamily:FONTS.ui }}>Fondamentale</div>
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(6, 1fr)", gap:6, marginBottom:14 }}>
-          {CHORD_ROOTS.map(code => (
-            <button key={code} onClick={() => setRoot(code)} aria-pressed={root===code} className="gr-focus" style={{
-              ...chip, padding:"9px 0",
-              border:`1.5px solid ${root===code ? C.primary : C.border}`,
-              background: root===code ? C.primaryL : C.surface,
-              color: root===code ? C.primaryD : C.text2,
-            }}>
-              {nomRacineAccord(code, quality)}
-            </button>
-          ))}
+      <Card style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div>
+          <Eyebrow style={{ marginBottom: 8 }}>Fondamentale</Eyebrow>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(6, minmax(0, 1fr))", gap: 6 }}>
+            {CHORD_ROOTS.map(code => (
+              <Chip key={code} selected={root === code} onClick={() => setRoot(code)}
+                style={{ ...STYLE_CHOIX, minWidth: 0, padding: 0 }}>
+                {nomRacineAccord(code, quality)}
+              </Chip>
+            ))}
+          </div>
         </div>
 
-        <div style={{ fontSize:12, fontWeight:700, color:C.text3, marginBottom:9, fontFamily:FONTS.ui }}>Famille</div>
-        <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:12 }}>
-          {CHORD_FAMILIES.map(f => (
-            <button key={f.id} aria-pressed={family===f.id} className="gr-focus" onClick={() => {
-              setFamily(f.id);
-              // On bascule sur la première qualité de la famille, pour ne
-              // jamais laisser une sélection invisible dans un autre onglet.
-              setQuality(f.keys[0]);
-            }} style={{
-              ...chip, padding:"7px 10px", fontSize:12,
-              border:`1.5px solid ${family===f.id ? C.primary : C.border}`,
-              background: family===f.id ? C.primaryL : C.surface,
-              color: family===f.id ? C.primaryD : C.text2,
-            }}>
-              {f.label}
-            </button>
-          ))}
+        <div>
+          <Eyebrow style={{ marginBottom: 8 }}>Famille</Eyebrow>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {CHORD_FAMILIES.map(f => (
+              <Chip key={f.id} selected={family === f.id} style={STYLE_CHOIX} onClick={() => {
+                setFamily(f.id);
+                // On bascule sur la première qualité de la famille, pour ne
+                // jamais laisser une sélection invisible dans un autre onglet.
+                setQuality(f.keys[0]);
+              }}>
+                {f.label}
+              </Chip>
+            ))}
+          </div>
         </div>
 
-        <div style={{ fontSize:12, fontWeight:700, color:C.text3, marginBottom:9, fontFamily:FONTS.ui }}>Qualité</div>
-        <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:14 }}>
-          {(CHORD_FAMILIES.find(f => f.id === family)?.keys || []).map(key => (
-            <button key={key} onClick={() => setQuality(key)} aria-pressed={quality===key} aria-label={CHORD_TYPES[key]?.name || key} className="gr-focus" style={{
-              ...chip,
-              border:`1.5px solid ${quality===key ? C.primary : C.border}`,
-              background: quality===key ? C.primaryL : C.surface,
-              color: quality===key ? C.primaryD : C.text2,
-            }}>
-              {CHORD_TYPES[key]?.sym || CHORD_TYPES[key]?.name || key}
-            </button>
-          ))}
+        <div>
+          <Eyebrow style={{ marginBottom: 8 }}>Qualité</Eyebrow>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {(CHORD_FAMILIES.find(f => f.id === family)?.keys || []).map(key => (
+              <Chip key={key} selected={quality === key} onClick={() => setQuality(key)}
+                aria-label={CHORD_TYPES[key]?.name || key} style={{ ...STYLE_CHOIX, minWidth: 48 }}>
+                {CHORD_TYPES[key]?.sym || CHORD_TYPES[key]?.name || key}
+              </Chip>
+            ))}
+          </div>
+          <div style={{ fontSize: 12, color: C.text2, marginTop: 8, minHeight: 18 }}>
+            {CHORD_TYPES[quality]?.name}
+          </div>
         </div>
 
-        <div style={{ fontSize:11.5, color:C.text3, marginBottom:12, fontFamily:FONTS.ui, minHeight:16 }}>
-          {CHORD_TYPES[quality]?.name}
-        </div>
-
-        <button onClick={addChord} disabled={sequence.length >= MAX_CHORDS} className="gr-focus" style={{
-          width:"100%", padding:"11px 0", borderRadius:R.md, border:"none",
-          background: sequence.length >= MAX_CHORDS ? C.border : C.primary,
-          color:C.onPrimaryBtn, fontWeight:700, fontSize:13.5, fontFamily:FONTS.ui,
-          cursor: sequence.length >= MAX_CHORDS ? "default" : "pointer",
-          display:"flex", alignItems:"center", justifyContent:"center", gap:6,
-        }}>
-          <Ti name="plus" size={15} color={C.onPrimaryBtn}/>
+        <Button variant="soft" full icon="plus" onClick={addChord} disabled={sequence.length >= MAX_CHORDS}>
           Ajouter à la suite
-        </button>
-      </div>
+        </Button>
+      </Card>
 
       {/* Suite d'accords construite */}
-      <div style={{ background:C.surface, border:`1.5px solid ${C.border}`, borderRadius:R.lg, padding:16, marginTop:12 }}>
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
-          <div style={{ fontSize:12, fontWeight:700, color:C.text3, fontFamily:FONTS.ui }}>
-            Ta suite ({sequence.length}/{MAX_CHORDS})
-          </div>
+      <Card style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, minHeight: 20 }}>
+          <Eyebrow>Ta suite ({sequence.length}/{MAX_CHORDS})</Eyebrow>
           {sequence.length > 0 && (
-            <button onClick={clearAll} className="gr-focus" style={{
-              background:"none", border:"none", color:C.coral, fontSize:12.5, fontWeight:700,
-              fontFamily:FONTS.ui, cursor:"pointer", padding:"8px 10px", margin:"-8px -10px", minHeight:36,
-            }}>
+            <Button variant="ghost" size="sm" tone="danger" icon="trash" onClick={clearAll}
+              style={{ margin: "-10px -12px -10px 0" }}>
               Vider
-            </button>
+            </Button>
           )}
         </div>
 
         {sequence.length === 0 ? (
-          <div role="status" style={{ textAlign:"center", padding:"18px 0", color:C.text3, fontSize:13, fontFamily:FONTS.ui }}>
+          <div role="status" style={{ textAlign: "center", padding: "10px 0", color: C.text2, fontSize: T.small, lineHeight: 1.5 }}>
             {suiteVidee ? (
               <>Suite vidée.{" "}
-                <button onClick={annulerVider} className="gr-focus" style={{ background:"none", border:"none", padding:"6px 4px", color:C.primaryD, fontWeight:800, fontSize:13, fontFamily:FONTS.ui, cursor:"pointer", textDecoration:"underline" }}>Annuler</button>
+                <Button variant="ghost" size="sm" onClick={annulerVider} style={{ padding: "0 6px" }}>Annuler</Button>
               </>
             ) : "Ajoute des accords ci-dessus pour construire ta suite."}
           </div>
         ) : (
-          <div style={{ display:"flex", flexWrap:"wrap", gap:8, marginBottom:16 }}>
-            {sequence.map((c, i) => (
-              <div key={i} style={{
-                display:"flex", alignItems:"center", gap:6, padding:"8px 6px 8px 12px",
-                borderRadius:10, fontFamily:FONTS.ui, fontWeight:700, fontSize:13,
-                border:`1.5px solid ${activeIdx===i && playing ? C.primary : C.border}`,
-                background: activeIdx===i && playing ? C.primaryL : C.surface2,
-                color: activeIdx===i && playing ? C.primaryD : C.text,
-                transition:"all 0.15s",
-              }}>
-                {c.label}
-                <button onClick={() => removeChord(i)} aria-label={`Retirer ${c.label}`} className="gr-focus" style={{
-                  background:"none", border:"none", cursor:"pointer", padding:0,
-                  width:32, height:32, margin:"-8px -4px -8px 0", borderRadius:8,
-                  display:"flex", alignItems:"center", justifyContent:"center", color:C.text3,
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {sequence.map((c, i) => {
+              const joue = activeIdx === i && playing;
+              return (
+                // L'accord en cours de lecture s'allume et bat une fois.
+                <div key={i} className={joue ? "gr-bump" : undefined} style={{
+                  display: "flex", alignItems: "center", gap: 2, padding: "2px 2px 2px 12px",
+                  borderRadius: R.sm, fontWeight: 700, fontSize: T.small,
+                  border: `2px solid ${joue ? C.primary : C.border}`,
+                  background: joue ? C.primaryL : C.surface2,
+                  color: joue ? C.primaryD : C.text,
+                  transition: "background-color var(--gr-dur-fast) ease, border-color var(--gr-dur-fast) ease, color var(--gr-dur-fast) ease",
                 }}>
-                  <Ti name="x" size={13} color={C.text3}/>
-                </button>
-              </div>
-            ))}
+                  {c.label}
+                  <IconButton icon="x" label={`Retirer ${c.label}`} variant="ghost" size={36} iconSize={14}
+                    onClick={() => removeChord(i)} />
+                </div>
+              );
+            })}
           </div>
         )}
 
         {/* Vitesse */}
-        <div style={{ display:"flex", gap:6, marginBottom:14 }}>
+        <div style={{ display: "flex", gap: 6 }}>
           {SPEED_PRESETS.map(p => (
-            <button key={p.id} onClick={() => setSpeed(p.id)} disabled={playing} aria-pressed={speed===p.id} className="gr-focus" style={{
-              flex:1, padding:"8px 0", borderRadius:R.sm, fontFamily:FONTS.ui,
-              border:`1.5px solid ${speed===p.id ? C.primary : C.border}`,
-              background: speed===p.id ? C.primaryL : C.surface,
-              color: speed===p.id ? C.primaryD : C.text2,
-              fontWeight:700, fontSize:12.5, cursor: playing ? "default" : "pointer",
-              opacity: playing ? 0.6 : 1,
-            }}>
+            <Chip key={p.id} selected={speed === p.id} onClick={() => setSpeed(p.id)} disabled={playing}
+              style={{ ...STYLE_CHOIX, flex: 1, minWidth: 0, padding: "0 4px" }}>
               {p.label}
-            </button>
+            </Chip>
           ))}
         </div>
 
-        <button onClick={toggle} disabled={sequence.length === 0} className="gr-focus" style={{
-          width:"100%", padding:"13px 0", borderRadius:R.md, border:"none",
-          background: sequence.length === 0 ? C.border : (playing ? C.coral : C.primary),
-          color:C.onPrimaryBtn, fontWeight:800, fontSize:14, fontFamily:FONTS.ui,
-          cursor: sequence.length === 0 ? "default" : "pointer",
-          display:"flex", alignItems:"center", justifyContent:"center", gap:7,
-        }}>
-          <Ti name={playing ? "player-pause" : "player-play"} size={16} color={C.onPrimaryBtn}/>
+        <Button size="lg" full tone={playing ? "coral" : "primary"} icon={playing ? "player-pause" : "player-play"}
+          onClick={toggle} disabled={sequence.length === 0}>
           {playing ? "Arrêter" : "Écouter la suite"}
-        </button>
-      </div>
+        </Button>
+      </Card>
     </div>
   );
 }

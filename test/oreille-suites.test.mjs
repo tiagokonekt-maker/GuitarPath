@@ -15,17 +15,17 @@ import { FAMILLES, genererQuestion } from "../src/store/generateurs.js";
 import { COURSES } from "../src/content/index.js";
 
 function rng(graine) { let x = graine >>> 0; return () => ((x = (x * 1664525 + 1013904223) >>> 0) / 2 ** 32); }
-// Oracle indépendant : lecture d'un nom français.
-const LET = ["Do", "Ré", "Mi", "Fa", "Sol", "La", "Si"], NAT = [0, 2, 4, 5, 7, 9, 11];
+// Oracle indépendant : lecture d'un nom, français (tonalités) ou anglais (accords).
+const LET = ["Do", "Ré", "Mi", "Fa", "Sol", "La", "Si"], LET_EN = ["C", "D", "E", "F", "G", "A", "B"], NAT = [0, 2, 4, 5, 7, 9, 11];
 function lire(n) {
-  const m = /^(Do|Ré|Mi|Fa|Sol|La|Si)(#|b)?(m|7|dim)?$/.exec(n); if (!m) return null;
-  const l = LET.indexOf(m[1]), acc = m[2] === "#" ? 1 : m[2] === "b" ? -1 : 0;
+  const m = /^(Do|Ré|Mi|Fa|Sol|La|Si|[A-G])(#|b)?(m|7|dim)?$/.exec(n); if (!m) return null;
+  const l = m[1].length === 1 ? LET_EN.indexOf(m[1]) : LET.indexOf(m[1]), acc = m[2] === "#" ? 1 : m[2] === "b" ? -1 : 0;
   return { l, pc: ((NAT[l] + acc) % 12 + 12) % 12, type: m[3] || "" };
 }
 const NUM = { I: 1, II: 2, III: 3, IV: 4, V: 5, VI: 6, VII: 7 };
 const ROMAIN = /(^|[\s(–])(I|II|III|IV|V|VI|VII|i|ii|iii|iv|v|vi|vii)°?7?(?=$|[\s).–,])/;
 
-/** Vérifie « Sol – Ré – Mim – Do » pour la suite `cle` depuis la tonique `t`. */
+/** Vérifie « G – D – Em – C » pour la suite `cle` depuis la tonique `t`. */
 function verifierNoms(libelle, cle, t) {
   const noms = libelle.split(" – "), tn = lire(nomTonique(t));
   assert.equal(tn.pc, t, `tonique ${nomTonique(t)}`);
@@ -35,7 +35,7 @@ function verifierNoms(libelle, cle, t) {
     assert.ok(n, `${noms[k]} illisible (${libelle})`);
     assert.equal(n.pc, (t + semi) % 12, `${libelle} : ${rom}`);
     assert.equal(n.type, type === "min" ? "m" : "", `${libelle} : qualité de ${rom}`);
-    // Une lettre par degré : le VI de Do mineur est Lab, jamais Sol#.
+    // Une lettre par degré : le VI de Do mineur est Ab, jamais G#.
     assert.equal(n.l, (tn.l + NUM[rom.toUpperCase()] - 1) % 7, `${libelle} : orthographe de ${rom}`);
   });
 }
@@ -105,16 +105,16 @@ test("avant la leçon : options en noms d'accords, aucun chiffre romain, ni dans
 function toniqueDe(q) { return lire(q.noms[0]).pc; }
 
 test("noms orthographiés dans plusieurs tonalités, majeures et mineures", () => {
-  assert.equal(libelleNomsSuite("I-V-vi-IV", 7), "Sol – Ré – Mim – Do");
-  assert.equal(libelleNomsSuite("I-V-vi-IV", 5), "Fa – Do – Rém – Sib");
-  assert.equal(libelleNomsSuite("I-vi-ii-V", 10), "Sib – Solm – Dom – Fa");
-  assert.equal(libelleNomsSuite("I-IV-V-I", 3), "Mib – Lab – Sib – Mib");
-  assert.equal(libelleNomsSuite("I-IV-vi-V", 4), "Mi – La – Do#m – Si");
-  assert.equal(libelleNomsSuite("i-VI-III-VII", 0), "Dom – Lab – Mib – Sib");
-  assert.equal(libelleNomsSuite("i-iv-v-i", 9), "Lam – Rém – Mim – Lam");
-  assert.equal(libelleNomsSuite("i-iv-V-i", 4), "Mim – Lam – Si – Mim", "mineur harmonique : V majeur");
-  assert.equal(libelleNomsSuite("i-VII-VI-V", 2), "Rém – Do – Sib – La");
-  assert.equal(libelleNomsSuite("i-VI-VII-i", 11), "Sim – Sol – La – Sim");
+  assert.equal(libelleNomsSuite("I-V-vi-IV", 7), "G – D – Em – C");
+  assert.equal(libelleNomsSuite("I-V-vi-IV", 5), "F – C – Dm – Bb");
+  assert.equal(libelleNomsSuite("I-vi-ii-V", 10), "Bb – Gm – Cm – F");
+  assert.equal(libelleNomsSuite("I-IV-V-I", 3), "Eb – Ab – Bb – Eb");
+  assert.equal(libelleNomsSuite("I-IV-vi-V", 4), "E – A – C#m – B");
+  assert.equal(libelleNomsSuite("i-VI-III-VII", 0), "Cm – Ab – Eb – Bb");
+  assert.equal(libelleNomsSuite("i-iv-v-i", 9), "Am – Dm – Em – Am");
+  assert.equal(libelleNomsSuite("i-iv-V-i", 4), "Em – Am – B – Em", "mineur harmonique : V majeur");
+  assert.equal(libelleNomsSuite("i-VII-VI-V", 2), "Dm – C – Bb – A");
+  assert.equal(libelleNomsSuite("i-VI-VII-i", 11), "Bm – G – A – Bm");
   for (const cle of ORDRE_PROGRESSIONS) for (const t of PROGRESSIONS[cle].mineur ? TONALITES_MIN : TONALITES_MAJ)
     verifierNoms(libelleNomsSuite(cle, t), cle, t);
 });
@@ -144,7 +144,7 @@ test("après la leçon : noms par défaut, chiffres sur demande, et la correctio
       for (const o of q.options) verifierNoms(o.label, o.key, toniqueDe(q));
       assert.match(q.consigne, /Quels accords \?$/);
     }
-    // « Sol – Ré – Mim – Do = I – V – vi – IV en Sol majeur. »
+    // « G – D – Em – C = I – V – vi – IV en Sol majeur. »
     assert.equal(q.repere, `${q.noms.join(" – ")} = ${q.roman} en ${q.tonalite}.`);
   }
 });
@@ -170,7 +170,7 @@ test("annonce du vivier : pas de chiffre romain avant la leçon", () => {
     assert.doesNotMatch(exempleSuite(cle, false), ROMAIN, exempleSuite(cle, false));
     assert.ok(exempleSuite(cle, true).startsWith(romainDe(cle)));
   }
-  assert.equal(exempleSuite("I-V-vi-IV", false), "la suite en Do majeur : Do – Sol – Lam – Fa");
+  assert.equal(exempleSuite("I-V-vi-IV", false), "la suite en Do majeur : C – G – Am – F");
   for (const d of ORDRE_DEGRES) {
     assert.doesNotMatch(exempleDegre(d, false), ROMAIN, exempleDegre(d, false));
     assert.ok(exempleDegre(d, true).endsWith(`(${d})`));
@@ -178,7 +178,7 @@ test("annonce du vivier : pas de chiffre romain avant la leçon", () => {
 });
 
 // ── Accord en tonalité ───────────────────────────────────────────────────
-test("accord en tonalité : « Rém » avant la leçon, « Rém (ii) » après ; la correction suit la même règle", () => {
+test("accord en tonalité : « Dm » avant la leçon, « Dm (ii) » après ; la correction suit la même règle", () => {
   const r = rng(15);
   for (let i = 0; i < 300; i++) {
     const avant = generateEarTrainingQuestion("chord_full", { pool: ORDRE_DEGRES, toutesOptions: true, rng: r, leconChiffres: false });

@@ -22,6 +22,8 @@
 
 import { useMemo, useState } from "react";
 import { useC } from "./design/ThemeContext.jsx";
+import { R, T } from "./design/tokens.js";
+import { Card, Eyebrow } from "./design/ui.jsx";
 // ── Son ──────────────────────────────────────────────────────────────────
 // Chaque diagramme peut s'écouter : bouton rond en haut à droite du cadre
 // (BarreEcoute), un seul diagramme à la fois (useLecteurDiagramme). CE QUI
@@ -38,21 +40,27 @@ import {
   sequenceIntervalles, degreeBoxToNotes, contexteDegres, sequenceDegres, accordDuCercle,
 } from "./fretboard/diagrammesSon.js";
 
+// Police du texte DANS les SVG (numéros, noms de cordes, libellés de
+// pastilles) : conservée, ces libellés sont calés au pixel. Le texte HTML
+// autour (légendes, lignes de tableau) hérite de la police de l'app.
 const FONT = '"Josefin Sans", "Roboto", sans-serif';
 const STRING_NAMES = ["Mi", "Si", "Sol", "Ré", "La", "Mi"]; // c1→c6, affiché c6→c1
 
 // Palette des notes actives — fonction du thème courant (plus de couleurs figées)
+// `text` : libellé posé sur l'aplat `fill` (C.onPrimaryBtn, jamais un blanc
+// fixe) · `ink` : la même couleur utilisée comme texte sur une surface.
 function getNoteColors(DC) {
+  const sur = DC.onPrimaryBtn;
   return {
-    primary: { fill: DC.primary,  text: "#fff" },
-    green:   { fill: DC.green,    text: "#fff" },
-    amber:   { fill: DC.amber,    text: "#fff" },
-    coral:   { fill: DC.coral,    text: "#fff" },
-    pink:    { fill: DC.pink,     text: "#fff" },
-    neutral: { fill: DC.text2,    text: "#fff" },
-    ghost:   { fill: DC.border,   text: DC.text2 },
-    open:    { fill: DC.surface,  text: DC.primary, stroke: DC.primary }, // corde à vide
-    muted:   { fill: "none",      text: DC.coral },                       // corde étouffée (X)
+    primary: { fill: DC.primary,  text: sur, ink: DC.primaryInk },
+    green:   { fill: DC.green,    text: sur, ink: DC.greenInk },
+    amber:   { fill: DC.amber,    text: sur, ink: DC.amberInk },
+    coral:   { fill: DC.coral,    text: sur, ink: DC.coralInk },
+    pink:    { fill: DC.pink,     text: sur, ink: DC.pinkInk },
+    neutral: { fill: DC.text2,    text: sur, ink: DC.text2 },
+    ghost:   { fill: DC.border,   text: DC.text2, ink: DC.text2 },
+    open:    { fill: DC.surface,  text: DC.primary, stroke: DC.primary, ink: DC.primaryInk }, // corde à vide
+    muted:   { fill: "none",      text: DC.coral, ink: DC.coralInk },                         // corde étouffée (X)
   };
 }
 
@@ -63,12 +71,7 @@ function DiagramCard({ caption, children, accent, actions }) {
   const DC = useC();
   const dotColor = accent || DC.primary;
   return (
-    <div style={{
-      background: DC.surface, borderRadius: 14,
-      border: `1px solid ${DC.border}`,
-      overflow: "hidden",
-      marginBottom: 0,
-    }}>
+    <Card pad={0} style={{ overflow: "hidden" }}>
       {actions && <BarreEcoute>{actions}</BarreEcoute>}
       <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
         {children}
@@ -76,7 +79,7 @@ function DiagramCard({ caption, children, accent, actions }) {
       {caption && (
         <div style={{
           padding: "8px 14px 10px",
-          fontSize: 11, color: DC.text2, fontFamily: FONT,
+          fontSize: T.micro, color: DC.text2,
           fontWeight: 500, letterSpacing: "0.02em",
           borderTop: `1px solid ${DC.border}`,
           display: "flex", alignItems: "center", gap: 6,
@@ -85,7 +88,7 @@ function DiagramCard({ caption, children, accent, actions }) {
           {caption}
         </div>
       )}
-    </div>
+    </Card>
   );
 }
 
@@ -449,13 +452,13 @@ export function ScalePattern({ data, caption }) {
           });
         })}
       </svg>
-      <div aria-hidden="true" style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 6, fontSize: 11, color: DC.text2, fontFamily: FONT }}>
+      <div aria-hidden="true" style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 6, padding: "0 14px 8px", fontSize: T.micro, color: DC.text2 }}>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
           <span style={{ width: 10, height: 10, borderRadius: 5, background: NOTE_COLORS[rootColor]?.fill }} /> fondamentale
         </span>
         {aDesAccents && (
           <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-            <span style={{ width: 10, height: 10, borderRadius: 5, background: NOTE_COLORS[accentColor]?.fill, boxShadow: `0 0 0 1.5px ${DC.text}` }} /> {accentLabel}
+            <span style={{ width: 10, height: 10, borderRadius: 5, background: NOTE_COLORS[accentColor]?.fill, boxShadow: `0 0 0 2px ${DC.text}` }} /> {accentLabel}
           </span>
         )}
       </div>
@@ -548,7 +551,7 @@ export function CircleOfFifths({ data, caption }) {
               />
               <text x={x} y={y + 4} textAnchor="middle"
                 fontSize={name.length > 2 ? 8.5 : 10.5} fontWeight={700}
-                fill={isHi ? "#fff" : DC.text} fontFamily={FONT}
+                fill={isHi ? DC.onPrimaryBtn : DC.text} fontFamily={FONT}
               >{name}</text>
             </g>
           );
@@ -621,29 +624,29 @@ export function DegreeChart({ data, caption }) {
           return (
             <Ligne key={i}
               {...(son ? {
-                type: "button", className: "gr-focus",
+                type: "button", className: "gr-row gr-focus",
                 onClick: () => ecouterCase(i),
                 "aria-pressed": etatBouton(lecteur, `case:${i}`).joue,
                 "aria-label": `Écouter ${son.type === "note" ? "la note" : "l'accord"} : ${b.top}, ${b.label}${b.sub ? `, ${b.sub}` : ""}`,
               } : {})}
               style={{
               display: "flex", alignItems: "center", gap: 10, width: "100%",
-              padding: "6px 8px", borderRadius: 8, marginBottom: 3,
+              padding: "6px 8px", borderRadius: R.xs, marginBottom: 3,
               minHeight: 36, textAlign: "left", font: "inherit",
-              background: col.fill + "18",
-              border: `1.5px solid ${sonne ? DC.text : "transparent"}`,
+              background: `color-mix(in srgb, ${col.fill} 9%, transparent)`,
+              border: `2px solid ${sonne ? DC.text : "transparent"}`,
               cursor: son ? "pointer" : "default",
             }}>
               <span style={{
                 minWidth: 28, height: 22, padding: "0 4px", borderRadius: 6,
                 background: col.fill,
                 display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 10, fontWeight: 700, fontFamily: FONT,
+                fontSize: 10, fontWeight: 700,
                 color: col.text, flexShrink: 0,
               }}>{b.top}</span>
-              <span style={{ flex: 1, fontSize: 11.5, fontFamily: FONT, color: DC.text, fontWeight: 600 }}>{b.label}</span>
+              <span style={{ flex: 1, fontSize: 11.5, color: DC.text, fontWeight: 600 }}>{b.label}</span>
               {b.sub && (
-                <span style={{ fontSize: 10, fontFamily: FONT, color: DC.text3, flexShrink: 0 }}>{b.sub}</span>
+                <span style={{ fontSize: 10, color: DC.text3, flexShrink: 0 }}>{b.sub}</span>
               )}
             </Ligne>
           );
@@ -702,38 +705,38 @@ export function IntervalChart({ data, caption }) {
           const col = NOTE_COLORS[iv.color] || NOTE_COLORS.neutral;
           const sonne = lecteur.pas === iv.symbol && lecteur.etat !== "repos";
           return (
-            <button key={iv.symbol} type="button" className="gr-focus"
+            <button key={iv.symbol} type="button" className="gr-row gr-focus"
               onClick={() => ecouter(iv)}
               aria-pressed={etatBouton(lecteur, `iv:${iv.symbol}`).joue}
               aria-label={`Écouter : ${iv.name} (${pluriel(iv.semitones, "demi-ton")}) depuis Do — ${iv.character}`}
               style={{
               display: "flex", alignItems: "center", gap: 10, width: "100%",
-              padding: "6px 8px", borderRadius: 8, marginBottom: 3,
+              padding: "6px 8px", borderRadius: R.xs, marginBottom: 3,
               minHeight: 36, textAlign: "left", font: "inherit", cursor: "pointer",
-              background: isHighlighted ? col.fill + "18" : "transparent",
-              border: sonne ? `1.5px solid ${DC.text}` : isHighlighted ? `1.5px solid ${col.fill}40` : "1.5px solid transparent",
+              background: isHighlighted ? `color-mix(in srgb, ${col.fill} 9%, transparent)` : "transparent",
+              border: sonne ? `2px solid ${DC.text}` : isHighlighted ? `2px solid color-mix(in srgb, ${col.fill} 25%, transparent)` : "2px solid transparent",
             }}>
               {/* Badge demi-tons */}
               <span style={{
                 width: 22, height: 22, borderRadius: 6,
                 background: isHighlighted ? col.fill : DC.surface2,
                 display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 9, fontWeight: 700, fontFamily: FONT,
+                fontSize: 9, fontWeight: 700,
                 color: isHighlighted ? col.text : DC.text3,
                 flexShrink: 0,
               }}>{iv.semitones}</span>
 
               {/* Symbole */}
               <span style={{
-                width: 28, fontSize: 11, fontWeight: 700, fontFamily: FONT,
-                color: isHighlighted ? col.fill : DC.text, flexShrink: 0,
+                width: 28, fontSize: 11, fontWeight: 700,
+                color: isHighlighted ? col.ink : DC.text, flexShrink: 0,
               }}>{iv.symbol}</span>
 
               {/* Nom */}
-              <span style={{ flex: 1, fontSize: 11, fontFamily: FONT, color: DC.text2 }}>{iv.name}</span>
+              <span style={{ flex: 1, fontSize: 11, color: DC.text2 }}>{iv.name}</span>
 
               {/* Caractère */}
-              <span style={{ fontSize: 10, fontFamily: FONT, color: isHighlighted ? col.fill : DC.text3, textAlign: "right", flexShrink: 0 }}>
+              <span style={{ fontSize: 10, color: isHighlighted ? col.ink : DC.text3, textAlign: "right", flexShrink: 0 }}>
                 {iv.character}
               </span>
             </button>
@@ -741,14 +744,12 @@ export function IntervalChart({ data, caption }) {
         })}
 
         {showOnGuitar && (
-          <div style={{ marginTop: 10, padding: "8px 10px", background: DC.amberL, borderRadius: 10, border: `1px solid ${DC.amberBorder}` }}>
-            <div style={{ fontSize: 10, fontWeight: 600, color: DC.amberD, fontFamily: FONT, marginBottom: 4, letterSpacing: "0.05em", textTransform: "uppercase" }}>
-              Sur 1 seule corde
-            </div>
-            <div style={{ fontSize: 11, color: DC.amberD, fontFamily: FONT, lineHeight: 1.6 }}>
+          <Card tone="amber" soft pad="8px 10px" style={{ marginTop: 10, borderRadius: R.md }}>
+            <Eyebrow tone="amber" style={{ marginBottom: 4 }}>Sur 1 seule corde</Eyebrow>
+            <div style={{ fontSize: T.micro, color: DC.amberD, lineHeight: 1.6 }}>
               Tierce maj = 4 cases · Quinte = 7 cases · Octave = 12 cases
             </div>
-          </div>
+          </Card>
         )}
       </div>
     </DiagramCard>
@@ -914,7 +915,7 @@ export function ChordDiagram({ data, caption }) {
               {finger > 0 && (
                 <text x={x} y={y + 4}
                   textAnchor="middle" fontSize={9}
-                  fill="#fff" fontFamily={FONT} fontWeight={700}
+                  fill={DC.onPrimaryBtn} fontFamily={FONT} fontWeight={700}
                 >{finger === 5 ? "T" : finger}</text>
               )}
             </g>
@@ -973,13 +974,13 @@ export function CAGEDForm({ data, caption }) {
         display: "flex", alignItems: "center", gap: 8, marginBottom: 8,
       }}>
         <div style={{
-          width: 32, height: 32, borderRadius: 8, background: tint.fill,
+          width: 32, height: 32, borderRadius: R.xs, background: tint.fill,
           display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 16, fontWeight: 700, color: tint.text, fontFamily: FONT,
+          fontSize: 16, fontWeight: 800, color: tint.text,
         }}>{form}</div>
         <div>
-          <div style={{ fontSize: 12, fontWeight: 600, color: DC.text, fontFamily: FONT }}>{root} — Forme {form}</div>
-          <div style={{ fontSize: 10, color: DC.text3, fontFamily: FONT }}>Fondamentale case {rootFret}</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: DC.text }}>{root} — Forme {form}</div>
+          <div style={{ fontSize: T.micro, color: DC.text3 }}>Fondamentale case {rootFret}</div>
         </div>
       </div>
       <FretboardDiagramVue
@@ -1142,7 +1143,7 @@ export function TabBlock({ data, caption, text }) {
     return (dernier + 2) * spc * 1000 + 600;   // + avance de playTab et résonance de la dernière note
   });
   if (lines.length === 0) {
-    return text ? <p style={{ margin: 0, fontSize: 15, lineHeight: 1.7, color: DC.text }}>{text}</p> : null;
+    return text ? <p style={{ margin: 0, fontSize: T.body, lineHeight: 1.7, color: DC.text }}>{text}</p> : null;
   }
   return (
     <DiagramCard caption={caption} accent={DC.primary} actions={evenements.length > 0 && (
@@ -1256,8 +1257,8 @@ export function RhythmGrid({ data, caption }) {
   );
 
   const getColor = (i) => {
-    if (highlights.includes(i)) return { bg: DC.primary, text: "#fff" };
-    if (accents.includes(i)) return { bg: DC.amber, text: "#fff" };
+    if (highlights.includes(i)) return { bg: DC.primary, text: DC.onPrimaryBtn };
+    if (accents.includes(i)) return { bg: DC.amber, text: DC.onPrimaryBtn };
     if (muted.includes(i)) return { bg: DC.surface2, text: DC.text3 };
     return { bg: DC.greenL, text: DC.greenD };
   };
@@ -1361,12 +1362,12 @@ export function RhythmGrid({ data, caption }) {
 // ═══════════════════════════════════════════════════════════════════════════
 function getStrumColors(DC) {
   return {
-    B:  { bg: DC.primary,  text: "#fff",        label: "↓" },
-    H:  { bg: DC.blue,     text: "#fff",        label: "↑" },
-    BH: { bg: DC.primary,  text: "#fff",        label: "↓↑" },
-    "-H":{ bg: DC.blue,    text: "#fff",        label: "↑" },
-    "-":{ bg: DC.surface2, text: DC.text3,      label: "–" },
-    x:  { bg: DC.amber,    text: "#fff",        label: "×" },
+    B:  { bg: DC.primary,  text: DC.onPrimaryBtn, label: "↓" },
+    H:  { bg: DC.blue,     text: DC.onPrimaryBtn, label: "↑" },
+    BH: { bg: DC.primary,  text: DC.onPrimaryBtn, label: "↓↑" },
+    "-H":{ bg: DC.blue,    text: DC.onPrimaryBtn, label: "↑" },
+    "-":{ bg: DC.surface2, text: DC.text3,        label: "–" },
+    x:  { bg: DC.amber,    text: DC.onPrimaryBtn, label: "×" },
   };
 }
 

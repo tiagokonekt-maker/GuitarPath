@@ -2,11 +2,12 @@
 // Outil interactif d'improvisation : gamme active, notes cibles, contraintes + backing track
 import { useState, useMemo, useEffect, useEffectEvent, useRef, useCallback } from "react";
 import { useWakeLock } from "../hooks/useWakeLock.js";
-import { FONTS, R } from "../design/tokens.js";
+import { R, T } from "../design/tokens.js";
 import { useC } from "../design/ThemeContext.jsx";
 import { Ti } from "../design/Ti.jsx";
 import { Gropi } from "../design/Gropi.jsx";
-import { BackButton } from "../design/ui.jsx";
+import { Button, Card, Confetti, Eyebrow, Gauge, IconButton, Segmented, SubHeader } from "../design/ui.jsx";
+import { relief } from "../design/hooks.js";
 import { Fretboard } from "../Fretboard.jsx";
 import { getScaleNotes, normalizeNote, SCALES } from "../fretboardUtils.js";
 import { nomsGamme } from "../music/orthographe.js";
@@ -51,24 +52,6 @@ import { packPourStyle, bassStylePour, compStylePour, ambiancePour } from "../ja
 // (`compStyle`) en sont tirés. Un style sans pack retomberait sur le motif
 // de batterie statique et la walking bass, plus bas.
 const PACKS = [BLUES_SHUFFLE_PACK, FUNK_16_PACK, ROCK_8_PACK, JAZZ_SWING_PACK, BOSSA_NOVA_PACK, BALLADE_POP_PACK];
-
-// Assombrit une couleur hex d'une quantité fixe, quel que soit le thème.
-// Les boutons de lecture utilisaient `colorD` (celui de `context`, ou
-// `C.primaryD`) comme second point de dégradé — or ce token est une couleur
-// de TEXTE, claire en thème sombre pour rester lisible sur un fond teinté,
-// pas une couleur de fond de bouton. Résultat en thème sombre : un dégradé
-// qui allait vers une teinte pâle, avec l'icône blanche presque invisible
-// dessus. `shade()` assombrit toujours PAR RAPPORT à la couleur de base,
-// donc le résultat reste correct dans les deux thèmes.
-function shade(hex, amount) {
-  const h = hex.replace("#", "");
-  const num = parseInt(h, 16);
-  let r = (num >> 16) + amount, g = ((num >> 8) & 0xff) + amount, b = (num & 0xff) + amount;
-  r = Math.max(0, Math.min(255, r));
-  g = Math.max(0, Math.min(255, g));
-  b = Math.max(0, Math.min(255, b));
-  return "#" + ((r << 16) | (g << 8) | b).toString(16).padStart(6, "0");
-}
 
 // ── Échantillons décodés, gardés d'un lancement à l'autre ─────────────────
 // Chaque lecture, et chaque changement de style, recréait Sampler et Players :
@@ -837,99 +820,96 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
     plannerRef.current?.nudgeEnergy(n - energie, mesureRef.current);
   };
   const LIBELLE_ENERGIE = ["", "Très calme", "Calme", "Normal", "Soutenu", "Intense"];
-  const carre = { width: 40, height: 40, borderRadius: R.sm, border: `1.5px solid ${C.border}`, background: C.surface, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: C.text2, fontWeight: 800, fontSize: 16, fontFamily: FONTS.ui, padding: 0 };
+  const enJeu = playing && compte == null;
+  // Tranche du gros bouton : sous l'aplat primaire à l'arrêt, sous la couleur
+  // du style pendant la lecture.
+  const fondLecture = loading ? C.surface2 : playing ? context.color : C.primaryBtn;
+  const trancheLecture = loading ? C.surface2 : playing ? `color-mix(in srgb, ${context.color} 72%, #000)` : C.primaryEdge;
+  const bascule = "background-color var(--gr-dur-press) ease";
 
   return (
-    <div style={{
-      background: C.surface,
-      border: `1.5px solid ${playing ? context.color : C.border}`,
-      borderRadius: R.lg, padding: "14px 14px 12px",
-      transition: "border-color 0.3s, box-shadow 0.3s",
-      boxShadow: playing ? `0 0 20px ${context.color}22` : "none",
+    <Card pad="14px 14px 12px" style={{
+      border: `2px solid ${playing ? context.color : C.border}`,
+      transition: "border-color var(--gr-dur) ease",
     }}>
 
       {/* Accord en cours (grand) + accord suivant + bouton lecture */}
       <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
         <div style={{ flex: 1, minWidth: 0 }} aria-live="polite">
-          <div style={{ fontSize: 11, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+          <Eyebrow tone="neutral" style={{ color: C.text2 }}>
             {compte != null ? "Prépare-toi" : playing ? "Maintenant" : "Premier accord"}
-          </div>
-          <div style={{ fontSize: compte != null ? 46 : 40, fontWeight: 800, lineHeight: 1.05, letterSpacing: "-1px", fontFamily: FONTS.title, color: playing ? context.colorD : C.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          </Eyebrow>
+          <div style={{
+            fontSize: compte != null ? 46 : 40, fontWeight: 800, lineHeight: 1.05, letterSpacing: "-1px",
+            color: playing ? context.colorD : C.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+            fontVariantNumeric: "tabular-nums", transition: "color var(--gr-dur-fast) ease",
+          }}>
             {compte != null ? `${compte}…` : nomAccord(root, accord, context.scale)}
           </div>
           {/* Une pastille par mesure de l'accord en cours : on voit combien il en reste */}
-          <div aria-hidden="true" style={{ display: "flex", gap: 4, marginTop: 6, height: 6 }}>
+          <div aria-hidden="true" style={{ display: "flex", gap: 4, marginTop: 6, height: 8 }}>
             {Array.from({ length: accord.bars }, (_, b) => (
-              <div key={b} style={{ width: 18, height: 6, borderRadius: 3, background: b <= mesureDansAccord ? context.color : C.border, transition: "background .08s" }} />
+              <div key={b} style={{ width: 20, height: 8, borderRadius: R.pill, background: b <= mesureDansAccord ? context.color : C.border, transition: bascule }} />
             ))}
           </div>
-          <div style={{ fontSize: 13, color: C.text2, fontFamily: FONTS.ui, marginTop: 7 }}>
+          <div style={{ fontSize: T.small, color: C.text2, marginTop: 7 }}>
             Ensuite : <b style={{ color: C.text }}>{nomAccord(root, suivant, context.scale)}</b>
           </div>
         </div>
 
-        <button onClick={toggle} disabled={loading} className="gr-focus"
+        <button type="button" onClick={toggle} disabled={loading} className="gr-press gr-focus"
           aria-label={loading ? "Chargement des sons" : playing ? "Arrêter le backing track" : "Lancer le backing track"}
           style={{
-            width: 64, height: 64, borderRadius: "50%", border: "none", flexShrink: 0,
-            background: loading ? C.surface2 : playing
-              ? `linear-gradient(135deg, ${context.color}, ${shade(context.color, -45)})`
-              : `linear-gradient(135deg, ${C.primary}, ${shade(C.primary, -45)})`,
-            cursor: loading ? "default" : "pointer",
+            ...relief(trancheLecture, 5),
+            width: 72, height: 72, padding: 0, borderRadius: R.pill, border: "none", flexShrink: 0,
+            background: fondLecture, color: loading ? C.text3 : C.onPrimaryBtn,
             display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: loading ? "none" : `0 4px 16px ${(playing ? context.color : C.primary)}55`,
-            transition: "background 0.2s, box-shadow 0.2s",
           }}>
           {loading
-            ? <Ti name="loader" size={24} color={C.text3} />
-            : <Ti name={playing ? "player-pause" : "player-play"} size={26} color={C.onPrimaryBtn} />}
+            ? <span className="gr-btn-spin" aria-hidden="true" style={{ fontSize: 22 }} />
+            : <Ti name={playing ? "player-pause" : "player-play"} size={30} color="currentColor" />}
         </button>
       </div>
 
       {playError && (
-        <div role="alert" style={{
-          display: "flex", alignItems: "center", gap: 8, marginTop: 10,
-          padding: "9px 12px", borderRadius: R.md,
-          background: C.coralL, border: `1px solid ${C.coral}`,
-        }}>
-          <Ti name="alert-circle" size={15} color={C.coralD} style={{ flexShrink: 0 }} />
-          <span style={{ fontSize: 12, color: C.coralD, fontFamily: FONTS.ui, lineHeight: 1.4, flex: 1 }}>
+        <Card role="alert" tone="danger" soft pad="6px 6px 6px 12px" className="gr-in-pop"
+          style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10, borderRadius: R.md }}>
+          <Ti name="alert-circle" size={16} color={C.dangerD} style={{ flexShrink: 0 }} />
+          <span style={{ fontSize: 12, color: C.dangerD, lineHeight: 1.4, flex: 1, minWidth: 0 }}>
             {playError}
           </span>
-          <button onClick={startBacking} className="gr-focus" style={{
-            background: "none", border: "none", color: C.coralD, fontWeight: 700, padding: "6px 4px",
-            fontSize: 12, fontFamily: FONTS.ui, cursor: "pointer", flexShrink: 0, textDecoration: "underline",
-          }}>
+          <Button variant="ghost" tone="danger" size="sm" onClick={startBacking} style={{ flexShrink: 0, minHeight: 44 }}>
             {interrompu ? "Reprendre" : "Réessayer"}
-          </button>
-        </div>
+          </Button>
+        </Card>
       )}
 
       {/* La grille complète, l'accord en cours mis en avant */}
-      <div style={{ display: "flex", gap: 3, margin: "14px 0 8px" }} aria-hidden="true">
+      <div style={{ display: "flex", gap: 3, margin: "14px 0 10px" }} aria-hidden="true">
         {Array.from({ length: totalBars }).map((_, i) => (
           <div key={i} style={{
-            flex: 1, height: 5, borderRadius: 3,
-            background: playing && compte == null && i === beat ? context.color
-              : playing && compte == null && i < beat ? `${context.color}44` : C.border,
-            transition: "background 0.08s",
+            flex: 1, height: 6, borderRadius: R.pill,
+            background: enJeu && i === beat ? context.color
+              : enJeu && i < beat ? `color-mix(in srgb, ${context.color} 30%, ${C.border})` : C.border,
+            transition: bascule,
           }} />
         ))}
       </div>
-      <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
         {progression.map((chord, i) => {
-          const isActive = playing && compte == null && i === currentChord;
+          const isActive = enJeu && i === currentChord;
           return (
             <div key={i} style={{
               padding: "5px 11px", borderRadius: R.pill,
               background: isActive ? context.colorL : C.bg,
-              border: `1.5px solid ${isActive ? context.color : C.border}`,
-              fontSize: 12.5, fontWeight: isActive ? 800 : 500,
+              border: `2px solid ${isActive ? context.color : C.border}`,
+              fontSize: T.small, fontWeight: 700,
               color: isActive ? context.colorD : C.text2,
-              fontFamily: FONTS.ui, transition: "background 0.12s, border-color 0.12s",
+              scale: isActive ? "1.08" : "1",
+              transition: "background-color var(--gr-dur-fast) ease, border-color var(--gr-dur-fast) ease, color var(--gr-dur-fast) ease, scale var(--gr-dur) var(--gr-ease-spring)",
             }}>
               {nomAccord(root, chord, context.scale)}
-              <span style={{ fontSize: 11, color: isActive ? context.color : C.text3, marginLeft: 4 }}>
+              <span style={{ fontSize: T.micro, fontWeight: 600, color: isActive ? context.colorD : C.text3, marginLeft: 4 }}>
                 ×{chord.bars}
               </span>
             </div>
@@ -940,87 +920,102 @@ function BackingTrackPlayer({ context, root, bpm, onBpmChange, onChord, onSecond
       {/* Tempo : réglable, y compris en jouant, et montée progressive */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 14, paddingTop: 12, borderTop: `1px solid ${C.border}` }}>
         <div role="group" aria-label="Tempo" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <button onClick={() => changerTempo(-5)} aria-label="Ralentir de 5" className="gr-focus" style={carre}>−</button>
+          <IconButton icon="minus" label="Ralentir de 5" onClick={() => changerTempo(-5)} />
           <div style={{ minWidth: 52, textAlign: "center" }}>
-            <div style={{ fontSize: 18, fontWeight: 800, color: C.text, lineHeight: 1, fontFamily: FONTS.ui }}>{bpm}</div>
-            <div style={{ fontSize: 11, color: C.text3, marginTop: 2, fontFamily: FONTS.ui }}>BPM</div>
+            <div style={{ fontSize: T.h3, fontWeight: 800, color: C.text, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{bpm}</div>
+            <div style={{ fontSize: T.micro, fontWeight: 600, color: C.text3, marginTop: 2 }}>BPM</div>
           </div>
-          <button onClick={() => changerTempo(5)} aria-label="Accélérer de 5" className="gr-focus" style={carre}>+</button>
+          <IconButton icon="plus" label="Accélérer de 5" onClick={() => changerTempo(5)} />
         </div>
         <div style={{ flex: 1 }} />
-        <button onClick={() => setRampe(r => !r)} aria-pressed={rampe} className="gr-focus" style={{
-          height: 40, padding: "0 12px", borderRadius: R.sm, cursor: "pointer", fontFamily: FONTS.ui,
-          border: `1.5px solid ${rampe ? context.color : C.border}`,
-          background: rampe ? context.colorL : C.surface,
-          color: rampe ? context.colorD : C.text2, fontWeight: 700, fontSize: 12, textAlign: "left", lineHeight: 1.2,
-        }}>
+        <Pastille C={C} couleurs={context} actif={rampe} onClick={() => setRampe(r => !r)}
+          style={{ flexDirection: "column", alignItems: "flex-start", gap: 0, padding: "4px 12px", fontSize: 12, lineHeight: 1.25, textAlign: "left", flexShrink: 1, whiteSpace: "normal" }}>
           Accélération
-          <div style={{ fontSize: 11, fontWeight: 600, color: rampe ? context.colorD : C.text3 }}>+5 toutes les 2 grilles</div>
-        </button>
+          <span style={{ fontSize: T.micro, fontWeight: 600, color: rampe ? context.colorD : C.text3 }}>+5 toutes les 2 grilles</span>
+        </Pastille>
       </div>
 
       {/* Réglages du groupe : repliés par défaut, pour garder la scène lisible */}
-      <button onClick={() => setReglagesOuverts(o => !o)} aria-expanded={reglagesOuverts} className="gr-focus" style={{
-        display: "flex", alignItems: "center", gap: 6, width: "100%", marginTop: 10, padding: "8px 2px",
-        background: "none", border: "none", cursor: "pointer", fontFamily: FONTS.ui,
+      <button type="button" onClick={() => setReglagesOuverts(o => !o)} aria-expanded={reglagesOuverts} className="gr-squish gr-focus" style={{
+        display: "flex", alignItems: "center", gap: 6, width: "100%", minHeight: 44, marginTop: 8, padding: "8px 2px",
+        background: "none", border: "none", borderRadius: R.sm, fontFamily: "inherit",
         fontSize: 12, fontWeight: 700, color: C.text2, textAlign: "left",
       }}>
-        <span aria-hidden="true" style={{ display: "inline-block", transform: reglagesOuverts ? "rotate(90deg)" : "none", transition: "transform .15s" }}>›</span>
+        <span aria-hidden="true" style={{ display: "inline-flex", transform: reglagesOuverts ? "rotate(90deg)" : "none", transition: "transform var(--gr-dur-fast) var(--gr-ease-out)" }}>
+          <Ti name="chevron-right" size={15} color="currentColor" />
+        </span>
         Régler le groupe
         <span style={{ fontWeight: 500, color: C.text3 }}>
           · {LIBELLE_ENERGIE[energie].toLowerCase()}{Object.values(coupes).some(Boolean) ? ` · sans ${Object.entries(coupes).filter(([, v]) => v).map(([k]) => k).join(", ")}` : ""}
         </span>
       </button>
       {reglagesOuverts && (
-        <div style={{ paddingTop: 4 }}>
+        <div className="gr-in" style={{ paddingTop: 4 }}>
           <div role="group" aria-label="Intensité du groupe" style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 12, color: C.text2, fontFamily: FONTS.ui, width: 64 }}>Intensité</span>
-            <button onClick={() => changerEnergie(-1)} aria-label="Plus calme" disabled={energie === 1} className="gr-focus" style={{ ...carre, opacity: energie === 1 ? .4 : 1 }}>−</button>
-            <div style={{ flex: 1, textAlign: "center" }}>
-              <div aria-hidden="true" style={{ display: "flex", gap: 4, justifyContent: "center" }}>
-                {[1, 2, 3, 4, 5].map(n => <span key={n} style={{ width: 16, height: 8, borderRadius: 4, background: n <= energie ? context.color : C.border }} />)}
+            <span style={{ fontSize: 12, fontWeight: 600, color: C.text2, width: 64 }}>Intensité</span>
+            <IconButton icon="minus" label="Plus calme" disabled={energie === 1} onClick={() => changerEnergie(-1)} style={{ opacity: energie === 1 ? .4 : 1 }} />
+            <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <div aria-hidden="true" style={{ width: "100%", maxWidth: 120 }}>
+                <Gauge value={energie} max={5} color={context.color} />
               </div>
-              <div style={{ fontSize: 11, color: C.text2, marginTop: 3, fontFamily: FONTS.ui }}>{LIBELLE_ENERGIE[energie]}</div>
+              <div style={{ fontSize: T.micro, fontWeight: 600, color: C.text2, marginTop: 4 }}>{LIBELLE_ENERGIE[energie]}</div>
             </div>
-            <button onClick={() => changerEnergie(1)} aria-label="Plus intense" disabled={energie === 5} className="gr-focus" style={{ ...carre, opacity: energie === 5 ? .4 : 1 }}>+</button>
+            <IconButton icon="plus" label="Plus intense" disabled={energie === 5} onClick={() => changerEnergie(1)} style={{ opacity: energie === 5 ? .4 : 1 }} />
           </div>
           <div role="group" aria-label="Instruments" style={{ display: "flex", gap: 6, marginTop: 10 }}>
             {[["accords", "Accords"], ["basse", "Basse"], ["batterie", "Batterie"]].map(([k, label]) => (
-              <button key={k} onClick={() => setCoupes(c => ({ ...c, [k]: !c[k] }))} aria-pressed={!coupes[k]} className="gr-focus" style={{
-                flex: 1, height: 40, borderRadius: R.sm, cursor: "pointer", fontFamily: FONTS.ui, fontSize: 12, fontWeight: 700,
-                border: `1.5px ${coupes[k] ? "dashed" : "solid"} ${coupes[k] ? C.border : context.color}`,
-                background: coupes[k] ? C.surface : context.colorL,
-                color: coupes[k] ? C.text3 : context.colorD, textDecoration: coupes[k] ? "line-through" : "none",
-              }}>{label}</button>
+              <Pastille key={k} C={C} couleurs={context} actif={!coupes[k]} onClick={() => setCoupes(c => ({ ...c, [k]: !c[k] }))}
+                style={{ flex: 1, minWidth: 0, padding: "0 6px", fontSize: 12, color: coupes[k] ? C.text3 : context.colorD, textDecoration: coupes[k] ? "line-through" : "none" }}>
+                {label}
+              </Pastille>
             ))}
           </div>
-          <div style={{ fontSize: 11, color: C.text3, marginTop: 6, fontFamily: FONTS.ui }}>
+          <div style={{ fontSize: T.micro, color: C.text3, marginTop: 6 }}>
             Coupe la basse pour faire entendre l'harmonie toi-même.
           </div>
         </div>
       )}
 
-    </div>
+    </Card>
+  );
+}
+
+/**
+ * Pastille pressable aux couleurs du style en cours. Les styles de la Jam
+ * portent leurs propres couleurs (jam/contextes.js), hors teintes de la
+ * palette : <Chip>, qui prend une teinte, ne convient pas.
+ *   couleurs  { color, colorL, colorD } du style
+ *   actif     pastille choisie (annoncée par aria-pressed)
+ */
+function Pastille({ C, couleurs, actif = false, style, children, ...rest }) {
+  const bord = actif ? couleurs.color : C.border;
+  return (
+    <button type="button" aria-pressed={actif} className="gr-press gr-focus" style={{
+      ...relief(bord, 2),
+      display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6,
+      minHeight: 44, padding: "0 14px", borderRadius: 12, flexShrink: 0, boxSizing: "border-box",
+      background: actif ? couleurs.colorL : C.surface,
+      border: `2px solid ${bord}`,
+      color: actif ? couleurs.colorD : C.text2,
+      fontFamily: "inherit", fontSize: T.small, fontWeight: 700, whiteSpace: "nowrap",
+      ...style,
+    }} {...rest}>
+      {children}
+    </button>
   );
 }
 
 /** Rangée de pastilles à choix unique (grille, gamme, tonalité d'un style). */
 function ChoixPastilles({ C, ctx, titre, options, valeur, onChoix }) {
   return (
-    <div role="group" aria-label={titre} style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
-      <span style={{ fontSize: 11, fontWeight: 700, color: ctx.colorD, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.06em", minWidth: 62 }}>{titre}</span>
-      {options.map(o => {
-        const actif = o.id === valeur;
-        return (
-          <button key={o.id} onClick={() => onChoix(o.id)} aria-pressed={actif} className="gr-focus" style={{
-            minHeight: 32, padding: "5px 10px", borderRadius: R.pill, cursor: "pointer", fontFamily: FONTS.ui,
-            fontSize: 12, fontWeight: actif ? 700 : 500,
-            border: `1.5px solid ${actif ? ctx.color : ctx.colorB}`,
-            background: actif ? C.surface : "transparent",
-            color: actif ? ctx.colorD : C.text2,
-          }}>{o.label}</button>
-        );
-      })}
+    <div role="group" aria-label={titre} style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
+      <Eyebrow style={{ color: ctx.colorD, minWidth: 62 }}>{titre}</Eyebrow>
+      {options.map(o => (
+        <Pastille key={o.id} C={C} couleurs={ctx} actif={o.id === valeur} onClick={() => onChoix(o.id)}
+          style={{ padding: "0 12px", fontSize: 12 }}>
+          {o.label}
+        </Pastille>
+      ))}
     </div>
   );
 }
@@ -1136,45 +1131,38 @@ export function JamSession({ onBack, dispatch, state }) {
     setRoot(CHROMATIC[(idx + dir + 12) % 12]);
   };
 
+  const suivi = <SuiviSeance chrono={chrono} sessionComptee={sessionComptee} couleur={ctx.color} />;
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: C.bg }}>
+    <div className="gr-in-push" style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: C.bg }}>
 
-      {/* Header */}
-      <div style={{ padding: "14px 16px 12px", display: "flex", alignItems: "center", gap: 10, borderBottom: `1px solid ${C.border}`, background: C.surface, position: "sticky", top: 0, zIndex: 10 }}>
-        <BackButton onClick={onBack} label="Retour aux outils" />
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: C.text, fontFamily: FONTS.title }}>Jam Session</div>
-          <div style={{ fontSize: 11, color: C.text3, fontFamily: FONTS.ui }}>{rootFr} - {ctx.label}</div>
-        </div>
-        <Gropi pose="rocker" size={46} anim="wiggle" />
-      </div>
+      {/* La séance vient d'être comptée : une fois par visite. */}
+      {sessionComptee && <Confetti />}
 
-      <div style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: 12, overflowY: "auto", paddingBottom: 32 }}>
+      <SubHeader compact tone="pink" onBack={onBack} backLabel="Retour aux outils" title="Jam Session"
+        subtitle={<>{rootFr} - {ctx.label}</>}
+        right={<Gropi pose="rocker" size={46} anim="wiggle" />}
+        style={{ position: "sticky", top: 0, zIndex: 10 }} />
+
+      <div className="gr-stagger" style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: 12, overflowY: "auto", paddingBottom: 32 }}>
 
         {/* Selecteur contexte */}
-        <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-          <div style={{ display: "flex", gap: 8, paddingBottom: 4 }}>
+        <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", margin: "0 -16px" }}>
+          <div style={{ display: "flex", gap: 8, padding: "2px 16px 4px", width: "max-content" }}>
             {CONTEXTS.map(c => (
-              <button key={c.id} onClick={() => choisirContexte(c)} aria-pressed={contextId === c.id} className="gr-focus" style={{
-                flexShrink: 0, padding: "10px 14px", borderRadius: R.pill,
-                border: `1.5px solid ${contextId === c.id ? c.color : C.border}`,
-                background: contextId === c.id ? c.colorL : C.surface,
-                color: contextId === c.id ? c.colorD : C.text2,
-                fontSize: 12, fontWeight: contextId === c.id ? 600 : 400,
-                cursor: "pointer", fontFamily: FONTS.ui, whiteSpace: "nowrap",
-              }}>
+              <Pastille key={c.id} C={C} couleurs={c} actif={contextId === c.id} onClick={() => choisirContexte(c)}>
                 {c.label}
-              </button>
+              </Pastille>
             ))}
           </div>
         </div>
 
         {/* Description + fiche du style : tempo conseillé, feel, grilles,
             gammes et tonalités proposées */}
-        <div style={{ background: ctx.colorL, border: `1px solid ${ctx.colorB}`, borderRadius: R.lg, padding: "10px 14px" }}>
-          <div style={{ fontSize: 12, color: ctx.colorD, fontFamily: FONTS.title, lineHeight: 1.5 }}>{ctx.desc}</div>
+        <Card pad="12px 14px" style={{ background: ctx.colorL, border: `2px solid ${ctx.colorB}` }}>
+          <div style={{ fontSize: T.small, fontWeight: 600, color: ctx.colorD, lineHeight: 1.5 }}>{ctx.desc}</div>
           {packDuStyle && (
-            <div style={{ fontSize: 11, color: ctx.colorD, fontFamily: FONTS.ui, marginTop: 6, opacity: 0.85 }}>
+            <div style={{ fontSize: 12, color: ctx.colorD, marginTop: 6, opacity: 0.85 }}>
               {feelLabel(packDuStyle)} · tempo conseillé {packDuStyle.tempoRange[0]}–{packDuStyle.tempoRange[1]} BPM
             </div>
           )}
@@ -1193,60 +1181,51 @@ export function JamSession({ onBack, dispatch, state }) {
               options={ctxBase.tonalites.map(t => ({ id: t, label: nomTonique(t, ctx.scale) }))}
               onChoix={setRoot} />
           )}
-        </div>
+        </Card>
 
         {/* Backing track player */}
         <BackingTrackPlayer context={ctx} root={root} bpm={bpm} onBpmChange={setBpm} onChord={setAccordIdx} onSecondeJouee={unSecondeDePlus} onLecture={surLecture} />
 
-        {/* Séance de pratique : on voit ce qu'il reste pour qu'elle compte */}
-        <SuiviSeance chrono={chrono} sessionComptee={sessionComptee} couleur={ctx.color} />
+        {/* Séance de pratique : on voit ce qu'il reste pour qu'elle compte.
+            Comptée, elle est fêtée (le bloc arrive en fanfare). */}
+        {sessionComptee ? <div><div className="gr-tada">{suivi}</div></div> : suivi}
 
         {/* Tonique */}
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ fontSize: 11, fontWeight: 600, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", width: 60 }}>Tonique</div>
-          <button onClick={() => transposeSemitone(-1)} aria-label="Un demi-ton plus bas" className="gr-focus" style={{ width: 40, height: 40, borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Ti name="chevron-left" size={16} color={C.text2} />
-          </button>
-          <button onClick={() => setShowRootPicker(!showRootPicker)} aria-expanded={showRootPicker} aria-label={`Tonique : ${rootFr}. Choisir une autre tonique`} className="gr-focus" style={{ flex: 1, height: 40, borderRadius: 10, border: `1.5px solid ${ctx.color}`, background: ctx.colorL, cursor: "pointer", fontSize: 16, fontWeight: 700, color: ctx.colorD, fontFamily: FONTS.ui }}>
+          <Eyebrow tone="neutral" style={{ color: C.text2, width: 60 }}>Tonique</Eyebrow>
+          <IconButton icon="chevron-left" label="Un demi-ton plus bas" onClick={() => transposeSemitone(-1)} />
+          <button type="button" onClick={() => setShowRootPicker(!showRootPicker)} aria-expanded={showRootPicker} aria-label={`Tonique : ${rootFr}. Choisir une autre tonique`} className="gr-press gr-focus" style={{
+            ...relief(ctx.color, 3),
+            flex: 1, minWidth: 0, height: 44, padding: 0, borderRadius: R.md, border: `2px solid ${ctx.color}`, background: ctx.colorL,
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+            fontFamily: "inherit", fontSize: T.lead, fontWeight: 800, color: ctx.colorD,
+          }}>
             {rootFr}
+            <span aria-hidden="true" style={{ display: "inline-flex", transform: showRootPicker ? "rotate(180deg)" : "none", transition: "transform var(--gr-dur-fast) var(--gr-ease-out)" }}>
+              <Ti name="chevron-down" size={16} color="currentColor" />
+            </span>
           </button>
-          <button onClick={() => transposeSemitone(1)} aria-label="Un demi-ton plus haut" className="gr-focus" style={{ width: 40, height: 40, borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Ti name="chevron-right" size={16} color={C.text2} />
-          </button>
+          <IconButton icon="chevron-right" label="Un demi-ton plus haut" onClick={() => transposeSemitone(1)} />
         </div>
 
         {/* Picker tonique */}
         {showRootPicker && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6, background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: 10 }}>
+          <Card pad={10} style={{ display: "grid", gridTemplateColumns: "repeat(6, minmax(0, 1fr))", gap: 6 }}>
             {ROOTS_FR.map(r => (
-              <button key={r.en} onClick={() => { setRoot(r.en); setShowRootPicker(false); }} aria-pressed={root === r.en} className="gr-focus" style={{
-                minHeight: 40, padding: "8px 4px", borderRadius: 8,
-                border: `1px solid ${root === r.en ? ctx.color : C.border}`,
-                background: root === r.en ? ctx.colorL : C.bg,
-                color: root === r.en ? ctx.colorD : C.text,
-                fontSize: 12, fontWeight: root === r.en ? 700 : 400,
-                cursor: "pointer", fontFamily: FONTS.ui,
-              }}>{nomTonique(r.en, ctx.scale)}</button>
+              <Pastille key={r.en} C={C} couleurs={ctx} actif={root === r.en} onClick={() => { setRoot(r.en); setShowRootPicker(false); }}
+                style={{ padding: "0 2px", fontSize: 12, color: root === r.en ? ctx.colorD : C.text }}>
+                {nomTonique(r.en, ctx.scale)}
+              </Pastille>
             ))}
-          </div>
+          </Card>
         )}
 
         {/* Affichage manche */}
-        <div style={{ display: "flex", gap: 6 }}>
-          {[{ key: "notes", label: "Notes" }, { key: "intervals", label: "Intervalles" }, { key: "degrees", label: "Degrés" }].map(m => (
-            <button key={m.key} onClick={() => setDisplayMode(m.key)} aria-pressed={displayMode === m.key} className="gr-focus" style={{
-              flex: 1, minHeight: 40, padding: "7px 0", borderRadius: 8,
-              border: `1px solid ${displayMode === m.key ? ctx.color : C.border}`,
-              background: displayMode === m.key ? ctx.colorL : C.surface,
-              color: displayMode === m.key ? ctx.colorD : C.text3,
-              fontSize: 11, fontWeight: displayMode === m.key ? 600 : 400,
-              cursor: "pointer", fontFamily: FONTS.ui,
-            }}>{m.label}</button>
-          ))}
-        </div>
+        <Segmented label="Affichage du manche" size="sm" value={displayMode} onChange={setDisplayMode}
+          options={[{ value: "notes", label: "Notes" }, { value: "intervals", label: "Intervalles" }, { value: "degrees", label: "Degrés" }]} />
 
         {/* Manche */}
-        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, overflow: "hidden" }}>
+        <Card pad={0} style={{ overflow: "hidden" }}>
           <div style={{ padding: "8px 8px 4px", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
             <Fretboard mode="scale" root={root} scale={ctx.scale} displayMode={displayMode} lang="fr" compact={true}
               flashNotes={notesDeLAccord.length ? notesDeLAccord : null} />
@@ -1254,65 +1233,65 @@ export function JamSession({ onBack, dispatch, state }) {
           <div style={{ padding: "8px 12px 10px", borderTop: `1px solid ${C.border}`, minHeight: 44, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }} aria-live="polite">
             {accordEnCours ? (
               <>
-                <span style={{ fontSize: 11, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, marginRight: 2 }}>
+                <span style={{ fontSize: T.micro, fontWeight: 700, color: C.text3, marginRight: 2 }}>
                   Notes de {nomAccord(root, accordEnCours, ctx.scale)} :
                 </span>
                 {notesAccordAffichees.map(({ note: n, nom }) => {
                   const dedans = dansLaGamme(n);
                   return (
                     <span key={n} title={dedans ? "Dans ta gamme" : "Hors de ta gamme : c'est la note qui fait entendre le changement"} style={{
-                      padding: "3px 8px", borderRadius: R.pill, fontSize: 12, fontWeight: 800, fontFamily: FONTS.ui,
+                      padding: "2px 8px", borderRadius: R.pill, fontSize: 12, fontWeight: 800,
                       background: dedans ? ctx.colorL : C.surface,
-                      border: `1.5px ${dedans ? "solid" : "dashed"} ${dedans ? ctx.color : C.text3}`,
+                      border: `2px ${dedans ? "solid" : "dashed"} ${dedans ? ctx.color : C.text3}`,
                       color: dedans ? ctx.colorD : C.text,
                     }}>{nom}{dedans ? "" : " *"}</span>
                   );
                 })}
                 {notesDeLAccord.some(n => !dansLaGamme(n)) && (
-                  <span style={{ fontSize: 11, color: C.text3, fontFamily: FONTS.ui, width: "100%" }}>
+                  <span style={{ fontSize: T.micro, color: C.text3, width: "100%" }}>
                     * hors de ta gamme : c'est elle qui fait entendre le changement d'accord.
                   </span>
                 )}
               </>
             ) : (
-              <span style={{ fontSize: 12, color: C.text3, fontFamily: FONTS.ui }}>
+              <span style={{ fontSize: 12, color: C.text3 }}>
                 Lance le backing : les notes de chaque accord s'allumeront sur le manche.
               </span>
             )}
           </div>
-        </div>
+        </Card>
 
         {/* Notes + cibles */}
         <div style={{ display: "flex", gap: 10 }}>
-          <div style={{ flex: 1, background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: "10px 12px" }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Gamme</div>
+          <Card pad="10px 12px" style={{ flex: 1, minWidth: 0 }}>
+            <Eyebrow tone="neutral" style={{ color: C.text2, marginBottom: 6 }}>Gamme</Eyebrow>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
               {activeNotes.map((note, i) => (
-                <div key={note} style={{ padding: "4px 8px", borderRadius: R.pill, background: i === 0 ? ctx.colorL : C.bg, border: `1px solid ${i === 0 ? ctx.color : C.border}`, fontSize: 12, fontWeight: i === 0 ? 700 : 400, color: i === 0 ? ctx.colorD : C.text2, fontFamily: FONTS.ui }}>
+                <div key={note} style={{ padding: "3px 8px", borderRadius: R.pill, background: i === 0 ? ctx.colorL : C.bg, border: `2px solid ${i === 0 ? ctx.color : C.border}`, fontSize: 12, fontWeight: i === 0 ? 800 : 600, color: i === 0 ? ctx.colorD : C.text2 }}>
                   {nomsActifs[i] ?? note}{i === 0 ? " R" : ""}
                 </div>
               ))}
             </div>
-          </div>
-          <div style={{ flex: 1, background: ctx.colorL, border: `1px solid ${ctx.colorB}`, borderRadius: R.lg, padding: "10px 12px" }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: ctx.colorD, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Cibles</div>
-            <div style={{ fontSize: 11, color: ctx.colorD, fontFamily: FONTS.ui, lineHeight: 1.5 }}>{ctx.targetDesc}</div>
-          </div>
+          </Card>
+          <Card pad="10px 12px" style={{ flex: 1, minWidth: 0, background: ctx.colorL, border: `2px solid ${ctx.colorB}` }}>
+            <Eyebrow style={{ color: ctx.colorD, marginBottom: 6 }}>Cibles</Eyebrow>
+            <div style={{ fontSize: 12, color: ctx.colorD, lineHeight: 1.5 }}>{ctx.targetDesc}</div>
+          </Card>
         </div>
 
         {/* Contrainte : adaptée au style et au niveau, chronométrée */}
         <CarteContrainte chrono={chrono} enLecture={enLecture} contextId={contextId} niveauApp={state?.level} dispatch={dispatch} />
 
         {/* Rappels */}
-        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.lg, padding: "12px 14px" }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: C.text3, fontFamily: FONTS.ui, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Rappels</div>
+        <Card pad="12px 14px">
+          <Eyebrow tone="neutral" style={{ color: C.text2, marginBottom: 8 }}>Rappels</Eyebrow>
           {["Silence = note. Utilise-le.", "Arrive sur une note de l'accord sur les temps forts.", "Une bonne phrase monte puis descend.", "Le sommet d'un solo se place vers les deux tiers, pas à la fin."].map((tip, i) => (
             <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: i < 3 ? 6 : 0 }}>
-              <div style={{ width: 4, height: 4, borderRadius: "50%", background: ctx.color, marginTop: 6, flexShrink: 0 }} />
-              <div style={{ fontSize: 12, color: C.text2, fontFamily: FONTS.ui, lineHeight: 1.5 }}>{tip}</div>
+              <div style={{ width: 6, height: 6, borderRadius: R.pill, background: ctx.color, marginTop: 6, flexShrink: 0 }} />
+              <div style={{ fontSize: 12, color: C.text2, lineHeight: 1.5 }}>{tip}</div>
             </div>
           ))}
-        </div>
+        </Card>
 
       </div>
     </div>
