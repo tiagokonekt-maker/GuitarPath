@@ -155,7 +155,9 @@ export function Metronome() {
   }, [bpm, ensureClick]);
 
   // BPM live
-  useEffect(() => { Tone.getTransport().bpm.value = bpm; }, [bpm]);
+  // (try : sans Web Audio, le transport n'existe pas ; l'écran doit
+  // s'afficher quand même, comme dans JamSession.)
+  useEffect(() => { try { Tone.getTransport().bpm.value = bpm; } catch { /* pas d'audio */ } }, [bpm]);
 
   // Changement de timbre : on reconstruit les voix sans interrompre la mesure.
   // La boucle lit voixRef à chaque temps, donc le nouveau timbre s'applique

@@ -6,6 +6,9 @@
 // « une nouvelle version est prête ». L'ancienne version l'activait de force
 // et rechargeait la page — sous les doigts de quelqu'un au milieu d'un
 // exercice, ce n'est pas acceptable.
+// En tout premier : rend le stockage sûr avant que Supabase ne le lise
+// (Safari peut le bloquer, cf. stockageSur.js).
+import './stockageSur.js';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';

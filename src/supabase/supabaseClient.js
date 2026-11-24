@@ -1,3 +1,7 @@
+// Avant createClient, qui lit sessionStorage : Safari peut le bloquer
+// (cf. stockageSur.js). Importé ici ET dans main.jsx : au build, ce module
+// part dans un morceau à part, exécuté avant le corps de main.jsx.
+import '../stockageSur.js';
 import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;

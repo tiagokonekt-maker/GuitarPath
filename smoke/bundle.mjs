@@ -18906,7 +18906,10 @@ function Metronome() {
     setPlaying(true);
   }, [bpm, ensureClick]);
   useEffect15(() => {
-    getTransport().bpm.value = bpm;
+    try {
+      getTransport().bpm.value = bpm;
+    } catch {
+    }
   }, [bpm]);
   useEffect15(() => {
     if (!voixRef.current) return;

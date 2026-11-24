@@ -43,11 +43,28 @@
     <style>
       html { background: #FFE8CF; }
       @media (prefers-color-scheme: dark) { html { background: #1A1008; } }
+      /* Message de secours : visible seulement si l'app n'a pas démarré
+         après 8 s (React remplace tout le contenu de #root au démarrage).
+         Jamais de page blanche muette, même si le script ne se charge pas. */
+      .gr-secours {
+        min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+        justify-content: center; gap: 12px; padding: 24px; text-align: center;
+        font: 15px/1.6 -apple-system, system-ui, sans-serif; color: #18130F;
+        visibility: hidden; animation: gr-secours 0s linear 8s forwards;
+      }
+      .gr-secours strong { font-size: 18px; }
+      .gr-secours a { color: #C64E12; font-weight: 700; }
+      @media (prefers-color-scheme: dark) { .gr-secours { color: #F5EBDD; } .gr-secours a { color: #FF9A5C; } }
+      @keyframes gr-secours { to { visibility: visible; } }
     </style>
   </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root"><div class="gr-secours">
+      <strong>Groply n'arrive pas à démarrer.</strong>
+      <span>Recharge la page. Si rien ne change, mets à jour iOS (ou Safari), puis réessaie.</span>
+      <a href="/">Recharger</a>
+    </div></div>
     <noscript style="display:block;padding:24px;font-family:sans-serif;text-align:center">
       Groply a besoin de JavaScript pour fonctionner. Active-le puis recharge la page.
     </noscript>
