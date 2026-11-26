@@ -135,6 +135,7 @@ const SAMPLE_URLS = {
 // (quand, combien de temps, quelle force, quelle courbe de hauteur) vient de
 // tab/tabSon.js, testé à part.
 let busGuitare = null;
+let busEtouffe = null;   // filtre partagé des notes étouffées (x), avant busGuitare
 let buffersCordes = null;          // Tone.ToneAudioBuffers, chargés à la demande
 const voixCordes = new Set();      // voix actives, pour que stopAll() les coupe
 // Numéro de la lecture en cours. stopAll() le change : une lecture qui se
@@ -476,6 +477,11 @@ export function loadAudio() {
       const reverb = new Tone.Reverb({ decay: 1.9, wet: 0.19 });
       reverb.connect(sortieMaitre);
       busGuitare = reverb;   // les voix de corde de playTab passent par le même chemin
+      // UN filtre partagé pour toutes les notes étouffées (x). Un filtre par
+      // note saturait le moteur audio : 280 « x » (Chank funk) = 560 filtres
+      // actifs dès le lancement, l'horloge audio tombait à mi-vitesse et
+      // plus rien ne sortait.
+      busEtouffe = new Tone.Filter({ frequency: 1100, type: "lowpass", rolloff: -24 }).connect(reverb);
 
       // Les échantillons sont décodés UNE fois, dans les buffers partagés
       // avec le moteur de cordes (playTab). Avant, le Sampler et playTab
@@ -507,10 +513,10 @@ export function resetAudio() {
 /** Libère sampler, réverbération et sortie maître (pas les buffers partagés). */
 function libererChaine() {
   arreterLecturePlanifiee();
-  for (const n of [sampler, busGuitare, sortieMaitre]) {
+  for (const n of [sampler, busEtouffe, busGuitare, sortieMaitre]) {
     try { n?.dispose?.(); } catch { /* déjà libéré */ }
   }
-  sampler = null; busGuitare = null; sortieMaitre = null;
+  sampler = null; busEtouffe = null; busGuitare = null; sortieMaitre = null;
 }
 
 /**
@@ -966,14 +972,9 @@ function jouerVoix(v, t0) {
   const T = t0 + v.debut, Tfin = t0 + v.fin;
   const src = new Tone.ToneBufferSource(buffersCordes.get(nom));
   const gain = new Tone.Gain(0);
-  let filtre = null;
-  if (v.etouffee) {
-    // « Tchk » : la corde étouffée ne garde que son attaque, sourde.
-    filtre = new Tone.Filter({ frequency: 1100, type: "lowpass", rolloff: -24 });
-    src.chain(filtre, gain, busGuitare);
-  } else {
-    src.chain(gain, busGuitare);
-  }
+  // « Tchk » : la corde étouffée ne garde que son attaque, sourde (filtre
+  // partagé busEtouffe, cf. ensureLoaded).
+  src.chain(gain, v.etouffee && busEtouffe ? busEtouffe : busGuitare);
   // Courbe de hauteur = vitesse de lecture de l'échantillon.
   src.playbackRate.setValueAtTime(vitessePour(depart, base), T);
   for (const p of v.hauteurs.slice(1)) {
@@ -992,7 +993,7 @@ function jouerVoix(v, t0) {
   voixCordes.add(voix);
   src.onended = () => {
     voixCordes.delete(voix);
-    try { src.dispose(); gain.dispose(); filtre?.dispose(); } catch { /* noop */ }
+    try { src.dispose(); gain.dispose(); } catch { /* noop */ }
   };
 }
 

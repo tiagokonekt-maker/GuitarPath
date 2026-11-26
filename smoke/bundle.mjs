@@ -3122,6 +3122,7 @@ function loadAudio() {
       const reverb = new Tone.Reverb({ decay: 1.9, wet: 0.19 });
       reverb.connect(sortieMaitre);
       busGuitare = reverb;
+      busEtouffe = new Tone.Filter({ frequency: 1100, type: "lowpass", rolloff: -24 }).connect(reverb);
       const buffers = await chargerBuffersCordes();
       sampler = new Tone.Sampler({
         urls: urlsCordes(buffers),
@@ -3143,13 +3144,14 @@ function loadAudio() {
 }
 function libererChaine() {
   arreterLecturePlanifiee();
-  for (const n of [sampler, busGuitare, sortieMaitre]) {
+  for (const n of [sampler, busEtouffe, busGuitare, sortieMaitre]) {
     try {
       n?.dispose?.();
     } catch {
     }
   }
   sampler = null;
+  busEtouffe = null;
   busGuitare = null;
   sortieMaitre = null;
 }
@@ -3431,13 +3433,7 @@ function jouerVoix(v, t0) {
   const T2 = t0 + v.debut, Tfin = t0 + v.fin;
   const src = new Tone.ToneBufferSource(buffersCordes.get(nom2));
   const gain = new Tone.Gain(0);
-  let filtre = null;
-  if (v.etouffee) {
-    filtre = new Tone.Filter({ frequency: 1100, type: "lowpass", rolloff: -24 });
-    src.chain(filtre, gain, busGuitare);
-  } else {
-    src.chain(gain, busGuitare);
-  }
+  src.chain(gain, v.etouffee && busEtouffe ? busEtouffe : busGuitare);
   src.playbackRate.setValueAtTime(vitessePour(depart, base), T2);
   for (const p of v.hauteurs.slice(1)) {
     const r = vitessePour(p.midi, base);
@@ -3456,7 +3452,6 @@ function jouerVoix(v, t0) {
     try {
       src.dispose();
       gain.dispose();
-      filtre?.dispose();
     } catch {
     }
   };
@@ -3946,7 +3941,7 @@ function makeEarQuizQuestion(mode = "interval") {
     play: ear.play
   };
 }
-var Tone, tonePromise, ctxGeste, SAMPLE_URLS, busGuitare, buffersCordes, voixCordes, generationTab, NOMS_ECHANTILLONS, MIDI_MIN_ECH, MIDI_MAX_ECH, BASE_URL, RELEASE, QUEUE_AUDIBLE_MS, RONDE_120, listSampleUrls, SAMPLE_COUNT, SHARP_TO_FLAT, CHROMATIC, OPEN_STRINGS2, DEV, warn, sortieMaitre, enAttente, lectureEnCours, departLecture, restaurationTimer, sampler, loadPromise, isLoaded, loadError, MELODIE_ECART, MELODIE_DEPART, MELODIE_NOTE, ECART_INTERVALLE_MS, promesseCordes, urlsCordes, vitessePour, AVANCE_TOUR_S, progressionTimers, progressionTimer, dureeMs, INTERVALLES_HISTORIQUES, QUALITES_HISTORIQUES;
+var Tone, tonePromise, ctxGeste, SAMPLE_URLS, busGuitare, busEtouffe, buffersCordes, voixCordes, generationTab, NOMS_ECHANTILLONS, MIDI_MIN_ECH, MIDI_MAX_ECH, BASE_URL, RELEASE, QUEUE_AUDIBLE_MS, RONDE_120, listSampleUrls, SAMPLE_COUNT, SHARP_TO_FLAT, CHROMATIC, OPEN_STRINGS2, DEV, warn, sortieMaitre, enAttente, lectureEnCours, departLecture, restaurationTimer, sampler, loadPromise, isLoaded, loadError, MELODIE_ECART, MELODIE_DEPART, MELODIE_NOTE, ECART_INTERVALLE_MS, promesseCordes, urlsCordes, vitessePour, AVANCE_TOUR_S, progressionTimers, progressionTimer, dureeMs, INTERVALLES_HISTORIQUES, QUALITES_HISTORIQUES;
 var init_audioEngine = __esm({
   "src/audioEngine.js"() {
     init_fretboardUtils();
@@ -4009,6 +4004,7 @@ var init_audioEngine = __esm({
       "B5": "B5.mp3"
     };
     busGuitare = null;
+    busEtouffe = null;
     buffersCordes = null;
     voixCordes = /* @__PURE__ */ new Set();
     generationTab = 0;
